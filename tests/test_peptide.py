@@ -1,4 +1,5 @@
-from peptacular.peptide import parse_modified_peptide, create_modified_peptide, strip_modifications
+from peptacular.peptide import parse_modified_peptide, create_modified_peptide, strip_modifications, \
+    get_semi_sequences, get_non_enzymatic_sequences
 
 import unittest
 
@@ -60,6 +61,16 @@ class TestPeptide(unittest.TestCase):
         self.assertEqual(strip_modifications('A-C-D-E-F-G'), 'ACDEFG')
         self.assertEqual(strip_modifications('A(2)CDEFG'), 'ACDEFG')
 
+    def test_get_all_substrings(self):
+        self.assertEqual(get_semi_sequences('PEPTIDE', 3, 5), {'TIDE', 'PTIDE', 'PEPT', 'PEPTI', 'IDE', 'PEP'})
+        self.assertEqual(get_semi_sequences('PEPTIDE', 2, 5), {'TIDE', 'PTIDE', 'PEPT', 'PEPTI', 'IDE', 'PEP', 'PE', 'DE'})
+        self.assertEqual(get_semi_sequences('PEPTIDE', 2, 100), {'TIDE', 'PTIDE', 'PEPT', 'PEPTI', 'IDE', 'PEP', 'PE', 'DE', 'PEPTID', 'PEPTIDE', 'EPTIDE'})
+        self.assertEqual(get_semi_sequences('PEPTIDE'), {'P', 'E', 'TIDE', 'PTIDE', 'PEPT', 'PEPTI', 'IDE', 'PEP', 'PE', 'DE', 'PEPTID', 'PEPTIDE', 'EPTIDE'})
+
+    def test_get_all_non_enzymatic_peptides(self):
+        self.assertEqual(get_non_enzymatic_sequences('PEPT'), {'P', 'E', 'P', 'T', 'PE', 'EP', 'PT', 'PEP', 'EPT', 'PEPT'})
+        self.assertEqual(get_non_enzymatic_sequences('PEPT', min_len=1, max_len=2), {'P', 'E', 'P', 'T', 'PE', 'EP', 'PT'})
+        self.assertEqual(get_non_enzymatic_sequences('PEPT', min_len=2, max_len=4), {'PE', 'EP', 'PT', 'PEP', 'EPT', 'PEPT'})
 
 if __name__ == "__main__":
     unittest.main()

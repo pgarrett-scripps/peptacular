@@ -1,8 +1,8 @@
 from io import StringIO, TextIOWrapper
-from typing import Union
+from typing import IO
 
 
-def fasta_to_dict(fasta_io: Union[StringIO, TextIOWrapper]):
+def fasta_to_dict(fasta_io: IO[str]):
     """
     A function that reads a FASTA file from a file-like object, and returns a dictionary where the keys are the locus
     (protein id) and the values are a dictionary containing the sequence and the description of the protein.
@@ -23,8 +23,9 @@ def fasta_to_dict(fasta_io: Union[StringIO, TextIOWrapper]):
         if line == "":
             continue
         elif line[0] == ">":  # new protein
-            locus = line.rstrip().split(" ")[0].replace(">", "")
-            description = " ".join(line.rstrip().split(" ")[1:])
+            line_elems = line.rstrip().split(" ")
+            locus = line_elems[0].replace(">", "")
+            description = " ".join(line_elems[1:])
             locus_to_sequence_map[locus] = {'sequence': "", 'description': description}
         else:  # protein sequence
             locus_to_sequence_map[locus]['sequence'] += line.rstrip()
