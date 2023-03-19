@@ -1,9 +1,68 @@
+import re
+
 import regex as reg
 
-from . import constants
+from .util import check_parentheses
 
 
-def parse_modified_peptide(peptide_sequence: str) -> dict[int, int]:
+def convert_ip2_mod_to_uniprot_mod(peptide_sequence: str, mod_dict: dict[str, str]):
+    """
+    Convert a peptide sequence with IP2-style modifications to UniProt-style modifications.
+
+    This function takes a peptide sequence in string format and a dictionary of IP2-style
+    modifications and their corresponding UniProt-style modifications, and returns a
+    modified peptide sequence with the IP2-style modifications replaced with their
+    corresponding UniProt-style modifications.
+
+    Parameters:
+    peptide_sequence (str): A string representing the peptide sequence.
+    mod_dict (dict[str, str]): A dictionary of IP2-style modifications and their
+        corresponding UniProt-style modifications.
+
+    Returns:
+    str: A modified peptide sequence with UniProt-style modifications.
+
+    """
+    for ip2_mod, uniprot_mod in mod_dict.items():
+        ip2_mod = f'({ip2_mod})'
+        uniprot_mod = f'({uniprot_mod})'
+        peptide_sequence = peptide_sequence.replace(ip2_mod, uniprot_mod)
+
+    return peptide_sequence
+
+
+def convert_to_ms2_pip_style(peptide_sequence: str) -> str:
+    """
+    Convert a peptide sequence to MS2PIP-style format.
+
+    This function takes a peptide sequence in string format and converts it to a modified
+    format that is used by the MS2PIP prediction software. The modified format consists of
+    a series of location and modification pairs, separated by a pipe symbol ('|').
+
+    Parameters:
+    peptide_sequence (str): A string representing the peptide sequence.
+
+    Returns:
+    str: A modified peptide sequence in MS2PIP-style format.
+
+    Example:
+    >>> convert_to_ms2_pip_style('PEPTIDEK')
+    '2|Phospho|6|Lysine'
+    """
+    mod_dict = parse_modified_peptide(peptide_sequence)
+    locs, mods = [], []
+    for loc in mod_dict:
+        mod = mod_dict[loc]
+        ms2_pip_style_loc = loc + 1
+        if ms2_pip_style_loc == len(strip_modifications(peptide_sequence)):
+            ms2_pip_style_loc = -1
+        locs.append(ms2_pip_style_loc)
+        mods.append(mod)
+
+    return '|'.join([f'{loc}|{mod}' for loc, mod in zip(locs, mods)])
+
+
+def parse_modified_peptide(peptide_sequence: str) -> dict[int, str]:
     """
     This function reads a peptide sequence with modifications and returns a dictionary
     with the modification values indexed by the position of the modified amino acid.
@@ -17,42 +76,22 @@ def parse_modified_peptide(peptide_sequence: str) -> dict[int, int]:
     :rtype: dict[int, int]
     :raises ValueError: If the peptide sequence contains incorrect modification notation.
     """
-    starting_par_count, ending_par_count = peptide_sequence.count('('), peptide_sequence.count(')')
-    if starting_par_count != ending_par_count:
+    if check_parentheses(peptide_sequence) is False:
         raise ValueError(f'Incorrect modification notation in peptide sequence : {peptide_sequence}!')
-    mod_count = ending_par_count
+
+    matches = re.finditer(r'\(([^)]*)\)', peptide_sequence)
 
     modifications = {}
-
-    # Initialize the index counter to 0
-    index = -1
+    mod_offset = 0
 
     # Loop through the substrings
-    for s in peptide_sequence.split('('):  # Split the sequence into a list of substrings at each opening parenthesis
-        # Check if the substring contains a closing parenthesis
-        if ')' in s:
-            # Split the substring at the closing parenthesis
-            mod, peptide = s.split(')')
-
-            # Convert the modification value to an integer
-            mod = int(mod)
-
-            # Add the modification to the dictionary, using the index as the key
-            modifications[index] = mod
-
-            # Increment the index by the length of the peptide substring
-            index += len(peptide)
-        else:
-            # Increment the index by the length of the substring
-            index += len(s)
-
-    if len(modifications) != mod_count:
-        raise ValueError(f'Incorrect modification notation in peptide sequence : {peptide_sequence}!')
-
+    for match in matches:
+        modifications[match.start() - mod_offset - 1] = match.group()[1:-1]
+        mod_offset += match.end() - match.start()
     return modifications
 
 
-def create_modified_peptide(unmodified_sequence: str, modifications: dict[int, int]) -> str:
+def create_modified_peptide(unmodified_sequence: str, modifications: dict[int, str]) -> str:
     """
     Creates a modified peptide sequence from an unmodified peptide sequence and a dictionary of modifications.
 
@@ -95,16 +134,11 @@ def strip_modifications(peptide_sequence: str) -> str:
     Returns:
         The peptide sequence with all non-amino-acid characters removed.
     """
-    return ''.join([c for c in peptide_sequence if c in constants.amino_acids])
+    if check_parentheses(peptide_sequence) is False:
+        raise ValueError(f'Incorrect modification notation in peptide sequence : {peptide_sequence}!')
 
-
-def get_modification(peptide_sequence: str, modification_regex: str, modification: float, regex_offset=0):
-    unmodified_peptide_sequence = strip_modifications(peptide_sequence)
-    sequon_sites = {}
-    for site in reg.finditer(modification_regex, unmodified_peptide_sequence, overlapped=True):
-        sequon_sites[site.span(0)[0] + regex_offset] = modification
-    return sequon_sites
-
+    unmodified_sequence = re.sub(r'\([^)]*\)', '', peptide_sequence)
+    return unmodified_sequence
 
 def get_left_sequences(sequence: str, min_len: int = None, max_len: int = None):
     """
@@ -130,7 +164,7 @@ def get_left_sequences(sequence: str, min_len: int = None, max_len: int = None):
     return {sequence[0:i] for i in range(min_len, min(max_len, len(sequence)) + 1)}
 
 
-def get_right_sequences(sequence: str, min_len:int=None, max_len:int=None):
+def get_right_sequences(sequence: str, min_len: int = None, max_len: int = None):
     """
     Returns a set of right substrings of string `sequence` that have lengths between `min_len` and `max_len`.
 
@@ -154,7 +188,7 @@ def get_right_sequences(sequence: str, min_len:int=None, max_len:int=None):
     return {sequence[-i:] for i in range(min_len, min(max_len, len(sequence)) + 1)}
 
 
-def get_semi_sequences(sequence:str, min_len:int=None, max_len:int=None):
+def get_semi_sequences(sequence: str, min_len: int = None, max_len: int = None):
     """
     Returns a set of all semi-peptides of string `sequence` that have lengths between `min_len` and `max_len`.
 
@@ -174,7 +208,7 @@ def get_semi_sequences(sequence:str, min_len:int=None, max_len:int=None):
     return get_left_sequences(sequence, min_len, max_len).union(get_right_sequences(sequence, min_len, max_len))
 
 
-def get_non_enzymatic_sequences(sequence:str, min_len:int=None, max_len:int=None):
+def get_non_enzymatic_sequences(sequence: str, min_len: int = None, max_len: int = None):
     """
     Returns a set of all non-enzymatic peptides of string `sequence` that have lengths between `min_len` and `max_len`.
 
@@ -202,3 +236,36 @@ def get_non_enzymatic_sequences(sequence:str, min_len:int=None, max_len:int=None
         for j in range(i + min_len, min(i + max_len + 1, len(sequence) + 1)):
             substrings.add(sequence[i:j])
     return substrings
+
+
+def calculate_peptide_mass(sequence):
+    mod_dict = parse_modified_peptide(sequence)
+    unmodified_sequence = strip_modifications(sequence)
+    # Dictionary of monoisotopic masses of amino acids
+    aa_masses = {
+        'A': 71.03711378,
+        'C': 103.00918478,
+        'D': 115.02694302,
+        'E': 129.04259309,
+        'F': 147.06841391,
+        'G': 57.02146372,
+        'H': 137.05891186,
+        'I': 113.08406398,
+        'K': 128.09496301,
+        'L': 113.08406398,
+        'M': 131.04048491,
+        'N': 114.04292744,
+        'P': 97.05276385,
+        'Q': 128.05857751,
+        'R': 156.10111102,
+        'S': 87.03202840,
+        'T': 101.04767847,
+        'V': 99.06841391,
+        'W': 186.07931295,
+        'Y': 163.06332853,
+    }
+
+    mass = sum(aa_masses[aa] for aa in unmodified_sequence)
+    mass += 18.0153  # Add the mass of a water molecule for the C-terminus (18.0153) 18.01063
+    mass += sum([float(mod_dict[i]) for i in mod_dict])
+    return mass

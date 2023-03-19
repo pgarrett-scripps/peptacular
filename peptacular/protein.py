@@ -1,4 +1,7 @@
+import pandas as pd
 import regex as reg
+
+from peptacular.peptide import get_non_enzymatic_sequences, get_semi_sequences
 
 
 def identify_cleavage_sites(protein_sequence: str, enzyme_regex: str, cleavage_offset=1):
@@ -50,7 +53,8 @@ def _get_spans(start_site: int, future_sites: list[int], missed_cleavages: int, 
     return spans
 
 
-def digest_protein_sequence(protein_sequence: str, enzyme_sites: list[int], missed_cleaves: int) -> \
+def digest_protein_sequence(protein_sequence: str, enzyme_sites: list[int], missed_cleaves: int, min_len: int,
+                            max_len: int) -> \
         list[tuple[str, int]]:
     """
   Digests a protein sequence according to the enzyme regex string and number of missed cleavages.
@@ -58,10 +62,15 @@ def digest_protein_sequence(protein_sequence: str, enzyme_sites: list[int], miss
   :param protein_sequence: The protein sequence to digest.
   :param enzyme_sites: The sites for enzymatic cleavage
   :param missed_cleaves: The number of allowed skipped enzymatic sites to allow.
-  :return: A list of strings containing the resulting peptides.
+  :param min_len: min peptide length
+  :param max_len: max_peptide length
+  :return: A list of (peptide, missed_cleavages)
   """
     if len(enzyme_sites) == 0:
-        return [(protein_sequence, 0)]
+        if min_len <= len(protein_sequence) <= max_len:
+            return [(protein_sequence, 0)]
+        else:
+            return []
 
     peptide_spans = []
 
@@ -80,7 +89,9 @@ def digest_protein_sequence(protein_sequence: str, enzyme_sites: list[int], miss
 
     peptides = []
     for span in peptide_spans:
-        peptides.append((protein_sequence[span[0]:span[1]], span[2]))
+        span_len = span[1] - span[0]
+        if min_len <= span_len <= max_len:
+            peptides.append((protein_sequence[span[0]:span[1]], span[2]))
     return peptides
 
 
@@ -116,8 +127,25 @@ def combine_site_regexes(protein_sequence: str, positive_site_info: list, negati
     return sorted(list(positive_sites - negative_sites))
 
 
+def filter_peptides(peptides):
+    peptide_dict = {}
+    for (peptide, peptide_type) in peptides:
+        found_peptide_type = peptide_dict.setdefault(peptide, peptide_type)
+
+        if found_peptide_type == -1:
+            peptide_dict[peptide] = peptide_type
+        elif peptide_type != -1:
+            continue
+        else:
+            if peptide_type < found_peptide_type:
+                peptide_dict[peptide] = peptide_type
+
+    return {(peptide, peptide_dict[peptide]) for peptide in peptide_dict}
+
+
 def digest_protein(protein_sequence: str, enzyme_regexes: tuple[list[str, int]],
-                   missed_cleavages: int, min_length: int, max_length: int) -> list[tuple[str, int]]:
+                   missed_cleavages: int, min_len: int, max_len: int, non_enzymatic: bool, semi_enzymatic: bool) -> \
+list[tuple[str, int]]:
     """
     A function that digests a given protein sequence based on the provided positive and negative regular expressions and
     the number of missed cleavages. It returns a list of tuples containing the peptides and the number of missed
@@ -133,6 +161,25 @@ def digest_protein(protein_sequence: str, enzyme_regexes: tuple[list[str, int]],
     Returns:
         list[tuple[str, int]]: A list of tuples containing the peptides and the number of missed cleavages
     """
+    if non_enzymatic is True:
+        return [(peptide, -1) for peptide in get_non_enzymatic_sequences(protein_sequence, min_len, max_len)]
+
     sites = combine_site_regexes(protein_sequence, enzyme_regexes[0], enzyme_regexes[1])
-    peptides = digest_protein_sequence(protein_sequence, sites, missed_cleavages)
-    return [(peptide, mc) for peptide, mc in peptides if min_length <= len(peptide) <= max_length]
+    peptides = digest_protein_sequence(protein_sequence, sites, missed_cleavages, min_len, max_len)
+
+    all_semi_peptides = []
+    if semi_enzymatic is True:
+        for (peptide, peptide_type) in peptides:
+            semi_peptides = get_semi_sequences(peptide, min_len, max_len)
+            semi_peptides.remove(peptide)
+
+            semi_peptides = [(semi_peptide, -1) for semi_peptide in semi_peptides]
+            all_semi_peptides.extend(semi_peptides)
+    peptides.extend(all_semi_peptides)
+    return peptides
+
+
+def peptides_to_df(peptides: list[tuple[str, int]]) -> pd.DataFrame:
+    df = pd.DataFrame(peptides, columns=['Peptide', 'Cleavage Type'])
+    return df
+
