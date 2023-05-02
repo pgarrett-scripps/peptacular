@@ -1,6 +1,5 @@
 from peptacular.peptide import parse_modified_peptide, create_modified_peptide, strip_modifications, \
-    get_semi_sequences, get_non_enzymatic_sequences, convert_to_ms2_pip_style, convert_ip2_mod_to_uniprot_mod, \
-    calculate_peptide_mass
+    get_semi_sequences, get_non_enzymatic_sequences, convert_to_ms2_pip_style, convert_ip2_mod_to_uniprot_mod
 
 import unittest
 
@@ -107,12 +106,6 @@ class TestPeptide(unittest.TestCase):
         self.assertEqual(get_non_enzymatic_sequences('PEPT'), {'P', 'E', 'P', 'T', 'PE', 'EP', 'PT', 'PEP', 'EPT', 'PEPT'})
         self.assertEqual(get_non_enzymatic_sequences('PEPT', min_len=1, max_len=2), {'P', 'E', 'P', 'T', 'PE', 'EP', 'PT'})
         self.assertEqual(get_non_enzymatic_sequences('PEPT', min_len=2, max_len=4), {'PE', 'EP', 'PT', 'PEP', 'EPT', 'PEPT'})
-
-    def test_calculate_peptide_mass(self):
-        self.assertAlmostEqual(calculate_peptide_mass('ACDEFGHIKLMNPQRSTVWY'), 2394.12495, 5)
-        self.assertAlmostEqual(calculate_peptide_mass('ACDEFGHIKLMNPQRSTVWYACDEFGHIKLMNPQRSTVWY'), 4770.23929, 5)
-        self.assertAlmostEqual(calculate_peptide_mass('ACDEFGH(100)IKLMNPQRSTVWY'), 2494.12495, 5)
-        self.assertAlmostEqual(calculate_peptide_mass('ACDEFGH(-100)IKLMNPQRSTVWY'), 2294.12495, 5)
 
 
 

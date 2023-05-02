@@ -1,7 +1,8 @@
-import pandas as pd
+from typing import Tuple, List, Any, Set
+
 import regex as reg
 
-from peptacular.peptide import get_non_enzymatic_sequences, get_semi_sequences
+from .peptide import get_non_enzymatic_sequences, get_semi_sequences
 
 
 def identify_cleavage_sites(protein_sequence: str, enzyme_regex: str, cleavage_offset=1):
@@ -17,32 +18,22 @@ def identify_cleavage_sites(protein_sequence: str, enzyme_regex: str, cleavage_o
             site        site
             |           |
         PEPKTIDEPERPTIDRES
-
-
-    :param protein_sequence: The protein sequence
-    :param enzyme_regex: The Regex string to be used to identify enzymatic sites.
-    :param cleavage_offset: The offset, from the start of the regex string to
-    :return:
     """
+
     enzyme_sites = []
     for site in reg.finditer(enzyme_regex, protein_sequence, overlapped=True):
         enzyme_sites.append(site.span(0))
     return [site[0] + cleavage_offset for site in enzyme_sites]
 
 
-def _get_spans(start_site: int, future_sites: list[int], missed_cleavages: int, last_sequence_index: int) -> \
-        list[tuple[int, int, int]]:
+def _get_spans(start_site: int, future_sites: List[int], missed_cleavages: int, last_sequence_index: int) -> \
+        List[Tuple[int, int, int]]:
     """
     The function computes the spans by taking the start_site and the first missed_cleavages number of elements
     of future_sites and creating a tuple of start and end indices. If there are not enough elements in next_sites to
     fill the missed_cleavages, the end index of the tuple is set to the last index of the sequence, last_sequence_index.
-
-    :param start_site: an integer representing the starting index of a sequence
-    :param future_sites: a list of integers representing the next indices of the sequence
-    :param missed_cleavages: an integer representing the number of missed cleavages
-    :param last_sequence_index: an integer representing the last index of the sequence
-    :return: a list of tuples, each tuple containing two integers that represent the start and end indices of the span.
     """
+
     spans = []
     for i, next_site in enumerate(future_sites[:missed_cleavages + 1]):
         spans.append((start_site, next_site, i))
@@ -53,19 +44,13 @@ def _get_spans(start_site: int, future_sites: list[int], missed_cleavages: int, 
     return spans
 
 
-def digest_protein_sequence(protein_sequence: str, enzyme_sites: list[int], missed_cleaves: int, min_len: int,
+def digest_protein_sequence(protein_sequence: str, enzyme_sites: List[int], missed_cleaves: int, min_len: int,
                             max_len: int) -> \
-        list[tuple[str, int]]:
+        List[Tuple[str, int]]:
     """
-  Digests a protein sequence according to the enzyme regex string and number of missed cleavages.
+    Digests a protein sequence according to the enzyme regex string and number of missed cleavages.
+    """
 
-  :param protein_sequence: The protein sequence to digest.
-  :param enzyme_sites: The sites for enzymatic cleavage
-  :param missed_cleaves: The number of allowed skipped enzymatic sites to allow.
-  :param min_len: min peptide length
-  :param max_len: max_peptide length
-  :return: A list of (peptide, missed_cleavages)
-  """
     if len(enzyme_sites) == 0:
         if min_len <= len(protein_sequence) <= max_len:
             return [(protein_sequence, 0)]
@@ -95,29 +80,24 @@ def digest_protein_sequence(protein_sequence: str, enzyme_sites: list[int], miss
     return peptides
 
 
-def flatten(nested_list: list) -> list:
+def flatten(nested_list: List[List[Any]]) -> List[Any]:
     """
     returns a flattened versions of the nested list
     """
+
     return [e for sublist in nested_list for e in sublist]
 
 
-def combine_site_regexes(protein_sequence: str, positive_site_info: list, negative_site_info: list) -> list[int]:
+def combine_site_regexes(protein_sequence: str, positive_site_info: List[Tuple[str, int]],
+                         negative_site_info: List[Tuple[str, int]]) -> List[int]:
     """
     The function uses the identify_cleavage_sites() function to find the positive and negative sites in the protein
     sequence using the regex strings and offsets provided in positive_site_info and negative_site_info.
     It then takes the set difference of the two sets of sites, resulting in a set of sites that are only
     found in the positive set and not the negative set. Finally, it returns the list of sites sorted in
     ascending order.
-
-    :param protein_sequence: a string representing the protein sequence
-    :param positive_site_info: a list of tuples where each tuple contains a regex string and an offset for
-                               identifying positive cleavage sites
-    :param negative_site_info: a list of tuples where each tuple contains a regex string and an offset for
-                               identifying negative cleavage sites
-    :return: a sorted list of integers representing the cleavage sites that are only found in the positive
-             set and not the negative set.
     """
+
     positive_sites = [identify_cleavage_sites(protein_sequence, site_info[0], site_info[1]) for site_info in
                       positive_site_info]
     negative_sites = [identify_cleavage_sites(protein_sequence, site_info[0], site_info[1]) for site_info in
@@ -127,7 +107,7 @@ def combine_site_regexes(protein_sequence: str, positive_site_info: list, negati
     return sorted(list(positive_sites - negative_sites))
 
 
-def filter_peptides(peptides):
+def filter_peptides(peptides: List[str]) -> Set[Tuple[str, int]]:
     peptide_dict = {}
     for (peptide, peptide_type) in peptides:
         found_peptide_type = peptide_dict.setdefault(peptide, peptide_type)
@@ -143,24 +123,15 @@ def filter_peptides(peptides):
     return {(peptide, peptide_dict[peptide]) for peptide in peptide_dict}
 
 
-def digest_protein(protein_sequence: str, enzyme_regexes: tuple[list[str, int]],
+def digest_protein(protein_sequence: str, enzyme_regexes: Tuple[List[Tuple[str, int]], List[Tuple[str, int]]],
                    missed_cleavages: int, min_len: int, max_len: int, non_enzymatic: bool, semi_enzymatic: bool) -> \
-list[tuple[str, int]]:
+        List[Tuple[str, int]]:
     """
     A function that digests a given protein sequence based on the provided positive and negative regular expressions and
     the number of missed cleavages. It returns a list of tuples containing the peptides and the number of missed
     cleavages. The returned peptides will be filtered based on the provided minimum and maximum length.
-
-    Parameters:
-        protein_sequence (str): The protein sequence to be digested
-        enzyme_regexes (tuple[list[str, int]]): List of positive regular expressions and negative regular expressions
-        missed_cleavages (int): The number of missed cleavages allowed
-        min_length (int): Minimum length of peptide
-        max_length (int): Maximum length of peptide
-
-    Returns:
-        list[tuple[str, int]]: A list of tuples containing the peptides and the number of missed cleavages
     """
+
     if non_enzymatic is True:
         return [(peptide, -1) for peptide in get_non_enzymatic_sequences(protein_sequence, min_len, max_len)]
 
@@ -177,9 +148,3 @@ list[tuple[str, int]]:
             all_semi_peptides.extend(semi_peptides)
     peptides.extend(all_semi_peptides)
     return peptides
-
-
-def peptides_to_df(peptides: list[tuple[str, int]]) -> pd.DataFrame:
-    df = pd.DataFrame(peptides, columns=['Peptide', 'Cleavage Type'])
-    return df
-

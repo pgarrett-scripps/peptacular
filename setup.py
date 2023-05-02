@@ -1,16 +1,5 @@
-from pathlib import Path
-
 from setuptools import setup
 
-setup(
-    name='peptacular',
-    version='0.0.3',
-    packages=['peptacular'],
-    url='',
-    license='',
-    author='Patrick Garrett',
-    author_email='pgarrett@scripps.edu',
-    description='Utility package for handling peptide and protein sequences/files',
-    install_requires=['regex==2022.10.31'],
-    python_requires='>=3.6'
-)
+# Prior to pip v21.1, a setup.py script was required to be compatible with development mode. With late versions of pip,
+# projects without setup.py may be installed in this mode.
+setup()

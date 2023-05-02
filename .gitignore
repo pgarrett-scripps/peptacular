@@ -1,0 +1,25 @@
+# Compiled Python files
+__pycache__/
+*.pyc
+
+# Virtual environment
+venv/
+env/
+
+# PyCharm
+.idea/
+
+# Logs and other generated files
+*.log
+*.sqlite3
+*.bak
+*.csv
+
+# Build files
+dist/
+build/
+*.egg-info/
+
+# OS generated files
+.DS_Store
+Thumbs.db

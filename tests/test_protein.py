@@ -20,7 +20,7 @@ PROTEIN = 'MVIMSEFSADPAGQGQGQQKPLRVGFYDIERTLGKGNFAVVKLARHRVTKTQVAIKIIDKTRLDSSNLE
 class TestProtein(unittest.TestCase):
 
     def test_trypsin_sites(self):
-        cleavage_sites = combine_site_regexes(PROTEIN, constants.TRYPTIC_REGEXES[0], constants.TRYPTIC_REGEXES[1])
+        cleavage_sites = combine_site_regexes(PROTEIN, constants.TRYPTIC_COMPLEX_REGEXES[0], constants.TRYPTIC_COMPLEX_REGEXES[1])
 
         sites = [23, 31, 35, 42, 45, 47, 50, 56, 60, 62, 70, 73, 79, 88, 96, 107, 127, 128, 129, 148, 151, 164, 175,
                  198, 233, 235, 240, 242, 256, 257, 265, 266, 273, 276, 279, 319, 321, 344, 346, 349, 360, 365, 449,
@@ -87,31 +87,74 @@ class TestProtein(unittest.TestCase):
         self.assertEqual(cleavage_sites, sites)
 
     def test_digest_protein(self):
-        peptides = set(digest_protein('TIDERTIDEKTIDE', constants.TRYPTIC_REGEXES, 2, 0, 100))
+
+        peptides = set(digest_protein(protein_sequence='TIDERTIDEKTIDE',
+                                      enzyme_regexes=constants.TRYPTIC_SIMPLE_REGEXES,
+                                      missed_cleavages=2,
+                                      min_len=0,
+                                      max_len=100,
+                                      non_enzymatic=False,
+                                      semi_enzymatic=False))
         self.assertEqual(peptides,
                          {('TIDER', 0), ('TIDERTIDEK', 1), ('TIDERTIDEKTIDE', 2), ('TIDEK', 0), ('TIDEKTIDE', 1),
                           ('TIDE', 0)})
 
-        peptides = set(digest_protein('TIDERTIDEKTIDE', constants.TRYPTIC_REGEXES, 1, 0, 100))
+        peptides = set(digest_protein(protein_sequence='TIDERTIDEKTIDE',
+                                      enzyme_regexes=constants.TRYPTIC_SIMPLE_REGEXES,
+                                      missed_cleavages=1,
+                                      min_len=0,
+                                      max_len=100,
+                                      non_enzymatic=False,
+                                      semi_enzymatic=False))
         self.assertEqual(peptides, {('TIDER', 0), ('TIDERTIDEK', 1), ('TIDEK', 0), ('TIDEKTIDE', 1), ('TIDE', 0)})
 
-        peptides = set(digest_protein('KTIDERTIDEKTIDE', constants.TRYPTIC_REGEXES, 1, 0, 100))
+        peptides = set(digest_protein(protein_sequence='KTIDERTIDEKTIDE',
+                                      enzyme_regexes=constants.TRYPTIC_SIMPLE_REGEXES,
+                                      missed_cleavages=1,
+                                      min_len=0,
+                                      max_len=100,
+                                      non_enzymatic=False,
+                                      semi_enzymatic=False))
         self.assertEqual(peptides,
                          {('K', 0), ('KTIDER', 1), ('TIDER', 0), ('TIDERTIDEK', 1), ('TIDEK', 0), ('TIDEKTIDE', 1),
                           ('TIDE', 0)})
 
-        peptides = set(digest_protein('TIDERTIDEKTIDEK', constants.TRYPTIC_REGEXES, 1, 0, 100))
+        peptides = set(digest_protein(protein_sequence='TIDERTIDEKTIDEK',
+                                      enzyme_regexes=constants.TRYPTIC_SIMPLE_REGEXES,
+                                      missed_cleavages=1,
+                                      min_len=0,
+                                      max_len=100,
+                                      non_enzymatic=False,
+                                      semi_enzymatic=False))
         self.assertEqual(peptides, {('TIDER', 0), ('TIDERTIDEK', 1), ('TIDEK', 0), ('TIDEKTIDEK', 1), ('TIDEK', 0)})
 
-        peptides = set(digest_protein('TIDERTIDEKKTIDE', constants.TRYPTIC_REGEXES, 1, 0, 100))
+        peptides = set(digest_protein(protein_sequence='TIDERTIDEKKTIDE',
+                                      enzyme_regexes=constants.TRYPTIC_SIMPLE_REGEXES,
+                                      missed_cleavages=1,
+                                      min_len=0,
+                                      max_len=100,
+                                      non_enzymatic=False,
+                                      semi_enzymatic=False))
         self.assertEqual(peptides,
                          {('TIDER', 0), ('TIDERTIDEK', 1), ('TIDEK', 0), ('TIDEKK', 1), ('K', 0), ('KTIDE', 1),
                           ('TIDE', 0)})
 
-        peptides = set(digest_protein('TIDERTIDEKTIDE', constants.TRYPTIC_REGEXES, 0, 0, 100))
+        peptides = set(digest_protein(protein_sequence='TIDERTIDEKTIDE',
+                                      enzyme_regexes=constants.TRYPTIC_SIMPLE_REGEXES,
+                                      missed_cleavages=0,
+                                      min_len=0,
+                                      max_len=100,
+                                      non_enzymatic=False,
+                                      semi_enzymatic=False))
         self.assertEqual(peptides, {('TIDER', 0), ('TIDEK', 0), ('TIDE', 0)})
 
-        peptides = set(digest_protein('TIDERTIDEKTIDE', constants.TRYPTIC_REGEXES, 10, 0, 100))
+        peptides = set(digest_protein(protein_sequence='TIDERTIDEKTIDE',
+                                      enzyme_regexes=constants.TRYPTIC_SIMPLE_REGEXES,
+                                      missed_cleavages=10,
+                                      min_len=0,
+                                      max_len=100,
+                                      non_enzymatic=False,
+                                      semi_enzymatic=False))
         self.assertEqual(peptides,
                          {('TIDER', 0), ('TIDERTIDEK', 1), ('TIDERTIDEKTIDE', 2), ('TIDEK', 0), ('TIDEKTIDE', 1),
                           ('TIDE', 0)})

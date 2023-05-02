@@ -1,16 +1,17 @@
-import streamlit as st
-
 from peptacular.constants import ENZYMES_OPTIONS
 
 
 def search_components():
+    import streamlit as st
+
     tolerance = st.number_input(label='Tolerance')
     tolerance_type = st.radio(label='Tolerance Type', options=('PPM', 'TH', 'Dalton'))
     return {'tolerance': tolerance, 'tolerance_type': tolerance_type}
 
 
-
 def digestion_components():
+    import streamlit as st
+
     non_enzymatic = st.checkbox(label='Non Enzymatic', value=False)
 
     col1, col2 = st.columns(2)
