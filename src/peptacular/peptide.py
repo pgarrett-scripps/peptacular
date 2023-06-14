@@ -1,5 +1,5 @@
 import re
-from typing import Dict
+from typing import Dict, Tuple, List
 
 from .util import check_parentheses
 
@@ -109,39 +109,59 @@ def strip_modifications(peptide_sequence: str) -> str:
     return unmodified_sequence
 
 
-def get_left_sequences(sequence: str, min_len: int = None, max_len: int = None):
+def get_left_semi_sequences(sequence: str, min_len: int = None, max_len: int = None, max_semi_offset: int = None):
     """
     Returns a set of left substrings of string `sequence` that have lengths between `min_len` and `max_len`.
 
     Example:
-    >>> get_left_sequences("abc", 1, 2)
+    >>> get_left_semi_sequences("abc", 1, 2)
     {'a', 'ab'}
     """
 
     if min_len is None:
         min_len = 1
     if max_len is None:
-        max_len = len(sequence)
-    return {sequence[0:i] for i in range(min_len, min(max_len, len(sequence)) + 1)}
+        max_len = len(sequence) - 1
+
+    cnt = 0
+    sequences = set()
+    for i in range(min_len, min(max_len, len(sequence) - 1) + 1)[::-1]:
+        sequences.add(sequence[0:i])
+        cnt += 1
+
+        if max_semi_offset is not None and cnt >= max_semi_offset:
+            break
+
+    return sequences
 
 
-def get_right_sequences(sequence: str, min_len: int = None, max_len: int = None):
+def get_right_semi_sequences(sequence: str, min_len: int = None, max_len: int = None, max_semi_offset: int = None):
     """
     Returns a set of right substrings of string `sequence` that have lengths between `min_len` and `max_len`.
 
     Example:
-    >>> get_right_sequences("abc", 1, 2)
+    >>> get_right_semi_sequences("abc", 1, 2)
     {'c', 'bc'}
     """
-
     if min_len is None:
         min_len = 1
     if max_len is None:
-        max_len = len(sequence)
-    return {sequence[-i:] for i in range(min_len, min(max_len, len(sequence)) + 1)}
+        max_len = len(sequence) - 1
+    end = min(max_len, len(sequence) - 1)
+
+    cnt = 0
+    sequences = set()
+    for i in range(min_len, end + 1)[::-1]:
+        sequences.add(sequence[-i:])
+        cnt += 1
+
+        if max_semi_offset is not None and cnt >= max_semi_offset:
+            break
+
+    return sequences
 
 
-def get_semi_sequences(sequence: str, min_len: int = None, max_len: int = None):
+def get_semi_sequences(sequence: str, min_len: int = None, max_len: int = None, max_semi_offset: int = None):
     """
     Returns a set of all semi-peptides of string `sequence` that have lengths between `min_len` and `max_len`.
 
@@ -150,7 +170,8 @@ def get_semi_sequences(sequence: str, min_len: int = None, max_len: int = None):
     {'a', 'ab', 'c', 'bc'}
     """
 
-    return get_left_sequences(sequence, min_len, max_len).union(get_right_sequences(sequence, min_len, max_len))
+    return get_left_semi_sequences(sequence, min_len, max_len, max_semi_offset).union(
+        get_right_semi_sequences(sequence, min_len, max_len, max_semi_offset))
 
 
 def get_non_enzymatic_sequences(sequence: str, min_len: int = None, max_len: int = None):
@@ -173,3 +194,12 @@ def get_non_enzymatic_sequences(sequence: str, min_len: int = None, max_len: int
         for j in range(i + min_len, min(i + max_len + 1, len(sequence) + 1)):
             substrings.add(sequence[i:j])
     return substrings
+
+
+def calculate_mass(sequence: str) -> float:
+    from pyteomics import mass
+
+    mod_mass = sum([float(mod) for (i, mod) in parse_modified_peptide(sequence)])
+    unmod_sequence = strip_modifications(sequence)
+    return mass.fast_mass(sequence, charge=0) + mod_mass
+

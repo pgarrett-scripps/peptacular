@@ -1,3 +1,4 @@
+import sys
 from typing import Union
 
 
@@ -91,3 +92,6 @@ class RefString:
 
     def center(self, width, fillchar=' '):
         return RefString(str(self).center(width, fillchar))
+
+    def __add__(self, other):
+        return RefString(str(self) + str(other))

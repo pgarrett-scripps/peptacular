@@ -1,5 +1,6 @@
 from peptacular import constants
-from peptacular.protein import digest_protein, combine_site_regexes
+from peptacular.protein import digest_protein, combine_site_regexes, pd_digest, get_enzyme_specificity, \
+    calculate_protein_coverage
 
 import unittest
 
@@ -20,7 +21,8 @@ PROTEIN = 'MVIMSEFSADPAGQGQGQQKPLRVGFYDIERTLGKGNFAVVKLARHRVTKTQVAIKIIDKTRLDSSNLE
 class TestProtein(unittest.TestCase):
 
     def test_trypsin_sites(self):
-        cleavage_sites = combine_site_regexes(PROTEIN, constants.TRYPTIC_COMPLEX_REGEXES[0], constants.TRYPTIC_COMPLEX_REGEXES[1])
+        cleavage_sites = combine_site_regexes(PROTEIN, constants.TRYPTIC_COMPLEX_REGEXES[0],
+                                              constants.TRYPTIC_COMPLEX_REGEXES[1])
 
         sites = [23, 31, 35, 42, 45, 47, 50, 56, 60, 62, 70, 73, 79, 88, 96, 107, 127, 128, 129, 148, 151, 164, 175,
                  198, 233, 235, 240, 242, 256, 257, 265, 266, 273, 276, 279, 319, 321, 344, 346, 349, 360, 365, 449,
@@ -30,7 +32,8 @@ class TestProtein(unittest.TestCase):
         self.assertEqual(cleavage_sites, sites)
 
     def test_thermolysin_sites(self):
-        cleavage_sites = combine_site_regexes(PROTEIN, constants.THERMOLYSIN_REGEXES[0], constants.THERMOLYSIN_REGEXES[1])
+        cleavage_sites = combine_site_regexes(PROTEIN, constants.THERMOLYSIN_REGEXES[0],
+                                              constants.THERMOLYSIN_REGEXES[1])
         sites = [1, 2, 3, 8, 11, 21, 23, 25, 32, 37, 38, 39, 40, 42, 43, 47, 52, 53, 54, 56, 57, 62, 67, 70, 76, 77,
                  79, 80, 85, 86, 88, 91, 92, 98, 100, 101, 105, 111, 114, 120, 129, 132, 133, 135, 136, 144, 145, 154,
                  155, 156, 160, 164, 165, 169, 172, 179, 189, 194, 204, 209, 211, 212, 213, 215, 216, 217, 223, 231,
@@ -50,7 +53,8 @@ class TestProtein(unittest.TestCase):
         self.assertEqual(cleavage_sites, sites)
 
     def test_proteinaseK_sites(self):
-        cleavage_sites = combine_site_regexes(PROTEIN, constants.PROTEINASEK_REGEXES[0], constants.PROTEINASEK_REGEXES[1])
+        cleavage_sites = combine_site_regexes(PROTEIN, constants.PROTEINASEK_REGEXES[0],
+                                              constants.PROTEINASEK_REGEXES[1])
         sites = [2, 3, 6, 7, 9, 12, 22, 24, 26, 27, 29, 30, 32, 33, 38, 39, 40, 41, 43, 44, 48, 49, 51, 53, 54, 55, 57,
                  58, 61, 63, 68, 69, 71, 72, 74, 75, 77, 80, 81, 86, 87, 89, 90, 92, 94, 95, 99, 100, 101, 102, 103,
                  104, 105, 106, 110, 112, 114, 115, 116, 121, 123, 125, 126, 130, 131, 133, 134, 136, 137, 138, 139,
@@ -87,7 +91,6 @@ class TestProtein(unittest.TestCase):
         self.assertEqual(cleavage_sites, sites)
 
     def test_digest_protein(self):
-
         peptides = set(digest_protein(protein_sequence='TIDERTIDEKTIDE',
                                       enzyme_regexes=constants.TRYPTIC_SIMPLE_REGEXES,
                                       missed_cleavages=2,
@@ -158,6 +161,29 @@ class TestProtein(unittest.TestCase):
         self.assertEqual(peptides,
                          {('TIDER', 0), ('TIDERTIDEK', 1), ('TIDERTIDEKTIDE', 2), ('TIDEK', 0), ('TIDEKTIDE', 1),
                           ('TIDE', 0)})
+
+    def test_pd_digest(self):
+        protein_df, peptide_df = pd_digest(protein_sequences=['TIDERTIDEKTIDE', 'TIDERTIDEKTIDEK'],
+                                           protein_locuses=['LOCUS1', 'LOCUS2'],
+                                           enzyme_regexes=constants.TRYPTIC_SIMPLE_REGEXES,
+                                           missed_cleavages=10,
+                                           min_len=0,
+                                           max_len=100,
+                                           non_enzymatic=False,
+                                           semi_enzymatic=False)
+
+    def test_get_specificity(self):
+        get_enzyme_specificity('K.PEPTIDEK.P', ([('([KR])', 1)], []))
+
+    def test_calculate_protein_coverage(self):
+        protein_sequence = 'TIDERTIDEKTIDE'
+        cov_arr = calculate_protein_coverage(protein_sequence=protein_sequence, peptides=['TIDER', 'TIDEK', 'TIDE'])
+        self.assertEqual(sum(cov_arr), len(protein_sequence))
+        self.assertEqual(cov_arr, [1] * len(protein_sequence))
+
+        cov_arr = calculate_protein_coverage(protein_sequence=protein_sequence, peptides=['TIDER', 'TIDEK'])
+        self.assertEqual(sum(cov_arr), len(protein_sequence) - 4)
+        self.assertEqual(cov_arr, [1] * (len(protein_sequence) - 4) + [0] * 4)
 
 
 if __name__ == "__main__":
