@@ -1,55 +1,32 @@
-amino_acids = 'ACDEFGHIKLMNPQRSTVWY'
+AMINO_ACIDS = 'ACDEFGHIKLMNPQRSTVWY'
+HYDROGEN = 1.00782503207
+PROTON = 1.00727646677
+OXYGEN = 15.99491461956
 
-# Trypsin: https://web.expasy.org/peptide_cutter/peptidecutter_enzymes.html#exceptions
-TRYPTIC_COMPLEX_REGEXES = (
-    [('([KR])([^P])', 1),
-     ('([W])([K])([P])', 2),
-     ('([M])([R])([P])', 2)],
-
-    [('([CD])(K)([D])', 2),
-     ('([C])([K])([HY])', 2),
-     ('([C])([R])([K])', 2),
-     ('([R])([R])([HR])', 2)])
-
-TRYPTIC_SIMPLE_REGEXES = (
-    [('([KR])([^P])', 1)],
-
-    [])
-
-THROMBIN_REGEXES = (
-    [('([AFGILTVM])([AFGILTVWA])([P])([R])([^DE])([^DE])', 4),
-     ('([G])([R])([G])', 2)],
-
-    [])
-
-THERMOLYSIN_REGEXES = (
-    [('([^DE])([AFILMV])([^P])', 1)],
-
-    [])
-
-PROTEINASEK_REGEXES = (
-    [('([AEFILTVWY])', 1)],
-
-    [])
-
-LYSC_REGEXES = ([('([K])', 1)],
-
-                [])
-
-LYSN_REGEXES = ([('([K])', 0)],
-
-                [])
-
-ENZYMES_OPTIONS = \
-    {'Trypsin': TRYPTIC_SIMPLE_REGEXES,
-     'Trypsin (expasy)': TRYPTIC_COMPLEX_REGEXES,
-     'Thrombin': THROMBIN_REGEXES,
-     'Thermolysin': THERMOLYSIN_REGEXES,
-     'Protinase K': PROTEINASEK_REGEXES,
-     'Lys C': LYSC_REGEXES,
-     'Lys N': LYSN_REGEXES,
-     }
-
+AA_MASSES = {
+    'G': 57.02146372057,
+    'A': 71.03711378471,
+    'S': 87.03202840427001,
+    'P': 97.05276384885,
+    'V': 99.06841391299,
+    'T': 101.04767846841,
+    'C': 103.00918478471,
+    'L': 113.08406397713001,
+    'I': 113.08406397713001,
+    'J': 113.08406397713001,
+    'N': 114.04292744114001,
+    'D': 115.02694302383001,
+    'Q': 128.05857750527997,
+    'K': 128.09496301399997,
+    'E': 129.04259308796998,
+    'M': 131.04048491299,
+    'H': 137.05891185845002,
+    'F': 147.06841391298997,
+    'U': 150.95363508471,
+    'R': 156.10111102359997,
+    'Y': 163.06332853254997,
+    'W': 186.07931294985997,
+    'O': 237.14772686284996}
 
 PROTEASES = {'arg-c': 'R',
  'asp-n': '\\w(?=D)',

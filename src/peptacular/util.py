@@ -1,9 +1,20 @@
-from typing import List
+from typing import List, Any
 
 
 def check_parentheses(text):
-    stack = []
+    """
+    Check if parentheses in the given text are balanced or not.
 
+    The function uses a stack data structure to ensure each opening parenthesis '('
+    has a corresponding closing parenthesis ')' and vice versa.
+
+    Args:
+        text (str): The input string to check for balanced parentheses.
+
+    Returns:
+        bool: True if parentheses are balanced, False otherwise.
+    """
+    stack = []
     for i, char in enumerate(text):
         if char == '(':
             stack.append(i)
@@ -12,24 +23,11 @@ def check_parentheses(text):
                 return False
             else:
                 stack.pop()
-
     return len(stack) == 0
 
-def calculate_protein_coverage(protein_sequence: str, peptide_sequences: List[str]) -> float:
+
+def flatten(nested_list: List[List[Any]]) -> List[Any]:
     """
-    Calculates the protein coverage of a list of peptides.
-
-    Args:
-        protein_sequence: The protein sequence.
-        peptide_sequences: The list of peptide sequences.
-
-    Returns:
-        The protein coverage.
+    returns a flattened versions of the nested list
     """
-    covered = set()
-    for peptide_sequence in peptide_sequences:
-        for i in range(len(protein_sequence) - len(peptide_sequence) + 1):
-            if protein_sequence[i:i + len(peptide_sequence)] == peptide_sequence:
-                covered.update(range(i, i + len(peptide_sequence)))
-
-    return len(covered) / len(protein_sequence)
+    return [e for sublist in nested_list for e in sublist]
