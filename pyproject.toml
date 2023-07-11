@@ -19,6 +19,7 @@ classifiers = [
 ]
 dependencies = [
     "regex",
+    "numpy"
 ]
 
 [tool.setuptools]

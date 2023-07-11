@@ -1,11 +1,5 @@
 import re
-from typing import Tuple, List, Union
-
-import regex as reg
-
-from .constants import PROTEASES
-from .sequence import get_non_enzymatic_sequences, get_semi_sequences
-from .util import flatten
+from typing import List
 
 
 def get_peptide_indexes_in_protein(protein: str, peptide: str) -> list[int]:
@@ -51,7 +45,7 @@ def calculate_protein_coverage_percent(protein: str, peptides: List[str]) -> flo
 
     Args:
         protein: The protein sequence.
-        peptide_sequences: The list of peptide sequences.
+        peptides: The list of peptide sequences.
 
     Returns:
         The protein coverage.
