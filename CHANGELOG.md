@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.0.6]
+
+### Added:
+- peptide sequence fragment calculator
+
+### Changes
+- converted peptide.py to sequence.py
+
 ## [0.0.5]
 
 ### Added:
