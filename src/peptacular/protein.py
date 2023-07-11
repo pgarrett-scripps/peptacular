@@ -2,7 +2,7 @@ import re
 from typing import List
 
 
-def get_peptide_indexes_in_protein(protein: str, peptide: str) -> list[int]:
+def get_peptide_indexes_in_protein(protein: str, peptide: str) -> List[int]:
     """
     Get all indexes of a peptide (substring) in a protein (string).
 
@@ -16,7 +16,7 @@ def get_peptide_indexes_in_protein(protein: str, peptide: str) -> list[int]:
     return [i.start() for i in re.finditer(peptide, protein)]
 
 
-def calculate_protein_coverage(protein: str, peptides: list[str]) -> list[int]:
+def calculate_protein_coverage(protein: str, peptides: List[int]) -> List[int]:
     """
     Calculate the coverage of a protein sequence by a list of peptides.
 
