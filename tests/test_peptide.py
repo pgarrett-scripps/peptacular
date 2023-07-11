@@ -247,7 +247,6 @@ class TestPeptide(unittest.TestCase):
         for f in pyteomics_b_frags:
             self.assertTrue(f in b_frags)
 
-
     def test_convert_to_mass_array(self):
 
         FRAGS = np.array([97.05276384885, 129.04259308796998, 97.05276384885, 101.04767846841,
@@ -256,12 +255,26 @@ class TestPeptide(unittest.TestCase):
         for m in FRAGS:
             self.assertTrue(m in mass_arr)
 
-
         FRAGS = np.array([197.05276384885, 129.04259308796998, 197.05276384885, 101.04767846841,
                           113.08406397713001, 115.02694302383001, 229.04259308796998], dtype=np.float32)
         mass_arr = calculate_mass_array('(100)PEP(100)TIDE(100)')
         for m in FRAGS:
             self.assertTrue(m in mass_arr)
+
+    def test_fragment2(self):
+        pyteomics = {'a': [70.06512569606001, 199.10771878403003, 300.15539725243997],
+                     'b': [98.06004031562, 227.10263340359, 328.150311872],
+                     'c': [115.08658941662999, 244.1291825046, 345.17686097301],
+                     'x': [372.14014111112, 275.08737726226997, 146.0447841743],
+                     'y': [346.1608765557, 249.10811270685, 120.06551961887999],
+                     'z': [329.13432745469, 232.08156360584, 103.03897051786998],
+                     }
+
+        for ion_type in 'abcxyz':
+            frags = sorted(list(fragment_sequence(sequence='PET', types=(ion_type), max_charge=1)))
+            pyteomics_frags = sorted(pyteomics[ion_type])
+            for f, pf in zip(frags, pyteomics_frags):
+                self.assertAlmostEqual(f, pf, 6)
 
 
 if __name__ == "__main__":

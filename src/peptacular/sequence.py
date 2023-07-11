@@ -5,7 +5,8 @@ from typing import Dict, List, Any, Tuple, Union
 import numpy as np
 import regex as reg
 
-from .constants import AA_MASSES, HYDROGEN, OXYGEN, PROTON, PROTEASES
+from .constants import PROTEASES, MONO_ISOTOPIC_ATOMIC_MASSES, \
+    MONO_ISOTOPIC_AA_MASSES, AVERAGE_AA_MASSES, AVERAGE_ATOMIC_MASSES
 
 from .util import check_parentheses
 
@@ -217,9 +218,9 @@ def add_static_mods(sequence: str, mod_map: Dict[str, Any]):
     """
 
     stripped_sequence = strip_modifications(sequence)
-    sequence_mod_map = parse_modified_sequence(stripped_sequence)
+    sequence_mod_map = parse_modified_sequence(sequence)
     for aa, mass in mod_map.items():
-        indexes = [i for i, x in enumerate(sequence) if x == aa]
+        indexes = [i for i, x in enumerate(stripped_sequence) if x == aa]
         for index in indexes:
             sequence_mod_map[index] = mass
 
@@ -278,7 +279,7 @@ def add_variable_mods(sequence: str, mod_map: Dict[str, float], max_mods: int) -
     return [create_modified_sequence(stripped_sequence, mod) for mod in mods]
 
 
-def calculate_mass(sequence: str, charge=0, ion_type: str = 'y') -> float:
+def calculate_mass(sequence: str, charge=0, ion_type: str = 'y', monoisotopic=True) -> float:
     """
     Calculate the mass of a peptide sequence.
 
@@ -291,23 +292,37 @@ def calculate_mass(sequence: str, charge=0, ion_type: str = 'y') -> float:
         float: The mass of the peptide sequence.
     """
 
+    if monoisotopic is True:
+        atomic_masses = MONO_ISOTOPIC_ATOMIC_MASSES
+        aa_masses = MONO_ISOTOPIC_AA_MASSES
+    else:
+        atomic_masses = AVERAGE_ATOMIC_MASSES
+        aa_masses = AVERAGE_AA_MASSES
+
     mods = parse_modified_sequence(sequence)
     stripped_sequence = strip_modifications(sequence)
 
-    mass = sum(AA_MASSES[aa] for aa in stripped_sequence)
+    mass = sum(aa_masses[aa] for aa in stripped_sequence)
     mass += sum(float(value) for value in mods.values())
-    mass += (HYDROGEN * 2 + OXYGEN)
-    mass += (charge * PROTON)
+    mass += (charge * atomic_masses['PROTON'])
 
-    if ion_type == 'b':
-        mass -= (HYDROGEN * 2 + OXYGEN)
-    elif ion_type == 'y':
+    if ion_type == 'a':
+        mass -= (atomic_masses['CARBON'] + atomic_masses['OXYGEN'])
+    elif ion_type == 'b':
         pass
+    elif ion_type == 'c':
+        mass += (atomic_masses['HYDROGEN'] * 3 + atomic_masses['NITROGEN'])
+    elif ion_type == 'x':
+        mass += (atomic_masses['CARBON'] + atomic_masses['OXYGEN'] * 2)
+    elif ion_type == 'y':
+        mass += (atomic_masses['HYDROGEN'] * 2 + atomic_masses['OXYGEN'])
+    elif ion_type == 'z':
+        mass += (atomic_masses['OXYGEN'] - atomic_masses['NITROGEN'] - atomic_masses['HYDROGEN'])
 
     return mass
 
 
-def calculate_mz(sequence: str, charge=0, ion_type: str = 'y') -> float:
+def calculate_mz(sequence: str, charge=0, ion_type: str = 'y', monoisotopic=True) -> float:
     """
     Calculate the m/z (mass-to-charge ratio) of a peptide sequence.
 
@@ -320,13 +335,13 @@ def calculate_mz(sequence: str, charge=0, ion_type: str = 'y') -> float:
         float: The m/z of the peptide sequence.
     """
 
-    mass = calculate_mass(sequence, charge, ion_type)
+    mass = calculate_mass(sequence, charge, ion_type, monoisotopic)
     if charge == 0:
         return mass
     return mass / charge
 
 
-def fragment_sequence(sequence: str, types=('b', 'y'), max_charge=1):
+def fragment_sequence(sequence: str, types=('b', 'y'), max_charge=1, monoisotopic=True):
     """
     Generates fragments of a given amino acid sequence based on the specified ion types and maximum charge.
     This function is a generator that yields the m/z (mass-to-charge ratio) of each fragment.
@@ -346,7 +361,7 @@ def fragment_sequence(sequence: str, types=('b', 'y'), max_charge=1):
                 if ion_type not in 'xyz':
                     continue
                 for charge in range(1, max_charge + 1):
-                    yield calculate_mz(pep, charge=charge, ion_type=ion_type)
+                    yield calculate_mz(pep, charge=charge, ion_type=ion_type, monoisotopic=monoisotopic)
 
     if any([ion in 'abc' for ion in types]):
         for pep in sequence_generator(sequence, forward=False):
@@ -355,6 +370,16 @@ def fragment_sequence(sequence: str, types=('b', 'y'), max_charge=1):
                     continue
                 for charge in range(1, max_charge + 1):
                     yield calculate_mz(pep, charge=charge, ion_type=ion_type)
+
+
+def fragment_series(sequence: str, ion_type='y', charge=1, monoisotopic=True):
+    if ion_type in 'xyz':
+        for pep in sequence_generator(sequence, forward=True):
+            yield calculate_mz(pep, charge=charge, ion_type=ion_type, monoisotopic=monoisotopic)
+
+    if ion_type in 'abc':
+        for pep in sequence_generator(sequence, forward=False):
+            yield calculate_mz(pep, charge=charge, ion_type=ion_type, monoisotopic=monoisotopic)
 
 
 def sequence_generator(sequence: str, forward: bool):
@@ -480,7 +505,13 @@ def shift_sequence_left(sequence: str, shift: int):
     return create_modified_sequence(shifted_stripped_sequence, shifted_sequence_mods)
 
 
-def calculate_mass_array(sequence: str):
+def calculate_mass_array(sequence: str, monoisotopic: bool = True):
+
+    if monoisotopic is True:
+        aa_masses = MONO_ISOTOPIC_AA_MASSES
+    else:
+        aa_masses = AVERAGE_AA_MASSES
+
     sequence_mods = parse_modified_sequence(sequence)
     stripped_sequence = strip_modifications(sequence)
 
@@ -494,7 +525,7 @@ def calculate_mass_array(sequence: str):
         if i == 0 and -1 in sequence_mods:
             mod_mass += float(sequence_mods[-1])
 
-        mass_arr[i] = np.float32(AA_MASSES[aa] + mod_mass)
+        mass_arr[i] = np.float32(aa_masses[aa] + mod_mass)
 
     mass_arr = np.array(mass_arr, dtype=np.float32)
 
@@ -523,9 +554,11 @@ def create_ion_table(sequence: str, max_len: int = 50, ion_type: str = 'y', char
 
     # Add (HYDROGEN * 2 + OXYGEN) to the computed mass, only where window_end > window_start
     if ion_type == 'y':
-        ion_table[window_end > window_start] += (HYDROGEN * 2 + OXYGEN) + (PROTON * charge)
+        ion_table[window_end > window_start] += (MONO_ISOTOPIC_ATOMIC_MASSES['HYDROGEN'] * 2 +
+                                                 MONO_ISOTOPIC_ATOMIC_MASSES['OXYGEN']) + \
+                                                (MONO_ISOTOPIC_ATOMIC_MASSES['PROTON'] * charge)
     elif ion_type == 'b':
-        ion_table[window_end > window_start] += (PROTON * charge)
+        ion_table[window_end > window_start] += (MONO_ISOTOPIC_ATOMIC_MASSES['PROTON'] * charge)
     else:
         raise ValueError("Invalid ion type. Must be either 'y' or 'b'")
 
