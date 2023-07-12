@@ -112,59 +112,59 @@ class TestPeptide(unittest.TestCase):
         self.assertEqual(strip_modifications('A(2)CDE(Acetyl)FG'), 'ACDEFG')
 
     def test_get_semi_sequences(self):
-        assert get_semi_sequences(sequence='PEPTIDE', min_len=3, max_len=5) == \
+        assert set(get_semi_sequences(sequence='PEPTIDE', min_len=3, max_len=5)) == \
                {'TIDE', 'PTIDE', 'PEPT', 'PEPTI', 'IDE', 'PEP'}
-        assert get_semi_sequences(sequence='PEPTIDE', min_len=2, max_len=5) == \
+        assert set(get_semi_sequences(sequence='PEPTIDE', min_len=2, max_len=5)) == \
                {'TIDE', 'PTIDE', 'PEPT', 'PEPTI', 'IDE', 'PEP', 'PE', 'DE'}
-        assert get_semi_sequences(sequence='PEPTIDE', min_len=2, max_len=100) == \
+        assert set(get_semi_sequences(sequence='PEPTIDE', min_len=2, max_len=100)) == \
                {'TIDE', 'PTIDE', 'PEPT', 'PEPTI', 'IDE', 'PEP', 'PE', 'DE', 'PEPTID', 'EPTIDE'}
-        assert get_semi_sequences(sequence='PEPTIDE', min_len=None, max_len=None) == \
+        assert set(get_semi_sequences(sequence='PEPTIDE', min_len=None, max_len=None)) == \
                {'P', 'E', 'TIDE', 'PTIDE', 'PEPT', 'PEPTI', 'IDE', 'PEP', 'PE', 'DE', 'PEPTID', 'EPTIDE'}
 
     def test_get_left_semi_sequences(self):
-        self.assertEqual(get_left_semi_sequences('PEPTIDE', None, None, None),
+        self.assertEqual(set(get_left_semi_sequences('PEPTIDE', None, None, None)),
                          {'P', 'PE', 'PEP', 'PEPT', 'PEPTI', 'PEPTID'})
-        self.assertEqual(get_left_semi_sequences('PEPTIDE', 3, None, None), {'PEP', 'PEPT', 'PEPTI', 'PEPTID'})
-        self.assertEqual(get_left_semi_sequences('PEPTIDE', None, 5, None), {'P', 'PE', 'PEP', 'PEPT', 'PEPTI'})
-        self.assertEqual(get_left_semi_sequences('PEPTIDE', None, None, 1), {'PEPTID'})
-        self.assertEqual(get_left_semi_sequences('PEPTIDE', None, None, 2), {'PEPTID', 'PEPTI'})
-        self.assertEqual(get_left_semi_sequences('PEPTIDE', 3, 5, 1), {'PEPTI'})
-        self.assertEqual(get_left_semi_sequences('PEPTIDE', 3, 5, 2), {'PEPTI', 'PEPT'})
+        self.assertEqual(set(get_left_semi_sequences('PEPTIDE', 3, None, None)), {'PEP', 'PEPT', 'PEPTI', 'PEPTID'})
+        self.assertEqual(set(get_left_semi_sequences('PEPTIDE', None, 5, None)), {'P', 'PE', 'PEP', 'PEPT', 'PEPTI'})
+        self.assertEqual(set(get_left_semi_sequences('PEPTIDE', None, None, 1)), {'PEPTID'})
+        self.assertEqual(set(get_left_semi_sequences('PEPTIDE', None, None, 2)), {'PEPTID', 'PEPTI'})
+        self.assertEqual(set(get_left_semi_sequences('PEPTIDE', 3, 5, 1)), {'PEPTI'})
+        self.assertEqual(set(get_left_semi_sequences('PEPTIDE', 3, 5, 2)), {'PEPTI', 'PEPT'})
 
-        assert get_left_semi_sequences(sequence='PEPTIDE', min_len=None, max_len=None) == \
+        assert set(get_left_semi_sequences(sequence='PEPTIDE', min_len=None, max_len=None)) == \
                {'P', 'PE', 'PEP', 'PEPT', 'PEPTI', 'PEPTID'}
-        assert get_left_semi_sequences(sequence='PEPTIDE', min_len=3, max_len=None) == \
+        assert set(get_left_semi_sequences(sequence='PEPTIDE', min_len=3, max_len=None)) == \
                {'PEP', 'PEPT', 'PEPTI', 'PEPTID'}
-        assert get_left_semi_sequences(sequence='PEPTIDE', min_len=None, max_len=5) == \
+        assert set(get_left_semi_sequences(sequence='PEPTIDE', min_len=None, max_len=5)) == \
                {'P', 'PE', 'PEP', 'PEPT', 'PEPTI'}
-        assert get_left_semi_sequences(sequence='PEPTIDE', min_len=3, max_len=4) == \
+        assert set(get_left_semi_sequences(sequence='PEPTIDE', min_len=3, max_len=4)) == \
                {'PEP', 'PEPT'}
 
     def test_get_right_semi_sequences(self):
-        self.assertEqual(get_right_semi_sequences('PEPTIDE', None, None, None),
+        self.assertEqual(set(get_right_semi_sequences('PEPTIDE', None, None, None)),
                          {'EPTIDE', 'PTIDE', 'TIDE', 'IDE', 'DE', 'E'})
-        self.assertEqual(get_right_semi_sequences('PEPTIDE', 3, None, None), {'EPTIDE', 'PTIDE', 'TIDE', 'IDE'})
-        self.assertEqual(get_right_semi_sequences('PEPTIDE', None, 5, None), {'PTIDE', 'TIDE', 'IDE', 'DE', 'E'})
-        self.assertEqual(get_right_semi_sequences('PEPTIDE', None, None, 1), {'EPTIDE'})
-        self.assertEqual(get_right_semi_sequences('PEPTIDE', None, None, 2), {'EPTIDE', 'PTIDE'})
-        self.assertEqual(get_right_semi_sequences('PEPTIDE', 3, 5, 1), {'PTIDE'})
-        self.assertEqual(get_right_semi_sequences('PEPTIDE', 3, 5, 2), {'PTIDE', 'TIDE'})
+        self.assertEqual(set(get_right_semi_sequences('PEPTIDE', 3, None, None)), {'EPTIDE', 'PTIDE', 'TIDE', 'IDE'})
+        self.assertEqual(set(get_right_semi_sequences('PEPTIDE', None, 5, None)), {'PTIDE', 'TIDE', 'IDE', 'DE', 'E'})
+        self.assertEqual(set(get_right_semi_sequences('PEPTIDE', None, None, 1)), {'EPTIDE'})
+        self.assertEqual(set(get_right_semi_sequences('PEPTIDE', None, None, 2)), {'EPTIDE', 'PTIDE'})
+        self.assertEqual(set(get_right_semi_sequences('PEPTIDE', 3, 5, 1)), {'PTIDE'})
+        self.assertEqual(set(get_right_semi_sequences('PEPTIDE', 3, 5, 2)), {'PTIDE', 'TIDE'})
 
-        assert get_right_semi_sequences(sequence='PEPTIDE', min_len=None, max_len=None) == \
+        assert set(get_right_semi_sequences(sequence='PEPTIDE', min_len=None, max_len=None)) == \
                {'EPTIDE', 'PTIDE', 'TIDE', 'IDE', 'DE', 'E'}
-        assert get_right_semi_sequences(sequence='PEPTIDE', min_len=3, max_len=None) == \
+        assert set(get_right_semi_sequences(sequence='PEPTIDE', min_len=3, max_len=None)) == \
                {'EPTIDE', 'PTIDE', 'TIDE', 'IDE'}
-        assert get_right_semi_sequences(sequence='PEPTIDE', min_len=None, max_len=5) == \
+        assert set(get_right_semi_sequences(sequence='PEPTIDE', min_len=None, max_len=5)) == \
                {'PTIDE', 'TIDE', 'IDE', 'DE', 'E'}
-        assert get_right_semi_sequences(sequence='PEPTIDE', min_len=3, max_len=4) == \
+        assert set(get_right_semi_sequences(sequence='PEPTIDE', min_len=3, max_len=4)) == \
                {'TIDE', 'IDE'}
 
     def test_get_all_non_enzymatic_peptides(self):
-        self.assertEqual(get_non_enzymatic_sequences('PEPT'),
+        self.assertEqual(set(get_non_enzymatic_sequences('PEPT')),
                          {'P', 'E', 'P', 'T', 'PE', 'EP', 'PT', 'PEP', 'EPT', 'PEPT'})
-        self.assertEqual(get_non_enzymatic_sequences('PEPT', min_len=1, max_len=2),
+        self.assertEqual(set(get_non_enzymatic_sequences('PEPT', min_len=1, max_len=2)),
                          {'P', 'E', 'P', 'T', 'PE', 'EP', 'PT'})
-        self.assertEqual(get_non_enzymatic_sequences('PEPT', min_len=2, max_len=4),
+        self.assertEqual(set(get_non_enzymatic_sequences('PEPT', min_len=2, max_len=4)),
                          {'PE', 'EP', 'PT', 'PEP', 'EPT', 'PEPT'})
 
     def test_add_static_mod(self):

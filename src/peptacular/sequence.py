@@ -131,9 +131,9 @@ def get_left_semi_sequences(sequence: str, min_len: int = None, max_len: int = N
         max_len = len(sequence) - 1
 
     cnt = 0
-    sequences = set()
+    sequences = []
     for i in range(min_len, min(max_len, len(sequence) - 1) + 1)[::-1]:
-        sequences.add(sequence[0:i])
+        sequences.append(sequence[0:i])
         cnt += 1
 
         if max_semi_offset is not None and cnt >= max_semi_offset:
@@ -157,9 +157,9 @@ def get_right_semi_sequences(sequence: str, min_len: int = None, max_len: int = 
     end = min(max_len, len(sequence) - 1)
 
     cnt = 0
-    sequences = set()
+    sequences = []
     for i in range(min_len, end + 1)[::-1]:
-        sequences.add(sequence[-i:])
+        sequences.append(sequence[-i:])
         cnt += 1
 
         if max_semi_offset is not None and cnt >= max_semi_offset:
@@ -178,8 +178,8 @@ def get_semi_sequences(sequence: str, min_len: int = None, max_len: int = None, 
     {'a', 'ab', 'c', 'bc'}
     """
 
-    return get_left_semi_sequences(sequence, min_len, max_len, max_semi_offset).union(
-        get_right_semi_sequences(sequence, min_len, max_len, max_semi_offset))
+    return get_left_semi_sequences(sequence, min_len, max_len, max_semi_offset) + \
+        get_right_semi_sequences(sequence, min_len, max_len, max_semi_offset)
 
 
 def get_non_enzymatic_sequences(sequence: str, min_len: int = None, max_len: int = None):
@@ -198,11 +198,11 @@ def get_non_enzymatic_sequences(sequence: str, min_len: int = None, max_len: int
     if max_len is None:
         max_len = len(sequence)
 
-    substrings = set()
+    sequences = []
     for i in range(len(sequence)):
         for j in range(i + min_len, min(i + max_len + 1, len(sequence) + 1)):
-            substrings.add(sequence[i:j])
-    return substrings
+            sequences.append(sequence[i:j])
+    return sequences
 
 
 def add_static_mods(sequence: str, mod_map: Dict[str, Any]):
@@ -506,7 +506,6 @@ def shift_sequence_left(sequence: str, shift: int):
 
 
 def calculate_mass_array(sequence: str, monoisotopic: bool = True):
-
     if monoisotopic is True:
         aa_masses = MONO_ISOTOPIC_AA_MASSES
     else:
@@ -532,8 +531,8 @@ def calculate_mass_array(sequence: str, monoisotopic: bool = True):
     return mass_arr
 
 
-def create_ion_table(sequence: str, max_len: int = 50, ion_type: str = 'y', charge: int = 0, enzyme: str = 'non-specific'):
-
+def create_ion_table(sequence: str, max_len: int = 50, ion_type: str = 'y', charge: int = 0,
+                     enzyme: str = 'non-specific'):
     if ion_type == 'y':
         sequence = sequence[::-1]
 
@@ -637,10 +636,7 @@ def _digest_sequence(protein_sequence: str, enzyme_sites: List[int], missed_clea
     """
 
     if len(enzyme_sites) == 0:
-        if min_len <= len(protein_sequence) <= max_len:
-            return [protein_sequence]
-        else:
-            return []
+        return [protein_sequence], [(0, len(protein_sequence), 0)]
 
     peptide_spans = []
 
@@ -660,13 +656,13 @@ def _digest_sequence(protein_sequence: str, enzyme_sites: List[int], missed_clea
     peptides = []
     for span in peptide_spans:
         span_len = span[1] - span[0]
-        if min_len <= span_len <= max_len:
-            peptides.append(protein_sequence[span[0]:span[1]])
-    return peptides
+        # if min_len <= span_len <= max_len:
+        peptides.append(protein_sequence[span[0]:span[1]])
+    return peptides, peptide_spans
 
 
 def digest_sequence(sequence: str, enzyme_regexes: Union[List[str], str], missed_cleavages: int, min_len: int,
-                    max_len: int, semi_enzymatic: bool) -> List[str]:
+                    max_len: int, semi_enzymatic: bool, info: bool = False) -> List[str]:
     """
     A function that digests a given amino acid sequence based on the provided positive and negative regular expressions and
     the number of missed cleavages. It returns a list of tuples containing the digested_sequences and the number of missed
@@ -675,20 +671,36 @@ def digest_sequence(sequence: str, enzyme_regexes: Union[List[str], str], missed
 
     if isinstance(enzyme_regexes, str):
         enzyme_regexes = [enzyme_regexes]
-    digested_sequences = []
+    digested_sequences, mc_status, semi_status, start, stop = [], [], [], [], []
     for enzyme_regex in enzyme_regexes:
 
         if enzyme_regex == PROTEASES['non-specific']:
-            digested_sequences.extend(
-                [peptide for peptide in get_non_enzymatic_sequences(sequence, min_len, max_len)])
+            sequences = get_non_enzymatic_sequences(sequence, min_len, max_len)
+            mc_status = [0 for _ in range(len(sequences))]
+            semi_status = [0 for _ in range(len(sequences))]
+            digested_sequences.extend(sequences)
 
         else:
             cleavage_sites = identify_cleavage_sites(sequence, enzyme_regex)
-            sequences = _digest_sequence(sequence, cleavage_sites, missed_cleavages, min_len, max_len)
+            sequences, spans = _digest_sequence(sequence, cleavage_sites, missed_cleavages, min_len, max_len)
+            mc_status = [span[2] for span in spans]
             digested_sequences.extend(sequences)
+            semi_status.extend([0 for _ in range(len(sequences))])
 
             if semi_enzymatic is True:
-                for sequence in sequences:
-                    digested_sequences.extend(get_semi_sequences(sequence, min_len, max_len))
+                for sequence, mc in zip(sequences, mc_status):
+                    semi_sequences = get_semi_sequences(sequence, min_len, max_len)
+                    digested_sequences.extend(semi_sequences)
+                    semi_status.extend([1 for _ in range(len(semi_sequences))])
+                    mc_status.extend([mc for _ in range(len(semi_sequences))])
+
+    # filter based on min / max len
+    flags = [max_len >= len(sequence) >= min_len for sequence in digested_sequences]
+    digested_sequences = [sequence for sequence, flag in zip(digested_sequences, flags) if flag is True ]
+    mc_status = [mc for mc, flag in zip(mc_status, flags) if flag is True ]
+    semi_status = [semi for semi, flag in zip(semi_status, flags) if flag is True ]
+
+    if info is True:
+        return digested_sequences, mc_status, semi_status
 
     return digested_sequences
