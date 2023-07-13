@@ -116,7 +116,8 @@ def strip_modifications(sequence: str) -> str:
     return unmodified_sequence
 
 
-def get_left_semi_sequences(sequence: str, min_len: int = None, max_len: int = None, max_semi_offset: int = None):
+def get_left_semi_sequences(sequence: str, min_len: int = None, max_len: int = None, max_semi_offset: int = None,
+                            info: bool = False):
     """
     Returns a set of left substrings of string `sequence` that have lengths between `min_len` and `max_len`.
 
@@ -132,17 +133,23 @@ def get_left_semi_sequences(sequence: str, min_len: int = None, max_len: int = N
 
     cnt = 0
     sequences = []
+    offsets = []
     for i in range(min_len, min(max_len, len(sequence) - 1) + 1)[::-1]:
         sequences.append(sequence[0:i])
+        offsets.append(i)
         cnt += 1
 
         if max_semi_offset is not None and cnt >= max_semi_offset:
             break
 
+    if info is True:
+        return sequences, offsets
+
     return sequences
 
 
-def get_right_semi_sequences(sequence: str, min_len: int = None, max_len: int = None, max_semi_offset: int = None):
+def get_right_semi_sequences(sequence: str, min_len: int = None, max_len: int = None, max_semi_offset: int = None,
+                             info: bool = False):
     """
     Returns a set of right substrings of string `sequence` that have lengths between `min_len` and `max_len`.
 
@@ -158,12 +165,17 @@ def get_right_semi_sequences(sequence: str, min_len: int = None, max_len: int = 
 
     cnt = 0
     sequences = []
+    offsets = []
     for i in range(min_len, end + 1)[::-1]:
         sequences.append(sequence[-i:])
+        offsets.append(-i)
         cnt += 1
 
         if max_semi_offset is not None and cnt >= max_semi_offset:
             break
+
+    if info is True:
+        return sequences, offsets
 
     return sequences
 
@@ -630,7 +642,7 @@ def _get_spans(start_site: int, future_sites: List[int], missed_cleavages: int, 
 
 
 def _digest_sequence(protein_sequence: str, enzyme_sites: List[int], missed_cleaves: int, min_len: int,
-                     max_len: int) -> List[str]:
+                     max_len: int) -> Tuple[List[str], List[Tuple[int, int, int]]]:
     """
     Digests a protein sequence according to the enzyme regex string and number of missed cleavages.
     """
@@ -662,7 +674,7 @@ def _digest_sequence(protein_sequence: str, enzyme_sites: List[int], missed_clea
 
 
 def digest_sequence(sequence: str, enzyme_regexes: Union[List[str], str], missed_cleavages: int, min_len: int,
-                    max_len: int, semi_enzymatic: bool, info: bool = False) -> List[str]:
+                    max_len: int, semi_enzymatic: bool) -> List[str]:
     """
     A function that digests a given amino acid sequence based on the provided positive and negative regular expressions and
     the number of missed cleavages. It returns a list of tuples containing the digested_sequences and the number of missed
@@ -671,36 +683,25 @@ def digest_sequence(sequence: str, enzyme_regexes: Union[List[str], str], missed
 
     if isinstance(enzyme_regexes, str):
         enzyme_regexes = [enzyme_regexes]
-    digested_sequences, mc_status, semi_status, start, stop = [], [], [], [], []
+    digested_sequences = []
     for enzyme_regex in enzyme_regexes:
 
         if enzyme_regex == PROTEASES['non-specific']:
             sequences = get_non_enzymatic_sequences(sequence, min_len, max_len)
-            mc_status = [0 for _ in range(len(sequences))]
-            semi_status = [0 for _ in range(len(sequences))]
             digested_sequences.extend(sequences)
 
         else:
             cleavage_sites = identify_cleavage_sites(sequence, enzyme_regex)
             sequences, spans = _digest_sequence(sequence, cleavage_sites, missed_cleavages, min_len, max_len)
-            mc_status = [span[2] for span in spans]
             digested_sequences.extend(sequences)
-            semi_status.extend([0 for _ in range(len(sequences))])
 
             if semi_enzymatic is True:
-                for sequence, mc in zip(sequences, mc_status):
+                for sequence in sequences:
                     semi_sequences = get_semi_sequences(sequence, min_len, max_len)
                     digested_sequences.extend(semi_sequences)
-                    semi_status.extend([1 for _ in range(len(semi_sequences))])
-                    mc_status.extend([mc for _ in range(len(semi_sequences))])
 
     # filter based on min / max len
     flags = [max_len >= len(sequence) >= min_len for sequence in digested_sequences]
-    digested_sequences = [sequence for sequence, flag in zip(digested_sequences, flags) if flag is True ]
-    mc_status = [mc for mc, flag in zip(mc_status, flags) if flag is True ]
-    semi_status = [semi for semi, flag in zip(semi_status, flags) if flag is True ]
-
-    if info is True:
-        return digested_sequences, mc_status, semi_status
+    digested_sequences = [sequence for sequence, flag in zip(digested_sequences, flags) if flag is True]
 
     return digested_sequences
