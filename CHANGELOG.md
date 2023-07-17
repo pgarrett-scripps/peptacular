@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.0]
+
+### Added:
+- spans.py to handle generating peptide spans from cleavage site info
+- masses.py to handle generating peptide masses from sequences
+
+### Removed:
+- refseq module
+
 ## [0.0.6]
 
 ### Added:

@@ -16,7 +16,7 @@ def get_peptide_indexes_in_protein(protein: str, peptide: str) -> List[int]:
     return [i.start() for i in re.finditer(peptide, protein)]
 
 
-def calculate_protein_coverage(protein: str, peptides: List[int]) -> List[int]:
+def calculate_protein_coverage(protein: str, peptides: List[str]) -> List[int]:
     """
     Calculate the coverage of a protein sequence by a list of peptides.
 

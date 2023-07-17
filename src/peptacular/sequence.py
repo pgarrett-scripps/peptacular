@@ -1,14 +1,37 @@
 import re
 from copy import deepcopy
-from typing import Dict, List, Any, Tuple, Union
+from typing import Dict, List, Any, Set
 
-import numpy as np
 import regex as reg
 
-from .constants import PROTEASES, MONO_ISOTOPIC_ATOMIC_MASSES, \
-    MONO_ISOTOPIC_AA_MASSES, AVERAGE_AA_MASSES, AVERAGE_ATOMIC_MASSES
+from .constants import PROTEASES
+from .spans import span_to_sequence, build_spans, build_non_enzymatic_spans, build_left_semi_spans, \
+    build_right_semi_spans
 
-from .util import check_parentheses
+
+def _check_parentheses(text):
+    """
+    Check if parentheses in the given text are balanced or not.
+
+    The function uses a stack data structure to ensure each opening parenthesis '('
+    has a corresponding closing parenthesis ')' and vice versa.
+
+    Args:
+        text (str): The input string to check for balanced parentheses.
+
+    Returns:
+        bool: True if parentheses are balanced, False otherwise.
+    """
+    stack = []
+    for i, char in enumerate(text):
+        if char == '(':
+            stack.append(i)
+        elif char == ')':
+            if not stack:
+                return False
+            else:
+                stack.pop()
+    return len(stack) == 0
 
 
 def convert_ip2_mod_to_uniprot_mod(sequence: str, mod_dict: Dict[str, Any]):
@@ -61,7 +84,7 @@ def parse_modified_sequence(sequence: str) -> Dict[int, Any]:
     with the modification values indexed by the position of the modified amino acid.
     """
 
-    if check_parentheses(sequence) is False:
+    if _check_parentheses(sequence) is False:
         raise ValueError(f'Incorrect modification notation in peptide sequence : {sequence}!')
 
     matches = re.finditer(r'\(([^)]*)\)', sequence)
@@ -109,112 +132,76 @@ def strip_modifications(sequence: str) -> str:
     Removes any non-amino-acid characters from the given peptide sequence.
     """
 
-    if check_parentheses(sequence) is False:
+    if _check_parentheses(sequence) is False:
         raise ValueError(f'Incorrect modification notation in peptide sequence : {sequence}!')
 
     unmodified_sequence = re.sub(r'\([^)]*\)', '', sequence)
     return unmodified_sequence
 
 
-def get_left_semi_sequences(sequence: str, min_len: int = None, max_len: int = None, max_semi_offset: int = None,
-                            info: bool = False):
+def get_left_semi_sequences(sequence: str, min_len: int = 1, max_len: int = None) -> List[str]:
     """
     Returns a set of left substrings of string `sequence` that have lengths between `min_len` and `max_len`.
 
-    Example:
-    >>> get_left_semi_sequences("abc", 1, 2)
-    {'a', 'ab'}
+    Args:
+        sequence (str): The string to generate subsequences from.
+        min_len (int, optional): The minimum length of the subsequence. Defaults to 1.
+        max_len (int, optional): The maximum length of the subsequence. If not provided, it defaults to the length of the sequence minus one.
+
+    Returns:
+        set: A set of left subsequences of the input sequence.
     """
-
-    if min_len is None:
-        min_len = 1
-    if max_len is None:
-        max_len = len(sequence) - 1
-
-    cnt = 0
-    sequences = []
-    offsets = []
-    for i in range(min_len, min(max_len, len(sequence) - 1) + 1)[::-1]:
-        sequences.append(sequence[0:i])
-        offsets.append(i)
-        cnt += 1
-
-        if max_semi_offset is not None and cnt >= max_semi_offset:
-            break
-
-    if info is True:
-        return sequences, offsets
-
-    return sequences
+    spans = build_left_semi_spans((0, len(sequence), 0), min_len, max_len)
+    return [span_to_sequence(sequence, span) for span in spans]
 
 
-def get_right_semi_sequences(sequence: str, min_len: int = None, max_len: int = None, max_semi_offset: int = None,
-                             info: bool = False):
+def get_right_semi_sequences(sequence: str, min_len: int = 1, max_len: int = None) -> List[str]:
     """
     Returns a set of right substrings of string `sequence` that have lengths between `min_len` and `max_len`.
 
-    Example:
-    >>> get_right_semi_sequences("abc", 1, 2)
-    {'c', 'bc'}
+    Args:
+        sequence (str): The string to generate subsequences from.
+        min_len (int, optional): The minimum length of the subsequence. Defaults to 1.
+        max_len (int, optional): The maximum length of the subsequence. If not provided, it defaults to the length of the sequence minus one.
+
+    Returns:
+        set: A set of right subsequences of the input sequence.
     """
-    if min_len is None:
-        min_len = 1
-    if max_len is None:
-        max_len = len(sequence) - 1
-    end = min(max_len, len(sequence) - 1)
 
-    cnt = 0
-    sequences = []
-    offsets = []
-    for i in range(min_len, end + 1)[::-1]:
-        sequences.append(sequence[-i:])
-        offsets.append(-i)
-        cnt += 1
-
-        if max_semi_offset is not None and cnt >= max_semi_offset:
-            break
-
-    if info is True:
-        return sequences, offsets
-
-    return sequences
+    spans = build_right_semi_spans((0, len(sequence), 0), min_len, max_len)
+    return [span_to_sequence(sequence, span) for span in spans]
 
 
-def get_semi_sequences(sequence: str, min_len: int = None, max_len: int = None, max_semi_offset: int = None):
+def get_semi_sequences(sequence: str, min_len: int = None, max_len: int = None) -> List[str]:
     """
     Returns a set of all semi enzymatic amino acid sequences of string `sequence` that have lengths
     between `min_len` and `max_len`.
-
-    Example:
-    >>> get_semi_sequences("abc", 1, 2)
-    {'a', 'ab', 'c', 'bc'}
     """
 
-    return get_left_semi_sequences(sequence, min_len, max_len, max_semi_offset) + \
-        get_right_semi_sequences(sequence, min_len, max_len, max_semi_offset)
+    return get_left_semi_sequences(sequence, min_len, max_len) + (
+        get_right_semi_sequences(sequence, min_len, max_len))
 
 
-def get_non_enzymatic_sequences(sequence: str, min_len: int = None, max_len: int = None):
+def get_non_enzymatic_sequences(sequence: str, min_len: int = None, max_len: int = None) -> List[str]:
     """
     Returns a set of all non-enzymatic amino acid sequences of string `sequence` that have lengths
     between `min_len` and `max_len`.
-
-    Example:
-    >>> get_non_enzymatic_sequences("abc", 1, 2)
-    {'a', 'b', 'c', 'ab', 'bc'}
     """
 
-    if min_len is None:
-        min_len = 1
+    spans = build_non_enzymatic_spans((0, len(sequence), 0), min_len, max_len)
+    return [span_to_sequence(sequence, span) for span in spans]
 
-    if max_len is None:
-        max_len = len(sequence)
 
-    sequences = []
-    for i in range(len(sequence)):
-        for j in range(i + min_len, min(i + max_len + 1, len(sequence) + 1)):
-            sequences.append(sequence[i:j])
-    return sequences
+def get_enzymatic_sequences(sequence: str, enzyme_regex: str, missed_cleavages: int, semi: bool, min_len: int = None,
+                            max_len: int = None) -> List[str]:
+    """
+    Returns a set of all non-enzymatic amino acid sequences of string `sequence` that have lengths
+    between `min_len` and `max_len`.
+    """
+
+    cleavage_sites = identify_cleavage_sites(sequence, enzyme_regex)
+    spans = build_spans(len(sequence), cleavage_sites, missed_cleavages, min_len, max_len, semi)
+    return [span_to_sequence(sequence, span) for span in spans]
 
 
 def add_static_mods(sequence: str, mod_map: Dict[str, Any]):
@@ -259,6 +246,7 @@ def rec_mod_builder(mods: Dict[str, float], sequence: str, i: int, mod_dict: Dic
     if i == len(sequence):
         yield mod_dict
         return
+
     original_mod_dict = deepcopy(mod_dict)
     for aa, mass in mods.items():
 
@@ -289,109 +277,6 @@ def add_variable_mods(sequence: str, mod_map: Dict[str, float], max_mods: int) -
     stripped_sequence = strip_modifications(sequence)
     mods = rec_mod_builder(mod_map, stripped_sequence, 0, original_mods, max_mods + len(original_mods))
     return [create_modified_sequence(stripped_sequence, mod) for mod in mods]
-
-
-def calculate_mass(sequence: str, charge=0, ion_type: str = 'y', monoisotopic=True) -> float:
-    """
-    Calculate the mass of a peptide sequence.
-
-    Args:
-        sequence (str): Peptide sequence. The sequence may include modifications.
-        charge (int, optional): Charge of the peptide. Default is 0.
-        ion_type (str, optional): Ion type. Can be either 'b' or 'y'. Default is 'y'.
-
-    Returns:
-        float: The mass of the peptide sequence.
-    """
-
-    if monoisotopic is True:
-        atomic_masses = MONO_ISOTOPIC_ATOMIC_MASSES
-        aa_masses = MONO_ISOTOPIC_AA_MASSES
-    else:
-        atomic_masses = AVERAGE_ATOMIC_MASSES
-        aa_masses = AVERAGE_AA_MASSES
-
-    mods = parse_modified_sequence(sequence)
-    stripped_sequence = strip_modifications(sequence)
-
-    mass = sum(aa_masses[aa] for aa in stripped_sequence)
-    mass += sum(float(value) for value in mods.values())
-    mass += (charge * atomic_masses['PROTON'])
-
-    if ion_type == 'a':
-        mass -= (atomic_masses['CARBON'] + atomic_masses['OXYGEN'])
-    elif ion_type == 'b':
-        pass
-    elif ion_type == 'c':
-        mass += (atomic_masses['HYDROGEN'] * 3 + atomic_masses['NITROGEN'])
-    elif ion_type == 'x':
-        mass += (atomic_masses['CARBON'] + atomic_masses['OXYGEN'] * 2)
-    elif ion_type == 'y':
-        mass += (atomic_masses['HYDROGEN'] * 2 + atomic_masses['OXYGEN'])
-    elif ion_type == 'z':
-        mass += (atomic_masses['OXYGEN'] - atomic_masses['NITROGEN'] - atomic_masses['HYDROGEN'])
-
-    return mass
-
-
-def calculate_mz(sequence: str, charge=0, ion_type: str = 'y', monoisotopic=True) -> float:
-    """
-    Calculate the m/z (mass-to-charge ratio) of a peptide sequence.
-
-    Args:
-        sequence (str): Peptide sequence. The sequence may include modifications.
-        charge (int, optional): Charge of the peptide. Default is 0.
-        ion_type (str, optional): Ion type. Can be either 'b' or 'y'. Default is 'y'.
-
-    Returns:
-        float: The m/z of the peptide sequence.
-    """
-
-    mass = calculate_mass(sequence, charge, ion_type, monoisotopic)
-    if charge == 0:
-        return mass
-    return mass / charge
-
-
-def fragment_sequence(sequence: str, types=('b', 'y'), max_charge=1, monoisotopic=True):
-    """
-    Generates fragments of a given amino acid sequence based on the specified ion types and maximum charge.
-    This function is a generator that yields the m/z (mass-to-charge ratio) of each fragment.
-
-    Args:
-        sequence (str): The amino acid sequence to be fragmented.
-        types (tuple, optional): A tuple containing the types of ions to be considered in the fragmentation.
-            Each ion type is represented by a single character. Defaults to ('b', 'y').
-        max_charge (int, optional): The maximum charge to consider for the fragments. Defaults to 1.
-
-    Yields:
-        float: The calculated m/z for the fragment.
-    """
-    if any([ion in 'xyz' for ion in types]):
-        for pep in sequence_generator(sequence, forward=True):
-            for ion_type in types:
-                if ion_type not in 'xyz':
-                    continue
-                for charge in range(1, max_charge + 1):
-                    yield calculate_mz(pep, charge=charge, ion_type=ion_type, monoisotopic=monoisotopic)
-
-    if any([ion in 'abc' for ion in types]):
-        for pep in sequence_generator(sequence, forward=False):
-            for ion_type in types:
-                if ion_type not in 'abc':
-                    continue
-                for charge in range(1, max_charge + 1):
-                    yield calculate_mz(pep, charge=charge, ion_type=ion_type)
-
-
-def fragment_series(sequence: str, ion_type='y', charge=1, monoisotopic=True):
-    if ion_type in 'xyz':
-        for pep in sequence_generator(sequence, forward=True):
-            yield calculate_mz(pep, charge=charge, ion_type=ion_type, monoisotopic=monoisotopic)
-
-    if ion_type in 'abc':
-        for pep in sequence_generator(sequence, forward=False):
-            yield calculate_mz(pep, charge=charge, ion_type=ion_type, monoisotopic=monoisotopic)
 
 
 def sequence_generator(sequence: str, forward: bool):
@@ -517,96 +402,6 @@ def shift_sequence_left(sequence: str, shift: int):
     return create_modified_sequence(shifted_stripped_sequence, shifted_sequence_mods)
 
 
-def calculate_mass_array(sequence: str, monoisotopic: bool = True):
-    if monoisotopic is True:
-        aa_masses = MONO_ISOTOPIC_AA_MASSES
-    else:
-        aa_masses = AVERAGE_AA_MASSES
-
-    sequence_mods = parse_modified_sequence(sequence)
-    stripped_sequence = strip_modifications(sequence)
-
-    mass_arr = np.zeros(len(stripped_sequence), dtype=np.float32)
-    for i, aa in enumerate(stripped_sequence):
-
-        mod_mass = 0
-        if i in sequence_mods:
-            mod_mass += float(sequence_mods[i])
-
-        if i == 0 and -1 in sequence_mods:
-            mod_mass += float(sequence_mods[-1])
-
-        mass_arr[i] = np.float32(aa_masses[aa] + mod_mass)
-
-    mass_arr = np.array(mass_arr, dtype=np.float32)
-
-    return mass_arr
-
-
-def create_ion_table(sequence: str, max_len: int = 50, ion_type: str = 'y', charge: int = 0,
-                     enzyme: str = 'non-specific'):
-    if ion_type == 'y':
-        sequence = sequence[::-1]
-
-    sequence_cumulative_sum = np.cumsum(calculate_mass_array(sequence))
-    len_sequence = len(sequence)
-
-    # Add padding zeros to make our life easier when computing window sums
-    sequence_cumulative_sum = np.pad(sequence_cumulative_sum, (1, 0), 'constant')
-
-    # Window start and end indices
-    window_start = np.arange(len_sequence)[:, None]
-    window_end = window_start + np.arange(1, max_len + 1)
-
-    # Limit window_end indices to array bounds
-    window_end = np.minimum(window_end, len_sequence)
-    # Compute window sums
-    ion_table = sequence_cumulative_sum[window_end] - sequence_cumulative_sum[window_start]
-
-    # Add (HYDROGEN * 2 + OXYGEN) to the computed mass, only where window_end > window_start
-    if ion_type == 'y':
-        ion_table[window_end > window_start] += (MONO_ISOTOPIC_ATOMIC_MASSES['HYDROGEN'] * 2 +
-                                                 MONO_ISOTOPIC_ATOMIC_MASSES['OXYGEN']) + \
-                                                (MONO_ISOTOPIC_ATOMIC_MASSES['PROTON'] * charge)
-    elif ion_type == 'b':
-        ion_table[window_end > window_start] += (MONO_ISOTOPIC_ATOMIC_MASSES['PROTON'] * charge)
-    else:
-        raise ValueError("Invalid ion type. Must be either 'y' or 'b'")
-
-    if charge != 0:
-        ion_table = ion_table / charge
-
-    # set invalid indexes to 0
-    for i, j in enumerate(range(len(ion_table) - 1, len(ion_table) - min(max_len, len_sequence) - 1, -1)):
-        ion_table[j, i + 1:] = 0
-
-    if len_sequence < max_len:
-        ion_table[:, len_sequence:] = 0
-
-    if enzyme != 'non-specific':
-        filter_ion_table(ion_table, sequence, enzyme)
-
-    return ion_table
-
-
-def filter_ion_table(ion_table: np.ndarray, sequence: str, enzyme: str):
-    enzyme_sites = set(identify_cleavage_sites(sequence, enzyme))
-
-    for i in range(len(ion_table)):
-        if i not in enzyme_sites:
-            ion_table[i, :] = 0
-
-
-def get_sorted_ion_table_indexes(matrix: np.ndarray) -> np.ndarray:
-    # Get 2D indexes without flattening
-    # Apply mass filters if provided
-    indexes_2d = np.argwhere(matrix)
-
-    # Sort by values at these indexes
-    sorted_2d_indexes = indexes_2d[np.argsort(matrix[indexes_2d[:, 0], indexes_2d[:, 1]], kind='mergesort')]
-    return sorted_2d_indexes
-
-
 def identify_cleavage_sites(protein_sequence: str, enzyme_regex: str):
     """
     Identifies cleavage sites in a protein sequence, based on enzyme_regex string. Since cleavages sites can only occur
@@ -623,85 +418,22 @@ def identify_cleavage_sites(protein_sequence: str, enzyme_regex: str):
     return [site[0] + 1 for site in enzyme_sites]
 
 
-def _get_spans(start_site: int, future_sites: List[int], missed_cleavages: int, last_sequence_index: int) -> \
-        List[Tuple[int, int, int]]:
-    """
-    The function computes the spans by taking the start_site and the first missed_cleavages number of elements
-    of future_sites and creating a tuple of start and end indices. If there are not enough elements in next_sites to
-    fill the missed_cleavages, the end index of the tuple is set to the last index of the sequence, last_sequence_index.
-    """
-
-    spans = []
-    for i, next_site in enumerate(future_sites[:missed_cleavages + 1]):
-        spans.append((start_site, next_site, i))
-
-    if len(spans) != missed_cleavages + 1:
-        spans.append((start_site, last_sequence_index, len(spans)))
-
-    return spans
-
-
-def _digest_sequence(protein_sequence: str, enzyme_sites: List[int], missed_cleaves: int, min_len: int,
-                     max_len: int) -> Tuple[List[str], List[Tuple[int, int, int]]]:
-    """
-    Digests a protein sequence according to the enzyme regex string and number of missed cleavages.
-    """
-
-    if len(enzyme_sites) == 0:
-        return [protein_sequence], [(0, len(protein_sequence), 0)]
-
-    peptide_spans = []
-
-    cur_site = 0
-    curr_enzyme_index = -1
-    while True:
-        future_start_sites = enzyme_sites[curr_enzyme_index + 1:]
-        spans = _get_spans(cur_site, future_start_sites, missed_cleaves, len(protein_sequence))
-        peptide_spans.extend(spans)
-        curr_enzyme_index += 1
-
-        if curr_enzyme_index >= len(enzyme_sites):
-            break
-
-        cur_site = enzyme_sites[curr_enzyme_index]
-
-    peptides = []
-    for span in peptide_spans:
-        span_len = span[1] - span[0]
-        # if min_len <= span_len <= max_len:
-        peptides.append(protein_sequence[span[0]:span[1]])
-    return peptides, peptide_spans
-
-
-def digest_sequence(sequence: str, enzyme_regexes: Union[List[str], str], missed_cleavages: int, min_len: int,
-                    max_len: int, semi_enzymatic: bool) -> List[str]:
+def digest_sequence(sequence: str, enzyme_regex: str, missed_cleavages: int, min_len: int,
+                    max_len: int, semi: bool) -> List[str]:
     """
     A function that digests a given amino acid sequence based on the provided positive and negative regular expressions and
     the number of missed cleavages. It returns a list of tuples containing the digested_sequences and the number of missed
     cleavages. The returned digested_sequences will be filtered based on the provided minimum and maximum length.
     """
 
-    if isinstance(enzyme_regexes, str):
-        enzyme_regexes = [enzyme_regexes]
     digested_sequences = []
-    for enzyme_regex in enzyme_regexes:
 
-        if enzyme_regex == PROTEASES['non-specific']:
-            sequences = get_non_enzymatic_sequences(sequence, min_len, max_len)
-            digested_sequences.extend(sequences)
+    if enzyme_regex == PROTEASES['non-specific'] or enzyme_regex == 'non-specific':
+        sequences = get_non_enzymatic_sequences(sequence, min_len, max_len)
+        digested_sequences.extend(sequences)
 
-        else:
-            cleavage_sites = identify_cleavage_sites(sequence, enzyme_regex)
-            sequences, spans = _digest_sequence(sequence, cleavage_sites, missed_cleavages, min_len, max_len)
-            digested_sequences.extend(sequences)
-
-            if semi_enzymatic is True:
-                for sequence in sequences:
-                    semi_sequences = get_semi_sequences(sequence, min_len, max_len)
-                    digested_sequences.extend(semi_sequences)
-
-    # filter based on min / max len
-    flags = [max_len >= len(sequence) >= min_len for sequence in digested_sequences]
-    digested_sequences = [sequence for sequence, flag in zip(digested_sequences, flags) if flag is True]
+    else:
+        peptides = get_enzymatic_sequences(sequence, enzyme_regex, missed_cleavages, semi, min_len, max_len)
+        digested_sequences.extend(peptides)
 
     return digested_sequences

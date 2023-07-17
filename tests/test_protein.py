@@ -20,62 +20,63 @@ class TestProtein(unittest.TestCase):
 
     def test_digest_protein(self):
         peptides = set(digest_sequence(sequence='TIDERTIDEKTIDE',
-                               enzyme_regexes=constants.PROTEASES['trypsin'],
-                               missed_cleavages=2,
-                               min_len=0,
-                               max_len=100,
-                               semi_enzymatic=False))
+                                       enzyme_regex=constants.PROTEASES['trypsin'],
+                                       missed_cleavages=2,
+                                       min_len=0,
+                                       max_len=100,
+                                       semi=False))
+
         self.assertEqual(peptides,
                          {'TIDER', 'TIDERTIDEK', 'TIDERTIDEKTIDE', 'TIDEK', 'TIDEKTIDE','TIDE'})
 
         peptides = set(digest_sequence(sequence='TIDERTIDEKTIDE',
-                               enzyme_regexes=constants.PROTEASES['trypsin'],
-                               missed_cleavages=1,
-                               min_len=0,
-                               max_len=100,
-                               semi_enzymatic=False))
+                                       enzyme_regex=constants.PROTEASES['trypsin'],
+                                       missed_cleavages=1,
+                                       min_len=0,
+                                       max_len=100,
+                                       semi=False))
         self.assertEqual(peptides, {'TIDER', 'TIDERTIDEK', 'TIDEK', 'TIDEKTIDE', 'TIDE'})
 
         peptides = set(digest_sequence(sequence='KTIDERTIDEKTIDE',
-                               enzyme_regexes=constants.PROTEASES['trypsin'],
-                               missed_cleavages=1,
-                               min_len=0,
-                               max_len=100,
-                               semi_enzymatic=False))
+                                       enzyme_regex=constants.PROTEASES['trypsin'],
+                                       missed_cleavages=1,
+                                       min_len=0,
+                                       max_len=100,
+                                       semi=False))
         self.assertEqual(peptides,
                          {'K', 'KTIDER', 'TIDER', 'TIDERTIDEK', 'TIDEK', 'TIDEKTIDE', 'TIDE'})
 
         peptides = set(digest_sequence(sequence='TIDERTIDEKTIDEK',
-                               enzyme_regexes=constants.PROTEASES['trypsin'],
-                               missed_cleavages=1,
-                               min_len=0,
-                               max_len=100,
-                               semi_enzymatic=False))
+                                       enzyme_regex=constants.PROTEASES['trypsin'],
+                                       missed_cleavages=1,
+                                       min_len=0,
+                                       max_len=100,
+                                       semi=False))
         self.assertEqual(peptides, {'TIDER', 'TIDERTIDEK', 'TIDEK', 'TIDEKTIDEK', 'TIDEK'})
 
         peptides = set(digest_sequence(sequence='TIDERTIDEKKTIDE',
-                               enzyme_regexes=constants.PROTEASES['trypsin'],
-                               missed_cleavages=1,
-                               min_len=0,
-                               max_len=100,
-                               semi_enzymatic=False))
+                                       enzyme_regex=constants.PROTEASES['trypsin'],
+                                       missed_cleavages=1,
+                                       min_len=0,
+                                       max_len=100,
+                                       semi=False))
         self.assertEqual(peptides,
                          {'TIDER', 'TIDERTIDEK', 'TIDEK', 'TIDEKK', 'K', 'KTIDE', 'TIDE'})
 
         peptides = set(digest_sequence(sequence='TIDERTIDEKTIDE',
-                                       enzyme_regexes=constants.PROTEASES['trypsin'],
+                                       enzyme_regex=constants.PROTEASES['trypsin'],
                                        missed_cleavages=0,
                                        min_len=0,
                                        max_len=100,
-                                       semi_enzymatic=False))
+                                       semi=False))
         self.assertEqual(peptides, {'TIDER', 'TIDEK', 'TIDE'})
 
         peptides = set(digest_sequence(sequence='TIDERTIDEKTIDE',
-                               enzyme_regexes=constants.PROTEASES['trypsin'],
-                               missed_cleavages=10,
-                               min_len=0,
-                               max_len=100,
-                               semi_enzymatic=False))
+                                       enzyme_regex=constants.PROTEASES['trypsin'],
+                                       missed_cleavages=10,
+                                       min_len=0,
+                                       max_len=100,
+                                       semi=False))
         self.assertEqual(peptides,
                          {'TIDER', 'TIDERTIDEK', 'TIDERTIDEKTIDE', 'TIDEK', 'TIDEKTIDE', 'TIDE'})
 
