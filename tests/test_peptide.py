@@ -1,5 +1,5 @@
 from peptacular.sequence import parse_modified_sequence, create_modified_sequence, strip_modifications, \
-    get_semi_sequences, get_non_enzymatic_sequences, convert_to_ms2_pip_style, convert_ip2_mod_to_uniprot_mod, \
+    get_semi_sequences, get_non_enzymatic_sequences, convert_to_ms2_pip_style, \
     get_left_semi_sequences, get_right_semi_sequences, add_static_mods, add_variable_mods, sequence_generator, \
     _sequence_generator_back, _sequence_generator_front
 
@@ -59,13 +59,6 @@ class TestPeptide(unittest.TestCase):
         peptide_sequence = "A(2)CDEFG("
         with self.assertRaises(ValueError):
             convert_to_ms2_pip_style(peptide_sequence)
-
-    def test_convert_ip2_mod_to_uniprot_mod(self):
-        # Test the case where there are multiple modifications in the peptide sequence
-        peptide_sequence = "A(2)C(2)DE(2)FG"
-        mod_map = {'2': 'Acetyl'}
-        expected_output = "A(Acetyl)C(Acetyl)DE(Acetyl)FG"
-        self.assertEqual(convert_ip2_mod_to_uniprot_mod(peptide_sequence, mod_map), expected_output)
 
     def test_create_modified_peptide(self):
         # Test the case where there are no modifications in the peptide sequence

@@ -1,5 +1,5 @@
 from functools import wraps
-from typing import Tuple, List, Any, Optional
+from typing import Tuple, List, Optional
 from itertools import groupby
 
 
@@ -10,7 +10,7 @@ def span_processing(func):
     """
 
     @wraps(func)
-    def wrapper(span: Tuple[int, int, Any], min_len: Optional[int] = None, max_len: Optional[int] = None):
+    def wrapper(span: Tuple[int, int, int], min_len: Optional[int] = None, max_len: Optional[int] = None):
         assert isinstance(span, Tuple) and len(span) == 3, 'span should be a tuple of length 3.'
         assert all(isinstance(arg, (int, type(None))) for arg in
                    (min_len, max_len)), 'min_len and max_len should be None or an integer.'
@@ -26,9 +26,13 @@ def span_processing(func):
     return wrapper
 
 
-def _validate_span(span: Tuple[int, int, Any]) -> None:
+def _validate_span(span: Tuple[int, int, int]) -> None:
     """
     This function checks if a given span is valid.
+
+    Args:
+        span (Tuple[int, int, int]): A tuple representing the span, structured as (start, end, value).
+
     Raises:
         ValueError: If the span is not valid.
 
@@ -43,7 +47,7 @@ def _validate_span(span: Tuple[int, int, Any]) -> None:
 
 
 @span_processing
-def build_non_enzymatic_spans(span: Tuple[int, int, Any], min_len: int, max_len: int) -> List[Tuple[int, int, Any]]:
+def build_non_enzymatic_spans(span: Tuple[int, int, int], min_len: int, max_len: int) -> List[Tuple[int, int, int]]:
     """
     This function generates and returns all possible sub-spans of the given span. These sub-spans have lengths ranging
     from `min_len` to `max_len`. The sub-spans are "non-enzymatic", meaning they are direct subsets of the given span
@@ -63,7 +67,7 @@ def build_non_enzymatic_spans(span: Tuple[int, int, Any], min_len: int, max_len:
 
 
 @span_processing
-def build_left_semi_spans(span: Tuple[int, int, Any], min_len: int, max_len: int) -> List[Tuple[int, int, Any]]:
+def build_left_semi_spans(span: Tuple[int, int, int], min_len: int, max_len: int) -> List[Tuple[int, int, int]]:
     """
     This function generates and returns all possible sub-spans of the given span starting from the left.
     These sub-spans have lengths ranging from `min_len` to `max_len`.
@@ -87,7 +91,7 @@ def build_left_semi_spans(span: Tuple[int, int, Any], min_len: int, max_len: int
 
 
 @span_processing
-def build_right_semi_spans(span: Tuple[int, int, Any], min_len: int, max_len: int) -> List[Tuple[int, int, Any]]:
+def build_right_semi_spans(span: Tuple[int, int, int], min_len: int, max_len: int) -> List[Tuple[int, int, int]]:
     """
     This function generates and returns all possible sub-spans of the given span starting from the right.
     These sub-spans have lengths ranging from `min_len` to `max_len`.
@@ -111,7 +115,7 @@ def build_right_semi_spans(span: Tuple[int, int, Any], min_len: int, max_len: in
     return [(i, end, value) for i in range(new_start, end + 1) if end - i >= min_len]
 
 
-def span_to_sequence(sequence: str, span: Tuple[int, int, Any]) -> str:
+def span_to_sequence(sequence: str, span: Tuple[int, int, int]) -> str:
     """
     This function takes a sequence and a span as input, then returns the subsequence of the input sequence
     that corresponds to the provided span.

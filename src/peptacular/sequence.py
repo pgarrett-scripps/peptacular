@@ -1,6 +1,6 @@
 import re
 from copy import deepcopy
-from typing import Dict, List, Any, Set
+from typing import Dict, List, Any
 
 import regex as reg
 
@@ -9,7 +9,7 @@ from .spans import span_to_sequence, build_spans, build_non_enzymatic_spans, bui
     build_right_semi_spans
 
 
-def _check_parentheses(text):
+def _are_parentheses_balanced(text):
     """
     Check if parentheses in the given text are balanced or not.
 
@@ -34,79 +34,106 @@ def _check_parentheses(text):
     return len(stack) == 0
 
 
-def convert_ip2_mod_to_uniprot_mod(sequence: str, mod_dict: Dict[str, Any]):
-    """
-    Convert a peptide sequence with IP2-style modifications to UniProt-style modifications.
-
-    This function takes a peptide sequence in string format and a dictionary of IP2-style
-    modifications and their corresponding UniProt-style modifications, and returns a
-    modified peptide sequence with the IP2-style modifications replaced with their
-    corresponding UniProt-style modifications.
-    """
-
-    for ip2_mod, uniprot_mod in mod_dict.items():
-        ip2_mod = f'({ip2_mod})'
-        uniprot_mod = f'({uniprot_mod})'
-        sequence = sequence.replace(ip2_mod, uniprot_mod)
-
-    return sequence
-
-
 def convert_to_ms2_pip_style(sequence: str) -> str:
     """
-    Convert a peptide sequence to MS2PIP-style format.
+    Converts a peptide sequence to the format used by MS2PIP prediction software.
 
-    This function takes a peptide sequence in string format and converts it to a modified
-    format that is used by the MS2PIP prediction software. The modified format consists of
-    a series of location and modification pairs, separated by a pipe symbol ('|').
+    This function parses a peptide sequence and transforms it into a string representation
+    where each modification's location is paired with the type of modification, separated
+    by a pipe ('|') symbol.
+
+    Args:
+        sequence (str): The peptide sequence, potentially including modifications.
+
+    Returns:
+        str: The sequence transformed into MS2PIP format.
 
     Example:
-    >>> convert_to_ms2_pip_style('PEPTIDEK')
-    '2|Phospho|6|Lysine'
+        >>> convert_to_ms2_pip_style('PEP(Phospho)TIDE(Phospho)K')
+        '2|Phospho|6|Phospho'
     """
 
-    mod_dict = parse_modified_sequence(sequence)
-    locs, mods = [], []
-    for loc in mod_dict:
-        mod = mod_dict[loc]
-        ms2_pip_style_loc = loc + 1
-        if ms2_pip_style_loc == len(strip_modifications(sequence)):
-            ms2_pip_style_loc = -1
-        locs.append(ms2_pip_style_loc)
-        mods.append(mod)
+    # Parse modifications from the sequence
+    modification_dict = parse_modified_sequence(sequence)
 
-    return '|'.join([f'{loc}|{mod}' for loc, mod in zip(locs, mods)])
+    ms2_pip_pairs = []
+    for location, modification in modification_dict.items():
+        # Adjust location index for MS2PIP
+        ms2_pip_location = location + 1
+        if ms2_pip_location == len(strip_modifications(sequence)):
+            ms2_pip_location = -1
+
+        # Append the new location and modification pair
+        ms2_pip_pairs.append(f'{ms2_pip_location}|{modification}')
+
+    # Combine pairs into a single string, separated by '|'
+    return '|'.join(ms2_pip_pairs)
 
 
-def parse_modified_sequence(sequence: str) -> Dict[int, Any]:
+def parse_modified_sequence(sequence: str) -> Dict[int, str]:
     """
-    This function reads a peptide sequence with modifications and returns a dictionary
-    with the modification values indexed by the position of the modified amino acid.
+    Parses a peptide sequence with modifications and returns a dictionary where keys
+    represent the position of the modified amino acid and values are the respective modifications.
+
+    Args:
+        sequence (str): The peptide sequence, potentially including modifications.
+
+    Returns:
+        Dict[int, str]: A dictionary with the modification values indexed by the position
+                        of the modified amino acid.
+
+    Raises:
+        ValueError: If the sequence contains unmatched parentheses indicating incorrect
+                    modification notation.
+
+    Example:
+        >>> parse_modified_sequence('PEP(Phospho)TIDEK')
+        {3: 'Phospho'}
     """
 
-    if _check_parentheses(sequence) is False:
+    # Check parentheses balance
+    if not _are_parentheses_balanced(sequence):
         raise ValueError(f'Incorrect modification notation in peptide sequence : {sequence}!')
 
-    matches = re.finditer(r'\(([^)]*)\)', sequence)
+    mod_pattern = re.compile(r'\(([^)]*)\)')
+    matches = mod_pattern.finditer(sequence)
 
     modifications = {}
     mod_offset = 0
 
-    # Loop through the substrings
     for match in matches:
-        modifications[match.start() - mod_offset - 1] = match.group()[1:-1]
-        mod_offset += match.end() - match.start()
+        modification_position = match.start() - mod_offset - 1
+        modification_value = match.group(1)
+        modifications[modification_position] = modification_value
+
+        # Compute offset for the next modification
+        mod_offset += len(match.group())
+
     return modifications
 
 
 def create_modified_sequence(sequence: str, modifications: Dict[int, Any]) -> str:
     """
-    Creates a modified amino acid sequence from an unmodified amino acid sequence and a dictionary of modifications.
+    Generates a peptide sequence with modifications based on an unmodified sequence and a dictionary of modifications.
 
-    The modifications are specified as a dictionary where the keys are the indices of the modified amino acids
-    in the peptide sequence, and the values are the modifications to apply at those indices. The modifications are
-    added to the peptide sequence in descending order of index, so that the indices remain valid after each
-    modification is applied.
+    The modifications are provided as a dictionary where keys correspond to the indices of the amino acids
+    in the sequence to be modified, and values are the modifications to be applied. Modifications are inserted
+    into the sequence in descending order of their indices to ensure their validity after each modification.
+
+    Args:
+        sequence (str): Unmodified peptide sequence.
+        modifications (Dict[int, str]): Dictionary with indices of the modified amino acids and corresponding
+                                        modifications.
+
+    Returns:
+        str: The peptide sequence with the specified modifications.
+
+    Raises:
+        ValueError: If an index in modifications is invalid for the sequence.
+
+    Example:
+        >>> create_modified_sequence('PEPTIDEK', {3: 5.0})
+        'PEP(5.0)TIDEK'
     """
 
     modified_sequence = []
@@ -129,10 +156,19 @@ def create_modified_sequence(sequence: str, modifications: Dict[int, Any]) -> st
 
 def strip_modifications(sequence: str) -> str:
     """
-    Removes any non-amino-acid characters from the given peptide sequence.
-    """
+    Remove any non-amino-acid characters from the given peptide sequence. This function specifically removes
+    the modifications which are generally annotated within parentheses.
 
-    if _check_parentheses(sequence) is False:
+    Args:
+        sequence (str): The peptide sequence to be processed.
+
+    Raises:
+        ValueError: If the parentheses in the given sequence are unbalanced.
+
+    Returns:
+        str: The peptide sequence without any modification annotations.
+    """
+    if _are_parentheses_balanced(sequence) is False:
         raise ValueError(f'Incorrect modification notation in peptide sequence : {sequence}!')
 
     unmodified_sequence = re.sub(r'\([^)]*\)', '', sequence)
@@ -146,10 +182,11 @@ def get_left_semi_sequences(sequence: str, min_len: int = 1, max_len: int = None
     Args:
         sequence (str): The string to generate subsequences from.
         min_len (int, optional): The minimum length of the subsequence. Defaults to 1.
-        max_len (int, optional): The maximum length of the subsequence. If not provided, it defaults to the length of the sequence minus one.
+        max_len (int, optional): The maximum length of the subsequence. If not provided, it defaults to the length of
+                                 the sequence minus one.
 
     Returns:
-        set: A set of left subsequences of the input sequence.
+        set: A list of left subsequences of the input sequence.
     """
     spans = build_left_semi_spans((0, len(sequence), 0), min_len, max_len)
     return [span_to_sequence(sequence, span) for span in spans]
@@ -162,30 +199,46 @@ def get_right_semi_sequences(sequence: str, min_len: int = 1, max_len: int = Non
     Args:
         sequence (str): The string to generate subsequences from.
         min_len (int, optional): The minimum length of the subsequence. Defaults to 1.
-        max_len (int, optional): The maximum length of the subsequence. If not provided, it defaults to the length of the sequence minus one.
+        max_len (int, optional): The maximum length of the subsequence. If not provided, it defaults to the length of
+                                 the sequence minus one.
 
     Returns:
-        set: A set of right subsequences of the input sequence.
+        set: A list of right subsequences of the input sequence.
     """
 
     spans = build_right_semi_spans((0, len(sequence), 0), min_len, max_len)
     return [span_to_sequence(sequence, span) for span in spans]
 
 
+from typing import List
+
 def get_semi_sequences(sequence: str, min_len: int = None, max_len: int = None) -> List[str]:
     """
-    Returns a set of all semi enzymatic amino acid sequences of string `sequence` that have lengths
-    between `min_len` and `max_len`.
+    Generate a list of all semi-enzymatic amino acid sequences of a given string sequence.
+
+    Args:
+        sequence (str): A string representing the protein sequence.
+        min_len (int, optional): The minimum length of the semi-enzymatic sequence. Default is None.
+        max_len (int, optional): The maximum length of the semi-enzymatic sequence. Default is None.
+
+    Returns:
+        List[str]: A list of semi-enzymatic sequences within the defined length bounds.
     """
 
-    return get_left_semi_sequences(sequence, min_len, max_len) + (
-        get_right_semi_sequences(sequence, min_len, max_len))
+    return get_left_semi_sequences(sequence, min_len, max_len) + get_right_semi_sequences(sequence, min_len, max_len)
 
 
 def get_non_enzymatic_sequences(sequence: str, min_len: int = None, max_len: int = None) -> List[str]:
     """
-    Returns a set of all non-enzymatic amino acid sequences of string `sequence` that have lengths
-    between `min_len` and `max_len`.
+    Generate a list of all non-enzymatic amino acid sequences of a given string sequence.
+
+    Args:
+        sequence (str): A string representing the protein sequence.
+        min_len (int, optional): The minimum length of the non-enzymatic sequence. Default is None.
+        max_len (int, optional): The maximum length of the non-enzymatic sequence. Default is None.
+
+    Returns:
+        List[str]: A list of non-enzymatic sequences within the defined length bounds.
     """
 
     spans = build_non_enzymatic_spans((0, len(sequence), 0), min_len, max_len)
@@ -195,8 +248,18 @@ def get_non_enzymatic_sequences(sequence: str, min_len: int = None, max_len: int
 def get_enzymatic_sequences(sequence: str, enzyme_regex: str, missed_cleavages: int, semi: bool, min_len: int = None,
                             max_len: int = None) -> List[str]:
     """
-    Returns a set of all non-enzymatic amino acid sequences of string `sequence` that have lengths
-    between `min_len` and `max_len`.
+    Generate a list of all enzymatic amino acid sequences of a given string sequence based on provided enzyme_regex.
+
+    Args:
+        sequence (str): A string representing the protein sequence.
+        enzyme_regex (str): The enzyme regular expression for identifying cleavage sites.
+        missed_cleavages (int): The maximum number of missed cleavages.
+        semi (bool): Whether the sequence includes semi enzymatic peptides.
+        min_len (int, optional): The minimum length of the enzymatic sequence. Default is None.
+        max_len (int, optional): The maximum length of the enzymatic sequence. Default is None.
+
+    Returns:
+        List[str]: A list of enzymatic sequences within the defined length bounds and satisfying the enzyme cleavage rules.
     """
 
     cleavage_sites = identify_cleavage_sites(sequence, enzyme_regex)
@@ -404,9 +467,17 @@ def shift_sequence_left(sequence: str, shift: int):
 
 def identify_cleavage_sites(protein_sequence: str, enzyme_regex: str):
     """
-    Identifies cleavage sites in a protein sequence, based on enzyme_regex string. Since cleavages sites can only occur
-    before or after a residues, cleavage_offset provides a way for the user to specify where the cleavage should occur
-    in the matching regex.
+    Identifies cleavage sites in a protein sequence, based on enzyme_regex pattern.
+    If enzyme_regex is a key in PROTEASES, the corresponding regex pattern will be used.
+    Cleavage sites are identified as the positions after matching residues.
+
+    Args:
+        protein_sequence (str): The protein sequence to be processed.
+        enzyme_regex (str): Regular expression pattern or key in PROTEASES dictionary that defines the cleavage
+                            rule of the enzyme.
+
+    Returns:
+        List[int]: A list of positions (1-indexed) in the protein sequence where cleavage occurs.
     """
 
     if enzyme_regex in PROTEASES:
@@ -421,19 +492,21 @@ def identify_cleavage_sites(protein_sequence: str, enzyme_regex: str):
 def digest_sequence(sequence: str, enzyme_regex: str, missed_cleavages: int, min_len: int,
                     max_len: int, semi: bool) -> List[str]:
     """
-    A function that digests a given amino acid sequence based on the provided positive and negative regular expressions and
-    the number of missed cleavages. It returns a list of tuples containing the digested_sequences and the number of missed
-    cleavages. The returned digested_sequences will be filtered based on the provided minimum and maximum length.
+    Digests a given amino acid sequence using specified enzyme rules and parameters, returning a list of peptides.
+
+    The sequence is broken down into peptides based on the enzyme's cleavage rules, with the number of
+    missed cleavages taken into account. The returned peptides are filtered based on minimum and maximum length.
+
+    Args:
+        sequence (str): The amino acid sequence to be digested.
+        enzyme_regex (str): Regular expression representing the enzyme's cleavage rules.
+        missed_cleavages (int): The number of allowed missed cleavages.
+        min_len (int): Minimum length of the returned peptides.
+        max_len (int): Maximum length of the returned peptides.
+        semi (bool): Whether to include semi-digested peptides.
+
+    Returns:
+        List[str]: The list of digested peptides.
     """
-
-    digested_sequences = []
-
-    if enzyme_regex == PROTEASES['non-specific'] or enzyme_regex == 'non-specific':
-        sequences = get_non_enzymatic_sequences(sequence, min_len, max_len)
-        digested_sequences.extend(sequences)
-
-    else:
-        peptides = get_enzymatic_sequences(sequence, enzyme_regex, missed_cleavages, semi, min_len, max_len)
-        digested_sequences.extend(peptides)
-
-    return digested_sequences
+    spans = build_spans(len(sequence), identify_cleavage_sites(sequence, enzyme_regex), missed_cleavages, min_len, max_len, semi)
+    return [span_to_sequence(sequence, span) for span in spans]
