@@ -2,6 +2,8 @@ from functools import wraps
 from typing import Tuple, List, Optional
 from itertools import groupby
 
+# TODO: Remove wrapper function? Its confusing and hurts readability
+
 
 def span_processing(func):
     """
@@ -179,7 +181,7 @@ def _get_all_left_semi_spans(spans: List[Tuple[int, int, int]], min_len: int, ma
     :return: A list of tuples representing all left semi-spans that are within the specified length range.
 
     This function groups the spans by the start position, for each group, it checks every span to see if its length
-    is at least the minimum length. If it is, it calculates the new maximum length, which is the smaller of the max_len
+    is at least the minimum length. If it is, it calculates the new maximum length, which is the smallest of the max_len
     and the span's length. Then it adds the left semi-spans to the list of semi-spans.
     """
     semi_spans = []
@@ -215,7 +217,7 @@ def _get_all_right_semi_spans(spans: List[Tuple[int, int, int]], min_len: int, m
     :return: A list of tuples representing all right semi-spans that are within the specified length range.
 
     This function groups the spans by the start position, for each group, it checks every span to see if its length
-    is at least the minimum length. If it is, it calculates the new maximum length, which is the smaller of the max_len
+    is at least the minimum length. If it is, it calculates the new maximum length, which is the smallest of the max_len
     and the span's length. Then it adds the right semi-spans to the list of semi-spans.
     """
 

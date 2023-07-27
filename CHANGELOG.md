@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.0]
+
+### Added:
+- Fragmenter.py - an easier to use peptide fragmenter (returns dataclasses)
+- Internal fragment ion support 
+
+## Changes:
+- fixed bug with C-Term PTMs
+
 ## [0.1.0]
 
 ### Added:
@@ -9,16 +18,16 @@ All notable changes to this project will be documented in this file.
 - masses.py to handle generating peptide masses from sequences
 
 ### Removed:
-- refseq module
+- refseq module - was a dumb idea
 
 ## [0.0.6]
 
 ### Added:
 - fragment ion
-- peptide mass and mz 
+- peptide mass and mz functions
 
 ### Changes
-- converted peptide.py to sequence.py
+- converted peptide.py to sequence.py (makes more sense since proteins are also sequences of amino acids)
 
 ## [0.0.5]
 

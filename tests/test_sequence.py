@@ -1,7 +1,7 @@
 from peptacular.sequence import parse_modified_sequence, create_modified_sequence, strip_modifications, \
     get_semi_sequences, get_non_enzymatic_sequences, convert_to_ms2_pip_style, \
     get_left_semi_sequences, get_right_semi_sequences, add_static_mods, add_variable_mods, sequence_generator, \
-    _sequence_generator_back, _sequence_generator_front
+    _sequence_generator_back, _sequence_generator_front, get_fragment_sequences, get_internal_fragment_sequences
 
 import unittest
 
@@ -154,6 +154,7 @@ class TestPeptide(unittest.TestCase):
         self.assertEqual(add_static_mods('PEPCTIDE', {'C': 57.021464}), 'PEPC(57.021464)TIDE')
         self.assertEqual(add_static_mods('PEPC(57.021464)TIDE', {'C': 57.021464}), 'PEPC(57.021464)TIDE')
         self.assertEqual(add_static_mods('CPEPTIDEC', {'C': 57.021464}), 'C(57.021464)PEPTIDEC(57.021464)')
+        self.assertEqual(add_static_mods('P(1)EPCTIDE(1)', {'C': 57.021464}), 'P(1)EPC(57.021464)TIDE(1)')
 
     def test_add_variable_mod(self):
         self.assertEqual(set(add_variable_mods('PEPCTIDCE', {'C': 57.021464}, 2)), {'PEPC(57.021464)TIDCE',
@@ -161,8 +162,8 @@ class TestPeptide(unittest.TestCase):
                                                                                     'PEPCTIDC(57.021464)E',
                                                                                     'PEPCTIDCE'})
 
-        self.assertEqual(set(add_variable_mods('PEPC(20)TIDCE', {'C': 57.021464}, 2)), {'PEPC(20)TIDCE',
-                                                                                        'PEPC(20)TIDC(57.021464)E'})
+        self.assertEqual(set(add_variable_mods('P(1)EPC(20)TIDCE', {'C': 57.021464}, 2)), {'P(1)EPC(20)TIDCE',
+                                                                                        'P(1)EPC(20)TIDC(57.021464)E'})
 
     def test_peptide_generator(self):
         # Test forward generator
@@ -196,6 +197,50 @@ class TestPeptide(unittest.TestCase):
         self.assertEqual(next(generator), "G")
         with self.assertRaises(StopIteration):
             next(generator)
+
+    def test_get_fragment_sequences(self):
+        sequence = "PEPTIDE"
+
+        for ion_type in 'abc':
+            fragments = get_fragment_sequences(sequence, ion_type)
+            self.assertEqual(fragments, ['P', 'PE', 'PEP', 'PEPT', 'PEPTI', 'PEPTID', 'PEPTIDE'][::-1])
+
+        for ion_type in 'xyz':
+            fragments = get_fragment_sequences(sequence, ion_type)
+            self.assertEqual(fragments, ['E', 'DE', 'IDE', 'TIDE', 'PTIDE', 'EPTIDE', 'PEPTIDE'][::-1])
+
+    def test_get_internal_fragment_sequences(self):
+        sequence = "PEPTIDE"
+
+        for ion_type in 'xyz':
+            fragments = get_internal_fragment_sequences(sequence, ion_type)
+            self.assertEqual(fragments, ['P', 'PE', 'PEP', 'PEPT', 'PEPTI', 'PEPTID', 'PEPTIDE'][::-1])
+
+        for ion_type in 'abc':
+            fragments = get_internal_fragment_sequences(sequence, ion_type)
+            self.assertEqual(fragments, ['E', 'DE', 'IDE', 'TIDE', 'PTIDE', 'EPTIDE', 'PEPTIDE'][::-1])
+
+    def test_get_fragment_sequences_modified(self):
+        sequence = "(-10)PEP(2)TIDE(100)"
+
+        for ion_type in 'abc':
+            fragments = get_fragment_sequences(sequence, ion_type)
+            self.assertEqual(fragments, ['(-10)P', '(-10)PE', '(-10)PEP(2)', '(-10)PEP(2)T', '(-10)PEP(2)TI', '(-10)PEP(2)TID', '(-10)PEP(2)TIDE(100)'][::-1])
+
+        for ion_type in 'xyz':
+            fragments = get_fragment_sequences(sequence, ion_type)
+            self.assertEqual(fragments, ['E(100)', 'DE(100)', 'IDE(100)', 'TIDE(100)', 'P(2)TIDE(100)', 'EP(2)TIDE(100)', '(-10)PEP(2)TIDE(100)'][::-1])
+
+    def test_get_internal_fragment_sequences_modified(self):
+        sequence = "(-10)PEP(2)TIDE(100)"
+
+        for ion_type in 'xyz':
+            fragments = get_internal_fragment_sequences(sequence, ion_type)
+            self.assertEqual(fragments, ['(-10)P', '(-10)PE', '(-10)PEP(2)', '(-10)PEP(2)T', '(-10)PEP(2)TI', '(-10)PEP(2)TID', '(-10)PEP(2)TIDE(100)'][::-1])
+
+        for ion_type in 'abc':
+            fragments = get_internal_fragment_sequences(sequence, ion_type)
+            self.assertEqual(fragments, ['E(100)', 'DE(100)', 'IDE(100)', 'TIDE(100)', 'P(2)TIDE(100)', 'EP(2)TIDE(100)', '(-10)PEP(2)TIDE(100)'][::-1])
 
 
 if __name__ == "__main__":

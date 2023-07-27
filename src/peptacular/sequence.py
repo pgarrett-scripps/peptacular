@@ -1,12 +1,15 @@
 import re
 from copy import deepcopy
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Union, Generator
 
 import regex as reg
 
 from .constants import PROTEASES
 from .spans import span_to_sequence, build_spans, build_non_enzymatic_spans, build_left_semi_spans, \
     build_right_semi_spans
+
+
+# TODO: Figure out how to specify modifications: either dict[int, str] or dict[int, str]?
 
 
 def _are_parentheses_balanced(text):
@@ -87,7 +90,7 @@ def parse_modified_sequence(sequence: str) -> Dict[int, str]:
                     modification notation.
 
     Example:
-        >>> parse_modified_sequence('PEP(Phospho)TIDEK')
+        >>> parse_modified_sequence('PEP(Phospho)TIDE')
         {3: 'Phospho'}
     """
 
@@ -132,8 +135,8 @@ def create_modified_sequence(sequence: str, modifications: Dict[int, Any]) -> st
         ValueError: If an index in modifications is invalid for the sequence.
 
     Example:
-        >>> create_modified_sequence('PEPTIDEK', {3: 5.0})
-        'PEP(5.0)TIDEK'
+        >>> create_modified_sequence('PEPTIDE', {3: 5.0})
+        'PEP(5.0)TIDE'
     """
 
     modified_sequence = []
@@ -210,8 +213,6 @@ def get_right_semi_sequences(sequence: str, min_len: int = 1, max_len: int = Non
     return [span_to_sequence(sequence, span) for span in spans]
 
 
-from typing import List
-
 def get_semi_sequences(sequence: str, min_len: int = None, max_len: int = None) -> List[str]:
     """
     Generate a list of all semi-enzymatic amino acid sequences of a given string sequence.
@@ -259,7 +260,8 @@ def get_enzymatic_sequences(sequence: str, enzyme_regex: str, missed_cleavages: 
         max_len (int, optional): The maximum length of the enzymatic sequence. Default is None.
 
     Returns:
-        List[str]: A list of enzymatic sequences within the defined length bounds and satisfying the enzyme cleavage rules.
+        List[str]: A list of enzymatic sequences within the defined length bounds and satisfying the enzyme cleavage
+                   rules.
     """
 
     cleavage_sites = identify_cleavage_sites(sequence, enzyme_regex)
@@ -342,7 +344,7 @@ def add_variable_mods(sequence: str, mod_map: Dict[str, float], max_mods: int) -
     return [create_modified_sequence(stripped_sequence, mod) for mod in mods]
 
 
-def sequence_generator(sequence: str, forward: bool):
+def sequence_generator(sequence: str, forward: bool) -> Generator[str, None, None]:
     """
     Generates amino acid sequences either from the front or the back.
 
@@ -359,7 +361,7 @@ def sequence_generator(sequence: str, forward: bool):
         return _sequence_generator_back(sequence)
 
 
-def _sequence_generator_back(sequence: str):
+def _sequence_generator_back(sequence: str) -> Generator[str, None, None]:
     """
     Generates amino acid sequences starting from the back of the sequence.
 
@@ -386,7 +388,7 @@ def _sequence_generator_back(sequence: str):
         sequence = sequence[:index - 1]
 
 
-def _sequence_generator_front(sequence: str):
+def _sequence_generator_front(sequence: str) -> Generator[str, None, None]:
     """
     Generates sub-sequences starting from the front of the sequence.
 
@@ -401,9 +403,11 @@ def _sequence_generator_front(sequence: str):
     """
     if sequence[0] == '(':
         yield sequence
-
         end_of_modification = sequence.find(')')
         sequence = sequence[end_of_modification + 2:]
+
+        if sequence == '':
+            return None
 
         if sequence[0] == '(':
             end_of_modification = sequence.find(')')
@@ -423,7 +427,7 @@ def _sequence_generator_front(sequence: str):
         sequence = sequence[index + 1:]
 
 
-def reverse_sequence(sequence: str):
+def reverse_sequence(sequence: str) -> str:
     """
     Reverses the sequence, while preserving the position of any modifications.
 
@@ -439,7 +443,7 @@ def reverse_sequence(sequence: str):
     return create_modified_sequence(stripped_sequence, mod_reverse)
 
 
-def shift_sequence_left(sequence: str, shift: int):
+def shift_sequence_left(sequence: str, shift: int) -> str:
     """
     Shifts the sequence to the left by a given number of positions, while preserving the position of any modifications.
 
@@ -465,7 +469,7 @@ def shift_sequence_left(sequence: str, shift: int):
     return create_modified_sequence(shifted_stripped_sequence, shifted_sequence_mods)
 
 
-def identify_cleavage_sites(protein_sequence: str, enzyme_regex: str):
+def identify_cleavage_sites(protein_sequence: str, enzyme_regex: str) -> List[int]:
     """
     Identifies cleavage sites in a protein sequence, based on enzyme_regex pattern.
     If enzyme_regex is a key in PROTEASES, the corresponding regex pattern will be used.
@@ -489,8 +493,9 @@ def identify_cleavage_sites(protein_sequence: str, enzyme_regex: str):
     return [site[0] + 1 for site in enzyme_sites]
 
 
-def digest_sequence(sequence: str, enzyme_regex: str, missed_cleavages: int, min_len: int,
-                    max_len: int, semi: bool) -> List[str]:
+def digest_sequence(sequence: str, enzyme_regex: Union[List[str], str], missed_cleavages: int, min_len: int = None,
+                    max_len: int = None, semi: bool = False) -> List[
+    str]:
     """
     Digests a given amino acid sequence using specified enzyme rules and parameters, returning a list of peptides.
 
@@ -508,5 +513,45 @@ def digest_sequence(sequence: str, enzyme_regex: str, missed_cleavages: int, min
     Returns:
         List[str]: The list of digested peptides.
     """
-    spans = build_spans(len(sequence), identify_cleavage_sites(sequence, enzyme_regex), missed_cleavages, min_len, max_len, semi)
-    return [span_to_sequence(sequence, span) for span in spans]
+
+    if isinstance(enzyme_regex, str):
+        enzyme_regex = [enzyme_regex]
+
+    cleavage_sites = []
+    for regex in enzyme_regex:
+        cleavage_sites.extend(identify_cleavage_sites(sequence, regex))
+    cleavage_sites.sort()
+
+    spans = build_spans(len(sequence), cleavage_sites, missed_cleavages, min_len, max_len, semi)
+    sequences = [span_to_sequence(sequence, span) for span in spans]
+
+    return sequences
+
+
+def get_fragment_sequences(sequence: str, ion_type: str) -> List[str]:
+    """
+    Generate fragment sequences for a given peptide sequence based on the specified ion type
+
+    Args:
+        sequence (str): The peptide sequence.
+        ion_type (str): The type of ion for which fragments are generated.
+
+    Returns:
+        List[str]: The fragment sequences.
+    """
+
+    return list(sequence_generator(sequence, forward=ion_type in 'xyz'))
+
+
+def get_internal_fragment_sequences(sequence: str, ion_type:str) -> List[str]:
+    """
+    Generate internal fragment sequences for a given peptide sequence based on the specified ion type.
+
+    Args:
+        sequence (str): The peptide sequence.
+        ion_type (str): The type of ion for which internal fragments are generated.
+
+    Returns:
+        List[str]: The internal fragment sequences.
+    """
+    return list(sequence_generator(sequence, forward=ion_type not in 'xyz'))

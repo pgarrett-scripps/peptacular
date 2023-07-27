@@ -1,8 +1,32 @@
+from typing import List
+
 import numpy as np
 
 from .constants import *
 from peptacular.sequence import parse_modified_sequence, strip_modifications, sequence_generator, \
     identify_cleavage_sites
+
+
+# TODO: Remove numpy dependency and separate index functions into separate project
+
+
+def filter_by_mass(sequences: list[str], min_mass: float = None, max_mass: float = None) -> List[str]:
+    """
+    Filters a list of sequences by mass, returning only those that fall within the specified range.
+
+    Args:
+        sequences (list[str]): A list of sequences to be filtered.
+        min_mass (float): Minimum mass of the returned sequences.
+        max_mass (float): Maximum mass of the returned sequences.
+
+    Returns:
+        list[str]: A list of sequences that fall within the specified mass range.
+    """
+
+    min_mass = min_mass or 0
+    max_mass = max_mass or float('inf')
+
+    return [sequence for sequence in sequences if min_mass <= calculate_mass(sequence) <= max_mass]
 
 
 def calculate_mass(sequence: str, charge=0, ion_type: str = 'y', monoisotopic=True) -> float:
@@ -19,14 +43,16 @@ def calculate_mass(sequence: str, charge=0, ion_type: str = 'y', monoisotopic=Tr
         float: The calculated mass of the peptide sequence.
     """
     # Select mass set based on monoisotopic flag
-    atomic_masses, aa_masses = (MONO_ISOTOPIC_ATOMIC_MASSES, MONO_ISOTOPIC_AA_MASSES) if monoisotopic else (AVERAGE_ATOMIC_MASSES, AVERAGE_AA_MASSES)
+    atomic_masses, aa_masses = (MONO_ISOTOPIC_ATOMIC_MASSES, MONO_ISOTOPIC_AA_MASSES) if monoisotopic else \
+        (AVERAGE_ATOMIC_MASSES, AVERAGE_AA_MASSES)
 
     # Parse modifications and strip them from sequence
     mods = parse_modified_sequence(sequence)
     stripped_sequence = strip_modifications(sequence)
 
     # Calculate mass
-    mass = sum(aa_masses[aa] for aa in stripped_sequence) + sum(float(value) for value in mods.values()) + (charge * atomic_masses['PROTON'])
+    mass = sum(aa_masses[aa] for aa in stripped_sequence) + sum(float(value) for value in mods.values()) + \
+        (charge * atomic_masses['PROTON'])
 
     # Adjust mass based on ion type
     ion_adjustments = {

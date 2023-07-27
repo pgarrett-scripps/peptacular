@@ -68,5 +68,6 @@ class TestPeptide(unittest.TestCase):
             for f, pf in zip(frags, pyteomics_frags):
                 self.assertAlmostEqual(f, pf, 6)
 
+
 if __name__ == "__main__":
     unittest.main()
