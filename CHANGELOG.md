@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0]
+
+### Added:
+- score.py - a module for scoring peptide matches
+
+### Changes:
+- made Fragment dataclass frozen
+
+
 ## [0.2.0]
 
 ### Added:
