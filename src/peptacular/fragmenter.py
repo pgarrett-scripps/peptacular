@@ -5,7 +5,7 @@ from peptacular.mass import calculate_mz
 from peptacular.sequence import get_fragment_sequences, get_internal_fragment_sequences, strip_modifications
 
 
-@dataclass
+@dataclass(frozen=True)
 class Fragment:
     """
     Represents a fragment resulting from breaking a sequence at specific points.
