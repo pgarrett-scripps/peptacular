@@ -6,7 +6,7 @@ name = "peptacular"
 authors = [
     {name = "Patrick Garrett", email = "pgarrett@scripps.edu"},
 ]
-description = "Utility package for handling peptide and protein sequences"
+description = "Overly simple mass spectrometry based proteomics python package"
 readme = "README.md"
 requires-python = ">=3.8"
 dynamic = ["version"]
@@ -19,7 +19,6 @@ classifiers = [
 ]
 dependencies = [
     "regex",
-    "numpy"
 ]
 
 [tool.setuptools]
@@ -34,5 +33,5 @@ version = {attr = "peptacular.__version__"}
 [tool.pylint]
 max-line-length = 120
 fail-under = 9.5
-good-names = ["db"]
+good-names = ["db", "i", "j", "aa", "n", "k", "p", "Na", "Nb", "Nc", "Nx", "Ny", "Nz", "mz"]
 extension-pkg-whitelist='pydantic'

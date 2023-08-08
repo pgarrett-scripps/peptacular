@@ -32,8 +32,7 @@ def _are_parentheses_balanced(text):
         elif char == ')':
             if not stack:
                 return False
-            else:
-                stack.pop()
+            stack.pop()
     return len(stack) == 0
 
 
@@ -357,8 +356,8 @@ def sequence_generator(sequence: str, forward: bool) -> Generator[str, None, Non
     """
     if forward:
         return _sequence_generator_front(sequence)
-    else:
-        return _sequence_generator_back(sequence)
+
+    return _sequence_generator_back(sequence)
 
 
 def _sequence_generator_back(sequence: str) -> Generator[str, None, None]:
@@ -380,7 +379,7 @@ def _sequence_generator_back(sequence: str) -> Generator[str, None, None]:
             start_of_modification = sequence.rfind('(')
 
             if start_of_modification == 0:
-                return None
+                return
 
             index = start_of_modification
 
@@ -407,7 +406,7 @@ def _sequence_generator_front(sequence: str) -> Generator[str, None, None]:
         sequence = sequence[end_of_modification + 2:]
 
         if sequence == '':
-            return None
+            return
 
         if sequence[0] == '(':
             end_of_modification = sequence.find(')')
@@ -419,7 +418,7 @@ def _sequence_generator_front(sequence: str) -> Generator[str, None, None]:
             end_of_modification = sequence.find(')')
 
             if end_of_modification == len(sequence):
-                return None
+                return
 
             index = end_of_modification
 
@@ -494,8 +493,7 @@ def identify_cleavage_sites(protein_sequence: str, enzyme_regex: str) -> List[in
 
 
 def digest_sequence(sequence: str, enzyme_regex: Union[List[str], str], missed_cleavages: int, min_len: int = None,
-                    max_len: int = None, semi: bool = False) -> List[
-    str]:
+                    max_len: int = None, semi: bool = False) -> List[str]:
     """
     Digests a given amino acid sequence using specified enzyme rules and parameters, returning a list of peptides.
 

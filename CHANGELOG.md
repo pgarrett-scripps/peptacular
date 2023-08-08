@@ -10,6 +10,9 @@ All notable changes to this project will be documented in this file.
 ### Changes:
 - made Fragment dataclass frozen
 
+### Removed:
+- removed indexing code from mass.py
+
 
 ## [0.2.0]
 

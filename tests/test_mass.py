@@ -1,6 +1,6 @@
 import numpy as np
 
-from peptacular.mass import fragment_sequence, calculate_mass_array
+from peptacular.mass import fragment_sequence
 
 import unittest
 
@@ -38,20 +38,6 @@ class TestPeptide(unittest.TestCase):
         self.assertEqual(len(pyteomics_b_frags), len(b_frags))
         for f in pyteomics_b_frags:
             self.assertTrue(f in b_frags)
-
-
-    def test_convert_to_mass_array(self):
-        FRAGS = np.array([97.05276384885, 129.04259308796998, 97.05276384885, 101.04767846841,
-                          113.08406397713001, 115.02694302383001, 129.04259308796998], dtype=np.float32)
-        mass_arr = calculate_mass_array('PEPTIDE')
-        for m in FRAGS:
-            self.assertTrue(m in mass_arr)
-
-        FRAGS = np.array([197.05276384885, 129.04259308796998, 197.05276384885, 101.04767846841,
-                          113.08406397713001, 115.02694302383001, 229.04259308796998], dtype=np.float32)
-        mass_arr = calculate_mass_array('(100)PEP(100)TIDE(100)')
-        for m in FRAGS:
-            self.assertTrue(m in mass_arr)
 
     def test_fragment2(self):
         pyteomics = {'a': [70.06512569606001, 199.10771878403003, 300.15539725243997],

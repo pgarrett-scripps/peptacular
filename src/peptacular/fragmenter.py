@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from typing import List
 
-from peptacular.mass import calculate_mz
-from peptacular.sequence import get_fragment_sequences, get_internal_fragment_sequences, strip_modifications
+from .mass import calculate_mz
+from .sequence import get_fragment_sequences, get_internal_fragment_sequences, strip_modifications
 
 
 @dataclass(frozen=True)
@@ -30,26 +30,39 @@ class Fragment:
 
     @property
     def start(self):
+        """
+        Returns the start index of the fragment in the parent sequence.
+        """
         if self.ion_type in 'abc':
             if self.internal is False:
                 return 0
-            else:
-                return self.parent_number - self.number
-        elif self.ion_type in 'xyz':
+            return self.parent_number - self.number
+
+        if self.ion_type in 'xyz':
             return -self.parent_number
+
+        raise ValueError(f"Invalid ion type: {self.ion_type}")
 
     @property
     def end(self):
+        """
+        Returns the end index of the fragment in the parent sequence.
+        """
         if self.ion_type in 'abc':
             return self.parent_number
-        elif self.ion_type in 'xyz':
+
+        if self.ion_type in 'xyz':
             if self.internal is False:
                 return None
-            else:
-                return self.start + self.number
+            return self.start + self.number
+
+        raise ValueError(f"Invalid ion type: {self.ion_type}")
 
     @property
     def label(self):
+        """
+        Returns the label of the fragment, e.g., b2, y3i, etc.
+        """
         return f"{'+' * self.charge}" \
                f"{self.ion_type}" \
                f"{self.parent_number}" \
@@ -67,7 +80,7 @@ def build_fragments(sequence: str, ion_types: List[str], charges: List[int], mon
         ion_types (List[str]): A list of ion types to consider, e.g., ['b', 'y'].
         charges (List[int]): A list of charge states for the fragments.
         monoisotopic (bool): If True, use monoisotopic masses for calculations.
-        internal_fragments (bool): If True, include internal fragments; otherwise, only terminal fragments are generated.
+        internal_fragments (bool): If True, include internal fragments.
 
     Returns:
         List[Fragment]: A list of Fragment objects representing the generated fragments.

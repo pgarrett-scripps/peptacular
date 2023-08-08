@@ -1,7 +1,7 @@
 import math
 from dataclasses import dataclass
 from typing import List
-from peptacular.fragmenter import Fragment
+from .fragmenter import Fragment
 
 
 def match_spectra(mz_spectrum1, mz_spectrum2, tolerance_value=0.1, tolerance_type='ppm'):
@@ -44,21 +44,40 @@ def match_spectra(mz_spectrum1, mz_spectrum2, tolerance_value=0.1, tolerance_typ
 
 @dataclass(frozen=True)
 class FragmentMatch:
+    """
+    Represents a match between a theoretical fragment and an experimental spectrum.
+    """
     fragment: Fragment
     mz: float
     intensity: float
 
     @property
     def error(self):
+        """
+        Returns the error between the theoretical and experimental m/z values.
+        """
         return self.fragment.mass - self.mz
 
     @property
     def error_ppm(self):
+        """
+        Returns the error between the theoretical and experimental m/z values in parts-per-million (ppm).
+        """
         return self.error / self.fragment.mass * 1e6
 
 
 def compute_fragment_matches(fragments: List[Fragment], mz_spectrum, intensity_spectrum, tolerance_value=0.1,
                              tolerance_type='ppm'):
+    """
+    Computes the fragment matches for a given set of fragments and an experimental spectrum.
+    :param fragments:  A list of Fragment objects.
+    :param mz_spectrum:  A list of m/z values.
+    :param intensity_spectrum:  A list of intensity values corresponding to the m/z values in mz_spectrum.
+    :param tolerance_value:  The tolerance value for matching fragments to the spectrum.
+    :param tolerance_type:  The type of tolerance ('ppm' or 'th').
+    :return:  A list of FragmentMatch objects.
+    """
+
     # sort fragments by mass
     fragments.sort(key=lambda x: x.mass)
     fragment_spectrum = [f.mass for f in fragments]
@@ -76,7 +95,7 @@ def compute_fragment_matches(fragments: List[Fragment], mz_spectrum, intensity_s
 
 
 def hyper_score(fragments: List[Fragment], mz_spectrum: List[float], intensity_spectrum: List[float],
-               tolerance_value=0.1, tolerance_type='ppm', filter_by='intensity') -> float:
+                tolerance_value=0.1, tolerance_type='ppm', filter_by='intensity') -> float:
     """
     Computes the hyperscore for a given set of fragments and an experimental spectrum.
 
@@ -87,7 +106,7 @@ def hyper_score(fragments: List[Fragment], mz_spectrum: List[float], intensity_s
     :param tolerance_type: Type of tolerance ('ppm' or 'th').
     :param filter_by: How to filter the matched fragments ('intensity' or 'error').
 
-    :return: Computed hyperscore.
+    :return: Computed hyper score.
     """
 
     max_intensity = max(intensity_spectrum)
@@ -118,9 +137,10 @@ def hyper_score(fragments: List[Fragment], mz_spectrum: List[float], intensity_s
     Nz = sum(1 for match in fragment_matches if match.fragment.ion_type == 'z')
 
     # Compute the hyper score
-    HS = dot_product * math.factorial(Na) * math.factorial(Nb) * math.factorial(Nc) * math.factorial(Nx) * math.factorial(Ny) * math.factorial(Nz)
+    score = dot_product * math.factorial(Na) * math.factorial(Nb) * math.factorial(Nc) * \
+            math.factorial(Nx) * math.factorial(Ny) * math.factorial(Nz)
 
-    return HS
+    return score
 
 
 def binomial_probability(n: int, k: int, p: float) -> float:
@@ -133,9 +153,8 @@ def binomial_probability(n: int, k: int, p: float) -> float:
 
     :return: Binomial probability P(X=k).
     """
-    from math import comb
 
-    return comb(n, k) * (p ** k) * ((1 - p) ** (n - k))
+    return math.comb(n, k) * (p ** k) * ((1 - p) ** (n - k))
 
 
 def estimate_probability_of_random_match(error_tolerance: float, mz_spectrum: List[float],
@@ -167,8 +186,8 @@ def estimate_probability_of_random_match(error_tolerance: float, mz_spectrum: Li
 
 
 def binomial_score(fragments: List[Fragment], mz_spectrum: List[float],
-                                          intensity_spectrum: List[float],
-                                          tolerance_value=0.1, tolerance_type='ppm') -> float:
+                   intensity_spectrum: List[float],
+                   tolerance_value=0.1, tolerance_type='ppm') -> float:
     """
     Computes a score based on binomial probability for a given set of fragments and an experimental spectrum.
 

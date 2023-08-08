@@ -2,8 +2,8 @@ from functools import wraps
 from typing import Tuple, List, Optional
 from itertools import groupby
 
-# TODO: Remove wrapper function? Its confusing and hurts readability
 
+# TODO: Remove wrapper function? Its confusing and hurts readability
 
 def span_processing(func):
     """
@@ -39,7 +39,7 @@ def _validate_span(span: Tuple[int, int, int]) -> None:
         ValueError: If the span is not valid.
 
     """
-    start, end, value = span
+    start, end, _ = span
     if start < 0:
         raise ValueError(f'Start of span should be non-negative, got {start}.')
     if end < 0:
@@ -64,7 +64,7 @@ def build_non_enzymatic_spans(span: Tuple[int, int, int], min_len: int, max_len:
     Returns:
         List[Tuple[int, int, int]]: A list of all possible sub-spans as tuples, each structured as (start, end, value).
     """
-    start, end, value = span
+    start, end, _ = span
     return [(i, j, 0) for i in range(start, end + 1) for j in range(i + min_len, min(end + 1, i + max_len + 1))]
 
 
@@ -162,7 +162,8 @@ def get_enzymatic_spans(max_index: int, enzyme_sites: List[int], missed_cleavage
 
     spans = []
     for i, start_site in enumerate(enzyme_sites):
-        spans.extend([(start_site, end_site, j) for j, end_site in enumerate(enzyme_sites[i+1:i+missed_cleavages+2])])
+        spans.extend(
+            [(start_site, end_site, j) for j, end_site in enumerate(enzyme_sites[i + 1:i + missed_cleavages + 2])])
 
     # Filter spans based on length
     spans = [span for span in spans if min_len <= span[1] - span[0] <= max_len]
