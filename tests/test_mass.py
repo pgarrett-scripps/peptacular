@@ -1,5 +1,3 @@
-import numpy as np
-
 from peptacular.mass import fragment_sequence
 
 import unittest
