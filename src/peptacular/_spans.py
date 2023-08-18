@@ -1,14 +1,22 @@
+"""
+Used in digest.py, and exclusively work with unmodified sequences!
+"""
+
 from functools import wraps
-from typing import Tuple, List, Optional
+from typing import Tuple, List, Optional, Callable
 from itertools import groupby
 
 
 # TODO: Remove wrapper function? Its confusing and hurts readability
 
-def span_processing(func):
+def span_processing(func: Callable):
     """
     A decorator to enforce constraints on the span and min_len and max_len arguments of decorated functions.
-    The span should be a tuple of length 3 and min_len and max_len should be None or an integer.
+
+    :param func: The function to be decorated.
+    :type func: Callable
+    :return: A wrapped function with constraints enforced on its arguments.
+    :rtype: Callable
     """
 
     @wraps(func)
@@ -30,40 +38,66 @@ def span_processing(func):
 
 def _validate_span(span: Tuple[int, int, int]) -> None:
     """
-    This function checks if a given span is valid.
+    Validates if a given span is valid.
 
-    Args:
-        span (Tuple[int, int, int]): A tuple representing the span, structured as (start, end, value).
+    :param span: A tuple representing the span.
+    :type span: Tuple[int, int, int]
+    :raises ValueError: If the span is not valid.
 
-    Raises:
-        ValueError: If the span is not valid.
+    :Example:
+
+    .. code-block:: python
+
+        >>> _validate_span((0, 5, 0))  # No error raised
+
+        >>> _validate_span((0, 0, 0))  # No error raised
+
+        >>> _validate_span((5, 0, 0))  # Raises ValueError
+        Traceback (most recent call last):
+        ValueError: Start of span: 5, should be less than or equal to end of span: 0.
+
+        >>> _validate_span((-1, 0, 0))  # Raises ValueError
+        Traceback (most recent call last):
+        ValueError: Start of span should be non-negative, got -1.
+
+        >>> _validate_span((0, -1, 0))  # Raises ValueError
+        Traceback (most recent call last):
+        ValueError: End of span should be non-negative, got -1.
 
     """
+
     start, end, _ = span
     if start < 0:
         raise ValueError(f'Start of span should be non-negative, got {start}.')
     if end < 0:
         raise ValueError(f'End of span should be non-negative, got {end}.')
     if start > end:
-        raise ValueError(f'Start of span {start} should be less than or equal to end of span {end}.')
+        raise ValueError(f'Start of span: {start}, should be less than or equal to end of span: {end}.')
 
 
 @span_processing
 def build_non_enzymatic_spans(span: Tuple[int, int, int], min_len: int, max_len: int) -> List[Tuple[int, int, int]]:
     """
-    This function generates and returns all possible sub-spans of the given span. These sub-spans have lengths ranging
-    from `min_len` to `max_len`. The sub-spans are "non-enzymatic", meaning they are direct subsets of the given span
-    and not created through any enzymatic action or process.
+    Generates and returns all possible sub-spans of the given span.
 
-    Args:
-        span (Tuple[int, int, int]): A tuple representing the original span, structured as (start, end, value).
-        min_len (int, optional): The minimum length of sub-spans to be generated. Defaults to 1.
-        max_len (int, optional): The maximum length of sub-spans to be generated. If not provided, it defaults to the
-                                 length of the input span.
+    :param span: A tuple representing the original span.
+    :type span: Tuple[int, int, int]
+    :param min_len: The minimum length of sub-spans to be generated.
+    :type min_len: int
+    :param max_len: The maximum length of sub-spans to be generated.
+    :type max_len: int
+    :return: A list of all possible sub-spans as tuples.
+    :rtype: List[Tuple[int, int, int]]
 
-    Returns:
-        List[Tuple[int, int, int]]: A list of all possible sub-spans as tuples, each structured as (start, end, value).
+    :Example:
+
+    .. code-block:: python
+
+        >>> build_non_enzymatic_spans((0, 3, 0), 1, 2)
+        [(0, 1, 0), (0, 2, 0), (1, 2, 0), (1, 3, 0), (2, 3, 0)]
+
     """
+
     start, end, _ = span
     return [(i, j, 0) for i in range(start, end + 1) for j in range(i + min_len, min(end + 1, i + max_len + 1))]
 
@@ -71,19 +105,18 @@ def build_non_enzymatic_spans(span: Tuple[int, int, int], min_len: int, max_len:
 @span_processing
 def build_left_semi_spans(span: Tuple[int, int, int], min_len: int, max_len: int) -> List[Tuple[int, int, int]]:
     """
-    This function generates and returns all possible sub-spans of the given span starting from the left.
-    These sub-spans have lengths ranging from `min_len` to `max_len`.
+    Generates and returns all possible sub-spans of the given span starting from the left.
 
-    Args:
-        span (Tuple[int, int, int]): A tuple representing the original span, structured as (start, end, value).
-        min_len (int, optional): The minimum length of sub-spans to be generated. Defaults to 1.
-        max_len (int, optional): The maximum length of sub-spans to be generated. If not provided, it defaults to the
-                                 length of the input span.
-
-    Returns:
-        List[Tuple[int, int, int]]: A list of all possible left sub-spans as tuples, each structured as
-                                    (start, end, value).
+    :param span: A tuple representing the original span.
+    :type span: Tuple[int, int, int]
+    :param min_len: The minimum length of sub-spans to be generated.
+    :type min_len: int
+    :param max_len: The maximum length of sub-spans to be generated.
+    :type max_len: int
+    :return: A list of all possible left sub-spans as tuples.
+    :rtype: List[Tuple[int, int, int]]
     """
+
     if min_len > max_len:
         return []
 
@@ -95,18 +128,16 @@ def build_left_semi_spans(span: Tuple[int, int, int], min_len: int, max_len: int
 @span_processing
 def build_right_semi_spans(span: Tuple[int, int, int], min_len: int, max_len: int) -> List[Tuple[int, int, int]]:
     """
-    This function generates and returns all possible sub-spans of the given span starting from the right.
-    These sub-spans have lengths ranging from `min_len` to `max_len`.
+    Generates and returns all possible sub-spans of the given span starting from the right.
 
-    Args:
-        span (Tuple[int, int, int]): A tuple representing the original span, structured as (start, end, value).
-        min_len (int, optional): The minimum length of sub-spans to be generated. Defaults to 1.
-        max_len (int, optional): The maximum length of sub-spans to be generated. If not provided, it defaults to the
-                                 length of the input span.
-
-    Returns:
-        List[Tuple[int, int, int]]: A list of all possible right sub-spans as tuples, each structured as
-                                    (start, end, value).
+    :param span: A tuple representing the original span.
+    :type span: Tuple[int, int, int]
+    :param min_len: The minimum length of sub-spans to be generated.
+    :type min_len: int
+    :param max_len: The maximum length of sub-spans to be generated.
+    :type max_len: int
+    :return: A list of all possible right sub-spans as tuples.
+    :rtype: List[Tuple[int, int, int]]
     """
 
     if min_len > max_len:
@@ -119,16 +150,14 @@ def build_right_semi_spans(span: Tuple[int, int, int], min_len: int, max_len: in
 
 def span_to_sequence(sequence: str, span: Tuple[int, int, int]) -> str:
     """
-    This function takes a sequence and a span as input, then returns the subsequence of the input sequence
-    that corresponds to the provided span.
+    Extracts a subsequence from the input sequence based on the provided span.
 
-    Args:
-        sequence (str): The original sequence from which a subsequence will be extracted.
-        span (Tuple[int, int, int]): A tuple representing the span of the subsequence to be extracted, structured as
-                                     (start, end, value).
-
-    Returns:
-        str: The subsequence of the input sequence as defined by the start and end of the provided span.
+    :param sequence: The original sequence.
+    :type sequence: str
+    :param span: A tuple representing the span of the subsequence to be extracted.
+    :type span: Tuple[int, int, int]
+    :return: The subsequence of the input sequence defined by the span.
+    :rtype: str
     """
 
     _validate_span(span)
@@ -138,19 +167,20 @@ def span_to_sequence(sequence: str, span: Tuple[int, int, int]) -> str:
 def get_enzymatic_spans(max_index: int, enzyme_sites: List[int], missed_cleavages: int,
                         min_len: int = None, max_len: int = None) -> List[Tuple[int, int, int]]:
     """
-    Computes the enzymatic spans for the given enzymatic sites and the number of missed
-    cleavages.
+    Computes enzymatic spans for the given enzyme sites and missed cleavages.
 
-    Parameters:
-        max_index (int): The max index of the span.
-        enzyme_sites (List[int]): The list of indices in the protein sequence that represent enzyme sites.
-        missed_cleavages (int): The number of allowed missed cleavages.
-        min_len (int): The minimum length of an enzymatic span.
-        max_len (int): The maximum length of an enzymatic span.
-
-    Returns:
-        List[Tuple[int, int, int]]: A list of tuples, where each tuple represents a span and contains three integers:
-                                    the start index, the end index, and the number of missed cleavages.
+    :param max_index: The max index of the span.
+    :type max_index: int
+    :param enzyme_sites: The list of indices representing enzyme sites.
+    :type enzyme_sites: List[int]
+    :param missed_cleavages: The number of allowed missed cleavages.
+    :type missed_cleavages: int
+    :param min_len: The minimum length of an enzymatic span.
+    :type min_len: int, optional
+    :param max_len: The maximum length of an enzymatic span.
+    :type max_len: int, optional
+    :return: A list of tuples representing enzymatic spans.
+    :rtype: List[Tuple[int, int, int]]
     """
 
     if min_len is None:
@@ -158,7 +188,14 @@ def get_enzymatic_spans(max_index: int, enzyme_sites: List[int], missed_cleavage
     if max_len is None:
         max_len = max_index
 
-    enzyme_sites = [0] + enzyme_sites + [max_index]
+    enzyme_sites = set(enzyme_sites)
+    if 0 not in enzyme_sites:
+        enzyme_sites.add(0)
+
+    if max_index not in enzyme_sites:
+        enzyme_sites.add(max_index)
+
+    enzyme_sites = sorted(list(enzyme_sites))
 
     spans = []
     for i, start_site in enumerate(enzyme_sites):
@@ -247,16 +284,16 @@ def _get_all_right_semi_spans(spans: List[Tuple[int, int, int]], min_len: int, m
 def get_semi_spans(spans: List[Tuple[int, int, int]], min_len: int, max_len: int) -> \
         List[Tuple[int, int, int]]:
     """
-    Computes the semi spans for a given list of spans based on the given minimum and maximum length criteria.
+    Computes semi spans for a given list of spans based on length criteria.
 
-    Parameters:
-        spans (List[Tuple[int, int, int]]): The list of spans for which the semi spans will be computed.
-        min_len (int): The minimum length of a semi span.
-        max_len (int): The maximum length of a semi span.
-
-    Returns:
-        List[Tuple[int, int, int]]: A list of tuples, where each tuple represents a semi span and contains three
-                                    integers: the start index, the end index, and the number of missed cleavages.
+    :param spans: The list of spans.
+    :type spans: List[Tuple[int, int, int]]
+    :param min_len: The minimum length of a semi span.
+    :type min_len: int
+    :param max_len: The maximum length of a semi span.
+    :type max_len: int
+    :return: A list of tuples representing semi spans.
+    :rtype: List[Tuple[int, int, int]]
     """
 
     semi_spans = []
@@ -275,20 +312,22 @@ def get_semi_spans(spans: List[Tuple[int, int, int]], min_len: int, max_len: int
 def build_spans(max_index: int, enzyme_sites: List[int], missed_cleavages: int, min_len: int,
                 max_len: int, semi: bool) -> List[Tuple[int, int, int]]:
     """
-    Builds spans for a given sequence based on the given enzyme sites, the number of missed cleavages, and the minimum
-    and maximum length criteria. If semi is set to True, semi spans are also computed and added to the list of spans.
+    Builds spans for a given sequence based on enzyme sites, missed cleavages, and length criteria.
 
-    Parameters:
-        max_index (int): The max index of the span.
-        enzyme_sites (List[int]): The list of indices in the sequence that represent enzyme sites.
-        missed_cleavages (int): The number of allowed missed cleavages.
-        min_len (int): The minimum length of a span.
-        max_len (int): The maximum length of a span.
-        semi (bool): Whether to compute and include semi spans.
-
-    Returns:
-        List[Tuple[int, int, int]]: A list of tuples, where each tuple represents a span and contains three integers:
-                                    the start index, the end index, and the number of missed cleavages.
+    :param max_index: The max index of the span.
+    :type max_index: int
+    :param enzyme_sites: The list of indices representing enzyme sites.
+    :type enzyme_sites: List[int]
+    :param missed_cleavages: The number of allowed missed cleavages.
+    :type missed_cleavages: int
+    :param min_len: The minimum length of a span.
+    :type min_len: int
+    :param max_len: The maximum length of a span.
+    :type max_len: int
+    :param semi: Whether to compute and include semi spans.
+    :type semi: bool
+    :return: A list of tuples representing spans.
+    :rtype: List[Tuple[int, int, int]]
     """
 
     if min_len is None:

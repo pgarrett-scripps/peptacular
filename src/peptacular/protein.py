@@ -2,54 +2,65 @@ import re
 from typing import List
 
 
-def get_peptide_indexes_in_protein(protein: str, peptide: str) -> List[int]:
+def find_peptide_indexes(protein: str, peptide: str) -> List[int]:
     """
-    Get all indexes of a peptide (substring) in a protein (string).
+    Retrieves all starting indexes of a given peptide within a protein sequence.
 
-    Args:
-        peptide (str): The peptide sequence to search for in the protein.
-        protein (str): The protein sequence.
-
-    Returns:
-        list[int]: List of indexes where the peptide sequence starts in the protein sequence.
+    :param protein: The complete protein sequence in which to search.
+    :type protein: str
+    :param peptide: The peptide sequence to find within the protein.
+    :type peptide: str
+    :return: A list of starting indexes where the peptide is found in the protein sequence.
+    :rtype: List[int]
     """
+
+    if len(peptide) == 0:
+        return []
+
     return [i.start() for i in re.finditer(peptide, protein)]
 
 
-def calculate_protein_coverage(protein: str, peptides: List[str]) -> List[int]:
+def build_coverage_array(protein: str, peptides: List[str]) -> List[int]:
     """
     Calculate the coverage of a protein sequence by a list of peptides.
 
     The coverage is represented as a binary list where each position in the protein sequence is marked as 1 if it
     is covered by at least one peptide and 0 otherwise.
 
-    Args:
-        protein (str): The protein sequence.
-        peptides (list[str]): List of peptide sequences.
+    :param protein: The protein sequence.
+    :type protein: str
+    :param peptides: List of peptide sequences.
+    :type peptides: List[str]
 
-    Returns:
-        list[int]: A list representing the coverage of the protein sequence by the peptides. Each position in the
-        list corresponds to a position in the protein sequence.
+    :return: A list representing the coverage of the protein sequence by the peptides. Each position in the
+             list corresponds to a position in the protein sequence.
+    :rtype: List[int]
     """
+
     cov_arr = [0] * len(protein)
     for peptide in peptides:
-        peptide_indexes = get_peptide_indexes_in_protein(protein, peptide)
+        peptide_indexes = find_peptide_indexes(protein, peptide)
         for peptide_index in peptide_indexes:
             cov_arr[peptide_index:peptide_index + len(peptide)] = [1] * len(peptide)
     return cov_arr
 
 
-def calculate_protein_coverage_percent(protein: str, peptides: List[str]) -> float:
+def calculate_percent_coverage(protein: str, peptides: List[str]) -> float:
     """
-    Calculates the protein coverage of a list of peptides.
+    Calculates the protein coverage of a list of peptides as a percentage.
 
-    Args:
-        protein: The protein sequence.
-        peptides: The list of peptide sequences.
+    :param protein: The protein sequence.
+    :type protein: str
+    :param peptides: The list of peptide sequences.
+    :type peptides: List[str]
 
-    Returns:
-        The protein coverage.
+    :return: The protein coverage percentage.
+    :rtype: float
     """
-    cov_arr = calculate_protein_coverage(protein, peptides)
+
+    cov_arr = build_coverage_array(protein, peptides)
+
+    if len(cov_arr) == 0:
+        return 0
 
     return sum(cov_arr) / len(cov_arr)

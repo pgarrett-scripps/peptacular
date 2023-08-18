@@ -1,6 +1,6 @@
 import unittest
 
-from peptacular.spans import build_non_enzymatic_spans, build_left_semi_spans, build_right_semi_spans, span_to_sequence, \
+from peptacular._spans import build_non_enzymatic_spans, build_left_semi_spans, build_right_semi_spans, span_to_sequence, \
     get_enzymatic_spans, get_semi_spans
 
 

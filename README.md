@@ -1,53 +1,39 @@
-# Peptacular
 
-Peptacular is a Python library for simulating the enzymatic digestion of protein 
-sequences. It allows users to define custom enzymes and cleavage rules using 
-regular expressions and to generate peptide products with varying levels of 
-missed cleavages. The library also supports semi-enzymatic and non-enzymatic digestion.
+# Peptacular: A Peptide Toolkit
 
-## Features
-- Custom enzyme definition using regular expressions
-- Control over the number of missed cleavages
-- Supports semi-enzymatic and non-enzymatic digestion
-- Filters peptides based on minimum and maximum length
-- Converts peptide results to a pandas DataFrame for easy analysis
+Peptacular is a comprehensive toolkit designed for the manipulation, interpretation, and analysis of peptide sequences. It is mainly for researchers and scientists working in the field of proteomics, Peptacular provides functionalities that make it easier to handle peptide sequences, especially those with modifications commonly encountered in mass spectrometry-based proteomics.
 
-- ## Installation
-To install Peptacular, run:
+## Installation
 
 ```bash
 pip install peptacular
 ```
 
 ## Usage
-Here is a basic example of using Peptacular to digest a protein sequence with a custom enzyme:
+
+Peptide sequences are represented as strings. Modifications are represented as a dictionary with the position of the modification as the key and the modification as the value. the sequcne module allows for easy conversion between the string and dictionary for of a modified peptide.
 
 ```python
-from peptacular.protein import digest_protein, peptides_to_df
+from peptacular import sequence, mass, fragment
 
-protein_sequence = 'PEPKTIDEPERPTIDE'
+peptide = 'PEPTIDE'
+modifications = {0: '1.2345', 5: 'Oxidation'}
 
-enzyme_regexes = (
-    [('([KR])([^P])', 1)],
+modified_peptide = sequence.add_modifications(peptide, modifications)
 
-    [])
+assert modified_peptide == 'P(1.2345)EPTID(Oxidation)E'
 
-missed_cleavages = 1
-min_len = 3
-max_len = 20
-non_enzymatic = False
-semi_enzymatic = False
+parsed_modifications = sequence.parse_modifications(modified_peptide)  # {0: '1.2345', 4: 'Oxidation'}
+stripped_peptide = sequence.strip_modifications(modified_peptide)  # 'PEPTIDE'
 
-peptides = digest_protein(
-    protein_sequence,
-    enzyme_regexes,
-    missed_cleavages,
-    min_len,
-    max_len,
-    non_enzymatic,
-    semi_enzymatic
-)
+assert parsed_modifications == modifications
+assert stripped_peptide == peptide
 
-peptide_df = peptides_to_df(peptides)
-print(peptide_df)
+# calculate mass
+peptide_mass = mass.calculate_mass(modified_peptide, charge=0, monoisotopic=True)
+
+# calculate fragments
+fragments = fragment.calculate_fragment_mz_series(modified_peptide, ion_type='y', charge=1, monoisotopic=True)
 ```
+
+

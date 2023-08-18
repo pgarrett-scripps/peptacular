@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.0] First Real Release
+
+### Added:
+- term.py - a module for handling terminal modifications
+- readthedocs 'sphynx-style' documentation
+
+### Changed:
+- split up sequence module into sequence and digest
+- split mass module into fragment and mass
+- updated term modification notation to use square brackets
+- renamed most functions
+- updated documentation to be compatible with sphynx
+- 
 ## [0.3.0]
 
 ### Added:

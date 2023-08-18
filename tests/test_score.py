@@ -1,6 +1,6 @@
 import unittest
 
-from peptacular.fragmenter import Fragment
+from peptacular.fragment import Fragment
 from peptacular.score import compute_fragment_matches, FragmentMatch, match_spectra
 
 
@@ -8,8 +8,8 @@ class TestScore(unittest.TestCase):
 
     def test_fragment_match(self):
         # Test basic functionality with 'th' tolerance
-        fragments = [Fragment(sequence='PEPT', mass=100, charge=1, ion_type='y', number=1, internal=False, parent_number=4),
-                     Fragment(sequence='PEPT', mass=200, charge=1, ion_type='b', number=1, internal=False, parent_number=4)]
+        fragments = [Fragment(sequence='PEPT', mz=100, charge=1, ion_type='y', number=1, internal=False, parent_number=4),
+                     Fragment(sequence='PEPT', mz=200, charge=1, ion_type='b', number=1, internal=False, parent_number=4)]
         mz_spectrum = [99.9, 100.1, 200, 200.05, 300.1, 300.2]
         intensity_spectrum = [100, 200, 300, 400, 500, 600]
 

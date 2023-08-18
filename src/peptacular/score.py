@@ -1,10 +1,26 @@
 import math
 from dataclasses import dataclass
 from typing import List
-from .fragmenter import Fragment
+from .fragment import Fragment
+
+
+# TODO: Validation
 
 
 def match_spectra(mz_spectrum1, mz_spectrum2, tolerance_value=0.1, tolerance_type='ppm'):
+    """
+    Matches two m/z spectra based on a specified tolerance value and type.
+
+    :param mz_spectrum1: List of m/z values for the first spectrum.
+    :param mz_spectrum2: List of m/z values for the second spectrum.
+    :param tolerance_value: Tolerance value for matching. Default is 0.1.
+    :param tolerance_type: Type of tolerance ('ppm' or 'th'). Default is 'ppm'.
+
+    :return: List of index pairs representing matched peaks between the two spectra.
+
+    :raises ValueError: If the provided tolerance type is not 'ppm' or 'th'.
+    """
+
     if tolerance_type not in ['ppm', 'th']:
         raise ValueError('Invalid tolerance type. Must be "ppm" or "th"')
 
@@ -46,6 +62,10 @@ def match_spectra(mz_spectrum1, mz_spectrum2, tolerance_value=0.1, tolerance_typ
 class FragmentMatch:
     """
     Represents a match between a theoretical fragment and an experimental spectrum.
+
+    :ivar fragment: Theoretical fragment object.
+    :ivar mz: Experimental m/z value.
+    :ivar intensity: Intensity of the experimental m/z value.
     """
     fragment: Fragment
     mz: float
@@ -54,16 +74,22 @@ class FragmentMatch:
     @property
     def error(self):
         """
-        Returns the error between the theoretical and experimental m/z values.
+        The error between the theoretical and experimental m/z values.
+
+        :return: error between the theoretical and experimental m/z values.
+        :rtype: float
         """
-        return self.fragment.mass - self.mz
+        return self.fragment.mz - self.mz
 
     @property
     def error_ppm(self):
         """
-        Returns the error between the theoretical and experimental m/z values in parts-per-million (ppm).
+        The error between the theoretical and experimental m/z values in parts-per-million (ppm).
+
+        :return: error between the theoretical and experimental m/z values in parts-per-million (ppm).
+        :rtype: float
         """
-        return self.error / self.fragment.mass * 1e6
+        return self.error / self.fragment.mz * 1e6
 
 
 def compute_fragment_matches(fragments: List[Fragment], mz_spectrum, intensity_spectrum, tolerance_value=0.1,
@@ -79,8 +105,8 @@ def compute_fragment_matches(fragments: List[Fragment], mz_spectrum, intensity_s
     """
 
     # sort fragments by mass
-    fragments.sort(key=lambda x: x.mass)
-    fragment_spectrum = [f.mass for f in fragments]
+    fragments.sort(key=lambda x: x.mz)
+    fragment_spectrum = [f.mz for f in fragments]
     indices = match_spectra(fragment_spectrum, mz_spectrum, tolerance_value, tolerance_type)
 
     fragment_matches = []
