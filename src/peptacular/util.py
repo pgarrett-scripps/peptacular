@@ -15,8 +15,6 @@ def validate_ion_type(ion_type: str) -> None:
 
     :raises ValueError: If the ion type is not valid.
 
-    :Example:
-
     .. code-block:: python
 
         >>> validate_ion_type("a")  # No error raised
@@ -44,8 +42,6 @@ def is_forward(ion_type: str) -> bool:
         :return: True if it's a forward ion, False otherwise.
         :rtype: bool
 
-        :Example:
-
         .. code-block:: python
 
             >>> is_forward("a")  # Returns False
@@ -53,6 +49,7 @@ def is_forward(ion_type: str) -> bool:
 
             >>> is_forward("y")  # Returns True
             True
+
     """
 
     validate_ion_type(ion_type)
@@ -68,8 +65,6 @@ def _are_parentheses_balanced(text: str, open_char='(', closed_char=')') -> bool
 
     :return: True if parentheses are balanced, False otherwise.
     :rtype: bool
-
-    :Example:
 
     .. code-block:: python
 
@@ -100,13 +95,12 @@ def _are_parentheses_balanced(text: str, open_char='(', closed_char=')') -> bool
 def validate_parentheses(sequence: str) -> None:
     """
     Validate the parentheses in the given sequence.
+
     :param sequence: The sequence to validate.
     :type sequence: str
 
-    :return: None
-
     :raises ValueError: If the parentheses are not balanced.
-    :Example:
+
     .. code-block:: python
         >>> validate_parentheses("PEPTIDE(1.2345)")
 
@@ -136,8 +130,6 @@ def convert_type(val: str) -> Union[str, int, float]:
 
     :return: The converted value.
     :rtype: Union[str, int, float]
-
-    :Example:
 
     .. code-block:: python
 
@@ -198,8 +190,6 @@ def _validate_span(span: Tuple[int, int, int]) -> None:
     :type span: Tuple[int, int, int]
     :raises ValueError: If the span is not valid.
 
-    :Example:
-
     .. code-block:: python
 
         >>> _validate_span((0, 5, 0))  # No error raised
@@ -227,6 +217,3 @@ def _validate_span(span: Tuple[int, int, int]) -> None:
         raise ValueError(f'End of span should be non-negative, got {end}.')
     if start > end:
         raise ValueError(f'Start of span: {start}, should be less than or equal to end of span: {end}.')
-
-
-

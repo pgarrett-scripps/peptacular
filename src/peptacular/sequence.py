@@ -59,7 +59,7 @@ def calculate_sequence_length(sequence: str) -> int:
     return len(strip_modifications(sequence))
 
 
-def parse_modifications(sequence: str) -> Dict[int, Union[str, int, float]]:
+def parse_modifications(sequence: str) -> Dict[int, Union[str, float, int]]:
     """
     Parses a peptide sequence with modifications and returns a dictionary where keys
     represent the position of the modified amino acid and values are the respective modifications.
@@ -118,16 +118,6 @@ def parse_modifications(sequence: str) -> Dict[int, Union[str, int, float]]:
 def _construct_sequence_with_modifications(sequence: str, mod_map: Dict[int, Any]) -> str:
     """
     Builds a modified peptide sequence from an unmodified sequence and a dictionary of modifications.
-
-    :param sequence: The unmodified peptide sequence.
-    :type sequence: str
-    :param mod_map: Dictionary with indices of the modified amino acids and corresponding modifications.
-    :type mod_map: Dict[int, Any]
-
-    :raises ValueError: If the index of a modification is invalid for the given sequence.
-
-    :return: The modified peptide sequence.
-    :rtype: str
     """
 
     n_term_mod = mod_map.pop(-1, None)
@@ -235,7 +225,7 @@ def strip_modifications(sequence: str) -> str:
     sequence = re.sub(r'\([^)]*\)', '', sequence)
 
     # Removing modifications in square brackets
-    sequence = re.sub(r'\[[^\]]*\]', '', sequence)
+    sequence = re.sub(r'\[[^]]*]', '', sequence)
 
     return sequence
 
@@ -297,8 +287,8 @@ def apply_static_modifications(sequence: str, mod_map: Dict[str, Any], overwrite
     return add_modifications(stripped_sequence, original_mod_map)
 
 
-def _generate_modification_combinations(mods: Dict[int, Set], sequence: str, index: int, current_mods: Dict[int, Any],
-                                        max_mod_count: int) -> Generator[Dict[int, Any], None, None]:
+def _apply_variable_modifications_rec(mods: Dict[int, Set], sequence: str, index: int, current_mods: Dict[int, Any],
+                                      max_mod_count: int) -> Generator[Dict[int, Any], None, None]:
     """
     Apply variable modifications to a sequence, generating all possible combinations.
 
@@ -330,9 +320,9 @@ def _generate_modification_combinations(mods: Dict[int, Set], sequence: str, ind
             updated_mod_dict = deepcopy(current_mods)
             if index not in current_mods:
                 updated_mod_dict[index] = curr_mod
-                yield from _generate_modification_combinations(mods, sequence, index + 1, updated_mod_dict,
-                                                               max_mod_count)
-    yield from _generate_modification_combinations(mods, sequence, index + 1, original_mod_dict, max_mod_count)
+                yield from _apply_variable_modifications_rec(mods, sequence, index + 1, updated_mod_dict,
+                                                             max_mod_count)
+    yield from _apply_variable_modifications_rec(mods, sequence, index + 1, original_mod_dict, max_mod_count)
 
 
 def apply_variable_modifications(sequence: str, mod_map: Dict[str, Any], max_mods: int) -> List[str]:
@@ -376,8 +366,8 @@ def apply_variable_modifications(sequence: str, mod_map: Dict[str, Any], max_mod
         for mod_index in identify_regex_indexes(stripped_sequence, regex_str):
             new_mod_map.setdefault(mod_index, set()).add(mod_mass)
 
-    mods = _generate_modification_combinations(new_mod_map, stripped_sequence, 0, original_mods,
-                                               max_mods + len(original_mods))
+    mods = _apply_variable_modifications_rec(new_mod_map, stripped_sequence, 0, original_mods,
+                                             max_mods + len(original_mods))
     return [add_modifications(stripped_sequence, mod) for mod in mods]
 
 
@@ -430,7 +420,7 @@ def reverse_sequence(sequence: str, swap_terms: bool = False) -> str:
     return modified_sequence
 
 
-def shift_sequence_left(sequence: str, shift: int) -> str:
+def shift_sequence(sequence: str, shift: int) -> str:
     """
     Shifts the sequence to the left by a given number of positions, while preserving the position of any modifications.
 
@@ -444,20 +434,20 @@ def shift_sequence_left(sequence: str, shift: int) -> str:
 
     .. code-block:: python
 
-        >>> shift_sequence_left('PEPTIDE', 2)
+        >>> shift_sequence('PEPTIDE', 2)
         'PTIDEPE'
 
-        >>> shift_sequence_left('[Acetyl]P(phospho)EP(phospho)TIDE[Amide]', 2)
+        >>> shift_sequence('[Acetyl]P(phospho)EP(phospho)TIDE[Amide]', 2)
         '[Acetyl]P(phospho)TIDEP(phospho)E[Amide]'
 
         # Shifting by 0 or length of sequence positions returns the original sequence:
-        >>> shift_sequence_left('[Acetyl]P(phospho)EP(phospho)TIDE[Amide]', 7)
+        >>> shift_sequence('[Acetyl]P(phospho)EP(phospho)TIDE[Amide]', 7)
         '[Acetyl]P(phospho)EP(phospho)TIDE[Amide]'
-        >>> shift_sequence_left('[Acetyl]P(phospho)EP(phospho)TIDE[Amide]', 0)
+        >>> shift_sequence('[Acetyl]P(phospho)EP(phospho)TIDE[Amide]', 0)
         '[Acetyl]P(phospho)EP(phospho)TIDE[Amide]'
 
         # Shifting by a negative number shifts the sequence to the right:
-        >>> shift_sequence_left('[Acetyl]P(phospho)EP(phospho)TIDE[Amide]', -2)
+        >>> shift_sequence('[Acetyl]P(phospho)EP(phospho)TIDE[Amide]', -2)
         '[Acetyl]DEP(phospho)EP(phospho)TI[Amide]'
 
     """
@@ -488,6 +478,7 @@ def shift_sequence_left(sequence: str, shift: int) -> str:
 def is_sequence_valid(sequence: str) -> bool:
     """
     Checks if the sequence is valid. A sequence is valid if it does not contain doubly enclosed modifications.
+
     :param sequence: modified sequence
     :type sequence: str
     :return: True, if the sequence is valid, False otherwise

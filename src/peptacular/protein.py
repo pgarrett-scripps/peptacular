@@ -13,8 +13,6 @@ def find_peptide_indexes(protein: str, peptide: str) -> List[int]:
     :return: A list of starting indexes where the peptide is found in the protein sequence.
     :rtype: List[int]
 
-    :Example:
-
     .. code-block:: python
 
         >>> find_peptide_indexes("PEPTIDE", "PEP")
@@ -55,8 +53,6 @@ def build_coverage_array(protein: str, peptides: List[str], accumulate: bool = F
              list corresponds to a position in the protein sequence.
     :rtype: List[int]
 
-    :Example:
-
     .. code-block:: python
 
         >>> build_coverage_array("PEPTIDE", ["PEP"])
@@ -96,8 +92,6 @@ def calculate_percent_coverage(protein: str, peptides: List[str]) -> float:
     :return: The protein coverage percentage.
     :rtype: float
 
-    :Example:
-
     .. code-block:: python
 
         >>> calculate_percent_coverage("PEPTIDE", ["PEP"])
@@ -105,6 +99,7 @@ def calculate_percent_coverage(protein: str, peptides: List[str]) -> float:
 
         >>> calculate_percent_coverage("PEPTIDE", ["PEP", "EPT"])
         0.5714285714285714
+
     """
 
     cov_arr = build_coverage_array(protein, peptides, accumulate=False)

@@ -2,43 +2,12 @@
 Used in digest.py, and exclusively work with unmodified sequences!
 """
 
-from functools import wraps
-from typing import Tuple, List, Optional, Callable
+from typing import Tuple, List
 from itertools import groupby
 
-from peptacular.util import _validate_span
 
-
-# TODO: Remove wrapper function? Its confusing and hurts readability
-
-def span_processing(func: Callable):
-    """
-    A decorator to enforce constraints on the span and min_len and max_len arguments of decorated functions.
-
-    :param func: The function to be decorated.
-    :type func: Callable
-    :return: A wrapped function with constraints enforced on its arguments.
-    :rtype: Callable
-    """
-
-    @wraps(func)
-    def wrapper(span: Tuple[int, int, int], min_len: Optional[int] = None, max_len: Optional[int] = None):
-        assert isinstance(span, Tuple) and len(span) == 3, 'span should be a tuple of length 3.'
-        assert all(isinstance(arg, (int, type(None))) for arg in
-                   (min_len, max_len)), 'min_len and max_len should be None or an integer.'
-        _validate_span(span)
-
-        if min_len is None:
-            min_len = 1
-        if max_len is None:
-            max_len = span[1] - span[0]
-
-        return func(span, min_len, max_len)
-
-    return wrapper
-
-@span_processing
-def build_non_enzymatic_spans(span: Tuple[int, int, int], min_len: int, max_len: int) -> List[Tuple[int, int, int]]:
+def build_non_enzymatic_spans(span: Tuple[int, int, int], min_len: int = None, max_len: int = None) \
+        -> List[Tuple[int, int, int]]:
     """
     Generates and returns all possible sub-spans of the given span.
 
@@ -51,8 +20,6 @@ def build_non_enzymatic_spans(span: Tuple[int, int, int], min_len: int, max_len:
     :return: A list of all possible sub-spans as tuples.
     :rtype: List[Tuple[int, int, int]]
 
-    :Example:
-
     .. code-block:: python
 
         >>> build_non_enzymatic_spans((0, 3, 0), 1, 2)
@@ -60,12 +27,17 @@ def build_non_enzymatic_spans(span: Tuple[int, int, int], min_len: int, max_len:
 
     """
 
+    if min_len is None:
+        min_len = 1
+    if max_len is None:
+        max_len = span[1] - span[0]
+
     start, end, _ = span
     return [(i, j, 0) for i in range(start, end + 1) for j in range(i + min_len, min(end + 1, i + max_len + 1))]
 
 
-@span_processing
-def build_left_semi_spans(span: Tuple[int, int, int], min_len: int, max_len: int) -> List[Tuple[int, int, int]]:
+def build_left_semi_spans(span: Tuple[int, int, int], min_len: int = None, max_len: int = None) \
+        -> List[Tuple[int, int, int]]:
     """
     Generates and returns all possible sub-spans of the given span starting from the left.
 
@@ -77,7 +49,26 @@ def build_left_semi_spans(span: Tuple[int, int, int], min_len: int, max_len: int
     :type max_len: int
     :return: A list of all possible left sub-spans as tuples.
     :rtype: List[Tuple[int, int, int]]
+
+    .. code-block:: python
+
+        >>> build_left_semi_spans((0, 3, 0))
+        [(0, 2, 0), (0, 1, 0)]
+
+        # Keeps the value of the original span
+        >>> build_left_semi_spans((0, 3, 2))
+        [(0, 2, 2), (0, 1, 2)]
+
+        # Set min and max length
+        >>> build_left_semi_spans((0, 3, 0), 1, 1)
+        [(0, 1, 0)]
+
     """
+
+    if min_len is None:
+        min_len = 1
+    if max_len is None:
+        max_len = span[1] - span[0]
 
     if min_len > max_len:
         return []
@@ -87,8 +78,8 @@ def build_left_semi_spans(span: Tuple[int, int, int], min_len: int, max_len: int
     return [(start, i, value) for i in range(new_end, start - 1, -1) if i - start >= min_len]
 
 
-@span_processing
-def build_right_semi_spans(span: Tuple[int, int, int], min_len: int, max_len: int) -> List[Tuple[int, int, int]]:
+def build_right_semi_spans(span: Tuple[int, int, int], min_len: int = None, max_len: int = None) \
+        -> List[Tuple[int, int, int]]:
     """
     Generates and returns all possible sub-spans of the given span starting from the right.
 
@@ -100,7 +91,26 @@ def build_right_semi_spans(span: Tuple[int, int, int], min_len: int, max_len: in
     :type max_len: int
     :return: A list of all possible right sub-spans as tuples.
     :rtype: List[Tuple[int, int, int]]
+
+    .. code-block:: python
+
+        >>> build_right_semi_spans((0, 3, 0))
+        [(1, 3, 0), (2, 3, 0)]
+
+        # Keeps the value of the original span
+        >>> build_right_semi_spans((0, 3, 2))
+        [(1, 3, 2), (2, 3, 2)]
+
+        # Set min and max length
+        >>> build_right_semi_spans((0, 3, 0), 1, 1)
+        [(2, 3, 0)]
+
     """
+
+    if min_len is None:
+        min_len = 1
+    if max_len is None:
+        max_len = span[1] - span[0]
 
     if min_len > max_len:
         return []
@@ -127,6 +137,20 @@ def get_enzymatic_spans(max_index: int, enzyme_sites: List[int], missed_cleavage
     :type max_len: int, optional
     :return: A list of tuples representing enzymatic spans.
     :rtype: List[Tuple[int, int, int]]
+
+    .. code-block:: python
+
+        >>> get_enzymatic_spans(5, [0, 3, 5], 1)
+        [(0, 3, 0), (0, 5, 1), (3, 5, 0)]
+
+        # Set min length
+        >>> get_enzymatic_spans(5, [0, 3, 5], 1, min_len=5)
+        [(0, 5, 1)]
+
+        # Set max length
+        >>> get_enzymatic_spans(5, [0, 3, 5], 1, max_len=3)
+        [(0, 3, 0), (3, 5, 0)]
+
     """
 
     if min_len is None:
@@ -159,14 +183,14 @@ def _get_all_left_semi_spans(spans: List[Tuple[int, int, int]], min_len: int, ma
     """
     Get all left semi-spans from the given list of spans that have a length within the specified range.
 
+    This function groups the spans by the start position, for each group, it checks every span to see if its length
+    is at least the minimum length. If it is, it calculates the new maximum length, which is the smallest of the max_len
+    and the span's length. Then it adds the left semi-spans to the list of semi-spans.
+
     :param spans: A list of tuples, where each tuple represents a span with three integers (start, end, value).
     :param min_len: The minimum length of the left semi-spans.
     :param max_len: The maximum length of the left semi-spans.
     :return: A list of tuples representing all left semi-spans that are within the specified length range.
-
-    This function groups the spans by the start position, for each group, it checks every span to see if its length
-    is at least the minimum length. If it is, it calculates the new maximum length, which is the smallest of the max_len
-    and the span's length. Then it adds the left semi-spans to the list of semi-spans.
     """
     semi_spans = []
     spans = sorted(spans, key=lambda x: (x[0], -x[2]))
@@ -195,14 +219,14 @@ def _get_all_right_semi_spans(spans: List[Tuple[int, int, int]], min_len: int, m
     """
     Get all right semi-spans from the given list of spans that have a length within the specified range.
 
+    This function groups the spans by the start position, for each group, it checks every span to see if its length
+    is at least the minimum length. If it is, it calculates the new maximum length, which is the smallest of the max_len
+    and the span's length. Then it adds the right semi-spans to the list of semi-spans.
+
     :param spans: A list of tuples, where each tuple represents a span with three integers (start, end, value).
     :param min_len: The minimum length of the right semi-spans.
     :param max_len: The maximum length of the right semi-spans.
     :return: A list of tuples representing all right semi-spans that are within the specified length range.
-
-    This function groups the spans by the start position, for each group, it checks every span to see if its length
-    is at least the minimum length. If it is, it calculates the new maximum length, which is the smallest of the max_len
-    and the span's length. Then it adds the right semi-spans to the list of semi-spans.
     """
 
     semi_spans = []
@@ -242,17 +266,7 @@ def get_semi_spans(spans: List[Tuple[int, int, int]], min_len: int, max_len: int
     :rtype: List[Tuple[int, int, int]]
     """
 
-    semi_spans = []
-
-    spans = sorted(spans, key=lambda x: (x[0], -x[2]))
-    for _, group in groupby(spans, key=lambda x: x[0]):
-        semi_spans.extend(_get_all_left_semi_spans(list(group), min_len, max_len))
-
-    spans = sorted(spans, key=lambda x: (x[1], -x[2]))
-    for _, group in groupby(spans, key=lambda x: x[1]):
-        semi_spans.extend(_get_all_right_semi_spans(list(group), min_len, max_len))
-
-    return semi_spans
+    return _get_all_left_semi_spans(spans, min_len, max_len) + _get_all_right_semi_spans(spans, min_len, max_len)
 
 
 def build_spans(max_index: int, enzyme_sites: List[int], missed_cleavages: int, min_len: int,
@@ -282,7 +296,7 @@ def build_spans(max_index: int, enzyme_sites: List[int], missed_cleavages: int, 
         max_len = max_index
 
     if semi:
-        spans = get_enzymatic_spans(max_index, enzyme_sites, missed_cleavages, None, None)
+        spans = get_enzymatic_spans(max_index, enzyme_sites, missed_cleavages, min_len, None)
         semi_spans = get_semi_spans(spans, min_len, max_len)
 
         # filter spans by len

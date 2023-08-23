@@ -222,7 +222,6 @@ def binomial_score(fragments: List[Fragment], mz_spectrum: List[float],
     :param intensity_spectrum: List of intensity values corresponding to the m/z values in mz_spectrum.
     :param tolerance_value: Tolerance value for matching fragments to the spectrum.
     :param tolerance_type: Type of tolerance ('ppm' or 'th').
-    :param p_success: Probability of a successful match in a single trial (default is 0.5).
 
     :return: Score based on binomial probability.
     """

@@ -26,7 +26,7 @@ def get_n_term_modification(sequence: str) -> Union[str, float, int, None]:
     Given a sequence with potential N-terminal notation, this function will parse and return the N-terminal
     modification, if available. If no modification is present, it returns None.
 
-    :param sequence: Sequence possibly containing an N-terminal modification notation.
+    :param sequence: The amino acid sequence, which can include modifications.
     :type sequence: str
 
     :return: N-terminal modification if present, else None.
@@ -65,7 +65,7 @@ def strip_n_term_modification(sequence: str) -> str:
     This function takes a sequence as input and returns the sequence without its N-terminal modification
     notation. If no N-terminal modification exists, the original sequence is returned unchanged.
 
-    :param sequence: Sequence which might contain an N-terminal modification.
+    :param sequence: The amino acid sequence, which can include modifications.
     :type sequence: str
 
     :return: Sequence devoid of the N-terminal modification notation.
@@ -98,17 +98,17 @@ def strip_n_term_modification(sequence: str) -> str:
     return sequence
 
 
-def add_n_term_modification(sequence: str, mod: Union[str, int, float, None]) -> str:
+def add_n_term_modification(sequence: str, mod: Union[str, float, int, None]) -> str:
     """
     Appends the specified N-terminal modification to the provided sequence.
 
     If the sequence already contains an N-terminal modification, the new modification will be combined with the
     existing one. Ensure that the types of the modifications are compatible to prevent errors.
 
-    :param sequence: Sequence to which the N-terminal modification will be added.
+    :param sequence: The amino acid sequence, which can include modifications.
     :type sequence: str
     :param mod: Modification to be appended at the N-terminus of the sequence.
-    :type mod: Union[str, int, float, None]
+    :type mod: Union[str, float, int, None]
 
     :return: Modified sequence with the added N-terminal notation.
     :rtype: str
@@ -165,7 +165,7 @@ def get_c_term_modification(sequence: str) -> Union[str, float, int, None]:
     This function parses a sequence and retrieves the C-terminal modification if it exists.
     If the sequence lacks a C-terminal modification, the function returns None.
 
-    :param sequence: Sequence which might have a C-terminal modification notation.
+    :param sequence: The amino acid sequence, which can include modifications.
     :type sequence: str
 
     :return: C-terminal modification if present, else None.
@@ -206,7 +206,7 @@ def strip_c_term_modification(sequence: str) -> str:
     its C-terminal modification notation. If no C-terminal modification is present in
     the sequence, the original sequence is returned unchanged.
 
-    :param sequence: Sequence which might contain a C-terminal modification notation.
+    :param sequence: The amino acid sequence, which can include modifications.
     :type sequence: str
 
     :return: Sequence without the C-terminal modification notation.
@@ -247,9 +247,8 @@ def add_c_term_modification(sequence: str, mod: Any) -> str:
     combined with the existing one. Ensure that the types of the modifications are compatible
     to prevent errors.
 
-    :param sequence: Sequence to which the C-terminal modification will be added.
+    :param sequence: The amino acid sequence, which can include modifications.
     :type sequence: str
-
     :param mod: Modification to be appended at the C-terminus of the sequence. Can be of type str, int, or float.
     :type mod: Any
 
@@ -308,7 +307,7 @@ def strip_term_modifications(sequence: str) -> str:
     If the sequence contains modifications at both terminals, this function will strip both
     notations. If there are no terminal modifications, the sequence is returned unchanged.
 
-    :param sequence: Sequence that may contain N-terminal and/or C-terminal modification notations.
+    :param sequence: The amino acid sequence, which can include modifications.
     :type sequence: str
 
     :return: Sequence without any terminal modification notations.
@@ -338,7 +337,7 @@ def strip_n_term(sequence: str) -> str:
     If the sequence begins with an N-terminal modification, it will be removed alongside the first amino acid.
     If no modifications are present, this operation is equivalent to eliminating the first character of the sequence.
 
-    :param sequence: Sequence possibly containing N-terminal modifications.
+    :param sequence: The amino acid sequence, which can include modifications.
     :type sequence: str
 
     :return: Sequence with the N-terminal amino acid (and any N-terminal modification) removed.
@@ -378,7 +377,7 @@ def strip_c_term(sequence: str) -> str:
     If the sequence ends with a C-terminal modification, it will be removed alongside the last amino acid.
     If no modifications are present, this operation is equivalent to eliminating the last character of the sequence.
 
-    :param sequence: Sequence possibly containing C-terminal modifications.
+    :param sequence: The amino acid sequence, which can include modifications.
     :type sequence: str
 
     :return: Sequence with the C-terminal amino acid (and any C-terminal modification) removed.
@@ -423,7 +422,7 @@ def condense_n_term(sequence: str) -> str:
     this function will combine them into a single modification on the first amino acid.
     If there's only an N-terminal modification, it will be transferred to the first amino acid.
 
-    :param sequence: Sequence that may contain N-terminal and/or first amino acid modifications.
+    :param sequence: The amino acid sequence, which can include modifications.
     :type sequence: str
 
     :return: Sequence with merged N-terminal and first amino acid modifications.
@@ -472,7 +471,7 @@ def condense_c_term(sequence: str) -> str:
     this function will combine them into a single modification on the last amino acid.
     If there's only a C-terminal modification, it will be transferred to the last amino acid.
 
-    :param sequence: Sequence that may contain C-terminal and/or last amino acid modifications.
+    :param sequence: The amino acid sequence, which can include modifications.
     :type sequence: str
 
     :return: Sequence with merged C-terminal and last amino acid modifications.
@@ -521,7 +520,7 @@ def condense_terms(sequence: str) -> str:
     this function will combine them into single modifications on the respective amino acids.
     If there's only a terminal modification, it will be transferred to the adjacent amino acid.
 
-    :param sequence: Sequence that may contain terminal and/or amino acid modifications.
+    :param sequence: The amino acid sequence, which can include modifications.
     :type sequence: str
 
     :return: Sequence with merged terminal and adjacent amino acid modifications.

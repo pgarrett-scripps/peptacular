@@ -33,7 +33,7 @@ assert stripped_peptide == peptide
 peptide_mass = mass.calculate_mass(modified_peptide, charge=0, monoisotopic=True)
 
 # calculate fragments
-fragments = fragment.calculate_fragment_mz_series(modified_peptide, ion_type='y', charge=1, monoisotopic=True)
+fragments = fragment.fragment(modified_peptide, ion_types='y', charges=1, monoisotopic=True)
 ```
 
 Digest.py utilizes the _spans module, which represents digested peptides as simple span objects of the original protein 

@@ -1,9 +1,10 @@
 import unittest
 
-from peptacular._spans import build_non_enzymatic_spans, build_left_semi_spans, build_right_semi_spans, \
+from peptacular.spans import build_non_enzymatic_spans, build_left_semi_spans, build_right_semi_spans, \
     get_enzymatic_spans, get_semi_spans
 
 from peptacular.sequence import span_to_sequence
+
 
 class TestSpans(unittest.TestCase):
 
@@ -90,19 +91,9 @@ class TestSpans(unittest.TestCase):
         with self.assertRaises(TypeError):
             build_non_enzymatic_spans(span)
 
-    def test_get_non_enzymatic_spans_invalid_span(self):
-        span = (4, 0, 1)
-        with self.assertRaises(ValueError):
-            build_non_enzymatic_spans(span)
-
     def test_get_left_spans_non_integer_input(self):
         span = (0.5, 4.5, 1)
         with self.assertRaises(TypeError):
-            build_left_semi_spans(span)
-
-    def test_get_left_spans_invalid_span(self):
-        span = (4, 0, 1)
-        with self.assertRaises(ValueError):
             build_left_semi_spans(span)
 
     def test_get_right_spans_non_integer_input(self):
@@ -110,21 +101,10 @@ class TestSpans(unittest.TestCase):
         with self.assertRaises(TypeError):
             build_right_semi_spans(span)
 
-    def test_get_right_spans_invalid_span(self):
-        span = (4, 0, 1)
-        with self.assertRaises(ValueError):
-            build_right_semi_spans(span)
-
     def test_span_to_sequence_non_integer_input(self):
         sequence = "ABCDEFGH"
         span = (0.5, 4.5, 1)
         with self.assertRaises(TypeError):
-            span_to_sequence(sequence, span)
-
-    def test_span_to_sequence_invalid_span(self):
-        sequence = "ABCDEFGH"
-        span = (4, 0, 1)
-        with self.assertRaises(ValueError):
             span_to_sequence(sequence, span)
 
     def test_get_enzymatic_spans(self):

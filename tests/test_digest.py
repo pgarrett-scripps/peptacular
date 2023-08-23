@@ -1,7 +1,7 @@
 import unittest
 
 from peptacular import constants
-from peptacular.digest import digest_sequence, identify_cleavage_sites, build_right_semi_sequences, \
+from peptacular.digest import digest, identify_cleavage_sites, build_right_semi_sequences, \
     build_non_enzymatic_sequences, build_left_semi_sequences, build_semi_sequences
 
 PROTEIN = 'MVIMSEFSADPAGQGQGQQKPLRVGFYDIERTLGKGNFAVVKLARHRVTKTQVAIKIIDKTRLDSSNLEKIYREVQLMKLLNHPHIIKLYQVMETKDMLYIVTE'
@@ -17,64 +17,64 @@ class TestDigest(unittest.TestCase):
         self.assertEqual(cleavage_sites, sites)
 
     def test_digest_protein(self):
-        peptides = set(digest_sequence(sequence='TIDERTIDEKTIDE',
-                                       enzyme_regex=constants.PROTEASES['trypsin'],
-                                       missed_cleavages=2,
-                                       min_len=0,
-                                       max_len=100,
-                                       semi=False))
+        peptides = set(digest(sequence='TIDERTIDEKTIDE',
+                              enzyme_regex=constants.PROTEASES['trypsin'],
+                              missed_cleavages=2,
+                              min_len=0,
+                              max_len=100,
+                              semi=False))
 
         self.assertEqual(peptides,
                          {'TIDER', 'TIDERTIDEK', 'TIDERTIDEKTIDE', 'TIDEK', 'TIDEKTIDE', 'TIDE'})
 
-        peptides = set(digest_sequence(sequence='TIDERTIDEKTIDE',
-                                       enzyme_regex=constants.PROTEASES['trypsin'],
-                                       missed_cleavages=1,
-                                       min_len=0,
-                                       max_len=100,
-                                       semi=False))
+        peptides = set(digest(sequence='TIDERTIDEKTIDE',
+                              enzyme_regex=constants.PROTEASES['trypsin'],
+                              missed_cleavages=1,
+                              min_len=0,
+                              max_len=100,
+                              semi=False))
         self.assertEqual(peptides, {'TIDER', 'TIDERTIDEK', 'TIDEK', 'TIDEKTIDE', 'TIDE'})
 
-        peptides = set(digest_sequence(sequence='KTIDERTIDEKTIDE',
-                                       enzyme_regex=constants.PROTEASES['trypsin'],
-                                       missed_cleavages=1,
-                                       min_len=0,
-                                       max_len=100,
-                                       semi=False))
+        peptides = set(digest(sequence='KTIDERTIDEKTIDE',
+                              enzyme_regex=constants.PROTEASES['trypsin'],
+                              missed_cleavages=1,
+                              min_len=0,
+                              max_len=100,
+                              semi=False))
         self.assertEqual(peptides,
                          {'K', 'KTIDER', 'TIDER', 'TIDERTIDEK', 'TIDEK', 'TIDEKTIDE', 'TIDE'})
 
-        peptides = set(digest_sequence(sequence='TIDERTIDEKTIDEK',
-                                       enzyme_regex=constants.PROTEASES['trypsin'],
-                                       missed_cleavages=1,
-                                       min_len=0,
-                                       max_len=100,
-                                       semi=False))
+        peptides = set(digest(sequence='TIDERTIDEKTIDEK',
+                              enzyme_regex=constants.PROTEASES['trypsin'],
+                              missed_cleavages=1,
+                              min_len=0,
+                              max_len=100,
+                              semi=False))
         self.assertEqual(peptides, {'TIDER', 'TIDERTIDEK', 'TIDEK', 'TIDEKTIDEK', 'TIDEK'})
 
-        peptides = set(digest_sequence(sequence='TIDERTIDEKKTIDE',
-                                       enzyme_regex=constants.PROTEASES['trypsin'],
-                                       missed_cleavages=1,
-                                       min_len=0,
-                                       max_len=100,
-                                       semi=False))
+        peptides = set(digest(sequence='TIDERTIDEKKTIDE',
+                              enzyme_regex=constants.PROTEASES['trypsin'],
+                              missed_cleavages=1,
+                              min_len=0,
+                              max_len=100,
+                              semi=False))
         self.assertEqual(peptides,
                          {'TIDER', 'TIDERTIDEK', 'TIDEK', 'TIDEKK', 'K', 'KTIDE', 'TIDE'})
 
-        peptides = set(digest_sequence(sequence='TIDERTIDEKTIDE',
-                                       enzyme_regex=constants.PROTEASES['trypsin'],
-                                       missed_cleavages=0,
-                                       min_len=0,
-                                       max_len=100,
-                                       semi=False))
+        peptides = set(digest(sequence='TIDERTIDEKTIDE',
+                              enzyme_regex=constants.PROTEASES['trypsin'],
+                              missed_cleavages=0,
+                              min_len=0,
+                              max_len=100,
+                              semi=False))
         self.assertEqual(peptides, {'TIDER', 'TIDEK', 'TIDE'})
 
-        peptides = set(digest_sequence(sequence='TIDERTIDEKTIDE',
-                                       enzyme_regex=constants.PROTEASES['trypsin'],
-                                       missed_cleavages=10,
-                                       min_len=0,
-                                       max_len=100,
-                                       semi=False))
+        peptides = set(digest(sequence='TIDERTIDEKTIDE',
+                              enzyme_regex=constants.PROTEASES['trypsin'],
+                              missed_cleavages=10,
+                              min_len=0,
+                              max_len=100,
+                              semi=False))
         self.assertEqual(peptides,
                          {'TIDER', 'TIDERTIDEK', 'TIDERTIDEKTIDE', 'TIDEK', 'TIDEKTIDE', 'TIDE'})
 
