@@ -18,6 +18,22 @@ update this note when I feel the code is stable enough to be used by others.
 pip install peptacular
 ```
 
+### Modification Notations:
+- Term modifications (N-terminus and C-terminus) are specified using square brackets: `[]`.
+- Residue modifications within the sequence are specified using parentheses: `()`.
+- N-Terminus modifications are denoted with a -1 index.
+- C-Terminus modifications use the index based on the length of the unmodified sequence.
+- Residue modifications are denoted with the index of the modified residue.
+
+### Modification Types and Representation:
+- Modifications can be represented as strings, integers, or floats.
+- During parsing, the module automatically identifies the modification type based on its representation.
+
+### Example Peptide Sequence:
+- `PEPT(1)IDE` - T modification of 1 (index 3)
+- `PEPTIDE(1.234)[2]` - C-Term modification of 2 (index 7) and E modification of 1.234 (index 6)
+- `[Acetyl]PEPTIDE(1.234)` - N-Term modification of 'Acetyl' (index -1) and E modification of 1.234 (index 6)
+
 ## Working with Sequences
 ```python
 from peptacular import sequence
