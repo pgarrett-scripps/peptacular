@@ -14,12 +14,12 @@ class TestSequence(unittest.TestCase):
 
         # Test the case where there is a single modification in the peptide sequence
         peptide_sequence = "A(2)CDEFG"
-        expected_output = {0: '2'}
+        expected_output = {0: 2}
         self.assertEqual(parse_modifications(peptide_sequence), expected_output)
 
         # Test the case where there are multiple modifications in the peptide sequence
         peptide_sequence = "A(2)C(3)DE(1)FG"
-        expected_output = {0: '2', 1: '3', 3: '1'}
+        expected_output = {0: 2, 1: 3, 3: 1}
         self.assertEqual(parse_modifications(peptide_sequence), expected_output)
 
     def test_create_modified_peptide(self):

@@ -6,6 +6,8 @@ from functools import wraps
 from typing import Tuple, List, Optional, Callable
 from itertools import groupby
 
+from peptacular.util import _validate_span
+
 
 # TODO: Remove wrapper function? Its confusing and hurts readability
 
@@ -34,46 +36,6 @@ def span_processing(func: Callable):
         return func(span, min_len, max_len)
 
     return wrapper
-
-
-def _validate_span(span: Tuple[int, int, int]) -> None:
-    """
-    Validates if a given span is valid.
-
-    :param span: A tuple representing the span.
-    :type span: Tuple[int, int, int]
-    :raises ValueError: If the span is not valid.
-
-    :Example:
-
-    .. code-block:: python
-
-        >>> _validate_span((0, 5, 0))  # No error raised
-
-        >>> _validate_span((0, 0, 0))  # No error raised
-
-        >>> _validate_span((5, 0, 0))  # Raises ValueError
-        Traceback (most recent call last):
-        ValueError: Start of span: 5, should be less than or equal to end of span: 0.
-
-        >>> _validate_span((-1, 0, 0))  # Raises ValueError
-        Traceback (most recent call last):
-        ValueError: Start of span should be non-negative, got -1.
-
-        >>> _validate_span((0, -1, 0))  # Raises ValueError
-        Traceback (most recent call last):
-        ValueError: End of span should be non-negative, got -1.
-
-    """
-
-    start, end, _ = span
-    if start < 0:
-        raise ValueError(f'Start of span should be non-negative, got {start}.')
-    if end < 0:
-        raise ValueError(f'End of span should be non-negative, got {end}.')
-    if start > end:
-        raise ValueError(f'Start of span: {start}, should be less than or equal to end of span: {end}.')
-
 
 @span_processing
 def build_non_enzymatic_spans(span: Tuple[int, int, int], min_len: int, max_len: int) -> List[Tuple[int, int, int]]:
@@ -146,22 +108,6 @@ def build_right_semi_spans(span: Tuple[int, int, int], min_len: int, max_len: in
     start, end, value = span
     new_start = max(start + 1, end - max_len)
     return [(i, end, value) for i in range(new_start, end + 1) if end - i >= min_len]
-
-
-def span_to_sequence(sequence: str, span: Tuple[int, int, int]) -> str:
-    """
-    Extracts a subsequence from the input sequence based on the provided span.
-
-    :param sequence: The original sequence.
-    :type sequence: str
-    :param span: A tuple representing the span of the subsequence to be extracted.
-    :type span: Tuple[int, int, int]
-    :return: The subsequence of the input sequence defined by the span.
-    :rtype: str
-    """
-
-    _validate_span(span)
-    return sequence[span[0]:span[1]]
 
 
 def get_enzymatic_spans(max_index: int, enzyme_sites: List[int], missed_cleavages: int,

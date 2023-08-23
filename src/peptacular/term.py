@@ -1,58 +1,94 @@
+"""
+The `term.py` module provides utilities for handling terminal modifications in amino acid sequences.
+These modifications are represented by square brackets either at the N-terminus or the C-terminus.
+
+Key Features:
+    - Extract, strip, add, or condense modifications at the N or C terminus.
+    - Support for string, float, and integer type modifications.
+    - Index-based representation for easy reference.
+
+Term Modification Notation:
+    - N-Terminus: [Acetyl]PEPTIDE or [1.234]PEPTIDE
+    - C-Terminus: PEPTIDE[Amide] or PEPTIDE[3.1415]
+    - N-Terminus modifications are denoted with a -1 index.
+    - C-Terminus modifications use the index based on the length of the unmodified sequence.
+"""
+
 from typing import Union, Any
 
+from peptacular.util import convert_type
 
-def get_n_term_modification(sequence: str) -> Union[str, None]:
+
+def get_n_term_modification(sequence: str) -> Union[str, float, int, None]:
     """
-    Parsed and returns the N-terminal modification if present, otherwise None.
+    Extracts the N-terminal modification from the sequence.
 
-    :param sequence: The peptide sequence with potential N-terminal notation.
+    Given a sequence with potential N-terminal notation, this function will parse and return the N-terminal
+    modification, if available. If no modification is present, it returns None.
+
+    :param sequence: Sequence possibly containing an N-terminal modification notation.
     :type sequence: str
 
-    :return: The N-terminal modification if present, otherwise None.
-    :rtype: Union[str, None]
-
-    :Example:
+    :return: N-terminal modification if present, else None.
+    :rtype: Union[str, float, int, None]
 
     .. code-block:: python
 
-        >>> get_n_term_modification("[Acetyl]PEPTIDE[Amide]")
+        # For string-based modifications:
+        >>> get_n_term_modification("[Acetyl]PEPTIDE")
         'Acetyl'
 
-        >>> get_n_term_modification("[Acetyl]P(1)EPTIDE(1)[Amide]")
-        'Acetyl'
+        # For float-based modifications:
+        >>> get_n_term_modification("[3.1415]PEPTIDE")
+        3.1415
 
-        >>> get_n_term_modification("PEPTIDE[Amide]") # None
+        # For int-based modifications:
+        >>> get_n_term_modification("[100]PEPTIDE")
+        100
+
+        # When no N-Terminus modification is present:
+        >>> get_n_term_modification("PEPTIDE") # returns None
+
     """
 
     if sequence.startswith('['):
         # find end notation
         end = sequence.find(']')
-        return sequence[1:end]
+        return convert_type(sequence[1:end])
     return None
 
 
 def strip_n_term_modification(sequence: str) -> str:
     """
-    Strip the N-terminal modification from the given sequence.
+    Removes any N-terminal modification notation from the sequence.
 
-    :param sequence: The peptide sequence with potential N-terminal notation.
+    This function takes a sequence as input and returns the sequence without its N-terminal modification
+    notation. If no N-terminal modification exists, the original sequence is returned unchanged.
+
+    :param sequence: Sequence which might contain an N-terminal modification.
     :type sequence: str
 
-    :return: The sequence without the N-terminal modification notation.
+    :return: Sequence devoid of the N-terminal modification notation.
     :rtype: str
-
-    :Example:
 
     .. code-block:: python
 
-        >>> strip_n_term_modification("[Acetyl]PEPTIDE[Amide]")
-        'PEPTIDE[Amide]'
+        # For sequences with different modification types (string, float, int):
+        >>> strip_n_term_modification("[Acetyl]PEPTIDE")
+        'PEPTIDE'
+        >>> strip_n_term_modification("[3.1415]PEPTIDE")
+        'PEPTIDE'
+        >>> strip_n_term_modification("[100]PEPTIDE")
+        'PEPTIDE'
 
-        >>> strip_n_term_modification("[Acetyl]P(1)EPTIDE(1)[Amide]")
-        'P(1)EPTIDE(1)[Amide]'
+        # If a residue modification is present at the N-terminus, only the terminal notation is removed:
+        >>> strip_n_term_modification("[Acetyl]P(1)EPTIDE")
+        'P(1)EPTIDE'
 
-        >>> strip_n_term_modification("PEPTIDE[Amide]")
-        'PEPTIDE[Amide]'
+        # For sequences without any N-terminal modification:
+        >>> strip_n_term_modification("PEPTIDE")
+        'PEPTIDE'
+
     """
 
     if sequence.startswith('['):
@@ -62,93 +98,137 @@ def strip_n_term_modification(sequence: str) -> str:
     return sequence
 
 
-def add_n_term_modification(sequence: str, mod: Any) -> str:
+def add_n_term_modification(sequence: str, mod: Union[str, int, float, None]) -> str:
     """
-    Add the given N-terminal modification to sequence.
+    Appends the specified N-terminal modification to the provided sequence.
 
-    :param sequence: The peptide sequence to add the N-terminal notation to.
+    If the sequence already contains an N-terminal modification, the new modification will be combined with the
+    existing one. Ensure that the types of the modifications are compatible to prevent errors.
+
+    :param sequence: Sequence to which the N-terminal modification will be added.
     :type sequence: str
+    :param mod: Modification to be appended at the N-terminus of the sequence.
+    :type mod: Union[str, int, float, None]
 
-    :param mod: The N-terminal notation to add to the sequence.
-    :type mod: str
-
-    :return: The sequence with the N-terminal modification notation added.
+    :return: Modified sequence with the added N-terminal notation.
     :rtype: str
-
-    :Example:
 
     .. code-block:: python
 
-        >>> add_n_term_modification("PEPTIDE[Amide]", "Acetyl")
-        '[Acetyl]PEPTIDE[Amide]'
+        # Adding string-based modifications:
+        >>> add_n_term_modification("PEPTIDE", "Acetyl")
+        '[Acetyl]PEPTIDE'
 
-        >>> add_n_term_modification("P(1)EPTIDE(1)[Amide]", "Acetyl")
-        '[Acetyl]P(1)EPTIDE(1)[Amide]'
+        # Adding float-based modifications:
+        >>> add_n_term_modification("PEPTIDE", 3.1415)
+        '[3.1415]PEPTIDE'
 
-        >>> add_n_term_modification("PEPTIDE[Amide]", None)
-        'PEPTIDE[Amide]'
+        # Adding int-based modifications:
+        >>> add_n_term_modification("PEPTIDE", 100)
+        '[100]PEPTIDE'
+
+        # Combining new modifications with existing N-terminal modifications:
+        >>> add_n_term_modification("[Acetyl]PEPTIDE", "Amide")
+        '[AcetylAmide]PEPTIDE'
+        >>> add_n_term_modification("[3.1415]PEPTIDE", 3.1415)
+        '[6.283]PEPTIDE'
+        >>> add_n_term_modification("[100]PEPTIDE", 100)
+        '[200]PEPTIDE'
+
+        # In case of incompatible modification types:
+        >>> add_n_term_modification("[100]PEPTIDE", '100')
+        Traceback (most recent call last):
+            ...
+        TypeError: unsupported operand type(s) for +: 'int' and 'str'
+
+        # No change if the modification is None:
+        >>> add_n_term_modification("PEPTIDE", None)
+        'PEPTIDE'
+
     """
 
     if mod is None:
         return sequence
 
+    existing_mod = get_n_term_modification(sequence)
+    if existing_mod is not None:
+        new_mod = existing_mod + mod
+        return f"[{str(new_mod)}]{strip_n_term_modification(sequence)}"
+
     return f"[{str(mod)}]{sequence}"
 
 
-def get_c_term_modification(sequence: str) -> Union[str, None]:
+def get_c_term_modification(sequence: str) -> Union[str, float, int, None]:
     """
-    Parses and returns the C-terminal modification from the sequence.
+    Extracts the C-terminal modification from the provided sequence.
 
-    :param sequence: The peptide sequence with potential C-terminal notation.
+    This function parses a sequence and retrieves the C-terminal modification if it exists.
+    If the sequence lacks a C-terminal modification, the function returns None.
+
+    :param sequence: Sequence which might have a C-terminal modification notation.
     :type sequence: str
 
-    :return: The C-terminal modification if present, otherwise None.
-    :rtype: Union[str, None]
-
-    :Example:
+    :return: C-terminal modification if present, else None.
+    :rtype: Union[str, float, int, None]
 
     .. code-block:: python
 
-        >>> get_c_term_modification("[Acetyl]PEPTIDE[Amide]")
+        # For sequences with string-based modifications:
+        >>> get_c_term_modification("PEPTIDE[Amide]")
         'Amide'
 
-        >>> get_c_term_modification("[Acetyl]P(1)EPTIDE(1)[Amide]")
-        'Amide'
+        # For sequences with float-based modifications:
+        >>> get_c_term_modification("PEPTIDE[3.1415]")
+        3.1415
 
-        >>> get_c_term_modification("[Acetyl]PEPTIDE") # None
+        # For sequences with int-based modifications:
+        >>> get_c_term_modification("PEPTIDE[100]")
+        100
+
+        # When no C-terminal modification is present:
+        >>> get_c_term_modification("PEPTIDE")
 
     """
 
     if sequence.endswith(']'):
         # find start notation from back
         start = sequence.rfind('[')
-        return sequence[start + 1:-1]
+        return convert_type(sequence[start + 1:-1])
 
     return None
 
 
 def strip_c_term_modification(sequence: str) -> str:
     """
-    Strip the C-terminal modification from the given sequence.
+    Removes the C-terminal modification notation from the provided sequence.
 
-    :param sequence: The peptide sequence with potential C-terminal notation.
+    This function parses the input sequence and returns the sequence devoid of
+    its C-terminal modification notation. If no C-terminal modification is present in
+    the sequence, the original sequence is returned unchanged.
+
+    :param sequence: Sequence which might contain a C-terminal modification notation.
     :type sequence: str
 
-    :return: The sequence without the C-terminal modification notation.
+    :return: Sequence without the C-terminal modification notation.
     :rtype: str
-
-    :Example:
 
     .. code-block:: python
 
-        >>> strip_c_term_modification("[Acetyl]PEPTIDE[Amide]")
-        '[Acetyl]PEPTIDE'
+        # For sequences with different modification types (string, float, int):
+        >>> strip_c_term_modification("PEPTIDE[Acetyl]")
+        'PEPTIDE'
+        >>> strip_c_term_modification("PEPTIDE[3.1415]")
+        'PEPTIDE'
+        >>> strip_c_term_modification("PEPTIDE[100]")
+        'PEPTIDE'
 
-        >>> strip_c_term_modification("[Acetyl]P(1)EPTIDE(1)[Amide]")
-        '[Acetyl]PEPTIDE'
+        # If a residue modification is present at the C-terminus, only the terminal notation is removed:
+        >>> strip_c_term_modification("P(1)EPTIDE[Amide]")
+        'P(1)EPTIDE'
 
-        >>> strip_c_term_modification("[Acetyl]PEPTIDE")
-        '[Acetyl]PEPTIDE'
+        # For sequences without any C-terminal modification:
+        >>> strip_c_term_modification("PEPTIDE")
+        'PEPTIDE'
 
     """
 
@@ -161,65 +241,91 @@ def strip_c_term_modification(sequence: str) -> str:
 
 def add_c_term_modification(sequence: str, mod: Any) -> str:
     """
-    Add the given C-terminal modification to sequence.
+    Appends the specified C-terminal modification notation to the provided sequence.
 
-    :param sequence: The peptide sequence to add the C-terminal notation to.
+    If the sequence already contains a C-terminal modification, the new modification will be
+    combined with the existing one. Ensure that the types of the modifications are compatible
+    to prevent errors.
+
+    :param sequence: Sequence to which the C-terminal modification will be added.
     :type sequence: str
 
-    :param mod: The C-terminal notation to add to the sequence.
-    :type mod: str
+    :param mod: Modification to be appended at the C-terminus of the sequence. Can be of type str, int, or float.
+    :type mod: Any
 
-    :return: The sequence with the N-terminal modification notation added.
+    :return: Modified sequence with the added C-terminal notation.
     :rtype: str
-
-    :Example:
 
     .. code-block:: python
 
-        >>> add_c_term_modification("[Acetyl]PEPTIDE", "Amide")
-        '[Acetyl]PEPTIDE[Amide]'
+        # Adding string-based modifications:
+        >>> add_c_term_modification("PEPTIDE", "Amide")
+        'PEPTIDE[Amide]'
 
-        >>> add_c_term_modification("[Acetyl]P(1)EPTIDE(1)", "Amide")
-        '[Acetyl]P(1)EPTIDE(1)[Amide]'
+        # Adding float-based modifications:
+        >>> add_c_term_modification("PEPTIDE", 3.1415)
+        'PEPTIDE[3.1415]'
 
-        >>> add_c_term_modification("[Acetyl]PEPTIDE", None)
-        '[Acetyl]PEPTIDE'
+        # Adding int-based modifications:
+        >>> add_c_term_modification("PEPTIDE", 100)
+        'PEPTIDE[100]'
+
+        # Combining new modifications with existing C-terminal modifications:
+        >>> add_c_term_modification("PEPTIDE[Amide]", "Acetyl")
+        'PEPTIDE[AmideAcetyl]'
+        >>> add_c_term_modification("PEPTIDE[3.1415]", 3.1415)
+        'PEPTIDE[6.283]'
+        >>> add_c_term_modification("PEPTIDE[100]", 100)
+        'PEPTIDE[200]'
+
+        # In case of incompatible modification types:
+        >>> add_c_term_modification("PEPTIDE[100]", '100')
+        Traceback (most recent call last):
+            ...
+        TypeError: unsupported operand type(s) for +: 'int' and 'str'
+
+        # No change if the modification is None:
+        >>> add_c_term_modification("PEPTIDE", None)
+        'PEPTIDE'
+
     """
 
     if mod is None:
         return sequence
+
+    existing_mod = get_c_term_modification(sequence)
+    if existing_mod is not None:
+        new_mod = existing_mod + mod
+        return f"{strip_c_term_modification(sequence)}[{str(new_mod)}]"
 
     return f"{sequence}[{str(mod)}]"
 
 
 def strip_term_modifications(sequence: str) -> str:
     """
-    Strip both N-terminal and C-terminal modifications from the sequence.
+    Removes both N-terminal and C-terminal modification notations from the sequence.
 
-    :param sequence: The peptide sequence with potential terminal notations.
+    If the sequence contains modifications at both terminals, this function will strip both
+    notations. If there are no terminal modifications, the sequence is returned unchanged.
+
+    :param sequence: Sequence that may contain N-terminal and/or C-terminal modification notations.
     :type sequence: str
 
-    :return: The sequence without the terminal modification notations.
+    :return: Sequence without any terminal modification notations.
     :rtype: str
 
-    :Example:
+    :Examples:
 
     .. code-block:: python
 
+        # Removing both N-terminal and C-terminal modifications:
         >>> strip_term_modifications("[Acetyl]PEPTIDE[Amide]")
         'PEPTIDE'
 
-        >>> strip_term_modifications("[Acetyl]P(1)EPTIDE(1)[Amide]")
-        'P(1)EPTIDE(1)'
-
-        >>> strip_term_modifications("[Acetyl]PEPTIDE")
+        # The result is equivalent to applying strip_n_term_modification followed by strip_c_term_modification:
+        >>> strip_n_term_modification(strip_c_term_modification("[Acetyl]PEPTIDE[Amide]"))
         'PEPTIDE'
 
-        >>> strip_term_modifications("PEPTIDE[Amide]")
-        'PEPTIDE'
-
-        >>> strip_term_modifications("PEPTIDE")
-        'PEPTIDE'
     """
 
     return strip_n_term_modification(strip_c_term_modification(sequence))
@@ -227,31 +333,35 @@ def strip_term_modifications(sequence: str) -> str:
 
 def strip_n_term(sequence: str) -> str:
     """
-    Removes the first (N-terminal) amino acid from the sequence, while preserving the position of any modifications.
+    Removes the N-terminal amino acid from the sequence, retaining any other modifications in their original positions.
 
-    :param sequence: The sequence to trim.
+    If the sequence begins with an N-terminal modification, it will be removed alongside the first amino acid.
+    If no modifications are present, this operation is equivalent to eliminating the first character of the sequence.
+
+    :param sequence: Sequence possibly containing N-terminal modifications.
     :type sequence: str
 
-    :return: The trimmed sequence
+    :return: Sequence with the N-terminal amino acid (and any N-terminal modification) removed.
     :rtype: str
-
-    :Example:
 
     .. code-block:: python
 
+        # For sequences without modifications, the first character is removed:
         >>> strip_n_term('PEPTIDE')
         'EPTIDE'
 
+        # Sequences with N-terminal modifications have them removed along with the first amino acid:
         >>> strip_n_term('[Acetyl]P(phospho)EP(phospho)TIDE[Amide]')
         'EP(phospho)TIDE[Amide]'
 
+        # For sequences with a single amino acid having a C-terminal modification, the result is an empty string:
         >>> strip_n_term('E(1)[Amide]')
         ''
-
         >>> strip_n_term('E[Amide]')
         ''
 
     """
+
     sequence = strip_n_term_modification(sequence)
     sequence = sequence[1:]
     if sequence and sequence[0] == '(':
@@ -263,31 +373,35 @@ def strip_n_term(sequence: str) -> str:
 
 def strip_c_term(sequence: str) -> str:
     """
-    Removes the last (C-terminal) amino acid from the sequence, while preserving the position of any modifications.
+    Removes the C-terminal amino acid from the sequence, retaining any other modifications in their original positions.
 
-    :param sequence: The sequence to trim.
+    If the sequence ends with a C-terminal modification, it will be removed alongside the last amino acid.
+    If no modifications are present, this operation is equivalent to eliminating the last character of the sequence.
+
+    :param sequence: Sequence possibly containing C-terminal modifications.
     :type sequence: str
 
-    :return: The trimmed sequence
+    :return: Sequence with the C-terminal amino acid (and any C-terminal modification) removed.
     :rtype: str
-
-    :Example:
 
     .. code-block:: python
 
+        # For sequences without modifications, the last character is removed:
         >>> strip_c_term('PEPTIDE')
         'PEPTID'
 
+        # Sequences with C-terminal modifications have them removed along with the last amino acid:
         >>> strip_c_term('[Acetyl]P(phospho)EP(phospho)TIDE(1)[Amide]')
         '[Acetyl]P(phospho)EP(phospho)TID'
 
+        # For sequences with a single amino acid having a N-terminal modification, the result is an empty string:
         >>> strip_c_term('[Acetyl]P(phospho)')
         ''
-
         >>> strip_c_term('[Acetyl]P')
         ''
 
     """
+
     sequence = strip_c_term_modification(sequence)
 
     if sequence and sequence[-1] == ')':
@@ -303,30 +417,38 @@ def strip_c_term(sequence: str) -> str:
 
 def condense_n_term(sequence: str) -> str:
     """
-    Combines the N-terminal modification with the first amino acid modicication. If the first amino acid is modified,
-    the modification is added to the N-terminal modification. Both modifications must be float-like in order to be
-    combined.
+    Merges any N-terminal modification with the modification of the first amino acid.
 
-    :param sequence: The sequence to condense.
+    If the sequence has both an N-terminal modification and a modification on the first amino acid,
+    this function will combine them into a single modification on the first amino acid.
+    If there's only an N-terminal modification, it will be transferred to the first amino acid.
+
+    :param sequence: Sequence that may contain N-terminal and/or first amino acid modifications.
     :type sequence: str
-    :return: The condensed sequence.
-    :rtype: str
 
-    :Example:
+    :return: Sequence with merged N-terminal and first amino acid modifications.
+    :rtype: str
 
     .. code-block:: python
 
+        # For sequences with just an N-terminal modification:
         >>> condense_n_term('[Acetyl]PEPTIDE')
         'P(Acetyl)EPTIDE'
 
+        # Combining N-terminal and first amino acid modifications:
+        >>> condense_n_term('[1.0]P(2)EPTIDE')
+        'P(3.0)EPTIDE'
+        >>> condense_n_term('[Acetyl]P(Amide)EPTIDE')
+        'P(AcetylAmide)EPTIDE'
+
+        # TypeError when incompatible modifications are attempted to be combined:
         >>> condense_n_term('[Acetyl]P(1.0)EPTIDE')
         Traceback (most recent call last):
-        ValueError: could not convert string to float: 'Acetyl'
-
-        >>> condense_n_term('[1.0]P(2.0)EP(phospho)TIDE')
-        'P(3.0)EP(phospho)TIDE'
+        ...
+        TypeError: can only concatenate str (not "float") to str
 
     """
+
     n_term_mod = get_n_term_modification(sequence)
     if n_term_mod is None:
         return sequence
@@ -334,7 +456,7 @@ def condense_n_term(sequence: str) -> str:
     sequence = strip_n_term_modification(sequence)
     if sequence[1] == '(':  # if the first amino acid is modified
         end = sequence.index(')')
-        condensed_mod = float(sequence[2:end]) + float(n_term_mod)
+        condensed_mod = n_term_mod + convert_type(sequence[2:end])
         sequence = f"{sequence[:1]}({condensed_mod}){sequence[end + 1:]}"
     else:
         sequence = f"{sequence[0]}({n_term_mod}){sequence[1:]}"
@@ -344,28 +466,35 @@ def condense_n_term(sequence: str) -> str:
 
 def condense_c_term(sequence: str) -> str:
     """
-    Combines the C-terminal modification with the last amino acid. If the last amino acid is modified,
-    the modification is added to the C-terminal modification. Both modifications must be float-like in order to be
-    combined.
+    Merges any C-terminal modification with the modification of the last amino acid.
 
-    :param sequence: The sequence to condense.
+    If the sequence has both a C-terminal modification and a modification on the last amino acid,
+    this function will combine them into a single modification on the last amino acid.
+    If there's only a C-terminal modification, it will be transferred to the last amino acid.
+
+    :param sequence: Sequence that may contain C-terminal and/or last amino acid modifications.
     :type sequence: str
-    :return: The condensed sequence.
-    :rtype: str
 
-    :Example:
+    :return: Sequence with merged C-terminal and last amino acid modifications.
+    :rtype: str
 
     .. code-block:: python
 
+        # For sequences with just a C-terminal modification:
         >>> condense_c_term('PEPTIDE[Amide]')
         'PEPTIDE(Amide)'
 
-        >>> condense_c_term('PEPTIDE(1)[Amide]')
-        Traceback (most recent call last):
-        ValueError: could not convert string to float: 'Amide'
+        # Combining C-terminal and last amino acid modifications:
+        >>> condense_c_term('PEPTIDE(1.0)[2.0]')
+        'PEPTIDE(3.0)'
+        >>> condense_c_term('PEPTIDE(Acetyl)[Amide]')
+        'PEPTIDE(AcetylAmide)'
 
-        >>> condense_c_term('PEPTIDE(1)[1.0]')
-        'PEPTIDE(2.0)'
+        # TypeError when incompatible modifications are attempted to be combined:
+        >>> condense_c_term('PEPTIDE(1.0)[Amide]')
+        Traceback (most recent call last):
+        ...
+        TypeError: unsupported operand type(s) for +: 'float' and 'str'
 
     """
 
@@ -376,7 +505,7 @@ def condense_c_term(sequence: str) -> str:
     sequence = strip_c_term_modification(sequence)
     if sequence[-1] == ')':  # if the last amino acid is modified
         start = sequence.rindex('(')
-        condensed_mod = float(sequence[start + 1:-1]) + float(c_term_mod)
+        condensed_mod = convert_type(sequence[start + 1:-1]) + c_term_mod
         sequence = f"{sequence[:start]}({condensed_mod})"
     else:
         sequence = f"{sequence}({c_term_mod})"
@@ -386,28 +515,28 @@ def condense_c_term(sequence: str) -> str:
 
 def condense_terms(sequence: str) -> str:
     """
-    Condenses the term modifications onto the associated term residues, adding modifications together if necessary.
-    For term modifications to be combined with the term amino acid modification, both modifications must be float-like.
+    Merges both the N-terminal and C-terminal modifications with their respective adjacent amino acid modifications.
 
+    If the sequence has terminal modifications (either N-terminal or C-terminal) and adjacent amino acid modifications,
+    this function will combine them into single modifications on the respective amino acids.
+    If there's only a terminal modification, it will be transferred to the adjacent amino acid.
 
-    :param sequence: modified sequence
+    :param sequence: Sequence that may contain terminal and/or amino acid modifications.
     :type sequence: str
-    :return: condensed sequence
-    :rtype: str
 
-    :Example:
+    :return: Sequence with merged terminal and adjacent amino acid modifications.
+    :rtype: str
 
     .. code-block:: python
 
-        >>> condense_terms('[Acetyl]PEPTIDE[Amide]')
-        'P(Acetyl)EPTIDE(Amide)'
+        # For sequences with modifications at both terminals:
+        >>> condense_terms('[1.0]P(2.0)EPTIDE(1.0)[2.0]')
+        'P(3.0)EPTIDE(3.0)'
 
-        >>> condense_terms('[Acetyl]PEPTIDE(1)[Amide]')
-        Traceback (most recent call last):
-        ValueError: could not convert string to float: 'Amide'
+        # Condense_terms is equivalent to the sequential application of condense_n_term and condense_c_term:
+        >>> condense_n_term(condense_c_term('[1.0]P(2.0)EPTIDE(1.0)[2.0]'))
+        'P(3.0)EPTIDE(3.0)'
 
-        >>> condense_terms('[Acetyl]PEPTIDE(1)[1.0]')
-        'P(Acetyl)EPTIDE(2.0)'
     """
 
     return condense_n_term(condense_c_term(sequence))

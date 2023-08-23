@@ -1,65 +1,86 @@
+"""
+Sequence.py - Amino Acid Sequence Manipulation with Modifications
+
+This module provides a set of utility functions to work with amino acid sequences that may contain modifications.
+Such modifications can occur at any position within the sequence and can also be present at the N-terminus or
+C-terminus of a peptide sequence.
+
+Key Features:
+- Parsing sequences with modifications and extracting modification details.
+- Calculating the length of sequences excluding any modification notations.
+- Adding, shifting, reversing, and stripping modifications from sequences.
+- Applying both static and variable modifications to sequences.
+- Validating the structure and integrity of modified sequences.
+
+Modification Notations:
+- Term modifications (N-terminus and C-terminus) are specified using square brackets: `[]`.
+- Residue modifications within the sequence are specified using parentheses: `()`.
+
+Modification Types and Representation:
+- Modifications can be represented as strings (e.g., "Phospho", "Acetyl"), integers, or floats.
+- String-based modifications typically represent the name or type of the modification.
+- Numerical modifications (integers or floats) represent specific mass changes associated with a modification.
+- During parsing, the module automatically identifies the modification type based on its representation.
+
+Example Sequences:
+    [Acetyl]P(Oxydation)EPTI(Phospho)DE[Amide] or [1.234]PE(1.0)PTI(2.0)DE[3.1415]
+
+The module ensures that sequences and their modifications are handled correctly, preserving the positional
+relationship between amino acids and their modifications during operations.
+"""
+
 import re
 from copy import deepcopy
-from typing import Dict, List, Any, Generator
+from typing import Dict, List, Any, Generator, Union, Set, Tuple
 
 from peptacular.term import get_c_term_modification, strip_term_modifications, add_n_term_modification, \
     add_c_term_modification, get_n_term_modification
+from peptacular.util import convert_type, identify_regex_indexes, _validate_span
 
 
 def calculate_sequence_length(sequence: str) -> int:
     """
-    Compute the length of the peptide sequence, excluding terminal modification notations.
+    Compute the length of the peptide sequence, excluding any modification notation.
 
-    :param sequence: The peptide sequence with potential terminal notations.
+    :param sequence: The amino acid sequence
     :type sequence: str
-
-    :return: The length of the peptide sequence.
+    :return: Length of the unmodified sequence.
     :rtype: int
-
-    :Example:
 
     .. code-block:: python
 
         >>> calculate_sequence_length("[Acetyl]PEP(1.2345)TID(3.14)E[Amide]")
         7
-
-        >>> calculate_sequence_length("PEP(1.2345)TID(3.14)E")
-        7
-
-        >>> calculate_sequence_length("[Acetyl]PEPTIDE[Amide]")
-        7
-
         >>> calculate_sequence_length("PEPTIDE")
         7
+
     """
 
     return len(strip_modifications(sequence))
 
 
-def parse_modifications(sequence: str) -> Dict[int, str]:
+def parse_modifications(sequence: str) -> Dict[int, Union[str, int, float]]:
     """
     Parses a peptide sequence with modifications and returns a dictionary where keys
     represent the position of the modified amino acid and values are the respective modifications.
 
     :param sequence: The peptide sequence, potentially including modifications.
     :type sequence: str
-
     :return: A dictionary with the modification values indexed by the position
              of the modified amino acid.
-    :rtype: Dict[int, str]
-
-    :raises ValueError: If the sequence contains invalid modification notation.
-
-    :Example:
+    :rtype: Dict[int, Union[str, int, float]]
 
     .. code-block:: python
 
-        >>> parse_modifications('PEP(Phospho)TIDE')
-        {2: 'Phospho'}
+        # All modifications will be returned as either strings, ints or floats.
+        >>> parse_modifications('PEP(Phospho)T(1)IDE(3.14)')
+        {2: 'Phospho', 3: 1, 6: 3.14}
 
-        >>> parse_modifications('[Acetyl]P(3.14)EPTIDE(1.234)[Amide]')
-        {-1: 'Acetyl', 0: '3.14', 6: '1.234', 7: 'Amide'}
+        # N-terminus and C-terminal modifications are index by -1, and the length of the sequence, respectively:
+        >>> parse_modifications('[Acetyl]PEPTIDE[Amide]')
+        {-1: 'Acetyl', 7: 'Amide'}
 
+        # A sequecnes without any modifications will return an empty dictionary:
         >>> parse_modifications('PEPTIDE')
         {}
     """
@@ -81,9 +102,9 @@ def parse_modifications(sequence: str) -> Dict[int, str]:
     mod_offset = 0
 
     for match in matches:
-        modification_position = match.start() - mod_offset - 1
-        modification_value = match.group(1)
-        modifications[modification_position] = modification_value
+        mod_index = match.start() - mod_offset - 1
+        mod = convert_type(match.group(1))
+        modifications[mod_index] = mod
 
         # Compute offset for the next modification
         mod_offset += len(match.group())
@@ -94,76 +115,94 @@ def parse_modifications(sequence: str) -> Dict[int, str]:
     return modifications
 
 
-def _build_modified_sequence(unmodified_sequence: str, modifications: Dict[int, Any]) -> str:
+def _construct_sequence_with_modifications(sequence: str, mod_map: Dict[int, Any]) -> str:
     """
     Builds a modified peptide sequence from an unmodified sequence and a dictionary of modifications.
+
+    :param sequence: The unmodified peptide sequence.
+    :type sequence: str
+    :param mod_map: Dictionary with indices of the modified amino acids and corresponding modifications.
+    :type mod_map: Dict[int, Any]
+
+    :raises ValueError: If the index of a modification is invalid for the given sequence.
+
+    :return: The modified peptide sequence.
+    :rtype: str
     """
-    n_term_mod = modifications.pop(-1, None)
-    c_term_mod = modifications.pop(calculate_sequence_length(unmodified_sequence), None)
+
+    n_term_mod = mod_map.pop(-1, None)
+    c_term_mod = mod_map.pop(calculate_sequence_length(sequence), None)
 
     modified_sequence = []
     prev_index = 0
 
     # Sort the modifications by index in descending order
-    for i, mod in sorted(modifications.items()):
+    for mod_index, mod in sorted(mod_map.items()):
 
-        if i < -1 or i >= len(unmodified_sequence):
-            raise ValueError(f'Index of modification: {i} is invalid for peptide sequence: {unmodified_sequence}')
+        if mod_index < -1 or mod_index >= len(sequence):
+            raise ValueError(f'Index of modification: {mod_index} is invalid for peptide sequence: {sequence}')
 
         # Insert the modification into the modified peptide sequence
-        modified_sequence.append(unmodified_sequence[prev_index: i + 1])
+        modified_sequence.append(sequence[prev_index: mod_index + 1])
         modified_sequence.append(f"({mod})")
-        prev_index = i + 1
+        prev_index = mod_index + 1
 
-    modified_sequence.append(unmodified_sequence[prev_index:])
+    modified_sequence.append(sequence[prev_index:])
     modified_sequence = ''.join(modified_sequence)
     modified_sequence = add_n_term_modification(modified_sequence, n_term_mod)
     modified_sequence = add_c_term_modification(modified_sequence, c_term_mod)
     return modified_sequence
 
 
-def add_modifications(sequence: str, modifications: Dict[int, Any]) -> str:
+def add_modifications(sequence: str, modifications: Dict[int, Any], overwrite: bool = True) -> str:
     """
-    Adds modifications to the given peptide sequence, overriding any existing modifications at overlapping indexes.
-
-    The modifications are provided as a dictionary where keys correspond to the indices of the amino acids
-    in the sequence to be modified, and values are the modifications to be applied. Modifications are inserted
-    into the sequence in descending order of their indices to ensure their validity after each modification.
+    Adds modifications to the given peptide sequence.
 
     :param sequence: Unmodified peptide sequence.
     :type sequence: str
     :param modifications: Dictionary with indices of the modified amino acids and corresponding modifications.
-    :type modifications: Dict[int, str]
+    :type modifications: Dict[int, Any]
+    :param overwrite: If True, existing modifications will be overwritten. If False, existing modifications will be
+                        preserved.
+    :type overwrite: bool
 
     :return: The peptide sequence with the specified modifications.
     :rtype: str
 
-    :raises ValueError: If an index in modifications is invalid for the sequence.
-
-    :Example:
-
     .. code-block:: python
 
+        # Add internal modifications to an unmodified peptide
         >>> add_modifications('PEPTIDE', {2: 'phospho'})
         'PEP(phospho)TIDE'
 
+        # Can also add N and C terminal modifications
         >>> add_modifications('PEPTIDE', {-1: 'Acetyl', 6: '1.234', 7: 'Amide'})
         '[Acetyl]PEPTIDE(1.234)[Amide]'
 
+        # Empty modification dicts will simply return the input sequence
         >>> add_modifications('PEPTIDE', {})
         'PEPTIDE'
 
-        >>> add_modifications('[Acetyl]PEPTIDE(1.234)[Amide]', {-1: 'Amide', 7: 'Acetyl'})
-        '[Amide]PEPTIDE(1.234)[Acetyl]'
+        # Existing modifications will be overwritten by default
+        >>> add_modifications('PEP(phospho)TIDE', {2: 'acetyl'})
+        'PEP(acetyl)TIDE'
+
+        # Can also preserve existing modifications
+        >>> add_modifications('PEP(phospho)TIDE', {2: 'acetyl'}, overwrite=False)
+        'PEP(phospho)TIDE'
     """
 
     stripped_sequence = strip_modifications(sequence)
     original_mods = parse_modifications(sequence)
 
-    # Merge the original modifications with the new ones, overriding the original ones
-    original_mods.update(modifications)
+    for mod_index, mod in sorted(modifications.items()):
+        if mod_index in original_mods:
+            if overwrite is True:
+                original_mods[mod_index] = mod
+        else:
+            original_mods[mod_index] = mod
 
-    return _build_modified_sequence(stripped_sequence, original_mods)
+    return _construct_sequence_with_modifications(stripped_sequence, original_mods)
 
 
 def strip_modifications(sequence: str) -> str:
@@ -176,18 +215,17 @@ def strip_modifications(sequence: str) -> str:
     :return: unmodified sequence
     :rtype: str
 
-    :raises ValueError: If an index in modifications is invalid for the sequence.
-
-    :Example:
-
     .. code-block:: python
 
+        # Removes internal modifications:
         >>> strip_modifications('PEP(phospho)TIDE')
         'PEPTIDE'
 
+        # Also removes N and C terminal modifications:
         >>> strip_modifications('[Acetyl](3.14)PEPTIDE(1.234)[Amide]')
         'PEPTIDE'
 
+        # Using a sequence without modifications will return the same sequence:
         >>> strip_modifications('PEPTIDE')
         'PEPTIDE'
 
@@ -202,7 +240,7 @@ def strip_modifications(sequence: str) -> str:
     return sequence
 
 
-def apply_static_modifications(sequence: str, mod_map: Dict[str, Any]) -> str:
+def apply_static_modifications(sequence: str, mod_map: Dict[str, Any], overwrite: bool = True) -> str:
     """
     Add static modifications to an amino acid sequence. If a modification is already present in the sequence,
     it will be replaced by the new one.
@@ -211,56 +249,67 @@ def apply_static_modifications(sequence: str, mod_map: Dict[str, Any]) -> str:
     :type sequence: str
     :param mod_map: Dictionary mapping amino acids to the mass of their modifications.
     :type mod_map: Dict[str, Any]
+    :param overwrite: If True, existing modifications will be replaced by the new ones.
+    :type overwrite: bool
 
     :return: Modified amino acid sequence.
     :rtype: str
 
-    :raises ValueError: If an index in modifications is invalid for the sequence.
-
-    :Example:
-
     .. code-block:: python
 
+        # Applies static modifcation to all matching residues in the sequence:
         >>> apply_static_modifications('PEPTIDE', {'P': 'phospho'})
         'P(phospho)EP(phospho)TIDE'
 
+        # Can specify multiple static modifications:
+        >>> apply_static_modifications('PEPTIDE', {'P': 'phospho', 'E': '3.0'})
+        'P(phospho)E(3.0)P(phospho)TIDE(3.0)'
+
+        # Works with already modified sequences:
         >>> apply_static_modifications('[3.14]PEPTIDE(1.234)', {'P': 'phospho'})
         '[3.14]P(phospho)EP(phospho)TIDE(1.234)'
 
+        # By default, any overlapping modifications will be replaced:
         >>> apply_static_modifications('PEP(1.234)TIDE', {'P': 'phospho'})
         'P(phospho)EP(phospho)TIDE'
 
-        >>> apply_static_modifications('PEPTIDE', {})
-        'PEPTIDE'
+        # To not reaplce existing modifications, set override to False:
+        >>> apply_static_modifications('PEP(1.234)TIDE', {'P': 'phospho'}, overwrite=False)
+        'P(phospho)EP(1.234)TIDE'
 
-        >>> apply_static_modifications('PEPTIDE', {'S': 'phospho'})
-        'PEPTIDE'
+        # Can also use regular expressions to match multiple residues:
+        >>> apply_static_modifications('PEPTIDE', {'(?<=P)E': 'phospho'})
+        'PE(phospho)PTIDE'
+
+        >>> apply_static_modifications('PEPTIDE', {'PE': 'phospho'})
+        'P(phospho)EPTIDE'
 
     """
 
     stripped_sequence = strip_modifications(sequence)
-    sequence_mod_map = parse_modifications(sequence)
-    for aa, mass in mod_map.items():
-        indexes = [i for i, x in enumerate(stripped_sequence) if x == aa]
-        for index in indexes:
-            sequence_mod_map[index] = mass
+    original_mod_map = parse_modifications(sequence)
 
-    return add_modifications(stripped_sequence, sequence_mod_map)
+    for regex_str, mod_mass in mod_map.items():
+        for mod_index in identify_regex_indexes(stripped_sequence, regex_str):
+            if overwrite is True or mod_index not in original_mod_map:
+                original_mod_map[mod_index] = mod_mass
+
+    return add_modifications(stripped_sequence, original_mod_map)
 
 
-def _variable_modification_builder(mods: Dict[str, Any], sequence: str, curr_idx: int, mod_dict: Dict[int, Any],
-                                   max_mod_count: int) -> Generator[Dict[int, str], None, None]:
+def _generate_modification_combinations(mods: Dict[int, Set], sequence: str, index: int, current_mods: Dict[int, Any],
+                                        max_mod_count: int) -> Generator[Dict[int, Any], None, None]:
     """
-    Recursive function to generate all possible combinations of modifications on an amino acid sequence.
+    Apply variable modifications to a sequence, generating all possible combinations.
 
     :param mods: Dictionary mapping amino acids to the mass of their modifications.
-    :type mods: Dict[str, Any]
-    :param sequence: amino acid sequence to modify.
+    :type mods: Dict[int, Any]
+    :param sequence: the unmodified sequence.
     :type sequence: str
-    :param curr_idx: Current index on the amino acid sequence.
-    :type curr_idx: int
-    :param mod_dict: Dictionary mapping the indices of the amino acids to the mass of their modifications.
-    :type mod_dict: Dict[int, str]
+    :param index: Current index on the amino acid sequence.
+    :type index: int
+    :param current_mods: Dictionary mapping the indices of the amino acids to the mass of their modifications.
+    :type current_mods: Dict[int, str]
     :param max_mod_count: Maximum number of modifications allowed on the amino acid sequence.
     :type max_mod_count: int
 
@@ -268,57 +317,67 @@ def _variable_modification_builder(mods: Dict[str, Any], sequence: str, curr_idx
     :rtype: Generator[Dict[int, float], None, None]
     """
 
-    if curr_idx == len(sequence):
-        yield mod_dict
+    if index == len(sequence) or len(current_mods) == max_mod_count:
+        yield current_mods
         return
 
-    original_mod_dict = deepcopy(mod_dict)
-    for aa, mass in mods.items():
+    original_mod_dict = deepcopy(current_mods)
 
-        if len(mod_dict) >= max_mod_count:
-            break
+    curr_mods = mods.get(index, None)
 
-        if sequence[curr_idx] == aa and curr_idx not in mod_dict:
-            mod_dict[curr_idx] = mass
-            yield from _variable_modification_builder(mods, sequence, curr_idx + 1, mod_dict, max_mod_count)
-
-    yield from _variable_modification_builder(mods, sequence, curr_idx + 1, original_mod_dict, max_mod_count)
+    if curr_mods is not None:
+        for curr_mod in curr_mods:
+            updated_mod_dict = deepcopy(current_mods)
+            if index not in current_mods:
+                updated_mod_dict[index] = curr_mod
+                yield from _generate_modification_combinations(mods, sequence, index + 1, updated_mod_dict,
+                                                               max_mod_count)
+    yield from _generate_modification_combinations(mods, sequence, index + 1, original_mod_dict, max_mod_count)
 
 
 def apply_variable_modifications(sequence: str, mod_map: Dict[str, Any], max_mods: int) -> List[str]:
     """
-    Add variable modifications to an amino acid sequence.
+    Apply variable modifications to a sequence.
 
     :param sequence: Original amino acid sequence.
     :type sequence: str
     :param mod_map: Dictionary mapping amino acids to the mass of their modifications.
-    :type mod_map: Dict[str, float]
+    :type mod_map: Dict[str, Any]
     :param max_mods: Maximum number of modifications allowed on the peptide.
     :type max_mods: int
 
-    :return: List of all possible modified peptide sequences, each represented as a string.
+    :return: List of all possible modified peptide sequences.
     :rtype: List[str]
-
-    :raises ValueError: If an index in modifications is invalid for the sequence.
-
-    :Example:
 
     .. code-block:: python
 
         >>> apply_variable_modifications('PEPTIDE', {'P': 'phospho'}, 2)
         ['P(phospho)EP(phospho)TIDE', 'P(phospho)EPTIDE', 'PEP(phospho)TIDE', 'PEPTIDE']
 
+        # Setting max_mods to 0 will return the original sequence:
         >>> apply_variable_modifications('PEPTIDE', {'P': 'phospho'}, 0)
         ['PEPTIDE']
 
+        # Works with already modified sequences, and will not replace existing modifications:
         >>> apply_variable_modifications('[Acetyl]P(3.14)EPTIDE[Amide]', {'P': 'phospho'}, 2)
         ['[Acetyl]P(3.14)EP(phospho)TIDE[Amide]', '[Acetyl]P(3.14)EPTIDE[Amide]']
+
+        # Can also use regular expressions to match multiple residues:
+        >>> apply_variable_modifications('PEPTIDE', {'(?<=P)E': 'phospho'}, 2)
+        ['PE(phospho)PTIDE', 'PEPTIDE']
 
     """
 
     original_mods = parse_modifications(sequence)
     stripped_sequence = strip_modifications(sequence)
-    mods = _variable_modification_builder(mod_map, stripped_sequence, 0, original_mods, max_mods + len(original_mods))
+
+    new_mod_map: Dict[int, Set] = {}
+    for regex_str, mod_mass in mod_map.items():
+        for mod_index in identify_regex_indexes(stripped_sequence, regex_str):
+            new_mod_map.setdefault(mod_index, set()).add(mod_mass)
+
+    mods = _generate_modification_combinations(new_mod_map, stripped_sequence, 0, original_mods,
+                                               max_mods + len(original_mods))
     return [add_modifications(stripped_sequence, mod) for mod in mods]
 
 
@@ -328,26 +387,24 @@ def reverse_sequence(sequence: str, swap_terms: bool = False) -> str:
 
     :param sequence: The amino acid sequence to be reversed.
     :type sequence: str
-
     :param swap_terms: If True, the N- and C-terminal modifications will be swapped.
     :type swap_terms: bool
 
     :return: The reversed sequence with modifications preserved.
     :rtype: str
 
-    :raises ValueError: If the sequence contains unmatched parentheses indicating incorrect modification notation.
-
-    :Example:
-
     .. code-block:: python
 
+        # For unmodified sequences, the result is the same as the built-in string reversal:
         >>> reverse_sequence('PEPTIDE')
         'EDITPEP'
 
+        # For modified sequences, the modifications are preserved on the associated residues:
         >>> reverse_sequence('[Acetyl]P(phospho)EP(phospho)TIDE[Amide]')
         '[Acetyl]EDITP(phospho)EP(phospho)[Amide]'
 
-        >>> reverse_sequence('[Acetyl]P(phospho)EP(phospho)TIDE[Amide]', True)
+        # If swap_terms is True, the N- and C-terminal modifications will be swapped too:
+        >>> reverse_sequence('[Acetyl]P(phospho)EP(phospho)TIDE[Amide]', swap_terms=True)
         '[Amide]EDITP(phospho)EP(phospho)[Acetyl]'
 
     """
@@ -385,10 +442,6 @@ def shift_sequence_left(sequence: str, shift: int) -> str:
     :return: The shifted sequence with modifications preserved.
     :rtype: str
 
-    :raises ValueError: If the sequence contains unmatched parentheses indicating incorrect modification notation.
-
-    :Example:
-
     .. code-block:: python
 
         >>> shift_sequence_left('PEPTIDE', 2)
@@ -397,14 +450,15 @@ def shift_sequence_left(sequence: str, shift: int) -> str:
         >>> shift_sequence_left('[Acetyl]P(phospho)EP(phospho)TIDE[Amide]', 2)
         '[Acetyl]P(phospho)TIDEP(phospho)E[Amide]'
 
+        # Shifting by 0 or length of sequence positions returns the original sequence:
         >>> shift_sequence_left('[Acetyl]P(phospho)EP(phospho)TIDE[Amide]', 7)
         '[Acetyl]P(phospho)EP(phospho)TIDE[Amide]'
-
-        >>> shift_sequence_left('[Acetyl]P(phospho)EP(phospho)TIDE[Amide]', -2)
-        '[Acetyl]DEP(phospho)EP(phospho)TI[Amide]'
-
         >>> shift_sequence_left('[Acetyl]P(phospho)EP(phospho)TIDE[Amide]', 0)
         '[Acetyl]P(phospho)EP(phospho)TIDE[Amide]'
+
+        # Shifting by a negative number shifts the sequence to the right:
+        >>> shift_sequence_left('[Acetyl]P(phospho)EP(phospho)TIDE[Amide]', -2)
+        '[Acetyl]DEP(phospho)EP(phospho)TI[Amide]'
 
     """
 
@@ -438,8 +492,6 @@ def is_sequence_valid(sequence: str) -> bool:
     :type sequence: str
     :return: True, if the sequence is valid, False otherwise
     :rtype: bool
-
-    :Example:
 
     .. code-block:: python
 
@@ -476,3 +528,61 @@ def is_sequence_valid(sequence: str) -> bool:
             return False
 
     return True
+
+
+def span_to_sequence(sequence: str, span: Tuple[int, int, int]) -> str:
+    """
+    Extracts a subsequence from the input sequence based on the provided span.
+
+    :param sequence: The original sequence.
+    :type sequence: str
+    :param span: A tuple representing the span of the subsequence to be extracted.
+    :type span: Tuple[int, int, int]
+
+    :return: The subsequence of the input sequence defined by the span.
+    :rtype: str
+
+    .. code-block:: python
+
+        # Works with unmodified sequences
+        >>> span_to_sequence('PEPTIDE', (0, 4, 0))
+        'PEPT'
+
+        >>> span_to_sequence('PEPTIDE', (1, 6, 0))
+        'EPTID'
+
+        >>> span_to_sequence('PEPTIDE', (4, 7, 0))
+        'IDE'
+
+        # but will also preserve modifications, including terminal modifications
+        >>> span_to_sequence('[Acetyl]P(1.0)EPTIDE', (0, 4, 0))
+        '[Acetyl]P(1.0)EPT'
+
+        >>> span_to_sequence('PEPTIDE(1.0)[Amide]', (4, 7, 0))
+        'IDE(1.0)[Amide]'
+
+    """
+
+    _validate_span(span)
+
+    stripped_sequence = strip_modifications(sequence)
+
+    base_sequence = stripped_sequence[span[0]:span[1]]
+
+    # if peptide is unmodified skip the modification parsing
+    if stripped_sequence == sequence:
+        return base_sequence
+
+    mods = parse_modifications(sequence)
+    n_term = get_n_term_modification(sequence)
+    c_term = get_c_term_modification(sequence)
+
+    mods = {k-span[0]: mods[k] for k in mods if span[0] <= k < span[1]}
+
+    if span[0] == 0 and n_term is not None:
+        mods[-1] = n_term
+
+    if span[1] == len(stripped_sequence) and c_term is not None:
+        mods[len(base_sequence)] = c_term
+
+    return add_modifications(base_sequence, mods)

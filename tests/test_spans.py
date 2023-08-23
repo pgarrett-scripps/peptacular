@@ -1,8 +1,9 @@
 import unittest
 
-from peptacular._spans import build_non_enzymatic_spans, build_left_semi_spans, build_right_semi_spans, span_to_sequence, \
+from peptacular._spans import build_non_enzymatic_spans, build_left_semi_spans, build_right_semi_spans, \
     get_enzymatic_spans, get_semi_spans
 
+from peptacular.sequence import span_to_sequence
 
 class TestSpans(unittest.TestCase):
 

@@ -1,8 +1,8 @@
 import unittest
 
 from peptacular import constants
-from peptacular.digest import digest_sequence, identify_cleavage_sites, _build_right_semi_sequences, \
-    build_non_enzymatic_sequences, _build_left_semi_sequences, build_semi_sequences
+from peptacular.digest import digest_sequence, identify_cleavage_sites, build_right_semi_sequences, \
+    build_non_enzymatic_sequences, build_left_semi_sequences, build_semi_sequences
 
 PROTEIN = 'MVIMSEFSADPAGQGQGQQKPLRVGFYDIERTLGKGNFAVVKLARHRVTKTQVAIKIIDKTRLDSSNLEKIYREVQLMKLLNHPHIIKLYQVMETKDMLYIVTE'
 
@@ -89,32 +89,32 @@ class TestDigest(unittest.TestCase):
                {'P', 'E', 'TIDE', 'PTIDE', 'PEPT', 'PEPTI', 'IDE', 'PEP', 'PE', 'DE', 'PEPTID', 'EPTIDE'}
 
     def test_get_left_semi_sequences(self):
-        self.assertEqual(set(_build_left_semi_sequences('PEPTIDE', None, None)),
+        self.assertEqual(set(build_left_semi_sequences('PEPTIDE', None, None)),
                          {'P', 'PE', 'PEP', 'PEPT', 'PEPTI', 'PEPTID'})
-        self.assertEqual(set(_build_left_semi_sequences('PEPTIDE', 3, None)), {'PEP', 'PEPT', 'PEPTI', 'PEPTID'})
-        self.assertEqual(set(_build_left_semi_sequences('PEPTIDE', None, 5)), {'P', 'PE', 'PEP', 'PEPT', 'PEPTI'})
+        self.assertEqual(set(build_left_semi_sequences('PEPTIDE', 3, None)), {'PEP', 'PEPT', 'PEPTI', 'PEPTID'})
+        self.assertEqual(set(build_left_semi_sequences('PEPTIDE', None, 5)), {'P', 'PE', 'PEP', 'PEPT', 'PEPTI'})
 
-        assert set(_build_left_semi_sequences(sequence='PEPTIDE', min_len=None, max_len=None)) == \
+        assert set(build_left_semi_sequences(sequence='PEPTIDE', min_len=None, max_len=None)) == \
                {'P', 'PE', 'PEP', 'PEPT', 'PEPTI', 'PEPTID'}
-        assert set(_build_left_semi_sequences(sequence='PEPTIDE', min_len=3, max_len=None)) == \
+        assert set(build_left_semi_sequences(sequence='PEPTIDE', min_len=3, max_len=None)) == \
                {'PEP', 'PEPT', 'PEPTI', 'PEPTID'}
-        assert set(_build_left_semi_sequences(sequence='PEPTIDE', min_len=None, max_len=5)) == \
+        assert set(build_left_semi_sequences(sequence='PEPTIDE', min_len=None, max_len=5)) == \
                {'P', 'PE', 'PEP', 'PEPT', 'PEPTI'}
-        assert set(_build_left_semi_sequences(sequence='PEPTIDE', min_len=3, max_len=4)) == \
+        assert set(build_left_semi_sequences(sequence='PEPTIDE', min_len=3, max_len=4)) == \
                {'PEP', 'PEPT'}
 
     def test_get_right_semi_sequences(self):
-        self.assertEqual(set(_build_right_semi_sequences('PEPTIDE', None, None)),
+        self.assertEqual(set(build_right_semi_sequences('PEPTIDE', None, None)),
                          {'EPTIDE', 'PTIDE', 'TIDE', 'IDE', 'DE', 'E'})
-        self.assertEqual(set(_build_right_semi_sequences('PEPTIDE', 3, None)), {'EPTIDE', 'PTIDE', 'TIDE', 'IDE'})
-        self.assertEqual(set(_build_right_semi_sequences('PEPTIDE', None, 5)), {'PTIDE', 'TIDE', 'IDE', 'DE', 'E'})
-        assert set(_build_right_semi_sequences(sequence='PEPTIDE', min_len=None, max_len=None)) == \
+        self.assertEqual(set(build_right_semi_sequences('PEPTIDE', 3, None)), {'EPTIDE', 'PTIDE', 'TIDE', 'IDE'})
+        self.assertEqual(set(build_right_semi_sequences('PEPTIDE', None, 5)), {'PTIDE', 'TIDE', 'IDE', 'DE', 'E'})
+        assert set(build_right_semi_sequences(sequence='PEPTIDE', min_len=None, max_len=None)) == \
                {'EPTIDE', 'PTIDE', 'TIDE', 'IDE', 'DE', 'E'}
-        assert set(_build_right_semi_sequences(sequence='PEPTIDE', min_len=3, max_len=None)) == \
+        assert set(build_right_semi_sequences(sequence='PEPTIDE', min_len=3, max_len=None)) == \
                {'EPTIDE', 'PTIDE', 'TIDE', 'IDE'}
-        assert set(_build_right_semi_sequences(sequence='PEPTIDE', min_len=None, max_len=5)) == \
+        assert set(build_right_semi_sequences(sequence='PEPTIDE', min_len=None, max_len=5)) == \
                {'PTIDE', 'TIDE', 'IDE', 'DE', 'E'}
-        assert set(_build_right_semi_sequences(sequence='PEPTIDE', min_len=3, max_len=4)) == \
+        assert set(build_right_semi_sequences(sequence='PEPTIDE', min_len=3, max_len=4)) == \
                {'TIDE', 'IDE'}
 
     def test_get_all_non_enzymatic_peptides(self):

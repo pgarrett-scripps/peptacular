@@ -1,3 +1,6 @@
+from typing import Union, List, Tuple
+import regex as reg
+
 from peptacular.constants import VALID_ION_TYPES, FORWARD_IONS
 
 
@@ -122,3 +125,108 @@ def validate_parentheses(sequence: str) -> None:
 
     if not _are_parentheses_balanced(sequence, '[', ']'):
         raise ValueError(f'Incorrect modification notation in peptide sequence: "{sequence}".')
+
+
+def convert_type(val: str) -> Union[str, int, float]:
+    """
+    Convert the given value to the appropriate type.
+
+    :param val: The value to convert.
+    :type val: str
+
+    :return: The converted value.
+    :rtype: Union[str, int, float]
+
+    :Example:
+
+    .. code-block:: python
+
+        >>> convert_type("1.234")
+        1.234
+
+        >>> convert_type("1")
+        1
+
+        >>> convert_type("abc")
+        'abc'
+    """
+    try:
+        return int(val)
+    except ValueError:
+        try:
+            return float(val)
+        except ValueError:
+            return val
+
+
+def identify_regex_indexes(input_str: str, regex_str: str, offset: int = 0) -> List[int]:
+    """
+    Identify the starting indexes of occurrences of a given regex pattern within a string.
+
+    :param input_str: The sequence in which to search.
+    :type input_str: str
+    :param regex_str: The regex pattern to search for.
+    :type regex_str: str
+    :param offset: An optional offset to add to each identified index. Default is 0.
+    :type offset: int
+    :return: A list of starting indexes where the regex pattern is found in the sequence.
+    :rtype: List[int]
+
+    .. code-block:: python
+
+        >>> identify_regex_indexes("PEPTIDE", "P")
+        [0, 2]
+
+        >>> identify_regex_indexes("PEPTIDE", "E")
+        [1, 6]
+
+        # More complex regex
+        >>> identify_regex_indexes("PEPTIDEP", "P[ST]")
+        [2]
+
+    """
+
+    regex_indexes = [match.start() + offset for match in reg.finditer(regex_str, input_str, overlapped=True)]
+    return regex_indexes
+
+
+def _validate_span(span: Tuple[int, int, int]) -> None:
+    """
+    Validates if a given span is valid.
+
+    :param span: A tuple representing the span.
+    :type span: Tuple[int, int, int]
+    :raises ValueError: If the span is not valid.
+
+    :Example:
+
+    .. code-block:: python
+
+        >>> _validate_span((0, 5, 0))  # No error raised
+
+        >>> _validate_span((0, 0, 0))  # No error raised
+
+        >>> _validate_span((5, 0, 0))  # Raises ValueError
+        Traceback (most recent call last):
+        ValueError: Start of span: 5, should be less than or equal to end of span: 0.
+
+        >>> _validate_span((-1, 0, 0))  # Raises ValueError
+        Traceback (most recent call last):
+        ValueError: Start of span should be non-negative, got -1.
+
+        >>> _validate_span((0, -1, 0))  # Raises ValueError
+        Traceback (most recent call last):
+        ValueError: End of span should be non-negative, got -1.
+
+    """
+
+    start, end, _ = span
+    if start < 0:
+        raise ValueError(f'Start of span should be non-negative, got {start}.')
+    if end < 0:
+        raise ValueError(f'End of span should be non-negative, got {end}.')
+    if start > end:
+        raise ValueError(f'Start of span: {start}, should be less than or equal to end of span: {end}.')
+
+
+

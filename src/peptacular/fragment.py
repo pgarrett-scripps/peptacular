@@ -1,7 +1,7 @@
 from dataclasses import dataclass
-from typing import List, Generator
+from typing import List, Generator, Union
 
-from peptacular.constants import MONO_ISOTOPIC_ATOMIC_MASSES
+from peptacular.constants import PROTON_MASS
 from peptacular.mass import calculate_mz
 from peptacular.sequence import strip_modifications
 from peptacular.term import strip_c_term, strip_n_term
@@ -17,9 +17,30 @@ class Fragment:
     :ivar float mz: The mass-to-charge (m/z) ratio of the fragment.
     :ivar int charge: The charge state of the fragment.
     :ivar str ion_type: The type of ion formed by the fragmentation.
-    :ivar int number: The fragment number (starting from the C-terminus).
+    :ivar int number: The fragment ion number, for abc ions this refers to the number of residues starting from the
+                      N-terminus, for xyz ions this refers to the number of residues starting from the C-terminus.
     :ivar bool internal: True if the fragment is an internal fragment, False if it is a terminal fragment.
-    :ivar int parent_number: The number of the parent fragment from which the internal fragment is derived.
+    :ivar int parent_number: The number of the parent fragment from which the internal fragment is derived. For
+    terminal fragments (internal=False) the number and parent number should always be equal.
+
+    .. code-block:: python
+
+        >>> fragment = Fragment("PEPTIDE", 123.456, 1, "b", 2, False, 2)
+        >>> fragment.sequence
+        'PEPTIDE'
+        >>> fragment.mz
+        123.456
+        >>> fragment.charge
+        1
+        >>> fragment.ion_type
+        'b'
+        >>> fragment.number
+        2
+        >>> fragment.internal
+        False
+        >>> fragment.parent_number
+        2
+
     """
 
     sequence: str
@@ -30,6 +51,13 @@ class Fragment:
     internal: bool
     parent_number: int
 
+    def __post_init__(self):
+        """
+        Validates the fragment after initialization.
+        """
+        if self.internal is False and self.number != self.parent_number:
+            raise ValueError("Parent number must be equal to number for terminal fragments.")
+
     @property
     def start(self):
         """
@@ -37,6 +65,8 @@ class Fragment:
 
         :return: Start index of the fragment.
         :rtype: int
+
+        :raises ValueError: If the ion type is invalid.
         """
         if self.ion_type in 'abc':
             if self.internal is False:
@@ -55,6 +85,8 @@ class Fragment:
 
         :return: End index of the fragment.
         :rtype: int
+
+        :raises ValueError: If the ion type is invalid.
         """
         if self.ion_type in 'abc':
             return self.parent_number
@@ -84,7 +116,7 @@ class Fragment:
         :return: Neutral mass of the fragment.
         :rtype: float
         """
-        return self.mass - self.charge * MONO_ISOTOPIC_ATOMIC_MASSES['PROTON']
+        return self.mass - self.charge * PROTON_MASS
 
     @property
     def label(self):
@@ -101,26 +133,50 @@ class Fragment:
                f"{self.number if self.internal else ''}"
 
 
-def create_fragments(sequence: str, ion_types: List[str], charges: List[int], monoisotopic: bool,
-                     internal_fragments: bool) -> List[Fragment]:
+def create_fragments(sequence: str, ion_types: Union[List[str], str], charges: Union[List[int], int],
+                     monoisotopic: bool = True, internal: bool = False) -> List[Fragment]:
     """
     Generate a list of fragments for a given peptide sequence.
 
     :param sequence: The peptide sequence (can be modified).
     :type sequence: str
-    :param ion_types: A list of ion types to consider, e.g., ['b', 'y'].
-    :type ion_types: List[str]
-    :param charges: A list of charge states for the fragments.
-    :type charges: List[int]
-    :param monoisotopic: If True, use monoisotopic masses for calculations.
+    :param ion_types: A list of ion types to consider, e.g., ['b', 'y'], or a single ion type, e.g., 'b'.
+    :type ion_types: Union[List[str], str]
+    :param charges: A list of charge states for the fragments, or a single charge state.
+    :type charges: Union[List[int], int]
+    :param monoisotopic: If True, use monoisotopic masses. If False, use average masses. Default is [True].
     :type monoisotopic: bool
-    :param internal_fragments: If True, include internal fragments.
-    :type internal_fragments: bool
+    :param internal: If True, include internal fragments. If False, only include terminal fragments. Default is [False].
+    :type internal: bool
 
     :return: A list of Fragment objects representing the generated fragments.
     :rtype: List[Fragment]
 
+    .. code-block:: python
+
+        >>> frags = create_fragments("[1.0]P(2.0)E(3.0)[4.0]", 'y', 1, monoisotopic=True, internal=False)
+        >>> len(frags)
+        2
+
+        >>> fragments[0].sequence
+        '[1.0]P(2.0)E(3.0)[4.0]'
+
+        >>> fragments[0].mz
+        255.11319808729002
+
+        >>> fragments[1].sequence
+        'E(3.0)[4.0]'
+
+        >>> fragments[1].mz
+        155.06043423844
+
     """
+
+    if isinstance(ion_types, str):
+        ion_types = [ion_types]
+
+    if isinstance(charges, int):
+        charges = [charges]
 
     fragments = []
     for ion_type in ion_types:
@@ -132,7 +188,7 @@ def create_fragments(sequence: str, ion_types: List[str], charges: List[int], mo
                 mz = calculate_mz(fragment_sequence, charge=charge, ion_type=ion_type, monoisotopic=monoisotopic)
                 fragments.append(Fragment(sequence=fragment_sequence, mz=mz, charge=charge, ion_type=ion_type,
                                           number=frag_number, internal=False, parent_number=frag_number))
-            if internal_fragments is True:
+            if internal is True:
                 fragment_seq_len = len(strip_modifications(fragment_sequence))
                 for internal_number, internal_fragment_sequence in enumerate(
                         create_fragment_internal_sequences(sequence=fragment_sequence, ion_type=ion_type)):
@@ -162,10 +218,9 @@ def create_fragment_sequences(sequence: str, ion_type: str) -> List[str]:
     :type ion_type: str
 
     :raise ValueError: If the ion type is not one of 'a', 'b', 'c', 'x', 'y', or 'z'.
+
     :return: The fragment sequences.
     :rtype: List[str]
-
-    :Example:
 
     .. code-block:: python
 
@@ -181,7 +236,7 @@ def create_fragment_sequences(sequence: str, ion_type: str) -> List[str]:
 
     """
 
-    return list(_sequence_trimmer(sequence, is_forward=is_forward(ion_type)))
+    return list(sequence_trimmer(sequence, forward=is_forward(ion_type)))
 
 
 def create_fragment_internal_sequences(sequence: str, ion_type: str) -> List[str]:
@@ -194,10 +249,9 @@ def create_fragment_internal_sequences(sequence: str, ion_type: str) -> List[str
     :type ion_type: str
 
     :raise ValueError: If the ion type is not one of 'a', 'b', 'c', 'x', 'y', or 'z'.
+
     :return: The internal fragment sequences.
     :rtype: List[str]
-
-    :Example:
 
     .. code-block:: python
 
@@ -213,33 +267,39 @@ def create_fragment_internal_sequences(sequence: str, ion_type: str) -> List[str
 
     """
 
-    return list(_sequence_trimmer(sequence, is_forward=not is_forward(ion_type)))
+    return list(sequence_trimmer(sequence, forward=not is_forward(ion_type)))
 
 
-def _sequence_trimmer(sequence: str, is_forward: bool) -> Generator[str, None, None]:
+def sequence_trimmer(sequence: str, forward: bool) -> Generator[str, None, None]:
     """
     Generates amino acid sequences either from the front or the back.
 
-    Args:
-        sequence (str): The initial amino acid sequence.
-        is_forward (bool): If True, start generating from the front; else, start from the back.
+    :param sequence: The peptide sequence.
+    :type sequence: str
+    :param forward: If True, generate sequences from the front. If False, generate sequences from the back.
+    :type forward: bool
 
-    Returns:
-        generator: A generator yielding amino acid sequences.
-
-    :Example:
+    :return: A generator of sequences.
+    :rtype: Generator[str, None, None]
 
     .. code-block:: python
 
-        >>> list(_sequence_trimmer("PEPTIDE", True))
+        >>> list(sequence_trimmer("PEPTIDE", True))
         ['PEPTIDE', 'EPTIDE', 'PTIDE', 'TIDE', 'IDE', 'DE', 'E']
 
-        >>> list(_sequence_trimmer("PEPTIDE", False))
+        >>> list(sequence_trimmer("PEPTIDE", False))
         ['PEPTIDE', 'PEPTID', 'PEPTI', 'PEPT', 'PEP', 'PE', 'P']
+
+        # Works with modifications
+        >>> list(sequence_trimmer("[Acetyl]PE(3.0)PTIDE", True))
+        ['[Acetyl]PE(3.0)PTIDE', 'E(3.0)PTIDE', 'PTIDE', 'TIDE', 'IDE', 'DE', 'E']
+
+        >>> list(sequence_trimmer("PEP(1.0)TIDE[Amide]", False))
+        ['PEP(1.0)TIDE[Amide]', 'PEP(1.0)TID', 'PEP(1.0)TI', 'PEP(1.0)T', 'PEP(1.0)', 'PE', 'P']
 
     """
 
-    if is_forward is True:
+    if forward is True:
         return _trim_from_start(sequence)
 
     return _trim_from_end(sequence)
@@ -257,10 +317,6 @@ def _trim_from_end(sequence: str) -> Generator[str, None, None]:
 
     :yield: The sequence with the back amino acid (and modification) removed.
     :rtype: Generator[str, None, None]
-
-    :return: None if the modification starts at the beginning of the sequence.
-
-    :Example:
 
     .. code-block:: python
 
@@ -290,10 +346,6 @@ def _trim_from_start(sequence: str) -> Generator[str, None, None]:
     :yield: The sequence with the front amino acid (and modification) removed.
     :rtype: Generator[str, None, None]
 
-    :return: None if the modification ends at the end of the sequence.
-
-    :Example:
-
     .. code-block:: python
 
         >>> list(_trim_from_start('PET'))
@@ -307,8 +359,9 @@ def _trim_from_start(sequence: str) -> Generator[str, None, None]:
         yield sequence
         sequence = strip_n_term(sequence)
 
-def calculate_fragment_mz_values(sequence: str, types=('b', 'y'), max_charge=1, monoisotopic=True) -> Generator[
-    float, None, None]:
+
+def calculate_fragment_mz_values(sequence: str, types=('b', 'y'), max_charge=1, monoisotopic=True) \
+        -> Generator[float, None, None]:
     """
     Generates fragments of a given amino acid sequence based on the specified ion types and charge states.
 
@@ -320,7 +373,9 @@ def calculate_fragment_mz_values(sequence: str, types=('b', 'y'), max_charge=1, 
     :type max_charge: int
     :param monoisotopic: Indicates whether to calculate monoisotopic mass. Defaults to True.
     :type monoisotopic: bool
+
     :raise ValueError: If the ion type is not one of 'a', 'b', 'c', 'x', 'y', or 'z'.
+
     :yield: The calculated m/z for the fragment.
     :rtype: float
     """
@@ -344,11 +399,30 @@ def calculate_fragment_mz_series(sequence: str, ion_type='y', charge=1, monoisot
     :type charge: int
     :param monoisotopic: Indicates whether to calculate monoisotopic mass. Defaults to True.
     :type monoisotopic: bool
+
     :raise ValueError: If the ion type is not one of 'a', 'b', 'c', 'x', 'y', or 'z'.
+
     :yield: The calculated m/z for the fragment.
     :rtype: float
+
+    .. code-block:: python
+
+        >>> list(calculate_fragment_mz_series("TIDE", ion_type="y", charge=1))
+        [477.21911970781, 376.17144123940005, 263.08737726227, 148.06043423844]
+
+        >>> list(calculate_fragment_mz_series("TIDE", ion_type="b", charge=2))
+        [230.10791574544, 165.58661920145502, 108.07314768954, 51.531115700975]
+
+        >>> list(calculate_fragment_mz_series("[1.0]T(-1.0)IDE(2.0)[-2.0]", ion_type="y", charge=1))
+        [477.21911970781, 376.17144123940005, 263.08737726227, 148.06043423844]
+
+        >>> list(calculate_fragment_mz_series("[Acetyl]TIDE", ion_type="b", charge=2))
+        Traceback (most recent call last):
+        ...
+        ValueError: could not convert string to float: 'Acetyl'
+
     """
 
     # Loop through the sequence to generate fragments and yield m/z
-    for sub_sequence in _sequence_trimmer(sequence, is_forward=is_forward(ion_type)):
+    for sub_sequence in sequence_trimmer(sequence, forward=is_forward(ion_type)):
         yield calculate_mz(sequence=sub_sequence, charge=charge, ion_type=ion_type, monoisotopic=monoisotopic)

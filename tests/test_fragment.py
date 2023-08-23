@@ -1,4 +1,4 @@
-from peptacular.fragment import calculate_fragment_mz_values, _sequence_trimmer, _trim_from_end, \
+from peptacular.fragment import calculate_fragment_mz_values, sequence_trimmer, _trim_from_end, \
     _trim_from_start, create_fragment_sequences, create_fragment_internal_sequences
 
 import unittest
@@ -55,7 +55,7 @@ class TestFragment(unittest.TestCase):
 
     def test_sequence_trimmer(self):
         # Test forward generator
-        generator = _sequence_trimmer("A(P)C(P)G", True)
+        generator = sequence_trimmer("A(P)C(P)G", True)
         self.assertEqual(next(generator), "A(P)C(P)G")
         self.assertEqual(next(generator), "C(P)G")
         self.assertEqual(next(generator), "G")
@@ -63,7 +63,7 @@ class TestFragment(unittest.TestCase):
             next(generator)
 
         # Test backward generator
-        generator = _sequence_trimmer("A(P)C(P)G", False)
+        generator = sequence_trimmer("A(P)C(P)G", False)
         self.assertEqual(next(generator), "A(P)C(P)G")
         self.assertEqual(next(generator), "A(P)C(P)")
         self.assertEqual(next(generator), "A(P)")
