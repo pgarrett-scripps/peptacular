@@ -19,5 +19,4 @@ sphinx:
 python:
   install:
     - requirements: docs/source/requirements.txt  # Adjust if your requirements file has a different name or path
-    - path: src
-
+    - path: .
