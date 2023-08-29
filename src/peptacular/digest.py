@@ -299,9 +299,8 @@ def digest(sequence: str, enzyme_regex: Union[List[str], str], missed_cleavages:
         ['TIDERTIDEK', 'TIDERTIDEKTIDE', 'TIDEKTIDE']
 
         # Generate semi-enzymatic sequences:
-        >>> digest(sequence='TIDERTIDEKTIDE', enzyme_regex='([KR])', missed_cleavages=1, min_len=8, semi=True)
-        ['TIDERTIDEK', 'TIDEKTIDE', 'TIDERTIDE', 'TIDERTID', 'TIDEKTID', 'IDERTIDEK', 'DERTIDEK', 'IDEKTIDE']
-
+        >>> digest(sequence='TIDERTIDEK(1)TIDE[2]', enzyme_regex='([KR])', missed_cleavages=1, min_len=9, semi=True)
+        ['TIDERTIDEK(1)', 'TIDEK(1)TIDE[2]', 'TIDERTIDE', 'IDERTIDEK(1)']
     """
 
     if isinstance(enzyme_regex, str):
@@ -312,7 +311,7 @@ def digest(sequence: str, enzyme_regex: Union[List[str], str], missed_cleavages:
         cleavage_sites.extend(identify_cleavage_sites(sequence, regex))
     cleavage_sites.sort()
 
-    spans = build_spans(len(sequence), cleavage_sites, missed_cleavages, min_len, max_len, semi)
+    spans = build_spans(calculate_sequence_length(sequence), cleavage_sites, missed_cleavages, min_len, max_len, semi)
     sequences = [span_to_sequence(sequence, span) for span in spans]
 
     return sequences

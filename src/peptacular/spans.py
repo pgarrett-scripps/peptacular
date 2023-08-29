@@ -6,7 +6,7 @@ from typing import Tuple, List
 from itertools import groupby
 
 
-def build_non_enzymatic_spans(span: Tuple[int, int, int], min_len: int = None, max_len: int = None) \
+def build_non_enzymatic_spans(span: Tuple[int, int, int], min_len: int = 1, max_len: int = None) \
         -> List[Tuple[int, int, int]]:
     """
     Generates and returns all possible sub-spans of the given span.
@@ -29,6 +29,7 @@ def build_non_enzymatic_spans(span: Tuple[int, int, int], min_len: int = None, m
 
     if min_len is None:
         min_len = 1
+
     if max_len is None:
         max_len = span[1] - span[0]
 
@@ -36,7 +37,7 @@ def build_non_enzymatic_spans(span: Tuple[int, int, int], min_len: int = None, m
     return [(i, j, 0) for i in range(start, end + 1) for j in range(i + min_len, min(end + 1, i + max_len + 1))]
 
 
-def build_left_semi_spans(span: Tuple[int, int, int], min_len: int = None, max_len: int = None) \
+def build_left_semi_spans(span: Tuple[int, int, int], min_len: int = 1, max_len: int = None) \
         -> List[Tuple[int, int, int]]:
     """
     Generates and returns all possible sub-spans of the given span starting from the left.
@@ -64,21 +65,18 @@ def build_left_semi_spans(span: Tuple[int, int, int], min_len: int = None, max_l
         [(0, 1, 0)]
 
     """
-
     if min_len is None:
         min_len = 1
+
     if max_len is None:
         max_len = span[1] - span[0]
-
-    if min_len > max_len:
-        return []
 
     start, end, value = span
     new_end = min(start + max_len, end - 1)
     return [(start, i, value) for i in range(new_end, start - 1, -1) if i - start >= min_len]
 
 
-def build_right_semi_spans(span: Tuple[int, int, int], min_len: int = None, max_len: int = None) \
+def build_right_semi_spans(span: Tuple[int, int, int], min_len: int = 1, max_len: int = None) \
         -> List[Tuple[int, int, int]]:
     """
     Generates and returns all possible sub-spans of the given span starting from the right.
@@ -106,14 +104,11 @@ def build_right_semi_spans(span: Tuple[int, int, int], min_len: int = None, max_
         [(2, 3, 0)]
 
     """
-
     if min_len is None:
         min_len = 1
+
     if max_len is None:
         max_len = span[1] - span[0]
-
-    if min_len > max_len:
-        return []
 
     start, end, value = span
     new_start = max(start + 1, end - max_len)
@@ -121,7 +116,7 @@ def build_right_semi_spans(span: Tuple[int, int, int], min_len: int = None, max_
 
 
 def get_enzymatic_spans(max_index: int, enzyme_sites: List[int], missed_cleavages: int,
-                        min_len: int = None, max_len: int = None) -> List[Tuple[int, int, int]]:
+                        min_len: int = 1, max_len: int = None) -> List[Tuple[int, int, int]]:
     """
     Computes enzymatic spans for the given enzyme sites and missed cleavages.
 
@@ -152,9 +147,9 @@ def get_enzymatic_spans(max_index: int, enzyme_sites: List[int], missed_cleavage
         [(0, 3, 0), (3, 5, 0)]
 
     """
-
     if min_len is None:
         min_len = 1
+
     if max_len is None:
         max_len = max_index
 
@@ -251,7 +246,7 @@ def _get_all_right_semi_spans(spans: List[Tuple[int, int, int]], min_len: int, m
     return semi_spans
 
 
-def get_semi_spans(spans: List[Tuple[int, int, int]], min_len: int, max_len: int) -> \
+def get_semi_spans(spans: List[Tuple[int, int, int]], min_len: int = 1, max_len: int = None) -> \
         List[Tuple[int, int, int]]:
     """
     Computes semi spans for a given list of spans based on length criteria.
@@ -265,6 +260,12 @@ def get_semi_spans(spans: List[Tuple[int, int, int]], min_len: int, max_len: int
     :return: A list of tuples representing semi spans.
     :rtype: List[Tuple[int, int, int]]
     """
+
+    if min_len is None:
+        min_len = 1
+
+    if max_len is None:
+        max_len = max(span[1] - span[0] for span in spans)
 
     return _get_all_left_semi_spans(spans, min_len, max_len) + _get_all_right_semi_spans(spans, min_len, max_len)
 
@@ -292,8 +293,12 @@ def build_spans(max_index: int, enzyme_sites: List[int], missed_cleavages: int, 
 
     if min_len is None:
         min_len = 1
+
     if max_len is None:
         max_len = max_index
+
+    if len(enzyme_sites) == max_index:  # non-enzymatic
+        return build_non_enzymatic_spans((0, max_index, 0), min_len, max_len)
 
     if semi:
         spans = get_enzymatic_spans(max_index, enzyme_sites, missed_cleavages, min_len, None)
