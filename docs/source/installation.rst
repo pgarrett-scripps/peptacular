@@ -29,7 +29,7 @@ To install peptacular from source, first clone the repository:
 
 .. code-block:: bash
 
-    git clone https://github.com/yourusername/peptacular.git
+    git clone https://github.com/pgarrett-scripps/peptacular.git
 
 Then navigate into the cloned directory:
 
