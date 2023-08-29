@@ -2,7 +2,7 @@
 from peptacular.constants import MONO_ISOTOPIC_ATOMIC_MASSES, AVERAGE_ATOMIC_MASSES, AVERAGE_AA_MASSES, \
     MONO_ISOTOPIC_AA_MASSES, ION_ADJUSTMENTS, UWPR_MONO_ISOTOPIC_ATOMIC_MASSES, UWPR_AVERAGE_AA_MASSES, \
     UWPR_AVERAGE_ATOMIC_MASSES, UWPR_MONO_ISOTOPIC_AA_MASSES
-from peptacular.sequence import parse_modifications, strip_modifications
+from peptacular.sequence import get_modifications, strip_modifications
 from peptacular.util import validate_ion_type
 
 
@@ -62,7 +62,7 @@ def calculate_mass(sequence: str, charge: int = 0, ion_type: str = 'y', monoisot
             if monoisotopic is True else (UWPR_AVERAGE_ATOMIC_MASSES, UWPR_AVERAGE_AA_MASSES)
 
     # Parse modifications and strip them from sequence
-    mods = parse_modifications(sequence=sequence)
+    mods = get_modifications(sequence=sequence)
     stripped_sequence = strip_modifications(sequence=sequence)
 
     # Calculate mass

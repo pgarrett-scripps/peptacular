@@ -1,4 +1,4 @@
-from peptacular.sequence import parse_modifications, add_modifications, strip_modifications, \
+from peptacular.sequence import get_modifications, add_modifications, strip_modifications, \
     apply_static_modifications, apply_variable_modifications
 
 import unittest
@@ -10,17 +10,17 @@ class TestSequence(unittest.TestCase):
         # Test the case where there are no modifications in the peptide sequence
         peptide_sequence = "ACDEFG"
         expected_output = {}
-        self.assertEqual(parse_modifications(peptide_sequence), expected_output)
+        self.assertEqual(get_modifications(peptide_sequence), expected_output)
 
         # Test the case where there is a single modification in the peptide sequence
         peptide_sequence = "A(2)CDEFG"
         expected_output = {0: 2}
-        self.assertEqual(parse_modifications(peptide_sequence), expected_output)
+        self.assertEqual(get_modifications(peptide_sequence), expected_output)
 
         # Test the case where there are multiple modifications in the peptide sequence
         peptide_sequence = "A(2)C(3)DE(1)FG"
         expected_output = {0: 2, 1: 3, 3: 1}
-        self.assertEqual(parse_modifications(peptide_sequence), expected_output)
+        self.assertEqual(get_modifications(peptide_sequence), expected_output)
 
     def test_create_modified_peptide(self):
         # Test the case where there are no modifications in the peptide sequence

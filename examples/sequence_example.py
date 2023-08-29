@@ -5,7 +5,7 @@ peptide = sequence.add_modifications('PEPTIDE', {0: 1.2345, 5: 1, 7: 'Amide'})
 assert peptide == 'P(1.2345)EPTID(1)E[Amide]'
 
 # Parse modifications from peptide sequence
-parsed_modifications = sequence.parse_modifications(peptide)
+parsed_modifications = sequence.get_modifications(peptide)
 assert parsed_modifications == {0: 1.2345, 5: 1, 7: 'Amide'}
 
 # Strip modifications from peptide sequence

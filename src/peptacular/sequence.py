@@ -59,7 +59,7 @@ def calculate_sequence_length(sequence: str) -> int:
     return len(strip_modifications(sequence))
 
 
-def parse_modifications(sequence: str) -> Dict[int, Union[str, float, int]]:
+def get_modifications(sequence: str) -> Dict[int, Union[str, float, int]]:
     """
     Parses a peptide sequence with modifications and returns a dictionary where keys
     represent the position of the modified amino acid and values are the respective modifications.
@@ -73,15 +73,15 @@ def parse_modifications(sequence: str) -> Dict[int, Union[str, float, int]]:
     .. code-block:: python
 
         # All modifications will be returned as either strings, ints or floats.
-        >>> parse_modifications('PEP(Phospho)T(1)IDE(3.14)')
+        >>> get_modifications('PEP(Phospho)T(1)IDE(3.14)')
         {2: 'Phospho', 3: 1, 6: 3.14}
 
         # N-terminus and C-terminal modifications are index by -1, and the length of the sequence, respectively:
-        >>> parse_modifications('[Acetyl]PEPTIDE[Amide]')
+        >>> get_modifications('[Acetyl]PEPTIDE[Amide]')
         {-1: 'Acetyl', 7: 'Amide'}
 
         # A sequecnes without any modifications will return an empty dictionary:
-        >>> parse_modifications('PEPTIDE')
+        >>> get_modifications('PEPTIDE')
         {}
     """
 
@@ -183,7 +183,7 @@ def add_modifications(sequence: str, modifications: Dict[int, Any], overwrite: b
     """
 
     stripped_sequence = strip_modifications(sequence)
-    original_mods = parse_modifications(sequence)
+    original_mods = get_modifications(sequence)
 
     for mod_index, mod in sorted(modifications.items()):
         if mod_index in original_mods:
@@ -277,7 +277,7 @@ def apply_static_modifications(sequence: str, mod_map: Dict[str, Any], overwrite
     """
 
     stripped_sequence = strip_modifications(sequence)
-    original_mod_map = parse_modifications(sequence)
+    original_mod_map = get_modifications(sequence)
 
     for regex_str, mod_mass in mod_map.items():
         for mod_index in identify_regex_indexes(stripped_sequence, regex_str):
@@ -358,7 +358,7 @@ def apply_variable_modifications(sequence: str, mod_map: Dict[str, Any], max_mod
 
     """
 
-    original_mods = parse_modifications(sequence)
+    original_mods = get_modifications(sequence)
     stripped_sequence = strip_modifications(sequence)
 
     new_mod_map: Dict[int, Set] = {}
@@ -399,7 +399,7 @@ def reverse_sequence(sequence: str, swap_terms: bool = False) -> str:
 
     """
 
-    mods = parse_modifications(sequence)
+    mods = get_modifications(sequence)
     stripped_sequence = strip_modifications(sequence)[::-1]
 
     n_term = mods.pop(-1, None)
@@ -452,7 +452,7 @@ def shift_sequence(sequence: str, shift: int) -> str:
 
     """
 
-    mods = parse_modifications(sequence)
+    mods = get_modifications(sequence)
     stripped_sequence = strip_modifications(sequence)
 
     n_term = mods.pop(-1, None)
@@ -511,7 +511,7 @@ def is_sequence_valid(sequence: str) -> bool:
         return False
 
     # check modifications
-    mods = parse_modifications(sequence)
+    mods = get_modifications(sequence)
     for index, mod in mods.items():
         if '(' in mod or ')' in mod:
             return False
@@ -564,7 +564,7 @@ def span_to_sequence(sequence: str, span: Tuple[int, int, int]) -> str:
     if stripped_sequence == sequence:
         return base_sequence
 
-    mods = parse_modifications(sequence)
+    mods = get_modifications(sequence)
     n_term = get_n_term_modification(sequence)
     c_term = get_c_term_modification(sequence)
 

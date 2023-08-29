@@ -2,15 +2,7 @@
 # Peptacular: A Peptide Toolkit
 
 Peptacular is a comprehensive toolkit designed for the manipulation, interpretation, and analysis of peptide sequences.
-It is mainly for researchers and scientists working in the field of proteomics, Peptacular provides functionalities 
-that make it easier to handle peptide sequences, especially those with modifications commonly encountered in mass 
-spectrometry-based proteomics.
-
-## Note
-
-I am currently refactoring the code very often. Since I don't think anyone else is
-currently using this but me I am not concerned with breaking changes. I will
-update this note when I feel the code is stable enough to be used by others.
+It is mainly for researchers and scientists working in the field of proteomics.
 
 ## Installation
 
@@ -35,6 +27,7 @@ pip install peptacular
 - `[Acetyl]PEPTIDE(1.234)` - N-Term modification of 'Acetyl' (index -1) and E modification of 1.234 (index 6)
 
 ## Working with Sequences
+
 ```python
 from peptacular import sequence
 
@@ -43,7 +36,7 @@ peptide = sequence.add_modifications('PEPTIDE', {0: 1.2345, 5: 1, 7: 'Amide'})
 assert peptide == 'P(1.2345)EPTID(1)E[Amide]'
 
 # Parse modifications from peptide sequence
-parsed_modifications = sequence.parse_modifications(peptide) 
+parsed_modifications = sequence.get_modifications(peptide)
 assert parsed_modifications == {0: 1.2345, 5: 1, 7: 'Amide'}
 
 # Strip modifications from peptide sequence
