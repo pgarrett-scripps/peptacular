@@ -4,6 +4,9 @@
 Peptacular is a comprehensive toolkit designed for the manipulation, interpretation, and analysis of peptide sequences.
 It is mainly for researchers and scientists working in the field of proteomics.
 
+## ReadTheDocs
+https://peptacular.readthedocs.io/en/latest/index.html
+
 ## Installation
 
 ```bash
