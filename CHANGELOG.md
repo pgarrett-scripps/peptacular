@@ -14,7 +14,7 @@ All notable changes to this project will be documented in this file.
 - updated term modification notation to use square brackets
 - renamed most functions
 - updated documentation to be compatible with sphynx
-- 
+
 ## [0.3.0]
 
 ### Added:
