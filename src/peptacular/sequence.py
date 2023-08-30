@@ -83,6 +83,7 @@ def get_modifications(sequence: str) -> Dict[int, Union[str, float, int]]:
         # A sequecnes without any modifications will return an empty dictionary:
         >>> get_modifications('PEPTIDE')
         {}
+
     """
 
     n_term_mod = get_n_term_modification(sequence)
@@ -180,6 +181,7 @@ def add_modifications(sequence: str, modifications: Dict[int, Any], overwrite: b
         # Can also preserve existing modifications
         >>> add_modifications('PEP(phospho)TIDE', {2: 'acetyl'}, overwrite=False)
         'PEP(phospho)TIDE'
+
     """
 
     stripped_sequence = strip_modifications(sequence)
@@ -481,6 +483,7 @@ def is_sequence_valid(sequence: str) -> bool:
 
     :param sequence: modified sequence
     :type sequence: str
+
     :return: True, if the sequence is valid, False otherwise
     :rtype: bool
 
@@ -497,6 +500,7 @@ def is_sequence_valid(sequence: str) -> bool:
 
         >>> is_sequence_valid('[Acetyl]P(phospho)EP((phospho))TIDE[Amide]')
         False
+
     """
 
     stripped_sequence = strip_modifications(sequence)
@@ -512,11 +516,12 @@ def is_sequence_valid(sequence: str) -> bool:
 
     # check modifications
     mods = get_modifications(sequence)
-    for index, mod in mods.items():
-        if '(' in mod or ')' in mod:
-            return False
-        if '[' in mod or ']' in mod:
-            return False
+    for _, mod in mods.items():
+        if isinstance(mod, str):
+            if '(' in mod or ')' in mod:
+                return False
+            if '[' in mod or ']' in mod:
+                return False
 
     return True
 

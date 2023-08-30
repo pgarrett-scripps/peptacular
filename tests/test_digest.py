@@ -119,8 +119,8 @@ class TestDigest(unittest.TestCase):
 
     def test_get_all_non_enzymatic_peptides(self):
         self.assertEqual(set(build_non_enzymatic_sequences('PEPT')),
-                         {'P', 'E', 'P', 'T', 'PE', 'EP', 'PT', 'PEP', 'EPT', 'PEPT'})
+                         {'P', 'E', 'P', 'T', 'PE', 'EP', 'PT', 'PEP', 'EPT'})
         self.assertEqual(set(build_non_enzymatic_sequences('PEPT', min_len=1, max_len=2)),
                          {'P', 'E', 'P', 'T', 'PE', 'EP', 'PT'})
         self.assertEqual(set(build_non_enzymatic_sequences('PEPT', min_len=2, max_len=4)),
-                         {'PE', 'EP', 'PT', 'PEP', 'EPT', 'PEPT'})
+                         {'PE', 'EP', 'PT', 'PEP', 'EPT'})

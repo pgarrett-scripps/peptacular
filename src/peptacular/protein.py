@@ -22,7 +22,7 @@ def find_peptide_indexes(protein: str, peptide: str) -> List[int]:
         [1]
 
         >>> find_peptide_indexes("PEPTIDE", "E")
-        [1, 4]
+        [1, 6]
 
     """
 

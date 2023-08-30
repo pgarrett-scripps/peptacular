@@ -23,7 +23,7 @@ def build_left_semi_sequences(sequence: str, min_len: int = 1, max_len: int = No
 
     .. code-block:: python
 
-        # Generates subsequences from an unmodified sequence:
+        # Generates all left-hand semi enzymatic sequences (Returned values does not include input sequence)
         >>> build_left_semi_sequences('PEPTIDE')
         ['PEPTID', 'PEPTI', 'PEPT', 'PEP', 'PE', 'P']
 
@@ -33,13 +33,9 @@ def build_left_semi_sequences(sequence: str, min_len: int = 1, max_len: int = No
         >>> build_left_semi_sequences('')
         []
 
-        # Sequences with modifications are processed preserving those modifications:
+        # Modifications are preserved:
         >>> build_left_semi_sequences('[1]P(2)EPTIDE')
         ['[1]P(2)EPTID', '[1]P(2)EPTI', '[1]P(2)EPT', '[1]P(2)EP', '[1]P(2)E', '[1]P(2)']
-
-        # Terminal modifications are not carried through to the returned subsequences:
-        >>> build_left_semi_sequences('PEPTIDE(1.0)[Amide]')
-        ['PEPTID', 'PEPTI', 'PEPT', 'PEP', 'PE', 'P']
 
     """
 
@@ -64,7 +60,7 @@ def build_right_semi_sequences(sequence: str, min_len: int = 1, max_len: int = N
 
     .. code-block:: python
 
-        # Generates subsequences from an unmodified sequence:
+        # Generates all right-hand semi enzymatic sequences (Returned values does not include input sequence)
         >>> build_right_semi_sequences('PEPTIDE')
         ['EPTIDE', 'PTIDE', 'TIDE', 'IDE', 'DE', 'E']
 
@@ -74,11 +70,7 @@ def build_right_semi_sequences(sequence: str, min_len: int = 1, max_len: int = N
         >>> build_right_semi_sequences('')
         []
 
-        # Sequences with modifications are processed preserving those modifications:
-        >>> build_right_semi_sequences('[Acetyl]P(1.0)EPTIDE')
-        ['EPTIDE', 'PTIDE', 'TIDE', 'IDE', 'DE', 'E']
-
-        # Terminal modifications are not carried through to the returned subsequences:
+        # Modifications are preserved:
         >>> build_right_semi_sequences('PEPTIDE(1)[2]')
         ['EPTIDE(1)[2]', 'PTIDE(1)[2]', 'TIDE(1)[2]', 'IDE(1)[2]', 'DE(1)[2]', 'E(1)[2]']
 
@@ -133,20 +125,19 @@ def build_non_enzymatic_sequences(sequence: str, min_len: int = 1, max_len: int 
 
     .. code-block:: python
 
-        # Generates subsequences from an unmodified sequence:
+        # Generates non-enzymatic sequences (Returned values does not include input sequence):
         >>> build_non_enzymatic_sequences('PEP')
-        ['P', 'PE', 'PEP', 'E', 'EP', 'P']
+        ['P', 'PE', 'E', 'EP', 'P']
 
-
+        # For single-letter or empty sequences, the function returns an empty list:
         >>> build_non_enzymatic_sequences('P')
-        ['P']
-
+        []
         >>> build_non_enzymatic_sequences('')
         []
 
          # Sequences with modifications are processed preserving those modifications:
         >>> build_non_enzymatic_sequences('[Acetyl]P(1.0)EP(1.0)[Amide]')
-        ['[Acetyl]P(1.0)', '[Acetyl]P(1.0)E', '[Acetyl]P(1.0)EP(1.0)[Amide]', 'E', 'EP(1.0)[Amide]', 'P(1.0)[Amide]']
+        ['[Acetyl]P(1.0)', '[Acetyl]P(1.0)E', 'E', 'EP(1.0)[Amide]', 'P(1.0)[Amide]']
 
     """
 
@@ -186,15 +177,15 @@ def build_enzymatic_sequences(sequence: str, enzyme_regex: str, missed_cleavages
         >>> build_enzymatic_sequences(sequence='TIDERTIDEKTIDE', enzyme_regex='([KR])', missed_cleavages=2)
         ['TIDER', 'TIDERTIDEK', 'TIDERTIDEKTIDE', 'TIDEK', 'TIDEKTIDE', 'TIDE']
 
-        # Can specify a maximum length:
+        # Filter sequences by max length:
         >>> build_enzymatic_sequences(sequence='TIDERTIDEKTIDE', enzyme_regex='([KR])', missed_cleavages=2, max_len=5)
         ['TIDER', 'TIDEK', 'TIDE']
 
-        # Can specify a minimum length:
+        # Filter sequences by min length:
         >>> build_enzymatic_sequences(sequence='TIDERTIDEKTIDE', enzyme_regex='([KR])', missed_cleavages=2, min_len=6)
         ['TIDERTIDEK', 'TIDERTIDEKTIDE', 'TIDEKTIDE']
 
-        # Will also work with modified sequences
+        # Modifications are preserved:
         >>> build_enzymatic_sequences(sequence='[1]TIDERT(1.0)IDEKTIDE[2]', enzyme_regex='([KR])', missed_cleavages=2)
         ['[1]TIDER', '[1]TIDERT(1.0)IDEK', '[1]TIDERT(1.0)IDEKTIDE[2]', 'T(1.0)IDEK', 'T(1.0)IDEKTIDE[2]', 'TIDE[2]']
 

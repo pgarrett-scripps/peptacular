@@ -2,7 +2,7 @@
 from peptacular.constants import MONO_ISOTOPIC_ATOMIC_MASSES, AVERAGE_ATOMIC_MASSES, AVERAGE_AA_MASSES, \
     MONO_ISOTOPIC_AA_MASSES, ION_ADJUSTMENTS, UWPR_MONO_ISOTOPIC_ATOMIC_MASSES, UWPR_AVERAGE_AA_MASSES, \
     UWPR_AVERAGE_ATOMIC_MASSES, UWPR_MONO_ISOTOPIC_AA_MASSES
-from peptacular.sequence import get_modifications, strip_modifications
+from peptacular.sequence import get_modifications, strip_modifications, is_sequence_valid
 from peptacular.util import validate_ion_type
 
 
@@ -121,3 +121,44 @@ def calculate_mz(sequence: str, charge: int = 0, ion_type: str = 'y',
     mass = calculate_mass(sequence=sequence, charge=charge, ion_type=ion_type,
                           monoisotopic=monoisotopic, uwpr_mass=uwpr_mass)
     return mass if charge == 0 else mass / charge
+
+
+def valid_mass_sequence(sequence: str):
+    """
+    Check if a sequence is a valid mass sequence.
+
+    :param sequence: The amino acid sequence, which can include modifications.
+    :type sequence: str
+
+    :return: True if the sequence is a valid mass sequence, False otherwise.
+    :rtype: bool
+
+    .. code-block:: python
+
+        # Check if a sequence is a valid mass sequence.
+        >>> valid_mass_sequence('PEPTIDE')
+        True
+        >>> valid_mass_sequence('PEPTIDE[80]')
+        True
+        >>> valid_mass_sequence('PEPTIDE[80.0]')
+        True
+        >>> valid_mass_sequence('PEPTIDE(Ox)PEPTIDE')
+        False
+
+    """
+
+    if is_sequence_valid(sequence) is False:
+        return False
+
+    stripped_sequence = strip_modifications(sequence)
+    mods = get_modifications(sequence)
+
+    for aa in stripped_sequence:
+        if aa not in MONO_ISOTOPIC_AA_MASSES:
+            return False
+
+    for _, mod in mods.items():
+        if isinstance(mod, float) is False and isinstance(mod, int) is False:
+            return False
+
+    return True

@@ -93,7 +93,7 @@ class FragmentMatch:
 
 
 def compute_fragment_matches(fragments: List[Fragment], mz_spectrum, intensity_spectrum, tolerance_value=0.1,
-                             tolerance_type='ppm'):
+                             tolerance_type='ppm') -> List[FragmentMatch]:
     """
     Computes the fragment matches for a given set of fragments and an experimental spectrum.
     :param fragments:  A list of Fragment objects.
