@@ -358,7 +358,7 @@ def build_spans(max_index: int, enzyme_sites: List[int], missed_cleavages: int, 
     return spans
 
 
-def calculate_span_coverage(spans: List[Tuple[int, int, int]], max_index: int, accumulate: bool = False) -> list[int]:
+def calculate_span_coverage(spans: List[Tuple[int, int, int]], max_index: int, accumulate: bool = False) -> List[int]:
     """
     Calculates the coverage array for a given list of spans.
 
@@ -368,8 +368,9 @@ def calculate_span_coverage(spans: List[Tuple[int, int, int]], max_index: int, a
     :type max_index: int
     :param accumulate: Whether to accumulate the coverage array.
     :type accumulate: bool
+
     :return: The coverage array.
-    :rtype: list[int]
+    :rtype: List[int]
 
     .. code-block:: python
 
