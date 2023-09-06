@@ -199,12 +199,12 @@ def add_modifications(sequence: str, modifications: Dict[int, Any], overwrite: b
 
 def strip_modifications(sequence: str) -> str:
     """
-    Removes modifications from the given sequence.
+    Strips all modifications from the given sequence, returning the unmodified sequence.
 
-    :param sequence: modified sequence to be stripped
+    :param sequence: The sequence to be stripped of modifications.
     :type sequence: str
 
-    :return: unmodified sequence
+    :return: The stripped sequence
     :rtype: str
 
     .. code-block:: python
