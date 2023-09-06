@@ -33,8 +33,9 @@ import re
 from copy import deepcopy
 from typing import Dict, List, Any, Generator, Union, Set, Tuple
 
-from peptacular.term import get_c_term_modification, strip_term_modifications, add_n_term_modification, \
+from peptacular.term.modification import get_c_term_modification, strip_term_modifications, add_n_term_modification, \
     add_c_term_modification, get_n_term_modification
+from peptacular.term.residue import pop_n_term_residue
 from peptacular.util import convert_type, identify_regex_indexes, _validate_span
 
 
@@ -124,7 +125,11 @@ def _construct_sequence_with_modifications(sequence: str, mod_map: Dict[int, Any
     n_term_mod = mod_map.pop(-1, None)
     c_term_mod = mod_map.pop(calculate_sequence_length(sequence), None)
 
-    modified_sequence = []
+    sequence_components = []
+
+    if n_term_mod:
+        sequence_components.append(f"[{n_term_mod}]")
+
     prev_index = 0
 
     # Sort the modifications by index in descending order
@@ -134,15 +139,16 @@ def _construct_sequence_with_modifications(sequence: str, mod_map: Dict[int, Any
             raise ValueError(f'Index of modification: {mod_index} is invalid for peptide sequence: {sequence}')
 
         # Insert the modification into the modified peptide sequence
-        modified_sequence.append(sequence[prev_index: mod_index + 1])
-        modified_sequence.append(f"({mod})")
+        sequence_components.append(sequence[prev_index: mod_index + 1])
+        sequence_components.append(f"({mod})")
         prev_index = mod_index + 1
 
-    modified_sequence.append(sequence[prev_index:])
-    modified_sequence = ''.join(modified_sequence)
-    modified_sequence = add_n_term_modification(modified_sequence, n_term_mod)
-    modified_sequence = add_c_term_modification(modified_sequence, c_term_mod)
-    return modified_sequence
+    sequence_components.append(sequence[prev_index:])
+
+    if c_term_mod:
+        sequence_components.append(f"[{c_term_mod}]")
+
+    return ''.join(sequence_components)
 
 
 def add_modifications(sequence: str, modifications: Dict[int, Any], overwrite: bool = True) -> str:
@@ -188,6 +194,8 @@ def add_modifications(sequence: str, modifications: Dict[int, Any], overwrite: b
     original_mods = get_modifications(sequence)
 
     for mod_index, mod in sorted(modifications.items()):
+        if mod is None:
+            continue
         if mod_index in original_mods:
             if overwrite is True:
                 original_mods[mod_index] = mod
@@ -195,6 +203,28 @@ def add_modifications(sequence: str, modifications: Dict[int, Any], overwrite: b
             original_mods[mod_index] = mod
 
     return _construct_sequence_with_modifications(stripped_sequence, original_mods)
+
+
+def pop_modifications(sequence: str) -> Tuple[str, Dict[int, Any]]:
+    """
+    Removes all modifications from the given sequence, returning the unmodified sequence and a dictionary of the
+    removed modifications.
+
+    :param sequence: The sequence to be stripped of modifications.
+    :type sequence: str
+
+    :return: A tuple containing the unmodified sequence and a dictionary of the removed modifications.
+    :rtype: Tuple[str, Dict[int, Any]]
+
+    .. code-block:: python
+
+        # Simply combines the functionality of strip_modifications and get_modifications
+        >>> pop_modifications('PEP(phospho)TIDE')
+        ('PEPTIDE', {2: 'phospho'})
+
+    """
+
+    return strip_modifications(sequence), get_modifications(sequence)
 
 
 def strip_modifications(sequence: str) -> str:
@@ -292,7 +322,7 @@ def apply_static_modifications(sequence: str, mod_map: Dict[str, Any], overwrite
 def _apply_variable_modifications_rec(mods: Dict[int, Set], sequence: str, index: int, current_mods: Dict[int, Any],
                                       max_mod_count: int) -> Generator[Dict[int, Any], None, None]:
     """
-    Apply variable modifications to a sequence, generating all possible combinations.
+    Recursively applies variable modifications to the amino acid sequence.
 
     :param mods: Dictionary mapping amino acids to the mass of their modifications.
     :type mods: Dict[int, Any]
@@ -573,7 +603,7 @@ def span_to_sequence(sequence: str, span: Tuple[int, int, int]) -> str:
     n_term = get_n_term_modification(sequence)
     c_term = get_c_term_modification(sequence)
 
-    mods = {k-span[0]: mods[k] for k in mods if span[0] <= k < span[1]}
+    mods = {k - span[0]: mods[k] for k in mods if span[0] <= k < span[1]}
 
     if span[0] == 0 and n_term is not None:
         mods[-1] = n_term
@@ -582,3 +612,31 @@ def span_to_sequence(sequence: str, span: Tuple[int, int, int]) -> str:
         mods[len(base_sequence)] = c_term
 
     return add_modifications(base_sequence, mods)
+
+
+def split_sequence(sequence: str) -> List[str]:
+    """
+    Splits sequence into a list of amino acids, preserving modifications.
+
+    :param sequence: The sequence to be split.
+    :type sequence: str
+
+    :return: A list of amino acids, preserving modifications.
+    :rtype: List[str]
+
+    .. code-block:: python
+
+        >>> split_sequence('PEPTIDE')
+        ['P', 'E', 'P', 'T', 'I', 'D', 'E']
+
+        >>> split_sequence('[Acetyl]P(phospho)EP(phospho)TIDE[Amide]')
+        ['[Acetyl]P(phospho)', 'E', 'P(phospho)', 'T', 'I', 'D', 'E[Amide]']
+
+    """
+
+    split_sequences = []
+    while sequence:
+        n_term, sequence = pop_n_term_residue(sequence)
+        split_sequences.append(n_term)
+
+    return split_sequences

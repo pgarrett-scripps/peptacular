@@ -2,15 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.0.2] 
+## Next release?
+- make fragment faster by using numpys cumsum function and caching single modified residue masses
+
+## [1.1.0] 
 ### Added:
 - speed_test.py to examples and more examples!
+- more term functions! pop_c_term & pop_n_term & _get_c_term_index & _get_n_term_index
+- split_sequence function to sequence.py, which splits a sequence into a list of modified single residues
+- pop_modifications function to sequence.py, since it's useful!
 
 ### Changed
 - fragment.fragment now returns a list rather than a generator
 - identify_cleavage_sites no longer returns cleavage sites at the beginning or end of the sequence (x)PEPTIDE(x)
 - removed the x's appended onto sequence when calculating sites
 - fixed bug with non-specific digestion
+- made term functions more robust, using _get_c_term_index & _get_n_term_index when possible
+- split term.py into term.modification and term.residue (it just got too large)
 
 ## [1.0.1] 
 

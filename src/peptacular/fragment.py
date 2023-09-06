@@ -1,10 +1,22 @@
+"""
+fragment.py - A module for calculating peptide fragment ions.
+
+This module contains two pathways for fragmenting a peptide sequence:
+- build_fragments - a function that will return Fragment objects.
+- fragment - a function that will return a list of fragment ion mass or m/z values.
+
+The fragment() function is the recommended way to generate fragment ions mass values , since it is faster
+than the build_fragments() function, and also requires less memory. Still build_fragments is useful if you want to
+generate Fragment objects, which contain much more information about the fragment ions.
+"""
+
 from dataclasses import dataclass
 from typing import List, Generator, Union, Callable
 
 from peptacular.constants import PROTON_MASS
 from peptacular.mass import calculate_mz, calculate_mass
 from peptacular.sequence import calculate_sequence_length
-from peptacular.term import strip_c_term, strip_n_term
+from peptacular.term.residue import strip_c_term_residue, strip_n_term_residue
 from peptacular.util import is_forward
 
 
@@ -338,7 +350,7 @@ def _trim_from_end(sequence: str) -> Generator[str, None, None]:
 
     while sequence:
         yield sequence
-        sequence = strip_c_term(sequence)
+        sequence = strip_c_term_residue(sequence)
 
 
 def _trim_from_start(sequence: str) -> Generator[str, None, None]:
@@ -366,7 +378,7 @@ def _trim_from_start(sequence: str) -> Generator[str, None, None]:
 
     while sequence:
         yield sequence
-        sequence = strip_n_term(sequence)
+        sequence = strip_n_term_residue(sequence)
 
 
 def fragment(sequence: str, ion_types: Union[str, List[str]] = 'y', charges: Union[int, List[int]] = 1,
@@ -418,10 +430,8 @@ def fragment(sequence: str, ion_types: Union[str, List[str]] = 'y', charges: Uni
         ...
         ValueError: could not convert string to float: 'Acetyl'
 
-        # Can generate internal fragments too, but they are not very useful.
-        # Here is the order of fragments generated:
-        # [PEP, PE, P,  PEP,  E,  P]
-        # [y3, y3i, y3i, y2, y2i, y1]
+        # Can generate internal fragments too, but they are typically not very useful.
+        # order: sequences -> [PEP, PE, P,  PEP,  E,  P], ions -> [y3, y3i, y3i, y2, y2i, y1]
         >>> fragment("PEP", ion_types="y", charges=1, internal=True)
         [342.16596193614004, 245.11319808729002, 116.07060499932, 245.11319808729002, 148.06043423844, 116.07060499932]
 
