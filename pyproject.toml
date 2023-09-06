@@ -6,7 +6,7 @@ name = "peptacular"
 authors = [
     {name = "Patrick Garrett", email = "pgarrett@scripps.edu"},
 ]
-description = "A spectacularly simple proteomics python package."
+description = "A spectacularly simple package for working with peptide sequences."
 readme = "README.md"
 requires-python = ">=3.8"
 dynamic = ["version"]

@@ -16,3 +16,7 @@ peptides = digest('TIDERTIDEKT(1)IDE[2]', enzyme_regex='trypsin/P', missed_cleav
 assert peptides == ['TIDERTIDEK', 'TIDERTIDEKT(1)IDE[2]', 'TIDERTIDEKT(1)ID', 'TIDERTIDEKT(1)I',
                     'TIDERTIDEKT(1)', 'IDERTIDEKT(1)IDE[2]', 'DERTIDEKT(1)IDE[2]',
                     'ERTIDEKT(1)IDE[2]', 'RTIDEKT(1)IDE[2]']
+
+# Non-specific digestion
+peptides = digest('PEPTIDE', enzyme_regex='non-specific')
+print(peptides)

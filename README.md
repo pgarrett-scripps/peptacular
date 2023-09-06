@@ -1,7 +1,7 @@
 
 # Peptacular
 
-A spectacularly simple mass spectrometry-based proteomics python package.
+A spectacularly simple package for working with peptide sequences. 
 
 ## ReadTheDocs
 https://peptacular.readthedocs.io/en/latest/index.html
@@ -63,12 +63,12 @@ assert peptide_mz == 402.42130880862
 ```python
 from peptacular.fragment import fragment
 
-# Calculate single fragment ion series
+# Calculate m/z values for y+ fragments
 fragments = fragment('P(1.0)TIDE[2.0]', ion_types='y', charges=1, monoisotopic=True)
 assert list(fragments) == [577.27188355666, 479.21911970781, 378.17144123940005, 
                            265.08737726227, 150.06043423844]
 
-# Or multiple ion series
+# Can also specify multiple ion types and charges
 fragments = fragment('P(1.0)EP', ion_types=['y', 'b'], charges=[1,2], monoisotopic=True)
 assert list(fragments) == [343.16596193614004, 245.11319808729002, 116.07060499932, 
                            172.08661920145502, 123.06023727703, 58.538940733045, 

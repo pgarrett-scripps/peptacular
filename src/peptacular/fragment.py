@@ -1,8 +1,8 @@
 from dataclasses import dataclass
-from typing import List, Generator, Union
+from typing import List, Generator, Union, Callable
 
 from peptacular.constants import PROTON_MASS
-from peptacular.mass import calculate_mz
+from peptacular.mass import calculate_mz, calculate_mass
 from peptacular.sequence import calculate_sequence_length
 from peptacular.term import strip_c_term, strip_n_term
 from peptacular.util import is_forward
@@ -278,7 +278,7 @@ def create_fragment_internal_sequences(sequence: str, ion_type: str) -> List[str
     return list(sequence_trimmer(sequence, forward=not is_forward(ion_type)))
 
 
-def sequence_trimmer(sequence: str, forward: bool) -> Generator[str, None, None]:
+def sequence_trimmer(sequence: str, forward: bool) -> List[str]:
     """
     A generator that yields all subsequences of the input `sequence`, by trimming from the front or back.
 
@@ -287,30 +287,30 @@ def sequence_trimmer(sequence: str, forward: bool) -> Generator[str, None, None]
     :param forward: If True, generate sequences from the front. If False, generate sequences from the back.
     :type forward: bool
 
-    :return: A generator of sequences.
-    :rtype: Generator[str, None, None]
+    :return: The trimmed sequeunces.
+    :rtype: List[str]
 
     .. code-block:: python
 
-        >>> list(sequence_trimmer("PEPTIDE", True))
+        >>> sequence_trimmer("PEPTIDE", True)
         ['PEPTIDE', 'EPTIDE', 'PTIDE', 'TIDE', 'IDE', 'DE', 'E']
 
-        >>> list(sequence_trimmer("PEPTIDE", False))
+        >>> sequence_trimmer("PEPTIDE", False)
         ['PEPTIDE', 'PEPTID', 'PEPTI', 'PEPT', 'PEP', 'PE', 'P']
 
         # Works with modifications
-        >>> list(sequence_trimmer("[Acetyl]PE(3.0)PTIDE", True))
+        >>> sequence_trimmer("[Acetyl]PE(3.0)PTIDE", True)
         ['[Acetyl]PE(3.0)PTIDE', 'E(3.0)PTIDE', 'PTIDE', 'TIDE', 'IDE', 'DE', 'E']
 
-        >>> list(sequence_trimmer("PEP(1.0)TIDE[Amide]", False))
+        >>> sequence_trimmer("PEP(1.0)TIDE[Amide]", False)
         ['PEP(1.0)TIDE[Amide]', 'PEP(1.0)TID', 'PEP(1.0)TI', 'PEP(1.0)T', 'PEP(1.0)', 'PE', 'P']
 
     """
 
     if forward is True:
-        return _trim_from_start(sequence)
+        return list(_trim_from_start(sequence))
 
-    return _trim_from_end(sequence)
+    return list(_trim_from_end(sequence))
 
 
 def _trim_from_end(sequence: str) -> Generator[str, None, None]:
@@ -370,7 +370,7 @@ def _trim_from_start(sequence: str) -> Generator[str, None, None]:
 
 
 def fragment(sequence: str, ion_types: Union[str, List[str]] = 'y', charges: Union[int, List[int]] = 1,
-             monoisotopic: bool = True, internal: bool = False) -> Generator[float, None, None]:
+             monoisotopic: bool = True, internal: bool = False, mz: bool = True) -> List[float]:
     """
     Generates fragment ion mz values.
 
@@ -384,24 +384,36 @@ def fragment(sequence: str, ion_types: Union[str, List[str]] = 'y', charges: Uni
     :type monoisotopic: bool
     :param internal: Indicates whether to calculate internal fragments, defaults to [False].
     :type internal: bool
+    :param mz: Indicates whether to return m/z values or mass values, defaults to [True].
+    :type mz: bool
 
     :raise ValueError: If the ion type is not one of 'a', 'b', 'c', 'x', 'y', or 'z'.
 
-    :yield: The calculated m/z for the fragment.
-    :rtype: float
+    :return: The fragemnt ion m/z values.
+    :rtype: List[float]
 
     .. code-block:: python
 
-        >>> list(fragment("TIDE", ion_types="y", charges=1))
+        # Fragments are returned from largest to smallest.
+        >>> fragment("TIDE", ion_types="y", charges=1)
         [477.21911970781, 376.17144123940005, 263.08737726227, 148.06043423844]
-
-        >>> list(fragment("TIDE", ion_types="b", charges=2))
+        >>> fragment("TIDE", ion_types="b", charges=2)
         [230.10791574544, 165.58661920145502, 108.07314768954, 51.531115700975]
 
-        >>> list(fragment("[1.0]T(-1.0)IDE(2.0)[-2.0]", ion_types="y", charges=1))
+        # When using multiple ion types and charge states the fragments will be generated first by ion_types
+        # and second by charge state. For example, the following will generate the following fragments:
+        # [y2+, y1+, y2++, y1++, b2+, b1+, b2++, b1++]
+        >>> fragment("PE", ion_types=["y", "b"], charges=[1,2])[:4] # First 4 fragments
+        [245.11319808729002, 148.06043423844, 123.06023727703, 74.53385535260499]
+        >>> fragment("PE", ion_types=["y", "b"], charges=[1,2])[4:] # Last 4 fragments
+        [227.10263340359, 98.06004031562, 114.05495493517999, 49.533658391195004]
+
+        # Can also include modifications in the sequence.
+        >>> fragment("[1.0]T(-1.0)IDE(2.0)[-2.0]", ion_types="y", charges=1)
         [477.21911970781, 376.17144123940005, 263.08737726227, 148.06043423844]
 
-        >>> list(fragment("[Acetyl]TIDE", ion_types="b", charges=2))
+        # If the sequence contains a modification that is not a number, an error will be raised.
+        >>> fragment("[Acetyl]TIDE", ion_types="b", charges=2)
         Traceback (most recent call last):
         ...
         ValueError: could not convert string to float: 'Acetyl'
@@ -410,7 +422,7 @@ def fragment(sequence: str, ion_types: Union[str, List[str]] = 'y', charges: Uni
         # Here is the order of fragments generated:
         # [PEP, PE, P,  PEP,  E,  P]
         # [y3, y3i, y3i, y2, y2i, y1]
-        >>> list(fragment("PEP", ion_types="y", charges=1, internal=True))
+        >>> fragment("PEP", ion_types="y", charges=1, internal=True)
         [342.16596193614004, 245.11319808729002, 116.07060499932, 245.11319808729002, 148.06043423844, 116.07060499932]
 
     """
@@ -421,18 +433,24 @@ def fragment(sequence: str, ion_types: Union[str, List[str]] = 'y', charges: Uni
     if isinstance(charges, int):
         charges = [charges]
 
-    def _fragment(t: str, c: int):
+    def _fragment(t: str, c: int, func: Callable):
         # Loop through the sequence to generate fragments and yield m/z
         for sub_sequence in sequence_trimmer(sequence, forward=is_forward(t)):
-            yield calculate_mz(sequence=sub_sequence, charge=c, ion_type=t, monoisotopic=monoisotopic)
+            if mz is True:
+                yield func(sequence=sub_sequence, charge=c, ion_type=t, monoisotopic=monoisotopic)
             if internal is True:
                 for i, internal_sub_sequence in enumerate(
                         create_fragment_internal_sequences(sequence=sub_sequence, ion_type=t)):
                     if i == 0:  # skip first since its already created
                         continue
-                    yield calculate_mz(sequence=internal_sub_sequence, charge=c, ion_type=t,
-                                       monoisotopic=monoisotopic)
+                    yield func(sequence=internal_sub_sequence, charge=c, ion_type=t, monoisotopic=monoisotopic)
 
+    fragments = []
     for ion_type in ion_types:
         for charge in charges:
-            yield from _fragment(ion_type, charge)
+            if mz is True:
+                fragments.extend(list(_fragment(ion_type, charge, calculate_mz)))
+            else:
+                fragments.extend(list(_fragment(ion_type, charge, calculate_mass)))
+
+    return fragments

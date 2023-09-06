@@ -1,4 +1,4 @@
-from peptacular.fragment import fragment, sequence_trimmer, _trim_from_end, _trim_from_start, \
+from peptacular.fragment import fragment, _trim_from_end, _trim_from_start, \
     build_fragment_sequences, create_fragment_internal_sequences
 
 import unittest
@@ -60,23 +60,6 @@ class TestFragment(unittest.TestCase):
             pyteomics_frags = sorted(pyteomics[ion_type])
             for f, pf in zip(frags, pyteomics_frags):
                 self.assertAlmostEqual(f, pf, 6)
-
-    def test_sequence_trimmer(self):
-        # Test forward generator
-        generator = sequence_trimmer("A(P)C(P)G", True)
-        self.assertEqual(next(generator), "A(P)C(P)G")
-        self.assertEqual(next(generator), "C(P)G")
-        self.assertEqual(next(generator), "G")
-        with self.assertRaises(StopIteration):
-            next(generator)
-
-        # Test backward generator
-        generator = sequence_trimmer("A(P)C(P)G", False)
-        self.assertEqual(next(generator), "A(P)C(P)G")
-        self.assertEqual(next(generator), "A(P)C(P)")
-        self.assertEqual(next(generator), "A(P)")
-        with self.assertRaises(StopIteration):
-            next(generator)
 
     def test_trim_from_start(self):
         generator = _trim_from_end("A(P)C(P)G")

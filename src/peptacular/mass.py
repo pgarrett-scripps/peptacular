@@ -125,7 +125,7 @@ def calculate_mz(sequence: str, charge: int = 0, ion_type: str = 'y',
 
 def valid_mass_sequence(sequence: str):
     """
-    Check if a sequence is a valid mass sequence.
+    Check if a sequence is a valid mass-based sequence, where all modifications are either of type int or float.
 
     :param sequence: The amino acid sequence, which can include modifications.
     :type sequence: str

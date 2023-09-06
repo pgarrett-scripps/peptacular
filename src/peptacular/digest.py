@@ -191,7 +191,7 @@ def build_enzymatic_sequences(sequence: str, enzyme_regex: str, missed_cleavages
 
     """
 
-    cleavage_sites = identify_cleavage_sites(sequence, enzyme_regex)
+    cleavage_sites = [0] + identify_cleavage_sites(sequence, enzyme_regex) + [calculate_sequence_length(sequence)]
     spans = build_spans(calculate_sequence_length(sequence), cleavage_sites, missed_cleavages, min_len, max_len, semi)
     return [span_to_sequence(sequence, span) for span in spans]
 
@@ -199,9 +199,6 @@ def build_enzymatic_sequences(sequence: str, enzyme_regex: str, missed_cleavages
 def identify_cleavage_sites(sequence: str, enzyme_regex: str) -> List[int]:
     """
     Return a list of positions where cleavage occurs in input `sequence` based on the provided enzyme regex.
-
-    Note: 'x' is appended to the start and end of sequence to ensure that the first and last residues are matched.
-    Ensure that the regex pattern does not match 'x' if this is not desired.
 
     :param sequence: The amino acid sequence, which can include modifications.
     :type sequence: str
@@ -227,15 +224,19 @@ def identify_cleavage_sites(sequence: str, enzyme_regex: str) -> List[int]:
 
         # If the protease cleaves at the N-terminus, the first position is included:
         >>> identify_cleavage_sites(sequence='KPEPTIDEK', enzyme_regex='lys-n')
-        [0, 8]
+        [8]
 
         # Similarly, if the protease cleaves at the C-terminus, the last position is included:
         >>> identify_cleavage_sites(sequence='KPEPTIDEK', enzyme_regex='lys-c')
-        [1, 9]
+        [1]
 
         # Will also work with modified sequences
         >>> identify_cleavage_sites(sequence='[Acetyl]TIDERT(1.0)IDEKTIDE[Amide]', enzyme_regex='trypsin/P')
         [5, 10]
+
+        # Non-specific cleavage sites are also identified
+        >>> identify_cleavage_sites(sequence='PEPTIDE', enzyme_regex='non-specific')
+        [0, 1, 2, 3, 4, 5, 6]
 
     """
 
@@ -246,10 +247,11 @@ def identify_cleavage_sites(sequence: str, enzyme_regex: str) -> List[int]:
     if enzyme_regex in PROTEASES:
         enzyme_regex = PROTEASES[enzyme_regex]
 
-    return identify_regex_indexes('x' + sequence + 'x', enzyme_regex)
+    last_index = len(stripped_sequence)
+    return [i+1 for i in identify_regex_indexes(sequence, enzyme_regex) if i < last_index - 1]
 
 
-def digest(sequence: str, enzyme_regex: Union[List[str], str], missed_cleavages: int,
+def digest(sequence: str, enzyme_regex: Union[List[str], str], missed_cleavages: int = 0,
            semi: bool = False, min_len: int = 1, max_len: int = None) -> List[str]:
     """
     Returns a list of digested sequences derived from the input `sequence`.
@@ -258,7 +260,7 @@ def digest(sequence: str, enzyme_regex: Union[List[str], str], missed_cleavages:
     :type sequence: str
     :param enzyme_regex: Regular expression or list of regular expressions representing enzyme's cleavage rules.
     :type enzyme_regex: Union[List[str], str]
-    :param missed_cleavages: Maximum number of missed cleavages.
+    :param missed_cleavages: Maximum number of missed cleavages, defaults to [0].
     :type missed_cleavages: int
     :param semi: Whether to include semi-enzymatic peptides, defaults to [False].
     :type semi: bool
@@ -292,15 +294,24 @@ def digest(sequence: str, enzyme_regex: Union[List[str], str], missed_cleavages:
         # Generate semi-enzymatic sequences:
         >>> digest(sequence='TIDERTIDEK(1)TIDE[2]', enzyme_regex='([KR])', missed_cleavages=1, min_len=9, semi=True)
         ['TIDERTIDEK(1)', 'TIDEK(1)TIDE[2]', 'TIDERTIDE', 'IDERTIDEK(1)']
+
+        # Non-specific cleavage sites are also identified
+        >>> digest(sequence='PEPT', enzyme_regex='non-specific')
+        ['P', 'PE', 'PEP', 'E', 'EP', 'EPT', 'P', 'PT', 'T']
+
     """
 
     if isinstance(enzyme_regex, str):
         enzyme_regex = [enzyme_regex]
 
-    cleavage_sites = []
+    cleavage_sites = set()
     for regex in enzyme_regex:
-        cleavage_sites.extend(identify_cleavage_sites(sequence, regex))
-    cleavage_sites.sort()
+        cleavage_sites.update(identify_cleavage_sites(sequence, regex))
+
+    cleavage_sites.add(0)
+    cleavage_sites.add(calculate_sequence_length(sequence))
+
+    cleavage_sites = sorted(list(cleavage_sites))
 
     spans = build_spans(calculate_sequence_length(sequence), cleavage_sites, missed_cleavages, min_len, max_len, semi)
     sequences = [span_to_sequence(sequence, span) for span in spans]

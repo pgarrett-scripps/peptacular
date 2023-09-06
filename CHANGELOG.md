@@ -2,17 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.0.0] First Real Release
+## [1.0.2] 
+### Added:
+- speed_test.py to examples and more examples!
+
+### Changed
+- fragment.fragment now returns a list rather than a generator
+- identify_cleavage_sites no longer returns cleavage sites at the beginning or end of the sequence (x)PEPTIDE(x)
+- removed the x's appended onto sequence when calculating sites
+- fixed bug with non-specific digestion
+
+## [1.0.1] 
 
 ### Added:
 - term.py - a module for handling terminal modifications
 - readthedocs 'sphynx-style' documentation
+- examples folder
 
 ### Changed:
 - split up sequence module into sequence and digest
 - split mass module into fragment and mass
 - updated term modification notation to use square brackets
-- renamed most functions
+- renamed most functions... again
 - updated documentation to be compatible with sphynx
 
 ## [0.3.0]
