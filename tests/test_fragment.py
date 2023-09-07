@@ -1,5 +1,4 @@
-from peptacular.fragment import fragment, _trim_from_end, _trim_from_start, \
-    build_fragment_sequences, create_fragment_internal_sequences
+from peptacular.fragment import fragment, build_fragment_sequences, sequence_trimmer
 
 import unittest
 
@@ -61,43 +60,27 @@ class TestFragment(unittest.TestCase):
             for f, pf in zip(frags, pyteomics_frags):
                 self.assertAlmostEqual(f, pf, 6)
 
-    def test_trim_from_start(self):
-        generator = _trim_from_end("A(P)C(P)G")
-        self.assertEqual(next(generator), "A(P)C(P)G")
-        self.assertEqual(next(generator), "A(P)C(P)")
-        self.assertEqual(next(generator), "A(P)")
-        with self.assertRaises(StopIteration):
-            next(generator)
-
-    def test_trim_from_end(self):
-        generator = _trim_from_start("[P]A(P)C(P)G")
-        self.assertEqual(next(generator), "[P]A(P)C(P)G")
-        self.assertEqual(next(generator), "C(P)G")
-        self.assertEqual(next(generator), "G")
-        with self.assertRaises(StopIteration):
-            next(generator)
-
     def test_create_fragment_sequences(self):
         sequence = "PEPTIDE"
 
         for ion_type in 'abc':
-            fragments = build_fragment_sequences(sequence, ion_type)
+            fragments = list(build_fragment_sequences(sequence, ion_type))
             self.assertEqual(fragments, ['P', 'PE', 'PEP', 'PEPT', 'PEPTI', 'PEPTID', 'PEPTIDE'][::-1])
 
         for ion_type in 'xyz':
-            fragments = build_fragment_sequences(sequence, ion_type)
+            fragments = list(build_fragment_sequences(sequence, ion_type))
             self.assertEqual(fragments, ['E', 'DE', 'IDE', 'TIDE', 'PTIDE', 'EPTIDE', 'PEPTIDE'][::-1])
 
         modified_sequence = "[-10]PEP(2)TIDE(100)"
 
         for ion_type in 'abc':
-            fragments = build_fragment_sequences(modified_sequence, ion_type)
+            fragments = list(build_fragment_sequences(modified_sequence, ion_type))
             self.assertEqual(fragments,
                              ['[-10]P', '[-10]PE', '[-10]PEP(2)', '[-10]PEP(2)T', '[-10]PEP(2)TI', '[-10]PEP(2)TID',
                               '[-10]PEP(2)TIDE(100)'][::-1])
 
         for ion_type in 'xyz':
-            fragments = build_fragment_sequences(modified_sequence, ion_type)
+            fragments = list(build_fragment_sequences(modified_sequence, ion_type))
             self.assertEqual(fragments,
                              ['E(100)', 'DE(100)', 'IDE(100)', 'TIDE(100)', 'P(2)TIDE(100)', 'EP(2)TIDE(100)',
                               '[-10]PEP(2)TIDE(100)'][::-1])
@@ -106,23 +89,23 @@ class TestFragment(unittest.TestCase):
         sequence = "PEPTIDE"
 
         for ion_type in 'xyz':
-            fragments = create_fragment_internal_sequences(sequence, ion_type)
+            fragments = list(build_fragment_sequences(sequence, ion_type, True))
             self.assertEqual(fragments, ['P', 'PE', 'PEP', 'PEPT', 'PEPTI', 'PEPTID', 'PEPTIDE'][::-1])
 
         for ion_type in 'abc':
-            fragments = create_fragment_internal_sequences(sequence, ion_type)
+            fragments = list(build_fragment_sequences(sequence, ion_type, True))
             self.assertEqual(fragments, ['E', 'DE', 'IDE', 'TIDE', 'PTIDE', 'EPTIDE', 'PEPTIDE'][::-1])
 
         modified_sequence = "[-10]PEP(2)TIDE(100)"
 
         for ion_type in 'xyz':
-            fragments = create_fragment_internal_sequences(modified_sequence, ion_type)
+            fragments = list(build_fragment_sequences(modified_sequence, ion_type, True))
             self.assertEqual(fragments,
                              ['[-10]P', '[-10]PE', '[-10]PEP(2)', '[-10]PEP(2)T', '[-10]PEP(2)TI', '[-10]PEP(2)TID',
                               '[-10]PEP(2)TIDE(100)'][::-1])
 
         for ion_type in 'abc':
-            fragments = create_fragment_internal_sequences(modified_sequence, ion_type)
+            fragments = list(build_fragment_sequences(modified_sequence, ion_type, True))
             self.assertEqual(fragments,
                              ['E(100)', 'DE(100)', 'IDE(100)', 'TIDE(100)', 'P(2)TIDE(100)', 'EP(2)TIDE(100)',
                               '[-10]PEP(2)TIDE(100)'][::-1])

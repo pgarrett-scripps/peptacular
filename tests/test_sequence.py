@@ -1,5 +1,6 @@
 from peptacular.sequence import get_modifications, add_modifications, strip_modifications, \
-    apply_static_modifications, apply_variable_modifications
+    apply_static_modifications, apply_variable_modifications, pop_modifications, calculate_sequence_length, \
+    shift_sequence, reverse_sequence, is_sequence_valid, span_to_sequence, split_sequence
 
 import unittest
 
@@ -78,6 +79,56 @@ class TestSequence(unittest.TestCase):
 
         self.assertEqual(set(apply_variable_modifications('P(1)EPC(20)TIDCE', {'C': 57.021464}, 2)), {'P(1)EPC(20)TIDCE',
                                                                                            'P(1)EPC(20)TIDC(57.021464)E'})
+
+    def test_calculate_sequence_length(self):
+        self.assertEqual(calculate_sequence_length("[Acetyl]PEP(1.2345)TID(3.14)E[Amide]"), 7)
+        self.assertEqual(calculate_sequence_length("PEPTIDE"), 7)
+
+    def test_get_modifications(self):
+        self.assertEqual(get_modifications('PEP(Phospho)T(1)IDE(3.14)'), {2: 'Phospho', 3: 1, 6: 3.14})
+        self.assertEqual(get_modifications('[Acetyl]PEPTIDE[Amide]'), {-1: 'Acetyl', 7: 'Amide'})
+        self.assertEqual(get_modifications('PEPTIDE'), {})
+
+    def test_add_modifications(self):
+        self.assertEqual(add_modifications('PEPTIDE', {2: 'phospho'}), 'PEP(phospho)TIDE')
+        self.assertEqual(add_modifications('PEPTIDE', {-1: 'Acetyl', 6: '1.234', 7: 'Amide'}),
+                         '[Acetyl]PEPTIDE(1.234)[Amide]')
+        self.assertEqual(add_modifications('PEPTIDE', {}), 'PEPTIDE')
+
+    def test_pop_modifications(self):
+        self.assertEqual(pop_modifications('PEP(phospho)TIDE'), ('PEPTIDE', {2: 'phospho'}))
+
+    def test_strip_modifications(self):
+        self.assertEqual(strip_modifications('PEP(phospho)TIDE'), 'PEPTIDE')
+
+    def test_apply_static_modifications(self):
+        self.assertEqual(apply_static_modifications('PEPTIDE', {'P': 'phospho'}), 'P(phospho)EP(phospho)TIDE')
+
+    def test_apply_variable_modifications(self):
+        self.assertEqual(apply_variable_modifications('PEPTIDE', {'P': 'phospho'}, 2),
+                         ['P(phospho)EP(phospho)TIDE', 'P(phospho)EPTIDE', 'PEP(phospho)TIDE', 'PEPTIDE'])
+
+    def test_reverse_sequence(self):
+        self.assertEqual(reverse_sequence('PEPTIDE'), 'EDITPEP')
+        self.assertEqual(reverse_sequence('[Acetyl]P(phospho)EP(phospho)TIDE[Amide]'),
+                         '[Acetyl]EDITP(phospho)EP(phospho)[Amide]')
+
+    def test_shift_sequence(self):
+        self.assertEqual(shift_sequence('PEPTIDE', 2), 'PTIDEPE')
+
+    def test_is_sequence_valid(self):
+        self.assertTrue(is_sequence_valid('PEPTIDE'))
+        self.assertTrue(is_sequence_valid('[Acetyl]P(phospho)EP(phospho)TIDE[Amide]'))
+        self.assertFalse(is_sequence_valid('[Acetyl]P(phospho)EP((phospho))TIDE[Amide]'))
+
+    def test_span_to_sequence(self):
+        self.assertEqual(span_to_sequence('PEPTIDE', (0, 4, 0)), 'PEPT')
+        self.assertEqual(span_to_sequence('[Acetyl]PEP(1.2345)TID(3.14)E[Amide]', (0, 4, 0)), '[Acetyl]PEP(1.2345)T')
+
+    def test_split_sequence(self):
+        self.assertEqual(split_sequence('PEPTIDE'), ['P', 'E', 'P', 'T', 'I', 'D', 'E'])
+        self.assertEqual(split_sequence('[Acetyl]P(phospho)EP(phospho)TIDE[Amide]'),
+                         ['[Acetyl]P(phospho)', 'E', 'P(phospho)', 'T', 'I', 'D', 'E[Amide]'])
 
 
 if __name__ == "__main__":

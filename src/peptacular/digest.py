@@ -1,5 +1,5 @@
 from collections import deque
-from typing import Union, List
+from typing import Union, List, Generator, Tuple
 
 from peptacular.spans import build_left_semi_spans, build_right_semi_spans, build_non_enzymatic_spans, build_spans
 from peptacular.constants import PROTEASES
@@ -240,7 +240,7 @@ def identify_cleavage_sites(sequence: str, enzyme_regex: str) -> List[int]:
 
         # Non-specific cleavage sites are also identified
         >>> identify_cleavage_sites(sequence='PEPTIDE', enzyme_regex='non-specific')
-        [0, 1, 2, 3, 4, 5, 6]
+        [1, 2, 3, 4, 5, 6]
 
     """
 
@@ -305,6 +305,11 @@ def digest(sequence: str, enzyme_regex: Union[List[str], str], missed_cleavages:
 
     """
 
+    if min_len is None:
+        min_len = 1
+    if max_len is None:
+        max_len = calculate_sequence_length(sequence)
+
     if isinstance(enzyme_regex, str):
         enzyme_regex = [enzyme_regex]
 
@@ -316,8 +321,8 @@ def digest(sequence: str, enzyme_regex: Union[List[str], str], missed_cleavages:
     return _slow_digest(sequence, enzyme_regex, missed_cleavages, semi, min_len, max_len)
 
 
-def _slow_digest(sequence: str, enzyme_regex: List[str], missed_cleavages: int = 0, semi: bool = False,
-                 min_len: int = 1, max_len: int = None) -> List[str]:
+def _slow_digest(sequence: str, enzyme_regex: List[str], missed_cleavages: int, semi: bool,
+                 min_len: int, max_len: int) -> List[str]:
     """
     Slower version of digest for multiple enzyme_regex.
     """
@@ -337,17 +342,18 @@ def _slow_digest(sequence: str, enzyme_regex: List[str], missed_cleavages: int =
     return sequences
 
 
-def _fast_digest(sequence: str, enzyme_regex: str, missed_cleavages: int = 0, semi: bool = False,
-                 min_len: int = 1, max_len: int = None) -> List[str]:
+def _fast_digest(sequence: str, enzyme_regex: str, missed_cleavages: int, semi: bool,
+                 min_len: int, max_len: int) -> List[str]:
     """
     Faster version of digest for single enzyme_regex.
     """
 
-    peptides = _icleave(sequence, enzyme_regex, missed_cleavages, min_len, max_len, semi)
+    peptides = _icleave(sequence, enzyme_regex, missed_cleavages, semi, min_len, max_len)
     return [peptide[1] for peptide in peptides]
 
 
-def _icleave(sequence, rule, missed_cleavages, min_length, max_length, semi):
+def _icleave(sequence: str, enzyme_regex: str, missed_cleavages: int, semi: bool, min_len: int, max_len: int) \
+        -> Generator[Tuple[int, str], None, None]:
     """
     Modified from pyteomics.parser.cleave to work with peptacular modification notation.
     """
@@ -359,14 +365,10 @@ def _icleave(sequence, rule, missed_cleavages, min_length, max_length, semi):
     trange = range(ml)
     cleavage_sites = deque([0], maxlen=ml)
 
-    if min_length is None:
-        min_length = 1
-    if max_length is None:
-        max_length = len(sequence)
-
     cl = 1
 
     def add_mods(start, seq):
+
         if not mods:
             return seq
 
@@ -384,7 +386,7 @@ def _icleave(sequence, rule, missed_cleavages, min_length, max_length, semi):
 
         return add_modifications(seq, new_mods)
 
-    for end in it.chain([x.end() for x in re.finditer(rule, sequence)], [None]):
+    for end in it.chain([x.end() for x in re.finditer(enzyme_regex, sequence)], [None]):
         cleavage_sites.append(end)
         if cl < ml:
             cl += 1
@@ -395,10 +397,10 @@ def _icleave(sequence, rule, missed_cleavages, min_length, max_length, semi):
                 start = end - lenseq
             else:
                 start = len(sequence) - lenseq
-            if seq and min_length <= lenseq <= max_length:
+            if seq and min_len <= lenseq <= max_len:
                 yield start, add_mods(start, seq)
                 if semi:
-                    for k in range(min_length, min(lenseq, max_length)):
+                    for k in range(min_len, min(lenseq, max_len)):
                         yield start, add_mods(start, seq[:k])
-                    for k in range(max(1, lenseq - max_length), lenseq - min_length + 1):
+                    for k in range(max(1, lenseq - max_len), lenseq - min_len + 1):
                         yield start + k, add_mods(start + k, seq[k:])

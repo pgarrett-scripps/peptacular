@@ -11,7 +11,7 @@ generate Fragment objects, which contain much more information about the fragmen
 """
 
 from dataclasses import dataclass
-from functools import lru_cache
+from functools import lru_cache, cached_property
 from itertools import chain
 from typing import List, Generator, Union, Callable
 
@@ -39,11 +39,9 @@ class Fragment:
 
     .. code-block:: python
 
-        >>> frag = Fragment("PE(3.1415)PTIDE", 123.456, 1, "b", 2, False, 2)
+        >>> frag = Fragment("PE(3.1415)PTIDE", 1, "b", 2, False, 2, True)
         >>> frag.sequence
         'PE(3.1415)PTIDE'
-        >>> frag.mz
-        123.456
         >>> frag.charge
         1
         >>> frag.ion_type
@@ -54,16 +52,18 @@ class Fragment:
         False
         >>> frag.parent_number
         2
+        >>> frag.monoisotopic
+        True
 
     """
 
     sequence: str
-    mz: float
     charge: int
     ion_type: str
     number: int
     internal: bool
     parent_number: int
+    monoisotopic: bool
 
     def __post_init__(self):
         """
@@ -73,7 +73,7 @@ class Fragment:
         if self.internal is False and self.number != self.parent_number:
             raise ValueError("Parent number must be equal to number for terminal fragments.")
 
-    @property
+    @cached_property
     def start(self):
         """
         Returns the start index of the fragment sequence in the parent sequence.
@@ -94,7 +94,7 @@ class Fragment:
 
         raise ValueError(f"Invalid ion type: {self.ion_type}")
 
-    @property
+    @cached_property
     def end(self):
         """
         Returns the end index of the fragment sequence in the parent sequence.
@@ -115,7 +115,7 @@ class Fragment:
 
         raise ValueError(f"Invalid ion type: {self.ion_type}")
 
-    @property
+    @cached_property
     def mass(self):
         """
         Returns the mass of the fragment.
@@ -124,9 +124,9 @@ class Fragment:
         :rtype: float
         """
 
-        return self.mz * self.charge
+        return calculate_mz(self.sequence, self.charge, self.ion_type, self.monoisotopic)
 
-    @property
+    @cached_property
     def neutral_mass(self):
         """
         Returns the neutral mass of the fragment.
@@ -135,9 +135,20 @@ class Fragment:
         :rtype: float
         """
 
-        return self.mass - self.charge * PROTON_MASS
+        return calculate_mass(self.sequence, 0, self.ion_type, self.monoisotopic)
 
-    @property
+    @cached_property
+    def mz(self):
+        """
+        Returns the mass-to-charge (m/z) ratio of the fragment.
+
+        :return: Mass-to-charge (m/z) ratio of the fragment.
+        :rtype: float
+        """
+
+        return calculate_mz(self.sequence, self.charge, self.ion_type, self.monoisotopic)
+
+    @cached_property
     def label(self):
         """
         Returns the label of the fragment, e.g., b2, y3i, etc.
@@ -182,14 +193,8 @@ def build_fragments(sequence: str, ion_types: Union[List[str], str], charges: Un
         >>> frags[0].sequence
         '[1.0]P(2.0)E(3.0)[4.0]'
 
-        >>> frags[0].mz
-        255.11319808729002
-
         >>> frags[1].sequence
         'E(3.0)[4.0]'
-
-        >>> frags[1].mz
-        155.06043423844
 
     """
 
@@ -199,97 +204,35 @@ def build_fragments(sequence: str, ion_types: Union[List[str], str], charges: Un
     if isinstance(charges, int):
         charges = [charges]
 
-    fragments = []
-    for ion_type in ion_types:
+    def _fragment(t: str, c: int):
+        # Loop through the sequence to generate fragments and yield m/z
         seq_length = calculate_sequence_length(sequence)
-        for number, fragment_sequence in enumerate(build_fragment_sequences(sequence=sequence, ion_type=ion_type)):
-
+        for number, frag in enumerate(build_fragment_sequences(sequence, t)):
             frag_number = seq_length - number
-            for charge in charges:
-                mz = calculate_mz(fragment_sequence, charge=charge, ion_type=ion_type, monoisotopic=monoisotopic)
-                fragments.append(Fragment(sequence=fragment_sequence, mz=mz, charge=charge, ion_type=ion_type,
-                                          number=frag_number, internal=False, parent_number=frag_number))
+            yield Fragment(sequence=frag, charge=c, ion_type=t, number=frag_number,
+                           internal=False, parent_number=frag_number, monoisotopic=monoisotopic)
+
             if internal is True:
-                fragment_seq_len = calculate_sequence_length(fragment_sequence)
-                for internal_number, internal_fragment_sequence in enumerate(
-                        create_fragment_internal_sequences(sequence=fragment_sequence, ion_type=ion_type)):
+                fragment_seq_len = calculate_sequence_length(frag)
+                for internal_number, internal_frag in \
+                        enumerate(build_fragment_sequences(sequence=frag, ion_type=t, internal=True)):
 
                     if internal_number == 0:  # skip first since its already created
                         continue
 
                     internal_frag_number = fragment_seq_len - internal_number
+                    yield Fragment(sequence=internal_frag, charge=c, ion_type=t,
+                                   number=internal_frag_number, internal=True, parent_number=frag_number,
+                                   monoisotopic=monoisotopic)
 
-                    for charge in charges:
-                        mz = calculate_mz(internal_fragment_sequence, charge=charge, ion_type=ion_type,
-                                          monoisotopic=monoisotopic)
-                        fragments.append(
-                            Fragment(sequence=internal_fragment_sequence, mz=mz, charge=charge, ion_type=ion_type,
-                                     number=internal_frag_number, internal=True, parent_number=frag_number))
-
+    fragments = list(chain.from_iterable(_fragment(t, c) for t in ion_types for c in charges))
     return fragments
 
 
-def build_fragment_sequences(sequence: str, ion_type: str) -> List[str]:
-    """
-    Builds all fragment subsequences for the input `sequence`.
-
-    :param sequence: The amino acid sequence, which can include modifications.
-    :type sequence: str
-    :param ion_type: The type of ion for which fragments are generated.
-    :type ion_type: str
-
-    :raise ValueError: If the ion type is not one of 'a', 'b', 'c', 'x', 'y', or 'z'.
-
-    :return: The fragment sequences.
-    :rtype: List[str]
-
-    .. code-block:: python
-
-        >>> build_fragment_sequences("PEPTIDE", "a")
-        ['PEPTIDE', 'PEPTID', 'PEPTI', 'PEPT', 'PEP', 'PE', 'P']
-
-        >>> build_fragment_sequences("PEPTIDE", "y")
-        ['PEPTIDE', 'EPTIDE', 'PTIDE', 'TIDE', 'IDE', 'DE', 'E']
-
-        >>> build_fragment_sequences("PEPTIDE", "o")
-        Traceback (most recent call last):
-        ValueError: Ion type o is invalid.
-
-    """
-
-    return list(sequence_trimmer(sequence, forward=is_forward(ion_type)))
-
-
-def create_fragment_internal_sequences(sequence: str, ion_type: str) -> List[str]:
-    """
-   Builds all internal fragment subsequences for the input `sequence`.
-
-    :param sequence: The amino acid sequence, which can include modifications.
-    :type sequence: str
-    :param ion_type: The type of ion for which internal fragments are generated.
-    :type ion_type: str
-
-    :raise ValueError: If the ion type is not one of 'a', 'b', 'c', 'x', 'y', or 'z'.
-
-    :return: The internal fragment subsequences.
-    :rtype: List[str]
-
-    .. code-block:: python
-
-        >>> create_fragment_internal_sequences("PEPTIDE", "a")
-        ['PEPTIDE', 'EPTIDE', 'PTIDE', 'TIDE', 'IDE', 'DE', 'E']
-
-        >>> create_fragment_internal_sequences("PEPTIDE", "y")
-        ['PEPTIDE', 'PEPTID', 'PEPTI', 'PEPT', 'PEP', 'PE', 'P']
-
-        >>> create_fragment_internal_sequences("PEPTIDE", "o")
-        Traceback (most recent call last):
-            ...
-        ValueError: Ion type o is invalid.
-
-    """
-
-    return list(sequence_trimmer(sequence, forward=not is_forward(ion_type)))
+def build_fragment_sequences(sequence: str, ion_type: str, internal: bool = False) -> List[str]:
+    if internal is True:
+        return sequence_trimmer(sequence, forward=not is_forward(ion_type))
+    return sequence_trimmer(sequence, forward=is_forward(ion_type))
 
 
 @lru_cache(maxsize=2)
@@ -322,66 +265,20 @@ def sequence_trimmer(sequence: str, forward: bool) -> List[str]:
 
     """
 
+    def _trim_from_end(seq: str) -> Generator[str, None, None]:
+        while seq:
+            yield seq
+            seq = strip_c_term_residue(seq)
+
+    def _trim_from_start(seq: str) -> Generator[str, None, None]:
+        while seq:
+            yield seq
+            seq = strip_n_term_residue(seq)
+
     if forward is True:
         return list(_trim_from_start(sequence))
 
     return list(_trim_from_end(sequence))
-
-
-def _trim_from_end(sequence: str) -> Generator[str, None, None]:
-    """
-    This function yields sub-sequences progressively by removing the last amino acid or modification
-    from the given sequence until the sequence is empty. If the last character in the sequence is a
-    closing parenthesis (indicating a modification), the entire modification is removed. This function
-    generates the sequences associated with abc ions.
-
-    :param sequence: The amino acid sequence, which can include modifications.
-    :type sequence: str
-
-    :yield: The sequence with the back amino acid (and modification) removed.
-    :rtype: Generator[str, None, None]
-
-    .. code-block:: python
-
-        >>> list(_trim_from_end('PET'))
-        ['PET', 'PE', 'P']
-        
-        >>> list(_trim_from_end('[Acetyl]P(3.14)ET[Amide]'))
-        ['[Acetyl]P(3.14)ET[Amide]', '[Acetyl]P(3.14)E', '[Acetyl]P(3.14)']
-
-    """
-
-    while sequence:
-        yield sequence
-        sequence = strip_c_term_residue(sequence)
-
-
-def _trim_from_start(sequence: str) -> Generator[str, None, None]:
-    """
-    This function yields sub-sequences progressively by removing the first amino acid or modification
-    from the given sequence until the sequence is empty. If the first character(s) in the sequence
-    indicate a modification (enclosed in parentheses), the entire modification is removed. This function
-    generates the sequences associated with xyz ions.
-
-    :param sequence: The amino acid sequence, which can include modifications.
-    :type sequence: str
-
-    :yield: The sequence with the front amino acid (and modification) removed.
-    :rtype: Generator[str, None, None]
-
-    .. code-block:: python
-
-        >>> list(_trim_from_start('PET'))
-        ['PET', 'ET', 'T']
-
-        >>> list(_trim_from_start('[Acetyl]P(3.14)ET[Amide]'))
-        ['[Acetyl]P(3.14)ET[Amide]', 'ET[Amide]', 'T[Amide]']
-
-    """
-
-    while sequence:
-        yield sequence
-        sequence = strip_n_term_residue(sequence)
 
 
 def fragment(sequence: str, ion_types: Union[str, List[str]] = 'y', charges: Union[int, List[int]] = 1,
@@ -458,14 +355,15 @@ def _slow_fragment(sequence: str, ion_types: List[str], charges: List[int],
     """
     Original fragment function that is slow, but works with internal fragments.
     """
+
     def _fragment(t: str, c: int, f: Callable):
         # Loop through the sequence to generate fragments and yield m/z
-        for sub_sequence in sequence_trimmer(sequence, forward=is_forward(t)):
+        for sub_sequence in build_fragment_sequences(sequence, ion_type=t):
             if mz is True:
                 yield f(sequence=sub_sequence, charge=c, ion_type=t, monoisotopic=monoisotopic)
             if internal is True:
                 for i, internal_sub_sequence in enumerate(
-                        create_fragment_internal_sequences(sequence=sub_sequence, ion_type=t)):
+                        build_fragment_sequences(sequence=sub_sequence, ion_type=t, internal=True)):
                     if i == 0:  # skip first since its already created
                         continue
                     yield f(sequence=internal_sub_sequence, charge=c, ion_type=t, monoisotopic=monoisotopic)
