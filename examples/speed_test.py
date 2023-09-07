@@ -36,7 +36,7 @@ functions_to_benchmark = [
     (get_modifications, "PE(3.1415)PTIDE"),
     (add_modifications, "PEPTIDE", {1: 3.1415}),
     (strip_modifications, "PE(3.1415)PTIDE"),
-    (fast_fragment, "PE(3.1415)PTIDE", ['a', 'b', 'c', 'x', 'y', 'z'], [1, 2, 3], True, False),
+    (build_fragments, "PE(3.1415)PTIDE", ['a', 'b', 'c', 'x', 'y', 'z'], [1, 2, 3], True, False),
     (fragment, "PE(3.1415)PTIDE", ['a', 'b', 'c', 'x', 'y', 'z'], [1, 2, 3], True, False),
     (split_sequence, "PE(3.1415)PTIDE"),
 ]

@@ -446,17 +446,29 @@ def fragment(sequence: str, ion_types: Union[str, List[str]] = 'y', charges: Uni
     if isinstance(charges, int):
         charges = [charges]
 
-    def _fragment(t: str, c: int, func: Callable):
+    if internal is True:
+        return _slow_fragment(sequence=sequence, ion_types=ion_types, charges=charges, monoisotopic=monoisotopic,
+                              mz=mz, internal=internal)
+
+    return _fast_fragment(sequence=sequence, ion_types=ion_types, charges=charges, monoisotopic=monoisotopic, mz=mz)
+
+
+def _slow_fragment(sequence: str, ion_types: List[str], charges: List[int],
+                   monoisotopic: bool, mz: bool, internal: bool) -> List[float]:
+    """
+    Original fragment function that is slow, but works with internal fragments.
+    """
+    def _fragment(t: str, c: int, f: Callable):
         # Loop through the sequence to generate fragments and yield m/z
         for sub_sequence in sequence_trimmer(sequence, forward=is_forward(t)):
             if mz is True:
-                yield func(sequence=sub_sequence, charge=c, ion_type=t, monoisotopic=monoisotopic)
+                yield f(sequence=sub_sequence, charge=c, ion_type=t, monoisotopic=monoisotopic)
             if internal is True:
                 for i, internal_sub_sequence in enumerate(
                         create_fragment_internal_sequences(sequence=sub_sequence, ion_type=t)):
                     if i == 0:  # skip first since its already created
                         continue
-                    yield func(sequence=internal_sub_sequence, charge=c, ion_type=t, monoisotopic=monoisotopic)
+                    yield f(sequence=internal_sub_sequence, charge=c, ion_type=t, monoisotopic=monoisotopic)
 
     func = calculate_mz if mz else calculate_mass
     fragments = list(chain.from_iterable(_fragment(t, c, func) for t in ion_types for c in charges))
@@ -464,67 +476,32 @@ def fragment(sequence: str, ion_types: Union[str, List[str]] = 'y', charges: Uni
     return fragments
 
 
-def fast_fragment(sequence: str, ion_types: Union[str, List[str]] = 'y', charges: Union[int, List[int]] = 1,
-                  monoisotopic: bool = True, mz: bool = True) -> 'np.ndarray':
+def _fast_fragment(sequence: str, ion_types: List[str], charges: List[int],
+                   monoisotopic: bool, mz: bool) -> List[float]:
     """
-
-    This is about 2.5x faster than the base fragment() function in peptacular.
-
-    .. code-block:: python
-
-        # Fragments are returned from largest to smallest.
-        >>> fast_fragment("TIDE", ion_types="y", charges=1)
-        [477.21911970781, 376.17144123940005, 263.08737726227, 148.06043423844]
-        >>> fast_fragment("TIDE", ion_types="b", charges=2)
-        [230.10791574544, 165.58661920145502, 108.07314768954, 51.531115700975]
-
-        # When using multiple ion types and charge states the fragments will be generated first by ion_types
-        # and second by charge state. For example, the following will generate the following fragments:
-        # [y2+, y1+, y2++, y1++, b2+, b1+, b2++, b1++]
-        >>> fast_fragment("PE", ion_types=["y", "b"], charges=[1,2])[:4] # First 4 fragments
-        [245.11319808729002, 148.06043423844, 123.06023727703, 74.53385535260499]
-        >>> fast_fragment("PE", ion_types=["y", "b"], charges=[1,2])[4:] # Last 4 fragments
-        [227.10263340359, 98.06004031562, 114.05495493517999, 49.533658391195004]
-
-        # Can also include modifications in the sequence.
-        >>> fast_fragment("[1.0]T(-1.0)IDE(2.0)[-2.0]", ion_types="y", charges=1)
-        [477.21911970781, 376.17144123940005, 263.08737726227, 148.06043423844]
-
+    Faster version of _slow_fragment that does not support internal fragments.
     """
-
-    import numpy as np
-
-    if isinstance(ion_types, str):
-        ion_types = [ion_types]
-
-    if isinstance(charges, int):
-        charges = [charges]
-
     aas = split_sequence(sequence)
 
-    masses = np.array([calculate_mass(aa, 0, 'b', monoisotopic) for aa in aas])
+    masses = [calculate_mass(aa, 0, 'b', monoisotopic) for aa in aas]
 
-    fragment_count = len(masses) * len(ion_types) * len(charges)
-    fragments = np.empty(fragment_count, dtype=float)
+    fragments = []
 
-    idx = 0
     for ion_type in ion_types:
         for charge in charges:
 
             if ion_type in ['a', 'b', 'c']:
-                cum_sum = np.cumsum(masses)
+                cum_sum = [sum(masses[:i + 1]) for i in range(len(masses))]
             elif ion_type in ['x', 'y', 'z']:
-                cum_sum = np.cumsum(masses[::-1])
+                cum_sum = [sum(masses[-(i + 1):]) for i in range(len(masses))]
             else:
                 raise ValueError(f"Invalid ion type: {ion_type}")
 
-            cum_sum += charge * PROTON_MASS
-            cum_sum += ION_ADJUSTMENTS[ion_type]
+            cum_sum = [x + charge * PROTON_MASS + ION_ADJUSTMENTS[ion_type] for x in cum_sum]
 
             if mz and charge > 0:
-                cum_sum /= charge
+                cum_sum = [x / charge for x in cum_sum]
 
-            fragments[idx:idx + len(cum_sum)] = cum_sum[::-1]
-            idx += len(cum_sum)
+            fragments.extend(cum_sum[::-1])
 
     return fragments

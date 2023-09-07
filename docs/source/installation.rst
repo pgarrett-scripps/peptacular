@@ -43,15 +43,6 @@ And install the package:
 
     python install .
 
-Dependencies
-------------
-
-peptacular requires the following packages:
-
-- regex
-
-These will be automatically installed if you use pip to install peptacular.
-
 Updating
 --------
 

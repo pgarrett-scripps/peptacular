@@ -1,7 +1,7 @@
 
 # Peptacular
 
-A spectacularly simple package for working with peptide sequences. 
+A spectacularly simple package for working with peptide sequences (Now with ZERO dependencies!)
 
 ## ReadTheDocs
 https://peptacular.readthedocs.io/en/latest/index.html
