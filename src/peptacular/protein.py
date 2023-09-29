@@ -1,4 +1,4 @@
-import re
+import regex as re
 from typing import List
 
 
@@ -29,7 +29,7 @@ def find_peptide_indexes(protein: str, peptide: str) -> List[int]:
     if len(peptide) == 0:
         return []
 
-    return [i.start() for i in re.finditer(peptide, protein)]
+    return [i.start() for i in re.finditer(peptide, protein, overlapped=True)]
 
 
 def build_coverage_array(protein: str, peptides: List[str], accumulate: bool = False) -> List[int]:

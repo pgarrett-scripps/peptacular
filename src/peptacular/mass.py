@@ -1,3 +1,7 @@
+"""
+mass.py is a simple module for computing the m/z and mass of an amino acid sequence, plus it works with peptacular's
+modification notation!
+"""
 
 from peptacular.constants import MONO_ISOTOPIC_ATOMIC_MASSES, AVERAGE_ATOMIC_MASSES, AVERAGE_AA_MASSES, \
     MONO_ISOTOPIC_AA_MASSES, ION_ADJUSTMENTS, UWPR_MONO_ISOTOPIC_ATOMIC_MASSES, UWPR_AVERAGE_AA_MASSES, \

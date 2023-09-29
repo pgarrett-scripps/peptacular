@@ -1,9 +1,4 @@
-AMINO_ACIDS = 'ACDEFGHIKLMNPQRSTVWY'
-
-# TODO: Remove either peptacular or UWPR constants
-
 PROTON_MASS = 1.00727646677
-
 AMINO_ACIDS = {'S', 'A', 'O', 'Y', 'R', 'P', 'N', 'H', 'E', 'J', 'G', 'F', 'V', 'D', 'I', 'K', 'L', 'C', 'T', 'Q', 'U', 'M', 'W'}
 
 MONO_ISOTOPIC_ATOMIC_MASSES = {

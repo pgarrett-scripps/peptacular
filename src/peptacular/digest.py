@@ -1,25 +1,33 @@
-from collections import deque
-from typing import Union, List, Generator, Tuple
+"""
+Digest.py contains functions to handle all your digestion needs and of course it works with peptacular's standard
+modification notation. From generating left/right semi enzymatic sequences to calculating protease cleavage sites
+there is likely a function for it here.
+
+Proteases can be a name of a protease in peptacular.constants.PROTEASES, or they can be a custom regex string. When
+specifying more than one protease, all cleavage sites will be combined (as if both proteases were present at the
+same time)
+"""
+
+from typing import Union, List
 
 from peptacular.spans import build_left_semi_spans, build_right_semi_spans, build_non_enzymatic_spans, build_spans
 from peptacular.constants import PROTEASES
 from peptacular.sequence import strip_modifications, calculate_sequence_length, span_to_sequence, get_modifications, \
-    add_modifications
+    _span_to_sequence_fast
 from peptacular.util import identify_regex_indexes
-import itertools as it
-import re
 
 
-def build_left_semi_sequences(sequence: str, min_len: int = 1, max_len: int = None) -> List[str]:
+def build_left_semi_sequences(sequence: str, min_len: int = None, max_len: int = None) -> List[str]:
     """
     Builds all left-hand semi-enzymatic subsequences derived from the input `sequence`.
 
     :param sequence: The amino acid sequence, which can include modifications.
     :type sequence: str
-    :param min_len: Minimum length for the subsequences (inclusive), defaults to [1].
+    :param min_len: Minimum length for the subsequences (inclusive), defaults to [None]. If None, min_len will be
+                    equal to 1.
     :type min_len: int
-    :param max_len: Maximum length for the subsequences (inclusive). If None, the subsequences will go up to the
-                    length of the `sequence`, defaults to [None].
+    :param max_len: Maximum length for the subsequences (inclusive). If None, the subsequences will go up to
+                    1 - length of the `sequence`, defaults to [None].
     :type max_len: Union[int, None]
 
     :return: Left-hand semi-enzymatic subsequences.
@@ -47,16 +55,17 @@ def build_left_semi_sequences(sequence: str, min_len: int = 1, max_len: int = No
     return [span_to_sequence(sequence, span) for span in spans]
 
 
-def build_right_semi_sequences(sequence: str, min_len: int = 1, max_len: int = None) -> List[str]:
+def build_right_semi_sequences(sequence: str, min_len: int = None, max_len: int = None) -> List[str]:
     """
     Builds all right-hand semi-enzymatic subsequences derived from the input `sequence`.
 
     :param sequence: The amino acid sequence, which can include modifications.
     :type sequence: str
-    :param min_len: Minimum length for the subsequences (inclusive), defaults to [1].
+    :param min_len: Minimum length for the subsequences (inclusive), default is [None]. If None, min_len will be
+                    equal to 1.
     :type min_len: int
-    :param max_len: Maximum length for the subsequences (inclusive). If None, the subsequences will go up to the
-                    length of the `sequence`, defaults to [None].
+    :param max_len: Maximum length for the subsequences (inclusive). If None, the subsequences will go up to
+                    1 - length of the `sequence`, defaults to [None].
     :type max_len: Union[int, None]
 
     :return: Right-hand semi-enzymatic subsequences
@@ -84,16 +93,17 @@ def build_right_semi_sequences(sequence: str, min_len: int = 1, max_len: int = N
     return [span_to_sequence(sequence, span) for span in spans]
 
 
-def build_semi_sequences(sequence: str, min_len: int = 1, max_len: int = None) -> List[str]:
+def build_semi_sequences(sequence: str, min_len: int = None, max_len: int = None) -> List[str]:
     """
     Builds allsemi-enzymatic sequences from the given input `sequence`.
 
     :param sequence: The amino acid sequence, which can include modifications.
     :type sequence: str
-    :param min_len: Minimum length for the subsequences (inclusive), defaults to [1].
+    :param min_len: Minimum length for the subsequences (inclusive), default is [None]. If None, min_len will be
+                    equal to 1.
     :type min_len: int
-    :param max_len: Maximum length for the subsequences (inclusive). If None, the subsequences will go up to the
-                    length of the `sequence`, defaults to [None].
+    :param max_len: Maximum length for the subsequences (inclusive). If None, the subsequences will go up  to
+                    1 - length of the `sequence`, defaults to [None].
     :type max_len: Union[int, None]
 
     :return: Semi-enzymatic subsequences.
@@ -112,16 +122,17 @@ def build_semi_sequences(sequence: str, min_len: int = 1, max_len: int = None) -
                                                                                               max_len)
 
 
-def build_non_enzymatic_sequences(sequence: str, min_len: int = 1, max_len: int = None) -> List[str]:
+def build_non_enzymatic_sequences(sequence: str, min_len: int = None, max_len: int = None) -> List[str]:
     """
     Builds all non-enzymatic sequences from the given input `sequence`.
 
     :param sequence: The amino acid sequence, which can include modifications.
     :type sequence: str
-    :param min_len: Minimum length for the subsequences (inclusive), defaults to [1].
+    :param min_len: Minimum length for the subsequences (inclusive), default is [None]. If None, min_len will be
+                    equal to 1.
     :type min_len: int
-    :param max_len: Maximum length for the subsequences (inclusive). If None, the subsequences will go up to the
-                    length of the `sequence`, defaults to [None].
+    :param max_len: Maximum length for the subsequences (inclusive). If None, the subsequences will go up  to
+                    1 - length of the `sequence`, defaults to [None].
     :type max_len: Union[int, None]
 
     :return: Non-enzymatic subsequences
@@ -150,7 +161,7 @@ def build_non_enzymatic_sequences(sequence: str, min_len: int = 1, max_len: int 
 
 
 def build_enzymatic_sequences(sequence: str, enzyme_regex: str, missed_cleavages: int, semi: bool = False,
-                              min_len: int = 1, max_len: int = None) -> List[str]:
+                              min_len: int = None, max_len: int = None) -> List[str]:
     """
     Builds all enzymatic sequences from the given input `sequence`.
 
@@ -162,10 +173,11 @@ def build_enzymatic_sequences(sequence: str, enzyme_regex: str, missed_cleavages
     :type missed_cleavages: int
     :param semi: Whether to include semi-enzymatic peptides, defaults to [False].
     :type semi: bool
-    :param min_len: Minimum length for the subsequences (inclusive), defaults to [1].
+    :param min_len: Minimum length for the subsequences (inclusive), default is [None]. If None, min_len will be
+                    equal to 1.
     :type min_len: int
-    :param max_len: Maximum length for the subsequences (inclusive). If None, the subsequences will go up to the
-                    length of the `sequence`, defaults to [None].
+    :param max_len: Maximum length for the subsequences (inclusive). If None, the subsequences will go up  to
+                    1 - length of the `sequence`, defaults to [None].
     :type max_len: Union[int, None]
 
     :return: Enzymatic subsequences.
@@ -242,6 +254,9 @@ def identify_cleavage_sites(sequence: str, enzyme_regex: str) -> List[int]:
         >>> identify_cleavage_sites(sequence='PEPTIDE', enzyme_regex='non-specific')
         [1, 2, 3, 4, 5, 6]
 
+        >>> identify_cleavage_sites(sequence='PPPP', enzyme_regex='PP')
+        [1, 2, 3]
+
     """
 
     stripped_sequence = strip_modifications(sequence)
@@ -256,7 +271,7 @@ def identify_cleavage_sites(sequence: str, enzyme_regex: str) -> List[int]:
 
 
 def digest(sequence: str, enzyme_regex: Union[List[str], str], missed_cleavages: int = 0,
-           semi: bool = False, min_len: int = 1, max_len: int = None) -> List[str]:
+           semi: bool = False, min_len: int = None, max_len: int = None) -> List[str]:
     """
     Returns a list of digested sequences derived from the input `sequence`.
 
@@ -268,10 +283,11 @@ def digest(sequence: str, enzyme_regex: Union[List[str], str], missed_cleavages:
     :type missed_cleavages: int
     :param semi: Whether to include semi-enzymatic peptides, defaults to [False].
     :type semi: bool
-    :param min_len: Minimum length for the subsequences (inclusive), defaults to [1].
+    :param min_len: Minimum length for the subsequences (inclusive), default is [None]. If None, min_len will be
+                    equal to 1.
     :type min_len: int
-    :param max_len: Maximum length for the subsequences (inclusive). If None, the subsequences will go up to the
-                    length of the `sequence`, defaults to [None].
+    :param max_len: Maximum length for the subsequences (inclusive). If None, the subsequences will go up  to
+                    1 - length of the `sequence`, defaults to [None].
     :type max_len: Union[int, None]
 
     :return: List of digested peptides.
@@ -281,11 +297,11 @@ def digest(sequence: str, enzyme_regex: Union[List[str], str], missed_cleavages:
 
         # Can use a key in PROTEASES to specify the enzyme_regex:
         >>> digest(sequence='TIDERTIDEKTIDE', enzyme_regex='trypsin/P', missed_cleavages=2)
-        ['TIDER', 'TIDERTIDEK', 'TIDEK', 'TIDERTIDEKTIDE', 'TIDEKTIDE', 'TIDE']
+        ['TIDER', 'TIDERTIDEK', 'TIDERTIDEKTIDE', 'TIDEK', 'TIDEKTIDE', 'TIDE']
 
         # Or specify a regular expression:
         >>> digest(sequence='TIDERTIDEKTIDE', enzyme_regex='([KR])', missed_cleavages=2)
-        ['TIDER', 'TIDERTIDEK', 'TIDEK', 'TIDERTIDEKTIDE', 'TIDEKTIDE', 'TIDE']
+        ['TIDER', 'TIDERTIDEK', 'TIDERTIDEKTIDE', 'TIDEK', 'TIDEKTIDE', 'TIDE']
 
         # Filter sequecnes by max length:
         >>> digest(sequence='TIDERTIDEKTIDE', enzyme_regex='([KR])', missed_cleavages=2, max_len=5)
@@ -297,7 +313,7 @@ def digest(sequence: str, enzyme_regex: Union[List[str], str], missed_cleavages:
 
         # Generate semi-enzymatic sequences:
         >>> digest(sequence='TIDERTIDEK(1)TIDE[2]', enzyme_regex='([KR])', missed_cleavages=1, min_len=9, semi=True)
-        ['TIDERTIDEK(1)', 'TIDERTIDE', 'IDERTIDEK(1)', 'TIDEK(1)TIDE[2]']
+        ['TIDERTIDEK(1)', 'TIDEK(1)TIDE[2]', 'TIDERTIDE', 'IDERTIDEK(1)']
 
         # Non-specific cleavage sites are also identified
         >>> digest(sequence='PEPT', enzyme_regex='non-specific')
@@ -315,92 +331,16 @@ def digest(sequence: str, enzyme_regex: Union[List[str], str], missed_cleavages:
 
     enzyme_regex = [PROTEASES.get(regex, regex) for regex in enzyme_regex]
 
-    if len(enzyme_regex) == 1 and enzyme_regex[0] != '()':
-        return _fast_digest(sequence, enzyme_regex[0], missed_cleavages, semi, min_len, max_len)
+    seq_len = calculate_sequence_length(sequence)
 
-    return _slow_digest(sequence, enzyme_regex, missed_cleavages, semi, min_len, max_len)
-
-
-def _slow_digest(sequence: str, enzyme_regex: List[str], missed_cleavages: int, semi: bool,
-                 min_len: int, max_len: int) -> List[str]:
-    """
-    Slower version of digest for multiple enzyme_regex.
-    """
-
-    cleavage_sites = set()
+    cleavage_sites = []
     for regex in enzyme_regex:
-        cleavage_sites.update(identify_cleavage_sites(sequence, regex))
+        cleavage_sites.extend(identify_cleavage_sites(sequence, regex))
 
-    cleavage_sites.add(0)
-    cleavage_sites.add(calculate_sequence_length(sequence))
+    stripped_sequence = strip_modifications(sequence)
+    mods = get_modifications(sequence)
 
-    cleavage_sites = sorted(list(cleavage_sites))
-
-    spans = build_spans(calculate_sequence_length(sequence), cleavage_sites, missed_cleavages, min_len, max_len, semi)
-    sequences = [span_to_sequence(sequence, span) for span in spans]
+    spans = build_spans(seq_len, cleavage_sites, missed_cleavages, min_len, max_len, semi)
+    sequences = [_span_to_sequence_fast(stripped_sequence, mods, span) for span in spans]
 
     return sequences
-
-
-def _fast_digest(sequence: str, enzyme_regex: str, missed_cleavages: int, semi: bool,
-                 min_len: int, max_len: int) -> List[str]:
-    """
-    Faster version of digest for single enzyme_regex.
-    """
-
-    peptides = _icleave(sequence, enzyme_regex, missed_cleavages, semi, min_len, max_len)
-    return [peptide[1] for peptide in peptides]
-
-
-def _icleave(sequence: str, enzyme_regex: str, missed_cleavages: int, semi: bool, min_len: int, max_len: int) \
-        -> Generator[Tuple[int, str], None, None]:
-    """
-    Modified from pyteomics.parser.cleave to work with peptacular modification notation.
-    """
-
-    mods = get_modifications(sequence)
-    sequence = strip_modifications(sequence)
-
-    ml = missed_cleavages + 2
-    trange = range(ml)
-    cleavage_sites = deque([0], maxlen=ml)
-
-    cl = 1
-
-    def add_mods(start, seq):
-
-        if not mods:
-            return seq
-
-        new_mods = {}
-
-        if start == 0 and -1 in mods:
-            new_mods[-1] = mods[-1]
-
-        for index in mods:
-            if start <= index < start + len(seq):
-                new_mods[index - start] = mods[index]
-
-        if start + len(seq) == len(sequence) and len(sequence) in mods:
-            new_mods[len(seq)] = mods[len(sequence)]
-
-        return add_modifications(seq, new_mods)
-
-    for end in it.chain([x.end() for x in re.finditer(enzyme_regex, sequence)], [None]):
-        cleavage_sites.append(end)
-        if cl < ml:
-            cl += 1
-        for j in trange[:cl - 1]:
-            seq = sequence[cleavage_sites[j]:cleavage_sites[-1]]
-            lenseq = len(seq)
-            if end is not None:
-                start = end - lenseq
-            else:
-                start = len(sequence) - lenseq
-            if seq and min_len <= lenseq <= max_len:
-                yield start, add_mods(start, seq)
-                if semi:
-                    for k in range(min_len, min(lenseq, max_len)):
-                        yield start, add_mods(start, seq[:k])
-                    for k in range(max(1, lenseq - max_len), lenseq - min_len + 1):
-                        yield start + k, add_mods(start + k, seq[k:])

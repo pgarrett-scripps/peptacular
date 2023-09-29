@@ -1,5 +1,6 @@
 import pytest
-from peptacular import sequence, digest, fragment, mass, protein, score, spans, term
+from peptacular import sequence, digest, fragment, mass, protein, score, spans
+from peptacular.term import modification, residue
 
 modules = [
     sequence,
@@ -9,8 +10,10 @@ modules = [
     protein,
     score,
     spans,
-    term
+    modification,
+    residue
 ]
+
 
 @pytest.mark.parametrize("module", modules)
 def test_doctests(module):

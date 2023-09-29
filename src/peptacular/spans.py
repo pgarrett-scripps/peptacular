@@ -1,35 +1,50 @@
 """
-Used in digest.py, and exclusively work with unmodified sequences!
+The span module contains multiple functions for generating and working with spans. This module is mostly used within
+the digest module, since spans essentially represent peptide sequences. Each span has a start, end and value component.
+The start and end values reference the start and end index of the peptide within the protein, while the value component
+is used to denote the number of missed cleavages the span contains.
+
+Working with spans can be a more efficient way of processing peptide data, since a peptide can be reference with only
+3 integers.
 """
 
 from typing import Tuple, List
 from itertools import groupby
 
 
-def build_non_enzymatic_spans(span: Tuple[int, int, int], min_len: int = 1, max_len: int = None) \
+def build_non_enzymatic_spans(span: Tuple[int, int, int], min_len: int = None, max_len: int = None) \
         -> List[Tuple[int, int, int]]:
     """
-    Generates and returns all possible sub-spans of the given span.
+    Generates non-enymatic spans with span lengths <= max_len and >= min_len
 
-    :param span: A tuple representing the original span.
+    :param span: The input span for which to generate sub-spans.
     :type span: Tuple[int, int, int]
-    :param min_len: The minimum length of sub-spans to be generated.
+    :param min_len: The minimum length of spans to be generated, default is [None]. If None, min_len will be
+                    equal to 1.
     :type min_len: int
-    :param max_len: The maximum length of sub-spans to be generated.
+    :param max_len: The maximum length of spans to be generated, default is [None]. If None or any value greater than
+                    span length - 1, max_len will be equal to span length - 1.
     :type max_len: int
 
-    :return: A list of all possible sub-spans as tuples.
+    :return: All non-enymatic spans.
     :rtype: List[Tuple[int, int, int]]
 
     .. code-block:: python
 
-        >>> build_non_enzymatic_spans((0, 3, 0), 1, 2)
-        [(0, 1, 0), (0, 2, 0), (1, 2, 0), (1, 3, 0), (2, 3, 0)]
-
+        # By default all spans are returned with lengths >= 1 and <= span length - 1
         >>> build_non_enzymatic_spans((0, 3, 0))
         [(0, 1, 0), (0, 2, 0), (1, 2, 0), (1, 3, 0), (2, 3, 0)]
 
-        >>> build_non_enzymatic_spans((0, 3, 0), 1, 10)
+        # The span value for non-enymatic spans will always be 0
+        >>> build_non_enzymatic_spans((0, 3, 2))
+        [(0, 1, 0), (0, 2, 0), (1, 2, 0), (1, 3, 0), (2, 3, 0)]
+
+        # Can also explicitly specify min_len and max_len
+        >>> build_non_enzymatic_spans((0, 3, 0), min_len=1, max_len=1)
+        [(0, 1, 0), (1, 2, 0), (2, 3, 0)]
+
+        # But it is not possible to generate spans >= span length - 1
+        >>> build_non_enzymatic_spans((0, 3, 0), max_len=10)
         [(0, 1, 0), (0, 2, 0), (1, 2, 0), (1, 3, 0), (2, 3, 0)]
 
     """
@@ -46,23 +61,27 @@ def build_non_enzymatic_spans(span: Tuple[int, int, int], min_len: int = 1, max_
     return [(i, j, 0) for i in range(start, end + 1) for j in range(i + min_len, min(end + 1, i + max_len + 1))]
 
 
-def build_left_semi_spans(span: Tuple[int, int, int], min_len: int = 1, max_len: int = None) \
+def build_left_semi_spans(span: Tuple[int, int, int], min_len: int = None, max_len: int = None) \
         -> List[Tuple[int, int, int]]:
     """
-    Generates and returns all possible sub-spans of the given span starting from the left.
+    Generates left-semi spans with span lengths <= max_len and >= min_len. A left-semi span is any span
+    which has the same start position as the parent span.
 
-    :param span: A tuple representing the original span.
+    :param span: The input span for which to generate sub-spans.
     :type span: Tuple[int, int, int]
-    :param min_len: The minimum length of sub-spans to be generated.
+    :param min_len: The minimum length of spans to be generated, default is [None]. If None, min_len will be
+                    equal to 1.
     :type min_len: int
-    :param max_len: The maximum length of sub-spans to be generated.
+    :param max_len: The maximum length of spans to be generated, default is [None]. If None or any value greater than
+                    span length - 1, max_len will be equal to span length - 1.
     :type max_len: int
 
-    :return: A list of all possible left sub-spans as tuples.
+    :return: A list of all left-semi spans.
     :rtype: List[Tuple[int, int, int]]
 
     .. code-block:: python
 
+        # By default all spans are returned with lengths >= 1 and <= span length - 1
         >>> build_left_semi_spans((0, 3, 0))
         [(0, 2, 0), (0, 1, 0)]
 
@@ -70,13 +89,16 @@ def build_left_semi_spans(span: Tuple[int, int, int], min_len: int = 1, max_len:
         >>> build_left_semi_spans((0, 3, 2))
         [(0, 2, 2), (0, 1, 2)]
 
-        # Set min and max length
-        >>> build_left_semi_spans((0, 3, 0), 1, 1)
+        # Can also explicitly specify min_len and max_len
+        >>> build_left_semi_spans((0, 3, 0), min_len=1, max_len=1)
         [(0, 1, 0)]
-        >>> build_left_semi_spans((0, 3, 0), 1, 10)
+
+        # But it is not possible to generate spans >= span length - 1
+        >>> build_left_semi_spans((0, 3, 0), max_len=10)
         [(0, 2, 0), (0, 1, 0)]
 
     """
+
     if min_len is None:
         min_len = 1
 
@@ -91,20 +113,24 @@ def build_left_semi_spans(span: Tuple[int, int, int], min_len: int = 1, max_len:
 def build_right_semi_spans(span: Tuple[int, int, int], min_len: int = 1, max_len: int = None) \
         -> List[Tuple[int, int, int]]:
     """
-    Generates and returns all possible sub-spans of the given span starting from the right.
+    Generates right-semi spans with span lengths <= max_len and >= min_len. A right-semi span is any span
+    which has the same end position as the parent span.
 
-    :param span: A tuple representing the original span.
+    :param span: The input span for which to generate sub-spans.
     :type span: Tuple[int, int, int]
-    :param min_len: The minimum length of sub-spans to be generated.
+    :param min_len: The minimum length of spans to be generated, default is [None]. If None, min_len will be
+                    equal to 1.
     :type min_len: int
-    :param max_len: The maximum length of sub-spans to be generated.
+    :param max_len: The maximum length of spans to be generated, default is [None]. If None or any value greater than
+                    span length - 1, max_len will be equal to span length - 1.
     :type max_len: int
 
-    :return: A list of all possible right sub-spans as tuples.
+    :return: A list of all right-semi spans.
     :rtype: List[Tuple[int, int, int]]
 
     .. code-block:: python
 
+        # By default all spans are returned with lengths >= 1 and <= span length - 1
         >>> build_right_semi_spans((0, 3, 0))
         [(1, 3, 0), (2, 3, 0)]
 
@@ -112,10 +138,12 @@ def build_right_semi_spans(span: Tuple[int, int, int], min_len: int = 1, max_len
         >>> build_right_semi_spans((0, 3, 2))
         [(1, 3, 2), (2, 3, 2)]
 
-        # Set min and max length
-        >>> build_right_semi_spans((0, 3, 0), 1, 1)
+        # Can also explicitly specify min_len and max_len
+        >>> build_right_semi_spans((0, 3, 0), min_len=1, max_len=1)
         [(2, 3, 0)]
-        >>> build_right_semi_spans((0, 3, 0), 1, 10)
+
+        # But it is not possible to generate spans >= span length - 1
+        >>> build_right_semi_spans((0, 3, 0), min_len=1, max_len=10)
         [(1, 3, 0), (2, 3, 0)]
 
     """
@@ -132,7 +160,7 @@ def build_right_semi_spans(span: Tuple[int, int, int], min_len: int = 1, max_len
 
 
 def build_enzymatic_spans(max_index: int, enzyme_sites: List[int], missed_cleavages: int,
-                          min_len: int = 1, max_len: int = None) -> List[Tuple[int, int, int]]:
+                          min_len: int = None, max_len: int = None) -> List[Tuple[int, int, int]]:
     """
     Computes enzymatic spans for the given enzyme sites and missed cleavages.
 
@@ -142,28 +170,30 @@ def build_enzymatic_spans(max_index: int, enzyme_sites: List[int], missed_cleava
     :type enzyme_sites: List[int]
     :param missed_cleavages: The number of allowed missed cleavages.
     :type missed_cleavages: int
-    :param min_len: The minimum length of an enzymatic span.
-    :type min_len: int, optional
-    :param max_len: The maximum length of an enzymatic span.
-    :type max_len: int, optional
+    :param min_len: The minimum length of an enzymatic span, default is [None]. If None min_len will be equal to 1.
+    :type min_len: int
+    :param max_len: The maximum length of an enzymatic span, default is [None]. If None max_len will be equal to
+                    max_index.
+    :type max_len: int
 
-    :return: A list of tuples representing enzymatic spans.
+    :return: A list of all enzymatic spans.
     :rtype: List[Tuple[int, int, int]]
 
     .. code-block:: python
 
-        >>> build_enzymatic_spans(5, [0, 3, 5], 1)
+        >>> build_enzymatic_spans(5, [3], 1)
         [(0, 3, 0), (0, 5, 1), (3, 5, 0)]
 
         # Set min length
-        >>> build_enzymatic_spans(5, [0, 3, 5], 1, min_len=5)
+        >>> build_enzymatic_spans(5, [3], 1, min_len=5)
         [(0, 5, 1)]
 
         # Set max length
-        >>> build_enzymatic_spans(5, [0, 3, 5], 1, max_len=3)
+        >>> build_enzymatic_spans(5, [3], 1, max_len=3)
         [(0, 3, 0), (3, 5, 0)]
 
     """
+
     if min_len is None:
         min_len = 1
 
@@ -190,31 +220,36 @@ def build_enzymatic_spans(max_index: int, enzyme_sites: List[int], missed_cleava
     return spans
 
 
-def _grouped_left_semi_span_builder(spans: List[Tuple[int, int, int]], min_len: int, max_len: int) -> \
+def _grouped_left_semi_span_builder(spans: List[Tuple[int, int, int]], min_len: int = None, max_len: int = None) -> \
         List[Tuple[int, int, int]]:
     """
-    Get all left semi-spans from the given list of spans that have a length within the specified range.
+    Efficiently generates all left-semi-spans from the given list of spans that have a length within the specified
+    range. The input spans must be enzymatic spans where the values of the span represents the number of missed
+    cleavages.
 
-    This function groups the spans by the start position, for each group, it checks every span to see if its length
-    is at least the minimum length. If it is, it calculates the new maximum length, which is the smallest of the max_len
-    and the span's length. Then it adds the left semi-spans to the list of semi-spans.
-
-    :param spans: A list of tuples, where each tuple represents a span with three integers (start, end, value).
+    :param spans: The input spans for which to generate sub-spans.
     :type spans: List[Tuple[int, int, int]]
-    :param min_len: The minimum length of the left semi-spans.
+    :param min_len: The minimum length of a span, default is [None]. If None min_len will be equal to 1.
     :type min_len: int
-    :param max_len: The maximum length of the left semi-spans.
+    :param max_len: The maximum length of a span, default is [None]. If None max_len will be equal to the largest span.
     :type max_len: int
 
-    :return: A list of tuples representing all left semi-spans that are within the specified length range.
+    :return: A list of all left-semi spans.
     :rtype: List[Tuple[int, int, int]]
 
     .. code-block:: python
 
-        >>> _grouped_left_semi_span_builder([(0, 3, 0), (0, 5, 1), (3, 5, 0)], 1, 5)
+        >>> _grouped_left_semi_span_builder([(0, 3, 0), (0, 5, 1), (3, 5, 0)], min_len=1, max_len=5)
+        [(0, 4, 1), (0, 2, 0), (0, 1, 0), (3, 4, 0)]
+
+        >>> _grouped_left_semi_span_builder([(0, 3, 0), (0, 5, 1), (3, 5, 0)], min_len=None, max_len=None)
         [(0, 4, 1), (0, 2, 0), (0, 1, 0), (3, 4, 0)]
 
     """
+
+    if min_len is None:
+        min_len = 1
+
     semi_spans = []
     spans = sorted(spans, key=lambda x: (x[0], -x[2]))
     for _, group in groupby(spans, key=lambda x: x[0]):
@@ -225,7 +260,10 @@ def _grouped_left_semi_span_builder(spans: List[Tuple[int, int, int]], min_len: 
             if span_len <= min_len:
                 break
 
-            new_max_len = min(max_len, span_len - 1)
+            new_max_len = span_len - 1
+            if max_len is not None:
+                new_max_len = min(max_len, new_max_len)
+
             if i == len(group) - 1:
                 semi_spans.extend(build_left_semi_spans(span, min_len, new_max_len))
             else:
@@ -237,31 +275,35 @@ def _grouped_left_semi_span_builder(spans: List[Tuple[int, int, int]], min_len: 
     return semi_spans
 
 
-def _grouped_right_semi_span_builder(spans: List[Tuple[int, int, int]], min_len: int, max_len: int) -> \
+def _grouped_right_semi_span_builder(spans: List[Tuple[int, int, int]], min_len: int = None, max_len: int = None) -> \
         List[Tuple[int, int, int]]:
     """
-    Get all right semi-spans from the given list of spans that have a length within the specified range.
+    Efficiently generates all right-semi-spans from the given list of spans that have a length within the specified
+    range. The input spans must be enzymatic spans where the values of the span represents the number of missed
+    cleavages.
 
-    This function groups the spans by the start position, for each group, it checks every span to see if its length
-    is at least the minimum length. If it is, it calculates the new maximum length, which is the smallest of the max_len
-    and the span's length. Then it adds the right semi-spans to the list of semi-spans.
-
-    :param spans: A list of tuples, where each tuple represents a span with three integers (start, end, value).
+    :param spans: The input spans for which to generate sub-spans.
     :type spans: List[Tuple[int, int, int]]
-    :param min_len: The minimum length of the right semi-spans.
+    :param min_len: The minimum length of a span, default is [None]. If None min_len will be equal to 1.
     :type min_len: int
-    :param max_len: The maximum length of the right semi-spans.
+    :param max_len: The maximum length of a span, default is [None]. If None max_len will be equal to the largest span.
     :type max_len: int
 
-    :return: A list of tuples representing all right semi-spans that are within the specified length range.
+    :return: A list of all right-semi spans.
     :rtype: List[Tuple[int, int, int]]
 
     .. code-block:: python
 
-        >>> _grouped_right_semi_span_builder([(0, 3, 0), (0, 5, 1), (3, 5, 0)], 1, 5)
+        >>> _grouped_right_semi_span_builder([(0, 3, 0), (0, 5, 1), (3, 5, 0)], min_len=1, max_len=5)
+        [(1, 3, 0), (2, 3, 0), (1, 5, 1), (2, 5, 1), (4, 5, 0)]
+
+        >>> _grouped_right_semi_span_builder([(0, 3, 0), (0, 5, 1), (3, 5, 0)], min_len=None, max_len=None)
         [(1, 3, 0), (2, 3, 0), (1, 5, 1), (2, 5, 1), (4, 5, 0)]
 
     """
+
+    if min_len is None:
+        min_len = 1
 
     semi_spans = []
     spans = sorted(spans, key=lambda x: (x[1], -x[2]))
@@ -273,7 +315,10 @@ def _grouped_right_semi_span_builder(spans: List[Tuple[int, int, int]], min_len:
             if span_len < min_len:
                 break
 
-            new_max_len = min(max_len, span_len - 1)
+            new_max_len = span_len - 1
+            if max_len is not None:
+                new_max_len = min(max_len, new_max_len)
+
             if i == len(group) - 1:
                 semi_spans.extend(build_right_semi_spans(span, min_len, new_max_len))
             else:
@@ -285,41 +330,43 @@ def _grouped_right_semi_span_builder(spans: List[Tuple[int, int, int]], min_len:
     return semi_spans
 
 
-def build_semi_spans(spans: List[Tuple[int, int, int]], min_len: int = 1, max_len: int = None) -> \
+def build_semi_spans(spans: List[Tuple[int, int, int]], min_len: int = None, max_len: int = None) -> \
         List[Tuple[int, int, int]]:
     """
-    Computes semi spans for a given list of spans based on length criteria.
+    Efficiently generates all semi-spans from the given list of spans that have a length within the specified
+    range. The input spans must be enzymatic spans where the values of the span represents the number of missed
+    cleavages.
+
 
     :param spans: The list of spans.
     :type spans: List[Tuple[int, int, int]]
-    :param min_len: The minimum length of a semi span.
+    :param min_len: The minimum length of spans to be generated, default is [None]. If None, min_len will be
+                    equal to 1.
     :type min_len: int
-    :param max_len: The maximum length of a semi span.
-    :type max_len: int
+    :param max_len: The maximum length of spans to be generated, default is [None]. If None or any value greater than
+                    the max span length will be equal to max span length.
 
-    :return: A list of tuples representing semi spans.
+    :return: A list of all semi spans.
     :rtype: List[Tuple[int, int, int]]
 
     .. code-block:: python
 
-        >>> build_semi_spans([(0, 3, 0), (0, 5, 1), (3, 5, 0)], 1, 5)
+        >>> build_semi_spans([(0, 3, 0), (0, 5, 1), (3, 5, 0)], min_len=1, max_len=5)
+        [(0, 4, 1), (0, 2, 0), (0, 1, 0), (3, 4, 0), (1, 3, 0), (2, 3, 0), (1, 5, 1), (2, 5, 1), (4, 5, 0)]
+
+        >>> build_semi_spans([(0, 3, 0), (0, 5, 1), (3, 5, 0)], min_len=None, max_len=None)
         [(0, 4, 1), (0, 2, 0), (0, 1, 0), (3, 4, 0), (1, 3, 0), (2, 3, 0), (1, 5, 1), (2, 5, 1), (4, 5, 0)]
 
     """
 
-    if min_len is None:
-        min_len = 1
-
-    if max_len is None:
-        max_len = max(span[1] - span[0] for span in spans)
-
-    return _grouped_left_semi_span_builder(spans, min_len, max_len) + _grouped_right_semi_span_builder(spans, min_len, max_len)
+    return _grouped_left_semi_span_builder(spans, min_len, max_len) + \
+        _grouped_right_semi_span_builder(spans, min_len, max_len)
 
 
-def build_spans(max_index: int, enzyme_sites: List[int], missed_cleavages: int, min_len: int,
-                max_len: int, semi: bool) -> List[Tuple[int, int, int]]:
+def build_spans(max_index: int, enzyme_sites: List[int], missed_cleavages: int, min_len: int = None,
+                max_len: int = None, semi: bool = False) -> List[Tuple[int, int, int]]:
     """
-    Builds spans for a given sequence based on enzyme sites, missed cleavages, and length criteria.
+    Builds all spans for the given digestion parameters and enzyme sites
 
     :param max_index: The max index of the span.
     :type max_index: int
@@ -327,14 +374,14 @@ def build_spans(max_index: int, enzyme_sites: List[int], missed_cleavages: int, 
     :type enzyme_sites: List[int]
     :param missed_cleavages: The number of allowed missed cleavages.
     :type missed_cleavages: int
-    :param min_len: The minimum length of a span.
+    :param min_len: The minimum length of a span, default is [None]. If None min_len will be equal to 1.
     :type min_len: int
-    :param max_len: The maximum length of a span.
+    :param max_len: The maximum length of a span, default is [None]. If None max_len will be equal to max_index.
     :type max_len: int
-    :param semi: Whether to compute and include semi spans.
+    :param semi: Whether to compute and include semi spans, default is False.
     :type semi: bool
 
-    :return: A list of tuples representing spans.
+    :return: A list of all generated spans.
     :rtype: List[Tuple[int, int, int]]
     """
 
@@ -344,7 +391,7 @@ def build_spans(max_index: int, enzyme_sites: List[int], missed_cleavages: int, 
     if max_len is None:
         max_len = max_index
 
-    if len(enzyme_sites) == max_index+1:  # non-enzymatic
+    if len(enzyme_sites) == max_index-1:  # non-enzymatic
         return build_non_enzymatic_spans((0, max_index, 0), min_len, max_len)
 
     if semi:
@@ -355,6 +402,7 @@ def build_spans(max_index: int, enzyme_sites: List[int], missed_cleavages: int, 
         spans = [span for span in spans if max_len >= span[1] - span[0] >= min_len] + semi_spans
     else:
         spans = build_enzymatic_spans(max_index, enzyme_sites, missed_cleavages, min_len, max_len)
+
     return spans
 
 

@@ -27,7 +27,9 @@ Welcome to Peptacular's Documentation
    mass
    protein
    sequence
-   term
+   term_modification
+   term_residue
+   spans
 
 Indices and Tables
 ------------------

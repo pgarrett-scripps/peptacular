@@ -1,5 +1,5 @@
 from typing import Union, List, Tuple
-import re
+import regex as re
 
 from peptacular.constants import VALID_ION_TYPES, FORWARD_IONS
 
@@ -176,9 +176,12 @@ def identify_regex_indexes(input_str: str, regex_str: str, offset: int = 0) -> L
         >>> identify_regex_indexes("PEPTIDEP", "P[ST]")
         [2]
 
+        >>> identify_regex_indexes("PPPP", "PP")
+        [0, 1, 2]
+
     """
 
-    regex_indexes = [match.start() + offset for match in re.finditer(regex_str, input_str)]
+    regex_indexes = [match.start() + offset for match in re.finditer(regex_str, input_str, overlapped=True)]
     return regex_indexes
 
 

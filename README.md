@@ -1,7 +1,7 @@
 
 # Peptacular
 
-A spectacularly simple package for working with peptide sequences (Now with ZERO dependencies!)
+A spectacularly simple package for working with peptide sequences.
 
 ## ReadTheDocs
 https://peptacular.readthedocs.io/en/latest/index.html
@@ -19,11 +19,6 @@ pip install peptacular
 ### Modification Types:
 - Modifications can be represented as strings, integers, or floats.
 - During parsing, the module automatically identifies the modification type based on its representation.
-
-### Example Sequences:
-- `PEPT(1)IDE` - T modification of 1 (index 3)
-- `PEPTIDE(1.234)[2]` - C-Term modification of 2 (index 7) and E modification of 1.234 (index 6)
-- `[Acetyl]PEPTIDE(1.234)` - N-Term modification of 'Acetyl' (index -1) and E modification of 1.234 (index 6)
 
 ## Working with Sequences
 ```python
@@ -80,7 +75,7 @@ assert fragments == [343.16596193614004, 245.11319808729002, 116.07060499932,
 fragment('PEPTIDE', ion_types=['y', 'b'], charges=[1, 2], monoisotopic=False)
 
 # Calculate fragment masses instead of m/z values
-fragment('PEPTIDE', ion_types=['y', 'b'], charges=[1, 2], monoisotopic=True, mz=False)```
+fragment('PEPTIDE', ion_types=['y', 'b'], charges=[1, 2], monoisotopic=True, mz=False)
 ```
 
 ## Digesting Sequences

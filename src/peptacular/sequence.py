@@ -592,24 +592,48 @@ def span_to_sequence(sequence: str, span: Tuple[int, int, int]) -> str:
     _validate_span(span)
 
     stripped_sequence = strip_modifications(sequence)
+    mods = get_modifications(sequence)
+
+    return _span_to_sequence_fast(stripped_sequence, mods, span)
+
+
+def _span_to_sequence_fast(stripped_sequence: str, mods: Dict[int, Union[str, float, int]],
+                           span: Tuple[int, int, int]) -> str:
+    """
+    Faster version of span_to_sequence
+
+    :param stripped_sequence: The stripped sequence.
+    :type stripped_sequence: str
+    :param mods: The modifications for sequence
+    :type mods: Dict[int, Union[str, float, int]]
+    :param span: A tuple representing the span of the subsequence to be extracted.
+    :type span: Tuple[int, int, int]
+
+    :return: The subsequence of the input sequence defined by the span.
+    :rtype: str
+
+    """
 
     base_sequence = stripped_sequence[span[0]:span[1]]
 
     # if peptide is unmodified skip the modification parsing
-    if stripped_sequence == sequence:
+    if len(mods) == 0:
         return base_sequence
 
-    mods = get_modifications(sequence)
-    n_term = get_n_term_modification(sequence)
-    c_term = get_c_term_modification(sequence)
+    n_term = mods.get(-1)
+    c_term = mods.get(len(stripped_sequence))
 
     mods = {k - span[0]: mods[k] for k in mods if span[0] <= k < span[1]}
 
-    if span[0] == 0 and n_term is not None:
+    if n_term is not None and span[0] == 0:
         mods[-1] = n_term
 
-    if span[1] == len(stripped_sequence) and c_term is not None:
+    if c_term is not None and span[1] == len(stripped_sequence):
         mods[len(base_sequence)] = c_term
+
+    # if peptide is unmodified skip the modification parsing
+    if len(mods) == 0:
+        return base_sequence
 
     return add_modifications(base_sequence, mods)
 

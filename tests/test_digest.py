@@ -123,4 +123,4 @@ class TestDigest(unittest.TestCase):
         self.assertEqual(set(build_non_enzymatic_sequences('PEPT', min_len=1, max_len=2)),
                          {'P', 'E', 'P', 'T', 'PE', 'EP', 'PT'})
         self.assertEqual(set(build_non_enzymatic_sequences('PEPT', min_len=2, max_len=4)),
-                         {'PE', 'EP', 'PT', 'PEP', 'EPT'})
+                         {'PT', 'EP', 'EPT', 'PE', 'PEP'})

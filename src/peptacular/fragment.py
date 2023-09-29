@@ -1,13 +1,13 @@
 """
-fragment.py - A module for calculating peptide fragment ions.
+fragment.py contains functions for.... guess what... fragmenting amino acid sequences!
 
-This module contains two pathways for fragmenting a peptide sequence:
-- build_fragments - a function that will return Fragment objects.
-- fragment - a function that will return a list of fragment ion mass or m/z values.
+There are two main methods for generating fragment ions within this module:
+- build_fragments() - Generates all fragment objects.
+- fragment() - Generates all fragment ion mass values.
 
-The fragment() function is the recommended way to generate fragment ions mass values , since it is faster
-than the build_fragments() function, and also requires less memory. Still build_fragments is useful if you want to
-generate Fragment objects, which contain much more information about the fragment ions.
+fragment() is the recommended way to generate fragment ions, since it is faster and requires less memory than
+build_fragments(). Still build_fragments is useful if you want to generate Fragment objects, which contain much more
+information about the fragment ions.
 """
 
 from dataclasses import dataclass
@@ -230,6 +230,34 @@ def build_fragments(sequence: str, ion_types: Union[List[str], str], charges: Un
 
 
 def build_fragment_sequences(sequence: str, ion_type: str, internal: bool = False) -> List[str]:
+    """
+    Creates a list of fragment sequences for a given input `sequence` and `ion_type`.
+
+    :param sequence: The amino acid sequence, which can include modifications.
+    :type sequence: str
+    :param ion_type: The ion type, e.g., 'b', 'y', 'a', 'c', 'x', or 'z'.
+    :type ion_type: str
+    :param internal: If True, build internal fragments. If False, build normal fragments, default is [False].
+    :type internal: bool
+
+    :return: List of fragment sequences.
+    :rtype: List[str]
+
+    .. code-block:: python
+
+        >>> build_fragment_sequences("PEPTIDE", 'y')
+        ['PEPTIDE', 'EPTIDE', 'PTIDE', 'TIDE', 'IDE', 'DE', 'E']
+
+        >>> build_fragment_sequences("PEPTIDE", 'b', True)
+        ['PEPTIDE', 'EPTIDE', 'PTIDE', 'TIDE', 'IDE', 'DE', 'E']
+
+        >>> build_fragment_sequences("PEPTIDE", 'b')
+        ['PEPTIDE', 'PEPTID', 'PEPTI', 'PEPT', 'PEP', 'PE', 'P']
+
+        >>> build_fragment_sequences("PEPTIDE", 'y', True)
+        ['PEPTIDE', 'PEPTID', 'PEPTI', 'PEPT', 'PEP', 'PE', 'P']
+
+    """
     if internal is True:
         return sequence_trimmer(sequence, forward=not is_forward(ion_type))
     return sequence_trimmer(sequence, forward=is_forward(ion_type))
@@ -265,20 +293,20 @@ def sequence_trimmer(sequence: str, forward: bool) -> List[str]:
 
     """
 
-    def _trim_from_end(seq: str) -> Generator[str, None, None]:
+    def trim_from_end(seq: str) -> Generator[str, None, None]:
         while seq:
             yield seq
             seq = strip_c_term_residue(seq)
 
-    def _trim_from_start(seq: str) -> Generator[str, None, None]:
+    def trim_from_start(seq: str) -> Generator[str, None, None]:
         while seq:
             yield seq
             seq = strip_n_term_residue(seq)
 
     if forward is True:
-        return list(_trim_from_start(sequence))
+        return list(trim_from_start(sequence))
 
-    return list(_trim_from_end(sequence))
+    return list(trim_from_end(sequence))
 
 
 def fragment(sequence: str, ion_types: Union[str, List[str]] = 'y', charges: Union[int, List[int]] = 1,
