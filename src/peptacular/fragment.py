@@ -17,8 +17,8 @@ from typing import List, Generator, Union, Callable
 
 from peptacular.constants import PROTON_MASS, ION_ADJUSTMENTS
 from peptacular.mass import calculate_mz, calculate_mass
-from peptacular.sequence import calculate_sequence_length, split_sequence
-from peptacular.term.residue import strip_c_term_residue, strip_n_term_residue
+from peptacular.sequence import calculate_sequence_length, split_sequence, get_modifications, strip_modifications
+from peptacular.term import get_n_term_modification, get_c_term_modification
 from peptacular.util import is_forward
 
 
@@ -257,6 +257,8 @@ def build_fragment_sequences(sequence: str, ion_type: str, internal: bool = Fals
         >>> build_fragment_sequences("PEPTIDE", 'y', True)
         ['PEPTIDE', 'PEPTID', 'PEPTI', 'PEPT', 'PEP', 'PE', 'P']
 
+
+
     """
     if internal is True:
         return sequence_trimmer(sequence, forward=not is_forward(ion_type))
@@ -288,25 +290,52 @@ def sequence_trimmer(sequence: str, forward: bool) -> List[str]:
         >>> sequence_trimmer("[Acetyl]PE(3.0)PTIDE", True)
         ['[Acetyl]PE(3.0)PTIDE', 'E(3.0)PTIDE', 'PTIDE', 'TIDE', 'IDE', 'DE', 'E']
 
+        >>> sequence_trimmer("[Acetyl]PEP[Amide]", True)
+        ['[Acetyl]PEP[Amide]', 'EP[Amide]', 'P[Amide]']
+
         >>> sequence_trimmer("PEP(1.0)TIDE[Amide]", False)
         ['PEP(1.0)TIDE[Amide]', 'PEP(1.0)TID', 'PEP(1.0)TI', 'PEP(1.0)T', 'PEP(1.0)', 'PE', 'P']
 
+        >>> sequence_trimmer("[Acetyl]PEP[Amide]", False)
+        ['[Acetyl]PEP[Amide]', '[Acetyl]PE', '[Acetyl]P']
+
     """
 
+    mods = get_modifications(sequence)
+    unmodified_seq = strip_modifications(sequence)
+
+    def reconstruct_seq(seq: str, start: int, end: int) -> str:
+        result = ''
+        for i in range(start, end):
+            result += seq[i]
+            if i in mods:
+                result += f'({mods[i]})'
+        return result
+
     def trim_from_end(seq: str) -> Generator[str, None, None]:
-        while seq:
-            yield seq
-            seq = strip_c_term_residue(seq)
+        for i in range(len(seq), 0, -1):
+            yield reconstruct_seq(seq, 0, i)
 
     def trim_from_start(seq: str) -> Generator[str, None, None]:
-        while seq:
-            yield seq
-            seq = strip_n_term_residue(seq)
+        for i in range(len(seq)):
+            yield reconstruct_seq(seq, i, len(seq))
 
-    if forward is True:
-        return list(trim_from_start(sequence))
+    n_term_mod = get_n_term_modification(sequence)
+    c_term_mod = get_c_term_modification(sequence)
 
-    return list(trim_from_end(sequence))
+    trimmed_sequences = list(trim_from_start(unmodified_seq)) if forward else list(trim_from_end(unmodified_seq))
+
+    if n_term_mod is not None and forward:
+        trimmed_sequences[0] = f'[{n_term_mod}]' + trimmed_sequences[0]
+    if c_term_mod is not None and forward:
+        trimmed_sequences = [seq + f'[{c_term_mod}]'for seq in trimmed_sequences]
+
+    if c_term_mod is not None and not forward:
+        trimmed_sequences[0] = trimmed_sequences[0] + f'[{c_term_mod}]'
+    if n_term_mod is not None and not forward:
+        trimmed_sequences = [f'[{n_term_mod}]' + seq for seq in trimmed_sequences]
+
+    return trimmed_sequences
 
 
 def fragment(sequence: str, ion_types: Union[str, List[str]] = 'y', charges: Union[int, List[int]] = 1,

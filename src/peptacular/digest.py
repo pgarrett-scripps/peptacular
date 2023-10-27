@@ -337,8 +337,13 @@ def digest(sequence: str, enzyme_regex: Union[List[str], str], missed_cleavages:
     for regex in enzyme_regex:
         cleavage_sites.extend(identify_cleavage_sites(sequence, regex))
 
-    stripped_sequence = strip_modifications(sequence)
-    mods = get_modifications(sequence)
+    # Check if the sequence has any modifications, if not we can skip the modification parsing
+    if '(' in sequence or '[' in sequence:
+        stripped_sequence = strip_modifications(sequence)
+        mods = get_modifications(sequence)
+    else:
+        stripped_sequence = sequence
+        mods = {}
 
     spans = build_spans(seq_len, cleavage_sites, missed_cleavages, min_len, max_len, semi)
     sequences = [_span_to_sequence_fast(stripped_sequence, mods, span) for span in spans]

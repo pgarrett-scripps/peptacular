@@ -6,7 +6,7 @@ modification notation!
 from peptacular.constants import MONO_ISOTOPIC_ATOMIC_MASSES, AVERAGE_ATOMIC_MASSES, AVERAGE_AA_MASSES, \
     MONO_ISOTOPIC_AA_MASSES, ION_ADJUSTMENTS, UWPR_MONO_ISOTOPIC_ATOMIC_MASSES, UWPR_AVERAGE_AA_MASSES, \
     UWPR_AVERAGE_ATOMIC_MASSES, UWPR_MONO_ISOTOPIC_AA_MASSES
-from peptacular.sequence import get_modifications, strip_modifications, is_sequence_valid
+from peptacular.sequence import get_modifications, strip_modifications
 from peptacular.util import validate_ion_type
 
 
@@ -150,9 +150,6 @@ def valid_mass_sequence(sequence: str):
         False
 
     """
-
-    if is_sequence_valid(sequence) is False:
-        return False
 
     stripped_sequence = strip_modifications(sequence)
     mods = get_modifications(sequence)

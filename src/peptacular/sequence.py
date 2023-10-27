@@ -29,13 +29,11 @@ The module ensures that sequences and their modifications are handled correctly,
 relationship between amino acids and their modifications during operations.
 """
 
-import re
 from copy import deepcopy
 from typing import Dict, List, Any, Generator, Union, Set, Tuple
 
-from peptacular.term.modification import get_c_term_modification, strip_term_modifications, add_n_term_modification, \
+from peptacular.term import get_c_term_modification, strip_term_modifications, add_n_term_modification, \
     add_c_term_modification, get_n_term_modification
-from peptacular.term.residue import pop_n_term_residue
 from peptacular.util import convert_type, identify_regex_indexes, _validate_span
 
 
@@ -74,8 +72,8 @@ def get_modifications(sequence: str) -> Dict[int, Union[str, float, int]]:
     .. code-block:: python
 
         # All modifications will be returned as either strings, ints or floats.
-        >>> get_modifications('PEP(Phospho)T(1)IDE(3.14)')
-        {2: 'Phospho', 3: 1, 6: 3.14}
+        >>> get_modifications('PEP(Phospho:C(2)H(4))T(1)IDE(3.14)')
+        {2: 'Phospho:C(2)H(4)', 3: 1, 6: 3.14}
 
         # N-terminus and C-terminal modifications are index by -1, and the length of the sequence, respectively:
         >>> get_modifications('[Acetyl]PEPTIDE[Amide]')
@@ -93,23 +91,28 @@ def get_modifications(sequence: str) -> Dict[int, Union[str, float, int]]:
     sequence = strip_term_modifications(sequence)
     stripped_sequence = strip_modifications(sequence)
 
-    mod_pattern = re.compile(r'\(([^)]*)\)')
-    matches = mod_pattern.finditer(sequence)
-
     modifications = {}
 
     if n_term_mod:
         modifications[-1] = n_term_mod
 
-    mod_offset = 0
+    mod_start_index = None
+    amino_acid_count = 0
+    nesting_level = 0
 
-    for match in matches:
-        mod_index = match.start() - mod_offset - 1
-        mod = convert_type(match.group(1))
-        modifications[mod_index] = mod
-
-        # Compute offset for the next modification
-        mod_offset += len(match.group())
+    for i, char in enumerate(sequence):
+        if char == '(':
+            nesting_level += 1
+            if mod_start_index is None:
+                mod_start_index = i
+        elif char == ')':
+            nesting_level -= 1
+            if nesting_level == 0:
+                mod = sequence[mod_start_index + 1:i]
+                modifications[amino_acid_count-1] = convert_type(mod)
+                mod_start_index = None
+        elif nesting_level == 0:
+            amino_acid_count += 1
 
     if c_term_mod:
         modifications[len(stripped_sequence)] = c_term_mod
@@ -244,7 +247,7 @@ def strip_modifications(sequence: str) -> str:
         'PEPTIDE'
 
         # Also removes N and C terminal modifications:
-        >>> strip_modifications('[Acetyl](3.14)PEPTIDE(1.234)[Amide]')
+        >>> strip_modifications('[Acetyl:NI[11]](3.14:C(12))PEPTIDE(1.234)[Amide]')
         'PEPTIDE'
 
         # Using a sequence without modifications will return the same sequence:
@@ -253,13 +256,19 @@ def strip_modifications(sequence: str) -> str:
 
     """
 
-    # Removing modifications in parentheses
-    sequence = re.sub(r'\([^)]*\)', '', sequence)
+    stripped_sequence = ''
+    depth = 0
 
-    # Removing modifications in square brackets
-    sequence = re.sub(r'\[[^]]*]', '', sequence)
+    for char in sequence:
+        if char == '(' or char == '[':
+            depth += 1
+        elif char == ')' or char == ']':
+            if depth > 0:
+                depth -= 1
+        elif depth == 0:
+            stripped_sequence += char
 
-    return sequence
+    return stripped_sequence
 
 
 def apply_static_modifications(sequence: str, mod_map: Dict[str, Any], overwrite: bool = True) -> str:
@@ -507,55 +516,6 @@ def shift_sequence(sequence: str, shift: int) -> str:
     return modified_sequence
 
 
-def is_sequence_valid(sequence: str) -> bool:
-    """
-    Checks if the sequence is valid. A sequence is valid if it does not contain doubly enclosed modifications.
-
-    :param sequence: modified sequence
-    :type sequence: str
-
-    :return: True, if the sequence is valid, False otherwise
-    :rtype: bool
-
-    .. code-block:: python
-
-        >>> is_sequence_valid('PEPTIDE')
-        True
-
-        >>> is_sequence_valid('[Acetyl]P(phospho)EP(phospho)TIDE[Amide]')
-        True
-
-        >>> is_sequence_valid('[Acetyl]P(phospho)EP(phospho)TIDE[Amide]]')
-        False
-
-        >>> is_sequence_valid('[Acetyl]P(phospho)EP((phospho))TIDE[Amide]')
-        False
-
-    """
-
-    stripped_sequence = strip_modifications(sequence)
-    residues = set(stripped_sequence)
-
-    # check if parenthesis are in the stripped sequence
-    if '(' in residues or ')' in residues:
-        return False
-
-    # check if square brackets are in the stripped sequence
-    if '[' in residues or ']' in residues:
-        return False
-
-    # check modifications
-    mods = get_modifications(sequence)
-    for _, mod in mods.items():
-        if isinstance(mod, str):
-            if '(' in mod or ')' in mod:
-                return False
-            if '[' in mod or ']' in mod:
-                return False
-
-    return True
-
-
 def span_to_sequence(sequence: str, span: Tuple[int, int, int]) -> str:
     """
     Extracts a subsequence from the input sequence based on the provided span.
@@ -653,14 +613,33 @@ def split_sequence(sequence: str) -> List[str]:
         >>> split_sequence('PEPTIDE')
         ['P', 'E', 'P', 'T', 'I', 'D', 'E']
 
-        >>> split_sequence('[Acetyl]P(phospho)EP(phospho)TIDE[Amide]')
-        ['[Acetyl]P(phospho)', 'E', 'P(phospho)', 'T', 'I', 'D', 'E[Amide]']
+        >>> split_sequence('[Acetyl]P(phospho:C(2)H(4))EP(phospho)TIDE[Amide]')
+        ['[Acetyl]P(phospho:C(2)H(4))', 'E', 'P(phospho)', 'T', 'I', 'D', 'E[Amide]']
 
     """
 
-    split_sequences = []
-    while sequence:
-        n_term, sequence = pop_n_term_residue(sequence)
-        split_sequences.append(n_term)
+    unmod_sequence = strip_modifications(sequence)
+    mods = get_modifications(sequence)
 
-    return split_sequences
+    seqs = []
+    for i, amino_acid in enumerate(unmod_sequence):
+        seq = ''
+
+        # Add N-terminal modification for the first amino acid
+        if i == 0 and -1 in mods:
+            seq = f'[{mods[-1]}]'
+
+        # Add the amino acid itself
+        seq += amino_acid
+
+        # Add internal modifications
+        if i in mods:
+            seq += f'({mods[i]})'
+
+        # Add C-terminal modification for the last amino acid
+        if i == len(unmod_sequence) - 1 and len(unmod_sequence) in mods:
+            seq += f'[{mods[len(unmod_sequence)]}]'
+
+        seqs.append(seq)
+
+    return seqs

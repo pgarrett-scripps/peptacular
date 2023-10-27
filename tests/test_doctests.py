@@ -1,6 +1,5 @@
 import pytest
-from peptacular import sequence, digest, fragment, mass, protein, score, spans
-from peptacular.term import modification, residue
+from peptacular import sequence, digest, fragment, mass, protein, score, spans, term
 
 modules = [
     sequence,
@@ -10,8 +9,7 @@ modules = [
     protein,
     score,
     spans,
-    modification,
-    residue
+    term,
 ]
 
 

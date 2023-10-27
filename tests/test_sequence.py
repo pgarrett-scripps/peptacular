@@ -1,6 +1,6 @@
 from peptacular.sequence import get_modifications, add_modifications, strip_modifications, \
     apply_static_modifications, apply_variable_modifications, pop_modifications, calculate_sequence_length, \
-    shift_sequence, reverse_sequence, is_sequence_valid, span_to_sequence, split_sequence
+    shift_sequence, reverse_sequence, span_to_sequence, split_sequence
 
 import unittest
 
@@ -21,6 +21,11 @@ class TestSequence(unittest.TestCase):
         # Test the case where there are multiple modifications in the peptide sequence
         peptide_sequence = "A(2)C(3)DE(1)FG"
         expected_output = {0: 2, 1: 3, 3: 1}
+        self.assertEqual(get_modifications(peptide_sequence), expected_output)
+
+        # Test the case where there are nested modifications
+        peptide_sequence = "A(2:C(2)H(4))C(3)DE(1[N[I]])FG"
+        expected_output = {0: '2:C(2)H(4)', 1: 3, 3: '1[N[I]]'}
         self.assertEqual(get_modifications(peptide_sequence), expected_output)
 
     def test_create_modified_peptide(self):
@@ -54,6 +59,12 @@ class TestSequence(unittest.TestCase):
         expected_output = "A(2)C(3)DE(1)FG"
         self.assertEqual(add_modifications(unmodified_sequence, modifications), expected_output)
 
+        # Test the case where there are nested modifications
+        unmodified_sequence = "ACDEFG"
+        modifications = {0: '2:C(2)H(4)', 1: 3, 3: '1[N[I]]'}
+        expected_output = "A(2:C(2)H(4))C(3)DE(1[N[I]])FG"
+        self.assertEqual(add_modifications(unmodified_sequence, modifications), expected_output)
+
         # Test the case where the index of a modification is invalid for the given peptide sequence
         unmodified_sequence = "ACDEFG"
         modifications = {10: 2}
@@ -64,6 +75,7 @@ class TestSequence(unittest.TestCase):
         self.assertEqual(strip_modifications('ACDEFG'), 'ACDEFG')
         self.assertEqual(strip_modifications('A(2)CDE(2)FG'), 'ACDEFG')
         self.assertEqual(strip_modifications('A(2)CDE(Acetyl)FG'), 'ACDEFG')
+        self.assertEqual(strip_modifications('A(2)CDE(Acetyl:(10))FG'), 'ACDEFG')
 
     def test_add_static_mod(self):
         self.assertEqual(apply_static_modifications('PEPCTIDE', {'C': 57.021464}), 'PEPC(57.021464)TIDE')
@@ -115,11 +127,6 @@ class TestSequence(unittest.TestCase):
 
     def test_shift_sequence(self):
         self.assertEqual(shift_sequence('PEPTIDE', 2), 'PTIDEPE')
-
-    def test_is_sequence_valid(self):
-        self.assertTrue(is_sequence_valid('PEPTIDE'))
-        self.assertTrue(is_sequence_valid('[Acetyl]P(phospho)EP(phospho)TIDE[Amide]'))
-        self.assertFalse(is_sequence_valid('[Acetyl]P(phospho)EP((phospho))TIDE[Amide]'))
 
     def test_span_to_sequence(self):
         self.assertEqual(span_to_sequence('PEPTIDE', (0, 4, 0)), 'PEPT')
