@@ -1,5 +1,7 @@
 from typing import Tuple
 
+from peptacular.term.modification import _get_c_term_modification_index
+
 
 def strip_n_term_residue(sequence: str) -> str:
     """
@@ -220,25 +222,36 @@ def _get_c_term_index(sequence: str) -> int:
         >>> 'PEPTIDE'[:6]
         'PEPTID'
 
-        >>> _get_c_term_index('[Acetyl]P(phospho)EP(phospho)TIDE(phospho)[Amide]')
-        32
-        >>> '[Acetyl]P(phospho)EP(phospho)TIDE(phospho)[Amide]'[:32]
-        '[Acetyl]P(phospho)EP(phospho)TID'
+        >>> _get_c_term_index('[Acetyl[2]]P(phospho)EP(phospho)TIDE(phospho(6))[Amide]')
+        35
+        >>> '[Acetyl[2]]P(phospho)EP(phospho)TIDE(phospho(6))[Amide]'[:35]
+        '[Acetyl[2]]P(phospho)EP(phospho)TID'
+
 
     """
 
-    start_index = len(sequence) - 1
-    if sequence and sequence[start_index] == ']':
-        start_index = sequence.rindex('[') - 1
+    # If the sequence is empty, return -1
+    if not sequence:
+        return -1
 
-    if sequence[start_index] == ')':
-        start_index = sequence.rindex('(') - 1
+    i = _get_c_term_modification_index(sequence)
 
-    # Check for N-Term modification
-    if start_index != 0 and sequence[start_index - 1] == ']':
-        start_index = 0
+    if i == -1:
+        i = len(sequence) - 1
 
-    return start_index
+    # Check for modification at the C-terminal amino acid
+    if i >= 0 and sequence[i] == ')':
+        nesting_level = 1
+        i -= 1
+        while i >= 0 and nesting_level > 0:
+            if sequence[i] == ')':
+                nesting_level += 1
+            elif sequence[i] == '(':
+                nesting_level -= 1
+            i -= 1
+
+    # Return the index of the C-terminal amino acid
+    return max(i, 0)
 
 
 def _get_n_term_index(sequence: str) -> int:

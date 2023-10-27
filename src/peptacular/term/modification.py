@@ -14,10 +14,27 @@ Term Modification Notation:
     - C-Terminus modifications use the index based on the length of the unmodified sequence.
 """
 
-
 from typing import Union, Any
 
 from peptacular.util import convert_type
+
+# TODO: Fix functions to work with nested brackets
+
+def _get_n_term_modification_index(sequence: str) -> int:
+    if sequence.startswith('['):
+        nesting_level = 0
+        for i, char in enumerate(sequence):
+            if char == '[':
+                nesting_level += 1
+            elif char == ']':
+                nesting_level -= 1
+                if nesting_level == 0:
+                    return i  # Found the end index of the N-terminal modification
+        # If the loop ends and the nesting level is not zero, it means brackets are unbalanced.
+        return -1
+    else:
+        # No N-terminal modification is present
+        return -1
 
 
 def get_n_term_modification(sequence: str) -> Union[str, float, int, None]:
@@ -50,13 +67,79 @@ def get_n_term_modification(sequence: str) -> Union[str, float, int, None]:
         # When no N-Terminus modification is present:
         >>> get_n_term_modification("PEPTIDE") # returns None
 
+        # For string-based modifications (with internal brackets):
+        >>> get_n_term_modification("[Acetyl:C(6)H[12]]PEPTIDE")
+        'Acetyl:C(6)H[12]'
+
     """
 
-    if sequence.startswith('['):
-        # find end notation
-        end = sequence.find(']')
-        return convert_type(sequence[1:end])
-    return None
+    i = _get_n_term_modification_index(sequence)
+
+    if i == -1:
+        return None
+
+    mod = sequence[1:i]  # Exclude the outer brackets
+    return convert_type(mod)
+
+
+def strip_n_term_modification(sequence: str) -> str:
+    """
+    Removes any N-terminal modification notation from the sequence.
+
+    This function takes a sequence as input and returns the sequence without its N-terminal modification
+    notation. If no N-terminal modification exists, the original sequence is returned unchanged.
+
+    :param sequence: The amino acid sequence, which can include modifications.
+    :type sequence: str
+
+    :return: Sequence devoid of the N-terminal modification notation.
+    :rtype: str
+
+    .. code-block:: python
+
+        # For sequences with different modification types (string, float, int):
+        >>> strip_n_term_modification("[Acetyl]PEPTIDE")
+        'PEPTIDE'
+        >>> strip_n_term_modification("[Acetyl:C(6)H[12]]PEPTIDE")
+        'PEPTIDE'
+        >>> strip_n_term_modification("[3.1415]PEPTIDE")
+        'PEPTIDE'
+        >>> strip_n_term_modification("[100]PEPTIDE")
+        'PEPTIDE'
+
+        # If a residue modification is present at the N-terminus, only the terminal notation is removed:
+        >>> strip_n_term_modification("[Acetyl]P(1)EPTIDE")
+        'P(1)EPTIDE'
+
+        # For sequences without any N-terminal modification:
+        >>> strip_n_term_modification("PEPTIDE")
+        'PEPTIDE'
+
+    """
+
+    i = _get_n_term_modification_index(sequence)
+
+    if i == -1:
+        return sequence
+
+    return sequence[i + 1:]
+
+
+def _get_c_term_modification_index(sequence: str) -> int:
+    if sequence.endswith(']'):
+        nesting_level = 0
+        for i, char in enumerate(reversed(sequence)):
+            if char == ']':
+                nesting_level += 1
+            elif char == '[':
+                nesting_level -= 1
+                if nesting_level == 0:
+                    return len(sequence) - i  # Found the end index of the C-terminal modification
+        # If the loop ends and the nesting level is not zero, it means brackets are unbalanced.
+        return -1
+    else:
+        # No C-terminal modification is present
+        return -1
 
 
 def get_c_term_modification(sequence: str) -> Union[str, float, int, None]:
@@ -89,54 +172,17 @@ def get_c_term_modification(sequence: str) -> Union[str, float, int, None]:
         # When no C-terminal modification is present:
         >>> get_c_term_modification("PEPTIDE")
 
+        # For string-based modifications (with internal brackets):
+        >>> get_c_term_modification("PEPTIDE[Amide:C(6)H[12]]")
+        'Amide:C(6)H[12]'
+
     """
 
-    if sequence.endswith(']'):
-        # find start notation from back
-        start = sequence.rfind('[')
-        return convert_type(sequence[start + 1:-1])
-
+    i = _get_c_term_modification_index(sequence)
+    if i != -1:
+        mod = sequence[i:-1]  # Exclude the outer brackets
+        return convert_type(mod)
     return None
-
-
-def strip_n_term_modification(sequence: str) -> str:
-    """
-    Removes any N-terminal modification notation from the sequence.
-
-    This function takes a sequence as input and returns the sequence without its N-terminal modification
-    notation. If no N-terminal modification exists, the original sequence is returned unchanged.
-
-    :param sequence: The amino acid sequence, which can include modifications.
-    :type sequence: str
-
-    :return: Sequence devoid of the N-terminal modification notation.
-    :rtype: str
-
-    .. code-block:: python
-
-        # For sequences with different modification types (string, float, int):
-        >>> strip_n_term_modification("[Acetyl]PEPTIDE")
-        'PEPTIDE'
-        >>> strip_n_term_modification("[3.1415]PEPTIDE")
-        'PEPTIDE'
-        >>> strip_n_term_modification("[100]PEPTIDE")
-        'PEPTIDE'
-
-        # If a residue modification is present at the N-terminus, only the terminal notation is removed:
-        >>> strip_n_term_modification("[Acetyl]P(1)EPTIDE")
-        'P(1)EPTIDE'
-
-        # For sequences without any N-terminal modification:
-        >>> strip_n_term_modification("PEPTIDE")
-        'PEPTIDE'
-
-    """
-
-    if sequence.startswith('['):
-        # find end notation
-        end = sequence.find(']')
-        return sequence[end + 1:]
-    return sequence
 
 
 def strip_c_term_modification(sequence: str) -> str:
@@ -158,6 +204,8 @@ def strip_c_term_modification(sequence: str) -> str:
         # For sequences with different modification types (string, float, int):
         >>> strip_c_term_modification("PEPTIDE[Acetyl]")
         'PEPTIDE'
+        >>> strip_c_term_modification("PEPTIDE[Acetyl:C(6)H[12]]")
+        'PEPTIDE'
         >>> strip_c_term_modification("PEPTIDE[3.1415]")
         'PEPTIDE'
         >>> strip_c_term_modification("PEPTIDE[100]")
@@ -173,10 +221,9 @@ def strip_c_term_modification(sequence: str) -> str:
 
     """
 
-    if sequence.endswith(']'):
-        # find start notation
-        start = sequence.rfind('[')
-        return sequence[:start]
+    i = _get_c_term_modification_index(sequence)
+    if i != -1:
+        return sequence[:i - 1]  # Exclude the C-terminal modification notation
     return sequence
 
 
@@ -331,6 +378,7 @@ def strip_term_modifications(sequence: str) -> str:
     return strip_n_term_modification(strip_c_term_modification(sequence))
 
 
+# TODO: Fix condense functions to handle nested modifications
 def condense_n_term_modifications(sequence: str) -> str:
     """
     Merges any N-terminal modification with the modification of the first amino acid.
