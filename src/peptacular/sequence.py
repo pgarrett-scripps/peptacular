@@ -35,7 +35,7 @@ from typing import Dict, List, Any, Generator, Union, Set, Tuple
 from peptacular.term import get_c_term_modification, strip_term_modifications, add_n_term_modification, \
     add_c_term_modification, get_n_term_modification
 from peptacular.util import convert_type, identify_regex_indexes, _validate_span
-import rust_bindings
+import peptacular_bindings
 
 
 def calculate_sequence_length(sequence: str) -> int:
@@ -63,7 +63,7 @@ def get_modifications_fast(sequence: str) -> Dict[int, str]:
     """
     Does not ensure order of modifications, and modifications are not converted to their appropriate type.
     """
-    return rust_bindings.extract_modifications_py(sequence)
+    return peptacular_bindings.get_modifications_py(sequence)
 
 
 def get_modifications(sequence: str) -> Dict[int, Union[str, float, int]]:
@@ -233,7 +233,7 @@ def strip_modifications(sequence: str) -> str:
 
     """
 
-    return rust_bindings.strip_peptide_py(sequence)
+    return peptacular_bindings.strip_modifications_py(sequence)
 
 
 def apply_static_modifications(sequence: str, mod_map: Dict[str, Any], overwrite: bool = True) -> str:
