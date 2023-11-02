@@ -33,7 +33,7 @@ from copy import deepcopy
 from typing import Dict, List, Any, Generator, Union, Set, Tuple
 
 from peptacular.term import add_n_term_modification, add_c_term_modification
-from peptacular.util import convert_type, identify_regex_indexes, _validate_span
+from peptacular.util import convert_type, identify_regex_indexes
 import peptacular_bindings
 
 

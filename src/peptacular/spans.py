@@ -391,7 +391,7 @@ def build_spans(max_index: int, enzyme_sites: List[int], missed_cleavages: int, 
     if max_len is None:
         max_len = max_index
 
-    if len(enzyme_sites) == max_index-1:  # non-enzymatic
+    if len(enzyme_sites) == max_index - 1:  # non-enzymatic
         return build_non_enzymatic_spans((0, max_index, 0), min_len, max_len)
 
     if semi:
