@@ -1,5 +1,6 @@
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools", "maturin>=1.0,<2.0"]
+build-backend = "maturin"
 
 [project]
 name = "peptacular"
@@ -21,9 +22,6 @@ dependencies = [
 "regex",
 ]
 
-[tool.setuptools]
-package-dir = {"" = "src"}
-
 [project.urls]
 repository = "https://github.com/pgarrett-scripps/peptacular.git"
 
@@ -35,3 +33,8 @@ max-line-length = 120
 fail-under = 9.5
 good-names = ["db", "i", "j", "aa", "n", "k", "p", "Na", "Nb", "Nc", "Nx", "Ny", "Nz", "mz"]
 extension-pkg-whitelist='pydantic'
+
+[tool.maturin]
+name = "peptacular"
+sdist = true
+

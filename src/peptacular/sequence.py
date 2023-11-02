@@ -35,6 +35,7 @@ from typing import Dict, List, Any, Generator, Union, Set, Tuple
 from peptacular.term import get_c_term_modification, strip_term_modifications, add_n_term_modification, \
     add_c_term_modification, get_n_term_modification
 from peptacular.util import convert_type, identify_regex_indexes, _validate_span
+import rust_bindings
 
 
 def calculate_sequence_length(sequence: str) -> int:
@@ -56,6 +57,13 @@ def calculate_sequence_length(sequence: str) -> int:
     """
 
     return len(strip_modifications(sequence))
+
+
+def get_modifications_fast(sequence: str) -> Dict[int, str]:
+    """
+    Does not ensure order of modifications, and modifications are not converted to their appropriate type.
+    """
+    return rust_bindings.extract_modifications_py(sequence)
 
 
 def get_modifications(sequence: str) -> Dict[int, Union[str, float, int]]:
@@ -85,39 +93,7 @@ def get_modifications(sequence: str) -> Dict[int, Union[str, float, int]]:
 
     """
 
-    n_term_mod = get_n_term_modification(sequence)
-    c_term_mod = get_c_term_modification(sequence)
-
-    sequence = strip_term_modifications(sequence)
-    stripped_sequence = strip_modifications(sequence)
-
-    modifications = {}
-
-    if n_term_mod:
-        modifications[-1] = n_term_mod
-
-    mod_start_index = None
-    amino_acid_count = 0
-    nesting_level = 0
-
-    for i, char in enumerate(sequence):
-        if char == '(':
-            nesting_level += 1
-            if mod_start_index is None:
-                mod_start_index = i
-        elif char == ')':
-            nesting_level -= 1
-            if nesting_level == 0:
-                mod = sequence[mod_start_index + 1:i]
-                modifications[amino_acid_count-1] = convert_type(mod)
-                mod_start_index = None
-        elif nesting_level == 0:
-            amino_acid_count += 1
-
-    if c_term_mod:
-        modifications[len(stripped_sequence)] = c_term_mod
-
-    return modifications
+    return {k: convert_type(v) for k, v in sorted(get_modifications_fast(sequence).items(), key=lambda item: item[0])}
 
 
 def _construct_sequence_with_modifications(sequence: str, mod_map: Dict[int, Any]) -> str:
@@ -125,8 +101,9 @@ def _construct_sequence_with_modifications(sequence: str, mod_map: Dict[int, Any
     Builds a modified peptide sequence from an unmodified sequence and a dictionary of modifications.
     """
 
+    seq_len=calculate_sequence_length(sequence)
     n_term_mod = mod_map.pop(-1, None)
-    c_term_mod = mod_map.pop(calculate_sequence_length(sequence), None)
+    c_term_mod = mod_map.pop(seq_len, None)
 
     sequence_components = []
 
@@ -138,7 +115,7 @@ def _construct_sequence_with_modifications(sequence: str, mod_map: Dict[int, Any
     # Sort the modifications by index in descending order
     for mod_index, mod in sorted(mod_map.items()):
 
-        if mod_index < -1 or mod_index >= len(sequence):
+        if mod_index < 0 or mod_index > seq_len-1:
             raise ValueError(f'Index of modification: {mod_index} is invalid for peptide sequence: {sequence}')
 
         # Insert the modification into the modified peptide sequence
@@ -194,7 +171,7 @@ def add_modifications(sequence: str, modifications: Dict[int, Any], overwrite: b
     """
 
     stripped_sequence = strip_modifications(sequence)
-    original_mods = get_modifications(sequence)
+    original_mods = get_modifications_fast(sequence)
 
     for mod_index, mod in sorted(modifications.items()):
         if mod is None:
@@ -256,19 +233,7 @@ def strip_modifications(sequence: str) -> str:
 
     """
 
-    stripped_sequence = ''
-    depth = 0
-
-    for char in sequence:
-        if char == '(' or char == '[':
-            depth += 1
-        elif char == ')' or char == ']':
-            if depth > 0:
-                depth -= 1
-        elif depth == 0:
-            stripped_sequence += char
-
-    return stripped_sequence
+    return rust_bindings.strip_peptide_py(sequence)
 
 
 def apply_static_modifications(sequence: str, mod_map: Dict[str, Any], overwrite: bool = True) -> str:
@@ -552,7 +517,7 @@ def span_to_sequence(sequence: str, span: Tuple[int, int, int]) -> str:
     _validate_span(span)
 
     stripped_sequence = strip_modifications(sequence)
-    mods = get_modifications(sequence)
+    mods = get_modifications_fast(sequence)
 
     return _span_to_sequence_fast(stripped_sequence, mods, span)
 

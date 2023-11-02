@@ -13,7 +13,7 @@ from typing import Union, List
 from peptacular.spans import build_left_semi_spans, build_right_semi_spans, build_non_enzymatic_spans, build_spans
 from peptacular.constants import PROTEASES
 from peptacular.sequence import strip_modifications, calculate_sequence_length, span_to_sequence, get_modifications, \
-    _span_to_sequence_fast
+    _span_to_sequence_fast, get_modifications_fast
 from peptacular.util import identify_regex_indexes
 
 
@@ -321,17 +321,17 @@ def digest(sequence: str, enzyme_regex: Union[List[str], str], missed_cleavages:
 
     """
 
+    seq_len = calculate_sequence_length(sequence)
+
     if min_len is None:
         min_len = 1
     if max_len is None:
-        max_len = calculate_sequence_length(sequence)
+        max_len = seq_len
 
     if isinstance(enzyme_regex, str):
         enzyme_regex = [enzyme_regex]
 
     enzyme_regex = [PROTEASES.get(regex, regex) for regex in enzyme_regex]
-
-    seq_len = calculate_sequence_length(sequence)
 
     cleavage_sites = []
     for regex in enzyme_regex:
@@ -340,7 +340,7 @@ def digest(sequence: str, enzyme_regex: Union[List[str], str], missed_cleavages:
     # Check if the sequence has any modifications, if not we can skip the modification parsing
     if '(' in sequence or '[' in sequence:
         stripped_sequence = strip_modifications(sequence)
-        mods = get_modifications(sequence)
+        mods = get_modifications_fast(sequence)
     else:
         stripped_sequence = sequence
         mods = {}

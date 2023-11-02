@@ -18,7 +18,6 @@ from typing import List, Generator, Union, Callable
 from peptacular.constants import PROTON_MASS, ION_ADJUSTMENTS
 from peptacular.mass import calculate_mz, calculate_mass
 from peptacular.sequence import calculate_sequence_length, split_sequence, get_modifications, strip_modifications
-from peptacular.term import get_n_term_modification, get_c_term_modification
 from peptacular.util import is_forward
 
 
@@ -320,8 +319,8 @@ def sequence_trimmer(sequence: str, forward: bool) -> List[str]:
         for i in range(len(seq)):
             yield reconstruct_seq(seq, i, len(seq))
 
-    n_term_mod = get_n_term_modification(sequence)
-    c_term_mod = get_c_term_modification(sequence)
+    n_term_mod = mods.get(-1)
+    c_term_mod = mods.get(len(unmodified_seq))
 
     trimmed_sequences = list(trim_from_start(unmodified_seq)) if forward else list(trim_from_end(unmodified_seq))
 

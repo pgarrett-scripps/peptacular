@@ -139,16 +139,18 @@ def convert_type(val: str) -> Union[str, int, float]:
         >>> convert_type("1")
         1
 
+        >>> convert_type("1.0")
+        1.0
+
         >>> convert_type("abc")
         'abc'
     """
-    try:
-        return int(val)
-    except ValueError:
+    for conversion in (int, float):
         try:
-            return float(val)
+            return conversion(val)
         except ValueError:
-            return val
+            continue
+    return val
 
 
 def identify_regex_indexes(input_str: str, regex_str: str, offset: int = 0) -> List[int]:
