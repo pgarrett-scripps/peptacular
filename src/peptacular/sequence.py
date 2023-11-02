@@ -32,8 +32,7 @@ relationship between amino acids and their modifications during operations.
 from copy import deepcopy
 from typing import Dict, List, Any, Generator, Union, Set, Tuple
 
-from peptacular.term import get_c_term_modification, strip_term_modifications, add_n_term_modification, \
-    add_c_term_modification, get_n_term_modification
+from peptacular.term import add_n_term_modification, add_c_term_modification
 from peptacular.util import convert_type, identify_regex_indexes, _validate_span
 import peptacular_bindings
 
@@ -101,7 +100,7 @@ def _construct_sequence_with_modifications(sequence: str, mod_map: Dict[int, Any
     Builds a modified peptide sequence from an unmodified sequence and a dictionary of modifications.
     """
 
-    seq_len=calculate_sequence_length(sequence)
+    seq_len = calculate_sequence_length(sequence)
     n_term_mod = mod_map.pop(-1, None)
     c_term_mod = mod_map.pop(seq_len, None)
 
@@ -115,7 +114,7 @@ def _construct_sequence_with_modifications(sequence: str, mod_map: Dict[int, Any
     # Sort the modifications by index in descending order
     for mod_index, mod in sorted(mod_map.items()):
 
-        if mod_index < 0 or mod_index > seq_len-1:
+        if mod_index < 0 or mod_index > seq_len - 1:
             raise ValueError(f'Index of modification: {mod_index} is invalid for peptide sequence: {sequence}')
 
         # Insert the modification into the modified peptide sequence
@@ -283,7 +282,7 @@ def apply_static_modifications(sequence: str, mod_map: Dict[str, Any], overwrite
     """
 
     stripped_sequence = strip_modifications(sequence)
-    original_mod_map = get_modifications(sequence)
+    original_mod_map = get_modifications_fast(sequence)
 
     for regex_str, mod_mass in mod_map.items():
         for mod_index in identify_regex_indexes(stripped_sequence, regex_str):
@@ -364,7 +363,7 @@ def apply_variable_modifications(sequence: str, mod_map: Dict[str, Any], max_mod
 
     """
 
-    original_mods = get_modifications(sequence)
+    original_mods = get_modifications_fast(sequence)
     stripped_sequence = strip_modifications(sequence)
 
     new_mod_map: Dict[int, Set] = {}
@@ -405,7 +404,7 @@ def reverse_sequence(sequence: str, swap_terms: bool = False) -> str:
 
     """
 
-    mods = get_modifications(sequence)
+    mods = get_modifications_fast(sequence)
     stripped_sequence = strip_modifications(sequence)[::-1]
 
     n_term = mods.pop(-1, None)
@@ -458,7 +457,7 @@ def shift_sequence(sequence: str, shift: int) -> str:
 
     """
 
-    mods = get_modifications(sequence)
+    mods = get_modifications_fast(sequence)
     stripped_sequence = strip_modifications(sequence)
 
     n_term = mods.pop(-1, None)
@@ -514,8 +513,6 @@ def span_to_sequence(sequence: str, span: Tuple[int, int, int]) -> str:
 
     """
 
-    _validate_span(span)
-
     stripped_sequence = strip_modifications(sequence)
     mods = get_modifications_fast(sequence)
 
@@ -541,26 +538,27 @@ def _span_to_sequence_fast(stripped_sequence: str, mods: Dict[int, Union[str, fl
 
     base_sequence = stripped_sequence[span[0]:span[1]]
 
-    # if peptide is unmodified skip the modification parsing
-    if len(mods) == 0:
+    if not mods:
+        # No modifications, return the base sequence immediately
         return base_sequence
 
-    n_term = mods.get(-1)
-    c_term = mods.get(len(stripped_sequence))
+    # Handling terminal modifications
+    n_term_mod = mods.get(-1)
+    c_term_mod = mods.get(len(stripped_sequence))
 
-    mods = {k - span[0]: mods[k] for k in mods if span[0] <= k < span[1]}
+    # Filter and adjust modifications within the span
+    span_mods = {k - span[0]: v for k, v in mods.items() if span[0] <= k < span[1]}
 
-    if n_term is not None and span[0] == 0:
-        mods[-1] = n_term
+    if n_term_mod is not None and span[0] == 0:
+        span_mods[-1] = n_term_mod
 
-    if c_term is not None and span[1] == len(stripped_sequence):
-        mods[len(base_sequence)] = c_term
+    if c_term_mod is not None and span[1] == len(stripped_sequence):
+        span_mods[len(base_sequence)] = c_term_mod
 
-    # if peptide is unmodified skip the modification parsing
-    if len(mods) == 0:
+    if not span_mods:
         return base_sequence
 
-    return add_modifications(base_sequence, mods)
+    return add_modifications(base_sequence, span_mods)
 
 
 def split_sequence(sequence: str) -> List[str]:
@@ -581,13 +579,18 @@ def split_sequence(sequence: str) -> List[str]:
         >>> split_sequence('[Acetyl]P(phospho:C(2)H(4))EP(phospho)TIDE[Amide]')
         ['[Acetyl]P(phospho:C(2)H(4))', 'E', 'P(phospho)', 'T', 'I', 'D', 'E[Amide]']
 
+        >>> split_sequence('[Acetyl]P(1)[Amide]')
+        ['[Acetyl]P(1)[Amide]']
+
     """
 
     unmod_sequence = strip_modifications(sequence)
-    mods = get_modifications(sequence)
+    mods = get_modifications_fast(sequence)
+
+    seq_len = len(unmod_sequence)
 
     seqs = []
-    for i, amino_acid in enumerate(unmod_sequence):
+    for i, aa in enumerate(unmod_sequence):
         seq = ''
 
         # Add N-terminal modification for the first amino acid
@@ -595,15 +598,15 @@ def split_sequence(sequence: str) -> List[str]:
             seq = f'[{mods[-1]}]'
 
         # Add the amino acid itself
-        seq += amino_acid
+        seq += aa
 
         # Add internal modifications
         if i in mods:
             seq += f'({mods[i]})'
 
         # Add C-terminal modification for the last amino acid
-        if i == len(unmod_sequence) - 1 and len(unmod_sequence) in mods:
-            seq += f'[{mods[len(unmod_sequence)]}]'
+        if i == seq_len - 1 and seq_len in mods:
+            seq += f'[{mods[seq_len]}]'
 
         seqs.append(seq)
 

@@ -13,7 +13,7 @@ information about the fragment ions.
 from dataclasses import dataclass
 from functools import lru_cache, cached_property
 from itertools import chain
-from typing import List, Generator, Union, Callable
+from typing import List, Union, Callable
 
 from peptacular.constants import PROTON_MASS, ION_ADJUSTMENTS
 from peptacular.mass import calculate_mz, calculate_mass
@@ -300,41 +300,17 @@ def sequence_trimmer(sequence: str, forward: bool) -> List[str]:
 
     """
 
-    mods = get_modifications(sequence)
-    unmodified_seq = strip_modifications(sequence)
+    split_seq = split_sequence(sequence)
+    subsequences = []
+    current_subseq = ''
 
-    def reconstruct_seq(seq: str, start: int, end: int) -> str:
-        result = ''
-        for i in range(start, end):
-            result += seq[i]
-            if i in mods:
-                result += f'({mods[i]})'
-        return result
+    # Iterate through the sequence and progressively build subsequences
+    for seq in (reversed(split_seq) if forward else split_seq):
+        current_subseq = seq + current_subseq if forward else current_subseq + seq
+        subsequences.append(current_subseq)
 
-    def trim_from_end(seq: str) -> Generator[str, None, None]:
-        for i in range(len(seq), 0, -1):
-            yield reconstruct_seq(seq, 0, i)
-
-    def trim_from_start(seq: str) -> Generator[str, None, None]:
-        for i in range(len(seq)):
-            yield reconstruct_seq(seq, i, len(seq))
-
-    n_term_mod = mods.get(-1)
-    c_term_mod = mods.get(len(unmodified_seq))
-
-    trimmed_sequences = list(trim_from_start(unmodified_seq)) if forward else list(trim_from_end(unmodified_seq))
-
-    if n_term_mod is not None and forward:
-        trimmed_sequences[0] = f'[{n_term_mod}]' + trimmed_sequences[0]
-    if c_term_mod is not None and forward:
-        trimmed_sequences = [seq + f'[{c_term_mod}]'for seq in trimmed_sequences]
-
-    if c_term_mod is not None and not forward:
-        trimmed_sequences[0] = trimmed_sequences[0] + f'[{c_term_mod}]'
-    if n_term_mod is not None and not forward:
-        trimmed_sequences = [f'[{n_term_mod}]' + seq for seq in trimmed_sequences]
-
-    return trimmed_sequences
+    # If moving forward, reverse the list at the end
+    return subsequences[::-1]
 
 
 def fragment(sequence: str, ion_types: Union[str, List[str]] = 'y', charges: Union[int, List[int]] = 1,

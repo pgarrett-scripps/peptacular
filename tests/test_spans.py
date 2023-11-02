@@ -80,12 +80,6 @@ class TestSpans(unittest.TestCase):
         expected_output = "ABC"
         self.assertEqual(span_to_sequence(sequence, span), expected_output)
 
-    def test_span_to_sequence_negative_span(self):
-        sequence = "ABCDEFGH"
-        span = (-4, -1, 1)
-        with self.assertRaises(ValueError):
-            span_to_sequence(sequence, span)
-
     def test_get_non_enzymatic_spans_non_integer_input(self):
         span = (0.5, 4.5, 1)
         with self.assertRaises(TypeError):
