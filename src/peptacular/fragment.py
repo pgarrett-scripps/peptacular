@@ -64,6 +64,9 @@ class Fragment:
     internal: bool
     parent_number: int
     monoisotopic: bool
+    isotope: int = 0
+    loss: float = 0.0
+    parent_sequence: str = ''
 
     def __post_init__(self):
         """
@@ -74,7 +77,7 @@ class Fragment:
             raise ValueError("Parent number must be equal to number for terminal fragments.")
 
     @cached_property
-    def start(self):
+    def _start(self):
         """
         Returns the start index of the fragment sequence in the parent sequence.
 
@@ -95,7 +98,15 @@ class Fragment:
         raise ValueError(f"Invalid ion type: {self.ion_type}")
 
     @cached_property
-    def end(self):
+    def start(self):
+
+        if self.parent_sequence != '' and self._start < 0:
+            return self._start + calculate_sequence_length(self.parent_sequence)
+
+        return self._start
+
+    @cached_property
+    def _end(self):
         """
         Returns the end index of the fragment sequence in the parent sequence.
 
@@ -116,6 +127,16 @@ class Fragment:
         raise ValueError(f"Invalid ion type: {self.ion_type}")
 
     @cached_property
+    def end(self):
+        if self.parent_sequence != '' and self._end == None:
+            return calculate_sequence_length(self.parent_sequence)
+
+        if self.parent_sequence != '' and self._end < 0:
+            return self._end + calculate_sequence_length(self.parent_sequence)
+
+        return self._end
+
+    @cached_property
     def mass(self):
         """
         Returns the mass of the fragment.
@@ -124,7 +145,9 @@ class Fragment:
         :rtype: float
         """
 
-        return calculate_mz(self.sequence, self.charge, self.ion_type, self.monoisotopic)
+        return calculate_mass(sequence=self.sequence, charge=self.charge, ion_type=self.ion_type,
+                              monoisotopic=self.monoisotopic, uwpr_mass=False, isotope=self.isotope,
+                              loss=self.loss)
 
     @cached_property
     def neutral_mass(self):
@@ -135,7 +158,10 @@ class Fragment:
         :rtype: float
         """
 
-        return calculate_mass(self.sequence, 0, self.ion_type, self.monoisotopic)
+        return calculate_mass(sequence=self.sequence, charge=0, ion_type=self.ion_type,
+                              monoisotopic=self.monoisotopic, uwpr_mass=False, isotope=self.isotope,
+                              loss=self.loss)
+
 
     @cached_property
     def mz(self):
@@ -146,7 +172,9 @@ class Fragment:
         :rtype: float
         """
 
-        return calculate_mz(self.sequence, self.charge, self.ion_type, self.monoisotopic)
+        return calculate_mz(sequence=self.sequence, charge=self.charge, ion_type=self.ion_type,
+                            monoisotopic=self.monoisotopic, uwpr_mass=False, isotope=self.isotope,
+                            loss = self.loss)
 
     @cached_property
     def label(self):
@@ -161,11 +189,31 @@ class Fragment:
                f"{self.ion_type}" \
                f"{self.parent_number}" \
                f"{'i' if self.internal else ''}" \
-               f"{self.number if self.internal else ''}"
+               f"{self.number if self.internal else ''}"\
+               f"{'(' + str(self.loss) + ')' if self.loss != 0.0 else ''}" \
+               f"{'*' * self.isotope if self.isotope > 0 else ''}"
+
+    def __iter__(self):
+        # Include regular attributes
+        for key, value in self.__dict__.items():
+            yield key, value
+
+        # Explicitly include cached properties
+        yield 'start', self.start
+        yield 'end', self.end
+        yield 'mass', self.mass
+        yield 'neutral_mass', self.neutral_mass
+        yield 'mz', self.mz
+        yield 'label', self.label
+
+    # Method to convert the object into a dictionary including cached properties
+    def to_dict(self):
+        return dict(self)
 
 
 def build_fragments(sequence: str, ion_types: Union[List[str], str], charges: Union[List[int], int],
-                    monoisotopic: bool = True, internal: bool = False) -> List[Fragment]:
+                    monoisotopic: bool = True, internal: bool = False, isotopes: Union[List[int], int] = 0,
+                    losses: Union[List[float], float] = 0.0) -> List[Fragment]:
     """
     Builds all Fragment objects or a given input 'sequence'.
 
@@ -204,13 +252,25 @@ def build_fragments(sequence: str, ion_types: Union[List[str], str], charges: Un
     if isinstance(charges, int):
         charges = [charges]
 
+    if isinstance(isotopes, int):
+        isotopes = [isotopes]
+
+    if isinstance(losses, float) or isinstance(losses, int):
+        losses = [losses]
+
+    if len(isotopes) == 0 or len(losses) == 0 or len(ion_types) == 0 or len(charges) == 0:
+        raise ValueError("No isotopes, losses, ion types, or charges provided.")
+
     def _fragment(t: str, c: int):
         # Loop through the sequence to generate fragments and yield m/z
         seq_length = calculate_sequence_length(sequence)
         for number, frag in enumerate(build_fragment_sequences(sequence, t)):
             frag_number = seq_length - number
-            yield Fragment(sequence=frag, charge=c, ion_type=t, number=frag_number,
-                           internal=False, parent_number=frag_number, monoisotopic=monoisotopic)
+            for iso in isotopes:
+                for loss in losses:
+                    yield Fragment(sequence=frag, charge=c, ion_type=t, number=frag_number,
+                                   internal=False, parent_number=frag_number, monoisotopic=monoisotopic,
+                                   isotope=iso, loss=loss, parent_sequence=sequence)
 
             if internal is True:
                 fragment_seq_len = calculate_sequence_length(frag)
@@ -221,9 +281,11 @@ def build_fragments(sequence: str, ion_types: Union[List[str], str], charges: Un
                         continue
 
                     internal_frag_number = fragment_seq_len - internal_number
-                    yield Fragment(sequence=internal_frag, charge=c, ion_type=t,
-                                   number=internal_frag_number, internal=True, parent_number=frag_number,
-                                   monoisotopic=monoisotopic)
+                    for iso in isotopes:
+                        for loss in losses:
+                            yield Fragment(sequence=internal_frag, charge=c, ion_type=t,
+                                           number=internal_frag_number, internal=True, parent_number=frag_number,
+                                           monoisotopic=monoisotopic, isotope=iso, loss=loss, parent_sequence=sequence)
 
     fragments = list(chain.from_iterable(_fragment(t, c) for t in ion_types for c in charges))
     return fragments

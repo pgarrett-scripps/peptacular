@@ -1,6 +1,6 @@
 import math
 from dataclasses import dataclass
-from typing import List, Tuple, Union, Dict
+from typing import List, Tuple, Union, Dict, Any
 from peptacular.fragment import Fragment
 
 
@@ -165,6 +165,21 @@ class FragmentMatch:
         """
         return self.error / self.fragment.mz * 1e6
 
+    def to_dict(self) -> Dict[str, Any]:
+        """
+        Converts the FragmentMatch object to a dictionary.
+
+        :return: Dictionary representation of the FragmentMatch object.
+        :rtype: Dict[str, Any]
+        """
+        return {
+            'fragment': self.fragment.to_dict(),
+            'mz': self.mz,
+            'intensity': self.intensity,
+            'error': self.error,
+            'error_ppm': self.error_ppm
+        }
+
 
 def compute_fragment_matches(fragments: List[Fragment], mz_spectrum: List[float],
                              intensity_spectrum: List[float], tolerance_value: float = 0.1,
@@ -190,6 +205,10 @@ def compute_fragment_matches(fragments: List[Fragment], mz_spectrum: List[float]
     # sort fragments by mass
     fragments.sort(key=lambda x: x.mz)
     fragment_spectrum = [f.mz for f in fragments]
+
+    # sort peaks
+    mz_spectrum, intensity_spectrum = zip(*sorted(zip(mz_spectrum, intensity_spectrum), key=lambda x: x[0]))
+
     indices = match_spectra_range(fragment_spectrum, mz_spectrum, tolerance_value, tolerance_type)
 
     fragment_matches = []

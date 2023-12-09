@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 ## Next release?
 - make fragment faster by using numpys cumsum function and caching single modified residue masses
 
+## [1.1.1] 
+### Added:
+- Added isotopes and loss to fragment.py
+
 ## [1.1.0] 
 ### Added:
 - speed_test.py to examples and more examples!

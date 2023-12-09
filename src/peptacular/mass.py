@@ -2,6 +2,7 @@
 mass.py is a simple module for computing the m/z and mass of an amino acid sequence, plus it works with peptacular's
 modification notation!
 """
+from typing import Union, List
 
 from peptacular.constants import MONO_ISOTOPIC_ATOMIC_MASSES, AVERAGE_ATOMIC_MASSES, AVERAGE_AA_MASSES, \
     MONO_ISOTOPIC_AA_MASSES, ION_ADJUSTMENTS, UWPR_MONO_ISOTOPIC_ATOMIC_MASSES, UWPR_AVERAGE_AA_MASSES, \
@@ -10,8 +11,9 @@ from peptacular.sequence import get_modifications, strip_modifications, is_seque
 from peptacular.util import validate_ion_type
 
 
+
 def calculate_mass(sequence: str, charge: int = 0, ion_type: str = 'y', monoisotopic: bool = True,
-                   uwpr_mass: bool = False) -> float:
+                   uwpr_mass: bool = False, isotope: int = 0, loss: float=0.0) -> float:
     """
     Calculate the mass of an amino acid 'sequence'.
 
@@ -74,11 +76,14 @@ def calculate_mass(sequence: str, charge: int = 0, ion_type: str = 'y', monoisot
     mass += sum(float(value) for value in mods.values())
     mass += (charge * atomic_masses['PROTON'])
 
-    return mass + ION_ADJUSTMENTS[ion_type]
+    mass += ION_ADJUSTMENTS[ion_type] + atomic_masses['NEUTRON'] * isotope + loss
+
+    return mass
 
 
 def calculate_mz(sequence: str, charge: int = 0, ion_type: str = 'y',
-                 monoisotopic: bool = True, uwpr_mass: bool = False) -> float:
+                 monoisotopic: bool = True, uwpr_mass: bool = False, isotope: int = 0,
+                 loss: Union[List[float], float]=0.0) -> float:
     """
     Calculate the m/z (mass-to-charge ratio) of an amino acid 'sequence'.
 
@@ -123,7 +128,7 @@ def calculate_mz(sequence: str, charge: int = 0, ion_type: str = 'y',
     """
 
     mass = calculate_mass(sequence=sequence, charge=charge, ion_type=ion_type,
-                          monoisotopic=monoisotopic, uwpr_mass=uwpr_mass)
+                          monoisotopic=monoisotopic, uwpr_mass=uwpr_mass, isotope=isotope, loss=loss)
     return mass if charge == 0 else mass / charge
 
 
