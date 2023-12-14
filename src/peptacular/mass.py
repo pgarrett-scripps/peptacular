@@ -2,7 +2,7 @@
 mass.py is a simple module for computing the m/z and mass of an amino acid sequence, plus it works with peptacular's
 modification notation!
 """
-from typing import Union, List
+from typing import Union, List, Dict
 
 from peptacular.constants import MONO_ISOTOPIC_ATOMIC_MASSES, AVERAGE_ATOMIC_MASSES, AVERAGE_AA_MASSES, \
     MONO_ISOTOPIC_AA_MASSES, ION_ADJUSTMENTS, UWPR_MONO_ISOTOPIC_ATOMIC_MASSES, UWPR_AVERAGE_AA_MASSES, \
@@ -11,9 +11,8 @@ from peptacular.sequence import get_modifications, strip_modifications, is_seque
 from peptacular.util import validate_ion_type
 
 
-
 def calculate_mass(sequence: str, charge: int = 0, ion_type: str = 'y', monoisotopic: bool = True,
-                   uwpr_mass: bool = False, isotope: int = 0, loss: float=0.0) -> float:
+                   uwpr_mass: bool = False, isotope: int = 0, loss: float = 0.0, aa_masses: Dict = None) -> float:
     """
     Calculate the mass of an amino acid 'sequence'.
 
@@ -59,13 +58,25 @@ def calculate_mass(sequence: str, charge: int = 0, ion_type: str = 'y', monoisot
 
     validate_ion_type(ion_type=ion_type)
 
-    # Select mass set based on monoisotopic flag
-    atomic_masses, aa_masses = (MONO_ISOTOPIC_ATOMIC_MASSES, MONO_ISOTOPIC_AA_MASSES) \
-        if monoisotopic is True else (AVERAGE_ATOMIC_MASSES, AVERAGE_AA_MASSES)
+    if aa_masses is None:
+        aa_masses = {}
 
-    if uwpr_mass is True:
-        atomic_masses, aa_masses = (UWPR_MONO_ISOTOPIC_ATOMIC_MASSES, UWPR_MONO_ISOTOPIC_AA_MASSES) \
-            if monoisotopic is True else (UWPR_AVERAGE_ATOMIC_MASSES, UWPR_AVERAGE_AA_MASSES)
+    if monoisotopic is True:
+
+        if uwpr_mass is True:
+            atomic_masses = UWPR_MONO_ISOTOPIC_ATOMIC_MASSES
+            aa_masses = {**UWPR_MONO_ISOTOPIC_AA_MASSES, **aa_masses}
+        else:
+            atomic_masses = MONO_ISOTOPIC_ATOMIC_MASSES
+            aa_masses = {**MONO_ISOTOPIC_AA_MASSES, **aa_masses}
+
+    else:
+        if uwpr_mass is True:
+            atomic_masses = UWPR_AVERAGE_ATOMIC_MASSES
+            aa_masses = {**UWPR_AVERAGE_AA_MASSES, **aa_masses}
+        else:
+            atomic_masses = AVERAGE_ATOMIC_MASSES
+            aa_masses = {**AVERAGE_AA_MASSES, **aa_masses}
 
     # Parse modifications and strip them from sequence
     mods = get_modifications(sequence=sequence)
@@ -83,7 +94,7 @@ def calculate_mass(sequence: str, charge: int = 0, ion_type: str = 'y', monoisot
 
 def calculate_mz(sequence: str, charge: int = 0, ion_type: str = 'y',
                  monoisotopic: bool = True, uwpr_mass: bool = False, isotope: int = 0,
-                 loss: Union[List[float], float]=0.0) -> float:
+                 loss: Union[List[float], float] = 0.0, aa_masses: Dict = None) -> float:
     """
     Calculate the m/z (mass-to-charge ratio) of an amino acid 'sequence'.
 
@@ -128,11 +139,12 @@ def calculate_mz(sequence: str, charge: int = 0, ion_type: str = 'y',
     """
 
     mass = calculate_mass(sequence=sequence, charge=charge, ion_type=ion_type,
-                          monoisotopic=monoisotopic, uwpr_mass=uwpr_mass, isotope=isotope, loss=loss)
+                          monoisotopic=monoisotopic, uwpr_mass=uwpr_mass, isotope=isotope, loss=loss,
+                          aa_masses=aa_masses)
     return mass if charge == 0 else mass / charge
 
 
-def valid_mass_sequence(sequence: str):
+def valid_mass_sequence(sequence: str) -> bool:
     """
     Check if a sequence is a valid mass-based sequence, where all modifications are either of type int or float.
 
@@ -159,12 +171,7 @@ def valid_mass_sequence(sequence: str):
     if is_sequence_valid(sequence) is False:
         return False
 
-    stripped_sequence = strip_modifications(sequence)
     mods = get_modifications(sequence)
-
-    for aa in stripped_sequence:
-        if aa not in MONO_ISOTOPIC_AA_MASSES:
-            return False
 
     for _, mod in mods.items():
         if isinstance(mod, float) is False and isinstance(mod, int) is False:

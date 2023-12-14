@@ -13,7 +13,7 @@ information about the fragment ions.
 from dataclasses import dataclass
 from functools import lru_cache, cached_property
 from itertools import chain
-from typing import List, Generator, Union, Callable
+from typing import List, Generator, Union, Callable, Dict
 
 from peptacular.constants import PROTON_MASS, ION_ADJUSTMENTS
 from peptacular.mass import calculate_mz, calculate_mass
@@ -67,6 +67,7 @@ class Fragment:
     isotope: int = 0
     loss: float = 0.0
     parent_sequence: str = ''
+    aa_masses: Dict = None
 
     def __post_init__(self):
         """
@@ -147,7 +148,7 @@ class Fragment:
 
         return calculate_mass(sequence=self.sequence, charge=self.charge, ion_type=self.ion_type,
                               monoisotopic=self.monoisotopic, uwpr_mass=False, isotope=self.isotope,
-                              loss=self.loss)
+                              loss=self.loss, aa_masses=self.aa_masses)
 
     @cached_property
     def neutral_mass(self):
@@ -160,8 +161,7 @@ class Fragment:
 
         return calculate_mass(sequence=self.sequence, charge=0, ion_type=self.ion_type,
                               monoisotopic=self.monoisotopic, uwpr_mass=False, isotope=self.isotope,
-                              loss=self.loss)
-
+                              loss=self.loss, aa_masses=self.aa_masses)
 
     @cached_property
     def mz(self):
@@ -174,7 +174,7 @@ class Fragment:
 
         return calculate_mz(sequence=self.sequence, charge=self.charge, ion_type=self.ion_type,
                             monoisotopic=self.monoisotopic, uwpr_mass=False, isotope=self.isotope,
-                            loss = self.loss)
+                            loss=self.loss, aa_masses=self.aa_masses)
 
     @cached_property
     def label(self):
@@ -189,7 +189,7 @@ class Fragment:
                f"{self.ion_type}" \
                f"{self.parent_number}" \
                f"{'i' if self.internal else ''}" \
-               f"{self.number if self.internal else ''}"\
+               f"{self.number if self.internal else ''}" \
                f"{'(' + str(self.loss) + ')' if self.loss != 0.0 else ''}" \
                f"{'*' * self.isotope if self.isotope > 0 else ''}"
 
@@ -213,7 +213,7 @@ class Fragment:
 
 def build_fragments(sequence: str, ion_types: Union[List[str], str], charges: Union[List[int], int],
                     monoisotopic: bool = True, internal: bool = False, isotopes: Union[List[int], int] = 0,
-                    losses: Union[List[float], float] = 0.0) -> List[Fragment]:
+                    losses: Union[List[float], float] = 0.0, aa_masses: Dict = None) -> List[Fragment]:
     """
     Builds all Fragment objects or a given input 'sequence'.
 
@@ -270,7 +270,7 @@ def build_fragments(sequence: str, ion_types: Union[List[str], str], charges: Un
                 for loss in losses:
                     yield Fragment(sequence=frag, charge=c, ion_type=t, number=frag_number,
                                    internal=False, parent_number=frag_number, monoisotopic=monoisotopic,
-                                   isotope=iso, loss=loss, parent_sequence=sequence)
+                                   isotope=iso, loss=loss, parent_sequence=sequence, aa_masses=aa_masses)
 
             if internal is True:
                 fragment_seq_len = calculate_sequence_length(frag)
@@ -285,7 +285,8 @@ def build_fragments(sequence: str, ion_types: Union[List[str], str], charges: Un
                         for loss in losses:
                             yield Fragment(sequence=internal_frag, charge=c, ion_type=t,
                                            number=internal_frag_number, internal=True, parent_number=frag_number,
-                                           monoisotopic=monoisotopic, isotope=iso, loss=loss, parent_sequence=sequence)
+                                           monoisotopic=monoisotopic, isotope=iso, loss=loss, parent_sequence=sequence,
+                                           aa_masses=aa_masses)
 
     fragments = list(chain.from_iterable(_fragment(t, c) for t in ion_types for c in charges))
     return fragments
@@ -371,6 +372,7 @@ def sequence_trimmer(sequence: str, forward: bool) -> List[str]:
     return list(trim_from_end(sequence))
 
 
+# TODO: Add new fragment support to fragment function
 def fragment(sequence: str, ion_types: Union[str, List[str]] = 'y', charges: Union[int, List[int]] = 1,
              monoisotopic: bool = True, internal: bool = False, mz: bool = True) -> List[float]:
     """
