@@ -28,13 +28,13 @@ Example Sequences:
 The module ensures that sequences and their modifications are handled correctly, preserving the positional
 relationship between amino acids and their modifications during operations.
 """
-
+import itertools
 import re
 from copy import deepcopy
 from typing import Dict, List, Any, Generator, Union, Set, Tuple
 
 from peptacular.term.modification import get_c_term_modification, strip_term_modifications, add_n_term_modification, \
-    add_c_term_modification, get_n_term_modification
+    add_c_term_modification, get_n_term_modification, pop_term_modifications, add_term_modifications
 from peptacular.term.residue import pop_n_term_residue
 from peptacular.util import convert_type, identify_regex_indexes, _validate_span
 
@@ -664,3 +664,93 @@ def split_sequence(sequence: str) -> List[str]:
         split_sequences.append(n_term)
 
     return split_sequences
+
+
+def permutate_sequence(sequence: str) -> List[str]:
+    """
+    Generates all permutations of the input sequence. Terminal mods are kept in place.
+
+    :param sequence: The sequence to be permuted.
+    :type sequence: str
+
+    :return: A list of all permutations of the input sequence.
+    :rtype: List[str]
+
+    .. code-block:: python
+
+        >>> permutate_sequence('PET')
+        ['PET', 'PTE', 'EPT', 'ETP', 'TPE', 'TEP']
+
+        >>> permutate_sequence('[3]PET[1]')
+        ['[3]PET[1]', '[3]PTE[1]', '[3]EPT[1]', '[3]ETP[1]', '[3]TPE[1]', '[3]TEP[1]']
+
+        >>> permutate_sequence('PE(3.14)T')
+        ['PE(3.14)T', 'PTE(3.14)', 'E(3.14)PT', 'E(3.14)TP', 'TPE(3.14)', 'TE(3.14)P']
+
+
+    """
+    sequence, n_term, c_term = pop_term_modifications(sequence)
+    components = split_sequence(sequence)
+    return [add_term_modifications(''.join(p), n_term, c_term) for p in itertools.permutations(components)]
+
+
+def combinate_sequence(sequence: str, size: int) -> List[str]:
+    """
+    Generates all combinations of the input sequence of a given size. Terminal mods are kept in place.
+
+    :param sequence: The sequence to be combined.
+    :type sequence: str
+
+    :param size: The size of the combinations to be generated.
+    :type size: int
+
+    :return: A list of all combinations of the input sequence of the given size.
+    :rtype: List[str]
+
+    .. code-block:: python
+
+        >>> combinate_sequence('PET', 2)
+        ['PE', 'PT', 'ET']
+
+        >>> combinate_sequence('[3]PET[1]', 2)
+        ['[3]PE[1]', '[3]PT[1]', '[3]ET[1]']
+
+        >>> combinate_sequence('PE(3.14)T', 2)
+        ['PE(3.14)', 'PT', 'E(3.14)T']
+
+    """
+
+    sequence, n_term, c_term = pop_term_modifications(sequence)
+    components = split_sequence(sequence)
+    return [add_term_modifications(''.join(c), n_term, c_term) for c in itertools.combinations(components, size)]
+
+
+def combinate_with_replacement_sequence(sequence: str, size: int) -> List[str]:
+    """
+    Generates all combinations with replacement of the input sequence of a given size. Terminal mods are kept in place.
+
+    :param sequence: The sequence to be combined.
+    :type sequence: str
+
+    :param size: The size of the combinations to be generated.
+    :type size: int
+
+    :return: A list of all combinations of the input sequence of the given size.
+    :rtype: List[str]
+
+    .. code-block:: python
+
+        >>> combinate_with_replacement_sequence('PET', 2)
+        ['PP', 'PE', 'PT', 'EE', 'ET', 'TT']
+
+        >>> combinate_with_replacement_sequence('[3]PET[1]', 2)
+        ['[3]PP[1]', '[3]PE[1]', '[3]PT[1]', '[3]EE[1]', '[3]ET[1]', '[3]TT[1]']
+
+        >>> combinate_with_replacement_sequence('PE(3.14)T', 2)
+        ['PP', 'PE(3.14)', 'PT', 'E(3.14)E(3.14)', 'E(3.14)T', 'TT']
+
+    """
+
+    sequence, n_term, c_term = pop_term_modifications(sequence)
+    components = split_sequence(sequence)
+    return [add_term_modifications(''.join(c), n_term, c_term) for c in itertools.combinations_with_replacement(components, size)]

@@ -15,7 +15,7 @@ Term Modification Notation:
 """
 
 
-from typing import Union, Any
+from typing import Union, Any, Tuple
 
 from peptacular.util import convert_type
 
@@ -301,6 +301,10 @@ def add_c_term_modification(sequence: str, mod: Any) -> str:
     return f"{sequence}[{str(mod)}]"
 
 
+def add_term_modifications(sequence: str, n_term_mod: Any, c_term_mod) -> str:
+    return add_n_term_modification(add_c_term_modification(sequence, c_term_mod), n_term_mod)
+
+
 def strip_term_modifications(sequence: str) -> str:
     """
     Removes both N-terminal and C-terminal modification notations from the sequence.
@@ -456,3 +460,96 @@ def condense_term_modifications(sequence: str) -> str:
     """
 
     return condense_n_term_modifications(condense_c_term_modifications(sequence))
+
+
+def pop_n_term_modification(sequence: str) -> Tuple[str, Union[str, None]]:
+    """
+    Removes the N-terminal modification from the sequence and returns it separately.
+
+    :param sequence: The amino acid sequence, which can include modifications.
+    :type sequence: str
+
+    :return: The sequence without the N-terminal modification, and the removed N-terminal modification.
+    :rtype: Tuple[str, Optional[str]]
+
+    .. code-block:: python
+
+        # For sequences with an N-terminal modification:
+        >>> pop_n_term_modification('[Acetyl]PEPTIDE')
+        ('PEPTIDE', 'Acetyl')
+
+        # For sequences without an N-terminal modification:
+        >>> pop_n_term_modification('PEPTIDE')
+        ('PEPTIDE', None)
+
+    """
+
+    n_term_mod = get_n_term_modification(sequence)
+    if n_term_mod is None:
+        return sequence, None
+    sequence = strip_n_term_modification(sequence)
+    return sequence, n_term_mod
+
+
+def pop_c_term_modification(sequence: str) -> Tuple[str, Union[str, None]]:
+    """
+    Removes the C-terminal modification from the sequence and returns it separately.
+
+    :param sequence: The amino acid sequence, which can include modifications.
+    :type sequence: str
+
+    :return: The sequence without the C-terminal modification, and the removed C-terminal modification.
+    :rtype: Tuple[str, Optional[str]]
+
+    .. code-block:: python
+
+        # For sequences with a C-terminal modification:
+        >>> pop_c_term_modification('PEPTIDE[Amide]')
+        ('PEPTIDE', 'Amide')
+
+        # For sequences without a C-terminal modification:
+        >>> pop_c_term_modification('PEPTIDE')
+        ('PEPTIDE', None)
+
+    """
+
+    c_term_mod = get_c_term_modification(sequence)
+    if c_term_mod is None:
+        return sequence, None
+    sequence = strip_c_term_modification(sequence)
+    return sequence, c_term_mod
+
+
+def pop_term_modifications(sequence: str) -> Tuple[str, Union[str, None], Union[str, None]]:
+    """
+    Removes both the N-terminal and C-terminal modifications from the sequence and returns them separately.
+
+    :param sequence: The amino acid sequence, which can include modifications.
+    :type sequence: str
+
+    :return: The sequence without the terminal modifications, and the removed N-terminal and C-terminal modifications.
+    :rtype: Tuple[str, Optional[str], Optional[str]]
+
+    .. code-block:: python
+
+        # For sequences with both N-terminal and C-terminal modifications:
+        >>> pop_term_modifications('[Acetyl]PEPTIDE[Amide]')
+        ('PEPTIDE', 'Acetyl', 'Amide')
+
+        # For sequences with only an N-terminal modification:
+        >>> pop_term_modifications('[Acetyl]PEPTIDE')
+        ('PEPTIDE', 'Acetyl', None)
+
+        # For sequences with only a C-terminal modification:
+        >>> pop_term_modifications('PEPTIDE[Amide]')
+        ('PEPTIDE', None, 'Amide')
+
+        # For sequences without terminal modifications:
+        >>> pop_term_modifications('PEPTIDE')
+        ('PEPTIDE', None, None)
+
+    """
+
+    sequence, n_term_mod = pop_n_term_modification(sequence)
+    sequence, c_term_mod = pop_c_term_modification(sequence)
+    return sequence, n_term_mod, c_term_mod

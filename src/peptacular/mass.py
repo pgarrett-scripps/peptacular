@@ -26,6 +26,12 @@ def calculate_mass(sequence: str, charge: int = 0, ion_type: str = 'y', monoisot
     :type monoisotopic: bool
     :param uwpr_mass: If true, uses uwpr masses. If false, uses Pyteomics masses, defaults to [False].
     :type uwpr_mass: bool
+    :param isotope: The isotope number, defaults to [0].
+    :type isotope: int
+    :param loss: The loss, defaults to [0.0].
+    :type loss: float
+    :param aa_masses: A dictionary of amino acid masses, defaults to [None].
+    :type aa_masses: Dict
 
     :raise ValueError: If the ion type is not one of 'a', 'b', 'c', 'x', 'y', or 'z'.
 
@@ -108,6 +114,12 @@ def calculate_mz(sequence: str, charge: int = 0, ion_type: str = 'y',
     :type monoisotopic: bool
     :param uwpr_mass: If true, uses uwpr masses. If false, uses Pyteomics masses, defaults to [False].
     :type uwpr_mass: bool
+    :param isotope: The isotope number, defaults to [0].
+    :type isotope: int
+    :param loss: The loss, defaults to [0.0].
+    :type loss: float
+    :param aa_masses: A dictionary of amino acid masses, defaults to [None].
+    :type aa_masses: Dict
 
     :raise ValueError: If the ion type is not one of 'a', 'b', 'c', 'x', 'y', or 'z'.
 

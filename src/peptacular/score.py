@@ -222,6 +222,7 @@ def compute_fragment_matches(fragments: List[Fragment], mz_spectrum: List[float]
     return fragment_matches
 
 
+# TODO: Doesnt work with multiple charges or internal fragments
 def hyper_score(fragments: Union[List[Fragment], Dict[str, List[float]]], mz_spectrum: List[float],
                 intensity_spectrum: List[float], tolerance_value=0.1, tolerance_type='ppm',
                 filter_by='intensity') -> float:
@@ -273,18 +274,26 @@ def hyper_score(fragments: Union[List[Fragment], Dict[str, List[float]]], mz_spe
     elif filter_by == 'error':
         fragment_matches.sort(key=lambda x: abs(x.error), reverse=True)
 
-    fragment_matches = {match.fragment: match for match in fragment_matches}.values()
+    fragment_matches = {match.fragment: match for match in fragment_matches}
+
+    frag_nums = set()
+    for frag in fragment_matches:
+        key = (frag.ion_type, frag.parent_number)
+        if key not in frag_nums:
+            frag_nums.add(key)
+
+    fragment_matches = fragment_matches.values()
 
     # Calculate the dot product using matched fragments
     dot_product = sum(match.intensity for match in fragment_matches)
 
     # Count the number of b and y ions
-    Na = sum(1 for match in fragment_matches if match.fragment.ion_type == 'a')
-    Nb = sum(1 for match in fragment_matches if match.fragment.ion_type == 'b')
-    Nc = sum(1 for match in fragment_matches if match.fragment.ion_type == 'c')
-    Nx = sum(1 for match in fragment_matches if match.fragment.ion_type == 'x')
-    Ny = sum(1 for match in fragment_matches if match.fragment.ion_type == 'y')
-    Nz = sum(1 for match in fragment_matches if match.fragment.ion_type == 'z')
+    Na = sum(1 for ion_type, _ in frag_nums if ion_type == 'a')
+    Nb = sum(1 for ion_type, _ in frag_nums if ion_type == 'b')
+    Nc = sum(1 for ion_type, _ in frag_nums if ion_type == 'c')
+    Nx = sum(1 for ion_type, _ in frag_nums if ion_type == 'x')
+    Ny = sum(1 for ion_type, _ in frag_nums if ion_type == 'y')
+    Nz = sum(1 for ion_type, _ in frag_nums if ion_type == 'z')
 
     # Compute the hyper score
     score = dot_product * math.factorial(Na) * math.factorial(Nb) * math.factorial(Nc) * math.factorial(Nx) * \
