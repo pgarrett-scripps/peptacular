@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 ## Next release?
 - make fragment faster by using numpys cumsum function and caching single modified residue masses
 
+## [1.3.0]
+### Added:
+- Permutation / Combination / Product functions in sequence.py
+- Immonium Ion support to fragment.py
+
 ## [1.2.0] 
 ### Added:
 - Added support for custom aa masses to mass.py and fragment.py
