@@ -28,10 +28,11 @@ Example Sequences:
 The module ensures that sequences and their modifications are handled correctly, preserving the positional
 relationship between amino acids and their modifications during operations.
 """
+import collections
 import itertools
 import re
 from copy import deepcopy
-from typing import Dict, List, Any, Generator, Union, Set, Tuple
+from typing import Dict, List, Any, Generator, Union, Set, Tuple, Counter, Callable
 
 from peptacular.term.modification import get_c_term_modification, strip_term_modifications, add_n_term_modification, \
     add_c_term_modification, get_n_term_modification, pop_term_modifications, add_term_modifications
@@ -666,12 +667,14 @@ def split_sequence(sequence: str) -> List[str]:
     return split_sequences
 
 
-def permutate_sequence(sequence: str) -> List[str]:
+def permutate_sequence(sequence: str, size: Union[int, None]) -> List[str]:
     """
     Generates all permutations of the input sequence. Terminal mods are kept in place.
 
     :param sequence: The sequence to be permuted.
     :type sequence: str
+    :param size: The size of the permutations.
+    :type size: int
 
     :return: A list of all permutations of the input sequence.
     :rtype: List[str]
@@ -687,14 +690,50 @@ def permutate_sequence(sequence: str) -> List[str]:
         >>> permutate_sequence('PE(3.14)T')
         ['PE(3.14)T', 'PTE(3.14)', 'E(3.14)PT', 'E(3.14)TP', 'TPE(3.14)', 'TE(3.14)P']
 
-
     """
+
+    if size is None:
+        size = calculate_sequence_length(sequence)
+
     sequence, n_term, c_term = pop_term_modifications(sequence)
     components = split_sequence(sequence)
-    return [add_term_modifications(''.join(p), n_term, c_term) for p in itertools.permutations(components)]
+    return [add_term_modifications(''.join(p), n_term, c_term) for p in itertools.permutations(components, size)]
 
 
-def combinate_sequence(sequence: str, size: int) -> List[str]:
+def product_sequence(sequence: str, size: Union[int, None]) -> List[str]:
+    """
+    Generates all combinations of the input sequence of a given size. Terminal mods are kept in place.
+
+    :param sequence: The sequence to be combined.
+    :type sequence: str
+    :param size: The size of the combinations to be generated.
+    :type size: int
+
+    :return: A list of all combinations of the input sequence of the given size.
+    :rtype: List[str]
+
+    .. code-block:: python
+
+        >>> product_sequence('PET', 2)
+        ['PP', 'PE', 'PT', 'EP', 'EE', 'ET', 'TP', 'TE', 'TT']
+
+        >>> product_sequence('[3]PET[1]', 2)
+        ['[3]PP[1]', '[3]PE[1]', '[3]PT[1]', '[3]EP[1]', '[3]EE[1]', '[3]ET[1]', '[3]TP[1]', '[3]TE[1]', '[3]TT[1]']
+
+        >>> product_sequence('PE(3.14)T', 2)
+        ['PP', 'PE(3.14)', 'PT', 'E(3.14)P', 'E(3.14)E(3.14)', 'E(3.14)T', 'TP', 'TE(3.14)', 'TT']
+
+    """
+
+    if size is None:
+        size = calculate_sequence_length(sequence)
+
+    sequence, n_term, c_term = pop_term_modifications(sequence)
+    components = split_sequence(sequence)
+    return [add_term_modifications(''.join(p), n_term, c_term) for p in itertools.product(components, repeat=size)]
+
+
+def combinate_sequence(sequence: str, size: Union[int, None]) -> List[str]:
     """
     Generates all combinations of the input sequence of a given size. Terminal mods are kept in place.
 
@@ -720,12 +759,15 @@ def combinate_sequence(sequence: str, size: int) -> List[str]:
 
     """
 
+    if size is None:
+        size = calculate_sequence_length(sequence)
+
     sequence, n_term, c_term = pop_term_modifications(sequence)
     components = split_sequence(sequence)
     return [add_term_modifications(''.join(c), n_term, c_term) for c in itertools.combinations(components, size)]
 
 
-def combinate_with_replacement_sequence(sequence: str, size: int) -> List[str]:
+def combinate_with_replacement_sequence(sequence: str, size: Union[int, None]) -> List[str]:
     """
     Generates all combinations with replacement of the input sequence of a given size. Terminal mods are kept in place.
 
@@ -751,6 +793,63 @@ def combinate_with_replacement_sequence(sequence: str, size: int) -> List[str]:
 
     """
 
+    if size is None:
+        size = calculate_sequence_length(sequence)
+
     sequence, n_term, c_term = pop_term_modifications(sequence)
     components = split_sequence(sequence)
-    return [add_term_modifications(''.join(c), n_term, c_term) for c in itertools.combinations_with_replacement(components, size)]
+    return [add_term_modifications(''.join(c), n_term, c_term) for c in
+            itertools.combinations_with_replacement(components, size)]
+
+
+def sequence_counter(sequence: str) -> Counter:
+    """
+    Counts the occurrences of each amino acid in the input sequence.
+
+    :param sequence: The sequence to be counted.
+    :type sequence: str
+
+    :return: A Counter object containing the occurrences of each amino acid in the input sequence.
+    :rtype: Counter
+
+    .. code-block:: python
+
+        >>> sequence_counter('PEPTIDE')
+        Counter({'P': 2, 'E': 2, 'T': 1, 'I': 1, 'D': 1})
+
+        >>> sequence_counter('[Acetyl]P(phospho)EP(phospho)TIDE[Amide]')
+        Counter({'P(phospho)': 2, 'E': 2, 'T': 1, 'I': 1, 'D': 1})
+
+    """
+    sequence, n_term, c_term = pop_term_modifications(sequence)
+    components = split_sequence(sequence)
+    return collections.Counter(components)
+
+
+def sort_sequence(sequence: str, sort_function: Callable[[str], str] = lambda x: x[0]) -> str:
+    """
+    Sorts the input sequence using the provided sort function. Terminal mods are kept in place.
+
+    :param sequence: The sequence to be sorted.
+    :type sequence: str
+
+    :param sort_function: The sort function to be used. Defaults to identity function.
+    :type sort_function: Callable[[str], str]
+
+    :return: The input sequence sorted using the provided sort function.
+    :rtype: str
+
+    .. code-block:: python
+
+        >>> sort_sequence('PEPTIDE')
+        'DEEIPPT'
+
+        >>> sort_sequence('[Acetyl]P(phospho)EP(phospho)TIDE[Amide]')
+        '[Acetyl]EPP(phospho)TIDE[Amide]'
+
+    """
+
+    sequence, n_term, c_term = pop_term_modifications(sequence)
+    components = split_sequence(sequence)
+    components.sort(key=sort_function)
+    return add_term_modifications(''.join(components), n_term, c_term)

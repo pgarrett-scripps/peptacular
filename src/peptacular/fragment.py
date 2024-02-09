@@ -15,9 +15,9 @@ from functools import lru_cache, cached_property
 from itertools import chain
 from typing import List, Generator, Union, Callable, Dict
 
-from peptacular.constants import PROTON_MASS, ION_ADJUSTMENTS
+from peptacular.constants import PROTON_MASS, ION_ADJUSTMENTS, IMMONIUM_LOSS
 from peptacular.mass import calculate_mz, calculate_mass
-from peptacular.sequence import calculate_sequence_length, split_sequence
+from peptacular.sequence import calculate_sequence_length, split_sequence, strip_modifications
 from peptacular.term.residue import strip_c_term_residue, strip_n_term_residue
 from peptacular.util import is_forward
 
@@ -54,6 +54,12 @@ class Fragment:
         2
         >>> frag.monoisotopic
         True
+
+        >>> frag = Fragment("W", 1, "I", 0, False, 0, True)
+        >>> frag.sequence
+        'W'
+        >>> frag.mass
+        97.052763853
 
     """
 
@@ -101,6 +107,9 @@ class Fragment:
     @cached_property
     def start(self):
 
+        if self.ion_type in 'I':
+            return 0
+
         if self.parent_sequence != '' and self._start < 0:
             return self._start + calculate_sequence_length(self.parent_sequence)
 
@@ -129,6 +138,10 @@ class Fragment:
 
     @cached_property
     def end(self):
+
+        if self.ion_type in 'I':
+            return 0
+
         if self.parent_sequence != '' and self._end == None:
             return calculate_sequence_length(self.parent_sequence)
 
@@ -213,7 +226,7 @@ class Fragment:
 
 def build_fragments(sequence: str, ion_types: Union[List[str], str], charges: Union[List[int], int],
                     monoisotopic: bool = True, internal: bool = False, isotopes: Union[List[int], int] = 0,
-                    losses: Union[List[float], float] = 0.0, aa_masses: Dict = None) -> List[Fragment]:
+                    losses: Union[List[float], float] = 0.0, aa_masses: Dict = None, immonium: bool = False) -> List[Fragment]:
     """
     Builds all Fragment objects or a given input 'sequence'.
 
@@ -288,7 +301,15 @@ def build_fragments(sequence: str, ion_types: Union[List[str], str], charges: Un
                                            monoisotopic=monoisotopic, isotope=iso, loss=loss, parent_sequence=sequence,
                                            aa_masses=aa_masses)
 
-    fragments = list(chain.from_iterable(_fragment(t, c) for t in ion_types for c in charges))
+    immonium_frags = []
+    if immonium:
+        for aa in set(split_sequence(sequence)):
+            immonium_frag = Fragment(sequence=aa, charge=1, ion_type='I', number=0, internal=False, parent_number=0,
+                                        monoisotopic=monoisotopic, isotope=0, loss=0.0, parent_sequence=sequence,
+                                        aa_masses=aa_masses)
+            immonium_frags.append(immonium_frag)
+
+    fragments = list(chain.from_iterable(_fragment(t, c) for t in ion_types for c in charges)) + immonium_frags
     return fragments
 
 

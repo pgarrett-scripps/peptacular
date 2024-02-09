@@ -92,7 +92,6 @@ def calculate_mass(sequence: str, charge: int = 0, ion_type: str = 'y', monoisot
     mass = sum(aa_masses[aa] for aa in stripped_sequence)
     mass += sum(float(value) for value in mods.values())
     mass += (charge * atomic_masses['PROTON'])
-
     mass += ION_ADJUSTMENTS[ion_type] + atomic_masses['NEUTRON'] * isotope + loss
 
     return mass
