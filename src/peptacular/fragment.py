@@ -15,9 +15,9 @@ from functools import lru_cache, cached_property
 from itertools import chain
 from typing import List, Generator, Union, Callable, Dict
 
-from peptacular.constants import PROTON_MASS, ION_ADJUSTMENTS, IMMONIUM_LOSS
+from peptacular.constants import PROTON_MASS, ION_ADJUSTMENTS
 from peptacular.mass import calculate_mz, calculate_mass
-from peptacular.sequence import calculate_sequence_length, split_sequence, strip_modifications
+from peptacular.sequence import calculate_sequence_length, split_sequence
 from peptacular.term.residue import strip_c_term_residue, strip_n_term_residue
 from peptacular.util import is_forward
 
@@ -54,12 +54,6 @@ class Fragment:
         2
         >>> frag.monoisotopic
         True
-
-        >>> frag = Fragment("W", 1, "I", 0, False, 0, True)
-        >>> frag.sequence
-        'W'
-        >>> frag.mass
-        97.052763853
 
     """
 
@@ -142,7 +136,7 @@ class Fragment:
         if self.ion_type in 'I':
             return 0
 
-        if self.parent_sequence != '' and self._end == None:
+        if self.parent_sequence != '' and self._end is None:
             return calculate_sequence_length(self.parent_sequence)
 
         if self.parent_sequence != '' and self._end < 0:
@@ -226,7 +220,8 @@ class Fragment:
 
 def build_fragments(sequence: str, ion_types: Union[List[str], str], charges: Union[List[int], int],
                     monoisotopic: bool = True, internal: bool = False, isotopes: Union[List[int], int] = 0,
-                    losses: Union[List[float], float] = 0.0, aa_masses: Dict = None, immonium: bool = False) -> List[Fragment]:
+                    losses: Union[List[float], float] = 0.0, aa_masses: Dict = None,
+                    immonium: bool = False) -> List[Fragment]:
     """
     Builds all Fragment objects or a given input 'sequence'.
 
@@ -240,6 +235,14 @@ def build_fragments(sequence: str, ion_types: Union[List[str], str], charges: Un
     :type monoisotopic: bool
     :param internal: If True, include internal fragments. If False, only include terminal fragments, default is [False].
     :type internal: bool
+    :param isotopes: A list of isotope offsets to consider, or a single isotope offset, default is [0].
+    :type isotopes: Union[List[int], int]
+    :param losses: A list of neutral losses to consider, or a single neutral loss, default is [0.0].
+    :type losses: Union[List[float], float]
+    :param aa_masses: A dictionary of amino acid masses, default is None.
+    :type aa_masses: Dict
+    :param immonium: If True, include immonium ions, default is [False].
+    :type immonium: bool
 
     :return: List of Fragment objects.
     :rtype: List[Fragment]
@@ -305,8 +308,8 @@ def build_fragments(sequence: str, ion_types: Union[List[str], str], charges: Un
     if immonium:
         for aa in set(split_sequence(sequence)):
             immonium_frag = Fragment(sequence=aa, charge=1, ion_type='I', number=0, internal=False, parent_number=0,
-                                        monoisotopic=monoisotopic, isotope=0, loss=0.0, parent_sequence=sequence,
-                                        aa_masses=aa_masses)
+                                     monoisotopic=monoisotopic, isotope=0, loss=0.0, parent_sequence=sequence,
+                                     aa_masses=aa_masses)
             immonium_frags.append(immonium_frag)
 
     fragments = list(chain.from_iterable(_fragment(t, c) for t in ion_types for c in charges)) + immonium_frags

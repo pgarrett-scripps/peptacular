@@ -35,7 +35,8 @@ from copy import deepcopy
 from typing import Dict, List, Any, Generator, Union, Set, Tuple, Counter, Callable
 
 from peptacular.term.modification import get_c_term_modification, strip_term_modifications, add_n_term_modification, \
-    add_c_term_modification, get_n_term_modification, pop_term_modifications, add_term_modifications
+    add_c_term_modification, get_n_term_modification, pop_term_modifications, add_term_modifications, \
+    get_term_modifications
 from peptacular.term.residue import pop_n_term_residue
 from peptacular.util import convert_type, identify_regex_indexes, _validate_span
 
@@ -824,6 +825,49 @@ def sequence_counter(sequence: str) -> Counter:
     sequence, n_term, c_term = pop_term_modifications(sequence)
     components = split_sequence(sequence)
     return collections.Counter(components)
+
+
+def is_subsequence(subsequence: str, sequence: str, order: bool = True) -> bool:
+    """
+    Checks if the input subsequence is a subsequence of the input sequence. If order is True, the subsequence must be in
+    the same order as in the sequence. If order is False, the subsequence can be in any order.
+
+    :param subsequence: The subsequence to be checked.
+    :type subsequence: str
+    :param sequence: The sequence to be checked.
+    :type sequence: str
+    :param order: If True, the subsequence must be in the same order as in the sequence.
+    :type order: bool
+
+    :return: True if the subsequence is a subsequence of the sequence, False otherwise.
+    :rtype: bool
+
+    .. code-block:: python
+
+        >>> is_subsequence('PEP', 'PEPTIDE')
+        True
+
+        >>> is_subsequence('PET', 'PEPTIDE', order=False)
+        True
+
+        >>> is_subsequence('PET', 'PEPTIDE', order=True)
+        False
+
+    """
+
+    if order:
+        return subsequence in sequence
+    else:
+
+        subsequence_n_term, subsequence_c_term = get_term_modifications(subsequence)
+        sequence_n_term, sequence_c_term = get_term_modifications(sequence)
+
+        if subsequence_n_term != sequence_n_term or subsequence_c_term != sequence_c_term:
+            return False
+
+        subsequence_counts = sequence_counter(subsequence)
+        sequence_counts = sequence_counter(sequence)
+        return all(subsequence_counts[aa] <= sequence_counts[aa] for aa in subsequence_counts)
 
 
 def sort_sequence(sequence: str, sort_function: Callable[[str], str] = lambda x: x[0]) -> str:

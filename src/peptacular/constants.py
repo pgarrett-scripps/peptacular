@@ -1,7 +1,9 @@
 PROTON_MASS = 1.00727646677
 NEUTRON_MASS = 1.00866491597
-AMINO_ACIDS = {'S', 'A', 'O', 'Y', 'R', 'P', 'N', 'H', 'E', 'J', 'G', 'F', 'V', 'D', 'I', 'K', 'L', 'C', 'T', 'Q', 'U', 'M', 'W'}
+AMINO_ACIDS = {'S', 'A', 'O', 'Y', 'R', 'P', 'N', 'H', 'E', 'J', 'G', 'F', 'V', 'D', 'I', 'K', 'L', 'C',
+               'T', 'Q', 'U', 'M', 'W'}
 IMMONIUM_LOSS = 27.9943664668
+
 MONO_ISOTOPIC_ATOMIC_MASSES = {
     "HYDROGEN": 1.00782503207,
     "PROTON": PROTON_MASS,
@@ -14,7 +16,6 @@ MONO_ISOTOPIC_ATOMIC_MASSES = {
 UWPR_MONO_ISOTOPIC_ATOMIC_MASSES = {
     "HYDROGEN": 1.007825035,
     "PROTON": PROTON_MASS,
-    "NEUTRON": NEUTRON_MASS,
     "NEUTRON": NEUTRON_MASS,
     "OXYGEN": 15.99491463,
     "CARBON": 12.0,
@@ -201,9 +202,6 @@ ION_ADJUSTMENTS = {
     'I': -IMMONIUM_LOSS
 }
 
-
 FORWARD_IONS = {'a', 'b', 'c'}
 BACKWARD_IONS = {'x', 'y', 'z'}
 VALID_ION_TYPES = FORWARD_IONS.union(BACKWARD_IONS).union({'I'})
-
-
