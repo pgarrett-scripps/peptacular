@@ -5,13 +5,6 @@ This module provides a set of utility functions to work with amino acid sequence
 Such modifications can occur at any position within the sequence and can also be present at the N-terminus or
 C-terminus of a peptide sequence.
 
-Key Features:
-- Parsing sequences with modifications and extracting modification details.
-- Calculating the length of sequences excluding any modification notations.
-- Adding, shifting, reversing, and stripping modifications from sequences.
-- Applying both static and variable modifications to sequences.
-- Validating the structure and integrity of modified sequences.
-
 Modification Notations:
 - Term modifications (N-terminus and C-terminus) are specified using square brackets: `[]`.
 - Residue modifications within the sequence are specified using parentheses: `()`.
@@ -28,8 +21,10 @@ Example Sequences:
 The module ensures that sequences and their modifications are handled correctly, preserving the positional
 relationship between amino acids and their modifications during operations.
 """
+
 import collections
 import itertools
+import random
 import re
 from copy import deepcopy
 from typing import Dict, List, Any, Generator, Union, Set, Tuple, Counter, Callable
@@ -454,6 +449,41 @@ def reverse_sequence(sequence: str, swap_terms: bool = False) -> str:
     return modified_sequence
 
 
+def shuffle_sequence(sequence: str, seed: int = None) -> str:
+    """
+    Shuffles the sequence, while preserving the position of any modifications.
+
+    :param sequence: The sequence to be shuffled.
+    :type sequence: str
+    :param seed: Seed for the random number generator.
+    :type seed: int
+
+    :return: The shuffled sequence with modifications preserved.
+    :rtype: str
+
+    .. code-block:: python
+
+        # For unmodified sequences, the result is a random permutation of the original sequence:
+        >>> shuffle_sequence('PEPTIDE', seed=0)
+        'IPEPDTE'
+
+        # For modified sequences, the modifications are preserved on the associated residues:
+        >>> shuffle_sequence('[Acetyl]PEPTIDE', seed=0)
+        '[Acetyl]IPEPDTE'
+
+    """
+    if seed is not None:
+        random.seed(seed)
+
+    sequence, n_term, c_term = pop_term_modifications(sequence)
+    components = split_sequence(sequence)
+
+    random.shuffle(components)
+
+    shuffled_sequence = ''.join(components)
+    return add_term_modifications(shuffled_sequence, n_term, c_term)
+
+
 def shift_sequence(sequence: str, shift: int) -> str:
     """
     Shifts the sequence to the left by a given number of positions, while preserving the position of any modifications.
@@ -703,7 +733,7 @@ def permutate_sequence(sequence: str, size: Union[int, None]) -> List[str]:
 
 def product_sequence(sequence: str, size: Union[int, None]) -> List[str]:
     """
-    Generates all combinations of the input sequence of a given size. Terminal mods are kept in place.
+    Generates all sartesian products of the input sequence of a given size. Terminal mods are kept in place.
 
     :param sequence: The sequence to be combined.
     :type sequence: str
@@ -897,3 +927,82 @@ def sort_sequence(sequence: str, sort_function: Callable[[str], str] = lambda x:
     components = split_sequence(sequence)
     components.sort(key=sort_function)
     return add_term_modifications(''.join(components), n_term, c_term)
+
+
+def build_kmers(sequence: str, k: int) -> List[str]:
+    """
+    Builds kmers from a given sequence.
+
+    :param sequence: The sequence to build kmers from.
+    :type sequence: str
+    :param k: The length of the kmers.
+    :type k: int
+
+    :return: A list of kmers.
+    :rtype: list
+
+    .. code-block:: python
+
+        >>> build_kmers('PEPTIDE', 2)
+        ['PE', 'EP', 'PT', 'TI', 'ID', 'DE']
+
+        >>> build_kmers('PEPTIDE', 3)
+        ['PEP', 'EPT', 'PTI', 'TID', 'IDE']
+
+        >>> build_kmers('[Acetyl]P(phospho)EP(phospho)TIDE[Amide]', 3)
+        ['[Acetyl]P(phospho)EP(phospho)', 'EP(phospho)T', 'P(phospho)TI', 'TID', 'IDE[Amide]']
+
+        >>> build_kmers('--[1]PE(2)P', 2)
+        ['--', '-[1]P', '[1]PE(2)', 'E(2)P']
+
+    """
+
+    components = split_sequence(sequence)
+
+    kmers = []
+    for i in range(calculate_sequence_length(sequence) - k + 1):
+        kmer = ''.join(components[i:i + k])
+        kmers.append(kmer)
+
+    return kmers
+
+
+def construct_bruijn_graph(sequences: List[str], k: int) -> Dict[str, Dict[str, str]]:
+    """
+    Constructs a traditional De Bruijn graph from a list of sequences.
+
+    :param sequences: A list of sequences to construct the graph from.
+    :type sequences: list
+    :param k: The length of the kmers.
+    :type k: int
+
+    :raises ValueError: If the input sequences contain N or C term modifications.
+
+    :return: A dictionary representing the De Bruijn graph with each k-1-mer mapped to a set of succeeding characters.
+
+
+    .. code-block:: python
+
+        >>> construct_bruijn_graph(["PEP"], 2)
+        {'--': {'P': 'P'}, '-P': {'E': 'E'}, 'PE': {'P': 'P'}}
+
+        >>> construct_bruijn_graph(["PE(2)P"], 2)
+        {'--': {'P': 'P'}, '-P': {'E(2)': 'E(2)'}, 'PE(2)': {'P': 'P'}}
+
+    """
+
+    graph = {}
+    for sequence in sequences:
+
+        if get_n_term_modification(sequence) is not None or get_c_term_modification(sequence) is not None:
+            raise ValueError("N or C term modification not supported")
+
+        sequence = '-'*k + sequence
+        for kmer in build_kmers(sequence, k + 1):
+            components = split_sequence(kmer)
+            kmer, aa = ''.join(components[:-1]), components[-1]
+            if kmer not in graph:
+                graph[kmer] = {}
+            graph[kmer][aa] = aa
+
+    return graph

@@ -4,8 +4,8 @@ from typing import List, Tuple, Union, Dict, Any
 from peptacular.fragment import Fragment
 
 
-def match_spectra_range(mz_spectrum1: List[float], mz_spectrum2: List[float], tolerance_value: float = 0.1,
-                        tolerance_type: str = 'ppm') -> List[Tuple[int, int]]:
+def match_spectra_indexes(mz_spectrum1: List[float], mz_spectrum2: List[float], tolerance_value: float = 0.1,
+                          tolerance_type: str = 'ppm') -> List[Tuple[int, int]]:
     """
     Matches two m/z spectra based on a specified tolerance value and type.
 
@@ -25,13 +25,13 @@ def match_spectra_range(mz_spectrum1: List[float], mz_spectrum2: List[float], to
 
     .. code-block:: python
 
-        >>> match_spectra_range([100, 200, 300], [100, 200, 300])
+        >>> match_spectra_indexes([100, 200, 300], [100, 200, 300])
         [(0, 1), (1, 2), (2, 3)]
 
-        >>> match_spectra_range([100.1, 250, 300, 400], [100, 200, 300], 1, 'th')
+        >>> match_spectra_indexes([100.1, 250, 300, 400], [100, 200, 300], 1, 'th')
         [(0, 1), None, (2, 3), None]
 
-        >>> match_spectra_range([100, 100, 100], [100, 100, 100])
+        >>> match_spectra_indexes([100, 100, 100], [100, 100, 100])
         [(0, 3), (0, 3), (0, 3)]
 
     """
@@ -74,62 +74,80 @@ def match_spectra_range(mz_spectrum1: List[float], mz_spectrum2: List[float], to
     return indices
 
 
-def match_spectra_best(mz_spectrum1: List[float], mz_spectrum2: List[float], tolerance_value: float = 0.1,
-                       tolerance_type: str = 'ppm') -> List[Union[int, None]]:
+def match_spectra(fragments: List[float], mz_spectra: List[float], tolerance_value: float,
+                  tolerance_type: str = 'ppm', mode: str = 'closest',
+                  intensity_spectra: Union[List[float], None] = None) -> List[Union[int, None]]:
     """
     Matches two m/z spectra based on a specified tolerance value and type.
 
-    :param mz_spectrum1: List of m/z values for the first spectrum.
-    :type mz_spectrum1: List[float]
-    :param mz_spectrum2: List of m/z values for the second spectrum.
-    :type mz_spectrum2: List[float]
+    :param fragments: List of m/z values for the first spectrum.
+    :type fragments: List[float]
+    :param mz_spectra: List of m/z values for the second spectrum.
+    :type mz_spectra: List[float]
+    :param intensity_spectra: List of intensity values for the second spectrum. Required if mode is 'largest'.
+    :type intensity_spectra: Union[List[float], None]
     :param tolerance_value: Tolerance value for matching. Default is 0.1.
     :type tolerance_value: float
     :param tolerance_type: Type of tolerance ('ppm' or 'th'). Default is 'ppm'.
     :type tolerance_type: str
+    :param mode: Mode of matching ('closest' or 'largest' or 'all'). Default is 'closest'.
+    :type mode: str
 
-    :raises ValueError: If the provided tolerance type is not 'ppm' or 'th'.
+    :raises ValueError: If the provided tolerance type is not 'ppm' or 'th', or if the provided mode is
+    not 'closest' or 'largest'.
     
     :return: List of index pairs representing matched peaks between the two spectra.
     :rtype: List[int]
     
     .. code-block:: python
 
-            >>> match_spectra_best([100, 200, 300], [100, 200, 300])
+            >>> match_spectra([100, 200, 300], [100, 200, 300], 1, 'th')
             [0, 1, 2]
 
-            >>> match_spectra_best([100.1, 250, 300, 400], [100, 200, 300], 1, 'th')
+            >>> match_spectra([100.1, 250, 300, 400], [100, 200, 300], 1, 'th')
             [0, None, 2, None]
 
-            >>> match_spectra_best([100.1, 250, 300, 400], [100, 100.1, 200, 300], 1, 'th')
+            >>> f = [100.1, 250, 300, 400]
+            >>> s = [100, 100.1, 200, 300]
+            >>> match_spectra(f, s, 1, 'th')
             [1, None, 3, None]
+
+            >>> match_spectra(f, s, 1, 'th', mode='all')
+            [[0, 1], None, [3], None]
+
+            >>> match_spectra(f, s, 1, 'th', mode='largest', intensity_spectra=[10, 2, 3, 4])
+            [0, None, 3, None]
 
     """
 
     if tolerance_type not in ['ppm', 'th']:
         raise ValueError('Invalid tolerance type. Must be "ppm" or "th"')
 
-    indices = [None] * len(mz_spectrum1)
-    j = 0
-    for i, mz1 in enumerate(mz_spectrum1):
-        tolerance_offset = tolerance_value if tolerance_type == 'th' else mz1 * tolerance_value / 1e6
-        mz1_min = mz1 - tolerance_offset
-        mz1_max = mz1 + tolerance_offset
+    if mode not in ['closest', 'largest', 'all']:
+        raise ValueError('Invalid mode. Must be "closest" or "largest" or "all"')
 
-        best_match_index = None
-        best_match_distance = float('inf')
+    results = []
+    for i, indexes in enumerate(match_spectra_indexes(fragments, mz_spectra, tolerance_value, tolerance_type)):
+        if indexes is None:
+            results.append(None)
+        else:
 
-        while j < len(mz_spectrum2) and mz_spectrum2[j] <= mz1_max:
-            if mz1_min <= mz_spectrum2[j]:
-                distance = abs(mz1 - mz_spectrum2[j])
-                if distance < best_match_distance:
-                    best_match_distance = distance
-                    best_match_index = j
-            j += 1
+            if mode == 'all':
+                results.append([i for i in range(indexes[0], indexes[1])])
 
-        indices[i] = best_match_index
+            if mode == 'closest':
+                mz_diffs = [abs(fragments[i] - mz_spectra[idx]) for idx in range(indexes[0], indexes[1])]
+                min_index = mz_diffs.index(min(mz_diffs))
 
-    return indices
+                results.append(indexes[0] + min_index)
+
+            if mode == 'largest':
+                intensities = intensity_spectra[indexes[0]:indexes[1]]
+                largest_index = intensities.index(max(intensities))
+
+                results.append(indexes[0] + largest_index)
+
+    return results
 
 
 @dataclass(frozen=True)
@@ -181,35 +199,40 @@ class FragmentMatch:
         }
 
 
-def compute_fragment_matches(fragments: List[Fragment], mz_spectrum: List[float],
-                             intensity_spectrum: List[float], tolerance_value: float = 0.1,
-                             tolerance_type: str = 'ppm') -> List[FragmentMatch]:
+def compute_fragment_matches(fragments: List[Fragment], mz_spectra: List[float],
+                             intensity_spectra: List[float], tolerance_value: float = 0.1,
+                             tolerance_type: str = 'ppm', mode: str = 'all') -> List[FragmentMatch]:
     """
     Computes the fragment matches for a given set of fragments and an experimental spectrum.
 
     :param fragments: List of theoretical fragments.
     :type fragments: List[Fragment]
-    :param mz_spectrum: List of m/z values for the experimental spectrum.
-    :type mz_spectrum: List[float]
-    :param intensity_spectrum: List of intensity values for the experimental spectrum.
-    :type intensity_spectrum: List[float]
+    :param mz_spectra: List of m/z values for the experimental spectrum.
+    :type mz_spectra: List[float]
+    :param intensity_spectra: List of intensity values for the experimental spectrum.
+    :type intensity_spectra: List[float]
     :param tolerance_value: Tolerance value for matching. Default is 0.1.
     :type tolerance_value: float
     :param tolerance_type: Type of tolerance ('ppm' or 'th'). Default is 'ppm'.
     :type tolerance_type: str
 
+    :param mode: Mode of matching ('all', 'closest' or 'largest'). Default is 'all'.
+
     :return: List of fragment matches.
     :rtype: List[FragmentMatch]
     """
+
+    if mode not in ['all', 'closest', 'largest']:
+        raise ValueError('Invalid mode. Must be "all", "closest" or "largest"')
 
     # sort fragments by mass
     fragments.sort(key=lambda x: x.mz)
     fragment_spectrum = [f.mz for f in fragments]
 
     # sort peaks
-    mz_spectrum, intensity_spectrum = zip(*sorted(zip(mz_spectrum, intensity_spectrum), key=lambda x: x[0]))
+    mz_spectra, intensity_spectra = zip(*sorted(zip(mz_spectra, intensity_spectra), key=lambda x: x[0]))
 
-    indices = match_spectra_range(fragment_spectrum, mz_spectrum, tolerance_value, tolerance_type)
+    indices = match_spectra(fragment_spectrum, mz_spectra, tolerance_value, tolerance_type, mode, intensity_spectra)
 
     fragment_matches = []
     for i, index in enumerate(indices):
@@ -217,7 +240,7 @@ def compute_fragment_matches(fragments: List[Fragment], mz_spectrum: List[float]
             continue
         for j in range(*index):
             fragment_matches.append(
-                FragmentMatch(fragments[i], mz_spectrum[j], intensity_spectrum[j]))
+                FragmentMatch(fragments[i], mz_spectra[j], intensity_spectra[j]))
 
     return fragment_matches
 
@@ -321,7 +344,8 @@ def _binomial_probability(n: int, k: int, p: float) -> float:
 
 
 def _estimate_probability_of_random_match(error_tolerance: float, mz_spectrum: List[float],
-                                          tolerance_type: str = 'ppm') -> float:
+                                          tolerance_type: str = 'ppm', min_mz: Union[float, None] = None,
+                                          max_mz: Union[float, None] = None) -> float:
     """
     Estimate the probability of a random match between two peaks based on error tolerance and the experimental spectrum.
 
@@ -336,8 +360,14 @@ def _estimate_probability_of_random_match(error_tolerance: float, mz_spectrum: L
     :rtype: float
     """
 
+    if min_mz is None:
+        min_mz = min(mz_spectrum)
+
+    if max_mz is None:
+        max_mz = max(mz_spectrum)
+
     # Calculate the spectrum range
-    spectrum_range = max(mz_spectrum) - min(mz_spectrum)
+    spectrum_range = max_mz - min_mz
 
     # Calculate the error tolerance range
     if tolerance_type == 'ppm':
@@ -352,51 +382,54 @@ def _estimate_probability_of_random_match(error_tolerance: float, mz_spectrum: L
     return len(mz_spectrum) / num_bins
 
 
-def binomial_score(fragments: Union[List[Fragment], List[float]], mz_spectrum: List[float],
-                   intensity_spectrum: List[float],
-                   tolerance_value=0.1, tolerance_type='ppm') -> float:
+def binomial_score(fragments: Union[List[Fragment], List[float]], mz_spectra: List[float],
+                   tolerance_value: float, tolerance_type='ppm', min_mz: Union[float, None] = None,
+                   max_mz: Union[float, None] = None) -> float:
     """
     Computes a score based on binomial probability for a given set of fragments and an experimental spectrum.
 
+    :param min_mz:
     :param fragments: List of theoretical fragments.
-    :type fragments: List[Fragment]
-    :param mz_spectrum: List of m/z values from the experimental spectrum.
-    :type mz_spectrum: List[float]
-    :param intensity_spectrum: List of intensity values corresponding to the m/z values in mz_spectrum.
-    :type intensity_spectrum: List[float]
+    :type fragments: Union[List[Fragment], List[float]]
+    :param mz_spectra: List of m/z values from the experimental spectrum.
+    :type mz_spectra: List[float]
     :param tolerance_value: Tolerance value for matching fragments to the spectrum.
     :type tolerance_value: float
     :param tolerance_type: Type of tolerance ('ppm' or 'th').
     :type tolerance_type: str
+    :param min_mz: Minimum m/z value for the spectrum.
+    :type min_mz: Union[float, None]
+    :param max_mz: Maximum m/z value for the spectrum.
+    :type max_mz: Union[float, None]
 
     :return: Score based on binomial probability.
     :rtype: float
+
+    .. code-block:: python
+
+            >>> binomial_score([100, 200, 300], [100, 300, 400], 1, 'th')
+            0.000297
+
+            >>> binomial_score([103, 203, 303], [100, 300, 400], 1, 'th')
+            1.0
+
     """
 
-    @dataclass(frozen=True)
-    class MockFragment:
-        mz: float
+    if fragments and isinstance(fragments[0], Fragment):
+        fragments = [fragment.mz for fragment in fragments]
 
-    if isinstance(fragments, Dict):
-        fragments = [MockFragment(mz) for mz in fragments]
-
-    # Compute the fragment matches using the provided function
-    fragment_matches = compute_fragment_matches(fragments, mz_spectrum, intensity_spectrum, tolerance_value,
-                                                tolerance_type)
-
-    if len(fragment_matches) == 0:
-        return 1.0
-
-    fragment_matches = {match.fragment: match for match in fragment_matches}.values()
+    indexes = match_spectra_indexes(fragments, mz_spectra, tolerance_value, tolerance_type)
+    fragment_matches = [i is not None for i in indexes]
+    matches = sum(fragment_matches)
 
     # Number of matched fragments (successes)
-    k = len(fragment_matches)
+    k = matches
 
     # Total number of trials is the number of theoretical fragments
     n = len(fragments)
 
     # Estimate the probability of a random match
-    p_success = _estimate_probability_of_random_match(tolerance_value, mz_spectrum, tolerance_type)
+    p_success = _estimate_probability_of_random_match(tolerance_value, mz_spectra, tolerance_type, min_mz, max_mz)
 
     # Compute the score based on binomial probability
     score = _binomial_probability(n, k, p_success)
