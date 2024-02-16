@@ -952,8 +952,8 @@ def build_kmers(sequence: str, k: int) -> List[str]:
         >>> build_kmers('[Acetyl]P(phospho)EP(phospho)TIDE[Amide]', 3)
         ['[Acetyl]P(phospho)EP(phospho)', 'EP(phospho)T', 'P(phospho)TI', 'TID', 'IDE[Amide]']
 
-        >>> build_kmers('--[1]PE(2)P', 2)
-        ['--', '-[1]P', '[1]PE(2)', 'E(2)P']
+        >>> build_kmers('--PE(2)P', 2)
+        ['--', '-P', 'PE(2)', 'E(2)P']
 
     """
 
@@ -967,42 +967,3 @@ def build_kmers(sequence: str, k: int) -> List[str]:
     return kmers
 
 
-def construct_bruijn_graph(sequences: List[str], k: int) -> Dict[str, Dict[str, str]]:
-    """
-    Constructs a traditional De Bruijn graph from a list of sequences.
-
-    :param sequences: A list of sequences to construct the graph from.
-    :type sequences: list
-    :param k: The length of the kmers.
-    :type k: int
-
-    :raises ValueError: If the input sequences contain N or C term modifications.
-
-    :return: A dictionary representing the De Bruijn graph with each k-1-mer mapped to a set of succeeding characters.
-
-
-    .. code-block:: python
-
-        >>> construct_bruijn_graph(["PEP"], 2)
-        {'--': {'P': 'P'}, '-P': {'E': 'E'}, 'PE': {'P': 'P'}}
-
-        >>> construct_bruijn_graph(["PE(2)P"], 2)
-        {'--': {'P': 'P'}, '-P': {'E(2)': 'E(2)'}, 'PE(2)': {'P': 'P'}}
-
-    """
-
-    graph = {}
-    for sequence in sequences:
-
-        if get_n_term_modification(sequence) is not None or get_c_term_modification(sequence) is not None:
-            raise ValueError("N or C term modification not supported")
-
-        sequence = '-'*k + sequence
-        for kmer in build_kmers(sequence, k + 1):
-            components = split_sequence(kmer)
-            kmer, aa = ''.join(components[:-1]), components[-1]
-            if kmer not in graph:
-                graph[kmer] = {}
-            graph[kmer][aa] = aa
-
-    return graph
