@@ -15,7 +15,7 @@ from functools import lru_cache, cached_property
 from itertools import chain
 from typing import List, Generator, Union, Callable, Dict
 
-from peptacular.constants import PROTON_MASS, ION_ADJUSTMENTS
+from peptacular.constants import PROTON_MASS, MONOISOTOPIC_ION_ADJUSTMENTS, AVERAGE_ION_ADJUSTMENTS
 from peptacular.mass import calculate_mz, calculate_mass
 from peptacular.sequence import calculate_sequence_length, split_sequence
 from peptacular.term.residue import strip_c_term_residue, strip_n_term_residue
@@ -424,21 +424,21 @@ def fragment(sequence: str, ion_types: Union[str, List[str]] = 'y', charges: Uni
 
         # Fragments are returned from largest to smallest.
         >>> fragment("TIDE", ion_types="y", charges=1)
-        [477.21911970781, 376.17144123940005, 263.08737726227, 148.06043423844]
+        [477.21911988688, 376.17144138187996, 263.08737736688, 148.06043430188]
         >>> fragment("TIDE", ion_types="b", charges=2)
-        [230.10791574544, 165.58661920145502, 108.07314768954, 51.531115700975]
+        [230.10791582688, 165.58661925938, 108.07314772688, 51.53111571938]
 
         # When using multiple ion types and charge states the fragments will be generated first by ion_types
         # and second by charge state. For example, the following will generate the following fragments:
         # [y2+, y1+, y2++, y1++, b2+, b1+, b2++, b1++]
         >>> fragment("PE", ion_types=["y", "b"], charges=[1,2])[:4] # First 4 fragments
-        [245.11319808729002, 148.06043423844, 123.06023727703, 74.53385535260499]
+        [245.11319817688, 148.06043430188, 123.06023732188, 74.53385538438]
         >>> fragment("PE", ion_types=["y", "b"], charges=[1,2])[4:] # Last 4 fragments
-        [227.10263340359, 98.06004031562, 114.05495493517999, 49.533658391195004]
+        [227.10263347688, 98.06004034188, 114.05495497188, 49.53365840438]
 
         # Can also include modifications in the sequence.
         >>> fragment("[1.0]T(-1.0)IDE(2.0)[-2.0]", ion_types="y", charges=1)
-        [477.21911970781, 376.17144123940005, 263.08737726227, 148.06043423844]
+        [477.21911988688, 376.17144138187996, 263.08737736688, 148.06043430188]
 
         # If the sequence contains a modification that is not a number, an error will be raised.
         >>> fragment("[Acetyl]TIDE", ion_types="b", charges=2)
@@ -449,7 +449,7 @@ def fragment(sequence: str, ion_types: Union[str, List[str]] = 'y', charges: Uni
         # Can generate internal fragments too, but they are typically not very useful.
         # order: sequences -> [PEP, PE, P,  PEP,  E,  P], ions -> [y3, y3i, y3i, y2, y2i, y1]
         >>> fragment("PEP", ion_types="y", charges=1, internal=True)
-        [342.16596193614004, 245.11319808729002, 116.07060499932, 245.11319808729002, 148.06043423844, 116.07060499932]
+        [342.16596205187994, 245.11319817688, 116.07060504188, 245.11319817688, 148.06043430188, 116.07060504188]
 
     """
 
@@ -495,6 +495,8 @@ def _fast_fragment(sequence: str, ion_types: List[str], charges: List[int],
     """
     Faster version of _slow_fragment that does not support internal fragments.
     """
+
+    ion_adj = MONOISOTOPIC_ION_ADJUSTMENTS if monoisotopic else AVERAGE_ION_ADJUSTMENTS
     aas = split_sequence(sequence)
 
     masses = [calculate_mass(aa, 0, 'b', monoisotopic) for aa in aas]
@@ -511,7 +513,7 @@ def _fast_fragment(sequence: str, ion_types: List[str], charges: List[int],
             else:
                 raise ValueError(f"Invalid ion type: {ion_type}")
 
-            cum_sum = [x + charge * PROTON_MASS + ION_ADJUSTMENTS[ion_type] for x in cum_sum]
+            cum_sum = [x + charge * PROTON_MASS + ion_adj[ion_type] for x in cum_sum]
 
             if mz and charge > 0:
                 cum_sum = [x / charge for x in cum_sum]

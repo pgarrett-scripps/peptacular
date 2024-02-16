@@ -7,43 +7,43 @@ class TestFragment(unittest.TestCase):
     def test_calculate_fragment_mz_values_with_unmodified_peptide(self):
         pyteomics_y1_frags = [346.1608765557, 249.10811270685, 120.06551961887999]
         pyteomics_y2_frags = [173.584076511235, 125.05769458680999, 60.536398042825]
-        pyteomics_b1_frags = [98.06004031562, 227.10263340359, 328.150311872]
-        pyteomics_b2_frags = [49.533658391195004, 114.05495493517999, 164.578794169385]
+        pyteomics_b1_frags = [328.150311872, 227.10263340359, 98.06004031562]
+        pyteomics_b2_frags = [164.578794169385, 114.05495493517999, 49.533658391195004]
         y1_frags = list(fragment(sequence='PET', ion_types='y', charges=1))
         y2_frags = list(fragment(sequence='PET', ion_types='y', charges=2))
         b1_frags = list(fragment(sequence='PET', ion_types='b', charges=1))
         b2_frags = list(fragment(sequence='PET', ion_types='b', charges=2))
 
         self.assertEqual(len(pyteomics_y1_frags), len(y1_frags))
-        for f in pyteomics_y1_frags:
-            self.assertTrue(f in y1_frags)
+        for f, pf in zip(y1_frags, pyteomics_y1_frags):
+            self.assertAlmostEqual(f, pf, 6)
 
         self.assertEqual(len(pyteomics_y2_frags), len(y2_frags))
-        for f in pyteomics_y2_frags:
-            self.assertTrue(f in y2_frags)
+        for f, pf in zip(y2_frags, pyteomics_y2_frags):
+            self.assertAlmostEqual(f, pf, 6)
 
         self.assertEqual(len(pyteomics_b1_frags), len(b1_frags))
-        for f in pyteomics_b1_frags:
-            self.assertTrue(f in b1_frags)
+        for f, pf in zip(b2_frags, pyteomics_b2_frags):
+            self.assertAlmostEqual(f, pf, 6)
 
         self.assertEqual(len(pyteomics_b2_frags), len(b2_frags))
-        for f in pyteomics_b2_frags:
-            self.assertTrue(f in b2_frags)
+        for f, pf in zip(b2_frags, pyteomics_b2_frags):
+            self.assertAlmostEqual(f, pf, 6)
 
     def test_calculate_fragment_mz_values_with_modified_peptide(self):
         pyteomics_y_frags = [174.584076511235, 125.05769458680999, 60.536398042825]
-        pyteomics_b_frags = [50.533658391195004, 115.05495493517999, 165.578794169385]
+        pyteomics_b_frags = [165.578794169385, 115.05495493517999, 50.533658391195004]
 
         y_frags = list(fragment(sequence='P(2)ET', ion_types='y', charges=2))
         b_frags = list(fragment(sequence='P(2)ET', ion_types='b', charges=2))
 
         self.assertEqual(len(pyteomics_y_frags), len(y_frags))
-        for f in pyteomics_y_frags:
-            self.assertTrue(f in y_frags)
+        for f, pf in zip(y_frags, pyteomics_y_frags):
+            self.assertAlmostEqual(f, pf, 6)
 
         self.assertEqual(len(pyteomics_b_frags), len(b_frags))
-        for f in pyteomics_b_frags:
-            self.assertTrue(f in b_frags)
+        for f, pf in zip(b_frags, pyteomics_b_frags):
+            self.assertAlmostEqual(f, pf, 6)
 
     def test_calculate_fragment_mz_values_with_all_ion_types(self):
         pyteomics = {'a': [70.06512569606001, 199.10771878403003, 300.15539725243997],
