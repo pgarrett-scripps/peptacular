@@ -12,8 +12,8 @@ from typing import Union, List
 
 from peptacular.spans import build_left_semi_spans, build_right_semi_spans, build_non_enzymatic_spans, build_spans
 from peptacular.constants import PROTEASES
-from peptacular.sequence import strip_modifications, calculate_sequence_length, span_to_sequence, get_modifications, \
-    _span_to_sequence_fast
+from peptacular.sequence.sequence import strip_modifications, calculate_sequence_length, span_to_sequence, \
+    span_to_sequence_fast, pop_modifications
 from peptacular.util import identify_regex_indexes
 
 
@@ -46,8 +46,11 @@ def build_left_semi_sequences(sequence: str, min_len: int = None, max_len: int =
         []
 
         # Modifications are preserved:
-        >>> build_left_semi_sequences('[1]P(2)EPTIDE')
-        ['[1]P(2)EPTID', '[1]P(2)EPTI', '[1]P(2)EPT', '[1]P(2)EP', '[1]P(2)E', '[1]P(2)']
+        >>> build_left_semi_sequences('[1]-P[2]EPTIDE')
+        ['[1]-P[2]EPTID', '[1]-P[2]EPTI', '[1]-P[2]EPT', '[1]-P[2]EP', '[1]-P[2]E', '[1]-P[2]']
+
+        >>> build_left_semi_sequences('<13C>TIDE')
+        ['<13C>TID', '<13C>TI', '<13C>T']
 
     """
 
@@ -84,8 +87,11 @@ def build_right_semi_sequences(sequence: str, min_len: int = None, max_len: int 
         []
 
         # Modifications are preserved:
-        >>> build_right_semi_sequences('PEPTIDE(1)[2]')
-        ['EPTIDE(1)[2]', 'PTIDE(1)[2]', 'TIDE(1)[2]', 'IDE(1)[2]', 'DE(1)[2]', 'E(1)[2]']
+        >>> build_right_semi_sequences('PEPTIDE[1]-[2]')
+        ['EPTIDE[1]-[2]', 'PTIDE[1]-[2]', 'TIDE[1]-[2]', 'IDE[1]-[2]', 'DE[1]-[2]', 'E[1]-[2]']
+
+        >>> build_right_semi_sequences('<13C>TIDE')
+        ['<13C>IDE', '<13C>DE', '<13C>E']
 
     """
 
@@ -151,8 +157,11 @@ def build_non_enzymatic_sequences(sequence: str, min_len: int = None, max_len: i
         []
 
          # Sequences with modifications are processed preserving those modifications:
-        >>> build_non_enzymatic_sequences('[Acetyl]P(1.0)EP(1.0)[Amide]')
-        ['[Acetyl]P(1.0)', '[Acetyl]P(1.0)E', 'E', 'EP(1.0)[Amide]', 'P(1.0)[Amide]']
+        >>> build_non_enzymatic_sequences('[Acetyl]-P[1.0]EP[1.0]-[Amide]')
+        ['[Acetyl]-P[1.0]', '[Acetyl]-P[1.0]E', 'E', 'EP[1.0]-[Amide]', 'P[1.0]-[Amide]']
+
+        >>> build_non_enzymatic_sequences('<13C>PEP')
+        ['<13C>P', '<13C>PE', '<13C>E', '<13C>EP', '<13C>P']
 
     """
 
@@ -202,8 +211,11 @@ def build_enzymatic_sequences(sequence: str, enzyme_regex: str, missed_cleavages
         ['TIDERTIDEK', 'TIDERTIDEKTIDE', 'TIDEKTIDE']
 
         # Modifications are preserved:
-        >>> build_enzymatic_sequences(sequence='[1]TIDERT(1.0)IDEKTIDE[2]', enzyme_regex='([KR])', missed_cleavages=2)
-        ['[1]TIDER', '[1]TIDERT(1.0)IDEK', '[1]TIDERT(1.0)IDEKTIDE[2]', 'T(1.0)IDEK', 'T(1.0)IDEKTIDE[2]', 'TIDE[2]']
+        >>> build_enzymatic_sequences(sequence='[1]-TIDERT[1.0]IDEKTIDE-[2]', enzyme_regex='([KR])', missed_cleavages=2)
+        ['[1]-TIDER', '[1]-TIDERT[1.0]IDEK', '[1]-TIDERT[1.0]IDEKTIDE-[2]', 'T[1.0]IDEK', 'T[1.0]IDEKTIDE-[2]', 'TIDE-[2]']
+
+        >>> build_enzymatic_sequences(sequence='<13C>TIDERTIDEKTIDE', enzyme_regex='([KR])', missed_cleavages=2)
+        ['<13C>TIDER', '<13C>TIDERTIDEK', '<13C>TIDERTIDEKTIDE', '<13C>TIDEK', '<13C>TIDEKTIDE', '<13C>TIDE']
 
     """
 
@@ -247,7 +259,7 @@ def identify_cleavage_sites(sequence: str, enzyme_regex: str) -> List[int]:
         [1]
 
         # Will also work with modified sequences
-        >>> identify_cleavage_sites(sequence='[Acetyl]TIDERT(1.0)IDEKTIDE[Amide]', enzyme_regex='trypsin/P')
+        >>> identify_cleavage_sites(sequence='[Acetyl]-TIDERT[1.0]IDEKTIDE-[Amide]', enzyme_regex='trypsin/P')
         [5, 10]
 
         # Non-specific cleavage sites are also identified
@@ -312,35 +324,35 @@ def digest(sequence: str, enzyme_regex: Union[List[str], str], missed_cleavages:
         ['TIDERTIDEK', 'TIDERTIDEKTIDE', 'TIDEKTIDE']
 
         # Generate semi-enzymatic sequences:
-        >>> digest(sequence='TIDERTIDEK(1)TIDE[2]', enzyme_regex='([KR])', missed_cleavages=1, min_len=9, semi=True)
-        ['TIDERTIDEK(1)', 'TIDEK(1)TIDE[2]', 'TIDERTIDE', 'IDERTIDEK(1)']
+        >>> digest(sequence='TIDERTIDEK[1]TIDE-[2]', enzyme_regex='([KR])', missed_cleavages=1, min_len=9, semi=True)
+        ['TIDERTIDEK[1]', 'TIDEK[1]TIDE-[2]', 'TIDERTIDE', 'IDERTIDEK[1]']
 
         # Non-specific cleavage sites are also identified
         >>> digest(sequence='PEPT', enzyme_regex='non-specific')
         ['P', 'PE', 'PEP', 'E', 'EP', 'EPT', 'P', 'PT', 'T']
 
+        >>> digest(sequence='<13C>T[1][2]IDERTIDEKTIDE', enzyme_regex='([KR])', missed_cleavages=2, min_len=6)
+        ['<13C>T[1][2]IDERTIDEK', '<13C>T[1][2]IDERTIDEKTIDE', '<13C>TIDEKTIDE']
+
     """
+
+    seq_len = calculate_sequence_length(sequence)
 
     if min_len is None:
         min_len = 1
     if max_len is None:
-        max_len = calculate_sequence_length(sequence)
+        max_len = seq_len
 
     if isinstance(enzyme_regex, str):
         enzyme_regex = [enzyme_regex]
 
     enzyme_regex = [PROTEASES.get(regex, regex) for regex in enzyme_regex]
 
-    seq_len = calculate_sequence_length(sequence)
-
     cleavage_sites = []
     for regex in enzyme_regex:
         cleavage_sites.extend(identify_cleavage_sites(sequence, regex))
 
-    stripped_sequence = strip_modifications(sequence)
-    mods = get_modifications(sequence)
+    stripped_sequence, mods = pop_modifications(sequence)
 
     spans = build_spans(seq_len, cleavage_sites, missed_cleavages, min_len, max_len, semi)
-    sequences = [_span_to_sequence_fast(stripped_sequence, mods, span) for span in spans]
-
-    return sequences
+    return [span_to_sequence_fast(stripped_sequence, mods, span) for span in spans]

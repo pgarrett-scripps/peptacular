@@ -24,6 +24,9 @@ dependencies = [
 [tool.setuptools]
 package-dir = {"" = "src"}
 
+[tool.setuptools.package-data]
+mypkg = ["*.json"]
+
 [project.urls]
 repository = "https://github.com/pgarrett-scripps/peptacular.git"
 

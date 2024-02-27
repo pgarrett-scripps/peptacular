@@ -24,7 +24,7 @@ pip install peptacular
 ```python
 from peptacular import sequence
 
-# Create modified peptide sequence, mods can be str, float or int, 'PEPTIDE' -> 'P(1.2345)EPTID(1)E[Amide]'
+# Create modified peptide sequence, sequence can be str, float or int, 'PEPTIDE' -> 'P(1.2345)EPTID(1)E[Amide]'
 peptide = sequence.add_modifications('PEPTIDE', {0: 1.2345, 5: 1, 7: 'Amide'})
 assert peptide == 'P(1.2345)EPTID(1)E[Amide]'
 
@@ -113,3 +113,7 @@ peptides = apply_variable_modifications('PEPTIDE[2]', {'P': 'phospho', '(?<=P)E'
 assert peptides == ['P(phospho)E(1)PTIDE[2]', 'P(phospho)EP(phospho)TIDE[2]', 'P(phospho)EPTIDE[2]',
                     'PE(1)P(phospho)TIDE[2]', 'PE(1)PTIDE[2]', 'PEP(phospho)TIDE[2]', 'PEPTIDE[2]']
 ```
+
+
+## ProForma Compliance:
+

@@ -1,119 +1,153 @@
+import json
+import os
+from copy import deepcopy
+
 PROTON_MASS = 1.00727646688
 NEUTRON_MASS = 1.00866491597
 
-MONOISOTOPIC_ATOMIC_MASSES = {
-    'HYDROGEN': 1.007825035,
-    'DEUTERIUM': 2.014101779,
-    'LITHIUM': 7.016003,
-    'BORON': 11.0093055,
-    'CARBON': 12.0,
-    'CARBON13': 13.00335483,
-    'NITROGEN': 14.003074,
-    'NITROGEN15': 15.00010897,
-    'OXYGEN': 15.99491463,
-    'OXYGEN18': 17.9991603,
-    'FLUORINE': 18.99840322,
-    'SODIUM': 22.9897677,
-    'MAGNESIUM': 23.9850423,
-    'ALUMINIUM': 26.9815386,
-    'PHOSPHOROUS': 30.973762,
-    'SULFUR': 31.9720707,
-    'CHLORINE': 34.96885272,
-    'POTASSIUM': 38.9637074,
-    'CALCIUM': 39.9625906,
-    'CHROMIUM': 51.9405098,
-    'MANGANESE': 54.9380471,
-    'IRON': 55.9349393,
-    'NICKEL': 57.9353462,
-    'COBALT': 58.9331976,
-    'COPPER': 62.9295989,
-    'ZINC': 63.9291448,
-    'ARSENIC': 74.9215942,
-    'BROMINE': 78.9183361,
-    'SELENIUM': 79.9165196,
-    'MOLYBDENUM': 97.9054073,
-    'RUTHENIUM': 101.9043485,
-    'PALLADIUM': 105.903478,
-    'SILVER': 106.905092,
-    'CADMIUM': 113.903357,
-    'IODINE': 126.904473,
-    'PLATINUM': 194.964766,
-    'GOLD': 196.966543,
-    'MERCURY': 201.970617,
-}
+# load elemental data from json files
+with open(os.path.join(os.path.dirname(__file__), "data", "element", "atomic_number_to_symbol.json"), 'r') as f:
+    ATOMIC_NUMBER_TO_SYMBOL = json.load(f)
 
-AVERAGE_ATOMIC_MASSES = {
-    'HYDROGEN': 1.00794,
-    'DEUTERIUM': 2.014101779,
-    'LITHIUM': 6.941,
-    'BORON': 10.811,
-    'CARBON': 12.0107,
-    'CARBON13': 13.00335483,
-    'NITROGEN': 14.0067,
-    'NITROGEN15': 15.00010897,
-    'OXYGEN': 15.9994,
-    'OXYGEN18': 17.9991603,
-    'FLUORINE': 18.9984032,
-    'SODIUM': 22.98977,
-    'MAGNESIUM': 24.305,
-    'ALUMINIUM': 26.9815386,
-    'PHOSPHOROUS': 30.973761,
-    'SULFUR': 32.065,
-    'CHLORINE': 35.453,
-    'POTASSIUM': 39.0983,
-    'CALCIUM': 40.078,
-    'CHROMIUM': 51.9961,
-    'MANGANESE': 54.938045,
-    'IRON': 55.845,
-    'NICKEL': 58.6934,
-    'COBALT': 58.933195,
-    'COPPER': 63.546,
-    'ZINC': 65.409,
-    'ARSENIC': 74.9215942,
-    'BROMINE': 79.904,
-    'SELENIUM': 78.96,
-    'MOLYBDENUM': 95.94,
-    'RUTHENIUM': 101.07,
-    'PALLADIUM': 106.42,
-    'SILVER': 107.8682,
-    'CADMIUM': 112.411,
-    'IODINE': 126.90447,
-    'PLATINUM': 195.084,
-    'GOLD': 196.96655,
-    'MERCURY': 200.59,
-}
+with open(os.path.join(os.path.dirname(__file__), "data", "element", "average_atomic_masses.json"), 'r') as f:
+    AVERAGE_ATOMIC_MASSES = json.load(f)
+
+with open(os.path.join(os.path.dirname(__file__), "data", "element", "isotopic_atomic_masses.json"), 'r') as f:
+    ISOTOPIC_ATOMIC_MASSES = json.load(f)
+
+with open(os.path.join(os.path.dirname(__file__), "data", "element", "isotopic_atomic_compositions.json"), 'r') as f:
+    ISOTOPIC_ATOMIC_COMPOSITIONS = json.load(f)
 
 AA_COMPOSITIONS = {
-    "G": {"CARBON": 2, "HYDROGEN": 3, "NITROGEN": 1, "OXYGEN": 1},  # Glycine
-    "A": {"CARBON": 3, "HYDROGEN": 5, "NITROGEN": 1, "OXYGEN": 1},  # Alanine
-    "S": {"CARBON": 3, "HYDROGEN": 5, "NITROGEN": 1, "OXYGEN": 2},  # Serine
-    "P": {"CARBON": 5, "HYDROGEN": 7, "NITROGEN": 1, "OXYGEN": 1},  # Proline
-    "V": {"CARBON": 5, "HYDROGEN": 9, "NITROGEN": 1, "OXYGEN": 1},  # Valine
-    "T": {"CARBON": 4, "HYDROGEN": 7, "NITROGEN": 1, "OXYGEN": 2},  # Threonine
-    "C": {"CARBON": 3, "HYDROGEN": 5, "NITROGEN": 1, "OXYGEN": 1, "SULFUR": 1},  # Cysteine
-    "I": {"CARBON": 6, "HYDROGEN": 11, "NITROGEN": 1, "OXYGEN": 1},  # Isoleucine
-    "L": {"CARBON": 6, "HYDROGEN": 11, "NITROGEN": 1, "OXYGEN": 1},  # Leucine
-    "N": {"CARBON": 4, "HYDROGEN": 6, "NITROGEN": 2, "OXYGEN": 2},  # Asparagine
-    "D": {"CARBON": 4, "HYDROGEN": 5, "NITROGEN": 1, "OXYGEN": 3},  # Aspartic acid
-    "Q": {"CARBON": 5, "HYDROGEN": 8, "NITROGEN": 2, "OXYGEN": 3},  # Glutamine
-    "K": {"CARBON": 6, "HYDROGEN": 12, "NITROGEN": 2},  # Lysine
-    "E": {"CARBON": 5, "HYDROGEN": 7, "NITROGEN": 1, "OXYGEN": 3},  # Glutamic acid
-    "M": {"CARBON": 5, "HYDROGEN": 9, "NITROGEN": 1, "OXYGEN": 1, "SULFUR": 1},  # Methionine
-    "H": {"CARBON": 6, "HYDROGEN": 7, "NITROGEN": 3, "OXYGEN": 1},  # Histidine
-    "F": {"CARBON": 9, "HYDROGEN": 9, "NITROGEN": 1, "OXYGEN": 1},  # Phenylalanine
-    "R": {"CARBON": 6, "HYDROGEN": 12, "NITROGEN": 4, "OXYGEN": 1},  # Arginine
-    "Y": {"CARBON": 9, "HYDROGEN": 9, "NITROGEN": 1, "OXYGEN": 2},  # Tyrosine
-    "W": {"CARBON": 11, "HYDROGEN": 10, "NITROGEN": 2},  # Tryptophan
-    "U": {"CARBON": 3, "HYDROGEN": 5, "NITROGEN": 1, "OXYGEN": 1, "SELENIUM": 1},  # Selenocysteine
-    "O": {"CARBON": 12, "HYDROGEN": 19, "NITROGEN": 3, "OXYGEN": 2},  # Pyrrolysine
+    "G": {"C": 2, "H": 3, "N": 1, "O": 1},  # Glycine
+    "A": {"C": 3, "H": 5, "N": 1, "O": 1},  # Alanine
+    "S": {"C": 3, "H": 5, "N": 1, "O": 2},  # Serine
+    "P": {"C": 5, "H": 7, "N": 1, "O": 1},  # Proline
+    "V": {"C": 5, "H": 9, "N": 1, "O": 1},  # Valine
+    "T": {"C": 4, "H": 7, "N": 1, "O": 2},  # Threonine
+    "C": {"C": 3, "H": 5, "N": 1, "O": 1, "S": 1},  # Cysteine
+    "I": {"C": 6, "H": 11, "N": 1, "O": 1},  # Isoleucine
+    "L": {"C": 6, "H": 11, "N": 1, "O": 1},  # Leucine
+    "J": {"C": 6, "H": 11, "N": 1, "O": 1},  # Leucine or Isoleucine
+    "N": {"C": 4, "H": 6, "N": 2, "O": 2},  # Asparagine
+    "D": {"C": 4, "H": 5, "N": 1, "O": 3},  # Aspartic acid
+    "Q": {"C": 5, "H": 8, "N": 2, "O": 2},  # Glutamine
+    "K": {"C": 6, "H": 12, "N": 2, "O": 1},  # Lysine
+    "E": {"C": 5, "H": 7, "N": 1, "O": 3},  # Glutamic acid
+    "M": {"C": 5, "H": 9, "N": 1, "O": 1, "S": 1},  # Methionine
+    "H": {"C": 6, "H": 7, "N": 3, "O": 1},  # Histidine
+    "F": {"C": 9, "H": 9, "N": 1, "O": 1},  # Phenylalanine
+    "R": {"C": 6, "H": 12, "N": 4, "O": 1},  # Arginine
+    "Y": {"C": 9, "H": 9, "N": 1, "O": 2},  # Tyrosine
+    "W": {"C": 11, "H": 10, "N": 2},  # Tryptophan
+    "U": {"C": 3, "H": 5, "N": 1, "O": 1, "Se": 1},  # Selenocysteine
+    "O": {"C": 12, "H": 19, "N": 3, "O": 2},  # Pyrrolysine
+    "X": {},  # Unknown amino acid
 }
 
-MONOISOTOPIC_AA_MASSES, AVERAGE_AA_MASSES = {}, {}
-for aa in AA_COMPOSITIONS:
-    MONOISOTOPIC_AA_MASSES[aa] = sum([MONOISOTOPIC_ATOMIC_MASSES[k] * v for k, v in AA_COMPOSITIONS[aa].items()])
-    AVERAGE_AA_MASSES[aa] = sum([AVERAGE_ATOMIC_MASSES[k] * v for k, v in AA_COMPOSITIONS[aa].items()])
+ION_TYPE_START_COMPOSITIONS = {
+    "a": {"H": 1},
+    "b": {"H": 1},
+    "c": {"H": 1},
+    "x": {"O": 1, "C": 1},
+    "y": {"H": 2},
+    "z": {"H": -1, "N": -1},
+}
 
+ION_TYPE_END_COMPOSITIONS = {
+    "a": {"C": -1, "O": -1},
+    "b": {},
+    "c": {"H": 3, "N": 1},
+    "x": {"O": 1, "H": 1},
+    "y": {"O": 1, "H": 1},
+    "z": {"O": 1, "H": 1},
+}
+
+
+def create_ion_adjustments(atomic_masses, start_comps, end_comps):
+    adjustments = {}
+    for ion_type in start_comps:
+        start_mass = sum([atomic_masses[k] * v for k, v in start_comps[ion_type].items()])
+        end_mass = sum([atomic_masses[k] * v for k, v in end_comps[ion_type].items()])
+        adjustments[ion_type] = start_mass + end_mass - atomic_masses['H']
+
+    for forward_ion in 'abc':
+        for backward_ion in 'xyz':
+            start_mass = sum([atomic_masses[k] * v for k, v in end_comps[forward_ion].items()])
+            end_mass = sum([atomic_masses[k] * v for k, v in start_comps[backward_ion].items()])
+            adjustments[forward_ion + backward_ion] = start_mass + end_mass - atomic_masses['H']
+
+    adjustments['I'] = sum([atomic_masses[k] * v for k, v in end_comps['a'].items()])
+
+    return adjustments
+
+
+def create_ion_type_compositions(start_comps, end_comps):
+    compositions = {}
+    for ion_type in start_comps:
+        start_comp = start_comps[ion_type]
+        end_comp = end_comps[ion_type]
+
+        # combine the two dictionaries
+        combined = deepcopy(start_comp)
+        for k, v in end_comp.items():
+            combined[k] = combined.get(k, 0) + v
+
+        combined['H'] = combined.get('H', 0) - 1  # adjust for neutral mass
+
+        # drop any zero values
+        combined = {k: v for k, v in combined.items() if v != 0}
+
+        compositions[ion_type] = combined
+
+    for forward_ion in 'abc':
+        for backward_ion in 'xyz':
+            start_comp = start_comps[backward_ion]
+            end_comp = end_comps[forward_ion]
+
+            # combine the two dictionaries
+            combined = deepcopy(start_comp)
+            for k, v in end_comp.items():
+                combined[k] = combined.get(k, 0) + v
+
+            combined['H'] = combined.get('H', 0) - 1  # adjust for neutral mass
+
+            # drop any zero values
+            combined = {k: v for k, v in combined.items() if v != 0}
+
+            compositions[forward_ion + backward_ion] = combined
+
+    compositions['I'] = end_comps['a']
+
+    return compositions
+
+
+ION_TYPE_COMPOSITION_ADJUSTMENTS = create_ion_type_compositions(ION_TYPE_START_COMPOSITIONS, ION_TYPE_END_COMPOSITIONS)
+
+
+# print(ION_TYPE_COMPOSITION_ADJUSTMENTS)
+
+def create_aa_masses(atomic_masses, aa_compositions):
+    aa_masses = {}
+    for aa in aa_compositions:
+        aa_masses[aa] = sum([atomic_masses[k] * v for k, v in aa_compositions[aa].items()])
+    return aa_masses
+
+
+MONOISOTOPIC_AA_MASSES = create_aa_masses(ISOTOPIC_ATOMIC_MASSES, AA_COMPOSITIONS)
+AVERAGE_AA_MASSES = create_aa_masses(AVERAGE_ATOMIC_MASSES, AA_COMPOSITIONS)
 AMINO_ACIDS = set(AA_COMPOSITIONS.keys())
+MONOISOTOPIC_ION_ADJUSTMENTS = \
+    create_ion_adjustments(ISOTOPIC_ATOMIC_MASSES, ION_TYPE_START_COMPOSITIONS, ION_TYPE_END_COMPOSITIONS)
+AVERAGE_ION_ADJUSTMENTS = \
+    create_ion_adjustments(AVERAGE_ATOMIC_MASSES, ION_TYPE_START_COMPOSITIONS, ION_TYPE_END_COMPOSITIONS)
+
+FORWARD_ION_TYPES = {'a', 'b', 'c'}
+BACKWARD_ION_TYPES = {'x', 'y', 'z'}
+INTERNAL_ION_TYPES = {'ax', 'ay', 'az', 'bx', 'by', 'bz', 'cx', 'cy', 'cz'}
+TERMINAL_ION_TYPES = FORWARD_ION_TYPES | BACKWARD_ION_TYPES
+IMMONIUM_ION_TYPES = {'I'}
+VALID_ION_TYPES = TERMINAL_ION_TYPES | INTERNAL_ION_TYPES | IMMONIUM_ION_TYPES
 
 PROTEASES = {'arg-c': 'R',
              'asp-n': '\\w(?=D)',
@@ -158,34 +192,44 @@ PROTEASES = {'arg-c': 'R',
              'non-specific': '()',
              'no-cleave': '_'}
 
-MONOISOTOPIC_ION_ADJUSTMENTS = {
-    'a': -MONOISOTOPIC_ATOMIC_MASSES['CARBON'] - MONOISOTOPIC_ATOMIC_MASSES['OXYGEN'],
-    'b': 0,
-    'c': MONOISOTOPIC_ATOMIC_MASSES['HYDROGEN'] * 3 + MONOISOTOPIC_ATOMIC_MASSES['NITROGEN'],
-    'x': MONOISOTOPIC_ATOMIC_MASSES['CARBON'] + MONOISOTOPIC_ATOMIC_MASSES['OXYGEN'] * 2,
-    'y': MONOISOTOPIC_ATOMIC_MASSES['HYDROGEN'] * 2 + MONOISOTOPIC_ATOMIC_MASSES['OXYGEN'],
-    'z': MONOISOTOPIC_ATOMIC_MASSES['OXYGEN'] - MONOISOTOPIC_ATOMIC_MASSES['NITROGEN'] - MONOISOTOPIC_ATOMIC_MASSES[
-        'HYDROGEN'],
-    'I': - MONOISOTOPIC_ATOMIC_MASSES['CARBON'] - MONOISOTOPIC_ATOMIC_MASSES['OXYGEN'],
-}
+# load from unimod_mono.pkl
+with open(os.path.join(os.path.dirname(__file__), "data", "unimod", "id_to_isotopic_mass.json"), 'r') as f:
+    UNIMOD_ID_TO_MONO_MASSES = json.load(f)
 
-AVERAGE_ION_ADJUSTMENTS = {
-    'a': -AVERAGE_ATOMIC_MASSES['CARBON'] - AVERAGE_ATOMIC_MASSES['OXYGEN'],
-    'b': 0,
-    'c': AVERAGE_ATOMIC_MASSES['HYDROGEN'] * 3 + AVERAGE_ATOMIC_MASSES['NITROGEN'],
-    'x': AVERAGE_ATOMIC_MASSES['CARBON'] + AVERAGE_ATOMIC_MASSES['OXYGEN'] * 2,
-    'y': AVERAGE_ATOMIC_MASSES['HYDROGEN'] * 2 + AVERAGE_ATOMIC_MASSES['OXYGEN'],
-    'z': AVERAGE_ATOMIC_MASSES['OXYGEN'] - AVERAGE_ATOMIC_MASSES['NITROGEN'] - AVERAGE_ATOMIC_MASSES['HYDROGEN'],
-    'I': - AVERAGE_ATOMIC_MASSES['CARBON'] - AVERAGE_ATOMIC_MASSES['OXYGEN'],
-}
+with open(os.path.join(os.path.dirname(__file__), "data", "unimod", "id_to_average_mass.json"), 'r') as f:
+    UNIMOD_ID_TO_AVERAGE_MASSES = json.load(f)
 
+with open(os.path.join(os.path.dirname(__file__), "data", "unimod", "id_to_isotopic_compositions.json"), 'r') as f:
+    UNIMOD_ID_TO_ISOTOPIC_COMPOSITIONS = json.load(f)
 
-FORWARD_IONS = {'a', 'b', 'c'}
-BACKWARD_IONS = {'x', 'y', 'z'}
-VALID_ION_TYPES = FORWARD_IONS.union(BACKWARD_IONS).union({'I'})
+with open(os.path.join(os.path.dirname(__file__), "data", "unimod", "name_to_id.json"), 'r') as f:
+    UNIMOD_NAME_TO_ID = json.load(f)
 
-ISOTOPES = {"CARBON": [0.9893, 0.0107],
-            "HYDROGEN": [0.999885, 0.000115],
-            "OXYGEN": [0.99757, 0.00038, 0.00205],
-            "NITROGEN": [0.99636, 0.00364],
-            "SULFUR": [0.9499, 0.0075, 0.0425, 0.0001]}
+# Load monosaccharides
+with open(os.path.join(os.path.dirname(__file__), "data", "monosaccharide", "name_to_id.json"), 'r') as f:
+    MONOSACCHARIDE_NAME_TO_ID = json.load(f)
+
+with open(os.path.join(os.path.dirname(__file__), "data", "monosaccharide", "id_to_isotopic_mass.json"), 'r') as f:
+    MONOSACCHARIDE_ID_TO_ISOTOPIC_MASSES = json.load(f)
+
+with open(os.path.join(os.path.dirname(__file__), "data", "monosaccharide", "id_to_average_mass.json"), 'r') as f:
+    MONOSACCHARIDE_ID_TO_AVERAGE_MASSES = json.load(f)
+
+with open(os.path.join(os.path.dirname(__file__), "data", "monosaccharide", "id_to_isotopic_compositions.json"),
+          'r') as f:
+    MONOSACCHARIDE_ID_TO_COMPOSITIONS = json.load(f)
+
+MONOSACCHARIDES_NAMES_SORTED = sorted(list(MONOSACCHARIDE_NAME_TO_ID.keys()), key=len, reverse=True)
+
+# Load PSI-MOD
+with open(os.path.join(os.path.dirname(__file__), "data", "psi", "name_to_id.json"), 'r') as f:
+    PSI_MOD_NAME_TO_ID = json.load(f)
+
+with open(os.path.join(os.path.dirname(__file__), "data", "psi", "id_to_isotopic_mass.json"), 'r') as f:
+    PSI_MOD_ID_TO_ISOTOPIC_MASSES = json.load(f)
+
+with open(os.path.join(os.path.dirname(__file__), "data", "psi", "id_to_average_mass.json"), 'r') as f:
+    PSI_MOD_ID_TO_AVERAGE_MASSES = json.load(f)
+
+with open(os.path.join(os.path.dirname(__file__), "data", "psi", "id_to_isotopic_compositions.json"), 'r') as f:
+    PSI_MOD_ID_TO_COMPOSITIONS = json.load(f)

@@ -33,12 +33,12 @@ def benchmark_func(func, *args):
 
 
 functions_to_benchmark = [
-    (get_modifications, "PE(3.1415)PTIDE"),
-    (add_modifications, "PEPTIDE", {1: 3.1415}),
-    (strip_modifications, "PE(3.1415)PTIDE"),
-    (build_fragments, "PE(3.1415)PTIDE", ['a', 'b', 'c', 'x', 'y', 'z'], [1, 2, 3], True, False),
-    (fragment, "PE(3.1415)PTIDE", ['a', 'b', 'c', 'x', 'y', 'z'], [1, 2, 3], True, False),
-    (split_sequence, "PE(3.1415)PTIDE"),
+    (get_modifications, "<13C>[Acetyl]-PE[3.1415][1]PTIDE-[Amide]"),
+    (add_modifications, "<13C>[Acetyl]-PEPTIDE-[Amide]", {1: [3.1415]}),
+    (strip_modifications, "<13C>[Acetyl]-PE[3.1415]PTIDE-[Amide]"),
+    #(build_fragments, "PE(3.1415)PTIDE", ['a', 'b', 'c', 'x', 'y', 'z'], [1, 2, 3], True, False),
+    #(fragment, "PE(3.1415)PTIDE", ['a', 'b', 'c', 'x', 'y', 'z'], [1, 2, 3], True, False),
+    (split_sequence, "<13C>[Acetyl]-PE[3.1415]PTIDE-[Amide]"),
 ]
 
 # Benchmark and store results
@@ -48,3 +48,10 @@ for func, *params in functions_to_benchmark:
     benchmark_results[func.__name__] = round(calls_per_sec)
 
 print(benchmark_results)
+
+
+for i in range(100_000):
+    get_modifications("<13C>[Acetyl]-PE[3.1415][1]PTIDE-[Amide]")
+
+
+print(get_modifications("<13C>[Acetyl]-PE[3.1415][1]PTIDE-[Amide]"))

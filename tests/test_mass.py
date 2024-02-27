@@ -1,4 +1,4 @@
-from peptacular.constants import MONOISOTOPIC_ATOMIC_MASSES, AVERAGE_ATOMIC_MASSES, PROTON_MASS
+from peptacular.constants import ISOTOPIC_ATOMIC_MASSES, AVERAGE_ATOMIC_MASSES, PROTON_MASS
 from peptacular.mass import calculate_mz, calculate_mass
 
 import unittest

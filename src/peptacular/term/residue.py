@@ -1,5 +1,7 @@
 from typing import Tuple
 
+from peptacular.term.modification import get_n_term_modification_index, get_c_term_modification_index
+
 
 def strip_n_term_residue(sequence: str) -> str:
     """
@@ -21,15 +23,15 @@ def strip_n_term_residue(sequence: str) -> str:
         'EPTIDE'
 
         # Sequences with N-terminal modifications have them removed along with the first amino acid:
-        >>> strip_n_term_residue('[Acetyl]P(phospho)EP(phospho)TIDE[Amide]')
-        'EP(phospho)TIDE[Amide]'
+        >>> strip_n_term_residue('[Acetyl]-P[phospho]EP[phospho]TIDE-[Amide]')
+        'EP[phospho]TIDE-[Amide]'
 
         # For sequences with a single amino acid having a C-terminal modification, the result is an empty string:
-        >>> strip_n_term_residue('E(1)[Amide]')
+        >>> strip_n_term_residue('E[1]-[Amide]')
         ''
-        >>> strip_n_term_residue('[Acetyl]P(phospho)[Amide]')
+        >>> strip_n_term_residue('[Acetyl]-P[phospho]-[Amide]')
         ''
-        >>> strip_n_term_residue('E[Amide]')
+        >>> strip_n_term_residue('E-[Amide]')
         ''
 
     """
@@ -57,15 +59,15 @@ def strip_c_term_residue(sequence: str) -> str:
         'PEPTID'
 
         # Sequences with C-terminal modifications have them removed along with the last amino acid:
-        >>> strip_c_term_residue('[Acetyl]P(phospho)EP(phospho)TIDE(1)[Amide]')
-        '[Acetyl]P(phospho)EP(phospho)TID'
+        >>> strip_c_term_residue('[Acetyl]-P[phospho]EP[phospho]TIDE[1]-[Amide]')
+        '[Acetyl]-P[phospho]EP[phospho]TID'
 
         # For sequences with a single amino acid having a N-terminal modification, the result is an empty string:
-        >>> strip_c_term_residue('[Acetyl]P(phospho)')
+        >>> strip_c_term_residue('[Acetyl]-P[phospho]')
         ''
-        >>> strip_c_term_residue('[Acetyl]P(phospho)[Amide]')
+        >>> strip_c_term_residue('[Acetyl]-P[phospho]-[Amide]')
         ''
-        >>> strip_c_term_residue('[Acetyl]P')
+        >>> strip_c_term_residue('[Acetyl]-P')
         ''
 
     """
@@ -90,20 +92,20 @@ def get_n_term_residue(sequence: str) -> str:
         'P'
 
         # Sequences with N-terminal modifications return them along with the last amino acid:
-        >>> get_n_term_residue('[Acetyl]P(phospho)EP(phospho)TIDE(phospho)[Amide]')
-        '[Acetyl]P(phospho)'
+        >>> get_n_term_residue('[Acetyl]-P[phospho]EP[phospho]TIDE[phospho]-[Amide]')
+        '[Acetyl]-P[phospho]'
 
         # For sequences with a single amino acid
-        >>> get_n_term_residue('[Acetyl]P(phospho)[Amide]')
-        '[Acetyl]P(phospho)[Amide]'
-        >>> get_n_term_residue('[Acetyl]P')
-        '[Acetyl]P'
-        >>> get_n_term_residue('P[Amide]')
-        'P[Amide]'
-        >>> get_n_term_residue('P(phospho)[Amide]')
-        'P(phospho)[Amide]'
-        >>> get_n_term_residue('P(phospho)')
-        'P(phospho)'
+        >>> get_n_term_residue('[Acetyl]-P[phospho]-[Amide]')
+        '[Acetyl]-P[phospho]-[Amide]'
+        >>> get_n_term_residue('[Acetyl]-P')
+        '[Acetyl]-P'
+        >>> get_n_term_residue('P-[Amide]')
+        'P-[Amide]'
+        >>> get_n_term_residue('P[phospho]-[Amide]')
+        'P[phospho]-[Amide]'
+        >>> get_n_term_residue('P[phospho]')
+        'P[phospho]'
 
     """
 
@@ -128,20 +130,20 @@ def get_c_term_residue(sequence: str) -> str:
         'E'
 
         # Sequences with C-terminal modifications return them along with the last amino acid:
-        >>> get_c_term_residue('[Acetyl]P(phospho)EP(phospho)TIDE(phospho)[Amide]')
-        'E(phospho)[Amide]'
+        >>> get_c_term_residue('[Acetyl]-P[phospho]EP[phospho]TIDE[phospho]-[Amide]')
+        'E[phospho]-[Amide]'
 
         # For sequences with a single amino acid
-        >>> get_c_term_residue('[Acetyl]P(phospho)[Amide]')
-        '[Acetyl]P(phospho)[Amide]'
-        >>> get_c_term_residue('[Acetyl]P')
-        '[Acetyl]P'
-        >>> get_c_term_residue('P[Amide]')
-        'P[Amide]'
-        >>> get_c_term_residue('P(phospho)[Amide]')
-        'P(phospho)[Amide]'
-        >>> get_c_term_residue('P(phospho)')
-        'P(phospho)'
+        >>> get_c_term_residue('[Acetyl]-P[phospho]-[Amide]')
+        '[Acetyl]-P[phospho]-[Amide]'
+        >>> get_c_term_residue('[Acetyl]-P')
+        '[Acetyl]-P'
+        >>> get_c_term_residue('P-[Amide]')
+        'P-[Amide]'
+        >>> get_c_term_residue('P[phospho]-[Amide]')
+        'P[phospho]-[Amide]'
+        >>> get_c_term_residue('P[phospho]')
+        'P[phospho]'
 
     """
 
@@ -167,8 +169,8 @@ def pop_c_term_residue(sequence: str) -> Tuple[str, str]:
         ('E', 'PEPTID')
 
         # Sequences with C-terminal modifications return them along with the last amino acid:
-        >>> pop_c_term_residue('[Acetyl]P(phospho)EP(phospho)TIDE(phospho)[Amide]')
-        ('E(phospho)[Amide]', '[Acetyl]P(phospho)EP(phospho)TID')
+        >>> pop_c_term_residue('[Acetyl]-P[phospho]EP[phospho]TIDE[phospho]-[Amide]')
+        ('E[phospho]-[Amide]', '[Acetyl]-P[phospho]EP[phospho]TID')
 
     """
 
@@ -194,8 +196,8 @@ def pop_n_term_residue(sequence: str) -> Tuple[str, str]:
         ('P', 'EPTIDE')
 
         # Sequences with N-terminal modifications return them along with the last amino acid:
-        >>> pop_n_term_residue('[Acetyl]P(phospho)EP(phospho)TIDE(phospho)[Amide]')
-        ('[Acetyl]P(phospho)', 'EP(phospho)TIDE(phospho)[Amide]')
+        >>> pop_n_term_residue('[Acetyl]-P[phospho]EP[phospho]TIDE[phospho]-[Amide]')
+        ('[Acetyl]-P[phospho]', 'EP[phospho]TIDE[phospho]-[Amide]')
 
     """
 
@@ -217,28 +219,43 @@ def _get_c_term_index(sequence: str) -> int:
 
         >>> _get_c_term_index('PEPTIDE')
         6
-        >>> 'PEPTIDE'[:6]
-        'PEPTID'
 
-        >>> _get_c_term_index('[Acetyl]P(phospho)EP(phospho)TIDE(phospho)[Amide]')
-        32
-        >>> '[Acetyl]P(phospho)EP(phospho)TIDE(phospho)[Amide]'[:32]
-        '[Acetyl]P(phospho)EP(phospho)TID'
+        >>> _get_c_term_index('PEPTIDE[phospho]')
+        6
+
+        >>> _get_c_term_index('P[phospho]')
+        0
+
+        >>> _get_c_term_index('[Acetyl]-P[phospho]')
+        0
+
+        >>> _get_c_term_index('[Acetyl]-P')
+        0
+
+        >>> _get_c_term_index('P')
+        0
+
+        >>> _get_c_term_index('[Acetyl]-P[phospho]EP[phospho]TIDE[phospho]-[Amide]')
+        33
 
     """
 
-    start_index = len(sequence) - 1
-    if sequence and sequence[start_index] == ']':
-        start_index = sequence.rindex('[') - 1
+    index = get_c_term_modification_index(sequence)
+    new_seq = sequence[:index]
 
-    if sequence[start_index] == ')':
-        start_index = sequence.rindex('(') - 1
+    # check if there is a modification at the end of the sequence
+    if new_seq[-1] == ']':
+        index = new_seq.rindex('[')
+
+    index -= 1
+
+    new_seq = sequence[:index]
 
     # Check for N-Term modification
-    if start_index != 0 and sequence[start_index - 1] == ']':
-        start_index = 0
+    if new_seq.endswith(']-'):
+        return 0
 
-    return start_index
+    return index
 
 
 def _get_n_term_index(sequence: str) -> int:
@@ -255,27 +272,43 @@ def _get_n_term_index(sequence: str) -> int:
 
         >>> _get_n_term_index('PEPTIDE')
         1
-        >>> 'PEPTIDE'[1:]
-        'EPTIDE'
 
-        >>> _get_n_term_index('[Acetyl]P(phospho)EP(phospho)TIDE(phospho)[Amide]')
+        >>> _get_n_term_index('P[phospho]EPTIDE')
+        10
+
+        >>> _get_n_term_index('E[phospho]')
+        10
+
+        >>> _get_n_term_index('E[phospho]-[Amide]')
         18
-        >>> '[Acetyl]P(phospho)EP(phospho)TIDE(phospho)[Amide]'[18:]
-        'EP(phospho)TIDE(phospho)[Amide]'
+
+        >>> _get_n_term_index('E-[Amide]')
+        9
+
+        >>> _get_n_term_index('E')
+        1
+
+        >>> _get_n_term_index('[Acetyl]-P[phospho]EP[phospho]TIDE[phospho]-[Amide]')
+        19
 
     """
 
-    end_index = 0
-    if sequence and sequence[end_index] == '[':
-        end_index = sequence.index(']') + 1
+    index = get_n_term_modification_index(sequence)
+    new_seq = sequence[index:]
 
-    end_index += 1
+    index += 1
 
-    if end_index != len(sequence) and sequence[end_index] == '(':
-        end_index = sequence.index(')') + 1
+    if len(new_seq) == 1:
+        return index
+
+    # check if first amino acid is modified
+    if new_seq[1] == '[':
+        index += new_seq.index(']')
+
+    new_seq = sequence[index:]
 
     # Check for N-Term modification
-    if end_index != len(sequence) and sequence[end_index] == '[':
-        end_index = len(sequence)
+    if new_seq.startswith('-['):
+        return len(sequence)
 
-    return end_index
+    return index

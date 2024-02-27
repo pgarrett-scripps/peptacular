@@ -2,6 +2,7 @@ import math
 from dataclasses import dataclass
 from typing import List, Tuple, Union, Dict, Any
 from peptacular.fragment import Fragment
+from peptacular.sequence import strip_modifications
 
 
 def match_spectra_indexes(mz_spectrum1: List[float], mz_spectrum2: List[float], tolerance_value: float = 0.1,
@@ -159,7 +160,7 @@ class FragmentMatch:
     :ivar mz: Experimental m/z value.
     :ivar intensity: Intensity of the experimental m/z value.
     """
-    fragment: Fragment
+    fragment: Union[Fragment, None]
     mz: float
     intensity: float
 
@@ -171,7 +172,7 @@ class FragmentMatch:
         :return: error between the theoretical and experimental m/z values.
         :rtype: float
         """
-        return self.fragment.mz - self.mz
+        return self.theo_mz - self.mz
 
     @property
     def error_ppm(self):
@@ -183,6 +184,54 @@ class FragmentMatch:
         """
         return self.error / self.fragment.mz * 1e6
 
+    @property
+    def charge(self):
+        return abs(self.fragment.charge)
+
+    @property
+    def ion_type(self):
+        return self.fragment.ion_type
+
+    @property
+    def start(self):
+        return self.fragment.start
+
+    @property
+    def end(self):
+        return self.fragment.end
+
+    @property
+    def monoisotopic(self):
+        return self.fragment.monoisotopic
+
+    @property
+    def isotope(self):
+        return self.fragment.isotope
+
+    @property
+    def loss(self):
+        return self.fragment.loss
+
+    @property
+    def sequence(self):
+        return self.fragment.sequence
+
+    @property
+    def theo_mz(self):
+        return self.fragment.mz
+
+    @property
+    def internal(self):
+        return self.fragment.internal
+
+    @property
+    def label(self):
+        return self.fragment.label
+
+    @property
+    def parent_sequence(self):
+        return self.fragment.parent_sequence
+
     def to_dict(self) -> Dict[str, Any]:
         """
         Converts the FragmentMatch object to a dictionary.
@@ -190,17 +239,50 @@ class FragmentMatch:
         :return: Dictionary representation of the FragmentMatch object.
         :rtype: Dict[str, Any]
         """
-        return {
-            'fragment': self.fragment.to_dict(),
-            'mz': self.mz,
-            'intensity': self.intensity,
-            'error': self.error,
-            'error_ppm': self.error_ppm
-        }
+
+        if self.fragment is not None:
+
+            return {
+                'mz': self.mz,
+                'intensity': self.intensity,
+                'error': self.error,
+                'error_ppm': self.error_ppm,
+                'charge': self.charge,
+                'ion_type': self.ion_type,
+                'start': self.start,
+                'end': self.end,
+                'monoisotopic': self.monoisotopic,
+                'isotope': self.isotope,
+                'loss': self.loss,
+                'sequence': self.sequence,
+                'theo_mz': self.theo_mz,
+                'internal': self.internal,
+                'label': self.fragment.label
+            }
+
+        else:
+
+            return {
+                'mz': self.mz,
+                'intensity': self.intensity,
+                'error': 0,
+                'error_ppm': 0,
+                'charge': 0,
+                'ion_type': '',
+                'start': 0,
+                'end': 0,
+                'monoisotopic': True,
+                'isotope': 0,
+                'loss': 0,
+                'sequence': '',
+                'theo_mz': 0,
+                'internal': False,
+                'label': ''
+            }
 
 
 def compute_fragment_matches(fragments: List[Fragment], mz_spectra: List[float],
-                             intensity_spectra: List[float], tolerance_value: float = 0.1,
+                             intensity_spectra: List[float], tolerance_value: float,
                              tolerance_type: str = 'ppm', mode: str = 'all') -> List[FragmentMatch]:
     """
     Computes the fragment matches for a given set of fragments and an experimental spectrum.
@@ -217,6 +299,7 @@ def compute_fragment_matches(fragments: List[Fragment], mz_spectra: List[float],
     :type tolerance_type: str
 
     :param mode: Mode of matching ('all', 'closest' or 'largest'). Default is 'all'.
+    :type mode: str
 
     :return: List of fragment matches.
     :rtype: List[FragmentMatch]
@@ -238,91 +321,88 @@ def compute_fragment_matches(fragments: List[Fragment], mz_spectra: List[float],
     for i, index in enumerate(indices):
         if index is None:
             continue
-        for j in range(*index):
+        if isinstance(index, int):
             fragment_matches.append(
-                FragmentMatch(fragments[i], mz_spectra[j], intensity_spectra[j]))
+                FragmentMatch(fragments[i], mz_spectra[index], intensity_spectra[index]))
+        elif isinstance(index, List):
+            for j in index:
+                fragment_matches.append(
+                    FragmentMatch(fragments[i], mz_spectra[j], intensity_spectra[j]))
 
     return fragment_matches
 
 
-# TODO: Doesnt work with multiple charges or internal fragments
-def hyper_score(fragments: Union[List[Fragment], Dict[str, List[float]]], mz_spectrum: List[float],
-                intensity_spectrum: List[float], tolerance_value=0.1, tolerance_type='ppm',
-                filter_by='intensity') -> float:
+def fragment_match_coverage(fragment_matches: List[FragmentMatch]) -> Dict[str, List[int]]:
     """
-    Computes the hyperscore for a given set of fragments and an experimental spectrum.
+    Returns a dictionary of fragment coverage for a list of fragments.
+    :param fragment_matches: List of fragments.
+    :type fragment_matches: List[Fragment]
 
-    :param fragments: List of theoretical fragments
-    :type fragments: List[Fragment] or Dict[str, List[float]]
-    :param mz_spectrum: List of m/z values from the experimental spectrum.
-    :type mz_spectrum: List[float]
-    :param intensity_spectrum: List of intensity values corresponding to the m/z values in mz_spectrum.
-    :type intensity_spectrum: List[float]
-    :param tolerance_value: Tolerance value for matching fragments to the spectrum.
-    :type tolerance_value: float
-    :param tolerance_type: Type of tolerance ('ppm' or 'th').
-    :type tolerance_type: str
-    :param filter_by: How to filter the matched fragments ('intensity' or 'error').
-    :type filter_by: str
-
-    :return: Computed hyper score.
-    :rtype: float
-
-    .. code-block:: python
-
-            >>> hyper_score({'a': [100, 200, 300]}, [100, 300, 400], [1000, 2000, 1500])
-            3.0
-
+    :return: Dictionary of fragment coverage.
+    :rtype: Dict[str, List[int]]
     """
+    cov = {}
 
-    @dataclass(frozen=True)
-    class MockFragment:
-        mz: float
-        ion_type: str
+    if not fragment_matches:
+        return cov
 
-    if isinstance(fragments, Dict):
-        fragments = [MockFragment(mz, ion_type) for ion_type in fragments for mz in fragments[ion_type]]
+    unmod_sequence = strip_modifications(fragment_matches[0].parent_sequence)
 
-    max_intensity = max(intensity_spectrum)
-    intensity_spectrum = [intensity / max_intensity for intensity in intensity_spectrum]
-    # Compute the fragment matches using the provided function
-    fragment_matches = compute_fragment_matches(fragments, mz_spectrum, intensity_spectrum, tolerance_value,
-                                                tolerance_type)
-
-    if len(fragment_matches) == 0:
-        return 0
-
-    if filter_by == 'intensity':
-        fragment_matches.sort(key=lambda x: x.intensity, reverse=False)
-    elif filter_by == 'error':
-        fragment_matches.sort(key=lambda x: abs(x.error), reverse=True)
-
-    fragment_matches = {match.fragment: match for match in fragment_matches}
-
-    frag_nums = set()
     for frag in fragment_matches:
-        key = (frag.ion_type, frag.parent_number)
-        if key not in frag_nums:
-            frag_nums.add(key)
+        label = f"{'+' * frag.charge}{frag.ion_type}"
+        if label not in cov:
+            cov[label] = [0] * len(unmod_sequence)
+        for i in range(frag.start, frag.end):
+            cov[label][i] += 1
 
-    fragment_matches = fragment_matches.values()
+    return cov
 
-    # Calculate the dot product using matched fragments
-    dot_product = sum(match.intensity for match in fragment_matches)
 
-    # Count the number of b and y ions
-    Na = sum(1 for ion_type, _ in frag_nums if ion_type == 'a')
-    Nb = sum(1 for ion_type, _ in frag_nums if ion_type == 'b')
-    Nc = sum(1 for ion_type, _ in frag_nums if ion_type == 'c')
-    Nx = sum(1 for ion_type, _ in frag_nums if ion_type == 'x')
-    Ny = sum(1 for ion_type, _ in frag_nums if ion_type == 'y')
-    Nz = sum(1 for ion_type, _ in frag_nums if ion_type == 'z')
+def _get_monoisotopic_label(label: str) -> str:
+    return label.replace('*', '')
 
-    # Compute the hyper score
-    score = dot_product * math.factorial(Na) * math.factorial(Nb) * math.factorial(Nc) * math.factorial(Nx) * \
-            math.factorial(Ny) * math.factorial(Nz)
 
-    return score
+def _remove_isotope_from_label(label: str) -> str:
+    if label.endswith('*'):
+        return label[:-1]
+    else:
+        return ''
+
+
+def _add_isotope_to_label(label: str) -> str:
+    return label + '*'
+
+
+def filter_missing_mono_isotope(fragment_matches: List[FragmentMatch]) -> List[FragmentMatch]:
+    """
+    Filters out fragment matches that do not have a monoisotopic peak.
+
+    :param fragment_matches: List of fragment matches.
+    :type fragment_matches: List[FragmentMatch]
+
+    :return: List of fragment matches with monoisotopic peaks.
+    :rtype: List[FragmentMatch]
+    """
+
+    mono_labels = set([f.label for f in fragment_matches if f.isotope == 0])
+    return [f for f in fragment_matches if _get_monoisotopic_label(f.label) in mono_labels]
+
+
+def filter_skipped_isotopes(fragment_matches: List[FragmentMatch]) -> List[FragmentMatch]:
+    """
+    Filters out fragment matches that have skipped isotopes.
+
+    :param fragment_matches: List of fragment matches.
+    :type fragment_matches: List[FragmentMatch]
+
+    :return: List of fragment matches with monoisotopic peaks.
+    :rtype: List[FragmentMatch]
+    """
+
+    # remove peaks any peaks after a missing isotope
+    labels = set([f.label for f in fragment_matches])
+    return [f for f in fragment_matches if
+            _remove_isotope_from_label(f.label) in labels or _add_isotope_to_label(f.label) in labels]
 
 
 def _binomial_probability(n: int, k: int, p: float) -> float:
@@ -344,8 +424,8 @@ def _binomial_probability(n: int, k: int, p: float) -> float:
 
 
 def _estimate_probability_of_random_match(error_tolerance: float, mz_spectrum: List[float],
-                                          tolerance_type: str = 'ppm', min_mz: Union[float, None] = None,
-                                          max_mz: Union[float, None] = None) -> float:
+                                          tolerance_type: str = 'ppm', min_mz: float = None,
+                                          max_mz: float = None) -> float:
     """
     Estimate the probability of a random match between two peaks based on error tolerance and the experimental spectrum.
 
@@ -383,8 +463,8 @@ def _estimate_probability_of_random_match(error_tolerance: float, mz_spectrum: L
 
 
 def binomial_score(fragments: Union[List[Fragment], List[float]], mz_spectra: List[float],
-                   tolerance_value: float, tolerance_type='ppm', min_mz: Union[float, None] = None,
-                   max_mz: Union[float, None] = None) -> float:
+                   tolerance_value: float, tolerance_type='ppm', min_mz: float = None,
+                   max_mz: float = None) -> float:
     """
     Computes a score based on binomial probability for a given set of fragments and an experimental spectrum.
 
@@ -435,3 +515,27 @@ def binomial_score(fragments: Union[List[Fragment], List[float]], mz_spectra: Li
     score = _binomial_probability(n, k, p_success)
 
     return score
+
+
+def calculate_matched_intensity_proportion(fragment_matches: List[FragmentMatch], intensities: List[float]) -> float:
+    """
+    Calculates the proportion of matched intensity to total intensity.
+
+    :param fragment_matches: List of fragment matches.
+    :type fragment_matches: List[FragmentMatch]
+    :param intensities: List of intensities from the experimental spectrum.
+    :type intensities: List[float]
+
+    :return: Proportion of matched intensity to total intensity.
+    :rtype: float
+    """
+
+    # group matches by mz
+    matches = {f.mz: f for f in fragment_matches}
+    matched_intensity = sum(f.intenisty for f in matches.values())
+    total_intensity = sum(intensities)
+
+    if total_intensity == 0:
+        return 0
+
+    return matched_intensity / total_intensity

@@ -172,8 +172,8 @@ def construct_bruijn_graph(sequences: List[str], k: int) -> Dict[str, Dict[str, 
         >>> construct_bruijn_graph(["PEP"], 2)
         {'--': {'P': 'P'}, '-P': {'E': 'E'}, 'PE': {'P': 'P'}}
 
-        >>> construct_bruijn_graph(["PE(2)P"], 2)
-        {'--': {'P': 'P'}, '-P': {'E(2)': 'E(2)'}, 'PE(2)': {'P': 'P'}}
+        >>> construct_bruijn_graph(["PE[2]P"], 2)
+        {'--': {'P': 'P'}, '-P': {'E[2]': 'E[2]'}, 'PE[2]': {'P': 'P'}}
 
     """
 
@@ -269,8 +269,15 @@ def construct_sequence_with_markov_chain(graph: Dict[str, Counter], k: int, max_
 
     :param graph: The De Bruijn graph to construct the sequence from.
     :type graph: dict
-    :param length: The length of the sequence to construct.
-    :type length: int
+    :param k: The length of the kmers.
+    :type k: int
+    :param max_length: The length of the sequence to construct. If None, the sequence will be constructed until no more
+    transitions are possible.
+    :type max_length: int
+    :param start_key: The starting key for the sequence. If None, the sequence will start with a string of '-'*k.
+    :type start_key: str
+    :param seed: The seed to use for the random number generator.
+    :type seed: int
 
     :return: The constructed sequence.
     :rtype: str

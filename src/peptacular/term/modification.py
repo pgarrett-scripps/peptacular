@@ -14,10 +14,85 @@ Term Modification Notation:
     - C-Terminus modifications use the index based on the length of the unmodified sequence.
 """
 
-
 from typing import Union, Any, Tuple
 
 from peptacular.util import convert_type
+
+
+def get_n_term_modification_index(sequence: str) -> int:
+    """
+    Returns the end index of the N-terminal amino acid in the sequence.
+
+    :param sequence: The amino acid sequence, which can include modifications.
+    :type sequence: str
+
+    :return: The end index of the N-terminal amino acid in the sequence.
+    :rtype: int
+
+    .. code-block:: python
+
+        # For sequences with N-terminal modifications:
+        >>> get_n_term_modification_index('[Acetyl]-PEPTIDE')
+        9
+
+        >>> "[Acetyl]-PEPTIDE"[get_n_term_modification_index('[Acetyl]-PEPTIDE'):]
+        'PEPTIDE'
+
+        # For sequences without N-terminal modifications:
+        >>> get_n_term_modification_index('PEPTIDE')
+        0
+
+        >>> "PEPTIDE"[get_n_term_modification_index('PEPTIDE'):]
+        'PEPTIDE'
+
+    """
+
+    if sequence.startswith('['):
+        return sequence.find(']-') + 2
+
+    return 0
+
+
+def get_c_term_modification_index(sequence: str) -> int:
+    """
+    Return the start index of the C-terminal amino acid in the sequence.
+
+    :param sequence: The amino acid sequence, which can include modifications.
+    :type sequence: str
+
+    :return: The start index of the C-terminal amino acid in the sequence.
+    :rtype: int
+
+    .. code-block:: python
+
+        # For sequences with C-terminal modifications:
+        >>> get_c_term_modification_index('PEPTIDE-[Amide]')
+        7
+
+        >>> get_c_term_modification_index('PEPTIDE[3.14]-[Amide]')
+        13
+
+        >>> get_c_term_modification_index('PEPTIDE[3.14]')
+        13
+
+        >>> 'PEPTIDE[Amide]'[:get_c_term_modification_index('PEPTIDE-[Amide]')]
+        'PEPTIDE'
+
+        # For sequences without C-terminal modifications:
+        >>> get_c_term_modification_index('PEPTIDE')
+        7
+
+        >>> 'PEPTIDE'[:get_c_term_modification_index('PEPTIDE')]
+        'PEPTIDE'
+
+    """
+
+    if sequence.endswith(']'):
+        start = sequence.rfind('-[')
+        if start != -1:
+            return start
+
+    return len(sequence)
 
 
 def get_n_term_modification(sequence: str) -> Union[str, float, int, None]:
@@ -36,15 +111,15 @@ def get_n_term_modification(sequence: str) -> Union[str, float, int, None]:
     .. code-block:: python
 
         # For string-based modifications:
-        >>> get_n_term_modification("[Acetyl]PEPTIDE")
+        >>> get_n_term_modification("[Acetyl]-PEPTIDE")
         'Acetyl'
 
         # For float-based modifications:
-        >>> get_n_term_modification("[3.1415]PEPTIDE")
+        >>> get_n_term_modification("[3.1415]-PEPTIDE")
         3.1415
 
         # For int-based modifications:
-        >>> get_n_term_modification("[100]PEPTIDE")
+        >>> get_n_term_modification("[100]-PEPTIDE")
         100
 
         # When no N-Terminus modification is present:
@@ -52,11 +127,12 @@ def get_n_term_modification(sequence: str) -> Union[str, float, int, None]:
 
     """
 
-    if sequence.startswith('['):
-        # find end notation
-        end = sequence.find(']')
-        return convert_type(sequence[1:end])
-    return None
+    mod = convert_type(sequence[:get_n_term_modification_index(sequence)][1:-2])
+
+    if mod == '':
+        return None
+
+    return mod
 
 
 def get_c_term_modification(sequence: str) -> Union[str, float, int, None]:
@@ -75,15 +151,15 @@ def get_c_term_modification(sequence: str) -> Union[str, float, int, None]:
     .. code-block:: python
 
         # For sequences with string-based modifications:
-        >>> get_c_term_modification("PEPTIDE[Amide]")
+        >>> get_c_term_modification("PEPTIDE-[Amide]")
         'Amide'
 
         # For sequences with float-based modifications:
-        >>> get_c_term_modification("PEPTIDE[3.1415]")
+        >>> get_c_term_modification("PEPTIDE-[3.1415]")
         3.1415
 
         # For sequences with int-based modifications:
-        >>> get_c_term_modification("PEPTIDE[100]")
+        >>> get_c_term_modification("PEPTIDE-[100]")
         100
 
         # When no C-terminal modification is present:
@@ -91,12 +167,12 @@ def get_c_term_modification(sequence: str) -> Union[str, float, int, None]:
 
     """
 
-    if sequence.endswith(']'):
-        # find start notation from back
-        start = sequence.rfind('[')
-        return convert_type(sequence[start + 1:-1])
+    mod = convert_type(sequence[get_c_term_modification_index(sequence):][2:-1])
 
-    return None
+    if mod == '':
+        return None
+
+    return mod
 
 
 def get_term_modifications(sequence: str) -> Tuple[Union[str, float, int, None], Union[str, float, int, None]]:
@@ -115,11 +191,11 @@ def get_term_modifications(sequence: str) -> Tuple[Union[str, float, int, None],
     .. code-block:: python
 
         # For sequences with different modification types (string, float, int):
-        >>> get_term_modifications("[Acetyl]PEPTIDE[Amide]")
+        >>> get_term_modifications("[Acetyl]-PEPTIDE-[Amide]")
         ('Acetyl', 'Amide')
-        >>> get_term_modifications("[3.1415]PEPTIDE[100]")
+        >>> get_term_modifications("[3.1415]-PEPTIDE-[100]")
         (3.1415, 100)
-        >>> get_term_modifications("[100]PEPTIDE[Acetyl]")
+        >>> get_term_modifications("[100]-PEPTIDE-[Acetyl]")
         (100, 'Acetyl')
 
         # For sequences without any terminal modification:
@@ -149,16 +225,16 @@ def strip_n_term_modification(sequence: str) -> str:
     .. code-block:: python
 
         # For sequences with different modification types (string, float, int):
-        >>> strip_n_term_modification("[Acetyl]PEPTIDE")
+        >>> strip_n_term_modification("[Acetyl]-PEPTIDE")
         'PEPTIDE'
-        >>> strip_n_term_modification("[3.1415]PEPTIDE")
+        >>> strip_n_term_modification("[3.1415]-PEPTIDE")
         'PEPTIDE'
-        >>> strip_n_term_modification("[100]PEPTIDE")
+        >>> strip_n_term_modification("[100]-PEPTIDE")
         'PEPTIDE'
 
         # If a residue modification is present at the N-terminus, only the terminal notation is removed:
-        >>> strip_n_term_modification("[Acetyl]P(1)EPTIDE")
-        'P(1)EPTIDE'
+        >>> strip_n_term_modification("[Acetyl]-P[1]EPTIDE")
+        'P[1]EPTIDE'
 
         # For sequences without any N-terminal modification:
         >>> strip_n_term_modification("PEPTIDE")
@@ -166,11 +242,7 @@ def strip_n_term_modification(sequence: str) -> str:
 
     """
 
-    if sequence.startswith('['):
-        # find end notation
-        end = sequence.find(']')
-        return sequence[end + 1:]
-    return sequence
+    return sequence[get_n_term_modification_index(sequence):]
 
 
 def strip_c_term_modification(sequence: str) -> str:
@@ -190,16 +262,16 @@ def strip_c_term_modification(sequence: str) -> str:
     .. code-block:: python
 
         # For sequences with different modification types (string, float, int):
-        >>> strip_c_term_modification("PEPTIDE[Acetyl]")
+        >>> strip_c_term_modification("PEPTIDE-[Acetyl]")
         'PEPTIDE'
-        >>> strip_c_term_modification("PEPTIDE[3.1415]")
+        >>> strip_c_term_modification("PEPTIDE-[3.1415]")
         'PEPTIDE'
-        >>> strip_c_term_modification("PEPTIDE[100]")
+        >>> strip_c_term_modification("PEPTIDE-[100]")
         'PEPTIDE'
 
         # If a residue modification is present at the C-terminus, only the terminal notation is removed:
-        >>> strip_c_term_modification("P(1)EPTIDE[Amide]")
-        'P(1)EPTIDE'
+        >>> strip_c_term_modification("P[1]EPTIDE-[Amide]")
+        'P[1]EPTIDE'
 
         # For sequences without any C-terminal modification:
         >>> strip_c_term_modification("PEPTIDE")
@@ -207,11 +279,7 @@ def strip_c_term_modification(sequence: str) -> str:
 
     """
 
-    if sequence.endswith(']'):
-        # find start notation
-        start = sequence.rfind('[')
-        return sequence[:start]
-    return sequence
+    return sequence[:get_c_term_modification_index(sequence)]
 
 
 def strip_term_modifications(sequence: str) -> str:
@@ -230,16 +298,16 @@ def strip_term_modifications(sequence: str) -> str:
     .. code-block:: python
 
         # For sequences with different modification types (string, float, int):
-        >>> strip_term_modifications("[Acetyl]PEPTIDE[Amide]")
+        >>> strip_term_modifications("[Acetyl]-PEPTIDE-[Amide]")
         'PEPTIDE'
-        >>> strip_term_modifications("[3.1415]PEPTIDE[100]")
+        >>> strip_term_modifications("[3.1415]-PEPTIDE-[100]")
         'PEPTIDE'
-        >>> strip_term_modifications("[100]PEPTIDE[Acetyl]")
+        >>> strip_term_modifications("[100]-PEPTIDE-[Acetyl]")
         'PEPTIDE'
 
         # If a residue modification is present at both termini, only the terminal notations are removed:
-        >>> strip_term_modifications("[Acetyl]P(1)EPTIDE[Amide]")
-        'P(1)EPTIDE'
+        >>> strip_term_modifications("[Acetyl]-P[1]EPTIDE-[Amide]")
+        'P[1]EPTIDE'
 
         # For sequences without any terminal modification:
         >>> strip_term_modifications("PEPTIDE")
@@ -252,17 +320,17 @@ def strip_term_modifications(sequence: str) -> str:
     return sequence
 
 
-def add_n_term_modification(sequence: str, mod: Any) -> str:
+def add_n_term_modification(sequence: str, mod: Any, overwrite: bool = True) -> str:
     """
     Appends the specified N-terminal modification to the provided sequence.
-
-    If the sequence already contains an N-terminal modification, the new modification will be combined with the
-    existing one. Ensure that the types of the modifications are compatible to prevent errors.
 
     :param sequence: The amino acid sequence, which can include modifications.
     :type sequence: str
     :param mod: Modification to be appended at the N-terminus of the sequence.
     :type mod: Any
+    :param overwrite: If True, the new modification will overwrite the existing one. If False, the new modification
+    will not be added if an existing modification is present.
+    :type overwrite: bool
 
     :return: Modified sequence with the added N-terminal notation.
     :rtype: str
@@ -271,29 +339,23 @@ def add_n_term_modification(sequence: str, mod: Any) -> str:
 
         # Adding string-based modifications:
         >>> add_n_term_modification("PEPTIDE", "Acetyl")
-        '[Acetyl]PEPTIDE'
+        '[Acetyl]-PEPTIDE'
 
         # Adding float-based modifications:
         >>> add_n_term_modification("PEPTIDE", 3.1415)
-        '[3.1415]PEPTIDE'
+        '[3.1415]-PEPTIDE'
 
         # Adding int-based modifications:
         >>> add_n_term_modification("PEPTIDE", 100)
-        '[100]PEPTIDE'
+        '[100]-PEPTIDE'
 
-        # Combining new modifications with existing N-terminal modifications:
-        >>> add_n_term_modification("[Acetyl]PEPTIDE", "Amide")
-        '[AcetylAmide]PEPTIDE'
-        >>> add_n_term_modification("[3.1415]PEPTIDE", 3.1415)
-        '[6.283]PEPTIDE'
-        >>> add_n_term_modification("[100]PEPTIDE", 100)
-        '[200]PEPTIDE'
+        # by default, the new modification will overwrite the existing one:
+        >>> add_n_term_modification("[Acetyl]-PEPTIDE-[Amide]", "Amide")
+        '[Amide]-PEPTIDE-[Amide]'
 
-        # In case of incompatible modification types:
-        >>> add_n_term_modification("[100]PEPTIDE", '100')
-        Traceback (most recent call last):
-            ...
-        TypeError: unsupported operand type(s) for +: 'int' and 'str'
+        # If the overwrite parameter is set to False, the new modification will not be added:
+        >>> add_n_term_modification("[Acetyl]-PEPTIDE-[Amide]", "Acetyl", overwrite=False)
+        '[Acetyl]-PEPTIDE-[Amide]'
 
         # No change if the modification is None:
         >>> add_n_term_modification("PEPTIDE", None)
@@ -301,29 +363,36 @@ def add_n_term_modification(sequence: str, mod: Any) -> str:
 
     """
 
-    if mod is None:
-        return sequence
-
     existing_mod = get_n_term_modification(sequence)
-    if existing_mod is not None:
-        new_mod = existing_mod + mod
-        return f"[{str(new_mod)}]{strip_n_term_modification(sequence)}"
 
-    return f"[{str(mod)}]{sequence}"
+    if overwrite:
+
+        if mod is None:
+            return strip_n_term_modification(sequence)
+
+        return f"[{str(mod)}]-{strip_n_term_modification(sequence)}"
+
+    else:
+        if existing_mod is not None:
+            return sequence
+
+        else:
+            if mod is None:
+                return sequence
+            return f"[{str(mod)}]-{sequence}"
 
 
-def add_c_term_modification(sequence: str, mod: Any) -> str:
+def add_c_term_modification(sequence: str, mod: Any, overwrite: bool = True) -> str:
     """
-    Appends the specified C-terminal modification notation to the provided sequence.
-
-    If the sequence already contains a C-terminal modification, the new modification will be
-    combined with the existing one. Ensure that the types of the modifications are compatible
-    to prevent errors.
+    Adds the specified C-terminal modification notation to the provided sequence.
 
     :param sequence: The amino acid sequence, which can include modifications.
     :type sequence: str
     :param mod: Modification to be appended at the C-terminus of the sequence. Can be of type str, int, or float.
     :type mod: Any
+    :param overwrite: If True, the new modification will overwrite the existing one. If False, the new modification
+    will not be added if an existing modification is present.
+    :type overwrite: bool
 
     :return: Modified sequence with the added C-terminal notation.
     :rtype: str
@@ -332,29 +401,23 @@ def add_c_term_modification(sequence: str, mod: Any) -> str:
 
         # Adding string-based modifications:
         >>> add_c_term_modification("PEPTIDE", "Amide")
-        'PEPTIDE[Amide]'
+        'PEPTIDE-[Amide]'
 
         # Adding float-based modifications:
         >>> add_c_term_modification("PEPTIDE", 3.1415)
-        'PEPTIDE[3.1415]'
+        'PEPTIDE-[3.1415]'
 
         # Adding int-based modifications:
         >>> add_c_term_modification("PEPTIDE", 100)
-        'PEPTIDE[100]'
+        'PEPTIDE-[100]'
 
-        # Combining new modifications with existing C-terminal modifications:
-        >>> add_c_term_modification("PEPTIDE[Amide]", "Acetyl")
-        'PEPTIDE[AmideAcetyl]'
-        >>> add_c_term_modification("PEPTIDE[3.1415]", 3.1415)
-        'PEPTIDE[6.283]'
-        >>> add_c_term_modification("PEPTIDE[100]", 100)
-        'PEPTIDE[200]'
+        # by default, the new modification will overwrite the existing one:
+        >>> add_c_term_modification("[Acetyl]-PEPTIDE-[Amide]", "Acetyl")
+        '[Acetyl]-PEPTIDE-[Acetyl]'
 
-        # In case of incompatible modification types:
-        >>> add_c_term_modification("PEPTIDE[100]", '100')
-        Traceback (most recent call last):
-            ...
-        TypeError: unsupported operand type(s) for +: 'int' and 'str'
+        # If the overwrite parameter is set to False, the new modification will not be added:
+        >>> add_c_term_modification("[Acetyl]-PEPTIDE-[Amide]", "Acetyl", overwrite=False)
+        '[Acetyl]-PEPTIDE-[Amide]'
 
         # No change if the modification is None:
         >>> add_c_term_modification("PEPTIDE", None)
@@ -362,18 +425,27 @@ def add_c_term_modification(sequence: str, mod: Any) -> str:
 
     """
 
-    if mod is None:
-        return sequence
-
     existing_mod = get_c_term_modification(sequence)
-    if existing_mod is not None:
-        new_mod = existing_mod + mod
-        return f"{strip_c_term_modification(sequence)}[{str(new_mod)}]"
 
-    return f"{sequence}[{str(mod)}]"
+    if overwrite is True:
+
+        if mod is None:
+            return strip_c_term_modification(sequence)
+
+        return f"{strip_c_term_modification(sequence)}-[{str(mod)}]"
+
+    else:
+        if existing_mod is not None:
+            return sequence
+
+        else:
+            if mod is None:
+                return sequence
+
+            return f"{sequence}-[{str(mod)}]"
 
 
-def add_term_modifications(sequence: str, n_term_mod: Any, c_term_mod) -> str:
+def add_term_modifications(sequence: str, n_term_mod: Any, c_term_mod: Any, overwrite: bool = True) -> str:
     """
     Appends both N-terminal and C-terminal modification notations to the provided sequence.
 
@@ -386,6 +458,9 @@ def add_term_modifications(sequence: str, n_term_mod: Any, c_term_mod) -> str:
     :type n_term_mod: Any
     :param c_term_mod: Modification to be appended at the C-terminus of the sequence.
     :type c_term_mod: Any
+    :param overwrite: If True, the new modifications will overwrite the existing ones. If False, the new modifications
+    will not be added if existing modifications are present.
+    :type overwrite: bool
 
     :return: Modified sequence with the added terminal notations.
     :rtype: str
@@ -394,29 +469,24 @@ def add_term_modifications(sequence: str, n_term_mod: Any, c_term_mod) -> str:
 
         # Adding string-based modifications:
         >>> add_term_modifications("PEPTIDE", "Acetyl", "Amide")
-        '[Acetyl]PEPTIDE[Amide]'
+        '[Acetyl]-PEPTIDE-[Amide]'
 
         # Adding float-based modifications:
         >>> add_term_modifications("PEPTIDE", 3.1415, 3.1415)
-        '[3.1415]PEPTIDE[3.1415]'
+        '[3.1415]-PEPTIDE-[3.1415]'
 
         # Adding int-based modifications:
         >>> add_term_modifications("PEPTIDE", 100, 100)
-        '[100]PEPTIDE[100]'
+        '[100]-PEPTIDE-[100]'
 
-        # Combining new modifications with existing terminal modifications:
-        >>> add_term_modifications("[Acetyl]PEPTIDE[Amide]", "Amide", "Acetyl")
-        '[AcetylAmide]PEPTIDE[AmideAcetyl]'
-        >>> add_term_modifications("[3.1415]PEPTIDE[3.1415]", 3.1415, 3.1415)
-        '[6.283]PEPTIDE[6.283]'
-        >>> add_term_modifications("[100]PEPTIDE[100]", 100, 100)
-        '[200]PEPTIDE[200]'
 
-        # In case of incompatible modification types:
-        >>> add_term_modifications("[100]PEPTIDE[100]", '100', '100')
-        Traceback (most recent call last):
-            ...
-        TypeError: unsupported operand type(s) for +: 'int' and 'str'
+        # by default, the new modification will overwrite the existing one:
+        >>> add_term_modifications("[Acetyl]-PEPTIDE-[Amide]", "Amide", "Acetyl")
+        '[Amide]-PEPTIDE-[Acetyl]'
+
+        # If the overwrite parameter is set to False, the new modification will not be added:
+        >>> add_term_modifications("[Acetyl]-PEPTIDE-[Amide]", "Amide", "Acetyl", overwrite=False)
+        '[Acetyl]-PEPTIDE-[Amide]'
 
         # No change if the modifications are None:
         >>> add_term_modifications("PEPTIDE", None, None)
@@ -424,7 +494,7 @@ def add_term_modifications(sequence: str, n_term_mod: Any, c_term_mod) -> str:
 
     """
 
-    return add_n_term_modification(add_c_term_modification(sequence, c_term_mod), n_term_mod)
+    return add_n_term_modification(add_c_term_modification(sequence, c_term_mod, overwrite), n_term_mod, overwrite)
 
 
 def condense_n_term_modifications(sequence: str) -> str:
@@ -444,17 +514,17 @@ def condense_n_term_modifications(sequence: str) -> str:
     .. code-block:: python
 
         # For sequences with just an N-terminal modification:
-        >>> condense_n_term_modifications('[Acetyl]PEPTIDE')
-        'P(Acetyl)EPTIDE'
+        >>> condense_n_term_modifications('[Acetyl]-PEPTIDE')
+        'P[Acetyl]EPTIDE'
 
         # Combining N-terminal and first amino acid modifications:
-        >>> condense_n_term_modifications('[1.0]P(2)EPTIDE')
-        'P(3.0)EPTIDE'
-        >>> condense_n_term_modifications('[Acetyl]P(Amide)EPTIDE')
-        'P(AcetylAmide)EPTIDE'
+        >>> condense_n_term_modifications('[1.0]-P[2]EPTIDE')
+        'P[3.0]EPTIDE'
+        >>> condense_n_term_modifications('[Acetyl]-P[Amide]EPTIDE')
+        'P[AcetylAmide]EPTIDE'
 
         # TypeError when incompatible modifications are attempted to be combined:
-        >>> condense_n_term_modifications('[Acetyl]P(1.0)EPTIDE')
+        >>> condense_n_term_modifications('[Acetyl]-P[1.0]EPTIDE')
         Traceback (most recent call last):
         ...
         TypeError: can only concatenate str (not "float") to str
@@ -466,12 +536,12 @@ def condense_n_term_modifications(sequence: str) -> str:
         return sequence
 
     sequence = strip_n_term_modification(sequence)
-    if sequence[1] == '(':  # if the first amino acid is modified
-        end = sequence.index(')')
+    if sequence[1] == '[':  # if the first amino acid is modified
+        end = sequence.index(']')
         condensed_mod = n_term_mod + convert_type(sequence[2:end])
-        sequence = f"{sequence[:1]}({condensed_mod}){sequence[end + 1:]}"
+        sequence = f"{sequence[:1]}[{condensed_mod}]{sequence[end + 1:]}"
     else:
-        sequence = f"{sequence[0]}({n_term_mod}){sequence[1:]}"
+        sequence = f"{sequence[0]}[{n_term_mod}]{sequence[1:]}"
 
     return sequence
 
@@ -493,17 +563,17 @@ def condense_c_term_modifications(sequence: str) -> str:
     .. code-block:: python
 
         # For sequences with just a C-terminal modification:
-        >>> condense_c_term_modifications('PEPTIDE[Amide]')
-        'PEPTIDE(Amide)'
+        >>> condense_c_term_modifications('PEPTIDE-[Amide]')
+        'PEPTIDE[Amide]'
 
         # Combining C-terminal and last amino acid modifications:
-        >>> condense_c_term_modifications('PEPTIDE(1.0)[2.0]')
-        'PEPTIDE(3.0)'
-        >>> condense_c_term_modifications('PEPTIDE(Acetyl)[Amide]')
-        'PEPTIDE(AcetylAmide)'
+        >>> condense_c_term_modifications('PEPTIDE[1.0]-[2.0]')
+        'PEPTIDE[3.0]'
+        >>> condense_c_term_modifications('PEPTIDE[Acetyl]-[Amide]')
+        'PEPTIDE[AcetylAmide]'
 
         # TypeError when incompatible modifications are attempted to be combined:
-        >>> condense_c_term_modifications('PEPTIDE(1.0)[Amide]')
+        >>> condense_c_term_modifications('PEPTIDE[1.0]-[Amide]')
         Traceback (most recent call last):
         ...
         TypeError: unsupported operand type(s) for +: 'float' and 'str'
@@ -515,12 +585,12 @@ def condense_c_term_modifications(sequence: str) -> str:
         return sequence
 
     sequence = strip_c_term_modification(sequence)
-    if sequence[-1] == ')':  # if the last amino acid is modified
-        start = sequence.rindex('(')
+    if sequence[-1] == ']':  # if the last amino acid is modified
+        start = sequence.rindex('[')
         condensed_mod = convert_type(sequence[start + 1:-1]) + c_term_mod
-        sequence = f"{sequence[:start]}({condensed_mod})"
+        sequence = f"{sequence[:start]}[{condensed_mod}]"
     else:
-        sequence = f"{sequence}({c_term_mod})"
+        sequence = f"{sequence}[{c_term_mod}]"
 
     return sequence
 
@@ -542,12 +612,12 @@ def condense_term_modifications(sequence: str) -> str:
     .. code-block:: python
 
         # For sequences with modifications at both terminals:
-        >>> condense_term_modifications('[1.0]P(2.0)EPTIDE(1.0)[2.0]')
-        'P(3.0)EPTIDE(3.0)'
+        >>> condense_term_modifications('[1.0]-P[2.0]EPTIDE[1.0]-[2.0]')
+        'P[3.0]EPTIDE[3.0]'
 
         # Condense_terms is equivalent to the sequential application of condense_n_term and condense_c_term:
-        >>> condense_n_term_modifications(condense_c_term_modifications('[1.0]P(2.0)EPTIDE(1.0)[2.0]'))
-        'P(3.0)EPTIDE(3.0)'
+        >>> condense_n_term_modifications(condense_c_term_modifications('[1.0]-P[2.0]EPTIDE[1.0]-[2.0]'))
+        'P[3.0]EPTIDE[3.0]'
 
     """
 
@@ -567,7 +637,7 @@ def pop_n_term_modification(sequence: str) -> Tuple[str, Union[str, None]]:
     .. code-block:: python
 
         # For sequences with an N-terminal modification:
-        >>> pop_n_term_modification('[Acetyl]PEPTIDE')
+        >>> pop_n_term_modification('[Acetyl]-PEPTIDE')
         ('PEPTIDE', 'Acetyl')
 
         # For sequences without an N-terminal modification:
@@ -596,7 +666,7 @@ def pop_c_term_modification(sequence: str) -> Tuple[str, Union[str, None]]:
     .. code-block:: python
 
         # For sequences with a C-terminal modification:
-        >>> pop_c_term_modification('PEPTIDE[Amide]')
+        >>> pop_c_term_modification('PEPTIDE-[Amide]')
         ('PEPTIDE', 'Amide')
 
         # For sequences without a C-terminal modification:
@@ -625,15 +695,15 @@ def pop_term_modifications(sequence: str) -> Tuple[str, Union[str, None], Union[
     .. code-block:: python
 
         # For sequences with both N-terminal and C-terminal modifications:
-        >>> pop_term_modifications('[Acetyl]PEPTIDE[Amide]')
+        >>> pop_term_modifications('[Acetyl]-PEPTIDE-[Amide]')
         ('PEPTIDE', 'Acetyl', 'Amide')
 
         # For sequences with only an N-terminal modification:
-        >>> pop_term_modifications('[Acetyl]PEPTIDE')
+        >>> pop_term_modifications('[Acetyl]-PEPTIDE')
         ('PEPTIDE', 'Acetyl', None)
 
         # For sequences with only a C-terminal modification:
-        >>> pop_term_modifications('PEPTIDE[Amide]')
+        >>> pop_term_modifications('PEPTIDE-[Amide]')
         ('PEPTIDE', None, 'Amide')
 
         # For sequences without terminal modifications:

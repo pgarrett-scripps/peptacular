@@ -11,9 +11,10 @@ Working with spans can be a more efficient way of processing peptide data, since
 from typing import Tuple, List
 from itertools import groupby
 
+from peptacular.types import Span
 
-def build_non_enzymatic_spans(span: Tuple[int, int, int], min_len: int = None, max_len: int = None) \
-        -> List[Tuple[int, int, int]]:
+
+def build_non_enzymatic_spans(span: Span, min_len: int = None, max_len: int = None) -> List[Span]:
     """
     Generates non-enymatic spans with span lengths <= max_len and >= min_len
 
@@ -61,8 +62,7 @@ def build_non_enzymatic_spans(span: Tuple[int, int, int], min_len: int = None, m
     return [(i, j, 0) for i in range(start, end + 1) for j in range(i + min_len, min(end + 1, i + max_len + 1))]
 
 
-def build_left_semi_spans(span: Tuple[int, int, int], min_len: int = None, max_len: int = None) \
-        -> List[Tuple[int, int, int]]:
+def build_left_semi_spans(span: Span, min_len: int = None, max_len: int = None) -> List[Span]:
     """
     Generates left-semi spans with span lengths <= max_len and >= min_len. A left-semi span is any span
     which has the same start position as the parent span.
@@ -110,8 +110,7 @@ def build_left_semi_spans(span: Tuple[int, int, int], min_len: int = None, max_l
     return [(start, i, value) for i in range(new_end, start - 1, -1) if i - start >= min_len]
 
 
-def build_right_semi_spans(span: Tuple[int, int, int], min_len: int = 1, max_len: int = None) \
-        -> List[Tuple[int, int, int]]:
+def build_right_semi_spans(span: Span, min_len: int = 1, max_len: int = None) -> List[Span]:
     """
     Generates right-semi spans with span lengths <= max_len and >= min_len. A right-semi span is any span
     which has the same end position as the parent span.
@@ -160,7 +159,7 @@ def build_right_semi_spans(span: Tuple[int, int, int], min_len: int = 1, max_len
 
 
 def build_enzymatic_spans(max_index: int, enzyme_sites: List[int], missed_cleavages: int,
-                          min_len: int = None, max_len: int = None) -> List[Tuple[int, int, int]]:
+                          min_len: int = None, max_len: int = None) -> List[Span]:
     """
     Computes enzymatic spans for the given enzyme sites and missed cleavages.
 
@@ -220,8 +219,7 @@ def build_enzymatic_spans(max_index: int, enzyme_sites: List[int], missed_cleava
     return spans
 
 
-def _grouped_left_semi_span_builder(spans: List[Tuple[int, int, int]], min_len: int = None, max_len: int = None) -> \
-        List[Tuple[int, int, int]]:
+def _grouped_left_semi_span_builder(spans: List[Span], min_len: int = None, max_len: int = None) -> List[Span]:
     """
     Efficiently generates all left-semi-spans from the given list of spans that have a length within the specified
     range. The input spans must be enzymatic spans where the values of the span represents the number of missed
@@ -275,8 +273,7 @@ def _grouped_left_semi_span_builder(spans: List[Tuple[int, int, int]], min_len: 
     return semi_spans
 
 
-def _grouped_right_semi_span_builder(spans: List[Tuple[int, int, int]], min_len: int = None, max_len: int = None) -> \
-        List[Tuple[int, int, int]]:
+def _grouped_right_semi_span_builder(spans: List[Span], min_len: int = None, max_len: int = None) -> List[Span]:
     """
     Efficiently generates all right-semi-spans from the given list of spans that have a length within the specified
     range. The input spans must be enzymatic spans where the values of the span represents the number of missed
@@ -330,8 +327,7 @@ def _grouped_right_semi_span_builder(spans: List[Tuple[int, int, int]], min_len:
     return semi_spans
 
 
-def build_semi_spans(spans: List[Tuple[int, int, int]], min_len: int = None, max_len: int = None) -> \
-        List[Tuple[int, int, int]]:
+def build_semi_spans(spans: List[Span], min_len: int = None, max_len: int = None) -> List[Span]:
     """
     Efficiently generates all semi-spans from the given list of spans that have a length within the specified
     range. The input spans must be enzymatic spans where the values of the span represents the number of missed
@@ -364,7 +360,7 @@ def build_semi_spans(spans: List[Tuple[int, int, int]], min_len: int = None, max
 
 
 def build_spans(max_index: int, enzyme_sites: List[int], missed_cleavages: int, min_len: int = None,
-                max_len: int = None, semi: bool = False) -> List[Tuple[int, int, int]]:
+                max_len: int = None, semi: bool = False) -> List[Span]:
     """
     Builds all spans for the given digestion parameters and enzyme sites
 
@@ -391,7 +387,7 @@ def build_spans(max_index: int, enzyme_sites: List[int], missed_cleavages: int, 
     if max_len is None:
         max_len = max_index
 
-    if len(enzyme_sites) == max_index-1:  # non-enzymatic
+    if len(enzyme_sites) == max_index - 1:  # non-enzymatic
         return build_non_enzymatic_spans((0, max_index, 0), min_len, max_len)
 
     if semi:
@@ -406,7 +402,7 @@ def build_spans(max_index: int, enzyme_sites: List[int], missed_cleavages: int, 
     return spans
 
 
-def calculate_span_coverage(spans: List[Tuple[int, int, int]], max_index: int, accumulate: bool = False) -> List[int]:
+def calculate_span_coverage(spans: List[Span], max_index: int, accumulate: bool = False) -> List[int]:
     """
     Calculates the coverage array for a given list of spans.
 

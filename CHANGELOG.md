@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 ## Next release?
 - make fragment faster by using numpys cumsum function and caching single modified residue masses
 
+## [2.0.0]
+### Added:
+- Limited ProForma2.0 support
+- Support for Unimod, psi-mod, glycan formulas, and chemical formulas (using Proforma2.0 notation)
+- Support for all types of internal fragment ions (ax, ay, bx, bx...)
+- gen_data submodule for generating modification and atom mass lookup tables
+
+### Changed:
+- Terminal modifications notation has been changed to use []- and -[] for N- and C-terminal modifications, respectively
+- All internal modifications now use [] notation
+- Element masses/isotopes are generated using physics.nist.gov db
+
 ## [1.3.0]
 ### Added:
 - Permutation / Combination / Product functions in sequence.py
