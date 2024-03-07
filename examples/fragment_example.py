@@ -8,7 +8,3 @@ fragments = pt.fragment('P[1.0]EP', ion_types=['y', 'b'], charges=[1, 2], monois
 
 # Or for internal ions
 fragments = pt.fragment('P[1.0]EP', ion_types=['by'], charges=[1, 2], monoisotopic=True)
-
-
-
-
