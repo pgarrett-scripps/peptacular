@@ -4,8 +4,8 @@ the digest module, since spans essentially represent peptide sequences. Each spa
 The start and end values reference the start and end index of the peptide within the protein, while the value component
 is used to denote the number of missed cleavages the span contains.
 
-Working with spans can be a more efficient way of processing peptide data, since a peptide can be reference with only
-3 integers.
+Working with spans can be a more efficient way of processing the data, since a peptide can be reference with only
+3 ints.
 """
 
 from typing import Tuple, List

@@ -1,21 +1,36 @@
+
 # Changelog
 
 All notable changes to this project will be documented in this file.
 
-## Next release?
-- make fragment faster by using numpys cumsum function and caching single modified residue masses
+
+TODO:
+- Fix Fragment internal ions (might not be correct)
+- Add precursor ion type and remove last terminal fragment ion (since they don't exist)?
+- Have Isotope tag work with modifications
+- Ambiguous error? + some other unique errors
+- figure out what to do with testing suite as I moved most of the tests to docstrings
 
 ## [2.0.0]
 ### Added:
 - Limited ProForma2.0 support
 - Support for Unimod, psi-mod, glycan formulas, and chemical formulas (using Proforma2.0 notation)
 - Support for all types of internal fragment ions (ax, ay, bx, bx...)
+- support for global mods: isotope, static, labile, and unknown modification
+- support for mod localization scores
+- Support for multiple mods per site and []^x notation
 - gen_data submodule for generating modification and atom mass lookup tables
+- isotope.py for generating isotope distributions
+- apply_static_mod and apply_variable_mods now support n/c term mods
 
 ### Changed:
 - Terminal modifications notation has been changed to use []- and -[] for N- and C-terminal modifications, respectively
 - All internal modifications now use [] notation
 - Element masses/isotopes are generated using physics.nist.gov db
+- many sequence functions have been renamed to support importing peptacular as pt
+- move static/var mod builders to modbuilder.py
+- moved combinatorics funcs to combinatorics.py
+- mass, fragment, digest, sequence, chem, glycan, and isotope are accessible from peptacular base (suggest using import peptacular as pt)
 
 ## [1.3.0]
 ### Added:

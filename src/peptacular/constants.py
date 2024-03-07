@@ -1,22 +1,32 @@
 import json
 import os
 from copy import deepcopy
+from typing import Dict, List, Tuple
 
 PROTON_MASS = 1.00727646688
 NEUTRON_MASS = 1.00866491597
 
+
 # load elemental data from json files
 with open(os.path.join(os.path.dirname(__file__), "data", "element", "atomic_number_to_symbol.json"), 'r') as f:
-    ATOMIC_NUMBER_TO_SYMBOL = json.load(f)
+    ATOMIC_NUMBER_TO_SYMBOL: Dict[int, str] = json.load(f)
 
 with open(os.path.join(os.path.dirname(__file__), "data", "element", "average_atomic_masses.json"), 'r') as f:
-    AVERAGE_ATOMIC_MASSES = json.load(f)
+    AVERAGE_ATOMIC_MASSES: Dict[str, float] = json.load(f)
 
 with open(os.path.join(os.path.dirname(__file__), "data", "element", "isotopic_atomic_masses.json"), 'r') as f:
-    ISOTOPIC_ATOMIC_MASSES = json.load(f)
+    ISOTOPIC_ATOMIC_MASSES: Dict[str, float] = json.load(f)
 
-with open(os.path.join(os.path.dirname(__file__), "data", "element", "isotopic_atomic_compositions.json"), 'r') as f:
-    ISOTOPIC_ATOMIC_COMPOSITIONS = json.load(f)
+with open(os.path.join(os.path.dirname(__file__), "data", "element", "atomic_symbol_compositions.json"), 'r') as f:
+    ATOMIC_SYMBOL_TO_ISOTOPE_MASSES_AND_ABUNDANCES: Dict[str, List[Tuple[float, float]]] = json.load(f)
+
+with open(os.path.join(os.path.dirname(__file__), "data", "element",
+                       "atomic_symbol_neutron_offset_compositions.json"), 'r') as f:
+    ATOMIC_SYMBOL_TO_ISOTOPE_NEUTRON_OFFSETS_AND_ABUNDANCES: Dict[str, List[Tuple[int, float]]] = json.load(f)
+
+with open(os.path.join(os.path.dirname(__file__), "data", "element", "hill_order.json"), 'r') as f:
+    HILL_ORDER: Dict[str, int] = json.load(f)
+
 
 AA_COMPOSITIONS = {
     "G": {"C": 2, "H": 3, "N": 1, "O": 1},  # Glycine
@@ -136,7 +146,7 @@ def create_aa_masses(atomic_masses, aa_compositions):
 
 MONOISOTOPIC_AA_MASSES = create_aa_masses(ISOTOPIC_ATOMIC_MASSES, AA_COMPOSITIONS)
 AVERAGE_AA_MASSES = create_aa_masses(AVERAGE_ATOMIC_MASSES, AA_COMPOSITIONS)
-AMINO_ACIDS = set(AA_COMPOSITIONS.keys())
+AMINO_ACIDS = set(AA_COMPOSITIONS.keys()) | {'B', 'Z'}
 MONOISOTOPIC_ION_ADJUSTMENTS = \
     create_ion_adjustments(ISOTOPIC_ATOMIC_MASSES, ION_TYPE_START_COMPOSITIONS, ION_TYPE_END_COMPOSITIONS)
 AVERAGE_ION_ADJUSTMENTS = \
@@ -148,6 +158,11 @@ INTERNAL_ION_TYPES = {'ax', 'ay', 'az', 'bx', 'by', 'bz', 'cx', 'cy', 'cz'}
 TERMINAL_ION_TYPES = FORWARD_ION_TYPES | BACKWARD_ION_TYPES
 IMMONIUM_ION_TYPES = {'I'}
 VALID_ION_TYPES = TERMINAL_ION_TYPES | INTERNAL_ION_TYPES | IMMONIUM_ION_TYPES
+
+
+AVERAGINE_RATIOS = {'C': 4.9384, 'H': 7.7583, 'N': 1.3577, 'O': 1.4773, 'S': 0.0417}
+ISOTOPIC_AVERAGINE_MASS = sum([v * ISOTOPIC_ATOMIC_MASSES[k] for k, v in AVERAGINE_RATIOS.items()])
+AVERAGE_AVERAGINE_MASS = sum([v * AVERAGE_ATOMIC_MASSES[k] for k, v in AVERAGINE_RATIOS.items()])
 
 PROTEASES = {'arg-c': 'R',
              'asp-n': '\\w(?=D)',
@@ -194,42 +209,42 @@ PROTEASES = {'arg-c': 'R',
 
 # load from unimod_mono.pkl
 with open(os.path.join(os.path.dirname(__file__), "data", "unimod", "id_to_isotopic_mass.json"), 'r') as f:
-    UNIMOD_ID_TO_MONO_MASSES = json.load(f)
+    UNIMOD_ID_TO_MONO_MASSES: Dict[str, float] = json.load(f)
 
 with open(os.path.join(os.path.dirname(__file__), "data", "unimod", "id_to_average_mass.json"), 'r') as f:
-    UNIMOD_ID_TO_AVERAGE_MASSES = json.load(f)
+    UNIMOD_ID_TO_AVERAGE_MASSES: Dict[str, float] = json.load(f)
 
 with open(os.path.join(os.path.dirname(__file__), "data", "unimod", "id_to_isotopic_compositions.json"), 'r') as f:
-    UNIMOD_ID_TO_ISOTOPIC_COMPOSITIONS = json.load(f)
+    UNIMOD_ID_TO_ISOTOPIC_COMPOSITIONS: Dict[str, str] = json.load(f)
 
 with open(os.path.join(os.path.dirname(__file__), "data", "unimod", "name_to_id.json"), 'r') as f:
-    UNIMOD_NAME_TO_ID = json.load(f)
+    UNIMOD_NAME_TO_ID: Dict[str, str] = json.load(f)
 
 # Load monosaccharides
 with open(os.path.join(os.path.dirname(__file__), "data", "monosaccharide", "name_to_id.json"), 'r') as f:
-    MONOSACCHARIDE_NAME_TO_ID = json.load(f)
+    MONOSACCHARIDE_NAME_TO_ID: Dict[str, str] = json.load(f)
 
 with open(os.path.join(os.path.dirname(__file__), "data", "monosaccharide", "id_to_isotopic_mass.json"), 'r') as f:
-    MONOSACCHARIDE_ID_TO_ISOTOPIC_MASSES = json.load(f)
+    MONOSACCHARIDE_ID_TO_ISOTOPIC_MASSES: Dict[str, float] = json.load(f)
 
 with open(os.path.join(os.path.dirname(__file__), "data", "monosaccharide", "id_to_average_mass.json"), 'r') as f:
-    MONOSACCHARIDE_ID_TO_AVERAGE_MASSES = json.load(f)
+    MONOSACCHARIDE_ID_TO_AVERAGE_MASSES: Dict[str, float] = json.load(f)
 
 with open(os.path.join(os.path.dirname(__file__), "data", "monosaccharide", "id_to_isotopic_compositions.json"),
           'r') as f:
-    MONOSACCHARIDE_ID_TO_COMPOSITIONS = json.load(f)
+    MONOSACCHARIDE_ID_TO_COMPOSITIONS: Dict[str, str] = json.load(f)
 
-MONOSACCHARIDES_NAMES_SORTED = sorted(list(MONOSACCHARIDE_NAME_TO_ID.keys()), key=len, reverse=True)
+MONOSACCHARIDES_NAMES_SORTED: List[str] = sorted(list(MONOSACCHARIDE_NAME_TO_ID.keys()), key=len, reverse=True)
 
 # Load PSI-MOD
 with open(os.path.join(os.path.dirname(__file__), "data", "psi", "name_to_id.json"), 'r') as f:
-    PSI_MOD_NAME_TO_ID = json.load(f)
+    PSI_MOD_NAME_TO_ID: Dict[str, str] = json.load(f)
 
 with open(os.path.join(os.path.dirname(__file__), "data", "psi", "id_to_isotopic_mass.json"), 'r') as f:
-    PSI_MOD_ID_TO_ISOTOPIC_MASSES = json.load(f)
+    PSI_MOD_ID_TO_ISOTOPIC_MASSES: Dict[str, float] = json.load(f)
 
 with open(os.path.join(os.path.dirname(__file__), "data", "psi", "id_to_average_mass.json"), 'r') as f:
-    PSI_MOD_ID_TO_AVERAGE_MASSES = json.load(f)
+    PSI_MOD_ID_TO_AVERAGE_MASSES: Dict[str, float]= json.load(f)
 
 with open(os.path.join(os.path.dirname(__file__), "data", "psi", "id_to_isotopic_compositions.json"), 'r') as f:
-    PSI_MOD_ID_TO_COMPOSITIONS = json.load(f)
+    PSI_MOD_ID_TO_COMPOSITIONS: Dict[str, str] = json.load(f)

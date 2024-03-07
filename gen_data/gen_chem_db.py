@@ -1,6 +1,9 @@
 import json
+from copy import deepcopy
 from dataclasses import dataclass
 from typing import Union, List, Dict
+
+NEUTRON_MASS = 1.00866491597
 
 
 def gen_chem_db():
@@ -175,23 +178,121 @@ def gen_chem_db():
 
         return d
 
-    isotopic_atomic_compositions = get_isotopic_atomic_compositions(atomic_number_to_infos)
+    def map_atomic_number_to_comp_neutron_offset(aa_infos: Dict[int, List[ElementInfo]]) -> Dict[str, float]:
+        d = {}
+        for _, infos in aa_infos.items():
+            infos.sort(key=lambda x: x.isotopic_composition, reverse=True)
+
+            # first elem is monoisotopic
+            monoisotopic_info = infos[0]
+            d[monoisotopic_info.atomic_symbol] = []
+
+            for info in infos: # Add all isotopes for each atomic symbol
+                if info.isotopic_composition == 0.0:
+                    continue
+                d[monoisotopic_info.atomic_symbol].append(((info.mass_number - monoisotopic_info.mass_number), info.isotopic_composition))
+
+            for info in infos: # Add each isotopic composition for each isotope
+                d[str(info)] = [(0.0, 1.0)]
+
+            d['T'] = d['3T']
+            d['D'] = d['2D']
+            d['3H'] = d['3T']
+            d['2H'] = d['2D']
+
+        return d
+
+    def map_atomic_number_to_comp(aa_infos: Dict[int, List[ElementInfo]]) -> Dict[str, float]:
+        d = {}
+        for _, infos in aa_infos.items():
+            infos.sort(key=lambda x: x.isotopic_composition, reverse=True)
+
+            # first elem is monoisotopic
+            monoisotopic_info = infos[0]
+            d[monoisotopic_info.atomic_symbol] = []
+
+            for info in infos: # Add all isotopes for each atomic symbol
+                if info.isotopic_composition == 0.0:
+                    continue
+                d[monoisotopic_info.atomic_symbol].append((info.relative_atomic_mass, info.isotopic_composition))
+
+            for info in infos: # Add each isotopic composition for each isotope
+                d[str(info)] = [(info.relative_atomic_mass, 1.0)]
+
+            d['T'] = d['3T']
+            d['D'] = d['2D']
+            d['3H'] = d['3T']
+            d['2H'] = d['2D']
+
+        return d
+
+    def map_hill_order(aa_infos: Dict[int, List[ElementInfo]]) -> Dict[str, int]:
+
+        aa_infos = deepcopy(aa_infos)
+
+        d = []
+
+        # make carbon first
+        carbon_infos = aa_infos.pop(6)
+        carbon_infos.sort(key=lambda x: x.isotopic_composition, reverse=True)
+
+        monoisotopic_carbon = carbon_infos[0]
+        d.append(monoisotopic_carbon.atomic_symbol)
+        d.extend([str(info) for info in carbon_infos])
+
+        # make hydrogen second
+        hydrogen_infos = aa_infos.pop(1)
+        hydrogen_infos.sort(key=lambda x: x.isotopic_composition, reverse=True)
+        monoisotopic_hydrogen = hydrogen_infos[0]
+        d.append(monoisotopic_hydrogen.atomic_symbol)
+        d.extend([str(info) for info in hydrogen_infos])
+
+        d.append('T')
+        d.append('D')
+        d.append('3H')
+        d.append('2H')
+
+        # add the rest alphabetically
+        for atomic_number, infos in sorted(aa_infos.items(), key=lambda x: x[1][0].atomic_symbol):
+            infos.sort(key=lambda x: x.isotopic_composition, reverse=True)
+            d.append(infos[0].atomic_symbol)
+            for info in infos:
+                d.append(str(info))
+
+        # map to index
+        d = {v: k for k, v in enumerate(d)}
+
+        return d
+
+
+    atomic_number_to_comp_neutron_offset = map_atomic_number_to_comp_neutron_offset(atomic_number_to_infos)
+    atomic_symbol_to_compositions = map_atomic_number_to_comp(atomic_number_to_infos)
     isotopic_atomic_masses = get_isotopic_atomic_masses(atomic_number_to_infos)
 
-    print(isotopic_atomic_compositions)
+    hill_ordering = map_hill_order(atomic_number_to_infos)
+
+    print(hill_ordering)
+    print(atomic_number_to_comp_neutron_offset)
+    print(atomic_symbol_to_compositions)
     print(isotopic_atomic_masses)
     print(atomic_number_to_symbol)
     print(average_atomic_masses)
 
-    if not all([isotopic_atomic_compositions, isotopic_atomic_masses, atomic_number_to_symbol, average_atomic_masses]):
+    if not all([atomic_number_to_comp_neutron_offset, atomic_symbol_to_compositions, isotopic_atomic_masses, atomic_number_to_symbol, average_atomic_masses]):
         raise ValueError('Error parsing atomic data. Check the source file.')
+
+    with open('../src/peptacular/data/element/hill_order.json', 'w') as f:
+        json.dump(hill_ordering, f)
 
     # save to json files
     with open('../src/peptacular/data/element/isotopic_atomic_masses.json', 'w') as f:
         json.dump(isotopic_atomic_masses, f)
 
-    with open('../src/peptacular/data/element/isotopic_atomic_compositions.json', 'w') as f:
-        json.dump(isotopic_atomic_compositions, f)
+    with open('../src/peptacular/data/element/atomic_symbol_compositions.json', 'w') as f:
+        json.dump(atomic_symbol_to_compositions, f)
+
+    with open('../src/peptacular/data/element/atomic_symbol_neutron_offset_compositions.json', 'w') as f:
+        json.dump(atomic_number_to_comp_neutron_offset, f)
 
     with open('../src/peptacular/data/element/atomic_number_to_symbol.json', 'w') as f:
         json.dump(atomic_number_to_symbol, f)

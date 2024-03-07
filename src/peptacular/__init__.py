@@ -1,1 +1,10 @@
-__version__ = '1.3.0'
+__version__ = '2.0.0'
+
+from .sequence import *
+from .chem import *
+from .digest import *
+from .fragment import *
+from .mass import *
+from .glycan import *
+from .isotope import *
+

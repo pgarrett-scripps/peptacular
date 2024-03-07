@@ -1,8 +1,8 @@
 import unittest
 
 from peptacular import constants
-from peptacular.digest import digest, identify_cleavage_sites, build_right_semi_sequences, \
-    build_non_enzymatic_sequences, build_left_semi_sequences, build_semi_sequences
+from peptacular.digest import digest, get_cleavage_sites, get_right_semi_enzymatic_sequences, \
+    get_non_enzymatic_sequences, get_left_semi_enzymatic_sequences, get_semi_enzymatic_sequences
 
 PROTEIN = 'MVIMSEFSADPAGQGQGQQKPLRVGFYDIERTLGKGNFAVVKLARHRVTKTQVAIKIIDKTRLDSSNLEKIYREVQLMKLLNHPHIIKLYQVMETKDMLYIVTE'
 
@@ -10,7 +10,7 @@ PROTEIN = 'MVIMSEFSADPAGQGQGQQKPLRVGFYDIERTLGKGNFAVVKLARHRVTKTQVAIKIIDKTRLDSSNLE
 class TestDigest(unittest.TestCase):
 
     def test_trypsin_sites(self):
-        cleavage_sites = identify_cleavage_sites(PROTEIN, constants.PROTEASES['trypsin'])
+        cleavage_sites = get_cleavage_sites(PROTEIN, constants.PROTEASES['trypsin'])
 
         sites = [23, 31, 35, 42, 45, 47, 50, 56, 60, 62, 70, 73, 79, 88, 96]
 
@@ -79,48 +79,48 @@ class TestDigest(unittest.TestCase):
                          {'TIDER', 'TIDERTIDEK', 'TIDERTIDEKTIDE', 'TIDEK', 'TIDEKTIDE', 'TIDE'})
 
     def test_get_semi_sequences(self):
-        assert set(build_semi_sequences(sequence='PEPTIDE', min_len=3, max_len=5)) == \
+        assert set(get_semi_enzymatic_sequences(sequence='PEPTIDE', min_len=3, max_len=5)) == \
                {'TIDE', 'PTIDE', 'PEPT', 'PEPTI', 'IDE', 'PEP'}
-        assert set(build_semi_sequences(sequence='PEPTIDE', min_len=2, max_len=5)) == \
+        assert set(get_semi_enzymatic_sequences(sequence='PEPTIDE', min_len=2, max_len=5)) == \
                {'TIDE', 'PTIDE', 'PEPT', 'PEPTI', 'IDE', 'PEP', 'PE', 'DE'}
-        assert set(build_semi_sequences(sequence='PEPTIDE', min_len=2, max_len=100)) == \
+        assert set(get_semi_enzymatic_sequences(sequence='PEPTIDE', min_len=2, max_len=100)) == \
                {'TIDE', 'PTIDE', 'PEPT', 'PEPTI', 'IDE', 'PEP', 'PE', 'DE', 'PEPTID', 'EPTIDE'}
-        assert set(build_semi_sequences(sequence='PEPTIDE', min_len=None, max_len=None)) == \
+        assert set(get_semi_enzymatic_sequences(sequence='PEPTIDE', min_len=None, max_len=None)) == \
                {'P', 'E', 'TIDE', 'PTIDE', 'PEPT', 'PEPTI', 'IDE', 'PEP', 'PE', 'DE', 'PEPTID', 'EPTIDE'}
 
     def test_get_left_semi_sequences(self):
-        self.assertEqual(set(build_left_semi_sequences('PEPTIDE', None, None)),
+        self.assertEqual(set(get_left_semi_enzymatic_sequences('PEPTIDE', None, None)),
                          {'P', 'PE', 'PEP', 'PEPT', 'PEPTI', 'PEPTID'})
-        self.assertEqual(set(build_left_semi_sequences('PEPTIDE', 3, None)), {'PEP', 'PEPT', 'PEPTI', 'PEPTID'})
-        self.assertEqual(set(build_left_semi_sequences('PEPTIDE', None, 5)), {'P', 'PE', 'PEP', 'PEPT', 'PEPTI'})
+        self.assertEqual(set(get_left_semi_enzymatic_sequences('PEPTIDE', 3, None)), {'PEP', 'PEPT', 'PEPTI', 'PEPTID'})
+        self.assertEqual(set(get_left_semi_enzymatic_sequences('PEPTIDE', None, 5)), {'P', 'PE', 'PEP', 'PEPT', 'PEPTI'})
 
-        assert set(build_left_semi_sequences(sequence='PEPTIDE', min_len=None, max_len=None)) == \
+        assert set(get_left_semi_enzymatic_sequences(sequence='PEPTIDE', min_len=None, max_len=None)) == \
                {'P', 'PE', 'PEP', 'PEPT', 'PEPTI', 'PEPTID'}
-        assert set(build_left_semi_sequences(sequence='PEPTIDE', min_len=3, max_len=None)) == \
+        assert set(get_left_semi_enzymatic_sequences(sequence='PEPTIDE', min_len=3, max_len=None)) == \
                {'PEP', 'PEPT', 'PEPTI', 'PEPTID'}
-        assert set(build_left_semi_sequences(sequence='PEPTIDE', min_len=None, max_len=5)) == \
+        assert set(get_left_semi_enzymatic_sequences(sequence='PEPTIDE', min_len=None, max_len=5)) == \
                {'P', 'PE', 'PEP', 'PEPT', 'PEPTI'}
-        assert set(build_left_semi_sequences(sequence='PEPTIDE', min_len=3, max_len=4)) == \
+        assert set(get_left_semi_enzymatic_sequences(sequence='PEPTIDE', min_len=3, max_len=4)) == \
                {'PEP', 'PEPT'}
 
     def test_get_right_semi_sequences(self):
-        self.assertEqual(set(build_right_semi_sequences('PEPTIDE', None, None)),
+        self.assertEqual(set(get_right_semi_enzymatic_sequences('PEPTIDE', None, None)),
                          {'EPTIDE', 'PTIDE', 'TIDE', 'IDE', 'DE', 'E'})
-        self.assertEqual(set(build_right_semi_sequences('PEPTIDE', 3, None)), {'EPTIDE', 'PTIDE', 'TIDE', 'IDE'})
-        self.assertEqual(set(build_right_semi_sequences('PEPTIDE', None, 5)), {'PTIDE', 'TIDE', 'IDE', 'DE', 'E'})
-        assert set(build_right_semi_sequences(sequence='PEPTIDE', min_len=None, max_len=None)) == \
+        self.assertEqual(set(get_right_semi_enzymatic_sequences('PEPTIDE', 3, None)), {'EPTIDE', 'PTIDE', 'TIDE', 'IDE'})
+        self.assertEqual(set(get_right_semi_enzymatic_sequences('PEPTIDE', None, 5)), {'PTIDE', 'TIDE', 'IDE', 'DE', 'E'})
+        assert set(get_right_semi_enzymatic_sequences(sequence='PEPTIDE', min_len=None, max_len=None)) == \
                {'EPTIDE', 'PTIDE', 'TIDE', 'IDE', 'DE', 'E'}
-        assert set(build_right_semi_sequences(sequence='PEPTIDE', min_len=3, max_len=None)) == \
+        assert set(get_right_semi_enzymatic_sequences(sequence='PEPTIDE', min_len=3, max_len=None)) == \
                {'EPTIDE', 'PTIDE', 'TIDE', 'IDE'}
-        assert set(build_right_semi_sequences(sequence='PEPTIDE', min_len=None, max_len=5)) == \
+        assert set(get_right_semi_enzymatic_sequences(sequence='PEPTIDE', min_len=None, max_len=5)) == \
                {'PTIDE', 'TIDE', 'IDE', 'DE', 'E'}
-        assert set(build_right_semi_sequences(sequence='PEPTIDE', min_len=3, max_len=4)) == \
+        assert set(get_right_semi_enzymatic_sequences(sequence='PEPTIDE', min_len=3, max_len=4)) == \
                {'TIDE', 'IDE'}
 
     def test_get_all_non_enzymatic_peptides(self):
-        self.assertEqual(set(build_non_enzymatic_sequences('PEPT')),
+        self.assertEqual(set(get_non_enzymatic_sequences('PEPT')),
                          {'P', 'E', 'P', 'T', 'PE', 'EP', 'PT', 'PEP', 'EPT'})
-        self.assertEqual(set(build_non_enzymatic_sequences('PEPT', min_len=1, max_len=2)),
+        self.assertEqual(set(get_non_enzymatic_sequences('PEPT', min_len=1, max_len=2)),
                          {'P', 'E', 'P', 'T', 'PE', 'EP', 'PT'})
-        self.assertEqual(set(build_non_enzymatic_sequences('PEPT', min_len=2, max_len=4)),
+        self.assertEqual(set(get_non_enzymatic_sequences('PEPT', min_len=2, max_len=4)),
                          {'PT', 'EP', 'EPT', 'PE', 'PEP'})

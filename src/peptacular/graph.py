@@ -2,8 +2,7 @@ import random
 from collections import Counter
 from typing import List, Dict, Iterable
 
-from peptacular.sequence import build_kmers, split_sequence, calculate_sequence_length
-from peptacular.term.modification import get_n_term_modification, get_c_term_modification
+from peptacular.sequence import get_kmers, split, sequence_length, get_mods
 
 
 class DebruijnGraph:
@@ -22,7 +21,7 @@ class DebruijnGraph:
 
     def add_sequence(self, sequence: str) -> None:
         update_debruijn_graph(self.graph, sequence, self.k)
-        components = split_sequence(sequence)
+        components = split(sequence)
         self.aa_counter.update(components)
 
     def reset(self) -> None:
@@ -52,7 +51,7 @@ class MarkovChain:
 
     def add_sequence(self, sequence: str) -> None:
         update_markov_chain(self.chain, sequence, self.k)
-        components = split_sequence(sequence)
+        components = split(sequence)
         self.aa_counter.update(components)
 
     def reset(self) -> None:
@@ -84,12 +83,14 @@ def update_markov_chain(chain: Dict[str, Counter[str]], sequence: str, k: int) -
 
     """
 
-    if get_n_term_modification(sequence) is not None or get_c_term_modification(sequence) is not None:
+    mods = get_mods(sequence)
+
+    if mods.get('n', []) or mods.get('n', []):
         raise ValueError("N or C term modification not supported")
 
     sequence = '-' * k + sequence + '#'
-    for kmer in build_kmers(sequence, k + 1):
-        components = split_sequence(kmer)
+    for kmer in get_kmers(sequence, k + 1):
+        components = split(kmer)
         kmer, aa = ''.join(components[:-1]), components[-1]
         if kmer not in chain:
             chain[kmer] = Counter()
@@ -141,12 +142,14 @@ def update_debruijn_graph(graph: Dict[str, Dict[str, str]], sequence: str, k: in
 
     """
 
-    if get_n_term_modification(sequence) is not None or get_c_term_modification(sequence) is not None:
+    mods = get_mods(sequence)
+
+    if mods.get('n', []) or mods.get('n', []):
         raise ValueError("N or C term modification not supported")
 
     sequence = '-' * k + sequence
-    for kmer in build_kmers(sequence, k + 1):
-        comps = split_sequence(kmer)
+    for kmer in get_kmers(sequence, k + 1):
+        comps = split(kmer)
         kmer, aa = ''.join(comps[:-1]), comps[-1]
         if kmer not in graph:
             graph[kmer] = {}
@@ -247,10 +250,10 @@ def construct_sequence_with_debruijn_graph(sequence: str, graph: Dict[str, Dict[
 
     """
 
-    k = calculate_sequence_length(list(graph.keys())[0])
+    k = sequence_length(list(graph.keys())[0])
 
     sequence = '-' * k + sequence
-    kmers = list(build_kmers(sequence, k))
+    kmers = list(get_kmers(sequence, k))
 
     new_sequence = ''
     for i, kmer in enumerate(kmers):
@@ -309,7 +312,7 @@ def construct_sequence_with_markov_chain(graph: Dict[str, Counter], k: int, max_
         weights = list(graph[start_key].values())
         next_aa = random.choices(choices, weights=weights, k=1)[0]
 
-        if next_aa == '#' or calculate_sequence_length(new_sequence) >= max_length:
+        if next_aa == '#' or sequence_length(new_sequence) >= max_length:
             break
 
         new_sequence += next_aa

@@ -2,8 +2,10 @@ import timeit
 import random
 
 from peptacular import constants
+from peptacular.digest import digest
 from peptacular.fragment import *
 from peptacular.sequence import *
+from peptacular.mass import *
 
 
 # Function to generate a random sequence of amino acids
@@ -14,7 +16,7 @@ def generate_random_sequence(length: int) -> str:
 
 # Function to generate random modifications for a given sequence
 def generate_random_modifications(sequence: str, num_mods: int) -> Dict[int, float]:
-    mod_positions = random.sample(range(calculate_sequence_length(sequence)), num_mods)
+    mod_positions = random.sample(range(sequence_length(sequence)), num_mods)
     return {pos: round(random.uniform(0.5, 1.5), 4) for pos in mod_positions}
 
 
@@ -33,12 +35,14 @@ def benchmark_func(func, *args):
 
 
 functions_to_benchmark = [
-    (get_modifications, "<13C>[Acetyl]-PE[3.1415][1]PTIDE-[Amide]"),
-    (add_modifications, "<13C>[Acetyl]-PEPTIDE-[Amide]", {1: [3.1415]}),
-    (strip_modifications, "<13C>[Acetyl]-PE[3.1415]PTIDE-[Amide]"),
-    #(build_fragments, "PE(3.1415)PTIDE", ['a', 'b', 'c', 'x', 'y', 'z'], [1, 2, 3], True, False),
+    (get_mods, "<13C>[Acetyl]-PE[3.1415][1]PTIDE-[Amide]"),
+    (add_mods, "<13C>[Acetyl]-PEPTIDE-[Amide]", {1: [3.1415]}),
+    (strip_mods, "<13C>[Acetyl]-PE[3.1415]PTIDE-[Amide]"),
+    (mass, "<13C>[Acetyl]-PE[3.1415]PTIDE-[100]"),
+    (fragment, "<13C>[Acetyl]-PE[3.1415]PTIDE-[100]", ['a', 'b', 'c', 'x', 'y', 'z'], [1, 2, 3]),
+    (digest, "MASFRLFLLCLAGLVFVSEAGSVGAGEPKCPLMVKVLDAVRGSPAANVGVKVFK"*25, 'Trypsin'),
     #(fragment, "PE(3.1415)PTIDE", ['a', 'b', 'c', 'x', 'y', 'z'], [1, 2, 3], True, False),
-    (split_sequence, "<13C>[Acetyl]-PE[3.1415]PTIDE-[Amide]"),
+    (split, "<13C>[Acetyl]-PE[3.1415]PTIDE-[Amide]"),
 ]
 
 # Benchmark and store results
@@ -49,9 +53,3 @@ for func, *params in functions_to_benchmark:
 
 print(benchmark_results)
 
-
-for i in range(100_000):
-    get_modifications("<13C>[Acetyl]-PE[3.1415][1]PTIDE-[Amide]")
-
-
-print(get_modifications("<13C>[Acetyl]-PE[3.1415][1]PTIDE-[Amide]"))

@@ -1,9 +1,9 @@
 from typing import Tuple, List, Union
-from peptacular.sequence.sequence import pop_modifications, add_modifications
+from peptacular.sequence.sequence import pop_mods, add_mods
 from peptacular.types import ModValue
 
 
-def pop_n_term_modifications(sequence: str) -> Tuple[str, List[ModValue]]:
+def pop_nterm_mods(sequence: str) -> Tuple[str, List[ModValue]]:
     """
     Remove the n-term modifications from the sequence.
 
@@ -15,26 +15,26 @@ def pop_n_term_modifications(sequence: str) -> Tuple[str, List[ModValue]]:
 
     .. code-block:: python
 
-        >>> pop_n_term_modifications('[Acetyl]-PEPTIDE')
+        >>> pop_nterm_mods('[Acetyl]-PEPTIDE')
         ('PEPTIDE', ['Acetyl'])
 
-        >>> pop_n_term_modifications('[Acetyl][1]-PEPTIDE')
+        >>> pop_nterm_mods('[Acetyl][1]-PEPTIDE')
         ('PEPTIDE', ['Acetyl', 1])
 
-        >>> pop_n_term_modifications('PEPTIDE')
+        >>> pop_nterm_mods('PEPTIDE')
         ('PEPTIDE', [])
 
-        >>> pop_n_term_modifications('{Oxidation}<C13>[Acetyl]-PEPTIDE')
+        >>> pop_nterm_mods('{Oxidation}<C13>[Acetyl]-PEPTIDE')
         ('{Oxidation}<C13>PEPTIDE', ['Acetyl'])
 
     """
-    stripped_sequence, mods = pop_modifications(sequence)
+    stripped_sequence, mods = pop_mods(sequence)
     n_term_mod = mods.pop('n', [])
-    sequence = add_modifications(stripped_sequence, mods)
+    sequence = add_mods(stripped_sequence, mods)
     return sequence, n_term_mod
 
 
-def get_n_term_modifications(sequence: str) -> List[ModValue]:
+def get_nterm_mods(sequence: str) -> List[ModValue]:
     """
     Get the n-term modifications from the sequence.
 
@@ -46,23 +46,23 @@ def get_n_term_modifications(sequence: str) -> List[ModValue]:
 
     .. code-block:: python
 
-        >>> get_n_term_modifications('[Acetyl]-PEPTIDE')
+        >>> get_nterm_mods('[Acetyl]-PEPTIDE')
         ['Acetyl']
 
-        >>> get_n_term_modifications('[Acetyl][1]-PEPTIDE')
+        >>> get_nterm_mods('[Acetyl][1]-PEPTIDE')
         ['Acetyl', 1]
 
-        >>> get_n_term_modifications('PEPTIDE')
+        >>> get_nterm_mods('PEPTIDE')
         []
 
-        >>> get_n_term_modifications('{Oxidation}<C13>[Acetyl]-PEPTIDE')
+        >>> get_nterm_mods('{Oxidation}<C13>[Acetyl]-PEPTIDE')
         ['Acetyl']
 
     """
-    return pop_n_term_modifications(sequence)[1]
+    return pop_nterm_mods(sequence)[1]
 
 
-def strip_n_term_modifications(sequence: str) -> str:
+def strip_nterm_mods(sequence: str) -> str:
     """
     Remove the n-term modifications from the sequence.
 
@@ -74,23 +74,23 @@ def strip_n_term_modifications(sequence: str) -> str:
 
     .. code-block:: python
 
-        >>> strip_n_term_modifications('[Acetyl]-PEPTIDE')
+        >>> strip_nterm_mods('[Acetyl]-PEPTIDE')
         'PEPTIDE'
 
-        >>> strip_n_term_modifications('[Acetyl][1]-PEPTIDE')
+        >>> strip_nterm_mods('[Acetyl][1]-PEPTIDE')
         'PEPTIDE'
 
-        >>> strip_n_term_modifications('PEPTIDE')
+        >>> strip_nterm_mods('PEPTIDE')
         'PEPTIDE'
 
-        >>> strip_n_term_modifications('{Oxidation}<C13>[Acetyl]-PEPTIDE')
+        >>> strip_nterm_mods('{Oxidation}<C13>[Acetyl]-PEPTIDE')
         '{Oxidation}<C13>PEPTIDE'
 
     """
-    return pop_n_term_modifications(sequence)[0]
+    return pop_nterm_mods(sequence)[0]
 
 
-def add_n_term_modifications(sequence: str, mods: Union[ModValue, List[ModValue]], overwrite: bool = False) -> str:
+def add_nterm_mods(sequence: str, mods: Union[ModValue, List[ModValue]], overwrite: bool = False) -> str:
     """
     Add n-term modifications to the sequence.
 
@@ -106,25 +106,25 @@ def add_n_term_modifications(sequence: str, mods: Union[ModValue, List[ModValue]
 
     .. code-block:: python
 
-        >>> add_n_term_modifications('PEPTIDE', ['Acetyl'])
+        >>> add_nterm_mods('PEPTIDE', ['Acetyl'])
         '[Acetyl]-PEPTIDE'
 
-        >>> add_n_term_modifications('PEPTIDE', 'Acetyl')
+        >>> add_nterm_mods('PEPTIDE', 'Acetyl')
         '[Acetyl]-PEPTIDE'
 
-        >>> add_n_term_modifications('PEPTIDE', ['Acetyl', 1])
+        >>> add_nterm_mods('PEPTIDE', ['Acetyl', 1])
         '[Acetyl][1]-PEPTIDE'
 
-        >>> add_n_term_modifications('PEPTIDE', [])
+        >>> add_nterm_mods('PEPTIDE', [])
         'PEPTIDE'
 
-        >>> add_n_term_modifications('{Oxidation}<C13>PEPTIDE', ['Acetyl'])
+        >>> add_nterm_mods('{Oxidation}<C13>PEPTIDE', ['Acetyl'])
         '{Oxidation}<C13>[Acetyl]-PEPTIDE'
 
-        >>> add_n_term_modifications('[Acetyl]-PEPTIDE', 1)
+        >>> add_nterm_mods('[Acetyl]-PEPTIDE', 1)
         '[Acetyl][1]-PEPTIDE'
 
-        >>> add_n_term_modifications('[Acetyl]-PEPTIDE', 1, overwrite=True)
+        >>> add_nterm_mods('[Acetyl]-PEPTIDE', 1, overwrite=True)
         '[1]-PEPTIDE'
 
     """
@@ -132,10 +132,10 @@ def add_n_term_modifications(sequence: str, mods: Union[ModValue, List[ModValue]
     if not isinstance(mods, list):
         mods = [mods]
 
-    return add_modifications(sequence, {'n': mods}, overwrite)
+    return add_mods(sequence, {'n': mods}, overwrite)
 
 
-def pop_c_term_modifications(sequence: str) -> Tuple[str, List[ModValue]]:
+def pop_cterm_mods(sequence: str) -> Tuple[str, List[ModValue]]:
     """
     Remove the c-term modifications from the sequence.
 
@@ -147,26 +147,26 @@ def pop_c_term_modifications(sequence: str) -> Tuple[str, List[ModValue]]:
 
     .. code-block:: python
 
-        >>> pop_c_term_modifications('PEPTIDE-[Amide]')
+        >>> pop_cterm_mods('PEPTIDE-[Amide]')
         ('PEPTIDE', ['Amide'])
 
-        >>> pop_c_term_modifications('PEPTIDE-[Amide][1]')
+        >>> pop_cterm_mods('PEPTIDE-[Amide][1]')
         ('PEPTIDE', ['Amide', 1])
 
-        >>> pop_c_term_modifications('PEPTIDE')
+        >>> pop_cterm_mods('PEPTIDE')
         ('PEPTIDE', [])
 
-        >>> pop_c_term_modifications('<15C>PEPTIDE[Oxidation]-[Amide]')
+        >>> pop_cterm_mods('<15C>PEPTIDE[Oxidation]-[Amide]')
         ('<15C>PEPTIDE[Oxidation]', ['Amide'])
 
     """
-    stripped_sequence, mods = pop_modifications(sequence)
+    stripped_sequence, mods = pop_mods(sequence)
     c_term_mod = mods.pop('c', [])
-    sequence = add_modifications(stripped_sequence, mods)
+    sequence = add_mods(stripped_sequence, mods)
     return sequence, c_term_mod
 
 
-def get_c_term_modifications(sequence: str) -> List[ModValue]:
+def get_cterm_mods(sequence: str) -> List[ModValue]:
     """
     Get the c-term modifications from the sequence.
 
@@ -178,24 +178,24 @@ def get_c_term_modifications(sequence: str) -> List[ModValue]:
 
     .. code-block:: python
 
-        >>> get_c_term_modifications('PEPTIDE-[Amide]')
+        >>> get_cterm_mods('PEPTIDE-[Amide]')
         ['Amide']
 
-        >>> get_c_term_modifications('PEPTIDE-[Amide][1]')
+        >>> get_cterm_mods('PEPTIDE-[Amide][1]')
         ['Amide', 1]
 
-        >>> get_c_term_modifications('PEPTIDE')
+        >>> get_cterm_mods('PEPTIDE')
         []
 
-        >>> get_c_term_modifications('<15C>PEPTIDE[Oxidation]-[Amide]')
+        >>> get_cterm_mods('<15C>PEPTIDE[Oxidation]-[Amide]')
         ['Amide']
 
     """
 
-    return pop_c_term_modifications(sequence)[1]
+    return pop_cterm_mods(sequence)[1]
 
 
-def strip_c_term_modification(sequence: str) -> str:
+def strip_cterm_mods(sequence: str) -> str:
     """
     Remove the c-term modifications from the sequence.
 
@@ -207,23 +207,23 @@ def strip_c_term_modification(sequence: str) -> str:
 
     .. code-block:: python
 
-        >>> strip_c_term_modification('PEPTIDE-[Amide]')
+        >>> strip_cterm_mods('PEPTIDE-[Amide]')
         'PEPTIDE'
 
-        >>> strip_c_term_modification('PEPTIDE-[Amide][1]')
+        >>> strip_cterm_mods('PEPTIDE-[Amide][1]')
         'PEPTIDE'
 
-        >>> strip_c_term_modification('PEPTIDE')
+        >>> strip_cterm_mods('PEPTIDE')
         'PEPTIDE'
 
-        >>> strip_c_term_modification('<15C>PEPTIDE[Oxidation]-[Amide]')
+        >>> strip_cterm_mods('<15C>PEPTIDE[Oxidation]-[Amide]')
         '<15C>PEPTIDE[Oxidation]'
 
     """
-    return pop_c_term_modifications(sequence)[0]
+    return pop_cterm_mods(sequence)[0]
 
 
-def add_c_term_modifications(sequence: str, mods: Union[ModValue, List[ModValue]], overwrite: bool = False) -> str:
+def add_cterm_mods(sequence: str, mods: Union[ModValue, List[ModValue]], overwrite: bool = False) -> str:
     """
     Add a c-term modification to the sequence.
 
@@ -240,22 +240,22 @@ def add_c_term_modifications(sequence: str, mods: Union[ModValue, List[ModValue]
 
     .. code-block:: python
 
-        >>> add_c_term_modifications('PEPTIDE', ['Amide'])
+        >>> add_cterm_mods('PEPTIDE', ['Amide'])
         'PEPTIDE-[Amide]'
 
-        >>> add_c_term_modifications('PEPTIDE', 'Amide')
+        >>> add_cterm_mods('PEPTIDE', 'Amide')
         'PEPTIDE-[Amide]'
 
-        >>> add_c_term_modifications('PEPTIDE', ['Amide', 1])
+        >>> add_cterm_mods('PEPTIDE', ['Amide', 1])
         'PEPTIDE-[Amide][1]'
 
-        >>> add_c_term_modifications('PEPTIDE[Oxidation]', ['Amide'])
+        >>> add_cterm_mods('PEPTIDE[Oxidation]', ['Amide'])
         'PEPTIDE[Oxidation]-[Amide]'
 
-        >>> add_c_term_modifications('PEPTIDE-[Amide]', [1])
+        >>> add_cterm_mods('PEPTIDE-[Amide]', [1])
         'PEPTIDE-[Amide][1]'
 
-        >>> add_c_term_modifications('PEPTIDE-[Amide]', [1], overwrite=True)
+        >>> add_cterm_mods('PEPTIDE-[Amide]', [1], overwrite=True)
         'PEPTIDE-[1]'
 
     """
@@ -263,10 +263,10 @@ def add_c_term_modifications(sequence: str, mods: Union[ModValue, List[ModValue]
     if not isinstance(mods, list):
         mods = [mods]
 
-    return add_modifications(sequence, {'c': mods}, overwrite)
+    return add_mods(sequence, {'c': mods}, overwrite)
 
 
-def pop_terminal_modifications(sequence: str) -> Tuple[str, List[ModValue], List[ModValue]]:
+def pop_terminal_mods(sequence: str) -> Tuple[str, List[ModValue], List[ModValue]]:
     """
     Remove the n-term and c-term modifications from the sequence.
 
@@ -278,27 +278,27 @@ def pop_terminal_modifications(sequence: str) -> Tuple[str, List[ModValue], List
 
     .. code-block:: python
 
-        >>> pop_terminal_modifications('[Acetyl]-PEPTIDE-[Amide]')
+        >>> pop_terminal_mods('[Acetyl]-PEPTIDE-[Amide]')
         ('PEPTIDE', ['Acetyl'], ['Amide'])
 
-        >>> pop_terminal_modifications('[Acetyl][1]-PEPTIDE-[Amide][1]')
+        >>> pop_terminal_mods('[Acetyl][1]-PEPTIDE-[Amide][1]')
         ('PEPTIDE', ['Acetyl', 1], ['Amide', 1])
 
-        >>> pop_terminal_modifications('PEPTIDE')
+        >>> pop_terminal_mods('PEPTIDE')
         ('PEPTIDE', [], [])
 
-        >>> pop_terminal_modifications('{Oxidation}<C13>[Acetyl]-PEPTIDE[Oxidation]-[Amide]')
+        >>> pop_terminal_mods('{Oxidation}<C13>[Acetyl]-PEPTIDE[Oxidation]-[Amide]')
         ('{Oxidation}<C13>PEPTIDE[Oxidation]', ['Acetyl'], ['Amide'])
 
     """
-    stripped_sequence, mods = pop_modifications(sequence)
+    stripped_sequence, mods = pop_mods(sequence)
     c_term_mod = mods.pop('c', [])
     n_term_mod = mods.pop('n', [])
-    sequence = add_modifications(stripped_sequence, mods)
+    sequence = add_mods(stripped_sequence, mods)
     return sequence, n_term_mod, c_term_mod
 
 
-def get_terminal_modifications(sequence: str) -> Tuple[List[ModValue], List[ModValue]]:
+def get_terminal_mods(sequence: str) -> Tuple[List[ModValue], List[ModValue]]:
     """
     Get the n-term and c-term modifications from the sequence.
 
@@ -310,23 +310,23 @@ def get_terminal_modifications(sequence: str) -> Tuple[List[ModValue], List[ModV
 
     .. code-block:: python
 
-        >>> get_terminal_modifications('[Acetyl]-PEPTIDE-[Amide]')
+        >>> get_terminal_mods('[Acetyl]-PEPTIDE-[Amide]')
         (['Acetyl'], ['Amide'])
 
-        >>> get_terminal_modifications('[Acetyl][1]-PEPTIDE-[Amide][1]')
+        >>> get_terminal_mods('[Acetyl][1]-PEPTIDE-[Amide][1]')
         (['Acetyl', 1], ['Amide', 1])
 
-        >>> get_terminal_modifications('PEPTIDE')
+        >>> get_terminal_mods('PEPTIDE')
         ([], [])
 
-        >>> get_terminal_modifications('{Oxidation}<C13>[Acetyl]-PEPTIDE[Oxidation]-[Amide]')
+        >>> get_terminal_mods('{Oxidation}<C13>[Acetyl]-PEPTIDE[Oxidation]-[Amide]')
         (['Acetyl'], ['Amide'])
 
     """
-    return pop_terminal_modifications(sequence)[1:]
+    return pop_terminal_mods(sequence)[1:]
 
 
-def strip_terminal_modifications(sequence: str) -> str:
+def strip_terminal_mods(sequence: str) -> str:
     """
     Remove the n-term and c-term modifications from the sequence.
 
@@ -338,24 +338,24 @@ def strip_terminal_modifications(sequence: str) -> str:
 
     .. code-block:: python
 
-        >>> strip_terminal_modifications('[Acetyl]-PEPTIDE-[Amide]')
+        >>> strip_terminal_mods('[Acetyl]-PEPTIDE-[Amide]')
         'PEPTIDE'
 
-        >>> strip_terminal_modifications('[Acetyl][1]-PEPTIDE-[Amide][1]')
+        >>> strip_terminal_mods('[Acetyl][1]-PEPTIDE-[Amide][1]')
         'PEPTIDE'
 
-        >>> strip_terminal_modifications('PEPTIDE')
+        >>> strip_terminal_mods('PEPTIDE')
         'PEPTIDE'
 
-        >>> strip_terminal_modifications('{Oxidation}<C13>[Acetyl]-PEPTIDE[Oxidation]-[Amide]')
+        >>> strip_terminal_mods('{Oxidation}<C13>[Acetyl]-PEPTIDE[Oxidation]-[Amide]')
         '{Oxidation}<C13>PEPTIDE[Oxidation]'
 
     """
-    return pop_terminal_modifications(sequence)[0]
+    return pop_terminal_mods(sequence)[0]
 
 
-def add_terminal_modifications(sequence: str, n_term_mods: Union[ModValue, List[ModValue]],
-                               c_term_mods: Union[ModValue, List[ModValue]], overwrite: bool = False) -> str:
+def add_terminal_mods(sequence: str, n_term_mods: Union[ModValue, List[ModValue]],
+                      c_term_mods: Union[ModValue, List[ModValue]], overwrite: bool = False) -> str:
     """
     Add n-term and c-term modifications to the sequence.
 
@@ -373,25 +373,25 @@ def add_terminal_modifications(sequence: str, n_term_mods: Union[ModValue, List[
 
     .. code-block:: python
 
-        >>> add_terminal_modifications('PEPTIDE', ['Acetyl'], ['Amide'])
+        >>> add_terminal_mods('PEPTIDE', ['Acetyl'], ['Amide'])
         '[Acetyl]-PEPTIDE-[Amide]'
 
-        >>> add_terminal_modifications('PEPTIDE', 'Acetyl', 'Amide')
+        >>> add_terminal_mods('PEPTIDE', 'Acetyl', 'Amide')
         '[Acetyl]-PEPTIDE-[Amide]'
 
-        >>> add_terminal_modifications('PEPTIDE', ['Acetyl', 1], ['Amide', 1])
+        >>> add_terminal_mods('PEPTIDE', ['Acetyl', 1], ['Amide', 1])
         '[Acetyl][1]-PEPTIDE-[Amide][1]'
 
-        >>> add_terminal_modifications('PEPTIDE', ['Acetyl', 1], 'Amide')
+        >>> add_terminal_mods('PEPTIDE', ['Acetyl', 1], 'Amide')
         '[Acetyl][1]-PEPTIDE-[Amide]'
 
-        >>> add_terminal_modifications('PEPTIDE[Oxidation]', ['Acetyl'], ['Amide'])
+        >>> add_terminal_mods('PEPTIDE[Oxidation]', ['Acetyl'], ['Amide'])
         '[Acetyl]-PEPTIDE[Oxidation]-[Amide]'
 
-        >>> add_terminal_modifications('[Acetyl]-PEPTIDE-[Amide]', [1], [1])
+        >>> add_terminal_mods('[Acetyl]-PEPTIDE-[Amide]', [1], [1])
         '[Acetyl][1]-PEPTIDE-[Amide][1]'
 
-        >>> add_terminal_modifications('PEPTIDE-[Amide]', [1], [1], overwrite=True)
+        >>> add_terminal_mods('PEPTIDE-[Amide]', [1], [1], overwrite=True)
         '[1]-PEPTIDE-[1]'
 
     """
@@ -402,4 +402,4 @@ def add_terminal_modifications(sequence: str, n_term_mods: Union[ModValue, List[
     if not isinstance(c_term_mods, list):
         c_term_mods = [c_term_mods]
 
-    return add_modifications(sequence, {'n': n_term_mods, 'c': c_term_mods}, overwrite)
+    return add_mods(sequence, {'n': n_term_mods, 'c': c_term_mods}, overwrite)

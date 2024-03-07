@@ -3,7 +3,7 @@ import unittest
 from peptacular.spans import build_non_enzymatic_spans, build_left_semi_spans, build_right_semi_spans, \
     build_enzymatic_spans, build_semi_spans
 
-from peptacular.sequence import span_to_sequence
+from peptacular.sequence import _span_to_sequence
 
 
 class TestSpans(unittest.TestCase):
@@ -46,12 +46,12 @@ class TestSpans(unittest.TestCase):
         sequence = "ABCDEFGH"
         span = (0, 4, 1)
         expected_output = "ABCD"
-        self.assertEqual(span_to_sequence(sequence, span), expected_output)
+        self.assertEqual(_span_to_sequence(sequence, span), expected_output)
 
         sequence = "IJKLMNOP"
         span = (2, 6, 1)
         expected_output = "KLMN"
-        self.assertEqual(span_to_sequence(sequence, span), expected_output)
+        self.assertEqual(_span_to_sequence(sequence, span), expected_output)
 
     def test_get_non_enzymatic_spans_no_sub_spans(self):
         span = (0, 0, 1)
@@ -72,19 +72,19 @@ class TestSpans(unittest.TestCase):
         sequence = ""
         span = (0, 0, 1)
         expected_output = ""
-        self.assertEqual(span_to_sequence(sequence, span), expected_output)
+        self.assertEqual(_span_to_sequence(sequence, span), expected_output)
 
     def test_span_to_sequence_span_beyond_sequence_length(self):
         sequence = "ABC"
         span = (0, 10, 1)
         expected_output = "ABC"
-        self.assertEqual(span_to_sequence(sequence, span), expected_output)
+        self.assertEqual(_span_to_sequence(sequence, span), expected_output)
 
     def test_span_to_sequence_negative_span(self):
         sequence = "ABCDEFGH"
         span = (-4, -1, 1)
         with self.assertRaises(ValueError):
-            span_to_sequence(sequence, span)
+            _span_to_sequence(sequence, span)
 
     def test_get_non_enzymatic_spans_non_integer_input(self):
         span = (0.5, 4.5, 1)
@@ -105,7 +105,7 @@ class TestSpans(unittest.TestCase):
         sequence = "ABCDEFGH"
         span = (0.5, 4.5, 1)
         with self.assertRaises(TypeError):
-            span_to_sequence(sequence, span)
+            _span_to_sequence(sequence, span)
 
     def test_get_enzymatic_spans(self):
         end_index = 10

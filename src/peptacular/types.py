@@ -14,3 +14,6 @@ ModDict = Dict[ModIndex, ModDictValue]
 
 # Span Type
 Span = Tuple[int, int, int]
+
+# Chem Composition Type
+Chem_Composition = Dict[str, Union[int, float]]

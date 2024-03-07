@@ -1,5 +1,5 @@
 import json
-from peptacular.mass import calculate_chem_mass
+from peptacular.mass import chem_mass
 from typing import List
 from obo import read_obo
 
@@ -36,8 +36,8 @@ def generate_monosaccharide_db():
 
         # try to parse formula
         try:
-            mono_mass = calculate_chem_mass(delta_composition, monoisotopic=True)
-            ave_mass = calculate_chem_mass(delta_composition, monoisotopic=False)
+            mono_mass = chem_mass(delta_composition, monoisotopic=True)
+            ave_mass = chem_mass(delta_composition, monoisotopic=False)
         except:
             raise ValueError(f'Error parsing {term_id} {term_name} {mono} {delta_composition}')
 

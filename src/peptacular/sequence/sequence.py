@@ -1,43 +1,39 @@
 """
 Sequence.py - Amino Acid Sequence Manipulation with Modifications
 
-This module provides a set of utility functions to work with amino acid sequences that may contain modifications.
-Such modifications can occur at any position within the sequence and can also be present at the N-terminus or
-C-terminus of a peptide sequence.
+Modifications can be a str, int, or float
 
-Modification Notations:
-- Term modifications (N-terminus and C-terminus) are specified using square brackets: `[]`.
-- Residue modifications within the sequence are specified using parentheses: `()`.
+Modifications are mapped to the unmodified sequence by their index.
 
-Modification Types and Representation:
-- Modifications can be represented as strings (e.g., "Phospho", "Acetyl"), integers, or floats.
-- String-based modifications typically represent the name or type of the modification.
-- Numerical modifications (integers or floats) represent specific mass changes associated with a modification.
-- During parsing, the module automatically identifies the modification type based on its representation.
+Special modifications are mapped to the sequence by the following:
+    - N-terminal modifications are mapped to the index 'n'
+    - C-terminal modifications are mapped to the index 'c'
+    - Isotopic modifications are mapped to the index 'i'
+    - Static modifications are mapped to the index 's'
+    - Labile modifications are mapped to the index 'l'
+    - Unknown modifications are mapped to the index 'u'
 
-Example Sequences:
-    [Acetyl]-P(Oxydation)EPTI[Phospho]DE-[Amide] or [1.234]PE(1.0)PTI(2.0)DE[3.1415]
 
-The module ensures that sequences and their modifications are handled correctly, preserving the positional
-relationship between amino acids and their modifications during operations.
+Global Mods and labile mods are popped from the sequence and returned as a tuple with the stripped sequence. As
+a result they can be positioned anywhere in the sequence. Maybe add a check to see if they are at the beginning or
+end of the sequence and if not raise an error.
+
 """
 
 import collections
-import itertools
 import random
-import re
-from copy import deepcopy
-from typing import Dict, List, Generator, Union, Set, Tuple, Counter, Callable
+import regex as re
+from typing import Dict, List, Union, Tuple, Counter, Callable
 
-from peptacular.sequence.global_mods import pop_global_modifications
-from peptacular.sequence.labile_mods import pop_labile_modifications
+from peptacular.sequence.global_mods import pop_global_mods, parse_static_mods
+from peptacular.sequence.labile_mods import pop_labile_mods
 from peptacular.spans import Span
-from peptacular.util import convert_type, identify_regex_indexes, map_brackets_to_text
+from peptacular.util import convert_type, map_bracket_content_to_index
 
-from peptacular.types import ModDict, ModValue, ModIndex
+from peptacular.types import ModDict
 
 
-def calculate_sequence_length(sequence: str) -> int:
+def sequence_length(sequence: str) -> int:
     """
     Compute the length of the peptide sequence, excluding any modification notation.
 
@@ -48,19 +44,65 @@ def calculate_sequence_length(sequence: str) -> int:
 
     .. code-block:: python
 
-        >>> calculate_sequence_length("[Acetyl]-PEP[1.2345]TID[3.14]E-[Amide]")
+        >>> sequence_length("[Acetyl]-PEP[1.2345]TID[3.14]E-[Amide]")
         7
-        >>> calculate_sequence_length("PEPTIDE")
+        >>> sequence_length("PEPTIDE")
         7
-        >>> calculate_sequence_length("<C13>PEPTIDE[1.2345]")
+        >>> sequence_length("<C13>PEPTIDE[1.2345]")
+        7
+
+        # Skips ambiguous sequence notation: (?)
+        >>> sequence_length("(?PE)PTIDE[1.2345]")
         7
 
     """
 
-    return len(strip_modifications(sequence))
+    stripped_sequence = strip_mods(sequence)
+    cnt = 0
+    for c in stripped_sequence:
+        if c.isalpha():
+            cnt += 1
+
+    return cnt
 
 
-def get_modifications(sequence: str) -> ModDict:
+def is_ambiguous(sequence: str) -> bool:
+    """
+    Check if the sequence contains ambiguous amino acids.
+
+    :param sequence: The amino acid sequence
+    :type sequence: str
+
+    :return: True if the sequence contains ambiguous amino acids, False otherwise.
+    :rtype: bool
+
+    .. code-block:: python
+
+        >>> is_ambiguous("PEPTIDE")
+        False
+        >>> is_ambiguous("PEPTIDE")
+        False
+        >>> is_ambiguous("PEPTIDE[1.2345]")
+        False
+        >>> is_ambiguous("<13C>PEPTIDE")
+        False
+        >>> is_ambiguous("(?PE)PEPTIDE")
+        True
+
+    """
+
+    stripped_sequence = strip_mods(sequence)
+
+    if '?' in stripped_sequence:
+        return True
+
+    if '(' in stripped_sequence:
+        return True
+
+    return False
+
+
+def get_mods(sequence: str) -> ModDict:
     """
     Parses a peptide sequence with modifications and returns a dictionary where keys
     represent the position of the modified amino acid and values are the respective modifications.
@@ -74,67 +116,106 @@ def get_modifications(sequence: str) -> ModDict:
     .. code-block:: python
 
         # All modifications will be returned as either strings, ints or floats.
-        >>> get_modifications('PEP[Phospho]T[1]IDE[3.14]')
+        >>> get_mods('PEP[Phospho]T[1]IDE[3.14]')
         {2: ['Phospho'], 3: [1], 6: [3.14]}
 
-        >>> get_modifications('PEP[Phospho][1.0]TIDE')
+        >>> get_mods('PEP[Phospho][1.0]TIDE')
         {2: ['Phospho', 1.0]}
 
         # N-terminus and C-terminal modifications are index by -1, and the length of the sequence, respectively:
-        >>> get_modifications('[Acetyl]-PEPTIDE-[Amide]')
+        >>> get_mods('[Acetyl]-PEPTIDE-[Amide]')
         {'n': ['Acetyl'], 'c': ['Amide']}
 
-        >>> get_modifications('[Acetyl]-PEPTIDE')
+        >>> get_mods('[Acetyl]-PEPTIDE')
         {'n': ['Acetyl']}
 
-        >>> get_modifications('PEPTIDE-[Amide]')
+        >>> get_mods('PEPTIDE-[Amide]')
         {'c': ['Amide']}
 
         # A sequecnes without any modifications will return an empty dictionary:
-        >>> get_modifications('PEPTIDE')
+        >>> get_mods('PEPTIDE')
         {}
 
         # gets labile modifications
-        >>> get_modifications('{1.0}PEPTIDE')
+        >>> get_mods('{1.0}PEPTIDE')
         {'l': [1.0]}
 
         # gets isotopic and static modifications
-        >>> get_modifications('<13C><15N><[Acetyl]@C>PEPTIDE')
+        >>> get_mods('<13C><15N><[Acetyl]@C>PEPTIDE')
         {'i': ['13C', '15N'], 's': ['[Acetyl]@C']}
 
         # get multipe sequence
-        >>> get_modifications('PEP[1][2]TIDE')
+        >>> get_mods('PEP[1][2]TIDE')
         {2: [1, 2]}
 
         # get multipe sequence
-        >>> get_modifications('PEP[1]^2TIDE')
+        >>> get_mods('PEP[1]^2TIDE')
         {2: [1, 1]}
 
-    """
-    # get labile modifications
-    sequence, labile_mods = pop_labile_modifications(sequence)
-    sequence, isotope_mods, static_mods = pop_global_modifications(sequence)
-    sequence, bracket_mods = map_brackets_to_text(sequence)
+        >>> get_mods('[1]?PEP[1]^2TIDE')
+        {'u': [1], 2: [1, 1]}
 
+        >>> get_mods('[1][2]^2?[100]^3-PEP[1]^2TIDE')
+        {'u': [1, 2, 2], 'n': [100, 100, 100], 2: [1, 1]}
+
+        >>> get_mods('(?DQ)NGTWEM[Oxidation]ESNENFEGYM[Oxidation]K')
+        {10: ['Oxidation'], 20: ['Oxidation']}
+
+        >>> get_mods('P[2]EP[Formula:[13C]H12]TIDE')
+        {0: [2], 2: ['Formula:[13C]H12']}
+
+        >>> get_mods('P[2]EPTIDE')
+        {0: [2]}
+
+        >>> get_mods('[P]PEP[Formula:[13C]H12]TIDE')
+        Traceback (most recent call last):
+        ValueError: Invalid sequence
+
+        >>> get_mods('?[P]PEP[Formula:[13C]H12]TIDE')
+        Traceback (most recent call last):
+        ValueError: Invalid sequence
+
+        >>> get_mods('??[P]??-[P]PEP[Formula:[13C]H12]TIDE')
+        Traceback (most recent call last):
+        ValueError: Invalid sequence
+
+    """
+
+    if '<' not in sequence and '[' not in sequence and '{' not in sequence:
+        return {}
+
+    # get labile modifications
+    sequence, labile_mods = pop_labile_mods(sequence)
+    sequence, isotope_mods, static_mods = pop_global_mods(sequence)
+    sequence, bracket_mods = map_bracket_content_to_index(sequence, False)
+
+    seq_len = len(sequence)
     mod_dict = {}
     term_offset = 0
     for i, bracket_mods in bracket_mods.items():
-        for bracket_mod in bracket_mods:
-            if i == -1 and sequence[0] == '-':
-                if 'n' not in mod_dict:
-                    mod_dict['n'] = []
-                    term_offset += 1
-                mod_dict['n'].append(convert_type(bracket_mod))
-            elif i == len(sequence) - 1 and sequence[i] == '-':
-                if 'c' not in mod_dict:
-                    mod_dict['c'] = []
-                mod_dict['c'].append(convert_type(bracket_mod))
-            else:
-                index = i - term_offset
-                if index not in mod_dict:
-                    mod_dict[index] = []
 
-                mod_dict[index].append(convert_type(bracket_mod))
+        bracket_mods = [convert_type(mod) for mod in bracket_mods]
+
+        if sequence[i] == '-':  # n or c term
+            if i == seq_len - 1:
+                if 'c' in mod_dict:
+                    raise ValueError('Invalid sequence: Multiple locations for C-terminal modification')
+                mod_dict['c'] = bracket_mods
+            else:
+                if 'n' in mod_dict:
+                    raise ValueError('Invalid sequence: Multiple locations for N-terminal modification')
+                mod_dict['n'] = bracket_mods
+                term_offset += 1
+
+        elif sequence[i] == '?':
+            if 'u' in mod_dict:
+                raise ValueError('Invalid sequence: Multiple locations for unknown modification')
+            mod_dict['u'] = bracket_mods
+            term_offset += 1
+        else:
+            index = i - term_offset
+
+            mod_dict[index] = bracket_mods
 
     if labile_mods:
         mod_dict['l'] = labile_mods
@@ -148,7 +229,7 @@ def get_modifications(sequence: str) -> ModDict:
     return mod_dict
 
 
-def _construct_sequence_with_modifications(sequence: str, mods: ModDict) -> str:
+def _construct_sequence(sequence: str, mods: ModDict) -> str:
     """
     Builds a modified peptide sequence from an unmodified sequence and a dictionary of modifications.
     """
@@ -158,6 +239,7 @@ def _construct_sequence_with_modifications(sequence: str, mods: ModDict) -> str:
     isotope_mods = mods.get('i', [])
     static_mods = mods.get('s', [])
     labile_mods = mods.get('l', [])
+    unknown_mods = mods.get('u', [])
 
     sequence_components = []
 
@@ -186,6 +268,10 @@ def _construct_sequence_with_modifications(sequence: str, mods: ModDict) -> str:
         c_term_mod = '-' + ''.join([f'[{m}]' for m in c_term_mods])
         sequence_components.append(c_term_mod)
 
+    if unknown_mods:
+        unknown_mod = ''.join([f'[{m}]' for m in unknown_mods]) + '?'
+        sequence_components.insert(0, unknown_mod)
+
     if isotope_mods:
         isotope_mod = ''.join([f'<{m}>' for m in isotope_mods])
         sequence_components.insert(0, isotope_mod)
@@ -201,7 +287,7 @@ def _construct_sequence_with_modifications(sequence: str, mods: ModDict) -> str:
     return ''.join(sequence_components)
 
 
-def add_modifications(sequence: str, mods: ModDict, overwrite: bool = False) -> str:
+def add_mods(sequence: str, mods: ModDict, overwrite: bool = False) -> str:
     """
     Adds modifications to the given peptide sequence.
 
@@ -219,26 +305,32 @@ def add_modifications(sequence: str, mods: ModDict, overwrite: bool = False) -> 
     .. code-block:: python
 
         # Add internal modifications to an unmodified peptide
-        >>> add_modifications('PEPTIDE', {2: ['phospho']})
+        >>> add_mods('PEPTIDE', {2: ['phospho']})
         'PEP[phospho]TIDE'
 
         # Can also add N and C terminal modifications
-        >>> add_modifications('PEPTIDE', {'n': ['Acetyl'], 6: ['1.234'], 'c': ['Amide']})
+        >>> add_mods('PEPTIDE', {'n': ['Acetyl'], 6: ['1.234'], 'c': ['Amide']})
         '[Acetyl]-PEPTIDE[1.234]-[Amide]'
 
         # Empty modification dicts will simply return the input sequence
-        >>> add_modifications('PEPTIDE', {})
+        >>> add_mods('PEPTIDE', {})
         'PEPTIDE'
 
-        >>> add_modifications('PEP[phospho]TIDE', {2: ['acetyl']}, overwrite=True)
+        >>> add_mods('PEP[phospho]TIDE', {2: ['acetyl']}, overwrite=True)
         'PEP[acetyl]TIDE'
 
-        >>> add_modifications('PEP[phospho]TIDE', {2: ['acetyl']})
+        >>> add_mods('PEP[phospho]TIDE', {2: ['acetyl']})
         'PEP[phospho][acetyl]TIDE'
+
+        >>> add_mods('PEP[phospho]TIDE', {'u': ['acetyl']})
+        '[acetyl]?PEP[phospho]TIDE'
+
+        >>> add_mods('PEPTIDE', {'s': ['[100][200]@C']}, overwrite=True)
+        '<[100][200]@C>PEPTIDE'
 
     """
 
-    stripped_sequence, original_mods = pop_modifications(sequence)
+    stripped_sequence, original_mods = pop_mods(sequence)
 
     for mod_index, mod in mods.items():
 
@@ -253,10 +345,44 @@ def add_modifications(sequence: str, mods: ModDict, overwrite: bool = False) -> 
         else:
             original_mods[mod_index] = mod
 
-    return _construct_sequence_with_modifications(stripped_sequence, original_mods)
+    return _construct_sequence(stripped_sequence, original_mods)
 
 
-def pop_modifications(sequence: str) -> Tuple[str, ModDict]:
+def condense_static_mods(sequence: str) -> str:
+    """
+    Condenses static modifications into a single modification.
+
+    :param sequence: The peptide sequence.
+    :type sequence: str
+    :return: The peptide sequence with condensed static modifications.
+    :rtype: str
+
+    .. code-block:: python
+
+        # Condenses static modifications into a single modification
+        >>> condense_static_mods('<13C><[100]@P>PEPTIDE')
+        '<13C>P[100]EP[100]TIDE'
+
+        >>> condense_static_mods('<13C><[100]@P>P[10]EPTIDE')
+        '<13C>P[10][100]EP[100]TIDE'
+
+    """
+
+    stripped_sequence, original_mods = pop_mods(sequence)
+
+    static_mods = original_mods.pop('s', [])
+
+    static_mod_dict = parse_static_mods(static_mods)
+    for aa in static_mod_dict:
+        # get indexes of the amino acid
+        indexes = [m.start() for m in re.finditer(aa, stripped_sequence)]
+        for index in indexes:
+            original_mods.setdefault(index, []).extend(static_mod_dict[aa])
+
+    return add_mods(stripped_sequence, original_mods)
+
+
+def pop_mods(sequence: str) -> Tuple[str, ModDict]:
     """
     Removes all modifications from the given sequence, returning the unmodified sequence and a dictionary of the
     removed modifications.
@@ -270,15 +396,15 @@ def pop_modifications(sequence: str) -> Tuple[str, ModDict]:
     .. code-block:: python
 
         # Simply combines the functionality of strip_modifications and get_modifications
-        >>> pop_modifications('PEP[phospho]TIDE')
+        >>> pop_mods('PEP[phospho]TIDE')
         ('PEPTIDE', {2: ['phospho']})
 
     """
 
-    return strip_modifications(sequence), get_modifications(sequence)
+    return strip_mods(sequence), get_mods(sequence)
 
 
-def strip_modifications(sequence: str) -> str:
+def strip_mods(sequence: str) -> str:
     """
     Strips all modifications from the given sequence, returning the unmodified sequence.
 
@@ -291,212 +417,52 @@ def strip_modifications(sequence: str) -> str:
     .. code-block:: python
 
         # Removes internal modifications:
-        >>> strip_modifications('PEP[phospho]TIDE')
+        >>> strip_mods('PEP[phospho]TIDE')
         'PEPTIDE'
 
         # Also removes N and C terminal modifications:
-        >>> strip_modifications('[Acetyl]-[3.14]PEPTIDE[1.234]-[Amide]')
+        >>> strip_mods('[Acetyl]-[3.14]PEPTIDE[1.234]-[Amide]')
         'PEPTIDE'
 
         # Also remove labile modifications:
-        >>> strip_modifications('{1.0}[Acetyl]-[3.14]PEPTIDE[1.234]-[Amide]')
+        >>> strip_mods('{1.0}[Acetyl]-[3.14]PEPTIDE[1.234]-[Amide]')
         'PEPTIDE'
 
         # Also remove isotope notations:
-        >>> strip_modifications('<C13>[Acetyl]-[3.14]PEPTIDE[1.234]-[Amide]')
+        >>> strip_mods('<C13>[Acetyl]-[3.14]PEPTIDE[1.234]-[Amide]')
         'PEPTIDE'
 
         # Using a sequence without modifications will return the same sequence:
-        >>> strip_modifications('PEPTIDE')
+        >>> strip_mods('PEPTIDE')
         'PEPTIDE'
 
-        >>> strip_modifications('PEP[Formula:[13C]H12]TIDE')
+        >>> strip_mods('PEP[Formula:[13C]H12]TIDE')
+        'PEPTIDE'
+
+        >>> strip_mods('(?DQ)NGTWEM[Oxidation]ESNENFEGYM[Oxidation]K')
+        '(?DQ)NGTWEMESNENFEGYMK'
+
+        >>> strip_mods('[1][2]^2?[100]^3-PEP[1]^2TIDE')
         'PEPTIDE'
 
     """
 
     # remove {}
-    sequence = re.sub(r'\{[^}]*\}', '', sequence)
+    sequence = re.sub(r'{[^}]*}', '', sequence)
 
     # remove <>
-    sequence = re.sub(r'\<[^>]*\>', '', sequence)
+    sequence = re.sub(r'<[^>]*>', '', sequence)
 
     # Removing modifications in square brackets
-    sequence, bracket_mods = map_brackets_to_text(sequence)
+    sequence, bracket_mods = map_bracket_content_to_index(sequence)
+
+    if sequence.startswith('?'):
+        sequence = sequence[1:]
 
     return sequence.replace('-', '')
 
 
-def apply_static_modifications(sequence: str, mods: ModDict, overwrite: bool = True) -> str:
-    """
-    Add static modifications to an amino acid sequence. If a modification is already present in the sequence,
-    it will be replaced by the new one.
-
-    :param sequence: Original amino acid sequence.
-    :type sequence: str
-    :param mods: Dictionary mapping amino acids to the mass of their modifications.
-    :type mods: Dict[str, Any]
-    :param overwrite: If True, existing modifications will be replaced by the new ones.
-    :type overwrite: bool
-
-    :return: Modified amino acid sequence.
-    :rtype: str
-
-    .. code-block:: python
-
-        # Applies static modifcation to all matching residues in the sequence:
-        >>> apply_static_modifications('PEPTIDE', {'P': ['phospho']})
-        'P[phospho]EP[phospho]TIDE'
-
-        # Can specify multiple static modifications:
-        >>> apply_static_modifications('PEPTIDE', {'P': ['phospho'], 'E': ['3.0']})
-        'P[phospho]E[3.0]P[phospho]TIDE[3.0]'
-
-        # Works with already modified sequences:
-        >>> apply_static_modifications('[3.14]-PEPTIDE-[1.234]', {'P': ['phospho']})
-        '[3.14]-P[phospho]EP[phospho]TIDE-[1.234]'
-
-        # By default, any overlapping modifications will be replaced:
-        >>> apply_static_modifications('PEP[1.234]TIDE', {'P': ['phospho']})
-        'P[phospho]EP[phospho]TIDE'
-
-        # To not reaplce existing modifications, set override to False:
-        >>> apply_static_modifications('PEP[1.234]TIDE', {'P': ['phospho']}, overwrite=False)
-        'P[phospho]EP[1.234][phospho]TIDE'
-
-        # Can also use regular expressions to match multiple residues:
-        >>> apply_static_modifications('PEPTIDE', {'(?<=P)E': ['phospho']})
-        'PE[phospho]PTIDE'
-
-        >>> apply_static_modifications('PEPTIDE', {'PE': ['phospho']})
-        'P[phospho]EPTIDE'
-
-        >>> apply_static_modifications('<13C>PEPTIDE', {'P': ['phospho']})
-        '<13C>P[phospho]EP[phospho]TIDE'
-
-    """
-
-    stripped_sequence, original_mods = pop_modifications(sequence)
-
-    for regex_str, mod in mods.items():
-        for mod_index in identify_regex_indexes(stripped_sequence, regex_str):
-
-            if mod_index in original_mods:
-                if overwrite is True:
-                    original_mods[mod_index] = mod
-                else:
-                    original_mods[mod_index].extend(mod)
-            else:
-                original_mods[mod_index] = mod
-
-    return add_modifications(stripped_sequence, original_mods)
-
-
-def _apply_variable_modifications_rec(mods: Dict[ModIndex, Set[ModValue]], sequence: str, index: int,
-                                      current_mods: ModDict, max_mod_count: int, overwrite: bool) -> Generator[
-    ModDict, None, None]:
-    """
-    Recursively applies variable modifications to the amino acid sequence.
-
-    :param mods: Dictionary mapping amino acids to the mass of their modifications.
-    :type mods: Dict[int, Any]
-    :param sequence: the unmodified sequence.
-    :type sequence: str
-    :param index: Current index on the amino acid sequence.
-    :type index: int
-    :param current_mods: Dictionary mapping the indices of the amino acids to the mass of their modifications.
-    :type current_mods: Dict[int, str]
-    :param max_mod_count: Maximum number of modifications allowed on the amino acid sequence.
-    :type max_mod_count: int
-    :param overwrite: If True, existing modifications will be replaced by the new ones.
-    :type overwrite: bool
-
-    :yield: Modified dictionary mapping the indices of the amino acid sequence to the mass of their modifications.
-    :rtype: Generator[Dict[int, float], None, None]
-    """
-
-    if index == len(sequence) or len(current_mods) == max_mod_count:
-        yield current_mods
-        return
-
-    original_mod_dict = deepcopy(current_mods)
-
-    curr_mods = mods.get(index, None)
-
-    if curr_mods is not None:
-        for curr_mod in curr_mods:
-            updated_mod_dict = deepcopy(current_mods)
-
-            if index in current_mods:
-                if overwrite is True:
-                    updated_mod_dict[index] = curr_mod
-                    yield from _apply_variable_modifications_rec(mods, sequence, index + 1, updated_mod_dict,
-                                                                 max_mod_count, overwrite)
-            else:
-                updated_mod_dict[index] = curr_mod
-                yield from _apply_variable_modifications_rec(mods, sequence, index + 1, updated_mod_dict,
-                                                             max_mod_count, overwrite)
-    yield from _apply_variable_modifications_rec(mods, sequence, index + 1, original_mod_dict, max_mod_count, overwrite)
-
-
-def apply_variable_modifications(sequence: str, mod_map: ModDict, max_mods: int, overwrite: bool = False) -> List[str]:
-    """
-    Apply variable modifications to a sequence.
-
-    :param sequence: Original amino acid sequence.
-    :type sequence: str
-    :param mod_map: Dictionary mapping amino acids to the mass of their modifications.
-    :type mod_map: Dict[str, Any]
-    :param max_mods: Maximum number of modifications allowed on the peptide.
-    :type max_mods: int
-    :param overwrite: If True, existing modifications will be replaced by the new ones.
-    :type overwrite: bool
-
-    :return: List of all possible modified peptide sequences.
-    :rtype: List[str]
-
-    .. code-block:: python
-
-        >>> apply_variable_modifications('PEPTIDE', {'P': [['phospho']]}, 1)
-        ['P[phospho]EPTIDE', 'PEP[phospho]TIDE', 'PEPTIDE']
-
-        >>> apply_variable_modifications('PEPTIDE', {'P': [['phospho', 1]]}, 1)
-        ['P[phospho][1]EPTIDE', 'PEP[phospho][1]TIDE', 'PEPTIDE']
-
-        >>> apply_variable_modifications('PEPTIDE', {'P': [['phospho'], [1]]}, 1)
-        ['P[phospho]EPTIDE', 'P[1]EPTIDE', 'PEP[phospho]TIDE', 'PEP[1]TIDE', 'PEPTIDE']
-
-        # Setting max_mods to 0 will return the original sequence:
-        >>> apply_variable_modifications('PEPTIDE', {'P': [['phospho']]}, 0)
-        ['PEPTIDE']
-
-        # Works with already modified sequences, and will not replace existing modifications:
-        >>> apply_variable_modifications('[Acetyl]-P[3.14]EPTIDE-[Amide]', {'P': [['phospho']]}, 2)
-        ['[Acetyl]-P[3.14]EP[phospho]TIDE-[Amide]', '[Acetyl]-P[3.14]EPTIDE-[Amide]']
-
-        # Can also use regular expressions to match multiple residues:
-        >>> apply_variable_modifications('PEPTIDE', {'(?<=P)E': [['phospho']]}, 2)
-        ['PE[phospho]PTIDE', 'PEPTIDE']
-
-        >>> apply_variable_modifications('<13C>PEPTIDE', {'P': [['phospho']]}, 1)
-        ['<13C>P[phospho]EPTIDE', '<13C>PEP[phospho]TIDE', '<13C>PEPTIDE']
-
-    """
-
-    stripped_sequence, original_mods = pop_modifications(sequence)
-
-    new_mod_map: Dict[int, Set] = {}
-    for regex_str, mods in mod_map.items():
-        for mod_index in identify_regex_indexes(stripped_sequence, regex_str):
-            for mod in mods:
-                new_mod_map.setdefault(mod_index, []).append(mod)
-
-    mods = _apply_variable_modifications_rec(new_mod_map, stripped_sequence, 0, original_mods,
-                                             max_mods + len(original_mods), overwrite)
-    return [add_modifications(stripped_sequence, mod) for mod in mods]
-
-
-def reverse_sequence(sequence: str, swap_terms: bool = False) -> str:
+def reverse(sequence: str, swap_terms: bool = False) -> str:
     """
     Reverses the sequence, while preserving the position of any modifications.
 
@@ -511,24 +477,27 @@ def reverse_sequence(sequence: str, swap_terms: bool = False) -> str:
     .. code-block:: python
 
         # For unmodified sequences, the result is the same as the built-in string reversal:
-        >>> reverse_sequence('PEPTIDE')
+        >>> reverse('PEPTIDE')
         'EDITPEP'
 
-        >>> reverse_sequence('<13C>PEPTIDE')
+        >>> reverse('<13C>PEPTIDE')
         '<13C>EDITPEP'
 
         # For modified sequences, the modifications are preserved on the associated residues:
-        >>> reverse_sequence('[Acetyl]-P[phospho]EP[phospho]TIDE-[Amide]')
+        >>> reverse('[Acetyl]-P[phospho]EP[phospho]TIDE-[Amide]')
         '[Acetyl]-EDITP[phospho]EP[phospho]-[Amide]'
 
         # If swap_terms is True, the N- and C-terminal modifications will be swapped too:
-        >>> reverse_sequence('[Acetyl]-P[phospho]EP[phospho]TIDE-[Amide]', swap_terms=True)
+        >>> reverse('[Acetyl]-P[phospho]EP[phospho]TIDE-[Amide]', swap_terms=True)
         '[Amide]-EDITP[phospho]EP[phospho]-[Acetyl]'
 
     """
 
-    mods = get_modifications(sequence)
-    stripped_sequence = strip_modifications(sequence)[::-1]
+    mods = get_mods(sequence)
+    stripped_sequence = strip_mods(sequence)[::-1]
+
+    if is_ambiguous(stripped_sequence):
+        raise ValueError("Cannot reverse ambiguous sequence")
 
     mod_reverse = {}
     for mod_index in mods:
@@ -541,10 +510,10 @@ def reverse_sequence(sequence: str, swap_terms: bool = False) -> str:
         else:
             mod_reverse[mod_index] = mods[mod_index]
 
-    return _construct_sequence_with_modifications(stripped_sequence, mod_reverse)
+    return _construct_sequence(stripped_sequence, mod_reverse)
 
 
-def shuffle_sequence(sequence: str, seed: int = None) -> str:
+def shuffle(sequence: str, seed: int = None) -> str:
     """
     Shuffles the sequence, while preserving the position of any modifications.
 
@@ -559,14 +528,14 @@ def shuffle_sequence(sequence: str, seed: int = None) -> str:
     .. code-block:: python
 
         # For unmodified sequences, the result is a random permutation of the original sequence:
-        >>> shuffle_sequence('PEPTIDE', seed=0)
+        >>> shuffle('PEPTIDE', seed=0)
         'IPEPDTE'
 
         # For modified sequences, the modifications are preserved on the associated residues:
-        >>> shuffle_sequence('[Acetyl]-PEPTIDE', seed=0)
+        >>> shuffle('[Acetyl]-PEPTIDE', seed=0)
         '[Acetyl]-IPEPDTE'
 
-        >>> shuffle_sequence('<13C>PEPTIDE', seed=0)
+        >>> shuffle('<13C>PEPTIDE', seed=0)
         '<13C>IPEPDTE'
 
     """
@@ -574,16 +543,20 @@ def shuffle_sequence(sequence: str, seed: int = None) -> str:
     if seed is not None:
         random.seed(seed)
 
-    stripped_sequence, mods = pop_modifications(sequence)
+    stripped_sequence, mods = pop_mods(sequence)
+
+    if is_ambiguous(stripped_sequence):
+        raise ValueError("Cannot shuffle ambiguous sequence")
 
     n_term_mods = mods.pop('n', [])
     c_term_mods = mods.pop('c', [])
     isotope_mods = mods.pop('i', [])
     static_mods = mods.pop('s', [])
     labile_mods = mods.pop('l', [])
+    unknown_mods = mods.pop('u', [])
 
-    internally_modified_sequence = add_modifications(stripped_sequence, mods)
-    components = split_sequence(internally_modified_sequence)
+    internally_modified_sequence = add_mods(stripped_sequence, mods)
+    components = split(internally_modified_sequence)
     random.shuffle(components)
     shuffled_sequence = ''.join(components)
 
@@ -592,51 +565,55 @@ def shuffle_sequence(sequence: str, seed: int = None) -> str:
         'c': c_term_mods,
         'i': isotope_mods,
         's': static_mods,
-        'l': labile_mods
+        'l': labile_mods,
+        'u': unknown_mods
     }
 
-    return add_modifications(shuffled_sequence, updated_mods)
+    return add_mods(shuffled_sequence, updated_mods)
 
 
-def shift_sequence(sequence: str, shift: int) -> str:
+def shift(sequence: str, n: int) -> str:
     """
     Shifts the sequence to the left by a given number of positions, while preserving the position of any modifications.
 
     :param sequence: The sequence to be shifted.
     :type sequence: str
-    :param shift: The number of positions to shift the sequence to the left.
-    :type shift: int
+    :param n: The number of positions to shift the sequence to the left.
+    :type n: int
 
     :return: The shifted sequence with modifications preserved.
     :rtype: str
 
     .. code-block:: python
 
-        >>> shift_sequence('PEPTIDE', 2)
+        >>> shift('PEPTIDE', 2)
         'PTIDEPE'
 
-        >>> shift_sequence('[Acetyl]-P[phospho]EP[phospho]TIDE-[Amide]', 2)
+        >>> shift('[Acetyl]-P[phospho]EP[phospho]TIDE-[Amide]', 2)
         '[Acetyl]-P[phospho]TIDEP[phospho]E-[Amide]'
 
         # Shifting by 0 or length of sequence positions returns the original sequence:
-        >>> shift_sequence('[Acetyl]-P[phospho]EP[phospho]TIDE-[Amide]', 7)
+        >>> shift('[Acetyl]-P[phospho]EP[phospho]TIDE-[Amide]', 7)
         '[Acetyl]-P[phospho]EP[phospho]TIDE-[Amide]'
-        >>> shift_sequence('[Acetyl]-P[phospho]EP[phospho]TIDE-[Amide]', 0)
+        >>> shift('[Acetyl]-P[phospho]EP[phospho]TIDE-[Amide]', 0)
         '[Acetyl]-P[phospho]EP[phospho]TIDE-[Amide]'
 
         # Shifting by a negative number shifts the sequence to the right:
-        >>> shift_sequence('[Acetyl]-P[phospho]EP[phospho]TIDE-[Amide]', -2)
+        >>> shift('[Acetyl]-P[phospho]EP[phospho]TIDE-[Amide]', -2)
         '[Acetyl]-DEP[phospho]EP[phospho]TI-[Amide]'
 
-        >>> shift_sequence('<13C>PEPTIDE', 2)
+        >>> shift('<13C>PEPTIDE', 2)
         '<13C>PTIDEPE'
 
     """
 
-    stripped_sequence, mods = pop_modifications(sequence)
+    stripped_sequence, mods = pop_mods(sequence)
+
+    if is_ambiguous(stripped_sequence):
+        raise ValueError("Cannot shift ambiguous sequence")
 
     seq_len = len(stripped_sequence)
-    effective_shift = shift % seq_len
+    effective_shift = n % seq_len
     shifted_stripped_sequence = stripped_sequence[effective_shift:] + stripped_sequence[:effective_shift]
 
     shifted_sequence_mods = {}
@@ -646,7 +623,7 @@ def shift_sequence(sequence: str, shift: int) -> str:
         else:
             shifted_sequence_mods[mod_index] = mods[mod_index]
 
-    return _construct_sequence_with_modifications(shifted_stripped_sequence, shifted_sequence_mods)
+    return _construct_sequence(shifted_stripped_sequence, shifted_sequence_mods)
 
 
 def span_to_sequence(sequence: str, span: Span) -> str:
@@ -685,7 +662,7 @@ def span_to_sequence(sequence: str, span: Span) -> str:
 
     """
 
-    stripped_sequence, mods = pop_modifications(sequence)
+    stripped_sequence, mods = pop_mods(sequence)
     return span_to_sequence_fast(stripped_sequence, mods, span)
 
 
@@ -747,10 +724,10 @@ def span_to_sequence_fast(stripped_sequence: str, mods: ModDict, span: Span) -> 
         return base_sequence
 
     # update key values
-    return _construct_sequence_with_modifications(base_sequence, new_mods)
+    return _construct_sequence(base_sequence, new_mods)
 
 
-def split_sequence(sequence: str) -> List[str]:
+def split(sequence: str) -> List[str]:
     """
     Splits sequence into a list of amino acids, preserving modifications.
 
@@ -762,27 +739,29 @@ def split_sequence(sequence: str) -> List[str]:
 
     .. code-block:: python
 
-        >>> split_sequence('PEPTIDE')
+        >>> split('PEPTIDE')
         ['P', 'E', 'P', 'T', 'I', 'D', 'E']
 
-        >>> split_sequence('[Acetyl]-P[phospho]EP[phospho]TIDE-[Amide]')
+        >>> split('[Acetyl]-P[phospho]EP[phospho]TIDE-[Amide]')
         ['[Acetyl]-P[phospho]', 'E', 'P[phospho]', 'T', 'I', 'D', 'E-[Amide]']
 
-        >>> split_sequence('<C13>PEP[1]TIDE')
+        >>> split('<C13>PEP[1]TIDE')
         ['<C13>P', '<C13>E', '<C13>P[1]', '<C13>T', '<C13>I', '<C13>D', '<C13>E']
 
     """
 
-    mods = get_modifications(sequence)
+    mods = get_mods(sequence)
+    stripped_sequence = strip_mods(sequence)
 
-    n_term_mods = mods.get('n', [])
-    c_term_mods = mods.get('c', [])
-    isotope_mods = mods.get('i', [])
-    static_mods = mods.get('s', [])
-    labile_mods = mods.get('l', [])
-    internal_mods = {k: v for k, v in mods.items() if isinstance(k, int)}
+    if is_ambiguous(stripped_sequence):
+        raise ValueError("Cannot split ambiguous sequence")
 
-    stripped_sequence = strip_modifications(sequence)
+    n_term_mods = mods.pop('n', [])
+    c_term_mods = mods.pop('c', [])
+    isotope_mods = mods.pop('i', [])
+    static_mods = mods.pop('s', [])
+    labile_mods = mods.pop('l', [])
+    unknown_mods = mods.pop('u', [])
 
     comps = []
     for i, aa in enumerate(stripped_sequence):
@@ -791,252 +770,20 @@ def split_sequence(sequence: str) -> List[str]:
             tmp_mods['n'] = n_term_mods
         if i == len(stripped_sequence) - 1 and c_term_mods:
             tmp_mods['c'] = c_term_mods
-        if i in internal_mods:
-            tmp_mods[0] = internal_mods[i]
-        if isotope_mods:
-            tmp_mods['i'] = isotope_mods
-        if static_mods:
-            tmp_mods['s'] = static_mods
-        if labile_mods:
-            tmp_mods['l'] = labile_mods
+        if i in mods:
+            tmp_mods[0] = mods[i]
 
-        comps.append(_construct_sequence_with_modifications(aa, tmp_mods))
+        tmp_mods['i'] = isotope_mods
+        tmp_mods['s'] = static_mods
+        tmp_mods['l'] = labile_mods
+        tmp_mods['u'] = unknown_mods
+
+        comps.append(_construct_sequence(aa, tmp_mods))
 
     return comps
 
 
-def permutate_sequence(sequence: str, size: int = None) -> List[str]:
-    """
-    Generates all permutations of the input sequence. Terminal sequence are kept in place.
-
-    :param sequence: The sequence to be permuted.
-    :type sequence: str
-    :param size: The size of the permutations.
-    :type size: int
-
-    :return: A list of all permutations of the input sequence.
-    :rtype: List[str]
-
-    .. code-block:: python
-
-        >>> permutate_sequence('PET')
-        ['PET', 'PTE', 'EPT', 'ETP', 'TPE', 'TEP']
-
-        >>> permutate_sequence('[3]-PET-[1]')
-        ['[3]-PET-[1]', '[3]-PTE-[1]', '[3]-EPT-[1]', '[3]-ETP-[1]', '[3]-TPE-[1]', '[3]-TEP-[1]']
-
-        >>> permutate_sequence('PE[3.14]T')
-        ['PE[3.14]T', 'PTE[3.14]', 'E[3.14]PT', 'E[3.14]TP', 'TPE[3.14]', 'TE[3.14]P']
-
-        >>> permutate_sequence('<13C>PET')
-        ['<13C>PET', '<13C>PTE', '<13C>EPT', '<13C>ETP', '<13C>TPE', '<13C>TEP']
-
-    """
-
-    if size is None:
-        size = calculate_sequence_length(sequence)
-
-    sequence, mods = pop_modifications(sequence)
-
-    labile_mods = mods.pop('l', [])
-    static_mods = mods.pop('s', [])
-    isotope_mods = mods.pop('i', [])
-    n_term_mods = mods.pop('n', [])
-    c_term_mods = mods.pop('c', [])
-
-    internal_modified_sequence = _construct_sequence_with_modifications(sequence, mods)
-
-    new_mods = {}
-
-    if labile_mods:
-        new_mods['l'] = labile_mods
-    if static_mods:
-        new_mods['s'] = static_mods
-    if isotope_mods:
-        new_mods['i'] = isotope_mods
-    if n_term_mods:
-        new_mods['n'] = n_term_mods
-    if c_term_mods:
-        new_mods['c'] = c_term_mods
-
-    components = split_sequence(internal_modified_sequence)
-    return [add_modifications(''.join(p), new_mods) for p in itertools.permutations(components, size)]
-
-
-def product_sequence(sequence: str, size: Union[int, None]) -> List[str]:
-    """
-    Generates all sartesian products of the input sequence of a given size. Terminal sequence are kept in place.
-
-    :param sequence: The sequence to be combined.
-    :type sequence: str
-    :param size: The size of the combinations to be generated.
-    :type size: int
-
-    :return: A list of all combinations of the input sequence of the given size.
-    :rtype: List[str]
-
-    .. code-block:: python
-
-        >>> product_sequence('PET', 2)
-        ['PP', 'PE', 'PT', 'EP', 'EE', 'ET', 'TP', 'TE', 'TT']
-
-        >>> product_sequence('[3]-PET-[1]', 2)
-        ['[3]-PP-[1]', '[3]-PE-[1]', '[3]-PT-[1]', '[3]-EP-[1]', '[3]-EE-[1]', '[3]-ET-[1]', '[3]-TP-[1]', '[3]-TE-[1]', '[3]-TT-[1]']
-
-        >>> product_sequence('PE[3.14]T', 2)
-        ['PP', 'PE[3.14]', 'PT', 'E[3.14]P', 'E[3.14]E[3.14]', 'E[3.14]T', 'TP', 'TE[3.14]', 'TT']
-
-        >>> product_sequence('<13C>PET', 2)
-        ['<13C>PP', '<13C>PE', '<13C>PT', '<13C>EP', '<13C>EE', '<13C>ET', '<13C>TP', '<13C>TE', '<13C>TT']
-
-    """
-
-    sequence, mods = pop_modifications(sequence)
-
-    labile_mods = mods.pop('l', [])
-    static_mods = mods.pop('s', [])
-    isotope_mods = mods.pop('i', [])
-    n_term_mods = mods.pop('n', [])
-    c_term_mods = mods.pop('c', [])
-
-    internal_modified_sequence = _construct_sequence_with_modifications(sequence, mods)
-
-    new_mods = {}
-
-    if labile_mods:
-        new_mods['l'] = labile_mods
-    if static_mods:
-        new_mods['s'] = static_mods
-    if isotope_mods:
-        new_mods['i'] = isotope_mods
-    if n_term_mods:
-        new_mods['n'] = n_term_mods
-    if c_term_mods:
-        new_mods['c'] = c_term_mods
-
-    components = split_sequence(internal_modified_sequence)
-    return [add_modifications(''.join(p), new_mods) for p in itertools.product(components, repeat=size)]
-
-
-def combinate_sequence(sequence: str, size: Union[int, None]) -> List[str]:
-    """
-    Generates all combinations of the input sequence of a given size. Terminal sequence are kept in place.
-
-    :param sequence: The sequence to be combined.
-    :type sequence: str
-
-    :param size: The size of the combinations to be generated.
-    :type size: int
-
-    :return: A list of all combinations of the input sequence of the given size.
-    :rtype: List[str]
-
-    .. code-block:: python
-
-        >>> combinate_sequence('PET', 2)
-        ['PE', 'PT', 'ET']
-
-        >>> combinate_sequence('[3]-PET-[1]', 2)
-        ['[3]-PE-[1]', '[3]-PT-[1]', '[3]-ET-[1]']
-
-        >>> combinate_sequence('PE[3.14]T', 2)
-        ['PE[3.14]', 'PT', 'E[3.14]T']
-
-        >>> combinate_sequence('<13C>PET', 2)
-        ['<13C>PE', '<13C>PT', '<13C>ET']
-
-    """
-
-    if size is None:
-        size = calculate_sequence_length(sequence)
-
-    sequence, mods = pop_modifications(sequence)
-
-    labile_mods = mods.pop('l', [])
-    static_mods = mods.pop('s', [])
-    isotope_mods = mods.pop('i', [])
-    n_term_mods = mods.pop('n', [])
-    c_term_mods = mods.pop('c', [])
-
-    internal_modified_sequence = _construct_sequence_with_modifications(sequence, mods)
-
-    new_mods = {}
-
-    if labile_mods:
-        new_mods['l'] = labile_mods
-    if static_mods:
-        new_mods['s'] = static_mods
-    if isotope_mods:
-        new_mods['i'] = isotope_mods
-    if n_term_mods:
-        new_mods['n'] = n_term_mods
-    if c_term_mods:
-        new_mods['c'] = c_term_mods
-
-    components = split_sequence(internal_modified_sequence)
-    return [add_modifications(''.join(c), new_mods) for c in itertools.combinations(components, size)]
-
-
-def combinate_with_replacement_sequence(sequence: str, size: Union[int, None]) -> List[str]:
-    """
-    Generates all combinations with replacement of the input sequence of a given size. Terminal sequence are kept in place.
-
-    :param sequence: The sequence to be combined.
-    :type sequence: str
-
-    :param size: The size of the combinations to be generated.
-    :type size: int
-
-    :return: A list of all combinations of the input sequence of the given size.
-    :rtype: List[str]
-
-    .. code-block:: python
-
-        >>> combinate_with_replacement_sequence('PET', 2)
-        ['PP', 'PE', 'PT', 'EE', 'ET', 'TT']
-
-        >>> combinate_with_replacement_sequence('[3]-PET-[1]', 2)
-        ['[3]-PP-[1]', '[3]-PE-[1]', '[3]-PT-[1]', '[3]-EE-[1]', '[3]-ET-[1]', '[3]-TT-[1]']
-
-        >>> combinate_with_replacement_sequence('PE[3.14]T', 2)
-        ['PP', 'PE[3.14]', 'PT', 'E[3.14]E[3.14]', 'E[3.14]T', 'TT']
-
-        >>> combinate_with_replacement_sequence('<13C>PET', 2)
-        ['<13C>PP', '<13C>PE', '<13C>PT', '<13C>EE', '<13C>ET', '<13C>TT']
-
-    """
-
-    if size is None:
-        size = calculate_sequence_length(sequence)
-
-    sequence, mods = pop_modifications(sequence)
-
-    labile_mods = mods.pop('l', [])
-    static_mods = mods.pop('s', [])
-    isotope_mods = mods.pop('i', [])
-    n_term_mods = mods.pop('n', [])
-    c_term_mods = mods.pop('c', [])
-
-    internal_modified_sequence = _construct_sequence_with_modifications(sequence, mods)
-
-    new_mods = {}
-
-    if labile_mods:
-        new_mods['l'] = labile_mods
-    if static_mods:
-        new_mods['s'] = static_mods
-    if isotope_mods:
-        new_mods['i'] = isotope_mods
-    if n_term_mods:
-        new_mods['n'] = n_term_mods
-    if c_term_mods:
-        new_mods['c'] = c_term_mods
-
-    components = split_sequence(internal_modified_sequence)
-    return [add_modifications(''.join(p), new_mods) for p in itertools.combinations_with_replacement(components, size)]
-
-
-def sequence_counter(sequence: str) -> Counter:
+def count_components(sequence: str) -> Counter:
     """
     Counts the occurrences of each amino acid in the input sequence.
 
@@ -1048,30 +795,30 @@ def sequence_counter(sequence: str) -> Counter:
 
     .. code-block:: python
 
-        >>> sequence_counter('PEPTIDE')
+        >>> count_components('PEPTIDE')
         Counter({'P': 2, 'E': 2, 'T': 1, 'I': 1, 'D': 1})
 
-        >>> sequence_counter('[Acetyl]-P[phospho]EP[phospho]TIDE-[Amide]')
+        >>> count_components('[Acetyl]-P[phospho]EP[phospho]TIDE-[Amide]')
         Counter({'P[phospho]': 2, 'E': 2, 'T': 1, 'I': 1, 'D': 1})
 
-        >>> sequence_counter('<13C>PE[3.14]PTIDE')
+        >>> count_components('<13C>PE[3.14]PTIDE')
         Counter({'P': 2, 'E[3.14]': 1, 'T': 1, 'I': 1, 'D': 1, 'E': 1})
 
     """
-    sequence, mods = pop_modifications(sequence)
+    sequence, mods = pop_mods(sequence)
 
     _ = mods.pop('l', [])
     _ = mods.pop('s', [])
     _ = mods.pop('i', [])
     _ = mods.pop('n', [])
     _ = mods.pop('c', [])
+    _ = mods.pop('u', [])
 
-    internal_modified_sequence = _construct_sequence_with_modifications(sequence, mods)
-    components = split_sequence(internal_modified_sequence)
+    internal_modified_sequence = _construct_sequence(sequence, mods)
+    components = split(internal_modified_sequence)
     return collections.Counter(components)
 
 
-# TODO: Ensure that external sequence are correctly handled
 def is_subsequence(subsequence: str, sequence: str, order: bool = True) -> bool:
     """
     Checks if the input subsequence is a subsequence of the input sequence. If order is True, the subsequence must be in
@@ -1098,26 +845,72 @@ def is_subsequence(subsequence: str, sequence: str, order: bool = True) -> bool:
         >>> is_subsequence('PET', 'PEPTIDE', order=True)
         False
 
+        >>> is_subsequence('<13C>PEP', '<13C>PEPTIDE', order=True)
+        True
+
+        >>> is_subsequence('<13C>PEP[1.0]', '<13C>PEP[1.0]TIDE', order=True)
+        True
+
+        >>> is_subsequence('<13C>PEP', '<13C>PEP[1.0]TIDE', order=True)
+        False
+
     """
 
-    raise NotImplementedError("This function is not yet implemented.")
-
-    if order:
-        return subsequence in sequence
+    if order is True:
+        return len(find_subsequence_indices(sequence, subsequence)) != 0
     else:
 
-        _, sequence_mods = pop_modifications(sequence)
-        _, subsequence_mods = pop_modifications(subsequence)
+        _, sequence_mods = pop_mods(sequence)
+        sort_mods(sequence_mods)
+        _, subsequence_mods = pop_mods(subsequence)
+        sort_mods(subsequence_mods)
 
-        # if subsequence_n_term != sequence_n_term or subsequence_c_term != sequence_c_term:
-        #    return False
+        if sequence_mods.get('n') != subsequence_mods.get('n'):
+            return False
 
-        subsequence_counts = sequence_counter(subsequence)
-        sequence_counts = sequence_counter(sequence)
+        if sequence_mods.get('c') != subsequence_mods.get('c'):
+            return False
+
+        if sequence_mods.get('i') != subsequence_mods.get('i'):
+            return False
+
+        if sequence_mods.get('s') != subsequence_mods.get('s'):
+            return False
+
+        if sequence_mods.get('u') != subsequence_mods.get('u'):
+            return False
+
+        subsequence_counts = count_components(subsequence)
+        sequence_counts = count_components(sequence)
         return all(subsequence_counts[aa] <= sequence_counts[aa] for aa in subsequence_counts)
 
 
-def sort_sequence(sequence: str, sort_function: Callable[[str], str] = lambda x: x[0]) -> str:
+def sort_mods(mods: ModDict, sort_function: Callable[[str], str] = lambda x: str(x)) -> None:
+    """
+    Sorts the modifications in the input dictionary using the provided sort function.
+
+    :param mods: The modifications to be sorted.
+    :type mods: Dict[int, List[ModValue]]
+    :param sort_function: The sort function to be used. Defaults to identity function.
+    :type sort_function: Callable[[str], str]
+
+    :return: None
+    :rtype: None
+
+    .. code-block:: python
+
+        >>> mods = {1: ['phospho', 1], 2: ['phospho']}
+        >>> sort_mods(mods)
+        >>> mods
+        {1: [1, 'phospho'], 2: ['phospho']}
+
+    """
+
+    for k in mods:
+        mods[k].sort(key=sort_function)
+
+
+def sort(sequence: str, sort_function: Callable[[str], str] = lambda x: x[0]) -> str:
     """
     Sorts the input sequence using the provided sort function. Terminal sequence are kept in place.
 
@@ -1132,26 +925,31 @@ def sort_sequence(sequence: str, sort_function: Callable[[str], str] = lambda x:
 
     .. code-block:: python
 
-        >>> sort_sequence('PEPTIDE')
+        >>> sort('PEPTIDE')
         'DEEIPPT'
 
-        >>> sort_sequence('[Acetyl]-P[phospho]EP[phospho]TIDE-[Amide]')
+        >>> sort('[Acetyl]-P[phospho]EP[phospho]TIDE-[Amide]')
         '[Acetyl]-DEEIP[phospho]P[phospho]T-[Amide]'
+
+        >>> sort('[Acetyl]-P[1][phospho]EP[phospho]TIDE-[Amide]')
+        '[Acetyl]-DEEIP[1][phospho]P[phospho]T-[Amide]'
 
     """
 
-    stripped_sequence, mods = pop_modifications(sequence)
+    stripped_sequence, mods = pop_mods(sequence)
 
-    peptide_mods = {k: v for k, v in mods.items() if isinstance(k, int)}
-    global_mods = {k: v for k, v in mods.items() if isinstance(k, str)}
+    sort_mods(mods)
 
-    internal_modified_sequence = _construct_sequence_with_modifications(stripped_sequence, peptide_mods)
-    components = split_sequence(internal_modified_sequence)
+    residue_mods = {k: v for k, v in mods.items() if isinstance(k, int)}
+    other_mods = {k: v for k, v in mods.items() if isinstance(k, str)}
+
+    internal_modified_sequence = _construct_sequence(stripped_sequence, residue_mods)
+    components = split(internal_modified_sequence)
     components.sort(key=sort_function)
-    return add_modifications(''.join(components), global_mods)
+    return add_mods(''.join(components), other_mods)
 
 
-def build_kmers(sequence: str, k: int) -> List[str]:
+def get_kmers(sequence: str, k: int) -> List[str]:
     """
     Builds kmers from a given sequence.
 
@@ -1165,35 +963,182 @@ def build_kmers(sequence: str, k: int) -> List[str]:
 
     .. code-block:: python
 
-        >>> build_kmers('PEPTIDE', 2)
+        >>> get_kmers('PEPTIDE', 2)
         ['PE', 'EP', 'PT', 'TI', 'ID', 'DE']
 
-        >>> build_kmers('PEPTIDE', 3)
+        >>> get_kmers('PEPTIDE', 3)
         ['PEP', 'EPT', 'PTI', 'TID', 'IDE']
 
-        >>> build_kmers('<13C>PE[1][2]PTIDE', 3)
+        >>> get_kmers('<13C>PE[1][2]PTIDE', 3)
         ['<13C>PE[1][2]P', '<13C>E[1][2]PT', '<13C>PTI', '<13C>TID', '<13C>IDE']
 
-        >>> build_kmers('[Acetyl]-P[phospho]EP[phospho]TIDE-[Amide]', 3)
+        >>> get_kmers('[Acetyl]-P[phospho]EP[phospho]TIDE-[Amide]', 3)
         ['[Acetyl]-P[phospho]EP[phospho]', 'EP[phospho]T', 'P[phospho]TI', 'TID', 'IDE-[Amide]']
 
-        >>> build_kmers('==PE[2]P', 2)
+        >>> get_kmers('==PE[2]P', 2)
         ['==', '=P', 'PE[2]', 'E[2]P']
 
 
     """
 
-    stripped_sequence, mods = pop_modifications(sequence)
+    stripped_sequence, mods = pop_mods(sequence)
 
     peptide_mods = {k: v for k, v in mods.items() if isinstance(k, int) or k in ['n', 'c']}
     global_mods = {k: v for k, v in mods.items() if isinstance(k, str) and k not in ['n', 'c']}
 
-    internal_modified_sequence = _construct_sequence_with_modifications(stripped_sequence, peptide_mods)
-    components = split_sequence(internal_modified_sequence)
+    internal_modified_sequence = _construct_sequence(stripped_sequence, peptide_mods)
+    components = split(internal_modified_sequence)
 
     kmers = []
-    for i in range(calculate_sequence_length(sequence) - k + 1):
+    for i in range(len(stripped_sequence) - k + 1):
         kmer = ''.join(components[i:i + k])
-        kmers.append(add_modifications(kmer, global_mods))
+        kmers.append(add_mods(kmer, global_mods))
 
     return kmers
+
+
+def find_subsequence_indices(sequence: str, subsequence: str, ignore_mods: bool = False) -> List[int]:
+    """
+    Retrieves all starting indexes of a given subsequence within a sequence.
+
+    :param sequence: The parent sequence.
+    :type sequence: str
+    :param subsequence: The subsequences to search for.
+    :type subsequence: str
+    :param ignore_mods: Whether to ignore modifications.
+    :type ignore_mods: bool
+
+    :return: A list of starting indexes of the subsequence within the sequence.
+    :rtype: List[int]
+
+    .. code-block:: python
+
+        # Find the starting indexes of a subsequence
+        >>> find_subsequence_indices("PEPTIDE", "PEP")
+        [0]
+        >>> find_subsequence_indices("PEPTIDE", "EPT")
+        [1]
+        >>> find_subsequence_indices("PEPTIDE", "E")
+        [1, 6]
+
+        # By default the function will not ignore modifications
+        >>> find_subsequence_indices("[Acetyl]-PEPTIDE", "PEP")
+        []
+        >>> find_subsequence_indices("<13C>PEPTIDE", "PEP")
+        []
+        >>> find_subsequence_indices("<13C>PEP[1][Phospho]TIDE", "<13C>PEP[Phospho][1]")
+        [0]
+        >>> find_subsequence_indices("[Acetyl]-PEPTIDE", "[Acetyl]-PEP")
+        [0]
+        >>> find_subsequence_indices("PEPTIDE", "[Acetyl]-PEP")
+        []
+        >>> find_subsequence_indices("PEPTIDE[1.0]", "IDE")
+        []
+        >>> find_subsequence_indices("[Acetyl]-PEPTIDE-[Amide]", "[Acetyl]-PEPTIDE-[Amide]")
+        [0]
+
+        # If ignore_mods is set to True, the function will ignore modifications
+        >>> find_subsequence_indices("[Acetyl]-PEPTIDE", "PEP", ignore_mods=True)
+        [0]
+        >>> find_subsequence_indices("PEPTIDE", "[Acetyl]-PEP", ignore_mods=True)
+        [0]
+
+    """
+
+    unmodified_peptide, peptide_mods = pop_mods(subsequence)
+    unmodified_protein, protein_mods = pop_mods(sequence)
+
+    if ignore_mods:
+        return [i.start() for i in re.finditer(unmodified_peptide, unmodified_protein, overlapped=True)]
+
+    sort_mods(peptide_mods)
+    sort_mods(protein_mods)
+
+    subsequence = span_to_sequence_fast(unmodified_peptide, peptide_mods, (0, len(unmodified_peptide), 0))
+
+    spans = [(i.start(), i.end(), 0) for i in re.finditer(unmodified_peptide, unmodified_protein, overlapped=True)]
+    hit_peptides = [span_to_sequence_fast(unmodified_protein, protein_mods, s) for s in spans]
+
+    return [s[0] for s, p in zip(spans, hit_peptides) if p == subsequence]
+
+
+def coverage(sequence: str, subsequences: List[str], accumulate: bool = False,
+             ignore_mods: bool = False) -> List[int]:
+    """
+    Calculate the sequence coverage given a list of subsequecnes.
+
+    The coverage is represented as a binary list where each position in the protein sequence is marked as 1 if it
+    is covered by at least one peptide and 0 otherwise.
+
+    :param sequence: The parent sequence.
+    :type sequence: str
+    :param subsequences: List of subsequences.
+    :type subsequences: List[str]
+    :param accumulate: If True, the coverage array will be accumulated, i.e. if a position is covered by more than
+                        one subsequence, it will be marked as the sum of the number of subsequences covering it.
+                        If False, the coverage array will be binary, i.e. if a position is covered by more than one
+                        subsequence, it will be marked as 1.
+    :type accumulate: bool
+    :param ignore_mods: Whether to ignore modifications when calcualting the coverage.
+    :type ignore_mods: bool
+
+    :return: The sequence coverage array.
+    :rtype: List[int]
+
+    .. code-block:: python
+
+        >>> coverage("PEPTIDE", ["PEP"])
+        [1, 1, 1, 0, 0, 0, 0]
+
+        >>> coverage("PEPTIDE", ["PEP", "EPT"])
+        [1, 1, 1, 1, 0, 0, 0]
+
+        # If accumulate is True, overlapping indecies will be accumulated
+        >>> coverage("PEPTIDE", ["PEP", "EPT"], accumulate=True)
+        [1, 2, 2, 1, 0, 0, 0]
+
+    """
+
+    cov_arr = [0] * len(sequence)
+    for peptide in subsequences:
+        peptide_indexes = find_subsequence_indices(sequence, peptide, ignore_mods=ignore_mods)
+        for peptide_index in peptide_indexes:
+            if accumulate:
+                cov_arr[peptide_index:peptide_index + len(peptide)] = \
+                    [x + 1 for x in cov_arr[peptide_index:peptide_index + len(peptide)]]
+            else:
+                cov_arr[peptide_index:peptide_index + len(peptide)] = [1] * len(peptide)
+
+    return cov_arr
+
+
+def percent_coverage(sequence: str, subsequences: List[str], ignore_mods: bool = False) -> float:
+    """
+    Calculates the coverage given a list of subsequences.
+
+    :param sequence: The parent sequence.
+    :type sequence: str
+    :param subsequences: List of subsequences.
+    :type subsequences: List[str]
+    :param ignore_mods: Whether to ignore modifications when calcualting the coverage.
+    :type ignore_mods: bool
+
+    :return: The percent coverage.
+    :rtype: float
+
+    .. code-block:: python
+
+        >>> percent_coverage("PEPTIDE", ["PEP"])
+        0.42857142857142855
+
+        >>> percent_coverage("PEPTIDE", ["PEP", "EPT"])
+        0.5714285714285714
+
+    """
+
+    cov_arr = coverage(sequence, subsequences, accumulate=False, ignore_mods=ignore_mods)
+
+    if len(cov_arr) == 0:
+        return 0
+
+    return sum(cov_arr) / len(cov_arr)

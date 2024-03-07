@@ -2,11 +2,11 @@ import math
 from dataclasses import dataclass
 from typing import List, Tuple, Union, Dict, Any
 from peptacular.fragment import Fragment
-from peptacular.sequence import strip_modifications
+from peptacular.sequence import strip_mods
 
 
-def match_spectra_indexes(mz_spectrum1: List[float], mz_spectrum2: List[float], tolerance_value: float = 0.1,
-                          tolerance_type: str = 'ppm') -> List[Tuple[int, int]]:
+def get_matched_indices(mz_spectrum1: List[float], mz_spectrum2: List[float], tolerance_value: float = 0.1,
+                        tolerance_type: str = 'ppm') -> List[Tuple[int, int]]:
     """
     Matches two m/z spectra based on a specified tolerance value and type.
 
@@ -26,13 +26,13 @@ def match_spectra_indexes(mz_spectrum1: List[float], mz_spectrum2: List[float], 
 
     .. code-block:: python
 
-        >>> match_spectra_indexes([100, 200, 300], [100, 200, 300])
+        >>> get_matched_indices([100, 200, 300], [100, 200, 300])
         [(0, 1), (1, 2), (2, 3)]
 
-        >>> match_spectra_indexes([100.1, 250, 300, 400], [100, 200, 300], 1, 'th')
+        >>> get_matched_indices([100.1, 250, 300, 400], [100, 200, 300], 1, 'th')
         [(0, 1), None, (2, 3), None]
 
-        >>> match_spectra_indexes([100, 100, 100], [100, 100, 100])
+        >>> get_matched_indices([100, 100, 100], [100, 100, 100])
         [(0, 3), (0, 3), (0, 3)]
 
     """
@@ -128,7 +128,7 @@ def match_spectra(fragments: List[float], mz_spectra: List[float], tolerance_val
         raise ValueError('Invalid mode. Must be "closest" or "largest" or "all"')
 
     results = []
-    for i, indexes in enumerate(match_spectra_indexes(fragments, mz_spectra, tolerance_value, tolerance_type)):
+    for i, indexes in enumerate(get_matched_indices(fragments, mz_spectra, tolerance_value, tolerance_type)):
         if indexes is None:
             results.append(None)
         else:
@@ -281,9 +281,9 @@ class FragmentMatch:
             }
 
 
-def compute_fragment_matches(fragments: List[Fragment], mz_spectra: List[float],
-                             intensity_spectra: List[float], tolerance_value: float,
-                             tolerance_type: str = 'ppm', mode: str = 'all') -> List[FragmentMatch]:
+def get_fragment_matches(fragments: List[Fragment], mz_spectra: List[float],
+                         intensity_spectra: List[float], tolerance_value: float,
+                         tolerance_type: str = 'ppm', mode: str = 'all') -> List[FragmentMatch]:
     """
     Computes the fragment matches for a given set of fragments and an experimental spectrum.
 
@@ -332,9 +332,10 @@ def compute_fragment_matches(fragments: List[Fragment], mz_spectra: List[float],
     return fragment_matches
 
 
-def fragment_match_coverage(fragment_matches: List[FragmentMatch]) -> Dict[str, List[int]]:
+def get_match_coverage(fragment_matches: List[FragmentMatch]) -> Dict[str, List[int]]:
     """
-    Returns a dictionary of fragment coverage for a list of fragments.
+    Returns a dictionary of fragment coverage for each fragment type / charge.
+
     :param fragment_matches: List of fragments.
     :type fragment_matches: List[Fragment]
 
@@ -346,7 +347,7 @@ def fragment_match_coverage(fragment_matches: List[FragmentMatch]) -> Dict[str, 
     if not fragment_matches:
         return cov
 
-    unmod_sequence = strip_modifications(fragment_matches[0].parent_sequence)
+    unmod_sequence = strip_mods(fragment_matches[0].parent_sequence)
 
     for frag in fragment_matches:
         label = f"{'+' * frag.charge}{frag.ion_type}"
@@ -491,14 +492,14 @@ def binomial_score(fragments: Union[List[Fragment], List[float]], mz_spectra: Li
             0.000297
 
             >>> binomial_score([103, 203, 303], [100, 300, 400], 1, 'th')
-            1.0
+            0.970299
 
     """
 
     if fragments and isinstance(fragments[0], Fragment):
         fragments = [fragment.mz for fragment in fragments]
 
-    indexes = match_spectra_indexes(fragments, mz_spectra, tolerance_value, tolerance_type)
+    indexes = get_matched_indices(fragments, mz_spectra, tolerance_value, tolerance_type)
     fragment_matches = [i is not None for i in indexes]
     matches = sum(fragment_matches)
 
@@ -517,7 +518,7 @@ def binomial_score(fragments: Union[List[Fragment], List[float]], mz_spectra: Li
     return score
 
 
-def calculate_matched_intensity_proportion(fragment_matches: List[FragmentMatch], intensities: List[float]) -> float:
+def get_matched_intensity_percentage(fragment_matches: List[FragmentMatch], intensities: List[float]) -> float:
     """
     Calculates the proportion of matched intensity to total intensity.
 

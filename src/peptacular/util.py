@@ -1,125 +1,6 @@
 from typing import Union, List, Tuple, Dict
 import regex as re
 
-from peptacular.constants import VALID_ION_TYPES, FORWARD_ION_TYPES
-
-
-def validate_ion_type(ion_type: str) -> None:
-    """
-    Validates if the given ion type is valid.
-
-    This function checks if the ion type provided is one of the valid ion types. If not, it raises a ValueError.
-
-    :param ion_type: The type of ion to validate.
-    :type ion_type: str
-
-    :raises ValueError: If the ion type is not valid.
-
-    .. code-block:: python
-
-        >>> validate_ion_type("a")  # No error raised
-
-        >>> validate_ion_type("z")  # No error raised
-
-        >>> validate_ion_type("h")  # Raises ValueError
-        Traceback (most recent call last):
-        ValueError: Ion type h is invalid.
-    """
-
-    if ion_type not in VALID_ION_TYPES:
-        raise ValueError(f"Ion type {ion_type} is invalid.")
-
-
-def is_forward(ion_type: str) -> bool:
-    """
-        Checks if the provided ion type is a forward ion.
-
-        This function first validates the ion type and then checks if it's a forward ion.
-
-        :param ion_type: The type of ion to check.
-        :type ion_type: str
-
-        :return: True if it's a forward ion, False otherwise.
-        :rtype: bool
-
-        .. code-block:: python
-
-            >>> is_forward("a")  # Returns False
-            False
-
-            >>> is_forward("y")  # Returns True
-            True
-
-    """
-
-    validate_ion_type(ion_type)
-    return ion_type not in FORWARD_ION_TYPES
-
-
-def _are_parentheses_balanced(text: str, open_char='(', closed_char=')') -> bool:
-    """
-    Check if parentheses in the given text are balanced or not.
-
-    :param text: The input string to check for balanced parentheses.
-    :type text: str
-
-    :return: True if parentheses are balanced, False otherwise.
-    :rtype: bool
-
-    .. code-block:: python
-
-        >>> _are_parentheses_balanced("PEPTIDE(1.2345)")
-        True
-
-        >>> _are_parentheses_balanced("PEPTIDE(1.2345")
-        False
-
-        >>> _are_parentheses_balanced("PEPTIDE((1.2345")
-        False
-
-        >>> _are_parentheses_balanced("PEPTIDE((1.2345)")
-        False
-
-    """
-    stack = []
-    for i, char in enumerate(text):
-        if char == open_char:
-            stack.append(i)
-        elif char == closed_char:
-            if not stack:
-                return False
-            stack.pop()
-    return len(stack) == 0
-
-
-def validate_parentheses(sequence: str) -> None:
-    """
-    Validate the parentheses in the given sequence.
-
-    :param sequence: The sequence to validate.
-    :type sequence: str
-
-    :raises ValueError: If the parentheses are not balanced.
-
-    .. code-block:: python
-        >>> validate_parentheses("PEPTIDE(1.2345)")
-
-        >>> validate_parentheses("PEPTIDE(1.2345")
-        Traceback (most recent call last):
-        ValueError: Incorrect modification notation in peptide sequence: "PEPTIDE(1.2345".
-
-        >>> validate_parentheses("PEPTIDE(1.2345)[Amide")
-        Traceback (most recent call last):
-        ValueError: Incorrect modification notation in peptide sequence: "PEPTIDE(1.2345)[Amide".
-
-    """
-    # Check parentheses balance
-    if not _are_parentheses_balanced(sequence, '(', ')'):
-        raise ValueError(f'Incorrect modification notation in peptide sequence: "{sequence}".')
-
-    if not _are_parentheses_balanced(sequence, '[', ']'):
-        raise ValueError(f'Incorrect modification notation in peptide sequence: "{sequence}".')
-
 
 def convert_type(val: str) -> Union[str, int, float]:
     """
@@ -139,9 +20,20 @@ def convert_type(val: str) -> Union[str, int, float]:
         >>> convert_type("1")
         1
 
+        >>> convert_type("+1")
+        1
+
+        >>> convert_type("-1")
+        -1
+
+        >>> convert_type("1.0")
+        1.0
+
         >>> convert_type("abc")
         'abc'
+
     """
+
     try:
         return int(val)
     except ValueError:
@@ -151,7 +43,7 @@ def convert_type(val: str) -> Union[str, int, float]:
             return val
 
 
-def identify_regex_indexes(input_str: str, regex_str: str, offset: int = 0) -> List[int]:
+def get_regex_match_indices(input_str: str, regex_str: str, offset: int = 0) -> List[int]:
     """
     Identify the starting indexes of occurrences of a given regex pattern within a string.
 
@@ -166,25 +58,25 @@ def identify_regex_indexes(input_str: str, regex_str: str, offset: int = 0) -> L
 
     .. code-block:: python
 
-        >>> identify_regex_indexes("PEPTIDE", "P")
+        >>> get_regex_match_indices("PEPTIDE", "P")
         [0, 2]
 
-        >>> identify_regex_indexes("PEPTIDE", "E")
+        >>> get_regex_match_indices("PEPTIDE", "E")
         [1, 6]
 
         # More complex regex
-        >>> identify_regex_indexes("PEPTIDEP", "P[ST]")
+        >>> get_regex_match_indices("PEPTIDE", "P[ST]")
         [2]
 
-        >>> identify_regex_indexes("PPPP", "PP")
+        >>> get_regex_match_indices("PPPP", "PP")
         [0, 1, 2]
 
     """
 
-    return [i[0] for i in identify_regex_indexes_range(input_str, regex_str, offset)]
+    return [i[0] for i in get_regex_match_range(input_str, regex_str, offset)]
 
 
-def identify_regex_indexes_range(input_str: str, regex_str: str, offset: int = 0) -> List[Tuple[int, int]]:
+def get_regex_match_range(input_str: str, regex_str: str, offset: int = 0) -> List[Tuple[int, int]]:
     """
     Identify the starting indexes of occurrences of a given regex pattern within a string.
 
@@ -199,17 +91,17 @@ def identify_regex_indexes_range(input_str: str, regex_str: str, offset: int = 0
 
     .. code-block:: python
 
-        >>> identify_regex_indexes_range("PEPTIDE", "P")
+        >>> get_regex_match_range("PEPTIDE", "P")
         [(0, 1), (2, 3)]
 
-        >>> identify_regex_indexes_range("PEPTIDE", "E")
+        >>> get_regex_match_range("PEPTIDE", "E")
         [(1, 2), (6, 7)]
 
         # More complex regex
-        >>> identify_regex_indexes_range("PEPTIDEP", "P[ST]")
+        >>> get_regex_match_range("PEPTIDE", "P[ST]")
         [(2, 4)]
 
-        >>> identify_regex_indexes_range("PPPP", "PP")
+        >>> get_regex_match_range("PPPP", "PP")
         [(0, 2), (1, 3), (2, 4)]
 
     """
@@ -255,7 +147,7 @@ def _validate_span(span: Tuple[int, int, int]) -> None:
         raise ValueError(f'Start of span: {start}, should be less than or equal to end of span: {end}.')
 
 
-def map_brackets(text: str) -> List[Tuple[int, int]]:
+def _map_brackets_to_preceding_char(text: str) -> List[Tuple[int, int]]:
     """
     Find matching pairs of brackets in a string.
     
@@ -267,16 +159,28 @@ def map_brackets(text: str) -> List[Tuple[int, int]]:
     
     .. code-block:: python
     
-        >>> map_brackets("a[b]c")
+        >>> _map_brackets_to_preceding_char("a[b]c")
         [(1, 3)]
 
-        >>> map_brackets("a[b][x]c")
+        >>> _map_brackets_to_preceding_char("a[b][x]c")
         [(1, 3), (4, 6)]
 
-        >>> map_brackets("a[b[c]d]e")
+        >>> _map_brackets_to_preceding_char("a[b[c]d]e")
         [(1, 7)]
 
-        >>> map_brackets("a[b[c]d]e]]")
+        >>> _map_brackets_to_preceding_char("a[b[c]d]e]]")
+        Traceback (most recent call last):
+        ValueError: Unmatched brackets in input text.
+
+        >>> _map_brackets_to_preceding_char("a][bc")
+        Traceback (most recent call last):
+        ValueError: Unmatched brackets in input text.
+
+        >>> _map_brackets_to_preceding_char("a]bc")
+        Traceback (most recent call last):
+        ValueError: Unmatched brackets in input text.
+
+        >>> _map_brackets_to_preceding_char("a[bc")
         Traceback (most recent call last):
         ValueError: Unmatched brackets in input text.
 
@@ -301,15 +205,14 @@ def map_brackets(text: str) -> List[Tuple[int, int]]:
                     pairs.append((start_index, i))
                 # If stack is not empty, we're still inside a nested structure
             else:
-                # Handle case of unmatched closing bracket if necessary
-                pass
+                raise ValueError('Unmatched brackets in input text.')
 
     # No need to handle unmatched opening brackets as they are ignored for outermost pairs
 
     return pairs
 
 
-def remove_spans_from_text(text: str, pairs: List[Tuple[int, int]]) -> str:
+def _strip_bracket_spans(text: str, pairs: List[Tuple[int, int]]) -> str:
     """
     Remove spans from a string.
 
@@ -323,16 +226,16 @@ def remove_spans_from_text(text: str, pairs: List[Tuple[int, int]]) -> str:
 
     .. code-block:: python
 
-        >>> remove_spans_from_text("a[b]c", [(1, 3)])
+        >>> _strip_bracket_spans("a[b]c", [(1, 3)])
         'ac'
 
-        >>> remove_spans_from_text("a[b][x]c", [(1, 3), (4, 6)])
+        >>> _strip_bracket_spans("a[b][x]c", [(1, 3), (4, 6)])
         'ac'
 
-        >>> remove_spans_from_text("[x]a[b]c[x]", [(0, 2), (4, 6), (8, 10)])
+        >>> _strip_bracket_spans("[x]a[b]c[x]", [(0, 2), (4, 6), (8, 10)])
         'ac'
 
-        >>> remove_spans_from_text("a[b[c]d]e", [(1, 7)])
+        >>> _strip_bracket_spans("a[b[c]d]e", [(1, 7)])
         'ae'
 
     """
@@ -361,24 +264,30 @@ def _map_brackets_to_text(text: str) -> Tuple[str, Dict[int, List[str]]]:
 
     .. code-block:: python
 
-        >>> map_brackets_to_text("a[b]c")
+        >>> _map_brackets_to_text("a[b]c")
         ('ac', {0: ['b']})
 
-        >>> map_brackets_to_text("a[b][x]c")
+        >>> _map_brackets_to_text("a[b][x]c")
         ('ac', {0: ['b', 'x']})
 
-        >>> map_brackets_to_text("a[b]cd[1]e")
+        >>> _map_brackets_to_text("a[b]cd[1]e")
         ('acde', {0: ['b'], 2: ['1']})
 
-        >>> map_brackets_to_text("a[b[c]d]e")
+        >>> _map_brackets_to_text("a[b[c]d]e")
         ('ae', {0: ['b[c]d']})
 
-        >>> map_brackets_to_text("[x]-a[b]c-[x]")
+        >>> _map_brackets_to_text("[x]-a[b]c-[x]")
         ('-ac-', {-1: ['x'], 1: ['b'], 3: ['x']})
+
+        >>> _map_brackets_to_text("[1]?[2]-a[b]c")
+        ('?-ac', {-1: ['1'], 0: ['2'], 2: ['b']})
+
+        >>> _map_brackets_to_text("[b]ac")
+        ('ac', {-1: ['b']})
 
     """
 
-    pairs = map_brackets(text)  # Reuse the map_brackets function to find pairs
+    pairs = _map_brackets_to_preceding_char(text)  # Reuse the map_brackets function to find pairs
 
     bracket_contents = {}
     offset = 0  # Keep track of the offset caused by previous brackets
@@ -390,30 +299,60 @@ def _map_brackets_to_text(text: str) -> Tuple[str, Dict[int, List[str]]]:
 
         if preceding_char_index not in bracket_contents:
             bracket_contents[preceding_char_index] = []
+
         # Map the adjusted start index to the bracket content
-        bracket_contents[preceding_char_index].append(text[start+1:end])
+        bracket_contents[preceding_char_index].append(text[start + 1:end])
         # Update the offset for the next iteration
         offset += end - start + 1
 
-
-    sequence, spans = remove_spans_from_text(text, pairs), bracket_contents
+    sequence, spans = _strip_bracket_spans(text, pairs), bracket_contents
 
     return sequence, spans
 
 
-def map_brackets_to_text(text: str) -> Tuple[str, Dict[int, List[str]]]:
+def map_bracket_content_to_index(text: str, ignore_index_error: bool = False) -> Tuple[str, Dict[int, List[str]]]:
+    """
+    Map the content of brackets to the preceeding character in a string.
 
+    :param text: The input string.
+    :type text: str
+    :return: A dictionary containing the start index of the bracket and the index of the preceeding character.
+    :rtype: Dict[int, int]
+
+    .. code-block:: python
+
+        >>> map_bracket_content_to_index("a[b]c")
+        ('ac', {0: ['b']})
+
+        >>> map_bracket_content_to_index("a[b][x]c")
+        ('ac', {0: ['b', 'x']})
+
+        >>> map_bracket_content_to_index("a[b]cd[1]e")
+        ('acde', {0: ['b'], 2: ['1']})
+
+        >>> map_bracket_content_to_index("[1]?[2]-a[b]c")
+        ('?-ac', {0: ['1'], 1: ['2'], 2: ['b']})
+
+        >>> map_bracket_content_to_index("[b]ac")
+        Traceback (most recent call last):
+        ValueError: Invalid sequence
+
+    """
     sequence, spans = _map_brackets_to_text(text)
-    sequence, spans = fix_multiple_mods(sequence, spans)
+    sequence, spans = _fix_sequential_brackets(sequence, spans)
+    sequence, spans = _fix_preceding_brackets(sequence, spans, ignore_index_error)
+
     return sequence, spans
 
-def fix_multiple_mods(text: str, bracket_contents: Dict[int, List[str]]) -> Tuple[str, Dict[int, List[str]]]:
+
+def _fix_sequential_brackets(text: str, bracket_contents: Dict[int, List[str]]) -> Tuple[str, Dict[int, List[str]]]:
     """
     Fix multiple modifications in a string.
 
     :param text: The input string.
     :type text: str
-    :param bracket_contents: A dictionary containing the start index of the bracket and the index of the preceeding character.
+    :param bracket_contents: A dictionary containing the start index of the bracket and the index of the
+    preceeding character.
     :type bracket_contents: Dict[int, int]
 
     :return: A dictionary containing the start index of the bracket and the index of the preceeding character.
@@ -421,11 +360,14 @@ def fix_multiple_mods(text: str, bracket_contents: Dict[int, List[str]]) -> Tupl
 
     .. code-block:: python
 
-        >>> fix_multiple_mods('a^2cde', {0: ['b'], 4: ['1']})
+        >>> _fix_sequential_brackets('a^2cde', {0: ['b'], 4: ['1']})
         ('acde', {0: ['b', 'b'], 2: ['1']})
 
-        >>> fix_multiple_mods('a^2cde', {0: ['a', 'b'], 4: ['1']})
+        >>> _fix_sequential_brackets('a^2cde', {0: ['a', 'b'], 4: ['1']})
         ('acde', {0: ['a', 'b', 'b'], 2: ['1']})
+
+        >>> _fix_sequential_brackets('^2?-ac', {-1: ['1'], 2: ['2'], 4: ['b']})
+        ('?-ac', {-1: ['1', '1'], 0: ['2'], 2: ['b']})
 
     """
 
@@ -441,19 +383,65 @@ def fix_multiple_mods(text: str, bracket_contents: Dict[int, List[str]]) -> Tupl
 
         # Check if there is a modification at the index before '^'
         if index - 1 in bracket_contents:
-
             last_mod = bracket_contents[index - 1][-1]
             # Duplicate the modification
-            bracket_contents[index - 1].extend([last_mod]*(multiplier - 1))
+            bracket_contents[index - 1].extend([last_mod] * (multiplier - 1))
 
             # Remove the '^n' from the text
             text = text[:index] + text[index + len(match.group(0)):]
 
-
         # Update the offset for the next iteration
         for key in list(bracket_contents.keys()):
             if key > index:
-                bracket_contents[key-len_match] = bracket_contents[key]
+                bracket_contents[key - len_match] = bracket_contents[key]
                 del bracket_contents[key]
 
     return text, bracket_contents
+
+
+def _fix_preceding_brackets(sequence: str, mods: Dict[int, List[str]], ignore_index_error) -> Tuple[str, Dict[int, List[str]]]:
+    """
+    Fix the indices of the modifications in a string.
+
+    :param sequence: The input string.
+    :type sequence: str
+    :param mods: A dictionary containing the start index of the bracket and the index of the preceeding character.
+    :type mods: Dict[int, int]
+
+    :return: A dictionary containing the start index of the bracket and the index of the preceeding character.
+    :rtype: Dict[int, int]
+
+    .. code-block:: python
+
+        >>> _fix_preceding_brackets('?-ac', {-1: ['1', '1'], 0: ['2'], 2: ['b']}, False)
+        ('?-ac', {0: ['1', '1'], 1: ['2'], 2: ['b']})
+
+        >>> _fix_preceding_brackets('ac', {-1: ['b']}, False)
+        Traceback (most recent call last):
+        ValueError: Invalid sequence
+
+        >>> _fix_preceding_brackets('ac', {-1: ['b']}, True)
+        ('ac', {0: ['b']})
+
+    """
+
+    shift_index = 0
+    for i, c in enumerate(sequence):
+        if c not in '?-':
+            shift_index = i
+            break
+
+    # update all dict keys below shift index
+    new_mods = {}
+    for k in list(mods.keys()):
+        if k < shift_index:
+
+            if shift_index == k + 1:
+                if not ignore_index_error:
+                    raise ValueError('Invalid sequence: A modification is on the wrong side!')
+
+            new_mods[k + 1] = mods[k]
+        else:
+            new_mods[k] = mods[k]
+
+    return sequence, new_mods

@@ -1,9 +1,7 @@
-from collections import Counter
-from typing import Dict, Union
+from typing import Dict
 
-from peptacular.chem import parse_chem_formula, write_chem_formula
-from peptacular.constants import MONOSACCHARIDES_NAMES_SORTED, MONOSACCHARIDE_ID_TO_COMPOSITIONS, \
-    MONOSACCHARIDE_NAME_TO_ID
+from peptacular.errors import UnknownGlycanError
+from peptacular.constants import MONOSACCHARIDES_NAMES_SORTED
 
 
 def parse_glycan_formula(formula: str) -> Dict[str, int]:
@@ -12,6 +10,8 @@ def parse_glycan_formula(formula: str) -> Dict[str, int]:
 
     :param formula: A glycan formula string.
     :type formula: str
+
+    :raises UnknownGlycanError: If the glycan formula contains an unknown glycan.
 
     :return: A dictionary containing the glycan components and their counts.
     :rtype: dict
@@ -27,9 +27,22 @@ def parse_glycan_formula(formula: str) -> Dict[str, int]:
             >>> parse_glycan_formula('HexNAc2Hex3Neu5Gc-1')
             {'HexNAc': 2, 'Hex': 3, 'Neu5Gc': -1}
 
+            >>> parse_glycan_formula('')
+            {}
+
+            # This will raise an UnknownGlycanError
+            >>> parse_glycan_formula('HeSNAc2Hex3Neu5Gc1X')
+            Traceback (most recent call last):
+            peptacular.errors.UnknownGlycanError: Unknown glycan: HeSNAc2Hex3Neu5Gc1X
+
     """
 
     d = {}
+
+    if formula == '':
+        return d
+
+    original_formula = formula
 
     while formula != '':
         for glycan_name in MONOSACCHARIDES_NAMES_SORTED:
@@ -52,17 +65,19 @@ def parse_glycan_formula(formula: str) -> Dict[str, int]:
 
                 break
         else:
-            raise ValueError(f'Could not parse glycan: {formula}')
+            raise UnknownGlycanError(original_formula)
 
     return d
 
 
-def write_glycan_formula(glycan_dict: Dict[str, int]) -> str:
+def write_glycan_formula(glycan_dict: Dict[str, int], sep: str = None) -> str:
     """
     Writes a glycan dictionary to a string.
 
     :param glycan_dict: A dictionary containing the glycan components and their counts.
     :type glycan_dict: dict
+    :param sep: The separator to use between the glycan component and its count.
+    :type sep: str
 
     :return: A glycan formula string.
     :rtype: str
@@ -78,7 +93,16 @@ def write_glycan_formula(glycan_dict: Dict[str, int]) -> str:
             >>> write_glycan_formula({'HexNAc': 2, 'Hex': 3, 'Neu5Gc': -1})
             'HexNAc2Hex3Neu5Gc-1'
 
+            >>> write_glycan_formula({})
+            ''
+
+            >>> write_glycan_formula({'HexNAc': 2, 'Hex': 3, 'Neu5Gc': 1}, sep=' ')
+            'HexNAc 2 Hex 3 Neu5Gc 1'
+
     """
+
+    if sep is not None:
+        return sep.join([f'{component}{sep}{count}' for component, count in glycan_dict.items()])
 
     # Convert the dictionary to a list of strings
     glycan_str = [f'{component}{count}' for component, count in glycan_dict.items()]
@@ -86,32 +110,3 @@ def write_glycan_formula(glycan_dict: Dict[str, int]) -> str:
     # Join the list of strings into a single string
     return ''.join(glycan_str)
 
-
-def convert_glycan_formula_to_chem_formula(glycan: Union[Dict[str, int], str]) -> str:
-    """
-    Converts a glycan dictionary to a chemical formula.
-
-    :param glycan: A dictionary containing the glycan components and their counts, or a glycan formula string.
-    :type glycan: dict | str
-
-    :return: A chemical formula string.
-    :rtype: str
-
-    .. code-block:: python
-
-            >>> convert_glycan_formula_to_chem_formula({'HexNAc': 2, 'Hex': 3, 'Neu5Gc': 1})
-            'C45H73N3O34'
-
-    """
-
-    if isinstance(glycan, str):
-        glycan = parse_glycan_formula(glycan)
-
-    counts = Counter()
-    for component, count in glycan.items():
-        monosaccharide_id = MONOSACCHARIDE_NAME_TO_ID[component]
-        chem_formula = parse_chem_formula(MONOSACCHARIDE_ID_TO_COMPOSITIONS[monosaccharide_id])
-        for element, element_count in chem_formula.items():
-            counts[element] += element_count * count
-
-    return write_chem_formula(counts)
