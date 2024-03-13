@@ -1,10 +1,10 @@
-from typing import Dict
-
+from peptacular.util import convert_type
+from peptacular.types import Chem_Composition
 from peptacular.errors import UnknownGlycanError
 from peptacular.constants import MONOSACCHARIDES_NAMES_SORTED
 
 
-def parse_glycan_formula(formula: str) -> Dict[str, int]:
+def parse_glycan_formula(formula: str) -> Chem_Composition:
     """
     Parses a glycan sequence into its constituent parts.
 
@@ -26,6 +26,9 @@ def parse_glycan_formula(formula: str) -> Dict[str, int]:
 
             >>> parse_glycan_formula('HexNAc2Hex3Neu5Gc-1')
             {'HexNAc': 2, 'Hex': 3, 'Neu5Gc': -1}
+
+            >>> parse_glycan_formula('HexNAc2.2Hex3.9Neu1')
+            {'HexNAc': 2.2, 'Hex': 3.9, 'Neu': 1}
 
             >>> parse_glycan_formula('')
             {}
@@ -52,7 +55,7 @@ def parse_glycan_formula(formula: str) -> Dict[str, int]:
 
                 # get the count (can have +- or digits)
                 for c in formula:
-                    if c.isdigit() or c in '+-':
+                    if c.isdigit() or c in '+-.':
                         count += c
                     else:
                         break
@@ -61,7 +64,7 @@ def parse_glycan_formula(formula: str) -> Dict[str, int]:
                 formula = formula[len(count):]
 
                 # add the count to the dictionary
-                d[glycan_name] = int(count)
+                d[glycan_name] = convert_type(count)
 
                 break
         else:
@@ -70,7 +73,7 @@ def parse_glycan_formula(formula: str) -> Dict[str, int]:
     return d
 
 
-def write_glycan_formula(glycan_dict: Dict[str, int], sep: str = None) -> str:
+def write_glycan_formula(glycan_dict: Chem_Composition, sep: str = None) -> str:
     """
     Writes a glycan dictionary to a string.
 

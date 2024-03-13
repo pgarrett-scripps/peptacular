@@ -7,4 +7,5 @@ from .fragment import *
 from .mass import *
 from .glycan import *
 from .isotope import *
+from .constants import *
 

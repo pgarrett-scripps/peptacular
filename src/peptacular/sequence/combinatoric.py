@@ -1,11 +1,10 @@
-import itertools
 from typing import List, Union
 
-from peptacular.sequence import sequence_length
-from peptacular.sequence.sequence import _construct_sequence, split, add_mods, pop_mods
+from peptacular.sequence.proforma import ProFormaAnnotation
+from peptacular.sequence.sequence import parse_single_sequence
 
 
-def permutate(sequence: str, size: int = None) -> List[str]:
+def permutations(sequence: str | ProFormaAnnotation, size: int = None) -> List[str]:
     """
     Generates all permutations of the input sequence. Terminal sequence are kept in place.
 
@@ -19,49 +18,36 @@ def permutate(sequence: str, size: int = None) -> List[str]:
 
     .. code-block:: python
 
-        >>> permutate('PET')
+        >>> permutations('PET')
         ['PET', 'PTE', 'EPT', 'ETP', 'TPE', 'TEP']
 
-        >>> permutate('[3]-PET-[1]')
+        >>> permutations('[3]-PET-[1]')
         ['[3]-PET-[1]', '[3]-PTE-[1]', '[3]-EPT-[1]', '[3]-ETP-[1]', '[3]-TPE-[1]', '[3]-TEP-[1]']
 
-        >>> permutate('PE[3.14]T')
+        >>> permutations('PE[3.14]T')
         ['PE[3.14]T', 'PTE[3.14]', 'E[3.14]PT', 'E[3.14]TP', 'TPE[3.14]', 'TE[3.14]P']
 
-        >>> permutate('<13C>PET')
+        >>> permutations('<13C>PET')
         ['<13C>PET', '<13C>PTE', '<13C>EPT', '<13C>ETP', '<13C>TPE', '<13C>TEP']
 
     """
 
-    if size is None:
-        size = sequence_length(sequence)
+    if isinstance(sequence, str):
+        annotation = parse_single_sequence(sequence)
+    else:
+        annotation = sequence
 
-    sequence, mods = pop_mods(sequence)
-
-    labile_mods = mods.pop('l', [])
-    static_mods = mods.pop('s', [])
-    isotope_mods = mods.pop('i', [])
-    n_term_mods = mods.pop('n', [])
-    c_term_mods = mods.pop('c', [])
-    unknown_mods = mods.pop('u', [])
-
-    internal_modified_sequence = _construct_sequence(sequence, mods)
-
-    new_mods = {'l': labile_mods, 's': static_mods, 'i': isotope_mods, 'n': n_term_mods, 'c': c_term_mods,
-                'u': unknown_mods}
-
-    components = split(internal_modified_sequence)
-    return [add_mods(''.join(p), new_mods) for p in itertools.permutations(components, size)]
+    return [a.serialize() for a in annotation.permutations(size)]
 
 
-def product(sequence: str, size: Union[int, None]) -> List[str]:
+def product(sequence: str | ProFormaAnnotation, repeat: Union[int, None]) -> List[str]:
     """
     Generates all sartesian products of the input sequence of a given size. Terminal sequence are kept in place.
 
     :param sequence: The sequence to be combined.
     :type sequence: str
-    :param size: The size of the combinations to be generated.
-    :type size: int
+    :param repeat: The size of the combinations to be generated.
+    :type repeat: int
 
     :return: A list of all combinations of the input sequence of the given size.
     :rtype: List[str]
@@ -82,25 +68,15 @@ def product(sequence: str, size: Union[int, None]) -> List[str]:
 
     """
 
-    sequence, mods = pop_mods(sequence)
+    if isinstance(sequence, str):
+        annotation = parse_single_sequence(sequence)
+    else:
+        annotation = sequence
 
-    labile_mods = mods.pop('l', [])
-    static_mods = mods.pop('s', [])
-    isotope_mods = mods.pop('i', [])
-    n_term_mods = mods.pop('n', [])
-    c_term_mods = mods.pop('c', [])
-    unknown_mods = mods.pop('u', [])
-
-    internal_modified_sequence = _construct_sequence(sequence, mods)
-
-    new_mods = {'l': labile_mods, 's': static_mods, 'i': isotope_mods, 'n': n_term_mods, 'c': c_term_mods,
-                'u': unknown_mods}
-
-    components = split(internal_modified_sequence)
-    return [add_mods(''.join(p), new_mods) for p in itertools.product(components, repeat=size)]
+    return [a.serialize() for a in annotation.product(repeat)]
 
 
-def combinations(sequence: str, size: Union[int, None]) -> List[str]:
+def combinations(sequence: str | ProFormaAnnotation, size: Union[int, None]) -> List[str]:
     """
     Generates all combinations of the input sequence of a given size. Terminal sequence are kept in place.
 
@@ -129,27 +105,15 @@ def combinations(sequence: str, size: Union[int, None]) -> List[str]:
 
     """
 
-    if size is None:
-        size = sequence_length(sequence)
+    if isinstance(sequence, str):
+        annotation = parse_single_sequence(sequence)
+    else:
+        annotation = sequence
 
-    sequence, mods = pop_mods(sequence)
-
-    labile_mods = mods.pop('l', [])
-    static_mods = mods.pop('s', [])
-    isotope_mods = mods.pop('i', [])
-    n_term_mods = mods.pop('n', [])
-    c_term_mods = mods.pop('c', [])
-    unknown_mods = mods.pop('u', [])
-
-    internal_modified_sequence = _construct_sequence(sequence, mods)
-
-    new_mods = {'l': labile_mods, 's': static_mods, 'i': isotope_mods, 'n': n_term_mods, 'c': c_term_mods,
-                'u': unknown_mods}
-    components = split(internal_modified_sequence)
-    return [add_mods(''.join(c), new_mods) for c in itertools.combinations(components, size)]
+    return [a.serialize() for a in annotation.combinations(size)]
 
 
-def combinations_with_replacement(sequence: str, size: Union[int, None]) -> List[str]:
+def combinations_with_replacement(sequence: str | ProFormaAnnotation, size: Union[int, None]) -> List[str]:
     """
     Generates all combinations with replacement of the input sequence of a given size. Terminal sequence are kept
     in place.
@@ -179,22 +143,9 @@ def combinations_with_replacement(sequence: str, size: Union[int, None]) -> List
 
     """
 
-    if size is None:
-        size = sequence_length(sequence)
+    if isinstance(sequence, str):
+        annotation = parse_single_sequence(sequence)
+    else:
+        annotation = sequence
 
-    sequence, mods = pop_mods(sequence)
-
-    labile_mods = mods.pop('l', [])
-    static_mods = mods.pop('s', [])
-    isotope_mods = mods.pop('i', [])
-    n_term_mods = mods.pop('n', [])
-    c_term_mods = mods.pop('c', [])
-    unknown_mods = mods.pop('u', [])
-
-    internal_modified_sequence = _construct_sequence(sequence, mods)
-
-    new_mods = {'l': labile_mods, 's': static_mods, 'i': isotope_mods, 'n': n_term_mods, 'c': c_term_mods,
-                'u': unknown_mods}
-
-    components = split(internal_modified_sequence)
-    return [add_mods(''.join(p), new_mods) for p in itertools.combinations_with_replacement(components, size)]
+    return [a.serialize() for a in annotation.combinations_with_replacement(size)]

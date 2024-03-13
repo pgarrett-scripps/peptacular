@@ -90,3 +90,12 @@ class InvalidFormulaError(ValueError):
         self.formula = formula
         message = f"Cannot parse formula: {formula}"
         super().__init__(message, *args)
+
+
+class ProFormaFormatError(ValueError):
+    """Exception raised for errors due to invalid ProForma format."""
+
+    def __init__(self, proforma, *args):
+        self.proforma = proforma
+        message = f"Invalid ProForma format: {proforma}"
+        super().__init__(message, *args)

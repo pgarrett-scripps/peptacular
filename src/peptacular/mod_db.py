@@ -150,7 +150,7 @@ def parse_unimod_mass(unimod_str: str, monoisotopic: bool, precision: int = None
         raise UnknownModificationError(orig_str)
 
 
-def parse_unimod_composition(unimod_str: str) -> str:
+def parse_unimod_comp(unimod_str: str) -> str:
     """
     Get the composition of an unimod modification.
 
@@ -165,23 +165,23 @@ def parse_unimod_composition(unimod_str: str) -> str:
 
     .. code-block:: python
 
-        >>> parse_unimod_composition('UniMod:1')
+        >>> parse_unimod_comp('UniMod:1')
         'H2C2O1'
 
-        >>> parse_unimod_composition('U:1')
+        >>> parse_unimod_comp('U:1')
         'H2C2O1'
 
-        >>> parse_unimod_composition('1')
+        >>> parse_unimod_comp('1')
         'H2C2O1'
 
-        >>> parse_unimod_composition('Acetyl')
+        >>> parse_unimod_comp('Acetyl')
         'H2C2O1'
 
-        >>> parse_unimod_composition('+1')
+        >>> parse_unimod_comp('+1')
         Traceback (most recent call last):
         peptacular.errors.InvalidCompositionError: Cannot retrieve composition for: +1
 
-        >>> parse_unimod_composition('13252454')
+        >>> parse_unimod_comp('13252454')
         Traceback (most recent call last):
         peptacular.errors.UnknownModificationError: Unknown modification: 13252454
 
@@ -360,7 +360,7 @@ def parse_psi_mass(psi_str: str, monoisotopic: bool, precision: int = None) -> f
         raise UnknownModificationError(orig_str)
 
 
-def parse_psi_composition(psi_str: str) -> str:
+def parse_psi_comp(psi_str: str) -> str:
     """
     Get the composition of a PSI modification.
 
@@ -375,33 +375,33 @@ def parse_psi_composition(psi_str: str) -> str:
 
     .. code-block:: python
 
-        >>> parse_psi_composition('MOD:00046')
+        >>> parse_psi_comp('MOD:00046')
         'H1O3P1'
 
-        >>> parse_psi_composition('M:00046')
+        >>> parse_psi_comp('M:00046')
         'H1O3P1'
 
-        >>> parse_psi_composition('PSI-MOD:00046')
+        >>> parse_psi_comp('PSI-MOD:00046')
         'H1O3P1'
 
-        >>> parse_psi_composition('00046')
+        >>> parse_psi_comp('00046')
         'H1O3P1'
 
-        >>> parse_psi_composition('O-phospho-L-serine')
+        >>> parse_psi_comp('O-phospho-L-serine')
         'H1O3P1'
 
         # InvalidCompositionError when the modification is a delta mass offset
-        >>> parse_psi_composition('M:+1')
+        >>> parse_psi_comp('M:+1')
         Traceback (most recent call last):
         peptacular.errors.InvalidCompositionError: Cannot retrieve composition for: M:+1
 
         # InvalidCompositionError when the composition is None
-        >>> parse_psi_composition('M:modified D-asparagine residue')
+        >>> parse_psi_comp('M:modified D-asparagine residue')
         Traceback (most recent call last):
         peptacular.errors.InvalidCompositionError: Cannot retrieve composition for: M:modified D-asparagine residue
 
         # UnknownModificationError when the modification is not found
-        >>> parse_psi_composition('13252454')
+        >>> parse_psi_comp('13252454')
         Traceback (most recent call last):
         peptacular.errors.UnknownModificationError: Unknown modification: 13252454
 

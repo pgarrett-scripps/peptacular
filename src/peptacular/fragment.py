@@ -1,29 +1,18 @@
 """
 fragment.py contains functions for fragmenting peptides
 """
+from __future__ import annotations
 
 from dataclasses import dataclass
 from functools import cached_property
 from typing import List, Generator, Union
 
+from peptacular import ProFormaAnnotation
 from peptacular.constants import FORWARD_ION_TYPES, BACKWARD_ION_TYPES, INTERNAL_ION_TYPES, TERMINAL_ION_TYPES
 from peptacular.mass import mz, mass
-from peptacular.sequence.sequence import sequence_length, pop_mods, span_to_sequence
+from peptacular.sequence.sequence import sequence_length, pop_mods, span_to_sequence, parse_single_sequence
 from peptacular.spans import build_non_enzymatic_spans, build_right_semi_spans, build_left_semi_spans, Span
-
-ChargeType = Union[List[int], int]
-IsotopeType = Union[List[int], int]
-LossType = Union[List[float], float]
-IonTypeType = Union[List[str], str]
-
-
-# make ambiguity error
-
-class AmbiguityError(Exception):
-    """
-    Exception raised when a sequence contains ambiguity.
-    """
-    pass
+from peptacular.types import IonTypeType, IsotopeType, LossType, ChargeType
 
 
 @dataclass(frozen=True)
@@ -64,7 +53,7 @@ class Fragment:
     monoisotopic: bool
     isotope: int
     loss: float
-    parent_sequence: str
+    parent_sequence: str | ProFormaAnnotation
 
     @cached_property
     def internal(self):
@@ -162,8 +151,13 @@ class Fragment:
         }
 
 
-def _build_fragments(spans: List[Span], ion_types: List[str], charges: List[int], losses: List[float],
-                     isotopes: List[int], monoisotopic: bool, sequence: str) -> Generator[Fragment, None, None]:
+def _build_fragments(spans: List[Span],
+                     ion_types: List[str],
+                     charges: List[int],
+                     losses: List[float],
+                     isotopes: List[int],
+                     monoisotopic: bool,
+                     sequence: str | ProFormaAnnotation) -> Generator[Fragment, None, None]:
     for span in spans:
         for ion_type in ion_types:
             for iso in isotopes:
@@ -174,8 +168,11 @@ def _build_fragments(spans: List[Span], ion_types: List[str], charges: List[int]
                                        loss=loss, parent_sequence=sequence)
 
 
-def get_internal_fragments(sequence: str, ion_types: IonTypeType, charges: ChargeType,
-                           monoisotopic: bool = True, isotopes: IsotopeType = 0,
+def get_internal_fragments(sequence: str | ProFormaAnnotation,
+                           ion_types: IonTypeType,
+                           charges: ChargeType,
+                           monoisotopic: bool = True,
+                           isotopes: IsotopeType = 0,
                            losses: LossType = 0.0) -> List[Fragment]:
     """
     .. code-block:: python
@@ -206,13 +203,18 @@ def get_internal_fragments(sequence: str, ion_types: IonTypeType, charges: Charg
     if len(isotopes) == 0 or len(losses) == 0 or len(charges) == 0:
         raise ValueError("No isotopes, losses, ion types, or charges provided.")
 
-    stripped_sequence, mods = pop_mods(sequence)
-    spans = build_non_enzymatic_spans((0, len(stripped_sequence), 0))
-    internal_spans = [span for span in spans if span[0] != 0 and span[1] != len(stripped_sequence)]
-    return list(_build_fragments(internal_spans, ion_types, charges, losses, isotopes, monoisotopic, sequence))
+    if isinstance(sequence, str):
+        annotation = parse_single_sequence(sequence)
+    else:
+        annotation = sequence
+
+    spans = build_non_enzymatic_spans((0, len(annotation), 0))
+    internal_spans = [span for span in spans if span[0] != 0 and span[1] != len(annotation)]
+    return list(_build_fragments(internal_spans, ion_types, charges, losses, isotopes, monoisotopic, annotation))
 
 
-def get_immonium_fragments(sequence: str, charges: ChargeType, monoisotopic: bool = True, isotopes: IsotopeType = 0,
+def get_immonium_fragments(sequence: str | ProFormaAnnotation, charges: ChargeType, monoisotopic: bool = True,
+                           isotopes: IsotopeType = 0,
                            losses: LossType = 0.0) -> List[Fragment]:
     """
     Build immonium ions for a given sequence.
@@ -252,25 +254,33 @@ def get_immonium_fragments(sequence: str, charges: ChargeType, monoisotopic: boo
     if isinstance(losses, float) or isinstance(losses, int):
         losses = [losses]
 
-    spans = [(i, i + 1, 0) for i in range(len(sequence))]
-    return list(_build_fragments(spans, ['I'], charges, losses, isotopes, monoisotopic, sequence))
+    if isinstance(sequence, str):
+        annotation = parse_single_sequence(sequence)
+    else:
+        annotation = sequence
+
+    spans = [(i, i + 1, 0) for i in range(len(annotation))]
+    return list(_build_fragments(spans, ['I'], charges, losses, isotopes, monoisotopic, annotation))
 
 
-def _get_forward_fragments(sequence: str, ion_types: List[str], charges: List[int], monoisotopic: bool,
+def _get_forward_fragments(sequence: str | ProFormaAnnotation, ion_types: List[str], charges: List[int],
+                           monoisotopic: bool,
                            isotopes: List[int], losses: List[float]) -> List[Fragment]:
     start_span = (0, sequence_length(sequence), 0)
     spans = [start_span] + build_left_semi_spans(start_span)
     return list(_build_fragments(spans, ion_types, charges, losses, isotopes, monoisotopic, sequence))
 
 
-def _get_backward_fragments(sequence: str, ion_types: List[str], charges: List[int], monoisotopic: bool,
+def _get_backward_fragments(sequence: str | ProFormaAnnotation, ion_types: List[str], charges: List[int],
+                            monoisotopic: bool,
                             isotopes: List[int], losses: List[float]) -> Union[float, List[Fragment]]:
     start_span = (0, sequence_length(sequence), 0)
     spans = [start_span] + build_right_semi_spans(start_span)
     return list(_build_fragments(spans, ion_types, charges, losses, isotopes, monoisotopic, sequence))
 
 
-def get_terminal_fragments(sequence: str, ion_types: IonTypeType, charges: ChargeType, monoisotopic: bool = True,
+def get_terminal_fragments(sequence: str | ProFormaAnnotation, ion_types: IonTypeType, charges: ChargeType,
+                           monoisotopic: bool = True,
                            isotopes: IsotopeType = 0, losses: LossType = 0.0) -> List[Fragment]:
     """
 
@@ -303,17 +313,22 @@ def get_terminal_fragments(sequence: str, ion_types: IonTypeType, charges: Charg
     if isinstance(losses, float) or isinstance(losses, int):
         losses = [losses]
 
+    if isinstance(sequence, str):
+        annotation = parse_single_sequence(sequence)
+    else:
+        annotation = sequence
+
     forward_ions = [ion for ion in ion_types if ion in FORWARD_ION_TYPES]
     backward_ions = [ion for ion in ion_types if ion in BACKWARD_ION_TYPES]
 
     frags = []
-    frags.extend(_get_forward_fragments(sequence, forward_ions, charges, monoisotopic, isotopes, losses))
-    frags.extend(_get_backward_fragments(sequence, backward_ions, charges, monoisotopic, isotopes, losses))
+    frags.extend(_get_forward_fragments(annotation, forward_ions, charges, monoisotopic, isotopes, losses))
+    frags.extend(_get_backward_fragments(annotation, backward_ions, charges, monoisotopic, isotopes, losses))
 
     return frags
 
 
-def fragment(sequence: str, ion_types: IonTypeType, charges: ChargeType, monoisotopic: bool = True,
+def fragment(sequence: str | ProFormaAnnotation, ion_types: IonTypeType, charges: ChargeType, monoisotopic: bool = True,
              isotopes: IsotopeType = 0, losses: LossType = 0.0) -> List[Fragment]:
     """
     Builds all Fragment objects or a given input 'sequence'.
@@ -361,13 +376,13 @@ def fragment(sequence: str, ion_types: IonTypeType, charges: ChargeType, monoiso
     if isinstance(losses, float) or isinstance(losses, int):
         losses = [losses]
 
-    stripped_sequence, mods = pop_mods(sequence)
+    if isinstance(sequence, str):
+        annotation = parse_single_sequence(sequence)
+    else:
+        annotation = sequence
 
-    if '(' in stripped_sequence:
-        raise ValueError("Sequence cannot contain ambiguity.")
-
-    if 'u' in mods:
-        raise ValueError("Sequence cannot contain ambiguity.")
+    if annotation.is_ambiguous():
+        raise ValueError("Ambiguous sequence")
 
     terminal_fragment_types = [i for i in ion_types if i in TERMINAL_ION_TYPES]
     internal_fragment_types = [i for i in ion_types if i in INTERNAL_ION_TYPES]

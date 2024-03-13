@@ -281,24 +281,25 @@ def gen_chem_db():
     if not all([atomic_number_to_comp_neutron_offset, atomic_symbol_to_compositions, isotopic_atomic_masses, atomic_number_to_symbol, average_atomic_masses]):
         raise ValueError('Error parsing atomic data. Check the source file.')
 
-    with open('../src/peptacular/data/element/hill_order.json', 'w') as f:
-        json.dump(hill_ordering, f)
 
     # save to json files
-    with open('../src/peptacular/data/element/isotopic_atomic_masses.json', 'w') as f:
+    with open('../src/peptacular/data/element/atomic_symbol_to_average_mass.json', 'w') as f:
+        json.dump(average_atomic_masses, f)
+
+    with open('../src/peptacular/data/element/atomic_symbol_to_isotopic_mass.json', 'w') as f:
         json.dump(isotopic_atomic_masses, f)
-
-    with open('../src/peptacular/data/element/atomic_symbol_compositions.json', 'w') as f:
-        json.dump(atomic_symbol_to_compositions, f)
-
-    with open('../src/peptacular/data/element/atomic_symbol_neutron_offset_compositions.json', 'w') as f:
-        json.dump(atomic_number_to_comp_neutron_offset, f)
 
     with open('../src/peptacular/data/element/atomic_number_to_symbol.json', 'w') as f:
         json.dump(atomic_number_to_symbol, f)
 
-    with open('../src/peptacular/data/element/average_atomic_masses.json', 'w') as f:
-        json.dump(average_atomic_masses, f)
+    with open('../src/peptacular/data/element/atomic_symbol_to_isotope_mass_and_abundance.json', 'w') as f:
+        json.dump(atomic_symbol_to_compositions, f)
+
+    with open('../src/peptacular/data/element/atomic_symbol_to_isotope_neutron_offset_and_abundance.json', 'w') as f:
+        json.dump(atomic_number_to_comp_neutron_offset, f)
+
+    with open('../src/peptacular/data/element/atomic_symbol_to_hill_order_index.json', 'w') as f:
+        json.dump(hill_ordering, f)
 
 
 if __name__ == '__main__':

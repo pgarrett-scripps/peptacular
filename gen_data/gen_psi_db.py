@@ -93,7 +93,7 @@ def generate_psi_mod_db():
     if not all([name_to_id, id_to_composition, id_to_isotopic_mass, id_to_average_mass]):
         raise ValueError('Error parsing PSI-MOD OBO file.')
 
-    with open('../src/peptacular/data/psi/id_to_isotopic_compositions.json', 'w') as f:
+    with open('../src/peptacular/data/psi/id_to_chem_formula.json', 'w') as f:
         json.dump(id_to_composition, f)
 
     with open('../src/peptacular/data/psi/id_to_isotopic_mass.json', 'w') as f:

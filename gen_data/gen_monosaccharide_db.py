@@ -56,7 +56,7 @@ def generate_monosaccharide_db():
     if not all([name_to_id, id_to_composition, id_to_isotopic_mass, id_to_average_mass]):
         raise ValueError('Error parsing monosaccharides')
 
-    with open('../src/peptacular/data/monosaccharide/id_to_isotopic_compositions.json', 'w') as f:
+    with open('../src/peptacular/data/monosaccharide/id_to_chem_formula.json', 'w') as f:
         json.dump(id_to_composition, f)
 
     with open('../src/peptacular/data/monosaccharide/id_to_isotopic_mass.json', 'w') as f:

@@ -6,111 +6,8 @@ import sys
 from typing import List, Dict, Tuple, Union
 
 from peptacular import constants
-from peptacular.chem import estimate_element_counts
+from peptacular.chem import estimate_comp
 from peptacular.mass import chem_mass
-
-
-def _convolve_distributions(dist1: Dict[float, float],
-                            dist2: Dict[float, float],
-                            max_isotopes: Union[int, None],
-                            min_abundance_threshold: Union[float, None],
-                            distribution_resolution: Union[int, None]) -> Dict[float, float]:
-    """
-    Convolve two distributions to calculate the distribution of their sum.
-
-    :param dist1: The first distribution.
-    :type dist2: Dict[float, float]
-    :param dist2: The second distribution.
-    :type dist2: Dict[float, float]
-    :param max_isotopes: The maximum number of isotopes to keep. If None, no limit is applied.
-    :type max_isotopes: Union[int, None]
-    :param min_abundance_threshold: The minimum abundance of an isotope to keep. If None, no threshold is applied.
-    :type min_abundance_threshold: Union[float, None]
-    :param distribution_resolution: The resolution of the distribution. If None, no rounding is applied.
-    :type distribution_resolution: Union[int, None]
-
-    :return: A convolved isotopic distribution as a mass-to-abundance mapping.
-    :rtype: Dict[float, float]
-
-    .. python::
-
-        # Example usage
-        >>> d1 = {1.0: 0.5, 2.0: 0.5}
-        >>> d2 = {1.0: 0.5, 2.0: 0.5}
-        >>> _convolve_distributions(d1, d2, 3, 0.0, 5)
-        {3.0: 0.5, 2.0: 0.25, 4.0: 0.25}
-
-    """
-
-    if min_abundance_threshold is None:
-        min_abundance_threshold = 0.0
-
-    if max_isotopes is None:
-        max_isotopes = sys.maxsize
-
-    result = {}
-    for mass1, abundance1 in dist1.items():
-        for mass2, abundance2 in dist2.items():
-            new_mass = mass1 + mass2
-            if distribution_resolution is not None:
-                new_mass = round(new_mass, distribution_resolution)
-            new_abundance = abundance1 * abundance2
-            if new_abundance >= min_abundance_threshold:
-                if new_mass in result:
-                    result[new_mass] += new_abundance
-                else:
-                    result[new_mass] = new_abundance
-
-    # Apply max isotopes limit and sort by abundance
-    if max_isotopes != sys.maxsize:
-        sorted_result = sorted(result.items(), key=lambda x: x[1], reverse=True)
-        # Retain only the top `max_isotopes` isotopes based on abundance
-        filtered_result = {mass: abundance for mass, abundance in sorted_result[:max_isotopes]}
-        return filtered_result
-    else:
-        return result
-
-
-def _calculate_elemental_distribution(element: str,
-                                      count: int,
-                                      use_neutron_count: bool,
-                                      min_abundance_threshold: float = 10e-9) -> Dict[float, float]:
-    """
-    Calculate the isotopic distribution for an element.
-
-    :param element: The element.
-    :type element: str
-    :param count: The number of atoms.
-    :type count: int
-    :param use_neutron_count: Whether to use neutron offsets instead of masses.
-    :type use_neutron_count: bool
-
-    :return: The isotopic distribution.
-    :rtype: Counter[float, float]
-
-    .. python::
-
-        # Example usage
-        >>> _calculate_elemental_distribution('C', 2, False)
-        {24.0: 0.9787144899999999, 25.00335483507: 0.02117102, 26.00670967014: 0.00011448999999999998}
-
-        # Example usage
-        >>> _calculate_elemental_distribution('C', 2, True)
-        {0: 0.9787144899999999, 1: 0.02117102, 2: 0.00011448999999999998}
-
-    """
-    if use_neutron_count is True:
-        isotopes = constants.ATOMIC_SYMBOL_TO_ISOTOPE_NEUTRON_OFFSETS_AND_ABUNDANCES[element]
-    else:
-        isotopes = constants.ATOMIC_SYMBOL_TO_ISOTOPE_MASSES_AND_ABUNDANCES[element]
-
-    # Start with a distribution for an element not present (mass=0, abundance=1)
-    distribution = {0: 1.0}
-    for _ in range(count):
-        # Update the distribution by convolving it with the isotopes' distribution each time
-        isotope_distribution = {mass: abundance for mass, abundance in isotopes}
-        distribution = _convolve_distributions(distribution, isotope_distribution, None, min_abundance_threshold, None)
-    return distribution
 
 
 def isotopic_distribution(
@@ -223,25 +120,6 @@ def isotopic_distribution(
 
     return normalized_distribution
 
-
-def _fix_chemical_formula(chemical_formula: Dict[str, float]) -> Dict[str, int]:
-    """
-
-    :param chemical_formula:
-    :return:
-    """
-
-    starting_mass = chem_mass(chemical_formula)
-
-    # get the floor of the total atoms
-    total_atoms = {k: int(v) for k, v in chemical_formula.items()}
-
-    # add hydrogen's till the molecular mass is reached
-    total_atoms['H'] += int((starting_mass - chem_mass(total_atoms)) / constants.ISOTOPIC_ATOMIC_MASSES['H'])
-
-    return total_atoms
-
-
 def estimate_isotopic_distribution(neutral_mass: float,
                                    max_isotopes: Union[int, None] = None,
                                    min_abundance_threshold: Union[float, None] = None,
@@ -281,7 +159,7 @@ def estimate_isotopic_distribution(neutral_mass: float,
 
     """
     # Calculate the total number of each atom in the molecule based on its molecular mass
-    total_atoms = estimate_element_counts(neutral_mass)
+    total_atoms = estimate_comp(neutral_mass)
 
     # get the floor of the total atoms
     total_atoms = {k: int(v) for k, v in total_atoms.items()}
@@ -299,3 +177,125 @@ def estimate_isotopic_distribution(neutral_mass: float,
     mass_offset = neutral_mass - chem_mass(total_atoms)
 
     return [(mass + mass_offset, abundance) for mass, abundance in distributions]
+
+
+def _convolve_distributions(dist1: Dict[float, float],
+                            dist2: Dict[float, float],
+                            max_isotopes: Union[int, None],
+                            min_abundance_threshold: Union[float, None],
+                            distribution_resolution: Union[int, None]) -> Dict[float, float]:
+    """
+    Convolve two distributions to calculate the distribution of their sum.
+
+    :param dist1: The first distribution.
+    :type dist2: Dict[float, float]
+    :param dist2: The second distribution.
+    :type dist2: Dict[float, float]
+    :param max_isotopes: The maximum number of isotopes to keep. If None, no limit is applied.
+    :type max_isotopes: Union[int, None]
+    :param min_abundance_threshold: The minimum abundance of an isotope to keep. If None, no threshold is applied.
+    :type min_abundance_threshold: Union[float, None]
+    :param distribution_resolution: The resolution of the distribution. If None, no rounding is applied.
+    :type distribution_resolution: Union[int, None]
+
+    :return: A convolved isotopic distribution as a mass-to-abundance mapping.
+    :rtype: Dict[float, float]
+
+    .. python::
+
+        # Example usage
+        >>> d1 = {1.0: 0.5, 2.0: 0.5}
+        >>> d2 = {1.0: 0.5, 2.0: 0.5}
+        >>> _convolve_distributions(d1, d2, 3, 0.0, 5)
+        {3.0: 0.5, 2.0: 0.25, 4.0: 0.25}
+
+    """
+
+    if min_abundance_threshold is None:
+        min_abundance_threshold = 0.0
+
+    if max_isotopes is None:
+        max_isotopes = sys.maxsize
+
+    result = {}
+    for mass1, abundance1 in dist1.items():
+        for mass2, abundance2 in dist2.items():
+            new_mass = mass1 + mass2
+            if distribution_resolution is not None:
+                new_mass = round(new_mass, distribution_resolution)
+            new_abundance = abundance1 * abundance2
+            if new_abundance >= min_abundance_threshold:
+                if new_mass in result:
+                    result[new_mass] += new_abundance
+                else:
+                    result[new_mass] = new_abundance
+
+    # Apply max isotopes limit and sort by abundance
+    if max_isotopes != sys.maxsize:
+        sorted_result = sorted(result.items(), key=lambda x: x[1], reverse=True)
+        # Retain only the top `max_isotopes` isotopes based on abundance
+        filtered_result = {mass: abundance for mass, abundance in sorted_result[:max_isotopes]}
+        return filtered_result
+    else:
+        return result
+
+
+def _calculate_elemental_distribution(element: str,
+                                      count: int,
+                                      use_neutron_count: bool,
+                                      min_abundance_threshold: float = 10e-9) -> Dict[float, float]:
+    """
+    Calculate the isotopic distribution for an element.
+
+    :param element: The element.
+    :type element: str
+    :param count: The number of atoms.
+    :type count: int
+    :param use_neutron_count: Whether to use neutron offsets instead of masses.
+    :type use_neutron_count: bool
+
+    :return: The isotopic distribution.
+    :rtype: Counter[float, float]
+
+    .. python::
+
+        # Example usage
+        >>> _calculate_elemental_distribution('C', 2, False)
+        {24.0: 0.9787144899999999, 25.00335483507: 0.02117102, 26.00670967014: 0.00011448999999999998}
+
+        # Example using neutron count
+        >>> _calculate_elemental_distribution('C', 2, True)
+        {0: 0.9787144899999999, 1: 0.02117102, 2: 0.00011448999999999998}
+
+    """
+    if use_neutron_count is True:
+        isotopes = constants.ATOMIC_SYMBOL_TO_ISOTOPE_NEUTRON_OFFSETS_AND_ABUNDANCES[element]
+    else:
+        isotopes = constants.ATOMIC_SYMBOL_TO_ISOTOPE_MASSES_AND_ABUNDANCES[element]
+
+    # Start with a distribution for an element not present (mass=0, abundance=1)
+    distribution = {0: 1.0}
+    for _ in range(count):
+        # Update the distribution by convolving it with the isotopes' distribution each time
+        isotope_distribution = {mass: abundance for mass, abundance in isotopes}
+        distribution = _convolve_distributions(distribution, isotope_distribution, None, min_abundance_threshold, None)
+    return distribution
+
+
+def _fix_chemical_formula(chemical_formula: Dict[str, float]) -> Dict[str, int]:
+    """
+
+    :param chemical_formula:
+    :return:
+    """
+
+    starting_mass = chem_mass(chemical_formula)
+
+    # get the floor of the total atoms
+    total_atoms = {k: int(v) for k, v in chemical_formula.items()}
+
+    # add hydrogen's till the molecular mass is reached
+    total_atoms['H'] += int((starting_mass - chem_mass(total_atoms)) / constants.ISOTOPIC_ATOMIC_MASSES['H'])
+
+    return total_atoms
+

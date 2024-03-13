@@ -1,7 +1,6 @@
 import timeit
 import random
 
-from peptacular import constants
 from peptacular.digest import digest
 from peptacular.fragment import *
 from peptacular.sequence import *
@@ -36,13 +35,16 @@ def benchmark_func(func, *args):
 
 functions_to_benchmark = [
     (get_mods, "<13C>[Acetyl]-PE[3.1415][1]PTIDE-[Amide]"),
-    (add_mods, "<13C>[Acetyl]-PEPTIDE-[Amide]", {1: [3.1415]}),
+    (add_mods, "<13C>[Acetyl]-PEPTIDE-[Amide]", {1: [Mod(3.1415, 1)]}),
     (strip_mods, "<13C>[Acetyl]-PE[3.1415]PTIDE-[Amide]"),
     (mass, "<13C>[Acetyl]-PE[3.1415]PTIDE-[100]"),
     (fragment, "<13C>[Acetyl]-PE[3.1415]PTIDE-[100]", ['a', 'b', 'c', 'x', 'y', 'z'], [1, 2, 3]),
     (digest, "MASFRLFLLCLAGLVFVSEAGSVGAGEPKCPLMVKVLDAVRGSPAANVGVKVFK"*25, 'Trypsin'),
     #(fragment, "PE(3.1415)PTIDE", ['a', 'b', 'c', 'x', 'y', 'z'], [1, 2, 3], True, False),
     (split, "<13C>[Acetyl]-PE[3.1415]PTIDE-[Amide]"),
+    (span_to_sequence, "<13C>[Acetyl]-PE[3.1415]PTIDE-[Amide]", (3, 5, 0)),
+    (comp_mass, "<13C>[Acetyl]-PE[3.1415]PTIDE-[Oxidation]"),
+    (apply_static_mods, "PEPTIDE", {'P': 57.021464}),
 ]
 
 # Benchmark and store results
@@ -52,4 +54,6 @@ for func, *params in functions_to_benchmark:
     benchmark_results[func.__name__] = round(calls_per_sec)
 
 print(benchmark_results)
+
+
 

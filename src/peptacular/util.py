@@ -34,6 +34,9 @@ def convert_type(val: str) -> Union[str, int, float]:
 
     """
 
+    if isinstance(val, (int, float)):
+        return val
+
     try:
         return int(val)
     except ValueError:
@@ -108,6 +111,46 @@ def get_regex_match_range(input_str: str, regex_str: str, offset: int = 0) -> Li
 
     return [(match.start() + offset, match.end() + offset) for match in re.finditer(regex_str, input_str,
                                                                                     overlapped=True)]
+
+
+def map_bracket_content_to_index(text: str, ignore_index_error: bool = False) -> Tuple[str, Dict[int, List[str]]]:
+    """
+    Map the content of brackets to the preceeding character in a string.
+
+    :param text: The input string.
+    :type text: str
+    :param ignore_index_error: Whether to ignore index errors. Default is False.
+    :type ignore_index_error: bool
+
+    :raises ValueError: If the sequence is invalid.
+
+    :return: A dictionary containing the start index of the bracket and the index of the preceeding character.
+    :rtype: Dict[int, int]
+
+    .. code-block:: python
+
+        >>> map_bracket_content_to_index("a[b]c")
+        ('ac', {0: ['b']})
+
+        >>> map_bracket_content_to_index("a[b][x]c")
+        ('ac', {0: ['b', 'x']})
+
+        >>> map_bracket_content_to_index("a[b]cd[1]e")
+        ('acde', {0: ['b'], 2: ['1']})
+
+        >>> map_bracket_content_to_index("[1]?[2]-a[b]c")
+        ('?-ac', {0: ['1'], 1: ['2'], 2: ['b']})
+
+        >>> map_bracket_content_to_index("[b]ac")
+        Traceback (most recent call last):
+        ValueError: Invalid sequence
+
+    """
+    sequence, spans = _map_brackets_to_text(text)
+    sequence, spans = _fix_sequential_brackets(sequence, spans)
+    sequence, spans = _fix_preceding_brackets(sequence, spans, ignore_index_error)
+
+    return sequence, spans
 
 
 def _validate_span(span: Tuple[int, int, int]) -> None:
@@ -310,41 +353,6 @@ def _map_brackets_to_text(text: str) -> Tuple[str, Dict[int, List[str]]]:
     return sequence, spans
 
 
-def map_bracket_content_to_index(text: str, ignore_index_error: bool = False) -> Tuple[str, Dict[int, List[str]]]:
-    """
-    Map the content of brackets to the preceeding character in a string.
-
-    :param text: The input string.
-    :type text: str
-    :return: A dictionary containing the start index of the bracket and the index of the preceeding character.
-    :rtype: Dict[int, int]
-
-    .. code-block:: python
-
-        >>> map_bracket_content_to_index("a[b]c")
-        ('ac', {0: ['b']})
-
-        >>> map_bracket_content_to_index("a[b][x]c")
-        ('ac', {0: ['b', 'x']})
-
-        >>> map_bracket_content_to_index("a[b]cd[1]e")
-        ('acde', {0: ['b'], 2: ['1']})
-
-        >>> map_bracket_content_to_index("[1]?[2]-a[b]c")
-        ('?-ac', {0: ['1'], 1: ['2'], 2: ['b']})
-
-        >>> map_bracket_content_to_index("[b]ac")
-        Traceback (most recent call last):
-        ValueError: Invalid sequence
-
-    """
-    sequence, spans = _map_brackets_to_text(text)
-    sequence, spans = _fix_sequential_brackets(sequence, spans)
-    sequence, spans = _fix_preceding_brackets(sequence, spans, ignore_index_error)
-
-    return sequence, spans
-
-
 def _fix_sequential_brackets(text: str, bracket_contents: Dict[int, List[str]]) -> Tuple[str, Dict[int, List[str]]]:
     """
     Fix multiple modifications in a string.
@@ -399,7 +407,8 @@ def _fix_sequential_brackets(text: str, bracket_contents: Dict[int, List[str]]) 
     return text, bracket_contents
 
 
-def _fix_preceding_brackets(sequence: str, mods: Dict[int, List[str]], ignore_index_error) -> Tuple[str, Dict[int, List[str]]]:
+def _fix_preceding_brackets(sequence: str, mods: Dict[int, List[str]], ignore_index_error: bool) -> \
+        Tuple[str, Dict[int, List[str]]]:
     """
     Fix the indices of the modifications in a string.
 
@@ -407,6 +416,8 @@ def _fix_preceding_brackets(sequence: str, mods: Dict[int, List[str]], ignore_in
     :type sequence: str
     :param mods: A dictionary containing the start index of the bracket and the index of the preceeding character.
     :type mods: Dict[int, int]
+
+    :raises ValueError: If the sequence is invalid.
 
     :return: A dictionary containing the start index of the bracket and the index of the preceeding character.
     :rtype: Dict[int, int]

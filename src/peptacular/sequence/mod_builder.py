@@ -1,16 +1,19 @@
-from copy import deepcopy
+from __future__ import annotations
+
 from typing import Dict, List, Generator
 
-from peptacular.sequence import pop_mods, add_mods
-from peptacular.types import ModDict, ModIndex, ModValue
+from peptacular.sequence.sequence import parse_single_sequence
+from peptacular.sequence.proforma import ProFormaAnnotation, Mod
+from peptacular.types import ModIndex, ModValue
 from peptacular.util import get_regex_match_indices
+from peptacular.input_parser import fix_list_of_list_of_mods, fix_list_of_mods
 
 
-def apply_static_mods(sequence: str,
-                      residue_mods: ModDict,
-                      nterm_mods: ModDict = None,
-                      cterm_mods: ModDict = None,
-                      overwrite: bool = True) -> str:
+def apply_static_mods(sequence: str | ProFormaAnnotation,
+                      residue_mods: Dict[str, List[ModValue] | ModValue],
+                      nterm_mods: Dict[str, List[ModValue] | ModValue] | None = None,
+                      cterm_mods: Dict[str, List[ModValue] | ModValue] | None = None,
+                      mode: str = 'skip') -> str | ProFormaAnnotation:
     """
     Add static modifications to an amino acid sequence. If a modification is already present in the sequence,
     it will be replaced by the new one.
@@ -35,8 +38,11 @@ def apply_static_mods(sequence: str,
         >>> apply_static_mods('PEPTIDE', {'P': ['phospho']})
         'P[phospho]EP[phospho]TIDE'
 
+        >>> apply_static_mods('PEPTIDE', {'P': ['phospho', 'acetyl']})
+        'P[phospho][acetyl]EP[phospho][acetyl]TIDE'
+
         # Can specify multiple static modifications:
-        >>> apply_static_mods('PEPTIDE', {'P': ['phospho'], 'E': ['3.0']})
+        >>> apply_static_mods('PEPTIDE', {'P': ['phospho'], 'E': [3.0]})
         'P[phospho]E[3.0]P[phospho]TIDE[3.0]'
 
         # Works with already modified sequences:
@@ -44,11 +50,11 @@ def apply_static_mods(sequence: str,
         '[3.14]-P[phospho]EP[phospho]TIDE-[1.234]'
 
         # By default, any overlapping modifications will be replaced:
-        >>> apply_static_mods('PEP[1.234]TIDE', {'P': ['phospho']})
+        >>> apply_static_mods('PEP[1.234]TIDE', {'P': ['phospho']}, mode='overwrite')
         'P[phospho]EP[phospho]TIDE'
 
-        # To not reaplce existing modifications, set override to False:
-        >>> apply_static_mods('PEP[1.234]TIDE', {'P': ['phospho']}, overwrite=False)
+        # To append new modifications to existing ones, use mode='append':
+        >>> apply_static_mods('PEP[1.234]TIDE', {'P': ['phospho']}, mode='append')
         'P[phospho]EP[1.234][phospho]TIDE'
 
         # Can also use regular expressions to match multiple residues:
@@ -79,34 +85,74 @@ def apply_static_mods(sequence: str,
 
     """
 
-    stripped_sequence, original_mods = pop_mods(sequence)
+    if isinstance(sequence, str):
+        annotation = parse_single_sequence(sequence)
+        input_type = str
+    else:
+        annotation = sequence
+        input_type = ProFormaAnnotation
 
-    new_mods = {}
-    for regex_str, mod in residue_mods.items():
-        for mod_index in get_regex_match_indices(stripped_sequence, regex_str):
-            new_mods[mod_index] = mod
+    residue_mods = {k: fix_list_of_mods(v) for k, v in residue_mods.items()}
+    nterm_mods = {k: fix_list_of_mods(v) for k, v in nterm_mods.items()} if nterm_mods else {}
+    cterm_mods = {k: fix_list_of_mods(v) for k, v in cterm_mods.items()} if cterm_mods else {}
 
-    if nterm_mods:
-        for regex_str, mod in nterm_mods.items():
-            for mod_index in get_regex_match_indices(stripped_sequence, regex_str):
-                if mod_index == 0:
-                    new_mods['n'] = mod
+    new_annotation = annotation.copy()
 
-    if cterm_mods:
-        for regex_str, mod in cterm_mods.items():
-            for mod_index in get_regex_match_indices(stripped_sequence, regex_str):
-                if mod_index == len(stripped_sequence) - 1:
-                    new_mods['c'] = mod
+    for regex_str, mods in residue_mods.items():
+        for mod_index in get_regex_match_indices(annotation.sequence, regex_str):
+            if annotation.has_internal_mod(mod_index):  # mod already present
+                if mode == 'overwrite':
+                    new_annotation.add_internal_mod(mod_index, mods, False)
+                elif mode == 'append':
+                    new_annotation.add_internal_mod(mod_index, mods, True)
+                elif mode == 'skip':
+                    continue
+                else:
+                    raise ValueError(f'Invalid mode: {mode}')
+            else:
+                new_annotation.add_internal_mod(mod_index, mods, True)
 
-    return add_mods(sequence, new_mods, overwrite)
+    for regex_str, mods in nterm_mods.items():
+        for mod_index in get_regex_match_indices(annotation.sequence, regex_str):
+            if mod_index == 0:
+                if annotation.has_nterm_mods():
+                    if mode == 'overwrite':
+                        new_annotation.add_nterm_mods(mods, False)
+                    elif mode == 'append':
+                        new_annotation.add_nterm_mods(mods, True)
+                    elif mode == 'skip':
+                        continue
+                    else:
+                        raise ValueError(f'Invalid mode: {mode}')
+                else:
+                    new_annotation.add_nterm_mods(mods, True)
+
+    for regex_str, mods in cterm_mods.items():
+        for mod_index in get_regex_match_indices(annotation.sequence, regex_str):
+            if mod_index == len(annotation.sequence) - 1:
+                if annotation.has_cterm_mods():
+                    if mode == 'overwrite':
+                        new_annotation.add_cterm_mods(mods, False)
+                    elif mode == 'append':
+                        new_annotation.add_cterm_mods(mods, True)
+                    elif mode == 'skip':
+                        continue
+                    else:
+                        raise ValueError(f'Invalid mode: {mode}')
+                else:
+                    new_annotation.add_cterm_mods(mods, True)
+
+    if input_type == str:
+        return new_annotation.serialize()
+
+    return new_annotation
 
 
-def _apply_variable_mods_rec(mods: Dict[ModIndex, List[List[ModValue]]],
-                             sequence: str,
+def _apply_variable_mods_rec(mods: Dict[ModIndex, List[List[Mod]]],
+                             annotation: ProFormaAnnotation,
                              index: int,
-                             current_mods: ModDict,
                              max_mod_count: int,
-                             overwrite: bool) -> Generator[ModDict, None, None]:
+                             mode: str) -> Generator[ProFormaAnnotation, None, None]:
     """
     Recursively applies variable modifications to the amino acid sequence.
 
@@ -127,34 +173,42 @@ def _apply_variable_mods_rec(mods: Dict[ModIndex, List[List[ModValue]]],
     :rtype: Generator[Dict[int, float], None, None]
     """
 
-    if index == len(sequence) or len(current_mods) == max_mod_count:
-        yield current_mods
+    if index == len(annotation.sequence) or annotation.count_modified_residues() == max_mod_count:
+        yield annotation
         return
 
-    original_mod_dict = deepcopy(current_mods)
+    original_annotation = annotation.copy()
 
-    curr_mods = mods.get(index, None)
+    curr_list_of_mods = mods.get(index, None)
 
-    if curr_mods is not None:
-        for curr_mod in curr_mods:
-            updated_mod_dict = deepcopy(current_mods)
+    if curr_list_of_mods is not None:
+        for curr_mods in curr_list_of_mods:
+            if annotation.has_internal_mod(index):
+                if mode == 'overwrite':
+                    updated_annotation = annotation.copy()
+                    updated_annotation.add_internal_mod(index, curr_mods, False)  # will overwrite
+                    yield from _apply_variable_mods_rec(mods, updated_annotation, index + 1, max_mod_count, mode)
+                elif mode == 'append':
+                    updated_annotation = annotation.copy()
+                    updated_annotation.add_internal_mod(index, curr_mods, True)  # will append
+                    yield from _apply_variable_mods_rec(mods, updated_annotation, index + 1, max_mod_count, mode)
+                elif mode == 'skip':
+                    continue
+                else:
+                    raise ValueError(f'Invalid mode: {mode}')
 
-            if index in current_mods:
-                if overwrite is True:
-                    updated_mod_dict[index] = curr_mod
-                    yield from _apply_variable_mods_rec(mods, sequence, index + 1, updated_mod_dict,
-                                                        max_mod_count, overwrite)
             else:
-                updated_mod_dict[index] = curr_mod
-                yield from _apply_variable_mods_rec(mods, sequence, index + 1, updated_mod_dict,
-                                                    max_mod_count, overwrite)
-    yield from _apply_variable_mods_rec(mods, sequence, index + 1, original_mod_dict, max_mod_count, overwrite)
+                updated_annotation = annotation.copy()
+                updated_annotation.add_internal_mod(index, curr_mods, True)
+                yield from _apply_variable_mods_rec(mods, updated_annotation, index + 1, max_mod_count, mode)
+
+    yield from _apply_variable_mods_rec(mods, original_annotation, index + 1, max_mod_count, mode)
 
 
-def _variable_mods_builder(sequence: str,
-                           mod_map: Dict[str, List[List[ModValue]]],
+def _variable_mods_builder(annotation: ProFormaAnnotation,
+                           mod_map: Dict[str, List[List[Mod]]],
                            max_mods: int,
-                           overwrite: bool = False) -> List[str]:
+                           mode: str) -> Generator[ProFormaAnnotation, None, None]:
     """
     Apply variable modifications to a sequence.
 
@@ -171,26 +225,23 @@ def _variable_mods_builder(sequence: str,
     :rtype: List[str]
     """
 
-    stripped_sequence, original_mods = pop_mods(sequence)
+    new_mod_map: Dict[int, List[List[Mod]]] = {}
+    for regex_str, list_of_list_of_mods in mod_map.items():
+        for mod_index in get_regex_match_indices(annotation.sequence, regex_str):
+            for list_of_mods in list_of_list_of_mods:
+                new_mod_map.setdefault(mod_index, []).append(list_of_mods)
 
-    new_mod_map: Dict[int, List[List[ModValue]]] = {}
-    for regex_str, mods in mod_map.items():
-        for mod_index in get_regex_match_indices(stripped_sequence, regex_str):
-            for mod in mods:
-                new_mod_map.setdefault(mod_index, []).append(mod)
-
-    mods = _apply_variable_mods_rec(new_mod_map, stripped_sequence, 0, original_mods,
-                                    max_mods + len(original_mods), overwrite)
-
-    return [add_mods(stripped_sequence, mod) for mod in mods]
+    starting_mod_count = annotation.count_modified_residues()
+    annotations = _apply_variable_mods_rec(new_mod_map, annotation, 0, max_mods + starting_mod_count, mode)
+    return annotations
 
 
-def apply_variable_mods(sequence: str,
-                        mod_map: Dict[str, List[List[ModValue]]],
+def apply_variable_mods(sequence: str | ProFormaAnnotation,
+                        mod_map: Dict[str, List[List[ModValue]] | List[ModValue] | ModValue],
                         max_mods: int,
-                        nterm_mods: Dict[str, List[List[ModValue]]] = None,
-                        cterm_mods: Dict[str, List[List[ModValue]]] = None,
-                        overwrite: bool = False) -> List[str]:
+                        nterm_mods: Dict[str, List[List[ModValue]] | List[ModValue] | ModValue] | None = None,
+                        cterm_mods: Dict[str, List[List[ModValue]] | List[ModValue] | ModValue] | None = None,
+                        mode: str = 'skip') -> List[str] | List[ProFormaAnnotation]:
     """
     Apply variable modifications to a sequence.
 
@@ -204,8 +255,9 @@ def apply_variable_mods(sequence: str,
     :type nterm_mods: Dict[str, List[List[ModValue]]]
     :param cterm_mods: Dictionary mapping the C-terminal amino acids / regex to modifications.
     :type cterm_mods: Dict[str, List[List[ModValue]]]
-    :param overwrite: If True, existing modifications will be replaced by the new ones.
-    :type overwrite: bool
+    :param mode: overwrite, append, skip
+    :type mode: str
+
 
     :return: List of all possible modified peptide sequences.
     :rtype: List[str]
@@ -227,6 +279,10 @@ def apply_variable_mods(sequence: str,
         >>> apply_variable_mods('PEPTIDE', {'P': [['phospho']]}, 0)
         ['PEPTIDE']
 
+        # Setting max_mods to 0 will return the original sequence:
+        >>> apply_variable_mods('PEPTIDE[Hello]', {'P': [['phospho']]}, 1)
+        ['P[phospho]EPTIDE[Hello]', 'PEP[phospho]TIDE[Hello]', 'PEPTIDE[Hello]']
+
         # Works with already modified sequences, and will not replace existing modifications:
         >>> apply_variable_mods('[Acetyl]-P[3.14]EPTIDE-[Amide]', {'P': [['phospho']]}, 2)
         ['[Acetyl]-P[3.14]EP[phospho]TIDE-[Amide]', '[Acetyl]-P[3.14]EPTIDE-[Amide]']
@@ -246,21 +302,35 @@ def apply_variable_mods(sequence: str,
 
     """
 
-    seqs = []
+    if isinstance(sequence, str):
+        annotation = parse_single_sequence(sequence)
+        input_type = str
+    else:
+        annotation = sequence
+        input_type = ProFormaAnnotation
+
+    mod_map = {k: fix_list_of_list_of_mods(v) for k, v in mod_map.items()}
+    nterm_mods = {k: fix_list_of_list_of_mods(v) for k, v in nterm_mods.items()} if nterm_mods else {}
+    cterm_mods = {k: fix_list_of_list_of_mods(v) for k, v in cterm_mods.items()} if cterm_mods else {}
+
+    annotations = []
     if nterm_mods:
         for regex_str, mods_list in nterm_mods.items():
             for mods in mods_list:
-                nterm_seq = apply_static_mods(sequence, {}, nterm_mods={regex_str: mods}, overwrite=overwrite)
-                if nterm_seq != sequence:
-                    seqs.extend(_variable_mods_builder(nterm_seq, mod_map, max_mods, overwrite))
+                nterm_annot = apply_static_mods(annotation, {}, nterm_mods={regex_str: mods}, mode=mode)
+                if nterm_annot != annotation:
+                    annotations.extend(_variable_mods_builder(nterm_annot, mod_map, max_mods, mode=mode))
 
     if cterm_mods:
         for regex_str, mods_list in cterm_mods.items():
             for mods in mods_list:
-                cterm_seq = apply_static_mods(sequence, {}, cterm_mods={regex_str: mods}, overwrite=overwrite)
-                if cterm_seq != sequence:
-                    seqs.extend(_variable_mods_builder(cterm_seq, mod_map, max_mods, overwrite))
+                cterm_annot = apply_static_mods(annotation, {}, cterm_mods={regex_str: mods}, mode=mode)
+                if cterm_annot != annotation:
+                    annotations.extend(_variable_mods_builder(cterm_annot, mod_map, max_mods, mode=mode))
 
-    seqs.extend(_variable_mods_builder(sequence, mod_map, max_mods, overwrite))
+    annotations.extend(_variable_mods_builder(annotation, mod_map, max_mods, mode=mode))
 
-    return seqs
+    if input_type == str:
+        return [a.serialize() for a in annotations]
+
+    return annotations

@@ -7,17 +7,20 @@ Proteases can be a name of a protease in peptacular.constants.PROTEASES, or they
 specifying more than one protease, all cleavage sites will be combined (as if both proteases were present at the
 same time)
 """
+from __future__ import annotations
 
 from typing import Union, List
 
+from peptacular import ProFormaAnnotation
 from peptacular.spans import build_left_semi_spans, build_right_semi_spans, build_non_enzymatic_spans, build_spans
 from peptacular.constants import PROTEASES
-from peptacular.sequence.sequence import strip_mods, sequence_length, span_to_sequence, \
-    span_to_sequence_fast, pop_mods
+from peptacular.sequence.sequence import span_to_sequence, parse_single_sequence
 from peptacular.util import get_regex_match_indices
 
 
-def get_left_semi_enzymatic_sequences(sequence: str, min_len: int = None, max_len: int = None) -> List[str]:
+def get_left_semi_enzymatic_sequences(sequence: str | ProFormaAnnotation,
+                                      min_len: int | None = None,
+                                      max_len: int | None = None) -> List[str] | List[ProFormaAnnotation]:
     """
     Builds all left-hand semi-enzymatic subsequences derived from the input `sequence`.
 
@@ -54,11 +57,27 @@ def get_left_semi_enzymatic_sequences(sequence: str, min_len: int = None, max_le
 
     """
 
-    spans = build_left_semi_spans((0, sequence_length(sequence), 0), min_len, max_len)
-    return [span_to_sequence(sequence, span) for span in spans]
+    if isinstance(sequence, str):
+        annotation = parse_single_sequence(sequence)
+        input_type = str
+    elif isinstance(sequence, ProFormaAnnotation):
+        annotation = sequence
+        input_type = ProFormaAnnotation
+    else:
+        raise ValueError(f"Unsupported input type: {type(sequence)}")
+
+    s = (0, len(annotation), 0)
+    spans = build_left_semi_spans(span=s, min_len=min_len, max_len=max_len)
+
+    if input_type == ProFormaAnnotation:
+        return [annotation.slice(span[0], span[1]) for span in spans]
+
+    return [span_to_sequence(sequence=annotation, span=span) for span in spans]
 
 
-def get_right_semi_enzymatic_sequences(sequence: str, min_len: int = None, max_len: int = None) -> List[str]:
+def get_right_semi_enzymatic_sequences(sequence: str | ProFormaAnnotation,
+                                       min_len: int | None = None,
+                                       max_len: int | None = None) -> List[str]:
     """
     Builds all right-hand semi-enzymatic subsequences derived from the input `sequence`.
 
@@ -95,11 +114,27 @@ def get_right_semi_enzymatic_sequences(sequence: str, min_len: int = None, max_l
 
     """
 
-    spans = build_right_semi_spans((0, sequence_length(sequence), 0), min_len, max_len)
-    return [span_to_sequence(sequence, span) for span in spans]
+    if isinstance(sequence, str):
+        annotation = parse_single_sequence(sequence)
+        input_type = str
+    elif isinstance(sequence, ProFormaAnnotation):
+        annotation = sequence
+        input_type = ProFormaAnnotation
+    else:
+        raise ValueError(f"Unsupported input type: {type(sequence)}")
+
+    s = (0, len(annotation), 0)
+    spans = build_right_semi_spans(span=s, min_len=min_len, max_len=max_len)
+
+    if input_type == ProFormaAnnotation:
+        return [annotation.slice(span[0], span[1]) for span in spans]
+
+    return [span_to_sequence(sequence=annotation, span=span) for span in spans]
 
 
-def get_semi_enzymatic_sequences(sequence: str, min_len: int = None, max_len: int = None) -> List[str]:
+def get_semi_enzymatic_sequences(sequence: str | ProFormaAnnotation,
+                                 min_len: int | None = None,
+                                 max_len: int | None = None) -> List[str] | List[ProFormaAnnotation]:
     """
     Builds allsemi-enzymatic sequences from the given input `sequence`.
 
@@ -124,11 +159,13 @@ def get_semi_enzymatic_sequences(sequence: str, min_len: int = None, max_len: in
 
     """
 
-    return get_left_semi_enzymatic_sequences(sequence, min_len, max_len) + \
-        get_right_semi_enzymatic_sequences(sequence, min_len, max_len)
+    return get_left_semi_enzymatic_sequences(sequence=sequence, min_len=min_len, max_len=max_len) + \
+        get_right_semi_enzymatic_sequences(sequence=sequence, min_len=min_len, max_len=max_len)
 
 
-def get_non_enzymatic_sequences(sequence: str, min_len: int = None, max_len: int = None) -> List[str]:
+def get_non_enzymatic_sequences(sequence: str | ProFormaAnnotation,
+                                min_len: int | None = None,
+                                max_len: int | None = None) -> List[str] | List[ProFormaAnnotation]:
     """
     Builds all non-enzymatic sequences from the given input `sequence`.
 
@@ -165,12 +202,30 @@ def get_non_enzymatic_sequences(sequence: str, min_len: int = None, max_len: int
 
     """
 
-    spans = build_non_enzymatic_spans((0, sequence_length(sequence), 0), min_len, max_len)
-    return [span_to_sequence(sequence, span) for span in spans]
+    if isinstance(sequence, str):
+        annotation = parse_single_sequence(sequence)
+        input_type = str
+    elif isinstance(sequence, ProFormaAnnotation):
+        annotation = sequence
+        input_type = ProFormaAnnotation
+    else:
+        raise ValueError(f"Unsupported input type: {type(sequence)}")
+
+    s = (0, len(annotation), 0)
+    spans = build_non_enzymatic_spans(span=s, min_len=min_len, max_len=max_len)
+
+    if input_type == ProFormaAnnotation:
+        return [annotation.slice(span[0], span[1]) for span in spans]
+
+    return [span_to_sequence(sequence=annotation, span=span) for span in spans]
 
 
-def get_enzymatic_sequences(sequence: str, enzyme_regex: str, missed_cleavages: int, semi: bool = False,
-                            min_len: int = None, max_len: int = None) -> List[str]:
+def get_enzymatic_sequences(sequence: str | ProFormaAnnotation,
+                            enzyme_regex: str,
+                            missed_cleavages: int = 0,
+                            semi: bool = False,
+                            min_len: int | None = None,
+                            max_len: int | None = None) -> List[str] | List[ProFormaAnnotation]:
     """
     Builds all enzymatic sequences from the given input `sequence`.
 
@@ -219,12 +274,27 @@ def get_enzymatic_sequences(sequence: str, enzyme_regex: str, missed_cleavages: 
 
     """
 
-    cleavage_sites = [0] + get_cleavage_sites(sequence, enzyme_regex) + [sequence_length(sequence)]
-    spans = build_spans(sequence_length(sequence), cleavage_sites, missed_cleavages, min_len, max_len, semi)
-    return [span_to_sequence(sequence, span) for span in spans]
+    if isinstance(sequence, str):
+        annotation = parse_single_sequence(sequence)
+        input_type = str
+    elif isinstance(sequence, ProFormaAnnotation):
+        annotation = sequence
+        input_type = ProFormaAnnotation
+    else:
+        raise ValueError(f"Unsupported input type: {type(sequence)}")
+
+    cleavage_sites = [0] + get_cleavage_sites(sequence=annotation, enzyme_regex=enzyme_regex) + [len(annotation)]
+    spans = build_spans(max_index=len(annotation), enzyme_sites=cleavage_sites, missed_cleavages=missed_cleavages,
+                        min_len=min_len, max_len=max_len, semi=semi)
+
+    if input_type == ProFormaAnnotation:
+        return [annotation.slice(span[0], span[1]) for span in spans]
+
+    return [span_to_sequence(sequence=annotation, span=span) for span in spans]
 
 
-def get_cleavage_sites(sequence: str, enzyme_regex: str) -> List[int]:
+def get_cleavage_sites(sequence: str | ProFormaAnnotation,
+                       enzyme_regex: str) -> List[int]:
     """
     Return a list of positions where cleavage occurs in input `sequence` based on the provided enzyme regex.
 
@@ -271,19 +341,25 @@ def get_cleavage_sites(sequence: str, enzyme_regex: str) -> List[int]:
 
     """
 
-    stripped_sequence = strip_mods(sequence)
-    if stripped_sequence != sequence:
-        sequence = stripped_sequence
+    if isinstance(sequence, str):
+        annotation = parse_single_sequence(sequence)
+    else:
+        annotation = sequence
 
     if enzyme_regex in PROTEASES:
         enzyme_regex = PROTEASES[enzyme_regex]
 
-    last_index = len(stripped_sequence)
-    return [i + 1 for i in get_regex_match_indices(sequence, enzyme_regex) if i < last_index - 1]
+    last_index = len(annotation)
+    return [i + 1 for i in get_regex_match_indices(input_str=annotation.sequence, regex_str=enzyme_regex)
+            if i < last_index - 1]
 
 
-def digest(sequence: str, enzyme_regex: Union[List[str], str], missed_cleavages: int = 0,
-           semi: bool = False, min_len: int = None, max_len: int = None) -> List[str]:
+def digest(sequence: str | ProFormaAnnotation,
+           enzyme_regex: List[str] | str,
+           missed_cleavages: int = 0,
+           semi: bool = False,
+           min_len: int | None = None,
+           max_len: int | None = None) -> List[str] | List[ProFormaAnnotation]:
     """
     Returns a list of digested sequences derived from the input `sequence`.
 
@@ -336,7 +412,16 @@ def digest(sequence: str, enzyme_regex: Union[List[str], str], missed_cleavages:
 
     """
 
-    seq_len = sequence_length(sequence)
+    if isinstance(sequence, str):
+        annotation = parse_single_sequence(sequence)
+        input_type = str
+    elif isinstance(sequence, ProFormaAnnotation):
+        annotation = sequence
+        input_type = ProFormaAnnotation
+    else:
+        raise ValueError(f"Unsupported input type: {type(sequence)}")
+
+    seq_len = len(annotation)
 
     if min_len is None:
         min_len = 1
@@ -350,9 +435,12 @@ def digest(sequence: str, enzyme_regex: Union[List[str], str], missed_cleavages:
 
     cleavage_sites = []
     for regex in enzyme_regex:
-        cleavage_sites.extend(get_cleavage_sites(sequence, regex))
+        cleavage_sites.extend(get_cleavage_sites(sequence=annotation, enzyme_regex=regex))
 
-    stripped_sequence, mods = pop_mods(sequence)
+    spans = build_spans(max_index=seq_len, enzyme_sites=cleavage_sites, missed_cleavages=missed_cleavages,
+                        min_len=min_len, max_len=max_len, semi=semi)
 
-    spans = build_spans(seq_len, cleavage_sites, missed_cleavages, min_len, max_len, semi)
-    return [span_to_sequence_fast(stripped_sequence, mods, span) for span in spans]
+    if input_type == ProFormaAnnotation:
+        return [annotation.slice(span[0], span[1]) for span in spans]
+
+    return [span_to_sequence(sequence=annotation, span=span) for span in spans]
