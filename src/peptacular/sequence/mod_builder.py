@@ -3,10 +3,11 @@ from __future__ import annotations
 from typing import Dict, List, Generator
 
 from peptacular.sequence.sequence import parse_single_sequence
-from peptacular.sequence.proforma import ProFormaAnnotation, Mod
+from peptacular.sequence.proforma import ProFormaAnnotation
+from peptacular.proforma_dataclasses import Mod
 from peptacular.types import ModIndex, ModValue
 from peptacular.util import get_regex_match_indices
-from peptacular.input_parser import fix_list_of_list_of_mods, fix_list_of_mods
+from peptacular.input_convert import fix_list_of_list_of_mods, fix_list_of_mods
 
 
 def apply_static_mods(sequence: str | ProFormaAnnotation,

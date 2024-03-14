@@ -381,7 +381,7 @@ def fragment(sequence: str | ProFormaAnnotation, ion_types: IonTypeType, charges
     else:
         annotation = sequence
 
-    if annotation.is_ambiguous():
+    if annotation.contains_sequence_ambiguity():
         raise ValueError("Ambiguous sequence")
 
     terminal_fragment_types = [i for i in ion_types if i in TERMINAL_ION_TYPES]

@@ -83,6 +83,16 @@ class InvalidCompositionError(ValueError):
         super().__init__(message, *args)
 
 
+class DeltaMassCompositionError(ValueError):
+    """Exception raised for errors due to invalid composition."""
+
+    def __init__(self, composition, *args):
+        self.composition = composition
+        message = f"Cannot retrieve composition for: {composition}"
+        super().__init__(message, *args)
+
+
+
 class InvalidFormulaError(ValueError):
     """Exception raised for errors due to invalid formula."""
 
@@ -95,7 +105,18 @@ class InvalidFormulaError(ValueError):
 class ProFormaFormatError(ValueError):
     """Exception raised for errors due to invalid ProForma format."""
 
-    def __init__(self, proforma, *args):
-        self.proforma = proforma
-        message = f"Invalid ProForma format: {proforma}"
+    def __init__(self, msg, index, sequence, *args):
+        # Creating a visual marker for the error position in the sequence.
+        # Ensure index is within bounds to avoid IndexError.
+        if 0 <= index < len(sequence):
+            highlighted_sequence = sequence[:index] + ">>>" + sequence[index] + "<<<" + sequence[index + 1:]
+        else:
+            highlighted_sequence = sequence
+
+        self.msg = msg
+        message = (f"Invalid ProForma format detected:\n"
+                   f"  Error: {msg}\n"
+                   f"  At index: {index}\n"
+                   f"  In sequence: {highlighted_sequence}\n"
+                   f"  Note: The character in error is indicated by >>>ERROR<<<.")
         super().__init__(message, *args)

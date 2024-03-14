@@ -5,8 +5,8 @@ A spectacularly simple package for working with peptide sequences.
 
 Now level 2-ProForma compliant.
 
-Note: This package is still in development and new released will have breaking changes. I'm hoping for v2.0.0 to be
-a stable release. 
+Note: This package is still in development and the github / pip package are different versions. I'm hoping for v2.0.0 to be
+a stable release, to have everything cleaned up. 
 
 ## ReadTheDocs
 https://peptacular.readthedocs.io/en/latest/index.html

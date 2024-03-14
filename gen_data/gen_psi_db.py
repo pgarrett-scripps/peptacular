@@ -21,6 +21,15 @@ def generate_psi_mod_db():
         term_id = term.get('id')[0]
         term_name = term.get('name')[0]
 
+        is_obsolete = term.get('is_obsolete', ['false'])[0]
+        if is_obsolete in ['true', 'false']:
+            is_obsolete = bool(is_obsolete=='true')
+        else:
+            raise ValueError(f'Invalid is_obsolete value: {is_obsolete}')
+
+        if is_obsolete:
+            continue
+
         property_values = {}
         for val in term.get('xref', []):
             elems = val.split('"')
@@ -65,6 +74,14 @@ def generate_psi_mod_db():
                 continue
         """
 
+        if term_name in name_to_id:
+            print(f'Warning: {term_name} already exists in id_to_composition')
+            continue
+
+        if term_id in id_to_composition:
+            print(f'Warning: {term_id} already exists in id_to_composition')
+            continue
+
         name_to_id[term_name] = term_id
 
         try:
@@ -89,6 +106,27 @@ def generate_psi_mod_db():
     print(id_to_composition)
     print(id_to_isotopic_mass)
     print(id_to_average_mass)
+
+    # count number of bad entries
+    bad_comps = 0
+    for k, v in id_to_composition.items():
+        if not v:
+            bad_comps += 1
+
+    bad_mono = 0
+    for k, v in id_to_isotopic_mass.items():
+        if not v:
+            bad_mono += 1
+
+    bad_ave = 0
+    for k, v in id_to_average_mass.items():
+        if not v:
+            bad_ave += 1
+
+    print('Total number of entries:', len(id_to_composition))
+    print(f'Number of bad composition entries: {bad_comps}')
+    print(f'Number of bad isotopic mass entries: {bad_mono}')
+    print(f'Number of bad average mass entries: {bad_ave}')
 
     if not all([name_to_id, id_to_composition, id_to_isotopic_mass, id_to_average_mass]):
         raise ValueError('Error parsing PSI-MOD OBO file.')

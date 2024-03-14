@@ -33,6 +33,9 @@ def parse_glycan_formula(formula: str) -> Chem_Composition:
             >>> parse_glycan_formula('')
             {}
 
+            >>> parse_glycan_formula('Hex')
+            {'Hex': 1}
+
             # This will raise an UnknownGlycanError
             >>> parse_glycan_formula('HeSNAc2Hex3Neu5Gc1X')
             Traceback (most recent call last):
@@ -64,7 +67,15 @@ def parse_glycan_formula(formula: str) -> Chem_Composition:
                 formula = formula[len(count):]
 
                 # add the count to the dictionary
-                d[glycan_name] = convert_type(count)
+                if count == '':
+                    count = 1
+
+                count = convert_type(count)
+
+                if isinstance(count, str):
+                    raise ValueError(f'Invalid count: {count}')
+
+                d[glycan_name] = count
 
                 break
         else:

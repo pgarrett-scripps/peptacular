@@ -18,10 +18,14 @@ TODO:
 - Support for all types of internal fragment ions (ax, ay, bx, bx...)
 - support for global mods: isotope, static, labile, and unknown modification
 - support for mod localization scores
-- Support for multiple mods per site and []^x notation
+- support for multiple mods per site and []^x notation
+- support for chimeric and charged sequences
 - gen_data submodule for generating modification and atom mass lookup tables
 - isotope.py for generating isotope distributions
 - apply_static_mod and apply_variable_mods now support n/c term mods
+- proforma.py for handling ProForma strings (full support for ProForma2.0)
+- gno, resid, and xlmod support
+- randomizer.py for generating random proforma sequences
 
 ### Changed:
 - Terminal modifications notation has been changed to use []- and -[] for N- and C-terminal modifications, respectively
@@ -31,6 +35,7 @@ TODO:
 - move static/var mod builders to modbuilder.py
 - moved combinatorics funcs to combinatorics.py
 - mass, fragment, digest, sequence, chem, glycan, and isotope are accessible from peptacular base (suggest using import peptacular as pt)
+- Most functions now call back to a ProFormaAnnotation object
 
 ## [1.3.0]
 ### Added:

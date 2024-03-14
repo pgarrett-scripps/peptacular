@@ -1,6 +1,6 @@
 from typing import Union, Dict, Tuple, List
 
-from .dataclasses import Mod, Interval
+from peptacular.proforma_dataclasses import Mod, Interval
 
 ModIndex = Union[int, str]
 

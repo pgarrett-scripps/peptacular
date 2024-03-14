@@ -12,7 +12,8 @@ from peptacular.util import convert_type
 from peptacular.errors import UnknownElementError, UnknownGlycanError, InvalidDeltaMassError, \
     InvalidModificationMassError, UnknownAminoAcidError
 from peptacular.glycan import parse_glycan_formula
-from peptacular.mod_db import parse_psi_mass, parse_unimod_mass, is_unimod_str, is_psi_mod_str
+from peptacular.mod_db import parse_psi_mass, parse_unimod_mass, is_unimod_str, is_psi_mod_str, parse_xlmod_mass, \
+    parse_resid_mass, is_gno_str, parse_gno_mass, is_xlmod_str, is_resid_str
 from peptacular.sequence.sequence import parse_single_sequence
 from peptacular.types import Chem_Composition
 
@@ -221,7 +222,7 @@ def mass(sequence: str | ProFormaAnnotation,
 
         for aa, mod in static_map.items():
             aa_count = annotation.sequence.count(aa)
-            mod_mass = sum(_parse_mod_mass(m, monoisotopic, precision=None) for m in mod) * aa_count
+            mod_mass = sum(parse_mod_mass(m, monoisotopic, precision=None) for m in mod) * aa_count
             m += mod_mass
 
         annotation.pop_static_mods()
@@ -235,35 +236,35 @@ def mass(sequence: str | ProFormaAnnotation,
     # Apply labile mods
     if annotation.labile_mods is not None:
         for mod in annotation.labile_mods:
-            m += _parse_mod_mass(mod)
+            m += parse_mod_mass(mod)
 
     # Apply Unknown mods
     if annotation.unknown_mods is not None:
         for mod in annotation.unknown_mods:
-            m += _parse_mod_mass(mod)
+            m += parse_mod_mass(mod)
 
     # Apply N-term mods
     if annotation.nterm_mods is not None:
         for mod in annotation.nterm_mods:
-            m += _parse_mod_mass(mod)
+            m += parse_mod_mass(mod)
 
     # Apply intervals
     if annotation.intervals is not None:
         for interval in annotation.intervals:
             if interval.mods is not None:
                 for mod in interval.mods:
-                    m += _parse_mod_mass(mod)
+                    m += parse_mod_mass(mod)
 
     # apply internal mods
     if annotation.internal_mods is not None:
         for k, mods in annotation.internal_mods.items():
             for mod in mods:
-                m += _parse_mod_mass(mod)
+                m += parse_mod_mass(mod)
 
     # apply C-term mods
     if annotation.cterm_mods is not None:
         for mod in annotation.cterm_mods:
-            m += _parse_mod_mass(mod)
+            m += parse_mod_mass(mod)
 
     m += (charge * constants.PROTON_MASS)  # Add charge
     m += isotope * constants.NEUTRON_MASS + loss  # Add isotope and loss
@@ -373,6 +374,10 @@ def chem_mass(formula: Chem_Composition | str, monoisotopic: bool = True, precis
         >>> chem_mass({'13C': 6, 'H': 12, 'O': 6}, monoisotopic=False, precision=3)
         186.112
 
+        # Use average masses for all elements except for iosotopes.
+        >>> chem_mass({'13C': 6, 'D': 12, 'O': 6}, monoisotopic=False, precision=3)
+        198.186
+
         # Example Error
         >>> chem_mass({'C': 6, 'H': 12, 'O': 6, 'X': 1}, precision=3)
         Traceback (most recent call last):
@@ -392,7 +397,7 @@ def chem_mass(formula: Chem_Composition | str, monoisotopic: bool = True, precis
         if monoisotopic is True:
             m += constants.ISOTOPIC_ATOMIC_MASSES[element] * count
         else:
-            if any(char.isdigit() for char in element):  # element is a isotope
+            if element[0].isdigit() or element == 'D' or element == 'T':  # element is a isotope
                 m += constants.ISOTOPIC_ATOMIC_MASSES[element] * count
             else:
                 m += constants.AVERAGE_ATOMIC_MASSES[element] * count
@@ -775,17 +780,16 @@ def _parse_mod_mass(mod: str | Mod, monoisotopic: bool = True, precision: int | 
         # raises UnknownGlycanError
         return _parse_glycan_mass_from_proforma_str(mod, monoisotopic, precision)
 
-    elif mod_lower.startswith('gno:') or mod_lower.startswith('g:'):
-        # not implemented
-        raise NotImplementedError('GNO modifications are not implemented')
+    elif is_gno_str(mod):
+        return parse_gno_mass(mod, monoisotopic, precision)
 
-    elif mod_lower.startswith('xlmod:') or mod_lower.startswith('x:') or mod_lower.startswith('xl-mod:'):
+    elif is_xlmod_str(mod):
         # not implemented
-        raise NotImplementedError('XL-MOD modifications are not implemented')
+        return parse_xlmod_mass(mod, monoisotopic, precision)
 
-    elif mod_lower.startswith('resid:') or mod_lower.startswith('r:'):
+    elif is_resid_str(mod):
         # not implemented
-        raise NotImplementedError('RESID modifications are not implemented')
+        return parse_resid_mass(mod, monoisotopic, precision)
 
     elif mod_lower.startswith('info:'):  # Skip info modifications
         return None
@@ -871,12 +875,13 @@ def _pop_delta_mass_mods(annotation: ProFormaAnnotation) -> float:
     # Intervals
     if annotation.has_intervals():
         for interval in annotation.intervals:
-            for i in range(len(interval.mods) - 1, -1, -1):
-                mod = interval.mods[i]
-                val = _parse_mod_delta_mass_only(mod)
-                if val is not None:
-                    delta_mass += val
-                    interval.mods.pop(i)
+            if interval.has_mods():
+                for i in range(len(interval.mods) - 1, -1, -1):
+                    mod = interval.mods[i]
+                    val = _parse_mod_delta_mass_only(mod)
+                    if val is not None:
+                        delta_mass += val
+                        interval.mods.pop(i)
 
     # Internal mods
     if annotation.has_internal_mods():

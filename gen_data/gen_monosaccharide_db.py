@@ -47,6 +47,10 @@ def generate_monosaccharide_db():
         id_to_isotopic_mass[term_id] = float(mono)
         id_to_average_mass[term_id] = float(ave_mass)
 
+    name_to_id['NeuAc'] = name_to_id['Neu5Ac']
+    name_to_id['NeuGc'] = name_to_id['Neu5Gc']
+    name_to_id['Pent'] = name_to_id['Pen']
+    name_to_id['dHex'] = name_to_id['d-Hex']
 
     print(name_to_id)
     print(id_to_composition)

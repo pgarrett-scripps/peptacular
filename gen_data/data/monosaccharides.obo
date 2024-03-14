@@ -135,7 +135,7 @@ property_value: has_monoisotopic_mass "146.057908799" xsd:float
 id: MONO:61947BA4
 name: Fuc
 def: "Fuc"
-synonym: "RES\n1b:x-lgal-HEX-x:x|6:d\nLIN\n" EXACT
+synonym: "RES\n1b:x-lgalgal-HEX-x:x|6:d\nLIN\n" EXACT
 synonym: "?-L-Fucx" EXACT
 synonym: "u1221m" EXACT
 synonym: "Fucose" EXACT

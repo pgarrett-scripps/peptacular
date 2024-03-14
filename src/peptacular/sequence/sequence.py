@@ -30,11 +30,11 @@ import typing
 import regex as re
 from typing import Dict, List, Union, Tuple, Counter, Callable
 
-from peptacular.sequence.proforma import parse, ProFormaAnnotation, serialize, Mod
+from peptacular.sequence.proforma import parse, ProFormaAnnotation, serialize
+from peptacular.proforma_dataclasses import Mod
 from peptacular.spans import Span
-
 from peptacular.types import ModDict, ModValue
-from peptacular.input_parser import fix_list_of_mods
+from peptacular.input_convert import fix_list_of_mods
 
 
 def parse_single_sequence(sequence: str) -> ProFormaAnnotation:
@@ -107,7 +107,7 @@ def is_ambiguous(sequence: str | ProFormaAnnotation) -> bool:
     else:
         annotation = sequence
 
-    return annotation.is_ambiguous()
+    return annotation.contains_sequence_ambiguity()
 
 
 def get_mods(sequence: str | ProFormaAnnotation) -> ModDict:

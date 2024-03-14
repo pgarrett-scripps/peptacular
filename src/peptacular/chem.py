@@ -13,10 +13,12 @@ from peptacular import constants
 from peptacular.constants import AA_COMPOSITIONS, ION_TYPE_COMPOSITION_ADJUSTMENTS, \
     MONOSACCHARIDE_ID_TO_COMPOSITIONS, MONOSACCHARIDE_NAME_TO_ID
 from peptacular.errors import InvalidFormulaError, InvalidCompositionError, AmbiguousAminoAcidError, \
-    UnknownAminoAcidError
+    UnknownAminoAcidError, DeltaMassCompositionError
 from peptacular.glycan import parse_glycan_formula
-from peptacular.mod_db import parse_unimod_comp, parse_psi_comp, is_psi_mod_str, is_unimod_str
+from peptacular.mod_db import parse_unimod_comp, parse_psi_comp, is_psi_mod_str, is_unimod_str, parse_xlmod_comp, \
+    parse_resid_comp, is_resid_str, is_xlmod_str, is_gno_str, parse_gno_comp
 from peptacular.sequence.proforma import parse_static_mods, ProFormaAnnotation, Mod, parse_isotope_mods
+from peptacular.types import Chem_Composition
 from peptacular.util import convert_type
 
 
@@ -106,6 +108,9 @@ def parse_chem_formula(formula: str) -> Dict[str, int]:
 
         >>> parse_chem_formula('C6H12O6666')
         {'C': 6, 'H': 12, 'O': 6666}
+
+        >>> parse_chem_formula('[D]6H12O6666')
+        {'D': 6, 'H': 12, 'O': 6666}
 
         >>> parse_chem_formula('C6H12O-6666')
         {'C': 6, 'H': 12, 'O': -6666}
@@ -198,7 +203,7 @@ def write_chem_formula(formula: Dict[str, int], sep: str = None, hill_order: boo
     for k, v in formula.items():
         if v == 0:
             continue
-        if k[0].isdigit():
+        if k[0].isdigit() or k == 'D' or k == 'T':
             s += f'[{k}{v}]'
         else:
             s += f'{k}{v}'
@@ -206,7 +211,7 @@ def write_chem_formula(formula: Dict[str, int], sep: str = None, hill_order: boo
     return s
 
 
-def convert_glycan_formula_to_chem_formula(glycan: Union[Dict[str, int], str]) -> str:
+def convert_glycan_formula_to_chem_formula(glycan: Dict[str, int] | str) -> str:
     """
     Converts a glycan dictionary to a chemical formula.
 
@@ -223,6 +228,28 @@ def convert_glycan_formula_to_chem_formula(glycan: Union[Dict[str, int], str]) -
 
     """
 
+    return write_chem_formula(glycan_comp(glycan))
+
+def glycan_comp(glycan: Dict[str, int] | str) -> Chem_Composition:
+    """
+    Converts a glycan dictionary to a chemical formula.
+
+    :param glycan: A dictionary containing the glycan components and their counts, or a glycan formula string.
+    :type glycan: dict | str
+
+    :return: A chemical formula string.
+    :rtype: str
+
+    .. code-block:: python
+
+            >>> glycan_comp({'HexNAc': 2, 'Hex': 3, 'Neu5Gc': 1})
+            {'C': 45, 'H': 73, 'N': 3, 'O': 34}
+
+            >>> glycan_comp({'HexNAc': 2.2, 'Hex': 3, 'Neu5Gc': 1})
+            {'C': 46.6, 'H': 75.6, 'N': 3.2, 'O': 35.0}
+
+    """
+
     if isinstance(glycan, str):
         glycan = parse_glycan_formula(glycan)  # raises UnknownGlycanError
 
@@ -234,7 +261,7 @@ def convert_glycan_formula_to_chem_formula(glycan: Union[Dict[str, int], str]) -
         for element, element_count in chem_formula.items():
             counts[element] += element_count * count
 
-    return write_chem_formula(counts)
+    return dict(counts)
 
 
 def _split_chem_formula(formula: str) -> list[str]:
@@ -299,6 +326,9 @@ def _parse_isotope_component(formula: str) -> Dict[str, int]:
         >>> _parse_isotope_component('13C6')
         {'13C': 6}
 
+        >>> _parse_isotope_component('D6')
+        {'D': 6}
+
         >>> _parse_isotope_component('13C-6')
         {'13C': -6}
 
@@ -328,6 +358,9 @@ def _parse_isotope_component(formula: str) -> Dict[str, int]:
 
     if formula == '':
         return counts
+
+    if formula[0] == 'D' or formula[0] == 'T':
+        return _parse_condensed_chem_formula(formula)
 
     match = re.match(r'([0-9]*)([A-Za-z]+)(-?\d*\.?\d*)', formula)
     if match:
@@ -618,17 +651,17 @@ def _parse_modification_composition(mod: str) -> Union[None, Dict[str, int]]:
     if mod_lower.startswith('glycan:'):
         return _parse_glycan_comp_from_proforma_str(mod)
 
-    elif mod_lower.startswith('gno:') or mod_lower.startswith('g:'):
+    elif is_gno_str(mod):
         # not implemented
-        raise NotImplementedError('GNO modifications are not implemented')
+        return parse_chem_formula(parse_gno_comp(mod))
 
-    elif mod_lower.startswith('xlmod:') or mod_lower.startswith('x:') or mod_lower.startswith('xl-mod:'):
+    elif is_xlmod_str(mod):
         # not implemented
-        raise NotImplementedError('XL-MOD modifications are not implemented')
+        return parse_chem_formula(parse_xlmod_comp(mod))
 
-    elif mod_lower.startswith('resid:') or mod_lower.startswith('r:'):
+    elif is_resid_str(mod):
         # not implemented
-        raise NotImplementedError('RESID modifications are not implemented')
+        return parse_chem_formula(parse_resid_comp(mod))
 
     elif mod_lower.startswith('info:'):  # cannot get comp for info
         pass
@@ -676,26 +709,33 @@ def _parse_delta_mass(delta_mass: str) -> float:
         return delta_mass
 
     mass = None
-    for comp in delta_mass.split('|'):
+    for mod_str in delta_mass.split('|'):
+
+        # check if the mod contains a localization score
+        if '#' in mod_str:
+            mod_str = mod_str.split('#')[0]
 
         try:
-            mass = float(comp)
+            mass = float(mod_str)
             break
         except ValueError:
             pass
 
-        if delta_mass.lower().startswith('unimod:') or delta_mass.lower().startswith('u:') or \
-                delta_mass.lower().startswith('psi-mod:') or delta_mass.lower().startswith('mod:') or \
-                delta_mass.lower().startswith('m:'):
+        mod_lower = mod_str.lower()
+        if mod_lower.startswith('unimod:') or mod_lower.startswith('u:') or \
+                mod_lower.startswith('psi-mod:') or mod_lower.startswith('mod:') or mod_lower.startswith('m:') or \
+                mod_lower.startswith('resid:') or mod_lower.startswith('r:') or \
+                mod_lower.startswith('xlmod:') or mod_lower.startswith('x:') or \
+                mod_lower.startswith('gno:') or mod_lower.startswith('g:'):
 
-            mod_str = delta_mass.split(':')[1]
+            mod_str = mod_str.split(':')[1]
 
             if mod_str.startswith('+') or mod_str.startswith('-'):
                 mass = float(mod_str)
                 break
 
-        if delta_mass.lower().startswith('obs:'):
-            mod_str = delta_mass.split(':')[1]
+        if mod_str.lower().startswith('obs:'):
+            mod_str = mod_str.split(':')[1]
             try:
                 mass = float(mod_str)
                 break
@@ -792,33 +832,34 @@ def _get_sequence_comp(sequence: str | ProFormaAnnotation, ion_type: str) -> Dic
     mod_compositions = [composition]
 
     # Loop over unknown mods and apply them
-    if annotation.unknown_mods:
+    if annotation.has_unknown_mods():
         for unknown_mod in annotation.unknown_mods:
             mod_compositions.append(mod_comp(unknown_mod))
 
     # loop over intervals and apply them
-    if annotation.intervals:
+    if annotation.has_intervals():
         for interval in annotation.intervals:
-            for interval_mod in interval.mods:
-                mod_compositions.append(mod_comp(interval_mod))
+            if interval.has_mods():
+                for interval_mod in interval.mods:
+                    mod_compositions.append(mod_comp(interval_mod))
 
     # apply labile mods
-    if annotation.labile_mods:
+    if annotation.has_labile_mods():
         for labile_mod in annotation.labile_mods:
             mod_compositions.append(mod_comp(labile_mod))
 
     # apply N-term mods
-    if annotation.nterm_mods:
+    if annotation.has_nterm_mods():
         for nterm_mod in annotation.nterm_mods:
             mod_compositions.append(mod_comp(nterm_mod))
 
     # apply C-term mods
-    if annotation.cterm_mods:
+    if annotation.has_cterm_mods():
         for cterm_mod in annotation.cterm_mods:
             mod_compositions.append(mod_comp(cterm_mod))
 
     # apply internal mods
-    if annotation.internal_mods:
+    if annotation.has_internal_mods():
         for k, internal_mods in annotation.internal_mods.items():
             for internal_mod in internal_mods:
                 mod_compositions.append(mod_comp(internal_mod))
@@ -869,6 +910,9 @@ def _parse_mod_delta_mass_only(mod: str | Mod) -> Union[float, None]:
         >>> _parse_mod_delta_mass_only('Obs:+42.010565')
         42.010565
 
+        >>> _parse_mod_delta_mass_only('R:+1|INFO:Fantastic')
+        1.0
+
     """
 
     if isinstance(mod, float) or isinstance(mod, int):
@@ -879,7 +923,10 @@ def _parse_mod_delta_mass_only(mod: str | Mod) -> Union[float, None]:
 
     mods = mod.split('|')
     for m in mods:
-        m = _parse_modification_composition(m)
+        try:
+            m = _parse_modification_composition(m)
+        except DeltaMassCompositionError:
+            continue
         if m is not None:
             return None
 

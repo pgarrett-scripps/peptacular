@@ -148,6 +148,9 @@ def _create_aa_masses(atomic_masses, aa_compositions):
 MONOISOTOPIC_AA_MASSES: Dict[str, float] = _create_aa_masses(ISOTOPIC_ATOMIC_MASSES, AA_COMPOSITIONS)
 AVERAGE_AA_MASSES: Dict[str, float] = _create_aa_masses(AVERAGE_ATOMIC_MASSES, AA_COMPOSITIONS)
 AMINO_ACIDS: Set[str] = set(AA_COMPOSITIONS.keys()) | {'B', 'Z'}
+AMBIGUOUS_AMINO_ACIDS: Set[str] = {'J', 'B', 'Z', 'X'}
+MASS_AMBIGUOUS_AMINO_ACIDS: Set[str] = {'B', 'Z'}
+
 MONOISOTOPIC_ION_ADJUSTMENTS: Dict[str, float] = \
     _create_ion_adjustments(ISOTOPIC_ATOMIC_MASSES, ION_TYPE_START_COMPOSITIONS, ION_TYPE_END_COMPOSITIONS)
 AVERAGE_ION_ADJUSTMENTS: Dict[str, float] = \
@@ -208,6 +211,50 @@ with open(os.path.join(_psi_mod_path, "id_to_average_mass.json"), 'r') as f:
 
 with open(os.path.join(_psi_mod_path, "id_to_chem_formula.json"), 'r') as f:
     PSI_MOD_ID_TO_COMPOSITIONS: Dict[str, str] = json.load(f)
+
+# Load XL-MODs
+_xlmod_path = os.path.join(_dir_name, "data", "xlmod")
+with open(os.path.join(_xlmod_path, "name_to_id.json"), 'r') as f:
+    XLMOD_NAME_TO_ID: Dict[str, str] = json.load(f)
+
+with open(os.path.join(_xlmod_path, "id_to_isotopic_mass.json"), 'r') as f:
+    XLMOD_ID_TO_ISOTOPIC_MASSES: Dict[str, float] = json.load(f)
+
+with open(os.path.join(_xlmod_path, "id_to_average_mass.json"), 'r') as f:
+    XLMOD_ID_TO_AVERAGE_MASSES: Dict[str, float] = json.load(f)
+
+with open(os.path.join(_xlmod_path, "id_to_chem_formula.json"), 'r') as f:
+    XLMOD_ID_TO_COMPOSITIONS: Dict[str, str] = json.load(f)
+
+
+# Load RESID-MODs
+_resid_path = os.path.join(_dir_name, "data", "resid")
+with open(os.path.join(_resid_path, "name_to_id.json"), 'r') as f:
+    RESID_NAME_TO_ID: Dict[str, str] = json.load(f)
+
+with open(os.path.join(_resid_path, "id_to_isotopic_mass.json"), 'r') as f:
+    RESID_ID_TO_ISOTOPIC_MASSES: Dict[str, float] = json.load(f)
+
+with open(os.path.join(_resid_path, "id_to_average_mass.json"), 'r') as f:
+    RESID_ID_TO_AVERAGE_MASSES: Dict[str, float] = json.load(f)
+
+with open(os.path.join(_resid_path, "id_to_chem_formula.json"), 'r') as f:
+    RESID_ID_TO_COMPOSITIONS: Dict[str, str] = json.load(f)
+
+# Load GNO-MODs
+_gno_path = os.path.join(_dir_name, "data", "gno")
+with open(os.path.join(_gno_path, "name_to_id.json"), 'r') as f:
+    GNO_NAME_TO_ID: Dict[str, str] = json.load(f)
+
+with open(os.path.join(_gno_path, "id_to_isotopic_mass.json"), 'r') as f:
+    GNO_ID_TO_ISOTOPIC_MASSES: Dict[str, float] = json.load(f)
+
+with open(os.path.join(_gno_path, "id_to_average_mass.json"), 'r') as f:
+    GNO_ID_TO_AVERAGE_MASSES: Dict[str, float] = json.load(f)
+
+with open(os.path.join(_gno_path, "id_to_chem_formula.json"), 'r') as f:
+    GNO_ID_TO_COMPOSITIONS: Dict[str, str] = json.load(f)
+
 
 
 PROTEASES: Dict[str, str] = \

@@ -1,0 +1,286 @@
+from __future__ import annotations
+
+from random import randint, choice, sample
+from enum import Enum, auto
+from typing import List
+
+from peptacular.mass import mass, comp_mass, comp
+from peptacular.proforma_dataclasses import Mod, Interval
+from peptacular.sequence.proforma import ProFormaAnnotation, parse
+from pyteomics.proforma import parse as parse_proforma
+
+UNIMOD_LEVEL_BASE_MOD_VALS = ['Oxidation', 'UNIMOD:10']
+UNIMOD_LEVEL2_MOD_VALS = ['U:Oxidation', 'U:10', 'U:+1', 'U:-1', 'U:+3.1415', 'U:-3.1415']
+PSI_LEVEL_BASE_MOD_VALS = ['O-phospho-L-serine', 'MOD:00046']
+PSI_LEVEL2_MOD_VALS = ['M:O-phospho-L-serine', 'M:00046', 'M:+1', 'M:-1', 'M:+3.1415', 'M:-3.1415']
+DELTA_MASS_MOD_VALS = ['+1', '-1', '+3.1415', '-3.1415']
+MOD_INFO_VALS = ['INFO:Cool', 'INFO:Awesome', 'INFO:Radical', 'INFO:Amazing', 'INFO:Fantastic']
+CHEM_FORMULA_MOD_VALS = ['Formula:C12H22O11', 'Formula:[13C6]H12O6[12C-4]', 'Formula:CHO', 'Formula:C2H-5O',
+                         'Formula:C']
+GLYCAN_MOD_VALS = ['Glycan:HexNAc2Hex3Neu1', 'Glycan:Hex', 'Glycan:6BAAE1B1']
+GNO_MOD_VALS = ['GNO:G59626AS', 'GNO:G62765YT', 'G:G59626AS', 'G:G62765YT', 'G:+1', 'G:-1', 'G:+3.1415', 'G:-3.1415']
+RESID_MOD_VALS = ['RESID:AA0581', 'RESID:AA0037', 'R:AA0581', 'R:AA0037', 'R:+1', 'R:-1', 'R:+3.1415', 'R:-3.1415']
+ISOTOPE_MOD_VALS = ['13C', '15N', '18O', '2H', 'T', 'D']
+STATIC_MOD_VALS = ['[Oxidation]@M', '[Oxidation]@M,C,D', '[+1]@C', '[-1]@C', '[+3.1415]@C', '[-3.1415]@C']
+
+
+
+TOP_DOWN_MODS = CHEM_FORMULA_MOD_VALS + RESID_MOD_VALS
+CROSS_LINKING_MODS = []  # Cross linking not supported
+GLYCAN_MODS = GLYCAN_MOD_VALS + GNO_MOD_VALS
+SPECTRUM_MODS = []  # No Additional Mods
+
+
+class ProformaComplianceLevel(Enum):
+    BASE = auto()
+    LEVEL2 = auto()
+    TOP_DOWN = auto()
+    CROSS_LINKING = auto()
+    GLYCAN = auto()
+    SPECTRUM = auto()
+
+
+BASE_AMINO_ACIDS = "VWPSDCYTAIMHGQENFLKR"
+LEVEL2_AMINO_ACIDS = BASE_AMINO_ACIDS + 'OUBZXJ'
+LEVEL2_AMINO_ACIDS_WITHOUT_AMBIGUITY = BASE_AMINO_ACIDS + 'OU'
+
+BASE_MODS = UNIMOD_LEVEL_BASE_MOD_VALS + PSI_LEVEL_BASE_MOD_VALS + DELTA_MASS_MOD_VALS
+LEVEL2_MODS = UNIMOD_LEVEL2_MOD_VALS + PSI_LEVEL2_MOD_VALS + BASE_MODS
+
+
+def _random_sequence(amino_acids: str, min_sequence_length: int, max_sequence_length: int) -> str:
+    return ''.join(choice(amino_acids) for _ in range(randint(min_sequence_length, max_sequence_length)))
+
+
+def random_sequence(level: ProformaComplianceLevel, min_sequence_length: int = 5, max_sequence_length: int = 50,
+                    sequence_ambiguity: bool = True) -> str:
+    if level == ProformaComplianceLevel.BASE:
+        return _random_sequence(BASE_AMINO_ACIDS, min_sequence_length, max_sequence_length)
+    elif level == ProformaComplianceLevel.LEVEL2:
+        if sequence_ambiguity:
+            return _random_sequence(LEVEL2_AMINO_ACIDS, min_sequence_length, max_sequence_length)
+        return _random_sequence(LEVEL2_AMINO_ACIDS_WITHOUT_AMBIGUITY, min_sequence_length, max_sequence_length)
+    else:
+        raise ValueError("Invalid level")
+
+
+def _random_mod(mods: List[str], count: int, info: bool) -> Mod:
+    mod = choice(mods)
+    if info:
+        for _ in range(randint(1, 2)):
+            mod += f"|{choice(MOD_INFO_VALS)}"
+    return Mod(mod, count)
+
+
+def random_mod(level: ProformaComplianceLevel, count: int = 1, info: bool = False) -> Mod:
+    if level == ProformaComplianceLevel.BASE:
+        return _random_mod(BASE_MODS, count, info)
+    elif level == ProformaComplianceLevel.LEVEL2:
+        return _random_mod(LEVEL2_MODS, count, info)
+    elif level == ProformaComplianceLevel.TOP_DOWN:
+        return _random_mod(TOP_DOWN_MODS, count, info)
+    elif level == ProformaComplianceLevel.CROSS_LINKING:
+        raise NotImplementedError("Cross linking not supported")
+        # return _random_mod(CROSS_LINKING_MODS, count, info)
+    elif level == ProformaComplianceLevel.GLYCAN:
+        return _random_mod(GLYCAN_MODS, count, info)
+    elif level == ProformaComplianceLevel.SPECTRUM:
+        raise ValueError("No Valid Mods for Spectrum Level Compliance")
+        # return _random_mod(SPECTRUM_MODS, count, info)
+    else:
+        raise ValueError("Invalid level")
+
+
+def random_interval(level: ProformaComplianceLevel, start_index: int, end_index: int) -> Interval:
+    return _random_interval(level, start_index, end_index)
+
+
+def _random_interval(level: ProformaComplianceLevel, start_index: int, end_index: int) -> Interval:
+    # Ensure 'end' is strictly greater than 'start' to avoid zero-length intervals
+    start = randint(start_index, end_index - 1)
+    end = randint(start + 1, end_index)
+    ambiguous = choice([True, False])
+    mods = [random_mod(level, 1) for _ in range(randint(0, 2))]
+    return Interval(start, end, ambiguous, mods)
+
+
+def random_intervals(level: ProformaComplianceLevel, sequence: str, num_intervals: int) -> List[Interval]:
+    intervals = []
+    if num_intervals == 0:
+        return intervals
+    segment_length = len(sequence) // num_intervals
+    for i in range(num_intervals):
+        start_index = segment_length * i
+        end_index = start_index + segment_length - 1 if i < num_intervals - 1 else len(sequence)
+        interval = _random_interval(level, start_index, end_index)
+        intervals.append(interval)
+    return intervals
+
+
+def compliance_randomizer(level: ProformaComplianceLevel | int, min_sequence_length: int = 5, max_sequence_length: int = 50,
+                          mod_prob: float = 0.1, sequence_ambiguity: bool = True) -> ProFormaAnnotation:
+    """
+    1) Base Level Support (Technical name: Base-ProForma Compliant)
+    Represents the lowest level of compliance, this level involves providing support for:
+    - Amino acid sequences
+    - Protein modifications using two of the supported CVs/ontologies: Unimod and PSIMOD.
+    - Protein modifications using delta masses (without prefixes)
+    - N-terminal, C-terminal and labile modifications.
+    - Ambiguity in the modification position, including support for localisation scores.
+    - Ambiguity in the amino acid sequence.
+    - INFO tag.
+
+    2) Additional Separate Support (Technical name: level 2-ProForma compliant)
+    These features are independent from each other:
+    - Unusual amino acids (O and U).
+    - Ambiguous amino acids (e.g. X, B, Z). This would include support for sequence tags of
+    known mass (using the character X).
+    - Protein modifications using delta masses (using prefixes for the different
+    CVs/ontologies).
+    - Use of prefixes for Unimod (U:) and PSI-MOD (M:) names.
+    - Support for the joint representation of experimental data and its interpretation.
+    """
+    if isinstance(level, int):
+        if level == 1:
+            level = ProformaComplianceLevel.BASE
+        elif level == 2:
+            level = ProformaComplianceLevel.LEVEL2
+        else:
+            raise ValueError("Invalid level")
+
+    if level != ProformaComplianceLevel.BASE and level != ProformaComplianceLevel.LEVEL2:
+        raise ValueError("Invalid level")
+
+    # Amino acid sequences
+    sequence = random_sequence(level, min_sequence_length, max_sequence_length, sequence_ambiguity)
+
+    annotation = ProFormaAnnotation(sequence)
+
+    # Protein modifications using two of the supported CVs/ontologies: Unimod and PSIMOD.
+    # Protein modifications using delta masses (without prefixes)
+    num_internal_mods = int(len(sequence) * mod_prob)
+    internal_mods = [random_mod(level=level, count=1, info=choice([True, False]))
+                     for _ in range(num_internal_mods)]
+    internal_mod_indices = sample(range(len(sequence)), num_internal_mods)
+
+    for i, mod in zip(internal_mod_indices, internal_mods):
+        annotation.add_internal_mod(i, mod)
+
+    # N-terminal, C-terminal and labile modifications.
+    for _ in range(randint(0, 3)):
+        annotation.add_nterm_mods(random_mod(level=level, count=1, info=choice([True, False])))
+    for _ in range(randint(0, 3)):
+        annotation.add_cterm_mods(random_mod(level=level, count=1, info=choice([True, False])))
+    for _ in range(randint(0, 3)):
+        annotation.add_labile_mods(random_mod(level=level, count=1, info=choice([True, False])))
+    for _ in range(randint(0, 3)):
+        annotation.add_unknown_mods(random_mod(level=level, count=randint(1, 3), info=choice([True, False])))
+
+    # Ambiguity in the modification position, including support for localisation scores.
+    # Ambiguity in the amino acid sequence.
+    intervals = random_intervals(level, sequence, randint(0, 2))
+    annotation.add_intervals(intervals)
+
+    # Localization score
+    if choice([True, False]):
+        score_mod = random_mod(level=level, count=1, info=False)
+        score_mod = Mod(str(score_mod.val) + '#g1(0.9)', 1)
+        additional_mods = [Mod('#g1(0.1)', 1) for _ in range(randint(1, 3))]
+        score_mods = [score_mod] + additional_mods
+        score_mods_indices = sample(range(len(sequence)), len(score_mods))
+
+        for i, mod in zip(score_mods_indices, score_mods):
+            annotation.add_internal_mod(i, mod)
+
+    return annotation
+
+
+def top_down_randomizer(annotation: ProFormaAnnotation, mod_prob: float = 0.1):
+    """
+    3) Top-Down Extensions (Technical name: level 2-ProForma + top-down compliant)
+    - Additional CV/ontologies for protein modifications: RESID (the prefix R MUST be used
+    for RESID CV/ontology term names)
+    - Chemical formulas (this feature occurs in two places in this list).
+    """
+
+    # Protein modifications using two of the supported CVs/ontologies: Unimod and PSIMOD.
+    # Protein modifications using delta masses (without prefixes)
+    num_internal_mods = int(len(annotation) * mod_prob)
+    internal_mods = [random_mod(level=ProformaComplianceLevel.TOP_DOWN, count=1, info=choice([True, False]))
+                     for _ in range(num_internal_mods)]
+    internal_mod_indices = sample(range(len(annotation)), num_internal_mods)
+
+    for i, mod in zip(internal_mod_indices, internal_mods):
+        annotation.add_internal_mod(i, mod)
+
+
+def cross_linking_randomizer(annotation: ProFormaAnnotation):
+    """
+    4) Cross-Linking Extensions (Technical name: level 2-ProForma + cross-linking
+    compliant)
+    - Cross-linked peptides (using the XL-MOD CV/ontology, the prefix X MUST be used for
+    XL-MOD CV/ontology term names).
+    """
+
+    raise NotImplementedError("Cross linking not supported")
+
+
+def glycan_randomizer(annotation: ProFormaAnnotation, mod_prob: float = 0.1):
+    """
+    5) Glycan Extensions (Technical name: level 2-ProForma + glycans compliant)
+    - Additional CV/ontologies for protein modifications: GNO (the prefix G MUST be used
+    for GNO CV/ontology term names)
+    - Glycan composition.
+    - Chemical formulas (this feature occurs in two places in this list).
+    """
+
+    # Protein modifications using two of the supported CVs/ontologies: Unimod and PSIMOD.
+    # Protein modifications using delta masses (without prefixes)
+    num_internal_mods = int(len(annotation) * mod_prob)
+    internal_mods = [random_mod(level=ProformaComplianceLevel.GLYCAN, count=1, info=choice([True, False]))
+                     for _ in range(num_internal_mods)]
+    internal_mod_indices = sample(range(len(annotation)), num_internal_mods)
+
+    for i, mod in zip(internal_mod_indices, internal_mods):
+        annotation.add_internal_mod(i, mod)
+
+
+def spectrum_randomizer(annotation: ProFormaAnnotation):
+    """
+    6) Spectral Support (Technical name: level 2-ProForma + mass spectrum compliant)
+    - Charge and chimeric spectra are special cases (see Appendix II).
+    - Global modifications (e.g., every C is C13).
+    """
+
+    # Add charge and isotope type
+    if choice([True, False]):
+        annotation.add_charge(choice([1, 2, 3]))
+
+    for _ in range(randint(0, 3)):
+        mod = _random_mod(ISOTOPE_MOD_VALS, 1, False)
+        annotation.add_isotope_mods(mod)
+
+    for _ in range(randint(0, 3)):
+        mod = _random_mod(STATIC_MOD_VALS, 1, False)
+        annotation.add_static_mods(mod)
+
+
+for i in range(1000):
+    annotation = compliance_randomizer(ProformaComplianceLevel.BASE, sequence_ambiguity=False)
+    spectrum_randomizer(annotation)
+    top_down_randomizer(annotation)
+    glycan_randomizer(annotation)
+
+    sequence = annotation.serialize()
+    print(sequence)
+
+    #parse_proforma(sequence)
+
+    annotation2 = parse(sequence)[0]
+    mass(annotation2)
+    comp_mass(annotation2)
+    annotation.reverse()
+    annotation2.shift(2)
+    annotation2.shuffle()
+
+
