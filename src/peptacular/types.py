@@ -17,7 +17,7 @@ ModDict = Dict[ModIndex, ModDictValue]
 Span = Tuple[int, int, int]
 
 # Chem Composition Type
-Chem_Composition = Dict[str, Union[int, float]]
+ChemComposition = Dict[str, Union[int, float]]
 
 # Fragments
 ChargeType = Union[List[int], int]

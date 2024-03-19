@@ -281,7 +281,6 @@ def spectrum_randomizer(annotation: ProFormaAnnotation):
         mod = _random_mod(STATIC_MOD_VALS, 1, False)
         annotation.add_static_mods(mod)
 
-
 if __name__ == '__main__':
     for _ in range(10):
         anot = compliance_randomizer(ProformaComplianceLevel.BASE, sequence_ambiguity=False)

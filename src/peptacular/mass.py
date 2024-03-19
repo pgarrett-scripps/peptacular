@@ -5,23 +5,23 @@ from __future__ import annotations
 
 from typing import Dict
 
-from peptacular.chem import parse_chem_formula, _get_sequence_comp, _parse_mod_delta_mass_only, estimate_comp
+from peptacular.chem import parse_chem_formula, _sequence_comp, _parse_mod_delta_mass_only, estimate_comp
 from peptacular import constants
 from peptacular.chem_util import chem_mass
 from peptacular.mods.mod_setup import MONOSACCHARIDES_DB
-from peptacular.sequence.proforma import parse_static_mods, ProFormaAnnotation, Mod, parse_charge_adducts, \
-    _parse_ion_elements
+from peptacular.sequence.proforma import parse_static_mods, ProFormaAnnotation, Mod, parse_ion_elements
 from peptacular.util import convert_type
-from peptacular.errors import UnknownElementError, UnknownGlycanError, InvalidDeltaMassError, \
-    InvalidModificationMassError, UnknownAminoAcidError
+from peptacular.errors import InvalidDeltaMassError, InvalidModificationMassError, UnknownAminoAcidError, \
+    InvalidGlycanFormulaError, InvalidChemFormulaError
 from peptacular.glycan import parse_glycan_formula
 from peptacular.mods.mod_db import parse_psi_mass, parse_unimod_mass, is_unimod_str, is_psi_mod_str, parse_xlmod_mass, \
     parse_resid_mass, is_gno_str, parse_gno_mass, is_xlmod_str, is_resid_str
 from peptacular.sequence.sequence import sequence_to_annotation
-from peptacular.types import Chem_Composition
+from peptacular.types import ChemComposition
 
 
-def comp_mass(sequence: str | ProFormaAnnotation, ion_type: str = 'p') -> (Dict[str, int], float):
+def comp_mass(sequence: str | ProFormaAnnotation, ion_type: str = 'p',
+              charge: int | None = None, charge_adducts: str | None = None) -> (Dict[str, int], float):
     """
     Get the chemical composition of a peptide sequence and its delta mass.
 
@@ -29,18 +29,31 @@ def comp_mass(sequence: str | ProFormaAnnotation, ion_type: str = 'p') -> (Dict[
     :type sequence: str
     :param ion_type: The ion type.
     :type ion_type: str
+    :param charge: The charge state of the ion.
+    :type charge: int
+    :param charge_adducts: The charge adducts.
+    :type charge_adducts: str
 
     :return: The chemical composition and delta mass of the peptide sequence.
     :rtype: tuple
 
     .. code-block:: python
 
-        # Get the chemical composition of a peptide sequence.
+        # Unmodified Peptide
         >>> comp_mass('PEPTIDE')
         ({'C': 34, 'H': 53, 'N': 7, 'O': 15}, 0.0)
 
+        # Modified Peptide
         >>> comp_mass('PEPTIDE[1.0]')
         ({'C': 34, 'H': 53, 'N': 7, 'O': 15}, 1.0)
+
+        # Charge Adducts
+        >>> comp_mass('PEPTIDE', charge_adducts='+H+', charge=1)
+        ({'C': 34, 'H': 54, 'N': 7, 'O': 15, 'e': -1}, 0.0)
+
+        # Charge adducts in ProForma sequence
+        >>> comp_mass('PEPTIDE/2[+2Na+,+H+]')
+        ({'C': 34, 'H': 54, 'N': 7, 'O': 15, 'Na': 2, 'e': -3}, 0.0)
 
     """
 
@@ -51,23 +64,26 @@ def comp_mass(sequence: str | ProFormaAnnotation, ion_type: str = 'p') -> (Dict[
 
     annotation = annotation.condense_static_mods(inplace=False)
     delta_mass = _pop_delta_mass_mods(annotation)  # get delta mass and pop these mods
-    peptide_composition = _get_sequence_comp(annotation, ion_type)
+    peptide_composition = _sequence_comp(annotation, ion_type, charge, charge_adducts)
     return peptide_composition, delta_mass
 
 
 def comp(sequence: str | ProFormaAnnotation, ion_type: str = 'p', estimate_delta: bool = False,
-         charge: int = None, charge_adducts: str = None) -> Dict[str, int]:
+         charge: int | None = None, charge_adducts: str | None = None) -> Dict[str, int]:
     """
     Calculates the elemental composition of a peptide sequence, including modifications,
     and optionally estimates the composition based on the delta mass from modifications.
 
     :param sequence: The peptide sequence to analyze.
-
-
+    :type sequence: str
     :param ion_type: The type of ion ('p' for precursor, or other types indicating different ionization forms).
+    :type ion_type: str
     :param estimate_delta: If True, estimate the composition based on the delta mass from modifications.
+    :type estimate_delta: bool
     :param charge: The charge state of the ion.
+    :type charge: int
     :param charge_adducts: The charge adducts.
+    :type charge_adducts: str
 
     :raises ValueError: If delta_mass is nonzero and estimate_delta is False, indicating an unaccounted modification.
 
@@ -97,7 +113,7 @@ def comp(sequence: str | ProFormaAnnotation, ion_type: str = 'p', estimate_delta
     else:
         annotation = sequence
 
-    composition, delta_mass = comp_mass(annotation, ion_type)
+    composition, delta_mass = comp_mass(annotation, ion_type, charge, charge_adducts)
 
     if delta_mass != 0 and not estimate_delta:
         raise ValueError(f"Non-zero delta mass ({delta_mass}) encountered without estimation enabled for "
@@ -246,9 +262,7 @@ def mass(sequence: str | ProFormaAnnotation,
         peptide_composition, delta_mass = comp_mass(annotation, ion_type)
         return chem_mass(peptide_composition, monoisotopic=monoisotopic, precision=precision) + delta_mass
 
-    if ion_type == 'p':
-        ion_type = 'y'
-    else:
+    if ion_type != 'p':
         _ = annotation.pop_labile_mods()
 
     m = 0.0
@@ -257,11 +271,11 @@ def mass(sequence: str | ProFormaAnnotation,
 
         n_term_mod = static_map.get('N-Term')
         if n_term_mod is not None:
-            m += sum(parse_mod_mass(m, monoisotopic, precision=None) for m in n_term_mod)
+            m += sum(mod_mass(m, monoisotopic, precision=None) for m in n_term_mod)
 
         c_term_mod = static_map.get('C-Term')
         if c_term_mod is not None:
-            m += sum(parse_mod_mass(m, monoisotopic, precision=None) for m in c_term_mod)
+            m += sum(mod_mass(m, monoisotopic, precision=None) for m in c_term_mod)
 
         for aa, mod in static_map.items():
 
@@ -269,7 +283,7 @@ def mass(sequence: str | ProFormaAnnotation,
                 continue
 
             aa_count = annotation.sequence.count(aa)
-            m += sum(parse_mod_mass(m, monoisotopic, precision=None) for m in mod) * aa_count
+            m += sum(mod_mass(m, monoisotopic, precision=None) for m in mod) * aa_count
 
         annotation.pop_static_mods()
 
@@ -282,35 +296,35 @@ def mass(sequence: str | ProFormaAnnotation,
     # Apply labile mods
     if annotation.labile_mods is not None:
         for mod in annotation.labile_mods:
-            m += parse_mod_mass(mod)
+            m += mod_mass(mod)
 
     # Apply Unknown mods
     if annotation.unknown_mods is not None:
         for mod in annotation.unknown_mods:
-            m += parse_mod_mass(mod)
+            m += mod_mass(mod)
 
     # Apply N-term mods
     if annotation.nterm_mods is not None:
         for mod in annotation.nterm_mods:
-            m += parse_mod_mass(mod)
+            m += mod_mass(mod)
 
     # Apply intervals
     if annotation.intervals is not None:
         for interval in annotation.intervals:
             if interval.mods is not None:
                 for mod in interval.mods:
-                    m += parse_mod_mass(mod)
+                    m += mod_mass(mod)
 
     # apply internal mods
     if annotation.internal_mods is not None:
         for k, mods in annotation.internal_mods.items():
             for mod in mods:
-                m += parse_mod_mass(mod)
+                m += mod_mass(mod)
 
     # apply C-term mods
     if annotation.cterm_mods is not None:
         for mod in annotation.cterm_mods:
-            m += parse_mod_mass(mod)
+            m += mod_mass(mod)
 
     charge_adduct_mass = _parse_charge_adducts_mass(charge_adducts)
     m += (charge * charge_adduct_mass)  # Add charge
@@ -404,7 +418,7 @@ def mz(sequence: str | ProFormaAnnotation,
     return m
 
 
-def glycan_mass(formula: Chem_Composition | str,
+def glycan_mass(formula: ChemComposition | str,
                 monoisotopic: bool = True,
                 precision: int | None = None) -> float:
     """
@@ -438,12 +452,12 @@ def glycan_mass(formula: Chem_Composition | str,
         1142.027
 
         # Example Error# show example error
-        >>> glycan_mass({'HesNAc':1}, precision=3)
+        >>> glycan_mass('HexX', precision=3)
         Traceback (most recent call last):
-        peptacular.errors.UnknownGlycanError: Unknown glycan: HesNAc
+        peptacular.errors.InvalidGlycanFormulaError: Error parsing glycan formula: "HexX". Unknown glycan: "X"!
 
     """
-
+    original_formula = formula
     if isinstance(formula, str):
         formula = parse_glycan_formula(formula)
 
@@ -455,7 +469,7 @@ def glycan_mass(formula: Chem_Composition | str,
         elif MONOSACCHARIDES_DB.contains_synonym(monosaccharide):
             entry = MONOSACCHARIDES_DB.get_entry_by_synonym(monosaccharide)
         else:
-            raise UnknownGlycanError(monosaccharide)
+            raise InvalidGlycanFormulaError(original_formula, f'Unknown monosaccharide: "{monosaccharide}"!')
 
         if monoisotopic:
             m += entry.mono_mass * count
@@ -468,7 +482,7 @@ def glycan_mass(formula: Chem_Composition | str,
     return m
 
 
-def parse_mod_mass(mod: str | Mod, monoisotopic: bool = True, precision: int | None = None) -> float:
+def mod_mass(mod: str | Mod, monoisotopic: bool = True, precision: int | None = None) -> float:
     """
     Parse a modification string.
 
@@ -491,23 +505,26 @@ def parse_mod_mass(mod: str | Mod, monoisotopic: bool = True, precision: int | N
 
     .. code-block:: python
 
-        >>> parse_mod_mass('Acetyl|INFO:newly discovered', precision=3)
+        >>> mod_mass('Acetyl|INFO:newly discovered', precision=3)
         42.011
 
-        >>> parse_mod_mass('1', precision=3)
+        >>> mod_mass(Mod('Acetyl|INFO:newly discovered', 2), precision=3)
+        84.022
+
+        >>> mod_mass('1', precision=3)
         1
 
-        >>> parse_mod_mass('Acetyl|Obs:+42.010565', precision=3)
+        >>> mod_mass('Acetyl|Obs:+42.010565', precision=3)
         42.011
 
         # example error
-        >>> parse_mod_mass('Acetdsyl|Obs:42d.010565', precision=3)
+        >>> mod_mass('Acetdsyl|Obs:42d.010565', precision=3)
         Traceback (most recent call last):
         ...
         peptacular.errors.InvalidDeltaMassError: Invalid delta mass: 42d.010565
 
         # example invalid mass
-        >>> parse_mod_mass('info:HelloWorld', precision=3)
+        >>> mod_mass('info:HelloWorld', precision=3)
         Traceback (most recent call last):
         ...
         peptacular.errors.InvalidModificationMassError: Cannot determine mass for modification: info:HelloWorld
@@ -515,7 +532,7 @@ def parse_mod_mass(mod: str | Mod, monoisotopic: bool = True, precision: int | N
     """
 
     if isinstance(mod, Mod):
-        return parse_mod_mass(mod.val, monoisotopic, precision)
+        return mod_mass(mod.val, monoisotopic, precision)*mod.mult
 
     if isinstance(mod, int):
         return mod
@@ -589,7 +606,7 @@ def _parse_glycan_mass_from_proforma_str(glycan_str: str, monoisotopic: bool, pr
     :param precision: The precision of the mass.
     :type precision: int
 
-    :raises UnknownGlycanError: If the glycan string contains an unknown monosaccharide.
+    :raises InvalidGlycanFormulaError: If the glycan formula is invalid.
 
     :return: The mass of the glycan.
     :rtype: float
@@ -617,14 +634,14 @@ def _parse_glycan_mass_from_proforma_str(glycan_str: str, monoisotopic: bool, pr
         72.063
 
         # Invalid glycan ID
-        >>> _parse_glycan_mass_from_proforma_str('6BAAXE121B1', monoisotopic=True, precision=3)
+        >>> _parse_glycan_mass_from_proforma_str('Glycan:XXX', monoisotopic=True, precision=3)
         Traceback (most recent call last):
-        peptacular.errors.UnknownGlycanError: Unknown glycan: 6BAAXE121B1
+        peptacular.errors.InvalidGlycanFormulaError: Error parsing glycan formula: "XXX". Unknown glycan: "XXX"!
 
         # Invalid glycan str
-        >>> _parse_glycan_mass_from_proforma_str('HeSNAc2Hex3Neu1', monoisotopic=True, precision=3)
+        >>> _parse_glycan_mass_from_proforma_str('Glycan:HexXX', monoisotopic=True, precision=3)
         Traceback (most recent call last):
-        peptacular.errors.UnknownGlycanError: Unknown glycan: HeSNAc2Hex3Neu1
+        peptacular.errors.InvalidGlycanFormulaError: Error parsing glycan formula: "HexXX". Unknown glycan: "XX"!
 
     """
 
@@ -651,8 +668,8 @@ def _parse_glycan_mass_from_proforma_str(glycan_str: str, monoisotopic: bool, pr
     else:  # Try to parse glycan formula
         try:
             return round_func(glycan_mass(glycan_str, monoisotopic, precision))
-        except UnknownGlycanError as e:
-            raise e
+        except InvalidGlycanFormulaError as e:
+            raise InvalidGlycanFormulaError(glycan_str, e.msg) from e
 
 
 def _parse_chem_mass_from_proforma_str(chem_str: str, monoisotopic: bool, precision: int | None = None) -> float:
@@ -666,7 +683,7 @@ def _parse_chem_mass_from_proforma_str(chem_str: str, monoisotopic: bool, precis
     :param precision: The precision of the mass.
     :type precision: int
 
-    :raises UnknownElementError: If the chemical formula contains an unknown element.
+    :raises InvalidChemFormulaError: If the chemical formula is invalid.
 
     :return: The mass of the chemical formula.
     :rtype: float
@@ -681,6 +698,11 @@ def _parse_chem_mass_from_proforma_str(chem_str: str, monoisotopic: bool, precis
         >>> _parse_chem_mass_from_proforma_str('C2H4O2', monoisotopic=False, precision=3)
         60.052
 
+        # Invalid chemical formula
+        >>> _parse_chem_mass_from_proforma_str('C2H4O2X', monoisotopic=True, precision=3)
+        Traceback (most recent call last):
+        peptacular.errors.InvalidChemFormulaError: Error parsing chem formula: "C2H4O2X". Unknown element: "X"!
+
     """
 
     if chem_str.lower().startswith('formula:'):
@@ -689,11 +711,11 @@ def _parse_chem_mass_from_proforma_str(chem_str: str, monoisotopic: bool, precis
     comps = parse_chem_formula(chem_str)
     try:
         return chem_mass(comps, monoisotopic, precision)
-    except UnknownElementError as e:
-        raise e
+    except InvalidChemFormulaError as e:
+        raise InvalidChemFormulaError(chem_str, e.msg) from e
 
 
-def _parse_mod_mass(mod: str | Mod, monoisotopic: bool = True, precision: int | None = None) -> float | None:
+def _parse_mod_mass(mod: str, monoisotopic: bool = True, precision: int | None = None) -> float | None:
     """
     Parse a modification and return its mass.
 
@@ -762,9 +784,6 @@ def _parse_mod_mass(mod: str | Mod, monoisotopic: bool = True, precision: int | 
         42.010565
 
     """
-
-    if isinstance(mod, Mod):
-        return _parse_mod_mass(mod.val, monoisotopic, precision)
 
     # localization fix
     if isinstance(mod, str) and '#' in mod:
@@ -904,6 +923,7 @@ def _pop_delta_mass_mods(annotation: ProFormaAnnotation) -> float:
 
     return delta_mass
 
+
 def _parse_adduct_mass(adduct: str, precision: int | None = None, monoisotopic: bool = True) -> float:
     """
     Parse an adduct string and return its mass.
@@ -933,7 +953,7 @@ def _parse_adduct_mass(adduct: str, precision: int | None = None, monoisotopic: 
     """
 
     mass = 0.0
-    element_count, element_symbol, element_charge = _parse_ion_elements(adduct)
+    element_count, element_symbol, element_charge = parse_ion_elements(adduct)
     if monoisotopic is True:
         mass += element_count * constants.ISOTOPIC_ATOMIC_MASSES[element_symbol]
         mass -= element_charge * constants.ELECTRON_MASS

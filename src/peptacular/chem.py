@@ -4,25 +4,27 @@ with/and modifications.
 """
 from __future__ import annotations
 
-from typing import Dict, Union, List, Optional
+from typing import Dict, Union, List
 
-from peptacular.chem_util import parse_chem_formula, _parse_chem_comp_from_proforma_str, write_chem_formula
+from peptacular.types import ModValue, ChemComposition
+from peptacular.chem_util import parse_chem_formula, write_chem_formula
 from peptacular.mods.mod_setup import MONOSACCHARIDES_DB
 from peptacular.sequence.sequence import sequence_to_annotation
-from peptacular.constants import AA_COMPOSITIONS, ION_TYPE_COMPOSITION_ADJUSTMENTS, ISOTOPIC_AVERAGINE_MASS, AVERAGINE_RATIOS
+from peptacular.constants import AA_COMPOSITIONS, ION_TYPE_COMPOSITION_ADJUSTMENTS, ISOTOPIC_AVERAGINE_MASS, \
+    AVERAGINE_RATIOS
 from peptacular.errors import InvalidCompositionError, AmbiguousAminoAcidError, \
     UnknownAminoAcidError, DeltaMassCompositionError
 from peptacular.glycan import glycan_comp
 from peptacular.mods.mod_db import parse_unimod_comp, parse_psi_comp, is_psi_mod_str, is_unimod_str, parse_xlmod_comp, \
     parse_resid_comp, is_resid_str, is_xlmod_str, is_gno_str, parse_gno_comp
 from peptacular.sequence.proforma import parse_static_mods, ProFormaAnnotation, Mod, parse_isotope_mods, \
-    _parse_ion_elements
+    parse_ion_elements
 from peptacular.util import convert_type
 
 
-def convert_glycan_formula_to_chem_formula(glycan: Dict[str, int] | str) -> str:
+def glycan_to_chem(glycan: ChemComposition | str) -> str:
     """
-    Converts a glycan dictionary to a chemical formula.
+    Converts a glycan composition/formula to a chemical formula.
 
     :param glycan: A dictionary containing the glycan components and their counts, or a glycan formula string.
     :type glycan: dict | str
@@ -32,8 +34,11 @@ def convert_glycan_formula_to_chem_formula(glycan: Dict[str, int] | str) -> str:
 
     .. code-block:: python
 
-            >>> convert_glycan_formula_to_chem_formula({'HexNAc': 2, 'Hex': 3, 'Neu5Gc': 1})
+            >>> glycan_to_chem({'HexNAc': 2, 'Hex': 3, 'Neu5Gc': 1})
             'C45H73N3O34'
+
+            >>> glycan_to_chem({'HexNAc': 2.3, 'Hex': 3.3, 'Neu5Gc': 1.1})
+            'C50.3H81.6N3.4O37.9'
 
     """
 
@@ -60,17 +65,20 @@ def mod_comp(mod: str | Mod) -> Dict[str, int]:
         >>> mod_comp('Acetyl|Obs:+42.010565')
         {'H': 2, 'C': 2, 'O': 1}
 
+        >>> mod_comp(Mod('Acetyl|Obs:+42.010565', 2))
+        {'H': 4, 'C': 4, 'O': 2}
+
     """
 
     if isinstance(mod, Mod):
-        return mod_comp(mod.val)
+        return {k: v * mod.mult for k, v in mod_comp(mod.val).items()}
 
     if isinstance(mod, (float, int)):
         raise InvalidCompositionError(mod)
 
     mods = mod.split('|')
     for m in mods:
-        m = _parse_modification_composition(m)
+        m = _parse_mod_comp(m)
         if m is not None:
             return m
 
@@ -78,7 +86,7 @@ def mod_comp(mod: str | Mod) -> Dict[str, int]:
 
 
 def estimate_comp(neutral_mass: float,
-                  isotopic_mods: Optional[List[str] | List[Mod]] = None) -> Dict[str, float]:
+                  isotopic_mods: List[ModValue] | None = None) -> Dict[str, float]:
     """
     Estimate the number of each element in a molecule based on its molecular mass using the averagine model.
 
@@ -110,7 +118,7 @@ def estimate_comp(neutral_mass: float,
     return composition
 
 
-def _parse_glycan_comp_from_proforma_str(glycan_str: str) -> Dict[str, int]:
+def _parse_glycan_comp(glycan_str: str) -> Dict[str, int]:
     """
     Parse a glycan string and return its mass.
 
@@ -126,28 +134,28 @@ def _parse_glycan_comp_from_proforma_str(glycan_str: str) -> Dict[str, int]:
     .. code-block:: python
 
         #  Get Composition
-        >>> _parse_glycan_comp_from_proforma_str('HexNAc2Hex3Neu1')
+        >>> _parse_glycan_comp('HexNAc2Hex3Neu1')
         {'C': 43, 'H': 71, 'N': 3, 'O': 32}
 
         # Using a glycan name
-        >>> _parse_glycan_comp_from_proforma_str('HexNAc')
+        >>> _parse_glycan_comp('HexNAc')
         {'C': 8, 'H': 13, 'N': 1, 'O': 5}
 
         # Using a glycan ID
-        >>> _parse_glycan_comp_from_proforma_str('6BAAE1B1')
+        >>> _parse_glycan_comp('6BAAE1B1')
         {'C': 3, 'H': 4, 'O': 2}
 
         # Using a glycan ID
-        >>> _parse_glycan_comp_from_proforma_str('Glycan:6BAAE1B1')
+        >>> _parse_glycan_comp('Glycan:6BAAE1B1')
         {'C': 3, 'H': 4, 'O': 2}
 
         # Invalid glycan ID
-        >>> _parse_glycan_comp_from_proforma_str('6BAAXE121B1')
+        >>> _parse_glycan_comp('6BAAXE121B1')
         Traceback (most recent call last):
         peptacular.errors.UnknownGlycanError: Unknown glycan: 6BAAXE121B1
 
         # Invalid glycan str
-        >>> _parse_glycan_comp_from_proforma_str('HeSNAc2Hex3Neu1')
+        >>> _parse_glycan_comp('HeSNAc2Hex3Neu1')
         Traceback (most recent call last):
         peptacular.errors.UnknownGlycanError: Unknown glycan: HeSNAc2Hex3Neu1
 
@@ -163,16 +171,12 @@ def _parse_glycan_comp_from_proforma_str(glycan_str: str) -> Dict[str, int]:
     elif MONOSACCHARIDES_DB.contains_synonym(glycan_str):
         entry = MONOSACCHARIDES_DB.get_entry_by_synonym(glycan_str)
     else:
-        return parse_chem_formula(convert_glycan_formula_to_chem_formula(glycan_str))
+        return parse_chem_formula(glycan_to_chem(glycan_str))
 
     return parse_chem_formula(entry.composition)
 
 
-
-
-
-
-def _parse_modification_composition(mod: str) -> Union[None, Dict[str, int]]:
+def _parse_mod_comp(mod: str) -> Union[None, Dict[str, int]]:
     """
     Parses a modification composition and returns a dictionary with the element and their counts.
 
@@ -191,16 +195,16 @@ def _parse_modification_composition(mod: str) -> Union[None, Dict[str, int]]:
     .. code-block:: python
 
         # Calculate the mass of a peptide sequence.
-        >>> _parse_modification_composition('U:2')
+        >>> _parse_mod_comp('U:2')
         {'H': 1, 'N': 1, 'O': -1}
 
-        >>> _parse_modification_composition('Formula:[13C4]H12')
+        >>> _parse_mod_comp('Formula:[13C4]H12')
         {'13C': 4, 'H': 12}
 
-        >>> _parse_modification_composition('Glycan:HexNAc2Hex3Neu5Gc1')
+        >>> _parse_mod_comp('Glycan:HexNAc2Hex3Neu5Gc1')
         {'C': 45, 'H': 73, 'N': 3, 'O': 34}
 
-        >>> _parse_modification_composition('1')
+        >>> _parse_mod_comp('1')
 
     """
 
@@ -221,7 +225,7 @@ def _parse_modification_composition(mod: str) -> Union[None, Dict[str, int]]:
 
     mod_lower = mod.lower()
     if mod_lower.startswith('glycan:'):
-        return _parse_glycan_comp_from_proforma_str(mod)
+        return _parse_glycan_comp(mod)
 
     elif is_gno_str(mod):
         # not implemented
@@ -249,39 +253,39 @@ def _parse_modification_composition(mod: str) -> Union[None, Dict[str, int]]:
 
     # chemical formula
     elif mod_lower.startswith('formula:'):
-        return _parse_chem_comp_from_proforma_str(mod)
+        return parse_chem_formula(mod.split(':')[1])
 
 
-def _parse_delta_mass(delta_mass: str) -> float:
+def _parse_mod_delta_mass(mod: str) -> float | None:
     """
-    Parse the delta mass.
+    Parse the mod delta mass. If the mod cannot be parsed into a delta mass, it will return None.
 
-    :param delta_mass: The delta mass.
-    :type delta_mass: str
-    :return: The parsed delta mass.
-    :rtype: float
+    :param mod: The mod to parse.
+    :type mod: str
+    :return: The parsed delta mass, or None if the delta mass cannot be parsed.
+    :rtype: float | None
 
     .. code-block:: python
 
-        >>> _parse_delta_mass('42.0')
+        >>> _parse_mod_delta_mass('42.0')
         42.0
 
-        >>> _parse_delta_mass('Acetyl')
+        >>> _parse_mod_delta_mass('Acetyl')
 
-        >>> _parse_delta_mass('UniMod:1')
+        >>> _parse_mod_delta_mass('UniMod:1')
 
-        >>> _parse_delta_mass('UniMod:+1')
+        >>> _parse_mod_delta_mass('UniMod:+1')
         1.0
 
-        >>> _parse_delta_mass('Obs:42.0')
+        >>> _parse_mod_delta_mass('Obs:42.0')
         42.0
     """
 
-    if isinstance(delta_mass, (int, float)):
-        return delta_mass
+    if isinstance(mod, (int, float)):
+        return mod
 
     mass = None
-    for mod_str in delta_mass.split('|'):
+    for mod_str in mod.split('|'):
 
         # check if the mod contains a localization score
         if '#' in mod_str:
@@ -317,8 +321,8 @@ def _parse_delta_mass(delta_mass: str) -> float:
     return mass
 
 
-def _get_sequence_comp(sequence: str | ProFormaAnnotation, ion_type: str, charge: int = None,
-                       charge_adducts: str = None) -> Dict[str, int]:
+def _sequence_comp(sequence: str | ProFormaAnnotation, ion_type: str, charge: int = None,
+                   charge_adducts: str = None) -> Dict[str, int]:
     """
     Calculate the composition of a sequence.
 
@@ -337,42 +341,45 @@ def _get_sequence_comp(sequence: str | ProFormaAnnotation, ion_type: str, charge
     .. code-block:: python
 
         # Calculate the mass of a peptide sequence.
-        >>> _get_sequence_comp('PEPTIDE', 'y')
+        >>> _sequence_comp('PEPTIDE', 'y')
         {'C': 34, 'H': 53, 'N': 7, 'O': 15}
 
-        >>> _get_sequence_comp('PEPTIDE', 'b')
+        >>> _sequence_comp('PEPTIDE', 'b')
         {'C': 34, 'H': 51, 'N': 7, 'O': 14}
 
-        >>> _get_sequence_comp('<H>PEPTIDE', 'b')
+        >>> _sequence_comp('<H>PEPTIDE', 'b')
         {'C': 34, 'H': 51, 'N': 7, 'O': 14}
 
-        >>> _get_sequence_comp('{Unimod:2}PEPTIDE', 'p')
+        >>> _sequence_comp('{Unimod:2}PEPTIDE', 'p')
         {'C': 34, 'H': 54, 'N': 8, 'O': 14}
 
-        >>> _get_sequence_comp('<13C>PEPTIDE', 'b')
+        >>> _sequence_comp('<13C>PEPTIDE', 'b')
         {'H': 51, 'N': 7, 'O': 14, '13C': 34}
 
-        >>> _get_sequence_comp('PEPTIDE[Unimod:2]', 'y')
+        >>> _sequence_comp('PEPTIDE[Unimod:2]', 'y')
         {'C': 34, 'H': 54, 'N': 8, 'O': 14}
 
-        >>> _get_sequence_comp('<[Unimod:2]@T>PEPTIDE', 'y')
+        >>> _sequence_comp('<[Unimod:2]@T>PEPTIDE', 'y')
         {'C': 34, 'H': 54, 'N': 8, 'O': 14}
 
-        >>> _get_sequence_comp('<[Unimod:2]@N-Term>PEPTIDE', 'y')
+        >>> _sequence_comp('<[Unimod:2]@N-Term>PEPTIDE', 'y')
         {'C': 34, 'H': 54, 'N': 8, 'O': 14}
 
-        >>> _get_sequence_comp('PEPTIDE/2', 'y')
+        >>> _sequence_comp('PEPTIDE/2', 'y')
         {'C': 34, 'H': 55, 'N': 7, 'O': 15, 'e': -2}
 
-        >>> _get_sequence_comp('<13C>PEPTIDE[Unimod:213413]', 'b')
+        >>> _sequence_comp('PEPTIDE/2[+2Na+,+H+]', 'y')
+        {'C': 34, 'H': 54, 'N': 7, 'O': 15, 'Na': 2, 'e': -3}
+
+        >>> _sequence_comp('<13C>PEPTIDE[Unimod:213413]', 'b')
         Traceback (most recent call last):
         peptacular.errors.UnknownModificationError: Unknown modification: Unimod:213413
 
-        >>> _get_sequence_comp('I', 'by')
+        >>> _sequence_comp('I', 'by')
         {'C': 6, 'H': 12, 'N': 1, 'O': 1}
 
         # Ambiguous amino acid
-        >>> _get_sequence_comp('B', 'by')
+        >>> _sequence_comp('B', 'by')
         Traceback (most recent call last):
         peptacular.errors.AmbiguousAminoAcidError: Ambiguous amino acid: B
 
@@ -386,18 +393,10 @@ def _get_sequence_comp(sequence: str | ProFormaAnnotation, ion_type: str, charge
     if annotation.charge is not None and charge is None:
         charge = annotation.charge
 
-    if charge is None:
-        charge = 0
-
     if annotation.charge_adducts is not None and charge_adducts is None:
         charge_adducts = annotation.charge_adducts[0]
 
-    if charge_adducts is None:
-        charge_adducts = '+H+'
-
-    if ion_type == 'p':
-        ion_type = 'y'
-    else:
+    if ion_type != 'p':
         _ = annotation.pop_labile_mods()
 
     if 'B' in annotation.sequence:
@@ -484,10 +483,17 @@ def _get_sequence_comp(sequence: str | ProFormaAnnotation, ion_type: str, charge
                 mod_compositions.append(mod_composition)
 
     # Add the charge adducts
-    if charge != 0:
+    if charge is None and charge_adducts is None:
+        adduct_comp = {}
+    elif charge is not None and charge_adducts is None:
+        charge_adducts = f'{charge}H+'
         adduct_comp = _parse_charge_adducts_comp(charge_adducts)
-        adduct_comp = {k: v * charge for k, v in adduct_comp.items()}
-        mod_compositions.append(adduct_comp)
+    elif charge is None and charge_adducts is not None:
+        adduct_comp = {} # maybe this isnt right
+    else:
+        adduct_comp = _parse_charge_adducts_comp(charge_adducts)
+
+    mod_compositions.append(adduct_comp)
 
     # Merge the compositions
     composition = {}
@@ -537,21 +543,21 @@ def _parse_mod_delta_mass_only(mod: str | Mod) -> Union[float, None]:
     mods = mod.split('|')
     for m in mods:
         try:
-            m = _parse_modification_composition(m)
+            m = _parse_mod_comp(m)
         except DeltaMassCompositionError:
             continue
         if m is not None:
             return None
 
     for m in mods:
-        m = _parse_delta_mass(m)
+        m = _parse_mod_delta_mass(m)
         if m is not None:
             return m
 
     raise ValueError(f'Invalid modification: {mod}')
 
 
-def _apply_isotope_mods_to_composition(composition: Dict[str, int], isotopic_mods: List[Mod]) -> Dict[str, int]:
+def _apply_isotope_mods_to_composition(composition: ChemComposition, isotopic_mods: List[Mod | str]) -> ChemComposition:
     """
     Apply isotopic modifications to a composition.
 
@@ -565,12 +571,17 @@ def _apply_isotope_mods_to_composition(composition: Dict[str, int], isotopic_mod
 
     .. code-block:: python
 
-        # Example usage
+        # Apply isotopic modifications to a composition.
         >>> _apply_isotope_mods_to_composition({'C': 6, 'H': 12, 'O': 6}, ['13C'])
         {'H': 12, 'O': 6, '13C': 6}
 
+        # Apply multiple isotopic modifications to a composition.
         >>> _apply_isotope_mods_to_composition({'C': 6, 'H': 12, 'O': 6}, ['13C', '15N'])
         {'H': 12, 'O': 6, '13C': 6}
+
+        # Works with floats
+        >>> _apply_isotope_mods_to_composition({'C': 6.6, 'H': 12, 'O': 6}, ['13C', '15N'])
+        {'H': 12, 'O': 6, '13C': 6.6}
 
     """
 
@@ -614,17 +625,17 @@ def _parse_adduct_comp(adduct: str) -> Dict[str, int]:
         {'Na': 1, 'e': -1}
 
         >>> _parse_adduct_comp('+2Na+')
-        {'Na': 2, 'e': -1}
+        {'Na': 2, 'e': -2}
 
-        >>> _parse_adduct_comp('H+')
-        {'H': 1, 'e': -1}
+        >>> _parse_adduct_comp('2H+')
+        {'H': 2, 'e': -2}
 
     """
 
     comp = {}
-    element_count, element_symbol, element_charge = _parse_ion_elements(adduct)
+    element_count, element_symbol, element_charge = parse_ion_elements(adduct)
     comp[element_symbol] = element_count
-    comp['e'] = -1 * element_charge
+    comp['e'] = -1 * element_charge * element_count
 
     return comp
 
@@ -645,8 +656,8 @@ def _parse_charge_adducts_comp(adducts: Mod | str) -> Dict[str, int]:
         >>> _parse_charge_adducts_comp('+Na+,+H+')
         {'Na': 1, 'e': -2, 'H': 1}
 
-        >>> _parse_charge_adducts_comp('+H+')
-        {'H': 1, 'e': -1}
+        >>> _parse_charge_adducts_comp('2H+')
+        {'H': 2, 'e': -2}
 
     """
 
@@ -666,3 +677,11 @@ def _parse_charge_adducts_comp(adducts: Mod | str) -> Dict[str, int]:
             composition[k] = composition.get(k, 0) + v
 
     return composition
+
+
+if __name__ == '__main__':
+    print(f"{'EMEVEESPEK/2'}:\t\t\t\t\t{_sequence_comp('EMEVEESPEK/2', 'p')}")
+    print(f"{'EMEVEESPEK/2[+2Na+,+H+]'}:\t\t{_sequence_comp('EMEVEESPEK/2[+2Na+,+H+]', 'p')}")
+    print(f"{'EMEVEESPEK/1[+2Na+,-H+]'}:\t\t{_sequence_comp('EMEVEESPEK/1[+2Na+,-H+]', 'p')}")
+    print(f"{'EMEVEESPEK/-2[2I-]'}:\t\t\t\t{_sequence_comp('EMEVEESPEK/-2[2I-]', 'p')}")
+    print(f"{'EMEVEESPEK/-1[+e-]'}:\t\t\t\t{_sequence_comp('EMEVEESPEK/-1[+e-]', 'p')}")

@@ -1,4 +1,3 @@
-import json
 import os
 from copy import deepcopy
 from typing import Dict, List, Tuple, Set
@@ -19,12 +18,14 @@ _element_path = os.path.join(_dir_name, "data", "chem.txt")
 _infos = get_element_info(_element_path)
 
 # calculate average atomic mass for each element
-AVERAGE_ATOMIC_MASSES = map_atomic_symbol_to_average_mass(_infos)
-ISOTOPIC_ATOMIC_MASSES = get_isotopic_atomic_masses(_infos)
-ATOMIC_NUMBER_TO_SYMBOL = map_atomic_number_to_symbol(_infos)
-ATOMIC_SYMBOL_TO_ISOTOPE_NEUTRON_OFFSETS_AND_ABUNDANCES = map_atomic_number_to_comp_neutron_offset(_infos)
-ATOMIC_SYMBOL_TO_ISOTOPE_MASSES_AND_ABUNDANCES = map_atomic_number_to_comp(_infos)
-HILL_ORDER = map_hill_order(_infos)
+AVERAGE_ATOMIC_MASSES: Dict[str, float] = map_atomic_symbol_to_average_mass(_infos)
+ISOTOPIC_ATOMIC_MASSES: Dict[str, float] = get_isotopic_atomic_masses(_infos)
+ATOMIC_NUMBER_TO_SYMBOL: Dict[int, str] = map_atomic_number_to_symbol(_infos)
+ATOMIC_SYMBOL_TO_ISOTOPE_NEUTRON_OFFSETS_AND_ABUNDANCES: Dict[str, List[Tuple[int, float]]] = \
+    map_atomic_number_to_comp_neutron_offset(_infos)
+ATOMIC_SYMBOL_TO_ISOTOPE_MASSES_AND_ABUNDANCES: Dict[str, List[Tuple[float, float]]] = \
+    map_atomic_number_to_comp(_infos)
+HILL_ORDER: Dict[str, int] = map_hill_order(_infos)
 
 AA_COMPOSITIONS: Dict[str, Dict[str, int]] = {
     "G": {"C": 2, "H": 3, "N": 1, "O": 1},  # Glycine
@@ -61,6 +62,7 @@ ION_TYPE_START_COMPOSITIONS: Dict[str, Dict[str, int]] = {
     "x": {"O": 1, "C": 1},
     "y": {"H": 2},
     "z": {"H": -1, "N": -1},
+    "p": {'H': 2},
 }
 
 ION_TYPE_END_COMPOSITIONS: Dict[str, Dict[str, int]] = {
@@ -70,6 +72,7 @@ ION_TYPE_END_COMPOSITIONS: Dict[str, Dict[str, int]] = {
     "x": {"O": 1, "H": 1},
     "y": {"O": 1, "H": 1},
     "z": {"O": 1, "H": 1},
+    "p": {"O": 1, "H": 1},
 }
 
 

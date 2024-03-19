@@ -15,7 +15,7 @@ from peptacular.input_convert import fix_list_of_mods, fix_dict_of_mods, fix_int
 from peptacular.proforma_dataclasses import Mod, Interval, are_mods_equal, are_intervals_equal
 from peptacular.constants import AMINO_ACIDS, AMBIGUOUS_AMINO_ACIDS, MASS_AMBIGUOUS_AMINO_ACIDS
 from peptacular.errors import ProFormaFormatError
-from peptacular.types import ACCEPTED_MOD_INPUT, IntervalValue
+from peptacular.types import ACCEPTED_MOD_INPUT, ACCEPTED_INTERVAL_INPUT
 
 
 def _parse_modifications(proforma_sequence: str, opening_bracket: str = '[', closing_bracket: str = ']') -> List[Mod]:
@@ -245,7 +245,7 @@ def write_charge_adducts(charge_adducts: Dict[str, int]) -> Mod:
     return Mod(','.join(adducts_list), 1)
 
 
-def _pop_ion_count(ion: str) -> int:
+def _pop_ion_count(ion: str) -> (int, str):
     """
     Parse the charge of an ion from a string.
 
@@ -292,7 +292,7 @@ def _pop_ion_count(ion: str) -> int:
             return cnt * charge, ion[i:]
 
 
-def _pop_ion_symbol(ion: str) -> str:
+def _pop_ion_symbol(ion: str) -> (str, str):
     """
     Parse the symbol of an ion from a string.
 
@@ -333,7 +333,7 @@ def _pop_ion_symbol(ion: str) -> str:
     return symbol, ''
 
 
-def _pop_ion_charge(ion: str) -> int:
+def _pop_ion_charge(ion: str) -> (int, str):
     """
     Parse the charge of an ion from a string.
 
@@ -380,7 +380,7 @@ def _pop_ion_charge(ion: str) -> int:
     return cnt * sign, ''
 
 
-def _parse_ion_elements(ion: str) -> (int, str, int):
+def parse_ion_elements(ion: str) -> (int, str, int):
     """
     Parse the count, element, and charge of an ion from a string.
 
@@ -391,25 +391,25 @@ def _parse_ion_elements(ion: str) -> (int, str, int):
     :rtype: int
 
     Examples:
-        >>> _parse_ion_elements('+H+')
+        >>> parse_ion_elements('+H+')
         (1, 'H', 1)
 
-        >>> _parse_ion_elements('+2Na+')
+        >>> parse_ion_elements('+2Na+')
         (2, 'Na', 1)
 
-        >>> _parse_ion_elements('2I-')
+        >>> parse_ion_elements('2I-')
         (2, 'I', -1)
 
-        >>> _parse_ion_elements('+e-')
+        >>> parse_ion_elements('+e-')
         (1, 'e', -1)
 
-        >>> _parse_ion_elements('-2Na+')
+        >>> parse_ion_elements('-2Na+')
         (-2, 'Na', 1)
 
-        >>> _parse_ion_elements('+2Mg2+')
+        >>> parse_ion_elements('+2Mg2+')
         (2, 'Mg', 2)
 
-        >>> _parse_ion_elements('+2Mg2-')
+        >>> parse_ion_elements('+2Mg2-')
         (2, 'Mg', -2)
 
     """
@@ -1679,7 +1679,7 @@ def create_annotation(sequence: str,
                       nterm_mods: ACCEPTED_MOD_INPUT | None = None,
                       cterm_mods: ACCEPTED_MOD_INPUT | None = None,
                       internal_mods: Dict[int, ACCEPTED_MOD_INPUT] | None = None,
-                      intervals: List[IntervalValue] | None = None,
+                      intervals: ACCEPTED_INTERVAL_INPUT | None = None,
                       charge: int | None = None,
                       charge_adducts: ACCEPTED_MOD_INPUT | None = None) -> ProFormaAnnotation:
     """

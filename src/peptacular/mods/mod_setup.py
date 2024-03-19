@@ -11,9 +11,10 @@ from functools import cached_property
 from typing import List, Dict, IO, Any
 import requests
 
-from peptacular.chem_util import write_chem_formula, _parse_isotope_component, parse_chem_formula, chem_mass
-from peptacular.errors import InvalidFormulaError, UnknownGlycanError, UnknownElementError
-from peptacular.types import Chem_Composition
+from peptacular.chem_util import write_chem_formula, _parse_isotope_component, parse_chem_formula, chem_mass, \
+    _parse_split_chem_formula
+from peptacular.errors import InvalidChemFormulaError, InvalidGlycanFormulaError
+from peptacular.types import ChemComposition
 from peptacular.util import convert_type
 
 """
@@ -36,7 +37,7 @@ _MONOSACCHARIDE_NAME_MAP = {
 """
 
 
-def _parse_glycan_formula(formula: str) -> Chem_Composition:
+def _parse_glycan_formula(formula: str, sep: str) -> ChemComposition:
     d = {}
 
     if formula == '':
@@ -44,11 +45,9 @@ def _parse_glycan_formula(formula: str) -> Chem_Composition:
 
     original_formula = formula
 
-    """
-    # Replace any known synonyms
-    for k, v in _MONOSACCHARIDE_NAME_MAP.items():
-        formula = formula.replace(k, v)
-    """
+    if sep != '':
+        return _parse_split_chem_formula(formula, sep)
+
     while formula != '':
         for glycan_name in MONOSACCHARIDES_DB.names_sorted:
             if formula.startswith(glycan_name):
@@ -72,22 +71,22 @@ def _parse_glycan_formula(formula: str) -> Chem_Composition:
                 count = convert_type(count)
 
                 if isinstance(count, str):
-                    raise ValueError(f'Invalid count: {count}')
+                    raise InvalidGlycanFormulaError(original_formula, f'Invalid count: "{count}"!')
 
                 d[glycan_name] = count
 
                 break
         else:
-            raise UnknownGlycanError(original_formula)
+            raise InvalidGlycanFormulaError(original_formula, f'Unknown glycan: "{formula}"!')
 
     return d
 
 
-def _glycan_comp(glycan: Dict[str, int] | str) -> Chem_Composition:
+def _glycan_comp(glycan: Dict[str, int] | str, sep: str = '') -> ChemComposition:
     if isinstance(glycan, str):
-        glycan = _parse_glycan_formula(glycan)  # raises UnknownGlycanError
+        glycan = _parse_glycan_formula(glycan, sep)  # raises InvalidGlycanFormulaError
 
-    counts = Counter()
+    counts = {}
     for component, count in glycan.items():
 
         if MONOSACCHARIDES_DB.contains_name(component):
@@ -95,13 +94,13 @@ def _glycan_comp(glycan: Dict[str, int] | str) -> Chem_Composition:
         elif MONOSACCHARIDES_DB.contains_synonym(component):
             entry = MONOSACCHARIDES_DB.get_entry_by_synonym(component)
         else:
-            raise UnknownGlycanError(component)
+            raise InvalidGlycanFormulaError(glycan, f'Unknown glycan: "{component}"!')
 
         chem_formula = parse_chem_formula(entry.composition)
         for element, element_count in chem_formula.items():
-            counts[element] += element_count * count
+            counts[element] = counts.get(element, 0) + element_count * count
 
-    return dict(counts)
+    return counts
 
 
 class DbType:
@@ -261,7 +260,7 @@ def _fix_unimod_entry(entry: ModEntry):
 
     try:
         _ = parse_chem_formula(delta_formula)
-    except InvalidFormulaError as e:  # could be a glycan composition
+    except InvalidChemFormulaError as e:  # could be a glycan composition
 
         # replace 'H1O3P1' to Phospho and 'O3S1' to Sulpho
         delta_formula = entry.composition.replace('Sulf', 'Sulpho').replace('Phos', 'Phospho')
@@ -454,7 +453,7 @@ def _get_psimod_entries(terms: List[Dict[str, Any]]) -> List[ModEntry]:
 
             try:
                 _ = parse_chem_formula(delta_formula)
-            except InvalidFormulaError as e:  # could be a glycan composition
+            except InvalidChemFormulaError as e:  # could be a glycan composition
                 delta_formula = None
                 warnings.warn(
                     f'[{DbType.PSI_MOD}] Error parsing {term_id} {term_name} {property_values.get("DiffFormula")}, {e}')
@@ -569,7 +568,7 @@ def _get_resid_entries(terms: List[Dict[str, Any]]) -> List[ModEntry]:
 
             try:
                 _ = parse_chem_formula(delta_formula)
-            except InvalidFormulaError as e:  # could be a glycan composition
+            except InvalidChemFormulaError as e:  # could be a glycan composition
                 delta_formula = None
                 warnings.warn(
                     f'[{DbType.RESID}] Error parsing {term_id} {term_name} {property_values.get("DiffFormula")}, {e}')
@@ -656,7 +655,7 @@ def _get_xlmod_entries(terms: List[Dict[str, Any]]) -> List[ModEntry]:
             try:
                 delta_monoisotopic_mass_recalc = chem_mass(delta_formula, monoisotopic=True)
                 delta_average_mass_recalc = chem_mass(delta_formula, monoisotopic=False)
-            except InvalidFormulaError as e:
+            except InvalidChemFormulaError as e:
                 warnings.warn(f'[{DbType.XLMOD}] Error parsing {term_id} {term_name} {delta_formula}, {e}')
                 delta_formula = None
                 delta_average_mass = None
@@ -739,7 +738,7 @@ def _get_gno_entries(terms: List[Dict[str, Any]]) -> List[ModEntry]:
                 try:
                     delta_monoisotopic_mass_recalc = chem_mass(delta_formula, monoisotopic=True)
                     delta_average_mass_recalc = chem_mass(delta_formula, monoisotopic=False)
-                except InvalidFormulaError as e:
+                except InvalidChemFormulaError as e:
                     warnings.warn(f'[{DbType.GNO}] Error parsing {term_id} {term_name} {delta_formula}, {e}')
                     delta_formula = None
 
@@ -815,7 +814,7 @@ def _get_monosaccharide_entries(terms: List[Dict[str, Any]]) -> List[ModEntry]:
         try:
             delta_monoisotopic_mass_recalc = chem_mass(delta_formula, monoisotopic=True)
             delta_average_mass_recalc = chem_mass(delta_formula, monoisotopic=False)
-        except InvalidFormulaError as e:
+        except InvalidChemFormulaError as e:
             warnings.warn(f'[{DbType.MONOSACCHARIDES}]Error parsing {term_id} {term_name} {delta_formula}, {e}')
             delta_formula = None
 
@@ -888,7 +887,7 @@ class ModEntry:
         if self.composition is not None:
             try:
                 return chem_mass(self.composition, monoisotopic=True)
-            except (UnknownElementError, InvalidFormulaError) as e:  # could be glycan
+            except InvalidChemFormulaError as e:  # could be glycan
                 return chem_mass(_glycan_comp(self.composition), monoisotopic=True)
 
         return None
@@ -898,7 +897,7 @@ class ModEntry:
         if self.composition is not None:
             try:
                 return chem_mass(self.composition, monoisotopic=False)
-            except (UnknownElementError, InvalidFormulaError) as e:  # could be glycan
+            except InvalidChemFormulaError as e:  # could be glycan
                 return chem_mass(_glycan_comp(self.composition), monoisotopic=False)
         return None
 

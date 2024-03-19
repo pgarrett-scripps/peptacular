@@ -1,6 +1,6 @@
 from copy import deepcopy
 from dataclasses import dataclass
-from typing import Union, List, Dict
+from typing import Union, List, Dict, Tuple
 
 
 @dataclass
@@ -183,11 +183,10 @@ def get_isotopic_atomic_masses(elem_infos: List[ElementInfo]) -> Dict[str, float
     d['D'] = d['2D']
     d['3H'] = d['3T']
     d['2H'] = d['2D']
-
     return d
 
 
-def map_atomic_number_to_comp_neutron_offset(elem_infos: List[ElementInfo]) -> Dict[str, float]:
+def map_atomic_number_to_comp_neutron_offset(elem_infos: List[ElementInfo]) -> Dict[str, List[Tuple[int, float]]]:
     # map atomic number to all element infos
     aa_infos = _map_atomic_number_to_infos(elem_infos)
 
@@ -206,7 +205,7 @@ def map_atomic_number_to_comp_neutron_offset(elem_infos: List[ElementInfo]) -> D
                 ((info.mass_number - monoisotopic_info.mass_number), info.isotopic_composition))
 
         for info in infos:  # Add each isotopic composition for each isotope
-            d[str(info)] = [(0.0, 1.0)]
+            d[str(info)] = [(0, 1.0)]
 
         d['T'] = d['3T']
         d['D'] = d['2D']
@@ -216,7 +215,7 @@ def map_atomic_number_to_comp_neutron_offset(elem_infos: List[ElementInfo]) -> D
     return d
 
 
-def map_atomic_number_to_comp(elem_infos: List[ElementInfo]) -> Dict[str, float]:
+def map_atomic_number_to_comp(elem_infos: List[ElementInfo]) -> Dict[str, List[Tuple[float, float]]]:
     # map atomic number to all element infos
     aa_infos = _map_atomic_number_to_infos(elem_infos)
 

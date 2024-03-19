@@ -29,24 +29,6 @@ class InvalidSequenceError(ValueError):
     pass
 
 
-class UnknownElementError(ValueError):
-    """Exception raised for errors due to unknown elements."""
-
-    def __init__(self, element, *args):
-        self.element = element
-        message = f"Unknown element: {element}"
-        super().__init__(message, *args)
-
-
-class UnknownGlycanError(ValueError):
-    """Exception raised for errors due to unknown glycans."""
-
-    def __init__(self, glycan, *args):
-        self.glycan = glycan
-        message = f"Unknown glycan: {glycan}"
-        super().__init__(message, *args)
-
-
 class UnknownModificationError(ValueError):
     """Exception raised for errors due to unknown modifications."""
 
@@ -54,6 +36,7 @@ class UnknownModificationError(ValueError):
         self.modification = modification
         message = f"Unknown modification: {modification}"
         super().__init__(message, *args)
+
 
 class UnknownModificationMassError(ValueError):
     """Exception raised for errors due to unknown masses."""
@@ -99,13 +82,23 @@ class DeltaMassCompositionError(ValueError):
         super().__init__(message, *args)
 
 
-
-class InvalidFormulaError(ValueError):
+class InvalidChemFormulaError(ValueError):
     """Exception raised for errors due to invalid formula."""
 
-    def __init__(self, formula, *args):
+    def __init__(self, formula, msg, *args):
         self.formula = formula
-        message = f"Cannot parse formula: {formula}"
+        self.msg = msg
+        message = f'Error parsing chem formula: "{formula}". {msg}'
+        super().__init__(message, *args)
+
+
+class InvalidGlycanFormulaError(ValueError):
+    """Exception raised for errors due to invalid formula."""
+
+    def __init__(self, formula, msg, *args):
+        self.formula = formula
+        self.msg = msg
+        message = f'Error parsing glycan formula: "{formula}". {msg}'
         super().__init__(message, *args)
 
 
