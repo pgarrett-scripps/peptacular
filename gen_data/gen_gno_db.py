@@ -4,9 +4,7 @@ from collections import Counter
 from typing import List
 from obo import read_obo
 from peptacular import chem
-from peptacular.chem import convert_glycan_formula_to_chem_formula, glycan_comp
-from peptacular.glycan import parse_glycan_formula
-from peptacular.mass import chem_mass
+from peptacular.chem_util import glycan_comp, chem_mass
 
 
 def generate_gno_db():
@@ -52,7 +50,7 @@ def generate_gno_db():
                 try:
                     comp = glycan_comp(symbol)
                 except ValueError as e:
-                    #print(f'Error parsing1 {term_id} {term_name} {val}, {e}')
+                    print(f'Error parsing1 {term_id} {term_name} {val}, {e}')
                     composition = None
                     break
 
@@ -129,17 +127,17 @@ def generate_gno_db():
     # count number of bad entries
     bad_comps = 0
     for k, v in id_to_composition.items():
-        if not v:
+        if v == None:
             bad_comps += 1
 
     bad_mono = 0
     for k, v in id_to_isotopic_mass.items():
-        if not v:
+        if v == None:
             bad_mono += 1
 
     bad_ave = 0
     for k, v in id_to_average_mass.items():
-        if not v:
+        if v == None:
             bad_ave += 1
 
     print('Total number of entries:', len(terms))

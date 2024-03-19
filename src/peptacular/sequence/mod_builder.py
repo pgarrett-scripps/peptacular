@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Dict, List, Generator
 
-from peptacular.sequence.sequence import parse_single_sequence
+from peptacular.sequence.sequence import sequence_to_annotation
 from peptacular.sequence.proforma import ProFormaAnnotation
 from peptacular.proforma_dataclasses import Mod
 from peptacular.types import ModIndex, ModValue
@@ -87,7 +87,7 @@ def apply_static_mods(sequence: str | ProFormaAnnotation,
     """
 
     if isinstance(sequence, str):
-        annotation = parse_single_sequence(sequence)
+        annotation = sequence_to_annotation(sequence)
         input_type = str
     else:
         annotation = sequence
@@ -101,7 +101,7 @@ def apply_static_mods(sequence: str | ProFormaAnnotation,
 
     for regex_str, mods in residue_mods.items():
         for mod_index in get_regex_match_indices(annotation.sequence, regex_str):
-            if annotation.has_internal_mod(mod_index):  # mod already present
+            if annotation.has_internal_mods_at_index(mod_index):  # mod already present
                 if mode == 'overwrite':
                     new_annotation.add_internal_mod(mod_index, mods, False)
                 elif mode == 'append':
@@ -184,7 +184,7 @@ def _apply_variable_mods_rec(mods: Dict[ModIndex, List[List[Mod]]],
 
     if curr_list_of_mods is not None:
         for curr_mods in curr_list_of_mods:
-            if annotation.has_internal_mod(index):
+            if annotation.has_internal_mods_at_index(index):
                 if mode == 'overwrite':
                     updated_annotation = annotation.copy()
                     updated_annotation.add_internal_mod(index, curr_mods, False)  # will overwrite
@@ -304,7 +304,7 @@ def apply_variable_mods(sequence: str | ProFormaAnnotation,
     """
 
     if isinstance(sequence, str):
-        annotation = parse_single_sequence(sequence)
+        annotation = sequence_to_annotation(sequence)
         input_type = str
     else:
         annotation = sequence

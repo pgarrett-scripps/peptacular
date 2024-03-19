@@ -3,29 +3,28 @@ import os
 from copy import deepcopy
 from typing import Dict, List, Tuple, Set
 
+from peptacular.chem_setup import get_element_info, map_atomic_symbol_to_average_mass, \
+    map_atomic_number_to_comp_neutron_offset, get_isotopic_atomic_masses, map_hill_order, map_atomic_number_to_comp, \
+    map_atomic_number_to_symbol
+
 PROTON_MASS = 1.00727646688
 NEUTRON_MASS = 1.00866491597
 ELECTRON_MASS = 0.00054857990946
 
+
 _dir_name = os.path.dirname(__file__)
-_element_path = os.path.join(_dir_name, "data", "element")
-with open(os.path.join(_element_path, "atomic_symbol_to_average_mass.json"), 'r') as f:
-    AVERAGE_ATOMIC_MASSES: Dict[str, float] = json.load(f)
+_element_path = os.path.join(_dir_name, "data", "chem.txt")
 
-with open(os.path.join(_element_path, "atomic_symbol_to_isotopic_mass.json"), 'r') as f:
-    ISOTOPIC_ATOMIC_MASSES: Dict[str, float] = json.load(f)
+# Get element infos
+_infos = get_element_info(_element_path)
 
-with open(os.path.join(_element_path, "atomic_number_to_symbol.json"), 'r') as f:
-    ATOMIC_NUMBER_TO_SYMBOL: Dict[int, str] = json.load(f)
-
-with open(os.path.join(_element_path, "atomic_symbol_to_isotope_mass_and_abundance.json"), 'r') as f:
-    ATOMIC_SYMBOL_TO_ISOTOPE_MASSES_AND_ABUNDANCES: Dict[str, List[Tuple[float, float]]] = json.load(f)
-
-with open(os.path.join(_element_path, "atomic_symbol_to_isotope_neutron_offset_and_abundance.json"), 'r') as f:
-    ATOMIC_SYMBOL_TO_ISOTOPE_NEUTRON_OFFSETS_AND_ABUNDANCES: Dict[str, List[Tuple[int, float]]] = json.load(f)
-
-with open(os.path.join(_element_path, "atomic_symbol_to_hill_order_index.json"), 'r') as f:
-    HILL_ORDER: Dict[str, int] = json.load(f)
+# calculate average atomic mass for each element
+AVERAGE_ATOMIC_MASSES = map_atomic_symbol_to_average_mass(_infos)
+ISOTOPIC_ATOMIC_MASSES = get_isotopic_atomic_masses(_infos)
+ATOMIC_NUMBER_TO_SYMBOL = map_atomic_number_to_symbol(_infos)
+ATOMIC_SYMBOL_TO_ISOTOPE_NEUTRON_OFFSETS_AND_ABUNDANCES = map_atomic_number_to_comp_neutron_offset(_infos)
+ATOMIC_SYMBOL_TO_ISOTOPE_MASSES_AND_ABUNDANCES = map_atomic_number_to_comp(_infos)
+HILL_ORDER = map_hill_order(_infos)
 
 AA_COMPOSITIONS: Dict[str, Dict[str, int]] = {
     "G": {"C": 2, "H": 3, "N": 1, "O": 1},  # Glycine
@@ -167,6 +166,7 @@ AVERAGINE_RATIOS: Dict[str, float] = {'C': 4.9384, 'H': 7.7583, 'N': 1.3577, 'O'
 ISOTOPIC_AVERAGINE_MASS: float = sum([v * ISOTOPIC_ATOMIC_MASSES[k] for k, v in AVERAGINE_RATIOS.items()])
 AVERAGE_AVERAGINE_MASS: float = sum([v * AVERAGE_ATOMIC_MASSES[k] for k, v in AVERAGINE_RATIOS.items()])
 
+"""
 # load from unimod_mono.pkl
 _unimod_path = os.path.join(_dir_name, "data", "unimod")
 with open(os.path.join(_unimod_path, "id_to_isotopic_mass.json"), 'r') as f:
@@ -185,6 +185,7 @@ with open(os.path.join(_unimod_path, "name_to_id.json"), 'r') as f:
 _monosaccharide_path = os.path.join(_dir_name, "data", "monosaccharide")
 with open(os.path.join(_monosaccharide_path, "name_to_id.json"), 'r') as f:
     MONOSACCHARIDE_NAME_TO_ID: Dict[str, str] = json.load(f)
+    MONOSACCHARIDES_NAMES_SORTED: List[str] = sorted(list(MONOSACCHARIDE_NAME_TO_ID.keys()), key=len, reverse=True)
 
 with open(os.path.join(_monosaccharide_path, "id_to_isotopic_mass.json"), 'r') as f:
     MONOSACCHARIDE_ID_TO_ISOTOPIC_MASSES: Dict[str, float] = json.load(f)
@@ -196,7 +197,7 @@ with open(os.path.join(_monosaccharide_path, "id_to_chem_formula.json"),
           'r') as f:
     MONOSACCHARIDE_ID_TO_COMPOSITIONS: Dict[str, str] = json.load(f)
 
-MONOSACCHARIDES_NAMES_SORTED: List[str] = sorted(list(MONOSACCHARIDE_NAME_TO_ID.keys()), key=len, reverse=True)
+
 
 # Load PSI-MODs
 _psi_mod_path = os.path.join(_dir_name, "data", "psi")
@@ -255,7 +256,7 @@ with open(os.path.join(_gno_path, "id_to_average_mass.json"), 'r') as f:
 with open(os.path.join(_gno_path, "id_to_chem_formula.json"), 'r') as f:
     GNO_ID_TO_COMPOSITIONS: Dict[str, str] = json.load(f)
 
-
+"""
 
 PROTEASES: Dict[str, str] = \
     {

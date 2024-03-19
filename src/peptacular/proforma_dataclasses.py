@@ -3,7 +3,7 @@ from __future__ import annotations
 import copy
 from collections import Counter
 from dataclasses import dataclass
-from typing import List, Any
+from typing import List
 
 from peptacular.util import convert_type
 

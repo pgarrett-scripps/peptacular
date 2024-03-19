@@ -4,22 +4,40 @@ with/and modifications.
 """
 from __future__ import annotations
 
-import re
-from collections import Counter
 from typing import Dict, Union, List, Optional
 
-from peptacular.sequence.sequence import parse_single_sequence
-from peptacular import constants
-from peptacular.constants import AA_COMPOSITIONS, ION_TYPE_COMPOSITION_ADJUSTMENTS, \
-    MONOSACCHARIDE_ID_TO_COMPOSITIONS, MONOSACCHARIDE_NAME_TO_ID
-from peptacular.errors import InvalidFormulaError, InvalidCompositionError, AmbiguousAminoAcidError, \
+from peptacular.chem_util import parse_chem_formula, _parse_chem_comp_from_proforma_str, write_chem_formula
+from peptacular.mods.mod_setup import MONOSACCHARIDES_DB
+from peptacular.sequence.sequence import sequence_to_annotation
+from peptacular.constants import AA_COMPOSITIONS, ION_TYPE_COMPOSITION_ADJUSTMENTS, ISOTOPIC_AVERAGINE_MASS, AVERAGINE_RATIOS
+from peptacular.errors import InvalidCompositionError, AmbiguousAminoAcidError, \
     UnknownAminoAcidError, DeltaMassCompositionError
-from peptacular.glycan import parse_glycan_formula
-from peptacular.mod_db import parse_unimod_comp, parse_psi_comp, is_psi_mod_str, is_unimod_str, parse_xlmod_comp, \
+from peptacular.glycan import glycan_comp
+from peptacular.mods.mod_db import parse_unimod_comp, parse_psi_comp, is_psi_mod_str, is_unimod_str, parse_xlmod_comp, \
     parse_resid_comp, is_resid_str, is_xlmod_str, is_gno_str, parse_gno_comp
-from peptacular.sequence.proforma import parse_static_mods, ProFormaAnnotation, Mod, parse_isotope_mods
-from peptacular.types import Chem_Composition
+from peptacular.sequence.proforma import parse_static_mods, ProFormaAnnotation, Mod, parse_isotope_mods, \
+    _parse_ion_elements
 from peptacular.util import convert_type
+
+
+def convert_glycan_formula_to_chem_formula(glycan: Dict[str, int] | str) -> str:
+    """
+    Converts a glycan dictionary to a chemical formula.
+
+    :param glycan: A dictionary containing the glycan components and their counts, or a glycan formula string.
+    :type glycan: dict | str
+
+    :return: A chemical formula string.
+    :rtype: str
+
+    .. code-block:: python
+
+            >>> convert_glycan_formula_to_chem_formula({'HexNAc': 2, 'Hex': 3, 'Neu5Gc': 1})
+            'C45H73N3O34'
+
+    """
+
+    return write_chem_formula(glycan_comp(glycan))
 
 
 def mod_comp(mod: str | Mod) -> Dict[str, int]:
@@ -83,431 +101,13 @@ def estimate_comp(neutral_mass: float,
 
     """
 
-    composition = {atom: ratio * neutral_mass / constants.ISOTOPIC_AVERAGINE_MASS for atom, ratio in
-                   constants.AVERAGINE_RATIOS.items()}
+    composition = {atom: ratio * neutral_mass / ISOTOPIC_AVERAGINE_MASS for atom, ratio in
+                   AVERAGINE_RATIOS.items()}
 
     if isotopic_mods:
         composition = _apply_isotope_mods_to_composition(composition, isotopic_mods)
 
     return composition
-
-
-def parse_chem_formula(formula: str) -> Dict[str, int]:
-    """
-    Parses a chemical formula and returns a dictionary with the element and their counts.
-
-    :param formula: The chemical formula.
-    :type formula: str
-
-    :raises InvalidFormulaError: If the formula is invalid.
-
-    :return: A dictionary with the element and their counts.
-    :rtype: dict
-
-    .. code-block:: python
-
-        >>> parse_chem_formula('C6H12O6666')
-        {'C': 6, 'H': 12, 'O': 6666}
-
-        >>> parse_chem_formula('[D]6H12O6666')
-        {'D': 6, 'H': 12, 'O': 6666}
-
-        >>> parse_chem_formula('C6H12O-6666')
-        {'C': 6, 'H': 12, 'O': -6666}
-
-        >>> parse_chem_formula('[13C6666]H12O-6')
-        {'13C': 6666, 'H': 12, 'O': -6}
-
-        >>> parse_chem_formula('13C 6 H 12 O 6')
-        {'13C': 6, 'H': 12, 'O': 6}
-
-        >>> parse_chem_formula('C 6 Ce H 12.2 O 6 D')
-        {'C': 6, 'Ce': 1, 'H': 12.2, 'O': 6, 'D': 1}
-
-        >>> parse_chem_formula('C 1 1H -1.2 2H 3 D')
-        {'C': 1, '1H': -1.2, '2H': 3, 'D': 1}
-
-        # floats
-        >>> parse_chem_formula('C4.45N8.22H59.99[13C34]S0.04O16.33')
-        {'C': 4.45, 'N': 8.22, 'H': 59.99, '13C': 34, 'S': 0.04, 'O': 16.33}
-
-        # floats
-        >>> parse_chem_formula('C6H12O6ssss')
-        Traceback (most recent call last):
-        peptacular.errors.InvalidFormulaError: Cannot parse formula: C6H12O6ssss
-
-    """
-
-    if ' ' in formula:
-        return _parse_split_chem_formula(formula)
-
-    counters = []
-    for component in _split_chem_formula(formula):
-        if component.startswith('['):  # Isotope notation
-            counters.append(_parse_isotope_component(component[1:-1]))
-        else:
-            counters.append(_parse_condensed_chem_formula(component))
-
-    result_counter = Counter()
-    for counter in counters:
-        for key, value in counter.items():
-            result_counter[key] += value
-
-    return dict(result_counter)
-
-
-def write_chem_formula(formula: Dict[str, int], sep: str = None, hill_order: bool = False) -> str:
-    """
-    Writes a chemical formula from a dictionary with the element and their counts.
-
-    :param formula: A dictionary with the element and their counts.
-    :type formula: dict
-    :param sep: The separator to use between element and counts. Default is ''.
-    :type sep: str
-    :param hill_order: Whether to use Hill notation. Default is False.
-    :type hill_order: bool
-
-    :return: The chemical formula.
-    :rtype: str
-
-    .. code-block:: python
-
-        # Calculate the mass of a peptide sequence.
-        >>> write_chem_formula({'C': 6, 'H': 12, 'O': 6})
-        'C6H12O6'
-
-        >>> write_chem_formula({'C': 6, 'H': 12, 'O': 6, 'S': 0})
-        'C6H12O6'
-
-        >>> write_chem_formula({'13C': 6, 'H': 12, 'O': 6})
-        '[13C6]H12O6'
-
-        >>> write_chem_formula({'13C': 6, 'H': 12, 'O': 6}, sep=' ')
-        '13C 6 H 12 O 6'
-
-        >>> write_chem_formula({'13C': 6, 'H': 12, 'O': 6}, sep='|')
-        '13C|6|H|12|O|6'
-
-        >>> write_chem_formula({'O': 6, 'H': 12, '13C': 6, 'C': 10}, hill_order=True)
-        'C10[13C6]H12O6'
-
-    """
-
-    if hill_order:
-        formula = dict(sorted(formula.items(), key=lambda item: constants.HILL_ORDER[item[0]]))
-
-    if sep is not None:
-        return sep.join([f'{k}{sep}{v}' for k, v in formula.items() if v != 0])
-
-    s = ''
-    for k, v in formula.items():
-        if v == 0:
-            continue
-        if k[0].isdigit() or k == 'D' or k == 'T':
-            s += f'[{k}{v}]'
-        else:
-            s += f'{k}{v}'
-
-    return s
-
-
-def convert_glycan_formula_to_chem_formula(glycan: Dict[str, int] | str) -> str:
-    """
-    Converts a glycan dictionary to a chemical formula.
-
-    :param glycan: A dictionary containing the glycan components and their counts, or a glycan formula string.
-    :type glycan: dict | str
-
-    :return: A chemical formula string.
-    :rtype: str
-
-    .. code-block:: python
-
-            >>> convert_glycan_formula_to_chem_formula({'HexNAc': 2, 'Hex': 3, 'Neu5Gc': 1})
-            'C45H73N3O34'
-
-    """
-
-    return write_chem_formula(glycan_comp(glycan))
-
-def glycan_comp(glycan: Dict[str, int] | str) -> Chem_Composition:
-    """
-    Converts a glycan dictionary to a chemical formula.
-
-    :param glycan: A dictionary containing the glycan components and their counts, or a glycan formula string.
-    :type glycan: dict | str
-
-    :return: A chemical formula string.
-    :rtype: str
-
-    .. code-block:: python
-
-            >>> glycan_comp({'HexNAc': 2, 'Hex': 3, 'Neu5Gc': 1})
-            {'C': 45, 'H': 73, 'N': 3, 'O': 34}
-
-            >>> glycan_comp({'HexNAc': 2.2, 'Hex': 3, 'Neu5Gc': 1})
-            {'C': 46.6, 'H': 75.6, 'N': 3.2, 'O': 35.0}
-
-    """
-
-    if isinstance(glycan, str):
-        glycan = parse_glycan_formula(glycan)  # raises UnknownGlycanError
-
-    counts = Counter()
-    for component, count in glycan.items():
-
-        monosaccharide_id = MONOSACCHARIDE_NAME_TO_ID[component]
-        chem_formula = parse_chem_formula(MONOSACCHARIDE_ID_TO_COMPOSITIONS[monosaccharide_id])
-        for element, element_count in chem_formula.items():
-            counts[element] += element_count * count
-
-    return dict(counts)
-
-
-def _split_chem_formula(formula: str) -> list[str]:
-    """
-    Splits a chemical formula into its components. The formula is assumed to be proForma2.0 compliant, wherase the
-    isotope notation for an element and its count is enclosed in square brackets and the formula contains no
-    whitespace.
-
-    :param formula: The chemical formula.
-    :type formula: str
-
-    :return: The components of the chemical formula.
-    :rtype: list[str]
-
-    .. code-block:: python
-
-        # Split a chemical formula into its components.
-        >>> _split_chem_formula('C6H12O6')
-        ['C6H12O6']
-
-        >>> _split_chem_formula('C6H12O-6')
-        ['C6H12O-6']
-
-        >>> _split_chem_formula('[13C6]H12O-6')
-        ['[13C6]', 'H12O-6']
-
-        >>> _split_chem_formula('[13C6]C6H12O6[13C6]')
-        ['[13C6]', 'C6H12O6', '[13C6]']
-
-    """
-    components = []
-    i = 0
-    while i < len(formula):
-        if formula[i] == '[':
-            component_start = i
-            component_end = formula.index(']', component_start)
-            components.append(formula[component_start:component_end + 1])
-            i = component_end + 1
-        else:
-            component_start = i
-            while i < len(formula) and formula[i] not in '[]':
-                i += 1
-            components.append(formula[component_start:i])
-    return components
-
-
-def _parse_isotope_component(formula: str) -> Dict[str, int]:
-    """
-    Parses an isotope notation and returns the element and the mass number.
-
-    :param formula: The isotope notation.
-    :type formula: str
-
-    :raises InvalidFormulaError: If the formula is invalid.
-
-    :return: A tuple containing the element and the mass number.
-    :rtype: tuple
-
-    .. code-block:: python
-
-        # Parse an isotope notation.
-        >>> _parse_isotope_component('13C6')
-        {'13C': 6}
-
-        >>> _parse_isotope_component('D6')
-        {'D': 6}
-
-        >>> _parse_isotope_component('13C-6')
-        {'13C': -6}
-
-        >>> _parse_isotope_component('13C')
-        {'13C': 1}
-
-        >>> _parse_isotope_component('13Ce333')
-        {'13Ce': 333}
-
-        >>> _parse_isotope_component('13Ce1.3')
-        {'13Ce': 1.3}
-
-        >>> _parse_isotope_component('')
-        {}
-
-        >>> _parse_isotope_component('12323')
-        Traceback (most recent call last):
-        peptacular.errors.InvalidFormulaError: Cannot parse formula: 12323
-
-        # example of invalid isotope notation
-        >>> _parse_isotope_component('13C-')
-        Traceback (most recent call last):
-        peptacular.errors.InvalidFormulaError: Cannot parse formula: 13C-
-
-    """
-    counts = {}
-
-    if formula == '':
-        return counts
-
-    if formula[0] == 'D' or formula[0] == 'T':
-        return _parse_condensed_chem_formula(formula)
-
-    match = re.match(r'([0-9]*)([A-Za-z]+)(-?\d*\.?\d*)', formula)
-    if match:
-        mass_number_and_element = match.group(1) + match.group(2)  # Combine mass number (if any) and element symbol
-        count = convert_type(match.group(3)) if match.group(3) else 1  # Get the count, defaulting to 1 if not provided
-        if isinstance(count, str):
-            raise InvalidFormulaError(formula)
-        counts.setdefault(mass_number_and_element, 0)
-        counts[mass_number_and_element] += count
-    else:
-        raise InvalidFormulaError(formula)
-
-    return counts
-
-
-def _parse_condensed_chem_formula(formula: str) -> Dict[str, int]:
-    """
-    Parses a chemical formula and returns a dictionary with the element and their counts.
-
-    :param formula: The chemical formula.
-    :type formula: str
-
-    :raises InvalidFormulaError: If the formula is invalid.
-
-    :return: A dictionary with the element and their counts.
-    :rtype: dict
-
-    .. code-block:: python
-
-        # Calculate the mass of a peptide sequence.
-        >>> _parse_condensed_chem_formula('C6H12O6')
-        {'C': 6, 'H': 12, 'O': 6}
-
-        >>> _parse_condensed_chem_formula('C6H12O6C6')
-        {'C': 12, 'H': 12, 'O': 6}
-
-        >>> _parse_condensed_chem_formula('C6H12O-6')
-        {'C': 6, 'H': 12, 'O': -6}
-
-        >>> _parse_condensed_chem_formula('C6H12O6Ce333')
-        {'C': 6, 'H': 12, 'O': 6, 'Ce': 333}
-
-        >>> _parse_condensed_chem_formula('C6H12.1O6C6Ce333.1')
-        {'C': 12, 'H': 12.1, 'O': 6, 'Ce': 333.1}
-
-        >>> _parse_condensed_chem_formula('')
-        {}
-
-        # example of invalid formula
-        >>> _parse_condensed_chem_formula('123')
-        Traceback (most recent call last):
-        peptacular.errors.InvalidFormulaError: Cannot parse formula: 123
-
-        # example of invalid formula
-        >>> _parse_condensed_chem_formula('C6H12O-')
-        Traceback (most recent call last):
-        peptacular.errors.InvalidFormulaError: Cannot parse formula: C6H12O-
-
-        # example of invalid formula
-        >>> _parse_condensed_chem_formula('C6H12O6ssss')
-        Traceback (most recent call last):
-        peptacular.errors.InvalidFormulaError: Cannot parse formula: C6H12O6ssss
-
-    """
-
-    element_counts = {}
-
-    if formula == '':
-        return element_counts
-
-    # Find element and their counts in non-isotope components
-    matches = list(re.finditer(r'([A-Z][a-z]*)(-?\d*\.?\d*)', formula))
-
-    if len(matches) == 0:
-        raise InvalidFormulaError(formula)
-
-    matched_chars = 0
-    for match in matches:
-        element = match.group(1)
-        count_str = match.group(2)
-        matched_chars += len(element) + len(count_str)
-        count = convert_type(count_str) if count_str else 1
-        if isinstance(count, str):
-            raise InvalidFormulaError(formula)
-        element_counts.setdefault(element, 0)
-        element_counts[element] += count
-
-    if matched_chars != len(formula):
-        raise InvalidFormulaError(formula)
-
-    return element_counts
-
-
-def _parse_split_chem_formula(formula: str) -> Dict[str, int]:
-    """
-    Parses a chemical formula and returns a dictionary with the element and their counts.
-
-    :param formula: The chemical formula.
-    :type formula: str
-
-    :return: A dictionary with the element and their counts.
-    :rtype: dict
-
-    .. code-block:: python
-
-        >>> _parse_split_chem_formula('C 6 H 12 O 6')
-        {'C': 6, 'H': 12, 'O': 6}
-
-        >>> _parse_split_chem_formula('C 1 1H -1 2H 3 D')
-        {'C': 1, '1H': -1, '2H': 3, 'D': 1}
-
-        >>> _parse_split_chem_formula('C 6 Ce H 12 O 6 T')
-        {'C': 6, 'Ce': 1, 'H': 12, 'O': 6, 'T': 1}
-
-        >>> _parse_split_chem_formula('C 6 Ce H 12.2 O 6 T')
-        {'C': 6, 'Ce': 1, 'H': 12.2, 'O': 6, 'T': 1}
-
-    """
-
-    element_counts = {}
-    components = formula.split(' ')
-
-    def is_number(s):
-        try:
-            float(s)
-            return True
-        except ValueError:
-            return False
-
-    i = 0
-    while i < len(components):
-        element = components[i]
-        # Check if the next component is a number (positive or negative)
-        if i + 1 < len(components) and is_number(components[i + 1]):
-            count = convert_type(components[i + 1])
-            i += 2  # Skip the next item since it's the count
-        else:
-            count = 1  # Default count is 1
-            i += 1
-
-        # Add or update the element count in the dictionary
-        if element in element_counts:
-            element_counts[element] += count
-        else:
-            element_counts[element] = count
-
-    return element_counts
 
 
 def _parse_glycan_comp_from_proforma_str(glycan_str: str) -> Dict[str, int]:
@@ -556,48 +156,20 @@ def _parse_glycan_comp_from_proforma_str(glycan_str: str) -> Dict[str, int]:
     if glycan_str.lower().startswith('glycan:'):
         glycan_str = ''.join(glycan_str.split(':')[1:])
 
-    glycan_id = constants.MONOSACCHARIDE_NAME_TO_ID.get(glycan_str, glycan_str)  # get id if possible
-    glycan_comp = constants.MONOSACCHARIDE_ID_TO_COMPOSITIONS.get(glycan_id, None)  # raises UnknownGlycanError
-
-    if glycan_comp is not None:
-        return parse_chem_formula(glycan_comp)
+    if MONOSACCHARIDES_DB.contains_id(glycan_str):
+        entry = MONOSACCHARIDES_DB.get_entry_by_id(glycan_str)
+    elif MONOSACCHARIDES_DB.contains_name(glycan_str):
+        entry = MONOSACCHARIDES_DB.get_entry_by_name(glycan_str)
+    elif MONOSACCHARIDES_DB.contains_synonym(glycan_str):
+        entry = MONOSACCHARIDES_DB.get_entry_by_synonym(glycan_str)
     else:
         return parse_chem_formula(convert_glycan_formula_to_chem_formula(glycan_str))
 
+    return parse_chem_formula(entry.composition)
 
-def _parse_chem_comp_from_proforma_str(chem_str: str) -> Dict[str, int]:
-    """
-    Parse a chemical formula string and return its composition.
 
-    :param chem_str: The chemical formula string to parse.
-    :type chem_str: str
 
-    :raises InvalidFormulaError: If the formula is invalid.
 
-    :return: The composition of the chemical formula.
-    :rtype: dict
-
-    .. code-block:: python
-
-        # Calculate the mass of a peptide sequence.
-        >>> _parse_chem_comp_from_proforma_str('C6H12O6')
-        {'C': 6, 'H': 12, 'O': 6}
-
-        >>> _parse_chem_comp_from_proforma_str('C6H12O-6')
-        {'C': 6, 'H': 12, 'O': -6}
-
-        >>> _parse_chem_comp_from_proforma_str('[13C6]H12O-6')
-        {'13C': 6, 'H': 12, 'O': -6}
-
-        >>> _parse_chem_comp_from_proforma_str('13C 6 H 12 O 6')
-        {'13C': 6, 'H': 12, 'O': 6}
-
-    """
-
-    if chem_str.lower().startswith('formula:'):
-        chem_str = ''.join(chem_str.split(':')[1:])
-
-    return parse_chem_formula(chem_str)
 
 
 def _parse_modification_composition(mod: str) -> Union[None, Dict[str, int]]:
@@ -745,7 +317,8 @@ def _parse_delta_mass(delta_mass: str) -> float:
     return mass
 
 
-def _get_sequence_comp(sequence: str | ProFormaAnnotation, ion_type: str) -> Dict[str, int]:
+def _get_sequence_comp(sequence: str | ProFormaAnnotation, ion_type: str, charge: int = None,
+                       charge_adducts: str = None) -> Dict[str, int]:
     """
     Calculate the composition of a sequence.
 
@@ -753,6 +326,10 @@ def _get_sequence_comp(sequence: str | ProFormaAnnotation, ion_type: str) -> Dic
     :type sequence: str
     :param ion_type: The ion type.
     :type ion_type: str
+    :param charge: The charge of the ion.
+    :type charge: int
+    :param charge_adducts: The charge adducts.
+    :type charge_adducts: str
 
     :return: A dictionary with the element and their counts.
     :rtype: dict
@@ -781,6 +358,12 @@ def _get_sequence_comp(sequence: str | ProFormaAnnotation, ion_type: str) -> Dic
         >>> _get_sequence_comp('<[Unimod:2]@T>PEPTIDE', 'y')
         {'C': 34, 'H': 54, 'N': 8, 'O': 14}
 
+        >>> _get_sequence_comp('<[Unimod:2]@N-Term>PEPTIDE', 'y')
+        {'C': 34, 'H': 54, 'N': 8, 'O': 14}
+
+        >>> _get_sequence_comp('PEPTIDE/2', 'y')
+        {'C': 34, 'H': 55, 'N': 7, 'O': 15, 'e': -2}
+
         >>> _get_sequence_comp('<13C>PEPTIDE[Unimod:213413]', 'b')
         Traceback (most recent call last):
         peptacular.errors.UnknownModificationError: Unknown modification: Unimod:213413
@@ -796,9 +379,21 @@ def _get_sequence_comp(sequence: str | ProFormaAnnotation, ion_type: str) -> Dic
     """
 
     if isinstance(sequence, str):
-        annotation = parse_single_sequence(sequence)
+        annotation = sequence_to_annotation(sequence)
     else:
         annotation = sequence
+
+    if annotation.charge is not None and charge is None:
+        charge = annotation.charge
+
+    if charge is None:
+        charge = 0
+
+    if annotation.charge_adducts is not None and charge_adducts is None:
+        charge_adducts = annotation.charge_adducts[0]
+
+    if charge_adducts is None:
+        charge_adducts = '+H+'
 
     if ion_type == 'p':
         ion_type = 'y'
@@ -868,13 +463,31 @@ def _get_sequence_comp(sequence: str | ProFormaAnnotation, ion_type: str) -> Dic
     if static_mods:
         static_map = parse_static_mods(static_mods)
 
+        n_term_mod = static_map.get('N-Term')
+        if n_term_mod is not None:
+            for m in n_term_mod:
+                mod_compositions.append(mod_comp(m.val))
+
+        c_term_mod = static_map.get('C-Term')
+        if c_term_mod is not None:
+            for m in c_term_mod:
+                mod_compositions.append(mod_comp(m.val))
+
         for aa, mod in static_map.items():
+            if aa in ['N-Term', 'C-Term']:
+                continue
             aa_count = annotation.sequence.count(aa)
             for m in mod:
                 mod_composition = mod_comp(m.val)
 
                 mod_composition = {k: v * aa_count for k, v in mod_composition.items()}
                 mod_compositions.append(mod_composition)
+
+    # Add the charge adducts
+    if charge != 0:
+        adduct_comp = _parse_charge_adducts_comp(charge_adducts)
+        adduct_comp = {k: v * charge for k, v in adduct_comp.items()}
+        mod_compositions.append(adduct_comp)
 
     # Merge the compositions
     composition = {}
@@ -978,5 +591,78 @@ def _apply_isotope_mods_to_composition(composition: Dict[str, int], isotopic_mod
                 composition[isotope_label] = composition[element]
 
             del composition[element]
+
+    return composition
+
+
+def _parse_adduct_comp(adduct: str) -> Dict[str, int]:
+    """
+    Parse an adduct string and return its mass.
+
+    :param adduct: The adduct string to parse.
+    :type adduct: str
+
+    :raises InvalidDeltaMassError: If the adduct contains an invalid delta mass.
+
+    :return: The mass of the adduct.
+    :rtype: float
+
+    .. code-block:: python
+
+        # Parse an adduct string.
+        >>> _parse_adduct_comp('+Na+')
+        {'Na': 1, 'e': -1}
+
+        >>> _parse_adduct_comp('+2Na+')
+        {'Na': 2, 'e': -1}
+
+        >>> _parse_adduct_comp('H+')
+        {'H': 1, 'e': -1}
+
+    """
+
+    comp = {}
+    element_count, element_symbol, element_charge = _parse_ion_elements(adduct)
+    comp[element_symbol] = element_count
+    comp['e'] = -1 * element_charge
+
+    return comp
+
+
+def _parse_charge_adducts_comp(adducts: Mod | str) -> Dict[str, int]:
+    """
+    Parse the charge adducts and return their mass.
+
+    :param adducts: The charge adducts to parse.
+    :type adducts: str
+
+    :return: The mass of the charge adducts.
+    :rtype: float
+
+    .. code-block:: python
+
+        # Parse the charge adducts and return their mass.
+        >>> _parse_charge_adducts_comp('+Na+,+H+')
+        {'Na': 1, 'e': -2, 'H': 1}
+
+        >>> _parse_charge_adducts_comp('+H+')
+        {'H': 1, 'e': -1}
+
+    """
+
+    if isinstance(adducts, Mod):
+        adducts = adducts.val
+
+    adducts = adducts.split(',')
+
+    comps = []
+    for adduct in adducts:
+        comps.append(_parse_adduct_comp(adduct))
+
+    # Merge the compositions
+    composition = {}
+    for comp in comps:
+        for k, v in comp.items():
+            composition[k] = composition.get(k, 0) + v
 
     return composition

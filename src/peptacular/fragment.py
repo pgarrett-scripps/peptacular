@@ -7,10 +7,10 @@ from dataclasses import dataclass
 from functools import cached_property
 from typing import List, Generator, Union
 
-from peptacular import ProFormaAnnotation
+from peptacular.sequence.proforma import ProFormaAnnotation
 from peptacular.constants import FORWARD_ION_TYPES, BACKWARD_ION_TYPES, INTERNAL_ION_TYPES, TERMINAL_ION_TYPES
 from peptacular.mass import mz, mass
-from peptacular.sequence.sequence import sequence_length, pop_mods, span_to_sequence, parse_single_sequence
+from peptacular.sequence.sequence import sequence_length, pop_mods, span_to_sequence, sequence_to_annotation
 from peptacular.spans import build_non_enzymatic_spans, build_right_semi_spans, build_left_semi_spans, Span
 from peptacular.types import IonTypeType, IsotopeType, LossType, ChargeType
 
@@ -204,7 +204,7 @@ def get_internal_fragments(sequence: str | ProFormaAnnotation,
         raise ValueError("No isotopes, losses, ion types, or charges provided.")
 
     if isinstance(sequence, str):
-        annotation = parse_single_sequence(sequence)
+        annotation = sequence_to_annotation(sequence)
     else:
         annotation = sequence
 
@@ -255,7 +255,7 @@ def get_immonium_fragments(sequence: str | ProFormaAnnotation, charges: ChargeTy
         losses = [losses]
 
     if isinstance(sequence, str):
-        annotation = parse_single_sequence(sequence)
+        annotation = sequence_to_annotation(sequence)
     else:
         annotation = sequence
 
@@ -314,7 +314,7 @@ def get_terminal_fragments(sequence: str | ProFormaAnnotation, ion_types: IonTyp
         losses = [losses]
 
     if isinstance(sequence, str):
-        annotation = parse_single_sequence(sequence)
+        annotation = sequence_to_annotation(sequence)
     else:
         annotation = sequence
 
@@ -377,7 +377,7 @@ def fragment(sequence: str | ProFormaAnnotation, ion_types: IonTypeType, charges
         losses = [losses]
 
     if isinstance(sequence, str):
-        annotation = parse_single_sequence(sequence)
+        annotation = sequence_to_annotation(sequence)
     else:
         annotation = sequence
 

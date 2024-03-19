@@ -1,5 +1,5 @@
 import json
-from peptacular.mass import chem_mass
+from peptacular.chem_util import chem_mass
 from typing import List
 from obo import read_obo
 
@@ -51,6 +51,13 @@ def generate_monosaccharide_db():
     name_to_id['NeuGc'] = name_to_id['Neu5Gc']
     name_to_id['Pent'] = name_to_id['Pen']
     name_to_id['dHex'] = name_to_id['d-Hex']
+    name_to_id['Sulpho'] = name_to_id['sulfate']
+    name_to_id['Phospho'] = name_to_id['phosphate']
+
+    name_to_id['HexA'] = name_to_id['a-Hex']
+    name_to_id['aHex'] = name_to_id['a-Hex']
+
+
 
     print(name_to_id)
     print(id_to_composition)

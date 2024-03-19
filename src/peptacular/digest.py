@@ -11,10 +11,10 @@ from __future__ import annotations
 
 from typing import Union, List
 
-from peptacular import ProFormaAnnotation
+from peptacular.sequence.proforma import ProFormaAnnotation
 from peptacular.spans import build_left_semi_spans, build_right_semi_spans, build_non_enzymatic_spans, build_spans
 from peptacular.constants import PROTEASES
-from peptacular.sequence.sequence import span_to_sequence, parse_single_sequence
+from peptacular.sequence.sequence import span_to_sequence, sequence_to_annotation
 from peptacular.util import get_regex_match_indices
 
 
@@ -58,7 +58,7 @@ def get_left_semi_enzymatic_sequences(sequence: str | ProFormaAnnotation,
     """
 
     if isinstance(sequence, str):
-        annotation = parse_single_sequence(sequence)
+        annotation = sequence_to_annotation(sequence)
         input_type = str
     elif isinstance(sequence, ProFormaAnnotation):
         annotation = sequence
@@ -115,7 +115,7 @@ def get_right_semi_enzymatic_sequences(sequence: str | ProFormaAnnotation,
     """
 
     if isinstance(sequence, str):
-        annotation = parse_single_sequence(sequence)
+        annotation = sequence_to_annotation(sequence)
         input_type = str
     elif isinstance(sequence, ProFormaAnnotation):
         annotation = sequence
@@ -203,7 +203,7 @@ def get_non_enzymatic_sequences(sequence: str | ProFormaAnnotation,
     """
 
     if isinstance(sequence, str):
-        annotation = parse_single_sequence(sequence)
+        annotation = sequence_to_annotation(sequence)
         input_type = str
     elif isinstance(sequence, ProFormaAnnotation):
         annotation = sequence
@@ -275,7 +275,7 @@ def get_enzymatic_sequences(sequence: str | ProFormaAnnotation,
     """
 
     if isinstance(sequence, str):
-        annotation = parse_single_sequence(sequence)
+        annotation = sequence_to_annotation(sequence)
         input_type = str
     elif isinstance(sequence, ProFormaAnnotation):
         annotation = sequence
@@ -342,7 +342,7 @@ def get_cleavage_sites(sequence: str | ProFormaAnnotation,
     """
 
     if isinstance(sequence, str):
-        annotation = parse_single_sequence(sequence)
+        annotation = sequence_to_annotation(sequence)
     else:
         annotation = sequence
 
@@ -413,7 +413,7 @@ def digest(sequence: str | ProFormaAnnotation,
     """
 
     if isinstance(sequence, str):
-        annotation = parse_single_sequence(sequence)
+        annotation = sequence_to_annotation(sequence)
         input_type = str
     elif isinstance(sequence, ProFormaAnnotation):
         annotation = sequence

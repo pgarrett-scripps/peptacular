@@ -3,7 +3,9 @@ import random
 
 from peptacular.digest import digest
 from peptacular.fragment import *
-from peptacular.sequence import *
+from peptacular.sequence.sequence import *
+from peptacular.sequence.mod_builder import *
+
 from peptacular.mass import *
 
 

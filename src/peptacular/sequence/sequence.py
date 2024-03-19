@@ -1,7 +1,7 @@
 """
-Sequence.py - Amino Acid Sequence Manipulation with Modifications
+Sequence.py - A module for manipulating peptide sequences with modifications.
 
-Modifications can be a str, int, or float
+Modifications can be a str, int, float, or Mod object.
 
 Residue modifications are mapped to the unmodified sequence by their index.
 
@@ -12,7 +12,7 @@ Special modifications are mapped to the sequence by the following:
     - Static modifications are mapped to the index 'static'
     - Labile modifications are mapped to the index 'labile'
     - Unknown modifications are mapped to the index 'unknown'
-    - Internals are mapped to the index 'interval'
+    - Intervals are mapped to the index 'interval'
 
 
 Global Mods and labile mods are popped from the sequence and returned as a tuple with the stripped sequence. As
@@ -28,49 +28,67 @@ from __future__ import annotations
 import typing
 
 import regex as re
-from typing import Dict, List, Union, Tuple, Counter, Callable
+from typing import Dict, List, Tuple, Counter, Callable
 
-from peptacular.sequence.proforma import parse, ProFormaAnnotation, serialize
-from peptacular.proforma_dataclasses import Mod
+from peptacular.sequence.proforma import parse, ProFormaAnnotation, serialize, MultiProFormaAnnotation
+from peptacular.proforma_dataclasses import Mod, Interval
 from peptacular.spans import Span
-from peptacular.types import ModDict, ModValue
-from peptacular.input_convert import fix_list_of_mods
+from peptacular.types import ModDict, ModValue, IntervalValue
+from peptacular.input_convert import fix_list_of_mods, fix_interval_input, fix_intervals_input
 
 
-def parse_single_sequence(sequence: str) -> ProFormaAnnotation:
-    annotations = parse(sequence)
-    if len(annotations) != 1:
+def sequence_to_annotation(sequence: str) -> ProFormaAnnotation:
+    """
+    Parses a peptide sequence with modifications and returns a ProFormaAnnotation object.
+
+    :param sequence: The amino acid sequence.
+    :type sequence: str
+
+    :raises ValueError: If the input sequence contains multiple sequences.
+    :raises ProFormaFormatError: if the proforma sequence is not valid
+
+    :return: A ProFormaAnnotation object representing the input sequence.
+    :rtype: ProFormaAnnotation
+    """
+    annotation = parse(sequence)
+
+    if isinstance(annotation, MultiProFormaAnnotation):
         raise ValueError(f"Invalid sequence: {sequence}")
 
-    return annotations[0]
+    return annotation
 
 
 def sequence_length(sequence: str | ProFormaAnnotation) -> int:
     """
-    Compute the length of the peptide sequence, excluding any modification notation.
+    Compute the length of the peptide sequence based on the unmodified sequence.
 
-    :param sequence: The amino acid sequence
-    :type sequence: str
-    :return: Length of the unmodified sequence.
+    :param sequence: The sequence or ProFormaAnnotation object.
+    :type sequence: str | ProFormaAnnotation
+
+    :raises ValueError: If the input sequence contains multiple sequences.
+    :raises ProFormaFormatError: if the proforma sequence is not valid
+
+    :return: The sequence length.
     :rtype: int
 
     .. code-block:: python
 
-        >>> sequence_length("[Acetyl]-PEP[1.2345]TID[3.14]E-[Amide]")
-        7
+        # The length of the unmodified sequence is the same as the length of the string
         >>> sequence_length("PEPTIDE")
+        7
+
+        # Modifications are not counted in the sequence length
+        >>> sequence_length("[Acetyl]-PEP[1.2345]TID[3.14]E-[Amide]")
         7
         >>> sequence_length("<C13>PEPTIDE[1.2345]")
         7
-
-        # Skips ambiguous sequence notation: (?)
         >>> sequence_length("(?PE)PTIDE[1.2345]")
         7
 
     """
 
     if isinstance(sequence, str):
-        annotation = parse_single_sequence(sequence)
+        annotation = sequence_to_annotation(sequence)
     else:
         annotation = sequence
 
@@ -81,29 +99,36 @@ def is_ambiguous(sequence: str | ProFormaAnnotation) -> bool:
     """
     Check if the sequence contains ambiguous amino acids.
 
-    :param sequence: The amino acid sequence
-    :type sequence: str
+    :param sequence: The sequence or ProFormaAnnotation object.
+    :type sequence: str | ProFormaAnnotation
+
+    :raises ValueError: If the input sequence contains multiple sequences.
+    :raises ProFormaFormatError: if the proforma sequence is not valid
 
     :return: True if the sequence contains ambiguous amino acids, False otherwise.
     :rtype: bool
 
     .. code-block:: python
 
-        >>> is_ambiguous("PEPTIDE")
-        False
-        >>> is_ambiguous("PEPTIDE")
-        False
-        >>> is_ambiguous("PEPTIDE[1.2345]")
-        False
-        >>> is_ambiguous("<13C>PEPTIDE")
-        False
-        >>> is_ambiguous("(?PE)PEPTIDE")
+        # Any intervals will be considered ambiguous
+        >>> is_ambiguous("(?PE)PTIDE")
         True
+
+        # Any unknown modifications will also be considered ambiguous
+        >>> is_ambiguous("[Oxidation]?PEPTIDE")
+        True
+
+        # Unmodified sequences and explicit modifications are not considered ambiguous
+        >>> is_ambiguous("PEPTIDE")
+        False
+
+        >>> is_ambiguous("PEPTIDE[Oxidation]")
+        False
 
     """
 
     if isinstance(sequence, str):
-        annotation = parse_single_sequence(sequence)
+        annotation = sequence_to_annotation(sequence)
     else:
         annotation = sequence
 
@@ -112,28 +137,80 @@ def is_ambiguous(sequence: str | ProFormaAnnotation) -> bool:
 
 def get_mods(sequence: str | ProFormaAnnotation) -> ModDict:
     """
-    Parses a peptide sequence with modifications and returns a dictionary where keys
-    represent the position of the modified amino acid and values are the respective modifications.
+    Parses a sequence with modifications and returns a dictionary where keys represent the position/type of the
+    modifications.
 
-    :param sequence: The peptide sequence, potentially including modifications.
-    :type sequence: str
-    :return: A dictionary with the modification values indexed by the position
-             of the modified amino acid.
-    :rtype: Dict[int, Union[str, int, float]]
+    Internal modifications are mapped to the unmodified sequence by their index in the unmodified sequence.
+
+    Special modifications are mapped to the sequence by the following:
+    - N-terminal modifications are mapped to the index 'nterm'
+    - C-terminal modifications are mapped to the index 'cterm'
+    - Isotopic modifications are mapped to the index 'isotope'
+    - Static modifications are mapped to the index 'static'
+    - Labile modifications are mapped to the index 'labile'
+    - Unknown modifications are mapped to the index 'unknown'
+    - Intervals are mapped to the index 'interval'
+    - charge state is mapped to the index 'charge'
+    - charge adducts are mapped to the index 'charge_adducts'
+
+    :param sequence: The sequence or ProFormaAnnotation object.
+    :type sequence: str | ProFormaAnnotation
+
+    :raises ValueError: If the input sequence contains multiple sequences.
+    :raises ProFormaFormatError: if the proforma sequence is not valid
+
+    :return: A dictionary with the modifications
+    :rtype: Dict[int | str, List[str, int, float, Mod]
 
     .. code-block:: python
 
-        # All modifications will be returned as either strings, ints or floats.
-        >>> get_mods('PEP[Phospho]T[1]IDE[3.14]')
-        {2: [Mod('Phospho', 1)], 3: [Mod(1, 1)], 6: [Mod(3.14, 1)]}
+        # All modifications will be returned as Mod objects which contain the modification value and multiplier
+        >>> get_mods('PEP[Phospho]T[1]IDE[-3.14]')
+        {2: [Mod('Phospho', 1)], 3: [Mod(1, 1)], 6: [Mod(-3.14, 1)]}
 
         >>> get_mods('PEP[Phospho][1.0]TIDE')
         {2: [Mod('Phospho', 1), Mod(1.0, 1)]}
 
+        # N-terminal modifications are mapped to the index 'nterm'
+        >>> get_mods('[Acetyl]-PEPTIDE')
+        {'nterm': [Mod('Acetyl', 1)]}
+
+        # C-terminal modifications are mapped to the index 'cterm'
+        >>> get_mods('PEPTIDE-[Amide]')
+        {'cterm': [Mod('Amide', 1)]}
+
+        # Isotopic modifications are mapped to the index 'isotope'
+        >>> get_mods('<13C>PEPTIDE')
+        {'isotope': [Mod('13C', 1)]}
+
+        # Static modifications are mapped to the index 'static'
+        >>> get_mods('<[+1.234]@P>PEPTIDE')
+        {'static': [Mod('[+1.234]@P', 1)]}
+
+        # Labile modifications are mapped to the index 'labile'
+        >>> get_mods('{Glycan:Hex}PEPTIDE')
+        {'labile': [Mod('Glycan:Hex', 1)]}
+
+        # Unknown modifications are mapped to the index 'unknown'
+        >>> get_mods('[Phospho]^3?PEPTIDE')
+        {'unknown': [Mod('Phospho', 3)]}
+
+        # Intervals are mapped to the index 'interval'
+        >>> get_mods('PEP(TI)[Phospho]DE')
+        {'intervals': [Interval(3, 5, False, [Mod('Phospho', 1)])]}
+
+        # Charge state is mapped to the index 'charge'
+        >>> get_mods('PEPTIDE/+2')
+        {'charge': 2}
+
+        # Charge adducts are mapped to the index 'charge_adducts'
+        >>> get_mods('PEPTIDE/+2[+2Na+,-H+]')
+        {'charge': 2, 'charge_adducts': [Mod('+2Na+,-H+', 1)]}
+
     """
 
     if isinstance(sequence, str):
-        annotation = parse_single_sequence(sequence)
+        annotation = sequence_to_annotation(sequence)
     else:
         annotation = sequence
 
@@ -141,18 +218,22 @@ def get_mods(sequence: str | ProFormaAnnotation) -> ModDict:
 
 
 def add_mods(sequence: str | ProFormaAnnotation,
-             mods: Dict[str, List[ModValue] | ModValue],
+             mods: Dict[str | int, List[ModValue] | ModValue | IntervalValue | List[IntervalValue] | None],
              append: bool = True) -> str:
     """
-    Adds modifications to the given peptide sequence.
+    Adds modifications to the given sequence. The modifications can be of type Mod, str, int, or float, and can be
+    a single value or a list of values. The modifications will be added to the sequence in the order they are provided.
 
-    :param sequence: Unmodified peptide sequence.
-    :type sequence: str
-    :param mods: Dictionary with indices of the modified amino acids and corresponding modifications.
-    :type mods: Dict[int, Any]
+    :param sequence: The sequence or ProFormaAnnotation object.
+    :type sequence: str | ProFormaAnnotation
+    :param mods: Dictionary representing the modifications to be added to the sequence.
+    :type mods: Dict[str | int, List[ModValue] | ModValue]
     :param append: If True, the modifications will be appended to the existing modifications.
-                      If False, the existing modifications will be replaced.
+                      If False, the existing modifications will be replaced. Defaults to True.
     :type append: bool
+
+    :raises ValueError: If the input sequence contains multiple sequences.
+    :raises ProFormaFormatError: if the proforma sequence is not valid
 
     :return: The peptide sequence with the specified modifications.
     :rtype: str
@@ -164,62 +245,95 @@ def add_mods(sequence: str | ProFormaAnnotation,
         'PEP[phospho]TIDE'
 
         # Can also add N and C terminal modifications
-        >>> add_mods('PEPTIDE', {'nterm': [Mod('Acetyl', 1)], 6: [Mod(1.234, 1)], 'cterm': [Mod('Amide', 1)]})
+        >>> add_mods('PEPTIDE', {'nterm': 'Acetyl', 6: 1.234, 'cterm': 'Amide'})
         '[Acetyl]-PEPTIDE[1.234]-[Amide]'
 
-        # Empty modification dicts will simply return the input sequence
-        >>> add_mods('PEPTIDE', {})
-        'PEPTIDE'
+        # Can also add isotopic modifications
+        >>> add_mods('PEPTIDE', {'isotope': ['13C', '15N']})
+        '<13C><15N>PEPTIDE'
 
-        >>> add_mods('PEP[phospho]TIDE', {2: [Mod('acetyl', 1)]}, append=False)
-        'PEP[acetyl]TIDE'
+        # Can also add static modifications
+        >>> add_mods('PEPTIDE', {'static': '[+1.234]@P'})
+        '<[+1.234]@P>PEPTIDE'
 
-        >>> add_mods('PEP[phospho]TIDE', {2: [Mod('acetyl', 1)]})
-        'PEP[phospho][acetyl]TIDE'
+        # Can also add labile modifications
+        >>> add_mods('PEPTIDE', {'labile': 'Glycan:Hex'})
+        '{Glycan:Hex}PEPTIDE'
 
-        >>> add_mods('PEP[phospho]TIDE', {'unknown': [Mod('acetyl', 1)]})
-        '[acetyl]?PEP[phospho]TIDE'
+        # Can also add unknown modifications
+        >>> add_mods('PEPTIDE', {'unknown': Mod('Phospho', 3)})
+        '[Phospho]^3?PEPTIDE'
 
-        >>> add_mods('PEPTIDE', {'static': [Mod('[100][200]@C', 1)]}, append=False)
-        '<[100][200]@C>PEPTIDE'
+        # Can also add intervals
+        >>> add_mods('PEPTIDE', {'intervals': (3, 5, False, 'Phospho')})
+        'PEP(TI)[Phospho]DE'
+
+        # Can also add charge state
+        >>> add_mods('PEPTIDE', {'charge': 2})
+        'PEPTIDE/2'
+
+        # Can also add charge adducts
+        >>> add_mods('PEPTIDE', {'charge': 2, 'charge_adducts': '+2Na+,-H+'})
+        'PEPTIDE/2[+2Na+,-H+]'
 
     """
 
     if isinstance(sequence, str):
-        annotation = parse_single_sequence(sequence)
+        annotation = sequence_to_annotation(sequence)
     else:
         annotation = sequence
 
-    mods = {k: fix_list_of_mods(v) for k, v in mods.items()}
+    for k in mods:
+        if k == 'charge':
+            continue
+        elif k == 'intervals':
+            mods[k] = fix_intervals_input(mods[k])
+        else:
+            mods[k] = fix_list_of_mods(mods[k])
+
     annotation.add_mod_dict(mods, append=append)
-    return serialize([annotation])
+    return serialize(annotation)
 
 
 def condense_static_mods(sequence: str | ProFormaAnnotation) -> str:
     """
-    Condenses static modifications into a single modification.
+    Condenses static modifications into internal modifications.
 
-    :param sequence: The peptide sequence.
-    :type sequence: str
+    :param sequence: The sequence or ProFormaAnnotation object.
+    :type sequence: str | ProFormaAnnotation
+
+    :raises ValueError: If the input sequence contains multiple sequences.
+    :raises ProFormaFormatError: if the proforma sequence is not valid
+
     :return: The peptide sequence with condensed static modifications.
     :rtype: str
 
     .. code-block:: python
 
-        # Condenses static modifications into a single modification
+        # Condenses static modifications to specified internal modifications
         >>> condense_static_mods('<13C><[100]@P>PEPTIDE')
         '<13C>P[100]EP[100]TIDE'
 
+        # If residue is already modified, the static modification will be appended
         >>> condense_static_mods('<13C><[100]@P>P[10]EPTIDE')
         '<13C>P[10][100]EP[100]TIDE'
 
+        # Example for unmodified sequences
         >>> condense_static_mods('PEPTIDE')
         'PEPTIDE'
+
+        # Example for N-Term static modifications
+        >>> condense_static_mods('<[Oxidation]@N-Term>PEPTIDE')
+        '[Oxidation]-PEPTIDE'
+
+        # Example for C-Term static modifications
+        >>> condense_static_mods('<[Oxidation]@C-Term>PEPTIDE')
+        'PEPTIDE-[Oxidation]'
 
     """
 
     if isinstance(sequence, str):
-        annotation = parse_single_sequence(sequence)
+        annotation = sequence_to_annotation(sequence)
     else:
         annotation = sequence
 
@@ -231,11 +345,14 @@ def pop_mods(sequence: str | ProFormaAnnotation) -> Tuple[str, ModDict]:
     Removes all modifications from the given sequence, returning the unmodified sequence and a dictionary of the
     removed modifications.
 
-    :param sequence: The sequence to be stripped of modifications.
-    :type sequence: str
+    :param sequence: The sequence or ProFormaAnnotation object.
+    :type sequence: str | ProFormaAnnotation
+
+    :raises ValueError: If the input sequence contains multiple sequences.
+    :raises ProFormaFormatError: if the proforma sequence is not valid
 
     :return: A tuple containing the unmodified sequence and a dictionary of the removed modifications.
-    :rtype: Tuple[str, Dict[int, Any]]
+    :rtype: Tuple[str, ModDict]
 
     .. code-block:: python
 
@@ -246,7 +363,7 @@ def pop_mods(sequence: str | ProFormaAnnotation) -> Tuple[str, ModDict]:
     """
 
     if isinstance(sequence, str):
-        annotation = parse_single_sequence(sequence)
+        annotation = sequence_to_annotation(sequence)
     else:
         annotation = sequence
 
@@ -257,8 +374,11 @@ def strip_mods(sequence: str | ProFormaAnnotation) -> str:
     """
     Strips all modifications from the given sequence, returning the unmodified sequence.
 
-    :param sequence: The sequence to be stripped of modifications.
-    :type sequence: str
+    :param sequence: The sequence or ProFormaAnnotation object.
+    :type sequence: str | ProFormaAnnotation
+
+    :raises ValueError: If the input sequence contains multiple sequences.
+    :raises ProFormaFormatError: if the proforma sequence is not valid
 
     :return: The stripped sequence
     :rtype: str
@@ -297,7 +417,7 @@ def strip_mods(sequence: str | ProFormaAnnotation) -> str:
     """
 
     if isinstance(sequence, str):
-        annotation = parse_single_sequence(sequence)
+        annotation = sequence_to_annotation(sequence)
     else:
         annotation = sequence
 
@@ -308,10 +428,13 @@ def reverse(sequence: str | ProFormaAnnotation, swap_terms: bool = False) -> str
     """
     Reverses the sequence, while preserving the position of any modifications.
 
-    :param sequence: The amino acid sequence to be reversed.
-    :type sequence: str
+    :param sequence: The sequence or ProFormaAnnotation object.
+    :type sequence: str | ProFormaAnnotation
     :param swap_terms: If True, the N- and C-terminal modifications will be swapped.
     :type swap_terms: bool
+
+    :raises ValueError: If the input sequence contains multiple sequences.
+    :raises ProFormaFormatError: if the proforma sequence is not valid
 
     :return: The reversed sequence with modifications preserved.
     :rtype: str
@@ -336,7 +459,7 @@ def reverse(sequence: str | ProFormaAnnotation, swap_terms: bool = False) -> str
     """
 
     if isinstance(sequence, str):
-        annotation = parse_single_sequence(sequence)
+        annotation = sequence_to_annotation(sequence)
 
     else:
         annotation = sequence
@@ -349,10 +472,13 @@ def shuffle(sequence: str | ProFormaAnnotation, seed: int = None) -> str:
     """
     Shuffles the sequence, while preserving the position of any modifications.
 
-    :param sequence: The sequence to be shuffled.
-    :type sequence: str
+    :param sequence: The sequence or ProFormaAnnotation object.
+    :type sequence: str | ProFormaAnnotation
     :param seed: Seed for the random number generator.
     :type seed: int
+
+    :raises ValueError: If the input sequence contains multiple sequences.
+    :raises ProFormaFormatError: if the proforma sequence is not valid
 
     :return: The shuffled sequence with modifications preserved.
     :rtype: str
@@ -373,7 +499,7 @@ def shuffle(sequence: str | ProFormaAnnotation, seed: int = None) -> str:
     """
 
     if isinstance(sequence, str):
-        annotation = parse_single_sequence(sequence)
+        annotation = sequence_to_annotation(sequence)
 
     else:
         annotation = sequence
@@ -386,10 +512,13 @@ def shift(sequence: str | ProFormaAnnotation, n: int) -> str:
     """
     Shifts the sequence to the left by a given number of positions, while preserving the position of any modifications.
 
-    :param sequence: The sequence to be shifted.
-    :type sequence: str
+    :param sequence: The sequence or ProFormaAnnotation object.
+    :type sequence: str | ProFormaAnnotation
     :param n: The number of positions to shift the sequence to the left.
     :type n: int
+
+    :raises ValueError: If the input sequence contains multiple sequences.
+    :raises ProFormaFormatError: if the proforma sequence is not valid
 
     :return: The shifted sequence with modifications preserved.
     :rtype: str
@@ -418,7 +547,7 @@ def shift(sequence: str | ProFormaAnnotation, n: int) -> str:
     """
 
     if isinstance(sequence, str):
-        annotation = parse_single_sequence(sequence)
+        annotation = sequence_to_annotation(sequence)
     else:
         annotation = sequence
 
@@ -430,10 +559,13 @@ def span_to_sequence(sequence: str | ProFormaAnnotation, span: Span) -> str:
     """
     Extracts a subsequence from the input sequence based on the provided span.
 
-    :param sequence: The original sequence.
-    :type sequence: str
+    :param sequence: The sequence or ProFormaAnnotation object.
+    :type sequence: str | ProFormaAnnotation
     :param span: A tuple representing the span of the subsequence to be extracted.
     :type span: Tuple[int, int, int]
+
+    :raises ValueError: If the input sequence contains multiple sequences.
+    :raises ProFormaFormatError: if the proforma sequence is not valid
 
     :return: The subsequence of the input sequence defined by the span.
     :rtype: str
@@ -466,7 +598,7 @@ def span_to_sequence(sequence: str | ProFormaAnnotation, span: Span) -> str:
     """
 
     if isinstance(sequence, str):
-        annotation = parse_single_sequence(sequence)
+        annotation = sequence_to_annotation(sequence)
     else:
         annotation = sequence
 
@@ -478,8 +610,11 @@ def split(sequence: str | ProFormaAnnotation) -> List[str]:
     """
     Splits sequence into a list of amino acids, preserving modifications.
 
-    :param sequence: The sequence to be split.
-    :type sequence: str
+    :param sequence: The sequence or ProFormaAnnotation object.
+    :type sequence: str | ProFormaAnnotation
+
+    :raises ValueError: If the input sequence contains multiple sequences.
+    :raises ProFormaFormatError: if the proforma sequence is not valid
 
     :return: A list of amino acids, preserving modifications.
     :rtype: List[str]
@@ -498,7 +633,7 @@ def split(sequence: str | ProFormaAnnotation) -> List[str]:
     """
 
     if isinstance(sequence, str):
-        annotation = parse_single_sequence(sequence)
+        annotation = sequence_to_annotation(sequence)
 
     else:
         annotation = sequence
@@ -506,12 +641,15 @@ def split(sequence: str | ProFormaAnnotation) -> List[str]:
     return [annot.serialize() for annot in annotation.split()]
 
 
-def count_residues(sequence: str) -> typing.Counter:
+def count_residues(sequence: str | ProFormaAnnotation) -> typing.Counter:
     """
     Counts the occurrences of each amino acid in the input sequence.
 
-    :param sequence: The sequence to be counted.
-    :type sequence: str
+    :param sequence: The sequence or ProFormaAnnotation object.
+    :type sequence: str | ProFormaAnnotation
+
+    :raises ValueError: If the input sequence contains multiple sequences.
+    :raises ProFormaFormatError: if the proforma sequence is not valid
 
     :return: A Counter object containing the occurrences of each amino acid in the input sequence.
     :rtype: Counter
@@ -527,26 +665,36 @@ def count_residues(sequence: str) -> typing.Counter:
         >>> count_residues('<13C>PE[3.14]PTIDE')
         Counter({'<13C>P': 2, '<13C>E[3.14]': 1, '<13C>T': 1, '<13C>I': 1, '<13C>D': 1, '<13C>E': 1})
 
+        >>> count_residues('<[3.14]@C>PEPTIDE')
+        Counter({'P': 2, 'E': 2, 'T': 1, 'I': 1, 'D': 1})
+
+        >>> count_residues('<[3.14]@E>PEPTIDE')
+        Counter({'P': 2, 'E[3.14]': 2, 'T': 1, 'I': 1, 'D': 1})
+
     """
     if isinstance(sequence, str):
-        annotation = parse_single_sequence(sequence)
+        annotation = sequence_to_annotation(sequence)
     else:
         annotation = sequence
 
-    return annotation.count_residues()
+    new_annotation = annotation.condense_static_mods(inplace=False)
+    return new_annotation.count_residues()
 
 
-def is_subsequence(subsequence: str, sequence: str, order: bool = True) -> bool:
+def is_subsequence(subsequence: str | ProFormaAnnotation, sequence: str | ProFormaAnnotation, order: bool = True) -> bool:
     """
     Checks if the input subsequence is a subsequence of the input sequence. If order is True, the subsequence must be in
     the same order as in the sequence. If order is False, the subsequence can be in any order.
 
-    :param subsequence: The subsequence to be checked.
-    :type subsequence: str
-    :param sequence: The sequence to be checked.
-    :type sequence: str
+    :param subsequence: The sequence or ProFormaAnnotation object, representing the subsequence.
+    :type subsequence: str | ProFormaAnnotation
+    :param sequence: The sequence or ProFormaAnnotation object, representing the sequence.
+    :type sequence: str | ProFormaAnnotation
     :param order: If True, the subsequence must be in the same order as in the sequence.
     :type order: bool
+
+    :raises ValueError: If the input sequence contains multiple sequences.
+    :raises ProFormaFormatError: if the proforma sequence is not valid
 
     :return: True if the subsequence is a subsequence of the sequence, False otherwise.
     :rtype: bool
@@ -576,27 +724,6 @@ def is_subsequence(subsequence: str, sequence: str, order: bool = True) -> bool:
     if order is True:
         return len(find_subsequence_indices(sequence, subsequence)) != 0
     else:
-
-        _, sequence_mods = pop_mods(sequence)
-        _sort_mods(sequence_mods)
-        _, subsequence_mods = pop_mods(subsequence)
-        _sort_mods(subsequence_mods)
-
-        if sequence_mods.get('n') != subsequence_mods.get('n'):
-            return False
-
-        if sequence_mods.get('c') != subsequence_mods.get('c'):
-            return False
-
-        if sequence_mods.get('i') != subsequence_mods.get('i'):
-            return False
-
-        if sequence_mods.get('s') != subsequence_mods.get('s'):
-            return False
-
-        if sequence_mods.get('u') != subsequence_mods.get('u'):
-            return False
-
         subsequence_counts = count_residues(subsequence)
         sequence_counts = count_residues(sequence)
         return all(subsequence_counts[aa] <= sequence_counts[aa] for aa in subsequence_counts)
@@ -616,9 +743,9 @@ def _sort_mods(mods: ModDict, sort_function: Callable[[str], str] = lambda x: st
 
     .. code-block:: python
 
-        >>> mods = {1: ['phospho', 1], 2: ['phospho']}
-        >>> _sort_mods(mods)
-        >>> mods
+        >>> mod_dict = {1: ['phospho', 1], 2: ['phospho']}
+        >>> _sort_mods(mod_dict)
+        >>> mod_dict
         {1: [1, 'phospho'], 2: ['phospho']}
 
     """
@@ -627,15 +754,15 @@ def _sort_mods(mods: ModDict, sort_function: Callable[[str], str] = lambda x: st
         mods[k].sort(key=sort_function)
 
 
-def sort(sequence: str) -> str:
+def sort(sequence: str | ProFormaAnnotation) -> str:
     """
     Sorts the input sequence using the provided sort function. Terminal sequence are kept in place.
 
-    :param sequence: The sequence to be sorted.
-    :type sequence: str
+    :param sequence: The sequence or ProFormaAnnotation object.
+    :type sequence: str | ProFormaAnnotation
 
-    :param sort_function: The sort function to be used. Defaults to identity function.
-    :type sort_function: Callable[[str], str]
+    :raises ValueError: If the input sequence contains multiple sequences.
+    :raises ProFormaFormatError: if the proforma sequence is not valid
 
     :return: The input sequence sorted using the provided sort function.
     :rtype: str
@@ -654,7 +781,7 @@ def sort(sequence: str) -> str:
     """
 
     if isinstance(sequence, str):
-        annotation = parse_single_sequence(sequence)
+        annotation = sequence_to_annotation(sequence)
 
     else:
         annotation = sequence
@@ -669,12 +796,15 @@ def find_subsequence_indices(sequence: str | ProFormaAnnotation,
     """
     Retrieves all starting indexes of a given subsequence within a sequence.
 
-    :param sequence: The parent sequence.
-    :type sequence: str
-    :param subsequence: The subsequences to search for.
-    :type subsequence: str
+    :param sequence: The sequence or ProFormaAnnotation objectto look for the 'subsequence' in.
+    :type sequence: str | ProFormaAnnotation
+    :param subsequence: The sequence or ProFormaAnnotation object to be found within 'sequence'.
+    :type subsequence: str | ProFormaAnnotation
     :param ignore_mods: Whether to ignore modifications.
     :type ignore_mods: bool
+
+    :raises ValueError: If the input sequence contains multiple sequences.
+    :raises ProFormaFormatError: if the proforma sequence is not valid
 
     :return: A list of starting indexes of the subsequence within the sequence.
     :rtype: List[int]
@@ -714,10 +844,10 @@ def find_subsequence_indices(sequence: str | ProFormaAnnotation,
     """
 
     if isinstance(sequence, str):
-        sequence = parse_single_sequence(sequence)
+        sequence = sequence_to_annotation(sequence)
 
     if isinstance(subsequence, str):
-        subsequence = parse_single_sequence(subsequence)
+        subsequence = sequence_to_annotation(subsequence)
 
     if ignore_mods:
         sequence = sequence.strip()
@@ -736,10 +866,10 @@ def coverage(sequence: str | ProFormaAnnotation,
     The coverage is represented as a binary list where each position in the protein sequence is marked as 1 if it
     is covered by at least one peptide and 0 otherwise.
 
-    :param sequence: The parent sequence.
-    :type sequence: str
-    :param subsequences: List of subsequences.
-    :type subsequences: List[str]
+    :param sequence: The sequence or ProFormaAnnotation object to be covered.
+    :type sequence: str | ProFormaAnnotation
+    :param subsequences: The sequence's or ProFormaAnnotation object's subsequences to be used for coverage.
+    :type subsequences: List[str | ProFormaAnnotation]
     :param accumulate: If True, the coverage array will be accumulated, i.e. if a position is covered by more than
                         one subsequence, it will be marked as the sum of the number of subsequences covering it.
                         If False, the coverage array will be binary, i.e. if a position is covered by more than one
@@ -747,6 +877,9 @@ def coverage(sequence: str | ProFormaAnnotation,
     :type accumulate: bool
     :param ignore_mods: Whether to ignore modifications when calcualting the coverage.
     :type ignore_mods: bool
+
+    :raises ValueError: If the input sequence contains multiple sequences.
+    :raises ProFormaFormatError: if the proforma sequence is not valid
 
     :return: The sequence coverage array.
     :rtype: List[int]
@@ -766,13 +899,14 @@ def coverage(sequence: str | ProFormaAnnotation,
     """
 
     if isinstance(sequence, str):
-        sequence = parse_single_sequence(sequence)
-
-    if isinstance(subsequences[0], str):
-        subsequences = [parse_single_sequence(sub) for sub in subsequences]
+        sequence = sequence_to_annotation(sequence)
 
     cov_arr = [0] * sequence_length(sequence)
     for subsequence in subsequences:
+
+        if isinstance(subsequence, str):
+            subsequence = sequence_to_annotation(subsequence)
+
         peptide_indexes = find_subsequence_indices(sequence, subsequence, ignore_mods=ignore_mods)
         for peptide_index in peptide_indexes:
             if accumulate:
@@ -790,12 +924,15 @@ def percent_coverage(sequence: str | ProFormaAnnotation,
     """
     Calculates the coverage given a list of subsequences.
 
-    :param sequence: The parent sequence.
-    :type sequence: str
-    :param subsequences: List of subsequences.
-    :type subsequences: List[str]
+    :param sequence: The sequence or ProFormaAnnotation object to be covered.
+    :type sequence: str | ProFormaAnnotation
+    :param subsequences: The sequence's or ProFormaAnnotation object's subsequences to be used for coverage.
+    :type subsequences: List[str | ProFormaAnnotation]
     :param ignore_mods: Whether to ignore modifications when calcualting the coverage.
     :type ignore_mods: bool
+
+    :raises ValueError: If the input sequence contains multiple sequences.
+    :raises ProFormaFormatError: if the proforma sequence is not valid
 
     :return: The percent coverage.
     :rtype: float

@@ -1,0 +1,233 @@
+format-version: 1.2
+date: 2024-18-03 21:35:23.314000
+remark: namespace: MONO
+remark: creator: Joshua Klein <jaklein <-at-> bu.edu>
+remark: modifier: Patrick Garrett <pgarrett <-at-> scripps.edu>
+ontology: MONO
+
+[Term]
+id: MONO:0A2A057A
+name: Sug
+def: "A generic monosaccharide with 2 backbone carbons"
+property_value: has_chemical_formula "C2H2O1" xsd:string
+property_value: has_monoisotopic_mass "42.0105646837" xsd:float
+property_value: has_average_mass "42.036758" xsd:float
+
+[Term]
+id: MONO:6BAAE1B1
+name: Tri
+def: "A generic monosaccharide with 3 backbone carbons"
+property_value: has_chemical_formula "C3H4O2" xsd:string
+property_value: has_monoisotopic_mass "72.0211293674" xsd:float
+property_value: has_average_mass "72.062781" xsd:float
+
+[Term]
+id: MONO:2281E39B
+name: Tet
+def: "A generic monosaccharide with 4 backbone carbons"
+property_value: has_chemical_formula "C4H6O3" xsd:string
+property_value: has_monoisotopic_mass "102.031694051" xsd:float
+property_value: has_average_mass "102.088803" xsd:float
+
+[Term]
+id: MONO:1559E00E
+name: Pen
+def: "A generic monosaccharide with 5 backbone carbons"
+synonym: "Pent" EXACT
+property_value: has_chemical_formula "C5H8O4" xsd:string
+property_value: has_monoisotopic_mass "132.042258735" xsd:float
+property_value: has_average_mass "132.114825" xsd:float
+
+[Term]
+id: MONO:7AB4EB73
+name: Hex
+def: "A generic monosaccharide with 6 backbone carbons"
+property_value: has_chemical_formula "C6H10O5" xsd:string
+property_value: has_monoisotopic_mass "162.052823418" xsd:float
+property_value: has_average_mass "162.140848" xsd:float
+
+[Term]
+id: MONO:077F5949
+name: Hep
+def: "A generic monosaccharide with 7 backbone carbons"
+property_value: has_chemical_formula "C7H12O6" xsd:string
+property_value: has_monoisotopic_mass "192.063388102" xsd:float
+property_value: has_average_mass "192.166870" xsd:float
+
+[Term]
+id: MONO:6FD0344F
+name: Oct
+def: "A generic monosaccharide with 8 backbone carbons"
+property_value: has_chemical_formula "C8H14O7" xsd:string
+property_value: has_monoisotopic_mass "222.073952786" xsd:float
+property_value: has_average_mass "222.192892" xsd:float
+
+[Term]
+id: MONO:2CC56422
+name: Non
+def: "A generic monosaccharide with 9 backbone carbons"
+property_value: has_chemical_formula "C9H16O8" xsd:string
+property_value: has_monoisotopic_mass "252.08451747" xsd:float
+property_value: has_average_mass "252.218915" xsd:float
+
+[Term]
+id: MONO:2F3DD9C9
+name: Dec
+def: "A generic monosaccharide with 10 backbone carbons"
+property_value: has_chemical_formula "C10H18O9" xsd:string
+property_value: has_monoisotopic_mass "282.095082153" xsd:float
+property_value: has_average_mass "282.244937" xsd:float
+
+[Term]
+id: MONO:70565C17
+name: sulfate
+def: "sulfate"
+synonym: "S" EXACT
+synonym: "Sulpho" EXACT
+synonym: "Sulf" EXACT
+property_value: has_chemical_formula "H0O3S1" xsd:string
+property_value: has_monoisotopic_mass "79.9568148587" xsd:float
+property_value: has_average_mass "80.064299" xsd:float
+
+[Term]
+id: MONO:095E7DD0
+name: phosphate
+def: "phosphate"
+synonym: "P" EXACT
+synonym: "Phospho" EXACT
+synonym: "Phos" EXACT
+property_value: has_chemical_formula "H1O3P1" xsd:string
+property_value: has_monoisotopic_mass "79.9663305208" xsd:float
+property_value: has_average_mass "79.979917" xsd:float
+
+[Term]
+id: MONO:0C4F1FA5
+name: d-Hex
+def: "d-Hex"
+synonym: "dHex" EXACT
+synonym: "HexD" EXACT
+property_value: has_chemical_formula "C6H10O4" xsd:string
+property_value: has_monoisotopic_mass "146.057908799" xsd:float
+property_value: has_average_mass "146.141443" xsd:float
+
+[Term]
+id: MONO:61947BA4
+name: Fuc
+def: "Fuc"
+synonym: "Fucose" EXACT
+property_value: has_chemical_formula "C6H10O4" xsd:string
+property_value: has_monoisotopic_mass "146.057908799" xsd:float
+property_value: has_average_mass "146.141443" xsd:float
+
+[Term]
+id: MONO:3E923C03
+name: en,a-Hex
+def: "en,a-Hex"
+synonym: "en,HexA" EXACT
+synonym: "en,aHex" EXACT
+synonym: "ena-Hex" EXACT
+synonym: "enHexA" EXACT
+synonym: "enaHex" EXACT
+property_value: has_chemical_formula "C6H6O5" xsd:string
+property_value: has_monoisotopic_mass "158.02152329" xsd:float
+property_value: has_average_mass "158.109085" xsd:float
+
+[Term]
+id: MONO:14908737
+name: HexN
+def: "HexN"
+property_value: has_chemical_formula "C6H11N1O4" xsd:string
+property_value: has_monoisotopic_mass "161.068807836" xsd:float
+property_value: has_average_mass "161.156126" xsd:float
+
+[Term]
+id: MONO:0996D6B5
+name: a-Hex
+def: "a-Hex"
+synonym: "aHex" EXACT
+synonym: "HexA" EXACT
+property_value: has_chemical_formula "C6H8O6" xsd:string
+property_value: has_monoisotopic_mass "176.032087974" xsd:float
+property_value: has_average_mass "176.124371" xsd:float
+
+[Term]
+id: MONO:5E288A08
+name: HexNAc
+def: "HexNAc"
+property_value: has_chemical_formula "C8H13N1O5" xsd:string
+property_value: has_monoisotopic_mass "203.07937252" xsd:float
+property_value: has_average_mass "203.192885" xsd:float
+
+[Term]
+id: MONO:695E0092
+name: HexNS
+def: "HexNS"
+property_value: has_chemical_formula "C6H11N1O7S1" xsd:string
+property_value: has_monoisotopic_mass "241.025622694" xsd:float
+property_value: has_average_mass "241.220426" xsd:float
+
+[Term]
+id: MONO:252FAE19
+name: HexS
+def: "HexS"
+property_value: has_chemical_formula "C6H10O8S1" xsd:string
+property_value: has_monoisotopic_mass "242.009638277" xsd:float
+property_value: has_average_mass "242.205147" xsd:float
+
+[Term]
+id: MONO:27AA9097
+name: HexP
+def: "HexP"
+property_value: has_chemical_formula "C6H11O8P1" xsd:string
+property_value: has_monoisotopic_mass "242.019153939" xsd:float
+property_value: has_average_mass "242.120765" xsd:float
+
+[Term]
+id: MONO:513BD0C1
+name: Neu
+def: "Neu"
+property_value: has_chemical_formula "C9H15N1O7" xsd:string
+property_value: has_monoisotopic_mass "249.084851823" xsd:float
+property_value: has_average_mass "249.218312" xsd:float
+
+[Term]
+id: MONO:2D673195
+name: HexNAc(S)
+def: "HexNAc(S)"
+property_value: has_chemical_formula "C8H13N1O8S1" xsd:string
+property_value: has_monoisotopic_mass "283.036187378" xsd:float
+property_value: has_average_mass "283.257184" xsd:float
+
+[Term]
+id: MONO:2A76C372
+name: Neu5Ac
+def: "Neu5Ac"
+synonym: "NeuAc" EXACT
+property_value: has_chemical_formula "C11H17N1O8" xsd:string
+property_value: has_monoisotopic_mass "291.095416506" xsd:float
+property_value: has_average_mass "291.255070" xsd:float
+
+[Term]
+id: MONO:4DB3A9FC
+name: Neu5Gc
+def: "Neu5Gc"
+synonym: "NeuGc" EXACT
+property_value: has_chemical_formula "C11H17N1O9" xsd:string
+property_value: has_monoisotopic_mass "307.090331126" xsd:float
+property_value: has_average_mass "307.254475" xsd:float
+
+[Term]
+id: MONO:4D8FC3DD
+name: Me
+def: "Methylation"
+property_value: has_chemical_formula "CH2" xsd:string
+property_value: has_monoisotopic_mass "14.0156500642" xsd:float
+property_value: has_average_mass "14.026617" xsd:float
+
+[Term]
+id: MONO:995CFFA1
+name: Kdn
+def: "3-deoxy-D-glycero-D-galacto-non-2-ulopyranosonic acid"
+property_value: has_chemical_formula "C9H16O9" xsd:string
+property_value: has_monoisotopic_mass "268.0794321125" xsd:float
+property_value: has_average_mass "268.218319" xsd:float

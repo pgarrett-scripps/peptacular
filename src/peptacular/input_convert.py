@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Any, Union
 
-from peptacular.types import ModValue
+from peptacular.types import ModValue, IntervalValue
 from peptacular.proforma_dataclasses import Mod, Interval
 from peptacular.types import ACCEPTED_MOD_INPUT
 
@@ -112,33 +112,28 @@ def fix_list_of_mods(mods: List[ModValue] | ModValue) -> List[Mod]:
     return []
 
 
-def fix_dict_of_mods(mods: Dict[int | str, List[ModValue] | ModValue]) -> Dict[int | str, List[Mod]]:
+def fix_dict_of_mods(mods: Dict[Any, List[ModValue] | ModValue]) -> Dict[Any, List[Mod]]:
     """
-    Convert the input mods to a dictionary of lists of Mod instances.
+    Convert the input mods to a dictionary of lists of Mod instances. Mainly used to convert internal mod input to
+    the correct format. This will not work when used on the whole mod dict.
 
     :param mods:
     :return:
 
     .. code-block:: python
 
-        >>> fix_dict_of_mods({'phospho': 'phospho'})
-        {'phospho': [Mod('phospho', 1)]}
+        >>> fix_dict_of_mods({1: 'phospho'})
+        {1: [Mod('phospho', 1)]}
 
-        >>> fix_dict_of_mods({'phospho': [3.0]})
-        {'phospho': [Mod(3.0, 1)]}
-
-        >>> fix_dict_of_mods({'phospho': ['phospho']})
-        {'phospho': [Mod('phospho', 1)]}
-
-        >>> fix_dict_of_mods({'phospho': ['phospho', 1]})
-        {'phospho': [Mod('phospho', 1), Mod(1, 1)]}
+        >>> fix_dict_of_mods({2: [3.0]})
+        {2: [Mod(3.0, 1)]}
 
     """
 
     return {k: fix_list_of_mods(v) for k, v in mods.items()}
 
 
-def fix_interval_input(interval: Tuple[int, int, bool, ACCEPTED_MOD_INPUT | None] | Interval) -> Interval:
+def fix_interval_input(interval: IntervalValue) -> Interval:
     """
     Convert the input intervals to a list of Interval instances.
 
@@ -156,9 +151,50 @@ def fix_interval_input(interval: Tuple[int, int, bool, ACCEPTED_MOD_INPUT | None
         >>> fix_interval_input((1, 2, False, ['phospho']))
         Interval(1, 2, False, [Mod('phospho', 1)])
 
+        >>> fix_interval_input(Interval(1, 2, False, [Mod('phospho', 1)]))
+        Interval(1, 2, False, [Mod('phospho', 1)])
+
     """
 
     # parse mod
+    if isinstance(interval, Interval):
+        return interval
 
     mods = fix_list_of_mods(interval[3]) if interval[3] else None
     return Interval(interval[0], interval[1], interval[2], mods)
+
+
+def fix_intervals_input(intervals: List[IntervalValue] | IntervalValue) -> List[Interval]:
+    """
+    Convert the input intervals to a list of Interval instances.
+
+    :param intervals: List of intervals
+    :param intervals: Single interval or list of intervals
+
+    :return: List of Interval instances
+    :rtype: List[Interval]
+
+    .. code-block:: python
+
+        >>> fix_intervals_input([(1, 2, False, 'phospho')])
+        [Interval(1, 2, False, [Mod('phospho', 1)])]
+
+        >>> fix_intervals_input((1, 2, False, [3.0]))
+        [Interval(1, 2, False, [Mod(3.0, 1)])]
+
+        >>> fix_intervals_input([(1, 2, False, ['phospho'])])
+        [Interval(1, 2, False, [Mod('phospho', 1)])]
+
+        >>> fix_intervals_input([Interval(1, 2, False, [Mod('phospho', 1)])])
+        [Interval(1, 2, False, [Mod('phospho', 1)])]
+
+    """
+
+    if not isinstance(intervals, List):
+        intervals = [intervals]
+
+    new_intervals = []
+    for i, interval in enumerate(intervals):
+        new_intervals.append(fix_interval_input(interval))
+
+    return new_intervals

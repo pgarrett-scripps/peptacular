@@ -4,10 +4,17 @@ from random import randint, choice, sample
 from enum import Enum, auto
 from typing import List
 
-from peptacular.mass import mass, comp_mass, comp
+from peptacular.mass import mass, comp_mass
+from peptacular.mods.mod_setup import RESID_DB
 from peptacular.proforma_dataclasses import Mod, Interval
 from peptacular.sequence.proforma import ProFormaAnnotation, parse
-from pyteomics.proforma import parse as parse_proforma
+from pyteomics.proforma import parse as parse_proforma, ProForma
+
+# TODO: Take valid values from the respective dicts
+
+#reset_all_databases()
+
+print(len(RESID_DB))
 
 UNIMOD_LEVEL_BASE_MOD_VALS = ['Oxidation', 'UNIMOD:10']
 UNIMOD_LEVEL2_MOD_VALS = ['U:Oxidation', 'U:10', 'U:+1', 'U:-1', 'U:+3.1415', 'U:-3.1415']
@@ -22,14 +29,15 @@ GNO_MOD_VALS = ['GNO:G59626AS', 'GNO:G62765YT', 'G:G59626AS', 'G:G62765YT', 'G:+
 RESID_MOD_VALS = ['RESID:AA0581', 'RESID:AA0037', 'R:AA0581', 'R:AA0037', 'R:+1', 'R:-1', 'R:+3.1415', 'R:-3.1415']
 ISOTOPE_MOD_VALS = ['13C', '15N', '18O', '2H', 'T', 'D']
 STATIC_MOD_VALS = ['[Oxidation]@M', '[Oxidation]@M,C,D', '[+1]@C', '[-1]@C', '[+3.1415]@C', '[-3.1415]@C']
-
-
+XLMOD_VALS = ['XLMOD:02001', 'XLMOD:02010', 'XLMOD:02000', 'X:02001', 'X:02010', 'X:02000']
 
 TOP_DOWN_MODS = CHEM_FORMULA_MOD_VALS + RESID_MOD_VALS
-CROSS_LINKING_MODS = []  # Cross linking not supported
+CROSS_LINKING_MODS = XLMOD_VALS
 GLYCAN_MODS = GLYCAN_MOD_VALS + GNO_MOD_VALS
 SPECTRUM_MODS = []  # No Additional Mods
 
+
+# TODO: Need to check that added localization and cross linking mods arr at unoccupied positions (maybe)
 
 class ProformaComplianceLevel(Enum):
     BASE = auto()
@@ -80,13 +88,11 @@ def random_mod(level: ProformaComplianceLevel, count: int = 1, info: bool = Fals
     elif level == ProformaComplianceLevel.TOP_DOWN:
         return _random_mod(TOP_DOWN_MODS, count, info)
     elif level == ProformaComplianceLevel.CROSS_LINKING:
-        raise NotImplementedError("Cross linking not supported")
-        # return _random_mod(CROSS_LINKING_MODS, count, info)
+        return _random_mod(CROSS_LINKING_MODS, count, info)
     elif level == ProformaComplianceLevel.GLYCAN:
         return _random_mod(GLYCAN_MODS, count, info)
     elif level == ProformaComplianceLevel.SPECTRUM:
-        raise ValueError("No Valid Mods for Spectrum Level Compliance")
-        # return _random_mod(SPECTRUM_MODS, count, info)
+        return _random_mod(SPECTRUM_MODS, count, info)
     else:
         raise ValueError("Invalid level")
 
@@ -117,7 +123,8 @@ def random_intervals(level: ProformaComplianceLevel, sequence: str, num_interval
     return intervals
 
 
-def compliance_randomizer(level: ProformaComplianceLevel | int, min_sequence_length: int = 5, max_sequence_length: int = 50,
+def compliance_randomizer(level: ProformaComplianceLevel | int, min_sequence_length: int = 5,
+                          max_sequence_length: int = 50,
                           mod_prob: float = 0.1, sequence_ambiguity: bool = True) -> ProFormaAnnotation:
     """
     1) Base Level Support (Technical name: Base-ProForma Compliant)
@@ -131,7 +138,7 @@ def compliance_randomizer(level: ProformaComplianceLevel | int, min_sequence_len
     - INFO tag.
 
     2) Additional Separate Support (Technical name: level 2-ProForma compliant)
-    These features are independent from each other:
+    These features are independent of each other:
     - Unusual amino acids (O and U).
     - Ambiguous amino acids (e.g. X, B, Z). This would include support for sequence tags of
     known mass (using the character X).
@@ -153,7 +160,6 @@ def compliance_randomizer(level: ProformaComplianceLevel | int, min_sequence_len
 
     # Amino acid sequences
     sequence = random_sequence(level, min_sequence_length, max_sequence_length, sequence_ambiguity)
-
     annotation = ProFormaAnnotation(sequence)
 
     # Protein modifications using two of the supported CVs/ontologies: Unimod and PSIMOD.
@@ -190,6 +196,7 @@ def compliance_randomizer(level: ProformaComplianceLevel | int, min_sequence_len
         score_mods_indices = sample(range(len(sequence)), len(score_mods))
 
         for i, mod in zip(score_mods_indices, score_mods):
+            # annotation.pop_internal_mod(i)
             annotation.add_internal_mod(i, mod)
 
     return annotation
@@ -222,7 +229,17 @@ def cross_linking_randomizer(annotation: ProFormaAnnotation):
     XL-MOD CV/ontology term names).
     """
 
-    raise NotImplementedError("Cross linking not supported")
+    # Cross-linking
+    if choice([True, False]):
+        cross_link_mod = random_mod(level=ProformaComplianceLevel.CROSS_LINKING, count=1, info=False)
+        cross_link_mod = Mod(str(cross_link_mod.val) + '#XL1', 1)
+        additional_mods = [Mod('#XL1', 1) for _ in range(randint(1, 3))]
+        cross_link_mods = [cross_link_mod] + additional_mods
+        score_mods_indices = sample(range(len(annotation)), len(cross_link_mods))
+
+        for i, mod in zip(score_mods_indices, cross_link_mods):
+            #annotation.pop_internal_mod(i)
+            annotation.add_internal_mod(i, mod)
 
 
 def glycan_randomizer(annotation: ProFormaAnnotation, mod_prob: float = 0.1):
@@ -265,22 +282,33 @@ def spectrum_randomizer(annotation: ProFormaAnnotation):
         annotation.add_static_mods(mod)
 
 
-for i in range(1000):
-    annotation = compliance_randomizer(ProformaComplianceLevel.BASE, sequence_ambiguity=False)
-    spectrum_randomizer(annotation)
-    top_down_randomizer(annotation)
-    glycan_randomizer(annotation)
+if __name__ == '__main__':
+    for _ in range(10):
+        anot = compliance_randomizer(ProformaComplianceLevel.BASE, sequence_ambiguity=False)
+        spectrum_randomizer(anot)
+        #top_down_randomizer(anot)
+        #glycan_randomizer(anot)
+        #cross_linking_randomizer(anot)
 
-    sequence = annotation.serialize()
-    print(sequence)
+        mass(anot)
+        sequence = anot.serialize()
+        print(sequence)
 
-    #parse_proforma(sequence)
+        """
+        anot.pop_labile_mods()
+        anot.pop_unknown_mods()
+        anot.pop_static_mods()
+        anot.pop_unknown_mods()
+        sequence = anot.serialize()
+        parse_proforma(sequence)
+        """
 
-    annotation2 = parse(sequence)[0]
-    mass(annotation2)
-    comp_mass(annotation2)
-    annotation.reverse()
-    annotation2.shift(2)
-    annotation2.shuffle()
+        annotation2 = parse(sequence)
+        mass(annotation2)
+        comp_mass(annotation2)
+        anot.reverse()
+        annotation2.shift(2)
+        annotation2.shuffle()
 
-
+#seq = ProForma.parse('EMEVEESPEK/2[+2Na+,+H+]')
+#print(seq.mass)

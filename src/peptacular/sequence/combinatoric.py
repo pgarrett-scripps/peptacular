@@ -1,7 +1,7 @@
 from typing import List, Union
 
 from peptacular.sequence.proforma import ProFormaAnnotation
-from peptacular.sequence.sequence import parse_single_sequence
+from peptacular.sequence.sequence import sequence_to_annotation
 
 
 def permutations(sequence: str | ProFormaAnnotation, size: int = None) -> List[str]:
@@ -33,7 +33,7 @@ def permutations(sequence: str | ProFormaAnnotation, size: int = None) -> List[s
     """
 
     if isinstance(sequence, str):
-        annotation = parse_single_sequence(sequence)
+        annotation = sequence_to_annotation(sequence)
     else:
         annotation = sequence
 
@@ -69,7 +69,7 @@ def product(sequence: str | ProFormaAnnotation, repeat: Union[int, None]) -> Lis
     """
 
     if isinstance(sequence, str):
-        annotation = parse_single_sequence(sequence)
+        annotation = sequence_to_annotation(sequence)
     else:
         annotation = sequence
 
@@ -106,7 +106,7 @@ def combinations(sequence: str | ProFormaAnnotation, size: Union[int, None]) -> 
     """
 
     if isinstance(sequence, str):
-        annotation = parse_single_sequence(sequence)
+        annotation = sequence_to_annotation(sequence)
     else:
         annotation = sequence
 
@@ -144,7 +144,7 @@ def combinations_with_replacement(sequence: str | ProFormaAnnotation, size: Unio
     """
 
     if isinstance(sequence, str):
-        annotation = parse_single_sequence(sequence)
+        annotation = sequence_to_annotation(sequence)
     else:
         annotation = sequence
 
