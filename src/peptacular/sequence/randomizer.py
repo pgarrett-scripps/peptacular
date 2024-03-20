@@ -30,6 +30,7 @@ RESID_MOD_VALS = ['RESID:AA0581', 'RESID:AA0037', 'R:AA0581', 'R:AA0037', 'R:+1'
 ISOTOPE_MOD_VALS = ['13C', '15N', '18O', '2H', 'T', 'D']
 STATIC_MOD_VALS = ['[Oxidation]@M', '[Oxidation]@M,C,D', '[+1]@C', '[-1]@C', '[+3.1415]@C', '[-3.1415]@C']
 XLMOD_VALS = ['XLMOD:02001', 'XLMOD:02010', 'XLMOD:02000', 'X:02001', 'X:02010', 'X:02000']
+CHARGE_ADDUCTS = ['+H+', '+2Na+,-H+', '+2Na+,+H+', '2I-', '+e-']
 
 TOP_DOWN_MODS = CHEM_FORMULA_MOD_VALS + RESID_MOD_VALS
 CROSS_LINKING_MODS = XLMOD_VALS
@@ -280,6 +281,10 @@ def spectrum_randomizer(annotation: ProFormaAnnotation):
     for _ in range(randint(0, 3)):
         mod = _random_mod(STATIC_MOD_VALS, 1, False)
         annotation.add_static_mods(mod)
+
+    # Add adducts
+    if choice([True, False]):
+        annotation.add_charge_adducts(Mod(choice(CHARGE_ADDUCTS),1))
 
 if __name__ == '__main__':
     for _ in range(10):

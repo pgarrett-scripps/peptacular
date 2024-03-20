@@ -17,6 +17,9 @@ from peptacular.constants import AMINO_ACIDS, AMBIGUOUS_AMINO_ACIDS, MASS_AMBIGU
 from peptacular.errors import ProFormaFormatError
 from peptacular.types import ACCEPTED_MOD_INPUT, ACCEPTED_INTERVAL_INPUT
 
+ADDUCT_PATTERN = re.compile(r"([+-]?)(\d*)?([A-Za-z]{1,2}\d*\+?-?)")
+ISOTOPE_NUM_PATTERN = re.compile(r'[0-9]')
+
 
 def _parse_modifications(proforma_sequence: str, opening_bracket: str = '[', closing_bracket: str = ']') -> List[Mod]:
     """
@@ -181,7 +184,6 @@ def parse_charge_adducts(mod: Mod | str) -> Dict[str, int]:
         mod = mod.val
 
     charge_adducts = {}
-    adduct_pattern = re.compile(r"([+-]?)(\d*)?([A-Za-z]{1,2}\d*\+?-?)")
 
     mods = mod.split(',')
     for mod in mods:
@@ -190,7 +192,7 @@ def parse_charge_adducts(mod: Mod | str) -> Dict[str, int]:
         else:
             mod_str = mod
 
-        for sign, count, ion in adduct_pattern.findall(mod_str):
+        for sign, count, ion in ADDUCT_PATTERN.findall(mod_str):
             if count == '':
                 count = 1
             else:
@@ -536,8 +538,7 @@ def parse_isotope_mods(mods: List[Mod | str]) -> Dict[str, str]:
             mod = mod.val
 
         # remove digits
-        pattern = r'[0-9]'
-        base_aa = re.sub(pattern, '', mod)
+        base_aa = re.sub(ISOTOPE_NUM_PATTERN, '', mod)
         isotope_map[base_aa] = mod
 
     # If any keys are D or T, then replace them with H
@@ -1327,6 +1328,13 @@ class ProFormaAnnotation:
         Slice the annotation sequence and return a new annotation with the sliced sequence and modifications.
         """
         new_sequence = self.sequence[start:stop]
+
+        if not self.has_mods():
+            if inplace is True:
+                self._sequence = new_sequence
+                return None
+            return ProFormaAnnotation(_sequence=new_sequence)
+
 
         # Adjust internal modifications based on new sequence indices
         new_internal_mods = None

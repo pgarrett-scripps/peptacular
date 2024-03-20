@@ -135,6 +135,38 @@ def is_ambiguous(sequence: str | ProFormaAnnotation) -> bool:
     return annotation.contains_sequence_ambiguity()
 
 
+def is_modified(sequence: str | ProFormaAnnotation) -> bool:
+    """
+    Check if the sequence contains any modifications.
+
+    :param sequence: The sequence or ProFormaAnnotation object.
+    :type sequence: str | ProFormaAnnotation
+
+    :raises ValueError: If the input sequence contains multiple sequences.
+    :raises ProFormaFormatError: if the proforma sequence is not valid
+
+    :return: True if the sequence contains any modifications, False otherwise.
+    :rtype: bool
+
+    .. code-block:: python
+
+        # Any modifications will return True
+        >>> is_modified("PEP[Phospho]TIDE")
+        True
+
+        # Unmodified sequences will return False
+        >>> is_modified("PEPTIDE")
+        False
+
+    """
+
+    if isinstance(sequence, str):
+        annotation = sequence_to_annotation(sequence)
+    else:
+        annotation = sequence
+
+    return annotation.has_mods()
+
 def get_mods(sequence: str | ProFormaAnnotation) -> ModDict:
     """
     Parses a sequence with modifications and returns a dictionary where keys represent the position/type of the

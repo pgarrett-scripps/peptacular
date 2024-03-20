@@ -887,7 +887,7 @@ class ModEntry:
         if self.composition is not None:
             try:
                 return chem_mass(self.composition, monoisotopic=True)
-            except InvalidChemFormulaError as e:  # could be glycan
+            except InvalidChemFormulaError:  # could be glycan
                 return chem_mass(_glycan_comp(self.composition), monoisotopic=True)
 
         return None
@@ -897,7 +897,7 @@ class ModEntry:
         if self.composition is not None:
             try:
                 return chem_mass(self.composition, monoisotopic=False)
-            except InvalidChemFormulaError as e:  # could be glycan
+            except InvalidChemFormulaError:  # could be glycan
                 return chem_mass(_glycan_comp(self.composition), monoisotopic=False)
         return None
 
