@@ -2,7 +2,7 @@ import math
 from dataclasses import dataclass
 from typing import List, Tuple, Union, Dict, Any
 from peptacular.fragment import Fragment
-from peptacular.sequence import strip_mods
+from peptacular.sequence.sequence import strip_mods
 
 
 def get_matched_indices(mz_spectrum1: List[float], mz_spectrum2: List[float], tolerance_value: float = 0.1,

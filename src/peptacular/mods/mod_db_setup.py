@@ -9,35 +9,17 @@ import warnings
 from collections import Counter
 from functools import cached_property
 from typing import List, Dict, IO, Any
-import requests
 
-from peptacular.chem_util import write_chem_formula, _parse_isotope_component, parse_chem_formula, chem_mass, \
+from peptacular.chem.chem_util import write_chem_formula, _parse_isotope_component, parse_chem_formula, chem_mass, \
     _parse_split_chem_formula
 from peptacular.errors import InvalidChemFormulaError, InvalidGlycanFormulaError
-from peptacular.types import ChemComposition
 from peptacular.util import convert_type
 
-"""
-_MONOSACCHARIDES_NAMES_SORTED = ['phosphate', 'HexNAc(S)', 'en,a-Hex', 'sulfate', 'HexNAc', 'Neu5Ac',
-                                 'Neu5Gc', 'd-Hex', 'a-Hex', 'HexNS', 'HexN', 'HexS',
-                                 'HexP', 'Sug', 'Tri', 'Tet', 'Pen', 'Hex', 'Hep',
-                                 'Oct', 'Non', 'Dec', 'Fuc', 'Neu', 'Knd', 'Me']
 
-_MONOSACCHARIDE_NAME_MAP = {
-    'Phospho': 'phosphate',
-    'Sulpho': 'sulfate',
-    'HexA': 'a-Hex',
-    'aHex': 'a-Hex',
-    'NeuAc': 'Neu5Ac',
-    'NeuGc': 'Neu5Gc',
-    'Pent': 'Pen',
-    'dHex': 'd-Hex',
-    'HexD': 'd-Hex'
-}
-"""
-
-
-def _parse_glycan_formula(formula: str, sep: str) -> ChemComposition:
+def _parse_glycan_formula(formula: str, sep: str) -> Dict[str, int | float]:
+    """
+    Here to avoid a circular import. Real function is in peptacular.glycan
+    """
     d = {}
 
     if formula == '':
@@ -82,7 +64,10 @@ def _parse_glycan_formula(formula: str, sep: str) -> ChemComposition:
     return d
 
 
-def _glycan_comp(glycan: Dict[str, int] | str, sep: str = '') -> ChemComposition:
+def _glycan_comp(glycan: Dict[str, int] | str, sep: str = '') -> Dict[str, int | float]:
+    """
+    Here to avoid a circular import. Real function is in peptacular.glycan
+    """
     if isinstance(glycan, str):
         glycan = _parse_glycan_formula(glycan, sep)  # raises InvalidGlycanFormulaError
 
@@ -901,7 +886,6 @@ class ModEntry:
                 return chem_mass(_glycan_comp(self.composition), monoisotopic=False)
         return None
 
-
     def dict(self):
         return {
             'id': self.id,
@@ -913,6 +897,7 @@ class ModEntry:
             'parents': self.parents,
             'entry_type': self.entry_type
         }
+
 
 class EntryDb:
     """
@@ -1092,6 +1077,10 @@ class EntryDb:
         """
         Download obo file from the internet and reload the database
         """
+        try:
+            import requests
+        except ImportError:
+            raise ImportError("The requests module is required to download the obo file from the internet")
 
         file_url = _OBO_FILE_SOURCES.get(self.entry_type)
         if file_url is None:
@@ -1140,8 +1129,8 @@ class EntryDb:
                 self.names_sorted, self.entries = old_maps
             raise e
 
-        print(f'Reloaded {self.entry_type} database from {file}')
-        print('Entries:', len(self))
+        # print(f'Reloaded {self.entry_type} database from {file}')
+        # print('Entries:', len(self))
 
     def _get_names_sorted(self):
         synonyms = set(self.synonym_map.keys())
@@ -1164,6 +1153,9 @@ def count_invalid_entries(entries: List[ModEntry]) -> (int, int, int):
 
     return none_mono, none_avg, none_comp
 
+#import pkgutil
+#data = pkgutil.get_data(__name__, "../data/monosaccharides_updated.obo")
+
 _dir_name = os.path.dirname(__file__)
 _obo_path = os.path.join(_dir_name, "..", "data")
 MONOSACCHARIDES_DB = EntryDb(DbType.MONOSACCHARIDES, [], True)
@@ -1177,8 +1169,10 @@ MONOSACCHARIDES_DB.reload_from_file(os.path.join(_obo_path, "monosaccharides_upd
 UNIMOD_DB.reload_from_file(os.path.join(_obo_path, "unimod.obo"))
 PSI_MOD_DB.reload_from_file(os.path.join(_obo_path, "psi-mod.obo"))
 XLMOD_DB.reload_from_file(os.path.join(_obo_path, "xlmod.obo"))
-#GNO_DB.reload_from_file(os.path.join(_obo_path, "gno.obo"))
-#RESID_DB.reload_from_file(os.path.join(_obo_path, "psi-mod.obo"))
+
+
+# GNO_DB.reload_from_file(os.path.join(_obo_path, "gno.obo"))
+# RESID_DB.reload_from_file(os.path.join(_obo_path, "psi-mod.obo"))
 
 
 def reload_all_databases_from_online():
@@ -1188,6 +1182,7 @@ def reload_all_databases_from_online():
     XLMOD_DB.reload_from_online()
     GNO_DB.reload_from_online()
     RESID_DB.reload_from_online()
+
 
 def reload_all_databases():
     reset_all_databases()

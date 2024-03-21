@@ -1,17 +1,18 @@
 """
 Isotope.py - A module for calculating isotopic distributions of molecules.
 """
+from __future__ import annotations
 
 import sys
 from typing import List, Dict, Tuple, Union
 
 from peptacular import constants
-from peptacular.chem import estimate_comp
+from peptacular.chem.chem import estimate_comp
 from peptacular.mass import chem_mass
 
 
 def isotopic_distribution(
-        chemical_formula: Dict[str, int],
+        chemical_formula: Dict[str, int | float],
         max_isotopes: Union[int, None] = None,
         min_abundance_threshold: Union[float, None] = None,
         distribution_resolution: Union[int, None] = 5,
@@ -84,6 +85,13 @@ def isotopic_distribution(
     if max_isotopes is None:
         max_isotopes = sys.maxsize
 
+    # Just use these to correct mass
+    electron_count = chemical_formula.pop('e', 0)
+    proton_count = chemical_formula.pop('p', 0)
+    neutron_count = chemical_formula.pop('n', 0)
+    particle_mass_offset = (proton_count * constants.PROTON_MASS) + (neutron_count * constants.NEUTRON_MASS) + (
+            electron_count * constants.ELECTRON_MASS)
+
     # check if any values are negative:
     if any(v < 0 for v in chemical_formula.values()):
         raise ValueError("Negative values are not allowed in the chemical formula.")
@@ -116,7 +124,9 @@ def isotopic_distribution(
         normalized_distribution = normalized_distribution[:max_isotopes]
 
     if delta_mass:
-        normalized_distribution = [(mass + delta_mass, abundance) for mass, abundance in normalized_distribution]
+        normalized_distribution = [(mass + delta_mass + particle_mass_offset, abundance)
+                                   for mass, abundance in normalized_distribution]
+
 
     return normalized_distribution
 
@@ -268,6 +278,7 @@ def _calculate_elemental_distribution(element: str,
         {0: 0.9787144899999999, 1: 0.02117102, 2: 0.00011448999999999998}
 
     """
+
     if use_neutron_count is True:
         isotopes = constants.ATOMIC_SYMBOL_TO_ISOTOPE_NEUTRON_OFFSETS_AND_ABUNDANCES[element]
     else:

@@ -1,6 +1,7 @@
 import timeit
 import random
 
+from peptacular import constants
 from peptacular.digest import digest
 from peptacular.fragment import *
 from peptacular.sequence.sequence import *

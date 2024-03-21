@@ -6,10 +6,13 @@ from __future__ import annotations
 
 from peptacular.errors import UnknownModificationError, InvalidDeltaMassError, InvalidCompositionError, \
     DeltaMassCompositionError, UnknownModificationMassError
-from peptacular.mods.mod_setup import UNIMOD_DB, PSI_MOD_DB, XLMOD_DB, EntryDb, RESID_DB, GNO_DB
+from peptacular.mods.mod_db_setup import UNIMOD_DB, PSI_MOD_DB, XLMOD_DB, EntryDb, RESID_DB, GNO_DB
 
 
 def _get_mass(db: EntryDb, mod_str: str, orig_str: str, monoisotopic: bool, precision: int | None) -> float:
+    """
+    Helper function for getting the mass of a modification from a db.
+    """
     round_func = lambda x: round(x, precision) if precision is not None else x
 
     if mod_str.startswith('+') or mod_str.startswith('-'):
@@ -45,6 +48,9 @@ def _get_mass(db: EntryDb, mod_str: str, orig_str: str, monoisotopic: bool, prec
 
 
 def _get_comp(db: EntryDb, mod_str: str, orig_str: str) -> str:
+    """
+    Helper function for getting the composition of a modification from a db.
+    """
     if mod_str.startswith('+') or mod_str.startswith('-'):
         try:
             _ = float(mod_str)

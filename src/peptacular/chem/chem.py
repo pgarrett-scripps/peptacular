@@ -6,18 +6,18 @@ from __future__ import annotations
 
 from typing import Dict, Union, List
 
+from peptacular.chem.chem_constants import ISOTOPIC_AVERAGINE_MASS
 from peptacular.types import ModValue, ChemComposition
-from peptacular.chem_util import parse_chem_formula, write_chem_formula
-from peptacular.mods.mod_setup import MONOSACCHARIDES_DB
+from peptacular.chem.chem_util import parse_chem_formula, write_chem_formula
+from peptacular.mods.mod_db_setup import MONOSACCHARIDES_DB
 from peptacular.sequence.sequence import sequence_to_annotation
-from peptacular.constants import AA_COMPOSITIONS, ION_TYPE_COMPOSITION_ADJUSTMENTS, ISOTOPIC_AVERAGINE_MASS, \
-    AVERAGINE_RATIOS
+from peptacular.constants import AA_COMPOSITIONS, AVERAGINE_RATIOS, FRAGMENT_ION_COMPOSITION_ADJUSTMENTS
 from peptacular.errors import InvalidCompositionError, AmbiguousAminoAcidError, \
     UnknownAminoAcidError, DeltaMassCompositionError
 from peptacular.glycan import glycan_comp
 from peptacular.mods.mod_db import parse_unimod_comp, parse_psi_comp, is_psi_mod_str, is_unimod_str, parse_xlmod_comp, \
     parse_resid_comp, is_resid_str, is_xlmod_str, is_gno_str, parse_gno_comp
-from peptacular.sequence.proforma import parse_static_mods, ProFormaAnnotation, Mod, parse_isotope_mods, \
+from peptacular.proforma.proforma import parse_static_mods, ProFormaAnnotation, Mod, parse_isotope_mods, \
     parse_ion_elements
 from peptacular.util import convert_type
 
@@ -113,7 +113,7 @@ def estimate_comp(neutral_mass: float,
                    AVERAGINE_RATIOS.items()}
 
     if isotopic_mods:
-        composition = _apply_isotope_mods_to_composition(composition, isotopic_mods)
+        composition = apply_isotope_mods_to_composition(composition, isotopic_mods)
 
     return composition
 
@@ -341,42 +341,45 @@ def _sequence_comp(sequence: str | ProFormaAnnotation, ion_type: str, charge: in
     .. code-block:: python
 
         # Calculate the mass of a peptide sequence.
-        >>> _sequence_comp('PEPTIDE', 'y')
-        {'C': 34, 'H': 53, 'N': 7, 'O': 15}
+        >>> _sequence_comp('PEPTIDE', 'y', charge=1)
+        {'C': 34, 'H': 54, 'N': 7, 'O': 15, 'e': -1}
 
-        >>> _sequence_comp('PEPTIDE', 'b')
-        {'C': 34, 'H': 51, 'N': 7, 'O': 14}
+        >>> _sequence_comp('G', 'i', charge=1)
+        {'C': 1, 'H': 4, 'N': 1, 'e': -1}
 
-        >>> _sequence_comp('<H>PEPTIDE', 'b')
-        {'C': 34, 'H': 51, 'N': 7, 'O': 14}
+        >>> _sequence_comp('PEPTIDE', 'b', charge=1)
+        {'C': 34, 'H': 52, 'N': 7, 'O': 14, 'e': -1}
+
+        >>> _sequence_comp('<H>PEPTIDE', 'b', charge=1)
+        {'C': 34, 'H': 52, 'N': 7, 'O': 14, 'e': -1}
 
         >>> _sequence_comp('{Unimod:2}PEPTIDE', 'p')
         {'C': 34, 'H': 54, 'N': 8, 'O': 14}
 
-        >>> _sequence_comp('<13C>PEPTIDE', 'b')
-        {'H': 51, 'N': 7, 'O': 14, '13C': 34}
+        >>> _sequence_comp('<13C>PEPTIDE', 'b', charge=1)
+        {'H': 52, 'N': 7, 'O': 14, 'e': -1, '13C': 34}
 
-        >>> _sequence_comp('PEPTIDE[Unimod:2]', 'y')
-        {'C': 34, 'H': 54, 'N': 8, 'O': 14}
+        >>> _sequence_comp('PEPTIDE[Unimod:2]', 'y', charge=1)
+        {'C': 34, 'H': 55, 'N': 8, 'O': 14, 'e': -1}
 
-        >>> _sequence_comp('<[Unimod:2]@T>PEPTIDE', 'y')
-        {'C': 34, 'H': 54, 'N': 8, 'O': 14}
+        >>> _sequence_comp('<[Unimod:2]@T>PEPTIDE', 'y', charge=1)
+        {'C': 34, 'H': 55, 'N': 8, 'O': 14, 'e': -1}
 
-        >>> _sequence_comp('<[Unimod:2]@N-Term>PEPTIDE', 'y')
-        {'C': 34, 'H': 54, 'N': 8, 'O': 14}
+        >>> _sequence_comp('<[Unimod:2]@N-Term>PEPTIDE', 'y', charge=1)
+        {'C': 34, 'H': 55, 'N': 8, 'O': 14, 'e': -1}
 
-        >>> _sequence_comp('PEPTIDE/2', 'y')
-        {'C': 34, 'H': 55, 'N': 7, 'O': 15, 'e': -2}
+        >>> _sequence_comp('PEPTIDE/2', 'y', charge=1)
+        {'C': 34, 'H': 54, 'N': 7, 'O': 15, 'e': -1}
 
-        >>> _sequence_comp('PEPTIDE/2[+2Na+,+H+]', 'y')
-        {'C': 34, 'H': 54, 'N': 7, 'O': 15, 'Na': 2, 'e': -3}
+        >>> _sequence_comp('PEPTIDE/2[+2Na+,+H+]', 'y', charge=1)
+        {'C': 34, 'H': 54, 'N': 7, 'O': 15, 'e': -3, 'Na': 2}
 
         >>> _sequence_comp('<13C>PEPTIDE[Unimod:213413]', 'b')
         Traceback (most recent call last):
         peptacular.errors.UnknownModificationError: Unknown modification: Unimod:213413
 
         >>> _sequence_comp('I', 'by')
-        {'C': 6, 'H': 12, 'N': 1, 'O': 1}
+        {'C': 6, 'H': 10, 'N': 1, 'O': 1, 'e': 1}
 
         # Ambiguous amino acid
         >>> _sequence_comp('B', 'by')
@@ -415,9 +418,13 @@ def _sequence_comp(sequence: str | ProFormaAnnotation, ion_type: str, charge: in
         for k, v in aa_comp.items():
             composition[k] = composition.get(k, 0) + v
 
-    # Apply the adjustments for the ion type
-    for k, v in ION_TYPE_COMPOSITION_ADJUSTMENTS[ion_type].items():
+    # Apply the adjustments for the ion type (+ 1)
+    for k, v in FRAGMENT_ION_COMPOSITION_ADJUSTMENTS[ion_type].items():
         composition[k] = composition.get(k, 0) + v
+
+    # subtract 1 p to get the base composition
+    composition['H'] = composition.get('H', 0) - 1
+    composition['e'] = composition.get('e', 0) + 1
 
     # Pop isotopic mods
     isotopic_mods = annotation.pop_isotope_mods()
@@ -484,16 +491,16 @@ def _sequence_comp(sequence: str | ProFormaAnnotation, ion_type: str, charge: in
 
     # Add the charge adducts
     if charge is None and charge_adducts is None:
-        adduct_comp = {}
+        pass
     elif charge is not None and charge_adducts is None:
-        charge_adducts = f'{charge}H+'
-        adduct_comp = _parse_charge_adducts_comp(charge_adducts)
+        mod_compositions.append({'H': charge})
+        mod_compositions.append({'e': -charge})
     elif charge is None and charge_adducts is not None:
-        adduct_comp = {} # maybe this isnt right
+        adduct_comp = _parse_charge_adducts_comp(charge_adducts)
+        mod_compositions.append(adduct_comp)
     else:
         adduct_comp = _parse_charge_adducts_comp(charge_adducts)
-
-    mod_compositions.append(adduct_comp)
+        mod_compositions.append(adduct_comp)
 
     # Merge the compositions
     composition = {}
@@ -501,9 +508,11 @@ def _sequence_comp(sequence: str | ProFormaAnnotation, ion_type: str, charge: in
         for k, v in comp.items():
             composition[k] = composition.get(k, 0) + v
 
+    composition = {k: v for k, v in composition.items() if v != 0}
+
     # Apply isotopic mods
     if isotopic_mods:
-        composition = _apply_isotope_mods_to_composition(composition, isotopic_mods)
+        composition = apply_isotope_mods_to_composition(composition, isotopic_mods)
 
     return composition
 
@@ -557,7 +566,7 @@ def _parse_mod_delta_mass_only(mod: str | Mod) -> Union[float, None]:
     raise ValueError(f'Invalid modification: {mod}')
 
 
-def _apply_isotope_mods_to_composition(composition: ChemComposition, isotopic_mods: List[Mod | str]) -> ChemComposition:
+def apply_isotope_mods_to_composition(composition: ChemComposition, isotopic_mods: List[Mod | str]) -> ChemComposition:
     """
     Apply isotopic modifications to a composition.
 
@@ -572,21 +581,21 @@ def _apply_isotope_mods_to_composition(composition: ChemComposition, isotopic_mo
     .. code-block:: python
 
         # Apply isotopic modifications to a composition.
-        >>> _apply_isotope_mods_to_composition({'C': 6, 'H': 12, 'O': 6}, ['13C'])
+        >>> apply_isotope_mods_to_composition({'C': 6, 'H': 12, 'O': 6}, ['13C'])
         {'H': 12, 'O': 6, '13C': 6}
 
         # Apply multiple isotopic modifications to a composition.
-        >>> _apply_isotope_mods_to_composition({'C': 6, 'H': 12, 'O': 6}, ['13C', '15N'])
+        >>> apply_isotope_mods_to_composition({'C': 6, 'H': 12, 'O': 6}, ['13C', '15N'])
         {'H': 12, 'O': 6, '13C': 6}
 
         # Works with floats
-        >>> _apply_isotope_mods_to_composition({'C': 6.6, 'H': 12, 'O': 6}, ['13C', '15N'])
+        >>> apply_isotope_mods_to_composition({'C': 6.6, 'H': 12, 'O': 6}, ['13C', '15N'])
         {'H': 12, 'O': 6, '13C': 6.6}
 
     """
 
     isotope_map = parse_isotope_mods(isotopic_mods)
-
+    composition = composition.copy()
     for element, isotope_label in isotope_map.items():
         if element in composition:
 

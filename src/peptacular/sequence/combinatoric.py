@@ -1,6 +1,6 @@
 from typing import List, Union
 
-from peptacular.sequence.proforma import ProFormaAnnotation
+from peptacular.proforma.proforma import ProFormaAnnotation
 from peptacular.sequence.sequence import sequence_to_annotation
 
 

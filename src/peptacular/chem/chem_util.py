@@ -1,16 +1,14 @@
 from __future__ import annotations
 
-import re
 from typing import Dict
 
-from peptacular.constants import HILL_ORDER, ISOTOPIC_ATOMIC_MASSES, ELECTRON_MASS, PROTON_MASS, NEUTRON_MASS, \
-    AVERAGE_ATOMIC_MASSES
+from peptacular.proforma.proforma_dataclasses import Mod
+from peptacular.constants import HILL_ORDER, ISOTOPIC_ATOMIC_MASSES, ELECTRON_MASS, PROTON_MASS, \
+    NEUTRON_MASS, AVERAGE_ATOMIC_MASSES, ISOTOPE_COMPONENT_PATTERN, CONDENSED_CHEM_FORMULA_PATTERN
+from peptacular.proforma.proforma import parse_ion_elements
+
 from peptacular.errors import InvalidChemFormulaError
 from peptacular.util import convert_type
-
-# Compiling regex patterns used in your module
-ISOTOPE_COMPONENT_PATTERN = re.compile(r'([0-9]*)([A-Za-z]+)(-?\d*\.?\d*)')
-CONDENSED_CHEM_FORMULA_PATTERN = re.compile(r'([A-Z][a-z]*|e|p|n)(-?\d*\.?\d*)')
 
 
 def parse_chem_formula(formula: str, sep: str = '') -> Dict[str, int | float]:
@@ -89,7 +87,7 @@ def parse_chem_formula(formula: str, sep: str = '') -> Dict[str, int | float]:
     return combined_comp
 
 
-def write_chem_formula(composition: Dict[str, int | float], sep: str = None, hill_order: bool = False) -> str:
+def write_chem_formula(composition: Dict[str, int | float], sep: str = '', hill_order: bool = False) -> str:
     """
     Writes a chemical formula from a dict mapping elements to their counts.
 
@@ -133,7 +131,7 @@ def write_chem_formula(composition: Dict[str, int | float], sep: str = None, hil
     if hill_order:
         composition = dict(sorted(composition.items(), key=lambda item: HILL_ORDER.get(item[0], 10_000)))
 
-    if sep is not None:
+    if sep != '':
         return sep.join([f'{k}{sep}{v}' for k, v in composition.items() if v != 0])
 
     s = ''
@@ -486,3 +484,93 @@ def _parse_split_chem_formula(formula: str, sep: str) -> Dict[str, int | float]:
             element_counts[element] = count
 
     return element_counts
+
+
+def _parse_adduct_mass(adduct: str, precision: int | None = None, monoisotopic: bool = True) -> float:
+    """
+    Parse an adduct string and return its mass.
+
+    :param adduct: The adduct string to parse.
+    :type adduct: str
+    :param precision: The precision of the mass.
+    :type precision: int
+
+    :raises InvalidDeltaMassError: If the adduct contains an invalid delta mass.
+
+    :return: The mass of the adduct.
+    :rtype: float
+
+    .. code-block:: python
+
+        # Parse an adduct string.
+        >>> _parse_adduct_mass('+Na+', precision=5)
+        22.98922
+
+        >>> _parse_adduct_mass('+2Na+', precision=5)
+        45.97899
+
+        >>> _parse_adduct_mass('H+', precision=5)
+        1.00728
+
+    """
+
+    mass = 0.0
+    element_count, element_symbol, element_charge = parse_ion_elements(adduct)
+
+    if element_symbol == 'e':
+        mass += element_count*ELECTRON_MASS
+
+    else:
+
+        if monoisotopic is True:
+            mass += element_count * ISOTOPIC_ATOMIC_MASSES[element_symbol]
+            mass -= element_charge * ELECTRON_MASS
+        else:
+            mass += element_count * AVERAGE_ATOMIC_MASSES[element_symbol]
+            mass -= element_charge * ELECTRON_MASS
+
+        if precision is not None:
+            mass = round(mass, precision)
+
+    return mass
+
+
+def _parse_charge_adducts_mass(adducts: Mod | str, precision: int | None = None, monoisotopic: bool = True) -> float:
+    """
+    Parse the charge adducts and return their mass.
+
+    :param adducts: The charge adducts to parse.
+    :type adducts: str
+    :param precision: The precision of the mass.
+    :type precision: int
+
+    :raises InvalidDeltaMassError: If the adduct contains an invalid delta mass.
+
+    :return: The mass of the charge adducts.
+    :rtype: float
+
+    .. code-block:: python
+
+        # Parse the charge adducts and return their mass.
+        >>> _parse_charge_adducts_mass('+Na+,+H+', precision=5)
+        23.9965
+
+    """
+
+    if isinstance(adducts, Mod):
+        adducts = adducts.val
+
+    if adducts == '+H+':
+        return PROTON_MASS
+
+    adducts = adducts.split(',')
+
+    mass = 0.0
+
+    for adduct in adducts:
+        mass += _parse_adduct_mass(adduct, None, monoisotopic)
+
+    if precision is not None:
+        mass = round(mass, precision)
+
+    return mass

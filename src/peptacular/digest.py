@@ -12,16 +12,12 @@ from __future__ import annotations
 
 from typing import Union, List
 
-from peptacular import Span
-from peptacular.constants import PROTEASES
-from peptacular.sequence.proforma import ProFormaAnnotation, create_annotation
+from peptacular.spans import Span
+from peptacular.constants import PROTEASES_COMPILED
+from peptacular.proforma.proforma import ProFormaAnnotation, create_annotation
 from peptacular.spans import build_left_semi_spans, build_right_semi_spans, build_non_enzymatic_spans, build_spans
 from peptacular.sequence.sequence import sequence_to_annotation
 from peptacular.util import get_regex_match_indices
-import regex as re
-
-
-PROTEASES_COMPILED = {k: re.compile(v) for k, v in PROTEASES.items()}
 
 
 def _return_digest(annotation: ProFormaAnnotation, spans: List[Span],
@@ -39,6 +35,7 @@ def _return_digest(annotation: ProFormaAnnotation, spans: List[Span],
         return [annotation.serialize() for annotation in annotations]
 
     return annotations
+
 
 def get_left_semi_enzymatic_sequences(sequence: str | ProFormaAnnotation,
                                       min_len: int | None = None,
@@ -313,8 +310,7 @@ def get_enzymatic_sequences(sequence: str | ProFormaAnnotation,
     return _return_digest(annotation, spans, return_str)
 
 
-def get_cleavage_sites(sequence: str | ProFormaAnnotation,
-                       enzyme_regex: str | re.Pattern) -> List[int]:
+def get_cleavage_sites(sequence: str | ProFormaAnnotation, enzyme_regex: str) -> List[int]:
     """
     Return a list of positions where cleavage occurs in input `sequence` based on the provided enzyme regex.
 
@@ -426,10 +422,11 @@ def digest(sequence: str | ProFormaAnnotation,
         >>> digest(sequence='TIDERTIDEK[1]TIDE-[2]', enzyme_regex='([KR])', missed_cleavages=1, min_len=9, semi=True)
         ['TIDERTIDEK[1]', 'TIDEK[1]TIDE-[2]', 'TIDERTIDE', 'IDERTIDEK[1]']
 
-        # Non-specific cleavage sites are also identified
+        # Generate sequences with a non-specific enzyme
         >>> digest(sequence='PEPT', enzyme_regex='non-specific')
         ['P', 'PE', 'PEP', 'E', 'EP', 'EPT', 'P', 'PT', 'T']
 
+        # Modifications are preserved:
         >>> digest(sequence='<13C>T[1][2]IDERTIDEKTIDE', enzyme_regex='([KR])', missed_cleavages=2, min_len=6)
         ['<13C>T[1][2]IDERTIDEK', '<13C>T[1][2]IDERTIDEKTIDE', '<13C>TIDEKTIDE']
 
@@ -452,8 +449,6 @@ def digest(sequence: str | ProFormaAnnotation,
     if isinstance(enzyme_regex, str):
         enzyme_regex = [enzyme_regex]
 
-    enzyme_regex = [PROTEASES_COMPILED.get(regex, re.compile(regex)) for regex in enzyme_regex]
-
     cleavage_sites = []
     for regex in enzyme_regex:
         cleavage_sites.extend(get_cleavage_sites(sequence=annotation, enzyme_regex=regex))
@@ -462,4 +457,3 @@ def digest(sequence: str | ProFormaAnnotation,
                         min_len=min_len, max_len=max_len, semi=semi)
 
     return _return_digest(annotation, spans, return_str)
-

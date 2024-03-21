@@ -29,17 +29,27 @@ pip install peptacular
 ```python
 import peptacular as pt
 
-# Create modified peptide sequence, sequence can be str, float or int, 'PEPTIDE' -> 'P(1.2345)EPTID(1)E[Amide]'
-peptide = pt.add_mods('PEPTIDE', {0: [1.2345], 5: [1], 'c': ['Amide']})
-assert peptide == 'P[1.2345]EPTID[1]E-[Amide]'
+# Add mods to sequence
+sequence = pt.add_mods('P[1.2345]EPTIDE', {5: 1, 'cterm': 'Amide'})
+assert sequence == 'P[1.2345]EPTID[1]E-[Amide]'
 
-# Parse modifications from peptide sequence, 'P[1.2345]EPTID[1]E-[Amide]' -> {0: [1.2345], 5: [1], 'c': ['Amide']}
-parsed_modifications = pt.get_mods(peptide)
-assert parsed_modifications == {0: [1.2345], 5: [1], 'c': ['Amide']}
+# Get mods: mods are returned as a list of Mod objects Mod(value, multiplier)
+mods = pt.get_mods(sequence)
+assert mods == {'cterm': [pt.Mod('Amide', 1)], 0: [pt.Mod(1.2345, 1)], 5: [pt.Mod(1, 1)]}
 
-# Strip modifications from peptide sequence, 'P[1.2345]EPTID[1]E-[Amide]' -> 'PEPTIDE'
-stripped_peptide = pt.strip_mods(peptide)
-assert stripped_peptide == 'PEPTIDE'
+# Strip mods
+stripped_sequence = pt.strip_mods(sequence)
+assert stripped_sequence == 'PEPTIDE'
+
+# Pop mods
+stripped_sequence, mods = pt.pop_mods(sequence)
+assert stripped_sequence == 'PEPTIDE'
+assert mods == {'cterm': [pt.Mod('Amide', 1)], 0: [pt.Mod(1.2345, 1)], 5: [pt.Mod(1, 1)]}
+
+# Reverse sequence
+reverse_sequence = pt.reverse(sequence, swap_terms=False)
+assert reverse_sequence == 'ED[1]ITPEP[1.2345]-[Amide]'
+
 ```
 
 ## Calculating mass and m/z
@@ -111,5 +121,37 @@ peptides = pt.apply_variable_mods('PEPTIDE-[2]', {'P': [['phospho']], '(?<=P)E':
 print(peptides)
 assert peptides == ['P[phospho]E[1]PTIDE-[2]', 'P[phospho]EP[phospho]TIDE-[2]', 'P[phospho]EPTIDE-[2]',
                     'PE[1]P[phospho]TIDE-[2]', 'PE[1]PTIDE-[2]', 'PEP[phospho]TIDE-[2]', 'PEPTIDE-[2]']
+
+```
+
+## Isotopic Distribution
+```python
+import peptacular as pt
+
+# 1) Get the isotopic distribution for a chemical composition:
+formula = {'C': 12, 'H': 6, 'N': 3}
+isotopes = pt.isotopic_distribution(chemical_formula=formula, max_isotopes=3)
+assert isotopes == [(192.05617, 1.0), (193.05321, 0.010959894014211729), (193.05952, 0.1297887395127868)]
+
+# 2) Get the isotopic distribution for a peptide sequence:
+sequence = 'PEPTIDE'
+composition = pt.comp(sequence)
+isotopes = pt.isotopic_distribution(chemical_formula=composition, max_isotopes=3)
+assert isotopes ==  [(799.35997, 1.0), (800.36332, 0.3677347619528959), (801.36668, 0.06562576793973895)]
+
+
+# 3) Get the estimated isotopic distribution for a given mass value
+mass = 1000.0
+composition = pt.estimate_comp(mass)
+isotopes = pt.isotopic_distribution(chemical_formula=composition, max_isotopes=3)
+assert isotopes == [(1000.0000038305802, 1.0), (1001.0033538305802, 0.47589204488021836),
+                     (1002.0067138305802, 0.11066305966308926)]
+
+# 4) By default, the isotopic_distribution function uses the masses of the elements, but it is also possible to use
+#    neutron offsets from the monoisotopic peak.
+sequence = 'PEPTIDE'
+composition = pt.comp(sequence)
+isotopes = pt.isotopic_distribution(chemical_formula=composition, max_isotopes=3, use_neutron_count=True)
+assert isotopes == [(0, 1.0), (1, 0.4051174337315902), (2, 0.11084816056223826)]
 
 ```

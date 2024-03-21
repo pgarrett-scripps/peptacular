@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-from typing import List, Tuple, Dict, Any, Union
+from typing import List, Dict, Any
 
 from peptacular.types import ModValue, IntervalValue
-from peptacular.proforma_dataclasses import Mod, Interval
-from peptacular.types import ACCEPTED_MOD_INPUT
+from peptacular.proforma.proforma_dataclasses import Mod, Interval
 
 
 def convert_to_mod(mod: ModValue) -> Mod:

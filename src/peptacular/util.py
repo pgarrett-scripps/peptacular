@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from typing import Union, List, Tuple, Dict
-import regex as re
+import regex
 
 
 def convert_type(val: str) -> Union[str, int, float]:
@@ -48,7 +48,23 @@ def convert_type(val: str) -> Union[str, int, float]:
             return val
 
 
-def get_regex_match_indices(input_str: str, regex_str: str | re.Pattern, offset: int = 0) -> List[int]:
+def merge_dicts(d1: Dict, d2: Dict) -> Dict:
+    """
+    Merge two dictionaries. And remove any keys with value 0.
+    """
+    d = {}
+    for k, v in d1.items():
+        d[k] = v
+    for k, v in d2.items():
+        d[k] = d.get(k, 0) + v
+
+    # remove any keys with value 0
+    d = {k: v for k, v in d.items() if v != 0}
+
+    return d
+
+
+def get_regex_match_indices(input_str: str, regex_str: str | regex.Pattern, offset: int = 0) -> List[int]:
     """
     Identify the starting indexes of occurrences of a given regex pattern within a string.
 
@@ -66,7 +82,7 @@ def get_regex_match_indices(input_str: str, regex_str: str | re.Pattern, offset:
         >>> get_regex_match_indices("PEPTIDE", "P")
         [0, 2]
 
-        >>> get_regex_match_indices("PEPTIDE", re.compile("E"))
+        >>> get_regex_match_indices("PEPTIDE", regex.compile("E"))
         [1, 6]
 
         # More complex regex
@@ -79,13 +95,13 @@ def get_regex_match_indices(input_str: str, regex_str: str | re.Pattern, offset:
     """
 
     # if regex is compiled
-    if isinstance(regex_str, re.Pattern):
-        return [i.start() + offset for i in regex_str.finditer(input_str)]
+    if isinstance(regex_str, regex.Pattern):
+        return [i.start() + offset for i in regex_str.finditer(input_str, overlapped=True)]
     else:
         return [i[0] for i in get_regex_match_range(input_str, regex_str, offset)]
 
 
-def get_regex_match_range(input_str: str, regex_str: str | re.Pattern, offset: int = 0) -> List[Tuple[int, int]]:
+def get_regex_match_range(input_str: str, regex_str: str | regex.Pattern, offset: int = 0) -> List[Tuple[int, int]]:
     """
     Identify the starting indexes of occurrences of a given regex pattern within a string.
 
@@ -103,7 +119,7 @@ def get_regex_match_range(input_str: str, regex_str: str | re.Pattern, offset: i
         >>> get_regex_match_range("PEPTIDE", "P")
         [(0, 1), (2, 3)]
 
-        >>> get_regex_match_range("PEPTIDE", re.compile("E"))
+        >>> get_regex_match_range("PEPTIDE", regex.compile("E"))
         [(1, 2), (6, 7)]
 
         # More complex regex
@@ -116,12 +132,11 @@ def get_regex_match_range(input_str: str, regex_str: str | re.Pattern, offset: i
     """
 
     # if regex is compiled
-    if isinstance(regex_str, re.Pattern):
+    if isinstance(regex_str, regex.Pattern):
         return [(i.start() + offset, i.end() + offset) for i in regex_str.finditer(input_str)]
     else:
-        return [(match.start() + offset, match.end() + offset) for match in re.finditer(regex_str, input_str,
-                                                                                    overlapped=True)]
-
+        return [(match.start() + offset, match.end() + offset) for match in regex.finditer(regex_str, input_str,
+                                                                                        overlapped=True)]
 
 
 def _validate_span(span: Tuple[int, int, int]) -> None:
@@ -159,5 +174,3 @@ def _validate_span(span: Tuple[int, int, int]) -> None:
         raise ValueError(f'End of span should be non-negative, got {end}.')
     if start > end:
         raise ValueError(f'Start of span: {start}, should be less than or equal to end of span: {end}.')
-
-

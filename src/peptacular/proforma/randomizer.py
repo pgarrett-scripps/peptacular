@@ -5,16 +5,13 @@ from enum import Enum, auto
 from typing import List
 
 from peptacular.mass import mass, comp_mass
-from peptacular.mods.mod_setup import RESID_DB
-from peptacular.proforma_dataclasses import Mod, Interval
-from peptacular.sequence.proforma import ProFormaAnnotation, parse
+from peptacular.proforma.proforma_dataclasses import Mod, Interval
+from peptacular.proforma.proforma import ProFormaAnnotation, parse
 from pyteomics.proforma import parse as parse_proforma, ProForma
 
-# TODO: Take valid values from the respective dicts
+# TODO: Take valid values from the respective dbs
 
-#reset_all_databases()
-
-print(len(RESID_DB))
+# reset_all_databases()
 
 UNIMOD_LEVEL_BASE_MOD_VALS = ['Oxidation', 'UNIMOD:10']
 UNIMOD_LEVEL2_MOD_VALS = ['U:Oxidation', 'U:10', 'U:+1', 'U:-1', 'U:+3.1415', 'U:-3.1415']
@@ -22,20 +19,25 @@ PSI_LEVEL_BASE_MOD_VALS = ['O-phospho-L-serine', 'MOD:00046']
 PSI_LEVEL2_MOD_VALS = ['M:O-phospho-L-serine', 'M:00046', 'M:+1', 'M:-1', 'M:+3.1415', 'M:-3.1415']
 DELTA_MASS_MOD_VALS = ['+1', '-1', '+3.1415', '-3.1415']
 MOD_INFO_VALS = ['INFO:Cool', 'INFO:Awesome', 'INFO:Radical', 'INFO:Amazing', 'INFO:Fantastic']
-CHEM_FORMULA_MOD_VALS = ['Formula:C12H22O11', 'Formula:[13C6]H12O6[12C-4]', 'Formula:CHO', 'Formula:C2H-5O',
-                         'Formula:C']
+CHEM_FORMULA_MOD_VALS = ['Formula:C12H22O11', 'Formula:[13C6]H12O6[12C-4]', 'Formula:CHO', 'Formula:C2H-5O']
 GLYCAN_MOD_VALS = ['Glycan:HexNAc2Hex3Neu1', 'Glycan:Hex', 'Glycan:6BAAE1B1']
 GNO_MOD_VALS = ['GNO:G59626AS', 'GNO:G62765YT', 'G:G59626AS', 'G:G62765YT', 'G:+1', 'G:-1', 'G:+3.1415', 'G:-3.1415']
 RESID_MOD_VALS = ['RESID:AA0581', 'RESID:AA0037', 'R:AA0581', 'R:AA0037', 'R:+1', 'R:-1', 'R:+3.1415', 'R:-3.1415']
 ISOTOPE_MOD_VALS = ['13C', '15N', '18O', '2H', 'T', 'D']
 STATIC_MOD_VALS = ['[Oxidation]@M', '[Oxidation]@M,C,D', '[+1]@C', '[-1]@C', '[+3.1415]@C', '[-3.1415]@C']
 XLMOD_VALS = ['XLMOD:02001', 'XLMOD:02010', 'XLMOD:02000', 'X:02001', 'X:02010', 'X:02000']
-CHARGE_ADDUCTS = ['+H+', '+2Na+,-H+', '+2Na+,+H+', '2I-', '+e-']
+CHARGE_ADDUCT_VALS = ['+H+', '+2Na+,-H+', '+2Na+,+H+', '2I-', '+e-']
 
 TOP_DOWN_MODS = CHEM_FORMULA_MOD_VALS + RESID_MOD_VALS
 CROSS_LINKING_MODS = XLMOD_VALS
 GLYCAN_MODS = GLYCAN_MOD_VALS + GNO_MOD_VALS
-SPECTRUM_MODS = []  # No Additional Mods
+
+BASE_AMINO_ACIDS = "VWPSDCYTAIMHGQENFLKR"
+LEVEL2_AMINO_ACIDS = BASE_AMINO_ACIDS + 'OUBZXJ'
+LEVEL2_AMINO_ACIDS_WITHOUT_AMBIGUITY = BASE_AMINO_ACIDS + 'OU'
+
+BASE_MODS = UNIMOD_LEVEL_BASE_MOD_VALS + PSI_LEVEL_BASE_MOD_VALS + DELTA_MASS_MOD_VALS
+LEVEL2_MODS = UNIMOD_LEVEL2_MOD_VALS + PSI_LEVEL2_MOD_VALS + BASE_MODS
 
 
 # TODO: Need to check that added localization and cross linking mods arr at unoccupied positions (maybe)
@@ -47,14 +49,6 @@ class ProformaComplianceLevel(Enum):
     CROSS_LINKING = auto()
     GLYCAN = auto()
     SPECTRUM = auto()
-
-
-BASE_AMINO_ACIDS = "VWPSDCYTAIMHGQENFLKR"
-LEVEL2_AMINO_ACIDS = BASE_AMINO_ACIDS + 'OUBZXJ'
-LEVEL2_AMINO_ACIDS_WITHOUT_AMBIGUITY = BASE_AMINO_ACIDS + 'OU'
-
-BASE_MODS = UNIMOD_LEVEL_BASE_MOD_VALS + PSI_LEVEL_BASE_MOD_VALS + DELTA_MASS_MOD_VALS
-LEVEL2_MODS = UNIMOD_LEVEL2_MOD_VALS + PSI_LEVEL2_MOD_VALS + BASE_MODS
 
 
 def _random_sequence(amino_acids: str, min_sequence_length: int, max_sequence_length: int) -> str:
@@ -93,7 +87,7 @@ def random_mod(level: ProformaComplianceLevel, count: int = 1, info: bool = Fals
     elif level == ProformaComplianceLevel.GLYCAN:
         return _random_mod(GLYCAN_MODS, count, info)
     elif level == ProformaComplianceLevel.SPECTRUM:
-        return _random_mod(SPECTRUM_MODS, count, info)
+        return _random_mod([], count, info)
     else:
         raise ValueError("Invalid level")
 
@@ -239,7 +233,7 @@ def cross_linking_randomizer(annotation: ProFormaAnnotation):
         score_mods_indices = sample(range(len(annotation)), len(cross_link_mods))
 
         for i, mod in zip(score_mods_indices, cross_link_mods):
-            #annotation.pop_internal_mod(i)
+            # annotation.pop_internal_mod(i)
             annotation.add_internal_mod(i, mod)
 
 
@@ -282,17 +276,20 @@ def spectrum_randomizer(annotation: ProFormaAnnotation):
         mod = _random_mod(STATIC_MOD_VALS, 1, False)
         annotation.add_static_mods(mod)
 
-    # Add adducts
-    if choice([True, False]):
-        annotation.add_charge_adducts(Mod(choice(CHARGE_ADDUCTS),1))
+    if annotation.has_charge():
+
+        # Add adducts
+        if choice([True, False]):
+            annotation.add_charge_adducts(Mod(choice(CHARGE_ADDUCT_VALS), 1))
+
 
 if __name__ == '__main__':
-    for _ in range(10):
+    for _ in range(1000):
         anot = compliance_randomizer(ProformaComplianceLevel.BASE, sequence_ambiguity=False)
         spectrum_randomizer(anot)
-        #top_down_randomizer(anot)
-        #glycan_randomizer(anot)
-        #cross_linking_randomizer(anot)
+        # top_down_randomizer(anot)
+        # glycan_randomizer(anot)
+        # cross_linking_randomizer(anot)
 
         mass(anot)
         sequence = anot.serialize()
@@ -314,5 +311,5 @@ if __name__ == '__main__':
         annotation2.shift(2)
         annotation2.shuffle()
 
-#seq = ProForma.parse('EMEVEESPEK/2[+2Na+,+H+]')
-#print(seq.mass)
+# seq = ProForma.parse('EMEVEESPEK/2[+2Na+,+H+]')
+# print(seq.mass)

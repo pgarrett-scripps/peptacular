@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from typing import Dict
 
-from peptacular.chem_util import write_chem_formula
+from peptacular.chem.chem_util import write_chem_formula
 from peptacular.errors import InvalidGlycanFormulaError
-from peptacular.mods.mod_setup import _glycan_comp, _parse_glycan_formula  # To avoid circular import
+from peptacular.mods.mod_db_setup import _glycan_comp, _parse_glycan_formula  # To avoid circular import
 
 
 def write_glycan_formula(glycan_dict: Dict[str, int | float], sep: str = '') -> str:

@@ -41,17 +41,26 @@ class Mod:
             "mult": self.mult
         }
 
-    def __eq__(self, other: Mod) -> bool:
+    def __eq__(self, other: Mod | str | float | int) -> bool:
+
+        if isinstance(other, (str, float, int)):
+            other = Mod(other, 1)
+
         if self.val != other.val:
             return False
         if self.mult != other.mult:
             return False
         return True
 
-    def __lt__(self, other: Mod) -> bool:
+    def __lt__(self, other: Mod | str | float | int) -> bool:
         """
         Compare two mods (Doesn't Really matter, just for sorting)
         """
+
+        if isinstance(other, (str, float, int)):
+            other = Mod(other, 1)
+
+
         if str(self.val) < str(other.val):
             return True
         if self.val == other.val:

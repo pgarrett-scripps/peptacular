@@ -3,8 +3,8 @@ from __future__ import annotations
 from typing import Dict, List, Generator
 
 from peptacular.sequence.sequence import sequence_to_annotation
-from peptacular.sequence.proforma import ProFormaAnnotation
-from peptacular.proforma_dataclasses import Mod
+from peptacular.proforma.proforma import ProFormaAnnotation
+from peptacular.proforma.proforma_dataclasses import Mod
 from peptacular.types import ModIndex, ModValue
 from peptacular.util import get_regex_match_indices
 from peptacular.input_convert import fix_list_of_list_of_mods, fix_list_of_mods
@@ -27,8 +27,8 @@ def apply_static_mods(sequence: str | ProFormaAnnotation,
     :type nterm_mods: Dict[str, Any]
     :param cterm_mods: Dictionary mapping the C-terminal amino acid to the mass of its modification.
     :type cterm_mods: Dict[str, Any]
-    :param overwrite: If True, existing modifications will be replaced by the new ones.
-    :type overwrite: bool
+    :param mode: overwrite, append, skip
+    :type mode: str
 
     :return: Modified amino acid sequence.
     :rtype: str
@@ -159,16 +159,14 @@ def _apply_variable_mods_rec(mods: Dict[ModIndex, List[List[Mod]]],
 
     :param mods: Dictionary mapping amino acids to the mass of their modifications.
     :type mods: Dict[int, Any]
-    :param sequence: the unmodified sequence.
-    :type sequence: str
+    :param annotation: The annotation to modify.
+    :type annotation: ProFormaAnnotation
     :param index: Current index on the amino acid sequence.
     :type index: int
-    :param current_mods: Dictionary mapping the indices of the amino acids to the mass of their modifications.
-    :type current_mods: Dict[int, str]
     :param max_mod_count: Maximum number of modifications allowed on the amino acid sequence.
     :type max_mod_count: int
-    :param overwrite: If True, existing modifications will be replaced by the new ones.
-    :type overwrite: bool
+    :param mode: overwrite, append, skip
+    :type mode: str
 
     :yield: Modified dictionary mapping the indices of the amino acid sequence to the mass of their modifications.
     :rtype: Generator[Dict[int, float], None, None]
@@ -213,14 +211,14 @@ def _variable_mods_builder(annotation: ProFormaAnnotation,
     """
     Apply variable modifications to a sequence.
 
-    :param sequence: The sequence to be modified.
-    :type sequence: str
+    :param annotation: The annotation to modify.
+    :type annotation: ProFormaAnnotation
     :param mod_map: Dictionary mapping amino acids / regex to a list of modifications
     :type mod_map: Dict[str, List[List[ModValue]]]
     :param max_mods: Maximum number of modifications allowed on the amino acid sequence.
     :type max_mods: int
-    :param overwrite: If True, existing modifications will be replaced by the new ones.
-    :type overwrite: bool
+    :param mode: overwrite, append, skip
+    :type mode: str
 
     :return: List of all possible modified amino acid sequences.
     :rtype: List[str]
@@ -233,8 +231,8 @@ def _variable_mods_builder(annotation: ProFormaAnnotation,
                 new_mod_map.setdefault(mod_index, []).append(list_of_mods)
 
     starting_mod_count = annotation.count_modified_residues()
-    annotations = _apply_variable_mods_rec(new_mod_map, annotation, 0, max_mods + starting_mod_count, mode)
-    return annotations
+    var_annotations = _apply_variable_mods_rec(new_mod_map, annotation, 0, max_mods + starting_mod_count, mode)
+    return var_annotations
 
 
 def apply_variable_mods(sequence: str | ProFormaAnnotation,
@@ -298,8 +296,9 @@ def apply_variable_mods(sequence: str | ProFormaAnnotation,
         >>> apply_variable_mods('(?PE)PTIDE', {'P': [['phospho']]}, 1)
         ['(?P[phospho]E)PTIDE', '(?PE)P[phospho]TIDE', '(?PE)PTIDE']
 
-        >>> apply_variable_mods('PEPTIDE', {'P': [['1']]}, 1, nterm_mods={'P': [['acetyl']]}, cterm_mods={'P': [['amide']]})
-        ['[acetyl]-P[1]EPTIDE', '[acetyl]-PEP[1]TIDE', '[acetyl]-PEPTIDE', 'P[1]EPTIDE', 'PEP[1]TIDE', 'PEPTIDE']
+        # Term mods can also have a regex to match terminus residues
+        >>> apply_variable_mods('PEPTIDE', {'P': [['1']]}, 1, nterm_mods={'P': [['A']]}, cterm_mods={'P': [['B']]})
+        ['[A]-P[1]EPTIDE', '[A]-PEP[1]TIDE', '[A]-PEPTIDE', 'P[1]EPTIDE', 'PEP[1]TIDE', 'PEPTIDE']
 
     """
 
@@ -314,24 +313,24 @@ def apply_variable_mods(sequence: str | ProFormaAnnotation,
     nterm_mods = {k: fix_list_of_list_of_mods(v) for k, v in nterm_mods.items()} if nterm_mods else {}
     cterm_mods = {k: fix_list_of_list_of_mods(v) for k, v in cterm_mods.items()} if cterm_mods else {}
 
-    annotations = []
+    var_annotations = []
     if nterm_mods:
         for regex_str, mods_list in nterm_mods.items():
             for mods in mods_list:
                 nterm_annot = apply_static_mods(annotation, {}, nterm_mods={regex_str: mods}, mode=mode)
                 if nterm_annot != annotation:
-                    annotations.extend(_variable_mods_builder(nterm_annot, mod_map, max_mods, mode=mode))
+                    var_annotations.extend(_variable_mods_builder(nterm_annot, mod_map, max_mods, mode=mode))
 
     if cterm_mods:
         for regex_str, mods_list in cterm_mods.items():
             for mods in mods_list:
                 cterm_annot = apply_static_mods(annotation, {}, cterm_mods={regex_str: mods}, mode=mode)
                 if cterm_annot != annotation:
-                    annotations.extend(_variable_mods_builder(cterm_annot, mod_map, max_mods, mode=mode))
+                    var_annotations.extend(_variable_mods_builder(cterm_annot, mod_map, max_mods, mode=mode))
 
-    annotations.extend(_variable_mods_builder(annotation, mod_map, max_mods, mode=mode))
+    var_annotations.extend(_variable_mods_builder(annotation, mod_map, max_mods, mode=mode))
 
     if input_type == str:
-        return [a.serialize() for a in annotations]
+        return [a.serialize() for a in var_annotations]
 
-    return annotations
+    return var_annotations

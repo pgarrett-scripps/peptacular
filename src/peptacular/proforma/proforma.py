@@ -12,14 +12,11 @@ from typing import Counter as CounterType
 import regex as re
 
 from peptacular.input_convert import fix_list_of_mods, fix_dict_of_mods, fix_interval_input
-from peptacular.proforma_dataclasses import Mod, Interval, are_mods_equal, are_intervals_equal
-from peptacular.constants import AMINO_ACIDS, AMBIGUOUS_AMINO_ACIDS, MASS_AMBIGUOUS_AMINO_ACIDS
+from peptacular.proforma.proforma_dataclasses import Mod, Interval, are_mods_equal, are_intervals_equal
+from peptacular.constants import AMINO_ACIDS, AMBIGUOUS_AMINO_ACIDS, MASS_AMBIGUOUS_AMINO_ACIDS, ADDUCT_PATTERN,\
+    ISOTOPE_NUM_PATTERN, ISOTOPE_NUM_PATTERN
 from peptacular.errors import ProFormaFormatError
 from peptacular.types import ACCEPTED_MOD_INPUT, ACCEPTED_INTERVAL_INPUT
-
-ADDUCT_PATTERN = re.compile(r"([+-]?)(\d*)?([A-Za-z]{1,2}\d*\+?-?)")
-ISOTOPE_NUM_PATTERN = re.compile(r'[0-9]')
-
 
 def _parse_modifications(proforma_sequence: str, opening_bracket: str = '[', closing_bracket: str = ']') -> List[Mod]:
     """

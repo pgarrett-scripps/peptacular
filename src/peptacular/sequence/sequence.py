@@ -30,8 +30,8 @@ import typing
 import regex as re
 from typing import Dict, List, Tuple, Counter, Callable
 
-from peptacular.sequence.proforma import parse, ProFormaAnnotation, serialize, MultiProFormaAnnotation
-from peptacular.proforma_dataclasses import Mod, Interval
+from peptacular.proforma.proforma import parse, ProFormaAnnotation, serialize, MultiProFormaAnnotation
+from peptacular.proforma.proforma_dataclasses import Mod, Interval
 from peptacular.spans import Span
 from peptacular.types import ModDict, ModValue, IntervalValue
 from peptacular.input_convert import fix_list_of_mods, fix_interval_input, fix_intervals_input
