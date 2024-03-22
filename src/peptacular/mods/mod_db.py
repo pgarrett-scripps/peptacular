@@ -2,14 +2,14 @@
 mod_db.py - Functions for getting modification masses and compositions from unimod and psi-mod databases from
 peptacular/data/psi and peptacular/data/unimod.
 """
-from __future__ import annotations
+from typing import Union, Optional
 
 from peptacular.errors import UnknownModificationError, InvalidDeltaMassError, InvalidCompositionError, \
     DeltaMassCompositionError, UnknownModificationMassError
 from peptacular.mods.mod_db_setup import UNIMOD_DB, PSI_MOD_DB, XLMOD_DB, EntryDb, RESID_DB, GNO_DB
 
 
-def _get_mass(db: EntryDb, mod_str: str, orig_str: str, monoisotopic: bool, precision: int | None) -> float:
+def _get_mass(db: EntryDb, mod_str: str, orig_str: str, monoisotopic: bool, precision: Optional[int]) -> float:
     """
     Helper function for getting the mass of a modification from a db.
     """
@@ -75,7 +75,7 @@ def _get_comp(db: EntryDb, mod_str: str, orig_str: str) -> str:
         raise UnknownModificationError(orig_str)
 
 
-def is_unimod_str(unimod_str) -> bool:
+def is_unimod_str(unimod_str: str) -> bool:
     """
     Check if a string is a valid unimod id or name.
 
@@ -140,7 +140,7 @@ def _strip_unimod_str(unimod_str: str) -> str:
         return unimod_str
 
 
-def parse_unimod_mass(mod_str: str, monoisotopic: bool, precision: int = None) -> float:
+def parse_unimod_mass(mod_str: str, monoisotopic: bool, precision: Optional[int] = None) -> float:
     """
     Get the mass of an unimod modification.
 
@@ -148,8 +148,8 @@ def parse_unimod_mass(mod_str: str, monoisotopic: bool, precision: int = None) -
     :type mod_str: str
     :param monoisotopic: Whether to get the monoisotopic mass or the average mass.
     :type monoisotopic: bool
-    :param precision: The number of decimal places to round the mass to.
-    :type precision: int
+    :param precision: The number of decimal places to round the mass to. Default is None.
+    :type precision: Optional[int]
 
     :raises UnknownModificationError: If the mod entry cannot be found.
     :raises UnknownModificationMassError: If the entry has no mass.
@@ -305,7 +305,7 @@ def _strip_psi_str(psi_str: str) -> str:
         return psi_str
 
 
-def parse_psi_mass(mod_str: str, monoisotopic: bool, precision: int = None) -> float:
+def parse_psi_mass(mod_str: str, monoisotopic: bool, precision: Optional[int] = None) -> float:
     """
     Get the mass of a PSI modification.
 
@@ -313,8 +313,8 @@ def parse_psi_mass(mod_str: str, monoisotopic: bool, precision: int = None) -> f
     :type mod_str: str
     :param monoisotopic: Whether to get the monoisotopic mass or the average mass.
     :type monoisotopic: bool
-    :param precision: The number of decimal places to round the mass to.
-    :type precision: int
+    :param precision: The number of decimal places to round the mass to. Default is None.
+    :type precision: Optional[int]
 
     :raises UnknownModificationError: If the mod entry cannot be found.
     :raises UnknownModificationMassError: If the entry has no mass.
@@ -437,7 +437,7 @@ def _strip_xlmod_str(xlmod_str: str) -> str:
         return xlmod_str
 
 
-def parse_xlmod_mass(mod_str: str, monoisotopic: bool, precision: int = None) -> float:
+def parse_xlmod_mass(mod_str: str, monoisotopic: bool, precision: Optional[int] = None) -> float:
     """
     Get the mass of a xlmod modification.
 
@@ -445,8 +445,8 @@ def parse_xlmod_mass(mod_str: str, monoisotopic: bool, precision: int = None) ->
     :type mod_str: str
     :param monoisotopic: Whether to get the monoisotopic mass or the average mass.
     :type monoisotopic: bool
-    :param precision: The number of decimal places to round the mass to.
-    :type precision: int
+    :param precision: The number of decimal places to round the mass to. Default is None.
+    :type precision: Optional[int]
 
     :raises UnknownModificationError: If the mod entry cannot be found.
     :raises UnknownModificationMassError: If the entry has no mass.
@@ -533,7 +533,7 @@ def _strip_resid_str(resid_str: str) -> str:
         return resid_str
 
 
-def parse_resid_mass(mod_str: str, monoisotopic: bool, precision: int = None) -> float:
+def parse_resid_mass(mod_str: str, monoisotopic: bool, precision: Optional[int] = None) -> float:
     """
     Get the mass of a residue modification.
 
@@ -541,8 +541,8 @@ def parse_resid_mass(mod_str: str, monoisotopic: bool, precision: int = None) ->
     :type mod_str: str
     :param monoisotopic: Whether to get the monoisotopic mass or the average mass.
     :type monoisotopic: bool
-    :param precision: The number of decimal places to round the mass to.
-    :type precision: int
+    :param precision: The number of decimal places to round the mass to. Default is None.
+    :type precision: Optional[int]
 
     :raises UnknownModificationError: If the mod entry cannot be found.
     :raises UnknownModificationMassError: If the entry has no mass.
@@ -658,7 +658,7 @@ def _strip_gno_str(gno_str: str) -> str:
         return gno_str
 
 
-def parse_gno_mass(mod_str: str, monoisotopic: bool, precision: int = None) -> float:
+def parse_gno_mass(mod_str: str, monoisotopic: bool, precision: Optional[int] = None) -> float:
     """
     Get the mass of a GNO modification.
 
@@ -666,8 +666,8 @@ def parse_gno_mass(mod_str: str, monoisotopic: bool, precision: int = None) -> f
     :type mod_str: str
     :param monoisotopic: Whether to get the monoisotopic mass or the average mass.
     :type monoisotopic: bool
-    :param precision: The number of decimal places to round the mass to.
-    :type precision: int
+    :param precision: The number of decimal places to round the mass to. Default is None.
+    :type precision: Optional[int]
 
     :raises UnknownModificationError: If the mod entry cannot be found.
     :raises UnknownModificationMassError: If the entry has no mass.

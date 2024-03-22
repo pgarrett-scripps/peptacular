@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from typing import Union, List, Tuple, Dict
 import regex
 
@@ -64,7 +62,7 @@ def merge_dicts(d1: Dict, d2: Dict) -> Dict:
     return d
 
 
-def get_regex_match_indices(input_str: str, regex_str: str | regex.Pattern, offset: int = 0) -> List[int]:
+def get_regex_match_indices(input_str: str, regex_str: Union[str, regex.Pattern], offset: int = 0) -> List[int]:
     """
     Identify the starting indexes of occurrences of a given regex pattern within a string.
 
@@ -101,7 +99,7 @@ def get_regex_match_indices(input_str: str, regex_str: str | regex.Pattern, offs
         return [i[0] for i in get_regex_match_range(input_str, regex_str, offset)]
 
 
-def get_regex_match_range(input_str: str, regex_str: str | regex.Pattern, offset: int = 0) -> List[Tuple[int, int]]:
+def get_regex_match_range(input_str: str, regex_str: Union[str, regex.Pattern], offset: int = 0) -> List[Tuple[int, int]]:
     """
     Identify the starting indexes of occurrences of a given regex pattern within a string.
 

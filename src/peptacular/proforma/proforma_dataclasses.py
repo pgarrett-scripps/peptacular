@@ -1,9 +1,7 @@
-from __future__ import annotations
-
 import copy
 from collections import Counter
 from dataclasses import dataclass
-from typing import List
+from typing import List, Union, Any, Optional, Dict
 
 from peptacular.util import convert_type
 
@@ -13,35 +11,35 @@ class Mod:
     """
     A modification with optional multiplier
     """
-    val: int | float | str
+    val: Union[str, float, int]
     mult: int
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.val = convert_type(self.val)
 
-    def flatten(self) -> List[int | float | str]:
+    def flatten(self) -> List[Union[str, float, int]]:
         return [self.val] * self.mult
 
     def serialize(self, brackets: str) -> str:
         return f"{brackets[0]}{self.val}{brackets[1]}^{self.mult}" if self.mult > 1 else \
             f"{brackets[0]}{self.val}{brackets[1]}"
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash((self.val, self.mult))
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         # keep str quotes for strings but not for numbers
         if isinstance(self.val, str):
             return f"Mod('{self.val}', {self.mult})"
         return f"Mod({self.val}, {self.mult})"
 
-    def dict(self):
+    def dict(self) -> dict[str, Union[str, float, int]]:
         return {
             "val": self.val,
             "mult": self.mult
         }
 
-    def __eq__(self, other: Mod | str | float | int) -> bool:
+    def __eq__(self, other: Any) -> bool:
 
         if isinstance(other, (str, float, int)):
             other = Mod(other, 1)
@@ -52,14 +50,13 @@ class Mod:
             return False
         return True
 
-    def __lt__(self, other: Mod | str | float | int) -> bool:
+    def __lt__(self, other: Any) -> bool:
         """
         Compare two mods (Doesn't Really matter, just for sorting)
         """
 
         if isinstance(other, (str, float, int)):
             other = Mod(other, 1)
-
 
         if str(self.val) < str(other.val):
             return True
@@ -76,9 +73,9 @@ class Interval:
     start: int
     end: int
     ambiguous: bool
-    mods: List[Mod] | None = None
+    mods: Optional[List[Mod]] = None
 
-    def dict(self):
+    def dict(self) -> Dict:
         result = {
             "start": self.start,
             "end": self.end,
@@ -87,10 +84,10 @@ class Interval:
         }
         return result
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"Interval({self.start}, {self.end}, {self.ambiguous}, {self.mods})"
 
-    def __eq__(self, other: Interval) -> bool:
+    def __eq__(self, other: Any) -> bool:
         if self.start != other.start:
             return False
         if self.end != other.end:
@@ -101,22 +98,22 @@ class Interval:
             return False
         return True
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash((self.start, self.end, self.ambiguous, tuple(sorted(self.mods)) if self.mods else None))
 
     def has_mods(self) -> bool:
         return self.mods is not None
 
 
-def are_mods_equal(mods1: List[Mod] | None, mods2: List[Mod] | None) -> bool:
+def are_mods_equal(mods1: Optional[List[Mod]], mods2: Optional[List[Mod]]) -> bool:
     """
     Check if two lists of mods are equal
 
-    :param mods1: List of mods
-    :type mods1: List[Mod]
+    :param mods1: List of mods. Can be None.
+    :type mods1: Optional[List[Mod]]
 
-    :param mods2: List of mods
-    :type mods2: List[Mod]
+    :param mods2: List of mods. Can be None.
+    :type mods2: Optional[List[Mod]]
 
     :return: True if the lists are equal, False otherwise
     :rtype: bool
@@ -155,15 +152,15 @@ def are_mods_equal(mods1: List[Mod] | None, mods2: List[Mod] | None) -> bool:
     return Counter(mods1) == Counter(mods2)
 
 
-def are_intervals_equal(intervals1: List[Interval] | None, intervals2: List[Interval] | None) -> bool:
+def are_intervals_equal(intervals1: Optional[List[Interval]], intervals2: Optional[List[Interval]]) -> bool:
     """
     Check if two lists of intervals are equal
 
-    :param intervals1: List of intervals
-    :type intervals1: List[Interval]
+    :param intervals1: List of intervals. Can be None.
+    :type intervals1: Optional[List[Interval]]
 
-    :param intervals2: List of intervals
-    :type intervals2: List[Interval]
+    :param intervals2: List of intervals. Can be None.
+    :type intervals2: Optional[List[Interval]]
 
     :return: True if the lists are equal, False otherwise
     :rtype: bool

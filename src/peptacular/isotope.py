@@ -1,23 +1,22 @@
 """
 Isotope.py - A module for calculating isotopic distributions of molecules.
 """
-from __future__ import annotations
-
 import sys
-from typing import List, Dict, Tuple, Union
+from typing import List, Dict, Tuple, Union, Optional
 
 from peptacular import constants
+from peptacular.types import ChemComposition
 from peptacular.chem.chem import estimate_comp
 from peptacular.mass import chem_mass
 
 
 def isotopic_distribution(
-        chemical_formula: Dict[str, int | float],
-        max_isotopes: Union[int, None] = None,
-        min_abundance_threshold: Union[float, None] = None,
-        distribution_resolution: Union[int, None] = 5,
+        chemical_formula: ChemComposition,
+        max_isotopes: Optional[int] = None,
+        min_abundance_threshold: Optional[float] = None,
+        distribution_resolution: Union[int] = 5,
         use_neutron_count: bool = False,
-        conv_min_abundance_threshold: Union[float, None] = None) -> List[Tuple[float, float]]:
+        conv_min_abundance_threshold: Optional[float] = None) -> List[Tuple[float, float]]:
     """
     Calculate the isotopic distribution for a given formula.
 

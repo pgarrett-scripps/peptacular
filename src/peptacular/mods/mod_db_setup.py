@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import dataclasses
 import os
 import pickle
@@ -8,15 +6,18 @@ import tempfile
 import warnings
 from collections import Counter
 from functools import cached_property
-from typing import List, Dict, IO, Any
+from typing import List, Dict, IO, Any, Union, Iterator
 
 from peptacular.chem.chem_util import write_chem_formula, _parse_isotope_component, parse_chem_formula, chem_mass, \
     _parse_split_chem_formula
 from peptacular.errors import InvalidChemFormulaError, InvalidGlycanFormulaError
+from peptacular.mods.mod_db_setup import ModEntry
 from peptacular.util import convert_type
 
+from src.peptacular.types import ChemComposition
 
-def _parse_glycan_formula(formula: str, sep: str) -> Dict[str, int | float]:
+
+def _parse_glycan_formula(formula: str, sep: str) -> ChemComposition:
     """
     Here to avoid a circular import. Real function is in peptacular.glycan
     """
@@ -64,7 +65,7 @@ def _parse_glycan_formula(formula: str, sep: str) -> Dict[str, int | float]:
     return d
 
 
-def _glycan_comp(glycan: Dict[str, int] | str, sep: str = '') -> Dict[str, int | float]:
+def _glycan_comp(glycan: Union[ChemComposition, str], sep: str = '') -> ChemComposition:
     """
     Here to avoid a circular import. Real function is in peptacular.glycan
     """
@@ -236,7 +237,7 @@ def _get_parent_ids(term: Dict[str, Any]) -> List[str]:
     return parent_ids
 
 
-def _fix_unimod_entry(entry: ModEntry):
+def _fix_unimod_entry(entry: ModEntry) -> None:
     """
     1 - Unimod entries can have a glycan based composition
     """
@@ -860,12 +861,12 @@ def get_entries(db_type: DbType, file_path: str) -> List[ModEntry]:
 class ModEntry:
     id: str
     name: str
-    mono_mass: float | None
-    avg_mass: float | None
-    composition: str | None
-    synonyms: List[str] | None = None
-    parents: List[str] | None = None
-    entry_type: Any = None
+    mono_mass: Union[float, None]
+    avg_mass: Union[float, None]
+    composition: Union[str, None]
+    synonyms: Union[List[str], None] = None
+    parents: Union[List[str], None] = None
+    entry_type: Union[Any, None] = None
 
     @cached_property
     def calc_mono_mass(self):
@@ -917,36 +918,36 @@ class EntryDb:
         self.use_synonyms = use_synonyms
         self.setup(entries, use_synonyms)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'<EntryDb: {self.entry_type}, Entries: {len(self)}, Use Synonyms: {self.use_synonyms}>'
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f'EntryDb: {self.entry_type}'
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.id_map)
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> ModEntry:
         return self.get_entry_by_id(key)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[ModEntry]:
         return iter(self.id_map.values())
 
-    def __contains__(self, key):
+    def __contains__(self, key: str) -> bool:
         return key in self.id_map
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         if not isinstance(other, EntryDb):
             return False
         return self.entry_type == other.entry_type and self.id_map == other.id_map
 
-    def __ne__(self, other):
+    def __ne__(self, other: Any) -> bool:
         return not self.__eq__(other)
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash((self.entry_type, frozenset(self.id_map.items())))
 
-    def setup(self, entries: List[ModEntry], synonyms: bool = False):
+    def setup(self, entries: List[ModEntry], synonyms: bool = False) -> None:
         self._setup_id_map(entries)
         self._setup_name_map(entries)
         self._setup_synonym_map(entries)
@@ -971,25 +972,25 @@ class EntryDb:
     def contains_avg_mass(self, mass: float, tol: float = 0.1) -> bool:
         return bool(self.get_entries_by_avg_mass(mass, tol))
 
-    def _add_entry_to_id_map(self, entry: ModEntry):
+    def _add_entry_to_id_map(self, entry: ModEntry) -> None:
         if entry.id in self.id_map and self.id_map[entry.id] != entry:
             warnings.warn(f'[{self.entry_type}] Duplicate id: {entry.id}\n{entry}\n{self.id_map[entry.id]}')
         self.id_map[entry.id] = entry
 
-    def _setup_id_map(self, entries: List[ModEntry]):
+    def _setup_id_map(self, entries: List[ModEntry]) -> None:
         for entry in entries:
             self._add_entry_to_id_map(entry)
 
-    def _add_entry_to_name_map(self, entry: ModEntry):
+    def _add_entry_to_name_map(self, entry: ModEntry) -> None:
         if entry.name in self.name_map and self.name_map[entry.name] != entry:
             warnings.warn(f'[{self.entry_type}] Duplicate name: {entry.name}\n{entry}\n{self.name_map[entry.name]}')
         self.name_map[entry.name] = entry
 
-    def _setup_name_map(self, entries: List[ModEntry]):
+    def _setup_name_map(self, entries: List[ModEntry]) -> None:
         for entry in entries:
             self._add_entry_to_name_map(entry)
 
-    def _add_entry_to_synonym_map(self, entry: ModEntry):
+    def _add_entry_to_synonym_map(self, entry: ModEntry) -> None:
 
         if self.use_synonyms is False:
             return
@@ -999,25 +1000,25 @@ class EntryDb:
                 warnings.warn(f'[{self.entry_type}] Duplicate synonym: {syn}\n{entry}\n{self.synonym_map[syn]}')
             self.synonym_map[syn] = entry
 
-    def _setup_synonym_map(self, entries: List[ModEntry]):
+    def _setup_synonym_map(self, entries: List[ModEntry]) -> None:
         for entry in entries:
             self._add_entry_to_synonym_map(entry)
 
-    def _add_entry_to_mono_list(self, entry: ModEntry):
+    def _add_entry_to_mono_list(self, entry: ModEntry) -> None:
         if entry.mono_mass is not None:
             self.mono_mass_map.append(entry)
             self.mono_mass_map.sort(key=lambda x: x.mono_mass)
 
-    def setup_mono_list(self, entries: List[ModEntry]):
+    def setup_mono_list(self, entries: List[ModEntry]) -> None:
         valid_mono_entries = [entry for entry in entries if entry.mono_mass is not None]
         self.mono_mass_map = sorted(valid_mono_entries, key=lambda x: x.mono_mass)
 
-    def _add_entry_to_avg_list(self, entry: ModEntry):
+    def _add_entry_to_avg_list(self, entry: ModEntry) -> None:
         if entry.avg_mass is not None:
             self.avg_mass_map.append(entry)
             self.avg_mass_map.sort(key=lambda x: x.avg_mass)
 
-    def add_entry(self, entries: ModEntry | List[ModEntry]):
+    def add_entry(self, entries: Union[ModEntry, List[ModEntry]]) -> None:
 
         if isinstance(entries, ModEntry):
             entries = [entries]
@@ -1037,7 +1038,7 @@ class EntryDb:
         self.avg_mass_map.sort(key=lambda x: x.avg_mass)
         self.names_sorted = self._get_names_sorted()
 
-    def _setup_avg_list(self, entries: List[ModEntry]):
+    def _setup_avg_list(self, entries: List[ModEntry]) -> None:
         valid_avg_entries = [entry for entry in entries if entry.avg_mass is not None]
         self.avg_mass_map = sorted(valid_avg_entries, key=lambda x: x.avg_mass)
 
@@ -1056,7 +1057,7 @@ class EntryDb:
     def get_entries_by_avg_mass(self, mass: float, tol: float = 0.1) -> List[ModEntry]:
         return [entry for entry in self.avg_mass_map if abs(entry.avg_mass - mass) < tol]
 
-    def reset(self):
+    def reset(self) -> None:
         self.id_map = {}
         self.name_map = {}
         self.synonym_map = {}
@@ -1064,16 +1065,16 @@ class EntryDb:
         self.avg_mass_map = []
         self.names_sorted = []
 
-    def save(self, file: str):
+    def save(self, file: str) -> None:
         with open(file, 'wb') as f:
             pickle.dump(self, f)
 
     @staticmethod
-    def load(file: str):
+    def load(file: str) -> None:
         with open(file, 'rb') as f:
             return pickle.load(f)
 
-    def reload_from_online(self, use_synonyms: bool = False):
+    def reload_from_online(self, use_synonyms: bool = False) -> None:
         """
         Download obo file from the internet and reload the database
         """
@@ -1097,7 +1098,7 @@ class EntryDb:
         # Reload database from the downloaded file
         self.reload_from_file(tmp_file_path, use_synonyms)
 
-    def reload_from_file(self, file: str, use_synonyms: bool = False):
+    def reload_from_file(self, file: str, use_synonyms: bool = False) -> None:
         with open(file, 'r') as f:
             data = _read_obo(f)
 
@@ -1132,7 +1133,7 @@ class EntryDb:
         # print(f'Reloaded {self.entry_type} database from {file}')
         # print('Entries:', len(self))
 
-    def _get_names_sorted(self):
+    def _get_names_sorted(self) -> List[str]:
         synonyms = set(self.synonym_map.keys())
         names = set(self.name_map.keys())
         return sorted(list(synonyms.union(names)), key=lambda x: len(x), reverse=True)
@@ -1175,7 +1176,7 @@ XLMOD_DB.reload_from_file(os.path.join(_obo_path, "xlmod.obo"))
 # RESID_DB.reload_from_file(os.path.join(_obo_path, "psi-mod.obo"))
 
 
-def reload_all_databases_from_online():
+def reload_all_databases_from_online() -> None:
     MONOSACCHARIDES_DB.reload_from_online()
     UNIMOD_DB.reload_from_online()
     PSI_MOD_DB.reload_from_online()
@@ -1184,7 +1185,7 @@ def reload_all_databases_from_online():
     RESID_DB.reload_from_online()
 
 
-def reload_all_databases():
+def reload_all_databases() -> None:
     reset_all_databases()
     MONOSACCHARIDES_DB.reload_from_file(os.path.join(_obo_path, "monosaccharides_updated.obo"))
     UNIMOD_DB.reload_from_file(os.path.join(_obo_path, "unimod.obo"))
@@ -1194,7 +1195,7 @@ def reload_all_databases():
     RESID_DB.reload_from_file(os.path.join(_obo_path, "psi-mod.obo"))
 
 
-def reset_all_databases():
+def reset_all_databases() -> None:
     MONOSACCHARIDES_DB.reset()
     UNIMOD_DB.reset()
     PSI_MOD_DB.reset()

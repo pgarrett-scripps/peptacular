@@ -1,6 +1,6 @@
 import math
 from dataclasses import dataclass
-from typing import List, Tuple, Union, Dict, Any
+from typing import List, Tuple, Union, Dict, Any, Optional
 from peptacular.fragment import Fragment
 from peptacular.sequence.sequence import strip_mods
 
@@ -77,7 +77,7 @@ def get_matched_indices(mz_spectrum1: List[float], mz_spectrum2: List[float], to
 
 def match_spectra(fragments: List[float], mz_spectra: List[float], tolerance_value: float,
                   tolerance_type: str = 'ppm', mode: str = 'closest',
-                  intensity_spectra: Union[List[float], None] = None) -> List[Union[int, None]]:
+                  intensity_spectra: Optional[Union[List[float]]] = None) -> List[Union[int, None]]:
     """
     Matches two m/z spectra based on a specified tolerance value and type.
 
@@ -160,12 +160,12 @@ class FragmentMatch:
     :ivar mz: Experimental m/z value.
     :ivar intensity: Intensity of the experimental m/z value.
     """
-    fragment: Union[Fragment, None]
+    fragment: Optional[Fragment]
     mz: float
     intensity: float
 
     @property
-    def error(self):
+    def error(self) -> float:
         """
         The error between the theoretical and experimental m/z values.
 
@@ -175,7 +175,7 @@ class FragmentMatch:
         return self.theo_mz - self.mz
 
     @property
-    def error_ppm(self):
+    def error_ppm(self) -> float:
         """
         The error between the theoretical and experimental m/z values in parts-per-million (ppm).
 
@@ -185,54 +185,54 @@ class FragmentMatch:
         return self.error / self.fragment.mz * 1e6
 
     @property
-    def charge(self):
+    def charge(self) -> int:
         return abs(self.fragment.charge)
 
     @property
-    def ion_type(self):
+    def ion_type(self) -> str:
         return self.fragment.ion_type
 
     @property
-    def start(self):
+    def start(self) -> int:
         return self.fragment.start
 
     @property
-    def end(self):
+    def end(self) -> int:
         return self.fragment.end
 
     @property
-    def monoisotopic(self):
+    def monoisotopic(self) -> bool:
         return self.fragment.monoisotopic
 
     @property
-    def isotope(self):
+    def isotope(self) -> int:
         return self.fragment.isotope
 
     @property
-    def loss(self):
+    def loss(self) -> float:
         return self.fragment.loss
 
     @property
-    def sequence(self):
+    def sequence(self) -> str:
         return self.fragment.sequence
 
     @property
-    def theo_mz(self):
+    def theo_mz(self) -> float:
         return self.fragment.mz
 
     @property
-    def internal(self):
+    def internal(self) -> bool:
         return self.fragment.internal
 
     @property
-    def label(self):
+    def label(self) -> str:
         return self.fragment.label
 
     @property
-    def parent_sequence(self):
+    def parent_sequence(self) -> str:
         return self.fragment.parent_sequence
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> Dict:
         """
         Converts the FragmentMatch object to a dictionary.
 

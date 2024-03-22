@@ -1,8 +1,6 @@
 """
 fragment.py contains functions for fragmenting peptides
 """
-from __future__ import annotations
-
 from dataclasses import dataclass
 from functools import cached_property
 from typing import List, Generator, Union
@@ -53,7 +51,7 @@ class Fragment:
     monoisotopic: bool
     isotope: int
     loss: float
-    parent_sequence: str | ProFormaAnnotation
+    parent_sequence: Union[str, ProFormaAnnotation]
 
     @cached_property
     def internal(self):
@@ -157,7 +155,7 @@ def _build_fragments(spans: List[Span],
                      losses: List[float],
                      isotopes: List[int],
                      monoisotopic: bool,
-                     sequence: str | ProFormaAnnotation) -> Generator[Fragment, None, None]:
+                     sequence: Union[str, ProFormaAnnotation]) -> Generator[Fragment, None, None]:
     for span in spans:
         for ion_type in ion_types:
             for iso in isotopes:
@@ -168,7 +166,7 @@ def _build_fragments(spans: List[Span],
                                        loss=loss, parent_sequence=sequence)
 
 
-def get_internal_fragments(sequence: str | ProFormaAnnotation,
+def get_internal_fragments(sequence: Union[str, ProFormaAnnotation],
                            ion_types: IonTypeType,
                            charges: ChargeType,
                            monoisotopic: bool = True,
@@ -213,7 +211,7 @@ def get_internal_fragments(sequence: str | ProFormaAnnotation,
     return list(_build_fragments(internal_spans, ion_types, charges, losses, isotopes, monoisotopic, annotation))
 
 
-def get_immonium_fragments(sequence: str | ProFormaAnnotation, charges: ChargeType, monoisotopic: bool = True,
+def get_immonium_fragments(sequence: Union[str, ProFormaAnnotation], charges: ChargeType, monoisotopic: bool = True,
                            isotopes: IsotopeType = 0,
                            losses: LossType = 0.0) -> List[Fragment]:
     """
@@ -263,7 +261,7 @@ def get_immonium_fragments(sequence: str | ProFormaAnnotation, charges: ChargeTy
     return list(_build_fragments(spans, ['I'], charges, losses, isotopes, monoisotopic, annotation))
 
 
-def _get_forward_fragments(sequence: str | ProFormaAnnotation, ion_types: List[str], charges: List[int],
+def _get_forward_fragments(sequence: Union[str, ProFormaAnnotation], ion_types: List[str], charges: List[int],
                            monoisotopic: bool,
                            isotopes: List[int], losses: List[float]) -> List[Fragment]:
     start_span = (0, sequence_length(sequence), 0)
@@ -271,7 +269,7 @@ def _get_forward_fragments(sequence: str | ProFormaAnnotation, ion_types: List[s
     return list(_build_fragments(spans, ion_types, charges, losses, isotopes, monoisotopic, sequence))
 
 
-def _get_backward_fragments(sequence: str | ProFormaAnnotation, ion_types: List[str], charges: List[int],
+def _get_backward_fragments(sequence: Union[str, ProFormaAnnotation], ion_types: List[str], charges: List[int],
                             monoisotopic: bool,
                             isotopes: List[int], losses: List[float]) -> Union[float, List[Fragment]]:
     start_span = (0, sequence_length(sequence), 0)
@@ -279,7 +277,7 @@ def _get_backward_fragments(sequence: str | ProFormaAnnotation, ion_types: List[
     return list(_build_fragments(spans, ion_types, charges, losses, isotopes, monoisotopic, sequence))
 
 
-def get_terminal_fragments(sequence: str | ProFormaAnnotation, ion_types: IonTypeType, charges: ChargeType,
+def get_terminal_fragments(sequence: Union[str, ProFormaAnnotation], ion_types: IonTypeType, charges: ChargeType,
                            monoisotopic: bool = True,
                            isotopes: IsotopeType = 0, losses: LossType = 0.0) -> List[Fragment]:
     """
@@ -328,7 +326,7 @@ def get_terminal_fragments(sequence: str | ProFormaAnnotation, ion_types: IonTyp
     return frags
 
 
-def fragment(sequence: str | ProFormaAnnotation, ion_types: IonTypeType, charges: ChargeType, monoisotopic: bool = True,
+def fragment(sequence: Union[str, ProFormaAnnotation], ion_types: IonTypeType, charges: ChargeType, monoisotopic: bool = True,
              isotopes: IsotopeType = 0, losses: LossType = 0.0) -> List[Fragment]:
     """
     Builds all Fragment objects or a given input 'sequence'.

@@ -1,18 +1,17 @@
-from __future__ import annotations
+from typing import Union
 
-from typing import Dict
-
+from peptacular.types import ChemComposition
 from peptacular.chem.chem_util import write_chem_formula
 from peptacular.errors import InvalidGlycanFormulaError
 from peptacular.mods.mod_db_setup import _glycan_comp, _parse_glycan_formula  # To avoid circular import
 
 
-def write_glycan_formula(glycan_dict: Dict[str, int | float], sep: str = '') -> str:
+def write_glycan_formula(glycan_dict: ChemComposition, sep: str = '') -> str:
     """
     Writes a glycan dictionary to a string.
 
     :param glycan_dict: A dictionary containing the glycan components and their counts.
-    :type glycan_dict: Dict[str, int | float]
+    :type glycan_dict: ChemComposition
     :param sep: The separator to use between the glycan component and its count. Default is an empty string.
     :type sep: str
 
@@ -45,17 +44,17 @@ def write_glycan_formula(glycan_dict: Dict[str, int | float], sep: str = '') -> 
     return sep.join([f'{component}{sep}{count}' for component, count in glycan_dict.items()])
 
 
-def glycan_comp(glycan: Dict[str, int] | str) -> Dict[str, int | float]:
+def glycan_comp(glycan: Union[ChemComposition, str]) -> ChemComposition:
     """
     Converts a glycan dictionary to a chemical formula.
 
     :param glycan: A dictionary containing the glycan components and their counts, or a glycan formula string.
-    :type glycan: dict | str
+    :type glycan: Union[ChemComposition, str]
 
     :raises InvalidGlycanFormulaError: If the glycan formula is invalid.
 
     :return: A dictionary containing the glycan components and their counts.
-    :rtype: Dict[str, int | float]
+    :rtype: ChemComposition
 
     .. code-block:: python
 
@@ -85,7 +84,7 @@ def glycan_comp(glycan: Dict[str, int] | str) -> Dict[str, int | float]:
     return _glycan_comp(glycan)
 
 
-def parse_glycan_formula(formula: str, sep: str = '') -> Dict[str, int | float]:
+def parse_glycan_formula(formula: str, sep: str = '') -> ChemComposition:
     """
     Parses a glycan sequence into its constituent parts.
 
@@ -97,7 +96,7 @@ def parse_glycan_formula(formula: str, sep: str = '') -> Dict[str, int | float]:
     :raises InvalidGlycanFormulaError: If the glycan formula is invalid.
 
     :return: A dictionary containing the glycan components and their counts.
-    :rtype: Dict[str, int | float]
+    :rtype: ChemComposition
 
     .. code-block:: python
 
@@ -139,12 +138,12 @@ def parse_glycan_formula(formula: str, sep: str = '') -> Dict[str, int | float]:
         raise InvalidGlycanFormulaError(formula, e.msg) from e
 
 
-def convert_glycan_formula_to_chem_formula(glycan: Dict[str, int | float] | str) -> str:
+def convert_glycan_formula_to_chem_formula(glycan: Union[ChemComposition, str]) -> str:
     """
     Converts a glycan string or dictionary to a chemical formula.
 
     :param glycan: A dictionary containing the glycan components and their counts, or a glycan formula string.
-    :type glycan: Dict[str, int | float] | str
+    :type glycan: ChemComposition
 
     :raises InvalidGlycanFormulaError: If the glycan formula is invalid.
 

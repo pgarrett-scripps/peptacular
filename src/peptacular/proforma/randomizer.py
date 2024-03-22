@@ -1,8 +1,6 @@
-from __future__ import annotations
-
 from random import randint, choice, sample
 from enum import Enum, auto
-from typing import List
+from typing import List, Union
 
 from peptacular.mass import mass, comp_mass
 from peptacular.proforma.proforma_dataclasses import Mod, Interval
@@ -118,9 +116,11 @@ def random_intervals(level: ProformaComplianceLevel, sequence: str, num_interval
     return intervals
 
 
-def compliance_randomizer(level: ProformaComplianceLevel | int, min_sequence_length: int = 5,
+def compliance_randomizer(level: Union[ProformaComplianceLevel],
+                          min_sequence_length: int = 5,
                           max_sequence_length: int = 50,
-                          mod_prob: float = 0.1, sequence_ambiguity: bool = True) -> ProFormaAnnotation:
+                          mod_prob: float = 0.1,
+                          sequence_ambiguity: bool = True) -> ProFormaAnnotation:
     """
     1) Base Level Support (Technical name: Base-ProForma Compliant)
     Represents the lowest level of compliance, this level involves providing support for:

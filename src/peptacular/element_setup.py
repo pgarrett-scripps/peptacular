@@ -1,6 +1,6 @@
 from copy import deepcopy
 from dataclasses import dataclass
-from typing import Union, List, Dict, Tuple
+from typing import Union, List, Dict, Tuple, Optional
 
 
 @dataclass
@@ -10,7 +10,7 @@ class ElementInfo:
     mass_number: int
     relative_atomic_mass: float
     isotopic_composition: float
-    standard_atomic_weight: Union[List[float], float, None]
+    standard_atomic_weight: Optional[Union[List[float], float]]
     notes: str
 
     def __str__(self) -> str:

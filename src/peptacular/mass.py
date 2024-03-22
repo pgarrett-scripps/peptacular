@@ -1,10 +1,8 @@
 """
 mass.py is a simple module for computing the m/z and mass of an amino acid sequence.
 """
-from __future__ import annotations
-
 import warnings
-from typing import Dict
+from typing import Dict, Union, Optional
 
 from peptacular.constants import PROTON_MASS
 from peptacular.chem.chem import parse_chem_formula, _sequence_comp, _parse_mod_delta_mass_only, estimate_comp
@@ -23,8 +21,8 @@ from peptacular.sequence.sequence import sequence_to_annotation
 from peptacular.types import ChemComposition
 
 
-def comp_mass(sequence: str | ProFormaAnnotation, ion_type: str = 'p',
-              charge: int | None = None, charge_adducts: str | None = None) -> (Dict[str, int], float):
+def comp_mass(sequence: Union[str, ProFormaAnnotation], ion_type: str = 'p',
+              charge: Optional[int] = None, charge_adducts: Optional[str] = None) -> (Dict[str, int], float):
     """
     Get the chemical composition of a peptide sequence and its delta mass.
 
@@ -74,8 +72,8 @@ def comp_mass(sequence: str | ProFormaAnnotation, ion_type: str = 'p',
     return peptide_composition, delta_mass
 
 
-def comp(sequence: str | ProFormaAnnotation, ion_type: str = 'p', estimate_delta: bool = False,
-         charge: int | None = None, charge_adducts: str | None = None) -> Dict[str, int]:
+def comp(sequence: Union[str, ProFormaAnnotation], ion_type: str = 'p', estimate_delta: bool = False,
+         charge: Optional[int] = None, charge_adducts: Optional[str] = None) -> Dict[str, int]:
     """
     Calculates the elemental composition of a peptide sequence, including modifications,
     and optionally estimates the composition based on the delta mass from modifications.
@@ -136,14 +134,14 @@ def comp(sequence: str | ProFormaAnnotation, ion_type: str = 'p', estimate_delta
     return composition
 
 
-def mass(sequence: str | ProFormaAnnotation,
-         charge: int | None = None,
+def mass(sequence: Union[str, ProFormaAnnotation],
+         charge: Optional[int] = None,
          ion_type: str = 'p',
          monoisotopic: bool = True,
          isotope: int = 0,
          loss: float = 0.0,
-         charge_adducts: str | None = None,
-         precision: int | None = None) -> float:
+         charge_adducts: Optional[str] = None,
+         precision: Optional[int] = None) -> float:
     """
     Calculate the mass of an amino acid 'sequence'.
 
@@ -347,14 +345,14 @@ def mass(sequence: str | ProFormaAnnotation,
     return m
 
 
-def mz(sequence: str | ProFormaAnnotation,
-       charge: int | None = None,
+def mz(sequence: Union[str, ProFormaAnnotation],
+       charge: Optional[int] = None,
        ion_type: str = 'p',
        monoisotopic: bool = True,
        isotope: int = 0,
        loss: float = 0.0,
-       charge_adducts: str | None = None,
-       precision: int | None = None) -> float:
+       charge_adducts: Optional[str] = None,
+       precision: Optional[int] = None) -> float:
     """
     Calculate the m/z (mass-to-charge ratio) of an amino acid 'sequence'.
 
@@ -426,9 +424,9 @@ def mz(sequence: str | ProFormaAnnotation,
     return m
 
 
-def glycan_mass(formula: ChemComposition | str,
+def glycan_mass(formula: Union[str, ChemComposition],
                 monoisotopic: bool = True,
-                precision: int | None = None) -> float:
+                precision: Optional[int] = None) -> float:
     """
     Calculate the mass of a glycan formula.
 
@@ -490,7 +488,7 @@ def glycan_mass(formula: ChemComposition | str,
     return m
 
 
-def mod_mass(mod: str | Mod, monoisotopic: bool = True, precision: int | None = None) -> float:
+def mod_mass(mod: Union[str, Mod], monoisotopic: bool = True, precision: Optional[int] = None) -> float:
     """
     Parse a modification string.
 
@@ -557,7 +555,7 @@ def mod_mass(mod: str | Mod, monoisotopic: bool = True, precision: int | None = 
     raise InvalidModificationMassError(mod)
 
 
-def _parse_obs_mass_from_proforma_str(obs_str: str, precision: int | None = None) -> float:
+def _parse_obs_mass_from_proforma_str(obs_str: str, precision: Optional[int] = None) -> float:
     """
     Parse an observed mass string and return its mass.
 
@@ -603,7 +601,7 @@ def _parse_obs_mass_from_proforma_str(obs_str: str, precision: int | None = None
         raise InvalidDeltaMassError(obs_str)
 
 
-def _parse_glycan_mass_from_proforma_str(glycan_str: str, monoisotopic: bool, precision: int | None = None) -> float:
+def _parse_glycan_mass_from_proforma_str(glycan_str: str, monoisotopic: bool, precision: Optional[int] = None) -> float:
     """
     Parse a glycan string and return its mass.
 
@@ -680,7 +678,7 @@ def _parse_glycan_mass_from_proforma_str(glycan_str: str, monoisotopic: bool, pr
             raise InvalidGlycanFormulaError(glycan_str, e.msg) from e
 
 
-def _parse_chem_mass_from_proforma_str(chem_str: str, monoisotopic: bool, precision: int | None = None) -> float:
+def _parse_chem_mass_from_proforma_str(chem_str: str, monoisotopic: bool, precision: Optional[int] = None) -> float:
     """
     Parse a chemical formula string and return its mass.
 
@@ -723,7 +721,7 @@ def _parse_chem_mass_from_proforma_str(chem_str: str, monoisotopic: bool, precis
         raise InvalidChemFormulaError(chem_str, e.msg) from e
 
 
-def _parse_mod_mass(mod: str, monoisotopic: bool = True, precision: int | None = None) -> float | None:
+def _parse_mod_mass(mod: str, monoisotopic: bool = True, precision: Optional[int] = None) -> Union[float, None]:
     """
     Parse a modification and return its mass.
 

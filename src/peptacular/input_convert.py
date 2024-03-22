@@ -1,6 +1,4 @@
-from __future__ import annotations
-
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Union
 
 from peptacular.types import ModValue, IntervalValue
 from peptacular.proforma.proforma_dataclasses import Mod, Interval
@@ -31,12 +29,15 @@ def convert_to_mod(mod: ModValue) -> Mod:
     return Mod(mod, 1)
 
 
-def fix_list_of_list_of_mods(mods: List[List[ModValue]] | List[ModValue] | ModValue) -> List[List[Mod]]:
+def fix_list_of_list_of_mods(mods: Union[List[List[ModValue]], List[ModValue], ModValue]) -> List[List[Mod]]:
     """
     Convert the input mods to a list of lists of Mod instances.
 
-    :param mods:
-    :return:
+    :param mods: Either a list of lists of mods, a list of mods, or a single mod.
+    :type mods: Union[List[List[ModValue]], List[ModValue], ModValue]
+
+    :return: List of lists of Mod instances
+    :return: List[List[Mod]]
 
     .. code-block:: python
 
@@ -77,12 +78,15 @@ def fix_list_of_list_of_mods(mods: List[List[ModValue]] | List[ModValue] | ModVa
     return []
 
 
-def fix_list_of_mods(mods: List[ModValue] | ModValue) -> List[Mod]:
+def fix_list_of_mods(mods: Union[List[ModValue], ModValue]) -> List[Mod]:
     """
     Convert the input mods to a list of lists of Mod instances.
 
-    :param mods:
-    :return:
+    :param mods: Either a list of mods or a single mod.
+    :type mods: Union[List[ModValue], ModValue]
+
+    :return: List of Mod instances
+    :rtype: List[Mod]
 
     .. code-block:: python
 
@@ -111,13 +115,16 @@ def fix_list_of_mods(mods: List[ModValue] | ModValue) -> List[Mod]:
     return []
 
 
-def fix_dict_of_mods(mods: Dict[Any, List[ModValue] | ModValue]) -> Dict[Any, List[Mod]]:
+def fix_dict_of_mods(mods: Dict[Any, Union[List[ModValue], ModValue]]) -> Dict[Any, List[Mod]]:
     """
     Convert the input mods to a dictionary of lists of Mod instances. Mainly used to convert internal mod input to
     the correct format. This will not work when used on the whole mod dict.
 
-    :param mods:
-    :return:
+    :param mods: Dictionary of mods
+    :type mods: Dict[Any, Union[List[ModValue], ModValue]]
+
+    :return: Dictionary of lists of Mod instances
+    :rtype: Dict[Any, List[Mod]]
 
     .. code-block:: python
 
@@ -163,12 +170,12 @@ def fix_interval_input(interval: IntervalValue) -> Interval:
     return Interval(interval[0], interval[1], interval[2], mods)
 
 
-def fix_intervals_input(intervals: List[IntervalValue] | IntervalValue) -> List[Interval]:
+def fix_intervals_input(intervals: Union[List[IntervalValue], IntervalValue]) -> List[Interval]:
     """
     Convert the input intervals to a list of Interval instances.
 
     :param intervals: List of intervals
-    :param intervals: Single interval or list of intervals
+    :param intervals: Union[List[IntervalValue], IntervalValue]
 
     :return: List of Interval instances
     :rtype: List[Interval]

@@ -1,7 +1,6 @@
-from __future__ import annotations
+from typing import Union, Optional
 
-from typing import Dict
-
+from peptacular import ModValue
 from peptacular.proforma.proforma_dataclasses import Mod
 from peptacular.constants import HILL_ORDER, ISOTOPIC_ATOMIC_MASSES, ELECTRON_MASS, PROTON_MASS, \
     NEUTRON_MASS, AVERAGE_ATOMIC_MASSES, ISOTOPE_COMPONENT_PATTERN, CONDENSED_CHEM_FORMULA_PATTERN
@@ -10,8 +9,10 @@ from peptacular.proforma.proforma import parse_ion_elements
 from peptacular.errors import InvalidChemFormulaError
 from peptacular.util import convert_type
 
+from src.peptacular.types import ChemComposition
 
-def parse_chem_formula(formula: str, sep: str = '') -> Dict[str, int | float]:
+
+def parse_chem_formula(formula: str, sep: str = '') -> ChemComposition:
     """
     Parses a chemical formula and returns a dict mapping elements to their counts.
 
@@ -23,7 +24,7 @@ def parse_chem_formula(formula: str, sep: str = '') -> Dict[str, int | float]:
     :raises InvalidFormulaError: If the formula is invalid.
 
     :return: A dictionary with the element and their counts.
-    :rtype: Dict[str, int | float]
+    :rtype: ChemComposition
 
     .. code-block:: python
 
@@ -87,12 +88,12 @@ def parse_chem_formula(formula: str, sep: str = '') -> Dict[str, int | float]:
     return combined_comp
 
 
-def write_chem_formula(composition: Dict[str, int | float], sep: str = '', hill_order: bool = False) -> str:
+def write_chem_formula(composition: ChemComposition, sep: str = '', hill_order: bool = False) -> str:
     """
     Writes a chemical formula from a dict mapping elements to their counts.
 
     :param composition: A dictionary with the element and their counts.
-    :type: composition: Dict[str, int | float]
+    :type: composition: ChemComposition
     :param sep: The separator to use between element and counts. Default is ''.
     :type sep: str
     :param hill_order: Whether to use Hill notation. Default is False.
@@ -146,17 +147,19 @@ def write_chem_formula(composition: Dict[str, int | float], sep: str = '', hill_
     return s
 
 
-def chem_mass(formula: Dict[str, int | float] | str, monoisotopic: bool = True, precision: int | None = None,
+def chem_mass(formula: Union[ChemComposition, str],
+              monoisotopic: bool = True,
+              precision: Optional[int] = None,
               sep: str = '') -> float:
     """
     Calculate the mass of a chemical formula or composition.
 
     :param formula: The chemical formula or composition.
-    :type formula: Dict[str, int | float] | str
-    :param monoisotopic: Whether to use monoisotopic masses.
+    :type formula: Union[ChemComposition, str]
+    :param monoisotopic: Whether to use monoisotopic masses. Default is True.
     :type monoisotopic: bool
-    :param precision: The number of decimal places to round the mass to.
-    :type precision: int
+    :param precision: The number of decimal places to round the mass to. Default is None.
+    :type precision: Optional[int]
     :param sep: The separator to use between element and counts. Default is ''.
     :type sep: str
 
@@ -272,7 +275,7 @@ def _split_chem_formula(formula: str) -> list[str]:
     return components
 
 
-def _parse_isotope_component(formula: str) -> Dict[str, int | float]:
+def _parse_isotope_component(formula: str) -> ChemComposition:
     """
     Parses an isotope notation and returns the element and the mass number.
 
@@ -282,7 +285,7 @@ def _parse_isotope_component(formula: str) -> Dict[str, int | float]:
     :raises InvalidFormulaError: If the formula is invalid.
 
     :return: A dictionary with the element and their counts.
-    :rtype: Dict[str, int | float]
+    :rtype: ChemComposition
 
     .. code-block:: python
 
@@ -340,7 +343,7 @@ def _parse_isotope_component(formula: str) -> Dict[str, int | float]:
     return counts
 
 
-def _parse_condensed_chem_formula(formula: str) -> Dict[str, int | float]:
+def _parse_condensed_chem_formula(formula: str) -> ChemComposition:
     """
     Parses a chemical formula and returns a dict mapping elements to their counts.
 
@@ -350,7 +353,7 @@ def _parse_condensed_chem_formula(formula: str) -> Dict[str, int | float]:
     :raises InvalidFormulaError: If the formula is invalid.
 
     :return: A dictionary with the element and their counts.
-    :rtype: Dict[str, int | float]
+    :rtype: ChemComposition
 
     .. code-block:: python
 
@@ -422,7 +425,7 @@ def _parse_condensed_chem_formula(formula: str) -> Dict[str, int | float]:
     return element_counts
 
 
-def _parse_split_chem_formula(formula: str, sep: str) -> Dict[str, int | float]:
+def _parse_split_chem_formula(formula: str, sep: str) -> ChemComposition:
     """
     Parses a chemical formula and returns a dict mapping elements to their counts.
 
@@ -432,7 +435,7 @@ def _parse_split_chem_formula(formula: str, sep: str) -> Dict[str, int | float]:
     :type sep: str
 
     :return: A dictionary with the element and their counts.
-    :rtype: Dict[str, int | float]
+    :rtype: ChemComposition
 
     .. code-block:: python
 
@@ -486,14 +489,18 @@ def _parse_split_chem_formula(formula: str, sep: str) -> Dict[str, int | float]:
     return element_counts
 
 
-def _parse_adduct_mass(adduct: str, precision: int | None = None, monoisotopic: bool = True) -> float:
+def _parse_adduct_mass(adduct: str,
+                       precision: Optional[int] = None,
+                       monoisotopic: bool = True) -> float:
     """
     Parse an adduct string and return its mass.
 
     :param adduct: The adduct string to parse.
     :type adduct: str
-    :param precision: The precision of the mass.
-    :type precision: int
+    :param precision: The precision of the mass. Default is None.
+    :type precision: Optional[int]
+    :param monoisotopic: Whether to use monoisotopic masses. Default is True.
+    :type monoisotopic: bool
 
     :raises InvalidDeltaMassError: If the adduct contains an invalid delta mass.
 
@@ -535,14 +542,18 @@ def _parse_adduct_mass(adduct: str, precision: int | None = None, monoisotopic: 
     return mass
 
 
-def _parse_charge_adducts_mass(adducts: Mod | str, precision: int | None = None, monoisotopic: bool = True) -> float:
+def _parse_charge_adducts_mass(adducts: ModValue,
+                               precision: Optional[int] = None,
+                               monoisotopic: bool = True) -> float:
     """
     Parse the charge adducts and return their mass.
 
     :param adducts: The charge adducts to parse.
-    :type adducts: str
-    :param precision: The precision of the mass.
-    :type precision: int
+    :type adducts: ModValue
+    :param precision: The precision of the mass. Default is None.
+    :type precision: Optional[int]
+    :param monoisotopic: Whether to use monoisotopic masses. Default is True.
+    :type monoisotopic: bool
 
     :raises InvalidDeltaMassError: If the adduct contains an invalid delta mass.
 
@@ -558,7 +569,10 @@ def _parse_charge_adducts_mass(adducts: Mod | str, precision: int | None = None,
     """
 
     if isinstance(adducts, Mod):
-        adducts = adducts.val
+        return _parse_adduct_mass(adducts.val, precision, monoisotopic)
+
+    if not isinstance(adducts, str):
+        raise TypeError(f'Invalid type for adducts: {type(adducts)}! Must be a string.')
 
     if adducts == '+H+':
         return PROTON_MASS
