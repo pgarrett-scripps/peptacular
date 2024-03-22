@@ -9,7 +9,7 @@ from peptacular.proforma.proforma import parse_ion_elements
 from peptacular.errors import InvalidChemFormulaError
 from peptacular.util import convert_type
 
-from src.peptacular.types import ChemComposition
+from peptacular.types import ChemComposition
 
 
 def parse_chem_formula(formula: str, sep: str = '') -> ChemComposition:
@@ -569,7 +569,7 @@ def _parse_charge_adducts_mass(adducts: ModValue,
     """
 
     if isinstance(adducts, Mod):
-        return _parse_adduct_mass(adducts.val, precision, monoisotopic)
+        return _parse_charge_adducts_mass(adducts.val, precision, monoisotopic)
 
     if not isinstance(adducts, str):
         raise TypeError(f'Invalid type for adducts: {type(adducts)}! Must be a string.')

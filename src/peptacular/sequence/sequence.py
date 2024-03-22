@@ -23,12 +23,9 @@ end of the sequence and if not raise an error.
 
 # TODO: add mode to all mods additions: overwrite, append, skip...
 
-from __future__ import annotations
-
-import typing
-
 import regex as re
-from typing import Dict, List, Tuple, Counter, Callable
+from typing import Dict, List, Tuple, Counter, Callable, Union
+from typing import Counter as CounterType
 
 from peptacular.proforma.proforma import parse, ProFormaAnnotation, serialize, MultiProFormaAnnotation
 from peptacular.proforma.proforma_dataclasses import Mod, Interval
@@ -58,12 +55,12 @@ def sequence_to_annotation(sequence: str) -> ProFormaAnnotation:
     return annotation
 
 
-def sequence_length(sequence: str | ProFormaAnnotation) -> int:
+def sequence_length(sequence: Union[str, ProFormaAnnotation]) -> int:
     """
     Compute the length of the peptide sequence based on the unmodified sequence.
 
     :param sequence: The sequence or ProFormaAnnotation object.
-    :type sequence: str | ProFormaAnnotation
+    :type sequence: Union[str, ProFormaAnnotation]
 
     :raises ValueError: If the input sequence contains multiple sequences.
     :raises ProFormaFormatError: if the proforma sequence is not valid
@@ -95,12 +92,12 @@ def sequence_length(sequence: str | ProFormaAnnotation) -> int:
     return len(annotation)
 
 
-def is_ambiguous(sequence: str | ProFormaAnnotation) -> bool:
+def is_ambiguous(sequence: Union[str, ProFormaAnnotation]) -> bool:
     """
     Check if the sequence contains ambiguous amino acids.
 
     :param sequence: The sequence or ProFormaAnnotation object.
-    :type sequence: str | ProFormaAnnotation
+    :type sequence: Union[str, ProFormaAnnotation]
 
     :raises ValueError: If the input sequence contains multiple sequences.
     :raises ProFormaFormatError: if the proforma sequence is not valid
@@ -135,12 +132,12 @@ def is_ambiguous(sequence: str | ProFormaAnnotation) -> bool:
     return annotation.contains_sequence_ambiguity()
 
 
-def is_modified(sequence: str | ProFormaAnnotation) -> bool:
+def is_modified(sequence: Union[str, ProFormaAnnotation]) -> bool:
     """
     Check if the sequence contains any modifications.
 
     :param sequence: The sequence or ProFormaAnnotation object.
-    :type sequence: str | ProFormaAnnotation
+    :type sequence: Union[str, ProFormaAnnotation]
 
     :raises ValueError: If the input sequence contains multiple sequences.
     :raises ProFormaFormatError: if the proforma sequence is not valid
@@ -167,7 +164,7 @@ def is_modified(sequence: str | ProFormaAnnotation) -> bool:
 
     return annotation.has_mods()
 
-def get_mods(sequence: str | ProFormaAnnotation) -> ModDict:
+def get_mods(sequence: Union[str, ProFormaAnnotation]) -> ModDict:
     """
     Parses a sequence with modifications and returns a dictionary where keys represent the position/type of the
     modifications.
@@ -186,7 +183,7 @@ def get_mods(sequence: str | ProFormaAnnotation) -> ModDict:
     - charge adducts are mapped to the index 'charge_adducts'
 
     :param sequence: The sequence or ProFormaAnnotation object.
-    :type sequence: str | ProFormaAnnotation
+    :type sequence: Union[str, ProFormaAnnotation]
 
     :raises ValueError: If the input sequence contains multiple sequences.
     :raises ProFormaFormatError: if the proforma sequence is not valid
@@ -249,15 +246,15 @@ def get_mods(sequence: str | ProFormaAnnotation) -> ModDict:
     return annotation.mod_dict()
 
 
-def add_mods(sequence: str | ProFormaAnnotation,
-             mods: Dict[str | int, List[ModValue] | ModValue | IntervalValue | List[IntervalValue] | None],
+def add_mods(sequence: Union[str, ProFormaAnnotation],
+             mods: Dict,
              append: bool = True) -> str:
     """
     Adds modifications to the given sequence. The modifications can be of type Mod, str, int, or float, and can be
     a single value or a list of values. The modifications will be added to the sequence in the order they are provided.
 
     :param sequence: The sequence or ProFormaAnnotation object.
-    :type sequence: str | ProFormaAnnotation
+    :type sequence: Union[str, ProFormaAnnotation]
     :param mods: Dictionary representing the modifications to be added to the sequence.
     :type mods: Dict[str | int, List[ModValue] | ModValue]
     :param append: If True, the modifications will be appended to the existing modifications.
@@ -327,12 +324,12 @@ def add_mods(sequence: str | ProFormaAnnotation,
     return serialize(annotation)
 
 
-def condense_static_mods(sequence: str | ProFormaAnnotation) -> str:
+def condense_static_mods(sequence: Union[str, ProFormaAnnotation]) -> str:
     """
     Condenses static modifications into internal modifications.
 
     :param sequence: The sequence or ProFormaAnnotation object.
-    :type sequence: str | ProFormaAnnotation
+    :type sequence: Union[str, ProFormaAnnotation]
 
     :raises ValueError: If the input sequence contains multiple sequences.
     :raises ProFormaFormatError: if the proforma sequence is not valid
@@ -372,13 +369,13 @@ def condense_static_mods(sequence: str | ProFormaAnnotation) -> str:
     return annotation.condense_static_mods().serialize()
 
 
-def pop_mods(sequence: str | ProFormaAnnotation) -> Tuple[str, ModDict]:
+def pop_mods(sequence: Union[str, ProFormaAnnotation]) -> Tuple[str, ModDict]:
     """
     Removes all modifications from the given sequence, returning the unmodified sequence and a dictionary of the
     removed modifications.
 
     :param sequence: The sequence or ProFormaAnnotation object.
-    :type sequence: str | ProFormaAnnotation
+    :type sequence: Union[str, ProFormaAnnotation]
 
     :raises ValueError: If the input sequence contains multiple sequences.
     :raises ProFormaFormatError: if the proforma sequence is not valid
@@ -402,12 +399,12 @@ def pop_mods(sequence: str | ProFormaAnnotation) -> Tuple[str, ModDict]:
     return annotation.sequence, annotation.mod_dict()
 
 
-def strip_mods(sequence: str | ProFormaAnnotation) -> str:
+def strip_mods(sequence: Union[str, ProFormaAnnotation]) -> str:
     """
     Strips all modifications from the given sequence, returning the unmodified sequence.
 
     :param sequence: The sequence or ProFormaAnnotation object.
-    :type sequence: str | ProFormaAnnotation
+    :type sequence: Union[str, ProFormaAnnotation]
 
     :raises ValueError: If the input sequence contains multiple sequences.
     :raises ProFormaFormatError: if the proforma sequence is not valid
@@ -456,12 +453,12 @@ def strip_mods(sequence: str | ProFormaAnnotation) -> str:
     return annotation.sequence
 
 
-def reverse(sequence: str | ProFormaAnnotation, swap_terms: bool = False) -> str:
+def reverse(sequence: Union[str, ProFormaAnnotation], swap_terms: bool = False) -> str:
     """
     Reverses the sequence, while preserving the position of any modifications.
 
     :param sequence: The sequence or ProFormaAnnotation object.
-    :type sequence: str | ProFormaAnnotation
+    :type sequence: Union[str, ProFormaAnnotation]
     :param swap_terms: If True, the N- and C-terminal modifications will be swapped.
     :type swap_terms: bool
 
@@ -500,12 +497,12 @@ def reverse(sequence: str | ProFormaAnnotation, swap_terms: bool = False) -> str
     return reversed_annotation.serialize()
 
 
-def shuffle(sequence: str | ProFormaAnnotation, seed: int = None) -> str:
+def shuffle(sequence: Union[str, ProFormaAnnotation], seed: int = None) -> str:
     """
     Shuffles the sequence, while preserving the position of any modifications.
 
     :param sequence: The sequence or ProFormaAnnotation object.
-    :type sequence: str | ProFormaAnnotation
+    :type sequence: Union[str, ProFormaAnnotation]
     :param seed: Seed for the random number generator.
     :type seed: int
 
@@ -540,12 +537,12 @@ def shuffle(sequence: str | ProFormaAnnotation, seed: int = None) -> str:
     return shifted_annotation.serialize()
 
 
-def shift(sequence: str | ProFormaAnnotation, n: int) -> str:
+def shift(sequence: Union[str, ProFormaAnnotation], n: int) -> str:
     """
     Shifts the sequence to the left by a given number of positions, while preserving the position of any modifications.
 
     :param sequence: The sequence or ProFormaAnnotation object.
-    :type sequence: str | ProFormaAnnotation
+    :type sequence: Union[str, ProFormaAnnotation]
     :param n: The number of positions to shift the sequence to the left.
     :type n: int
 
@@ -587,12 +584,12 @@ def shift(sequence: str | ProFormaAnnotation, n: int) -> str:
     return shifted_annotation.serialize()
 
 
-def span_to_sequence(sequence: str | ProFormaAnnotation, span: Span) -> str:
+def span_to_sequence(sequence: Union[str, ProFormaAnnotation], span: Span) -> str:
     """
     Extracts a subsequence from the input sequence based on the provided span.
 
     :param sequence: The sequence or ProFormaAnnotation object.
-    :type sequence: str | ProFormaAnnotation
+    :type sequence: Union[str, ProFormaAnnotation]
     :param span: A tuple representing the span of the subsequence to be extracted.
     :type span: Tuple[int, int, int]
 
@@ -638,12 +635,12 @@ def span_to_sequence(sequence: str | ProFormaAnnotation, span: Span) -> str:
     return sliced_annotation.serialize()
 
 
-def split(sequence: str | ProFormaAnnotation) -> List[str]:
+def split(sequence: Union[str, ProFormaAnnotation]) -> List[str]:
     """
     Splits sequence into a list of amino acids, preserving modifications.
 
     :param sequence: The sequence or ProFormaAnnotation object.
-    :type sequence: str | ProFormaAnnotation
+    :type sequence: Union[str, ProFormaAnnotation]
 
     :raises ValueError: If the input sequence contains multiple sequences.
     :raises ProFormaFormatError: if the proforma sequence is not valid
@@ -673,12 +670,12 @@ def split(sequence: str | ProFormaAnnotation) -> List[str]:
     return [annot.serialize() for annot in annotation.split()]
 
 
-def count_residues(sequence: str | ProFormaAnnotation) -> typing.Counter:
+def count_residues(sequence: Union[str, ProFormaAnnotation]) -> CounterType:
     """
     Counts the occurrences of each amino acid in the input sequence.
 
     :param sequence: The sequence or ProFormaAnnotation object.
-    :type sequence: str | ProFormaAnnotation
+    :type sequence: Union[str, ProFormaAnnotation]
 
     :raises ValueError: If the input sequence contains multiple sequences.
     :raises ProFormaFormatError: if the proforma sequence is not valid
@@ -713,15 +710,15 @@ def count_residues(sequence: str | ProFormaAnnotation) -> typing.Counter:
     return new_annotation.count_residues()
 
 
-def is_subsequence(subsequence: str | ProFormaAnnotation, sequence: str | ProFormaAnnotation, order: bool = True) -> bool:
+def is_subsequence(subsequence: Union[str, ProFormaAnnotation], sequence: Union[str, ProFormaAnnotation], order: bool = True) -> bool:
     """
     Checks if the input subsequence is a subsequence of the input sequence. If order is True, the subsequence must be in
     the same order as in the sequence. If order is False, the subsequence can be in any order.
 
     :param subsequence: The sequence or ProFormaAnnotation object, representing the subsequence.
-    :type subsequence: str | ProFormaAnnotation
+    :type subsequence: Union[str, ProFormaAnnotation]
     :param sequence: The sequence or ProFormaAnnotation object, representing the sequence.
-    :type sequence: str | ProFormaAnnotation
+    :type sequence: Union[str, ProFormaAnnotation]
     :param order: If True, the subsequence must be in the same order as in the sequence.
     :type order: bool
 
@@ -786,12 +783,12 @@ def _sort_mods(mods: ModDict, sort_function: Callable[[str], str] = lambda x: st
         mods[k].sort(key=sort_function)
 
 
-def sort(sequence: str | ProFormaAnnotation) -> str:
+def sort(sequence: Union[str, ProFormaAnnotation]) -> str:
     """
     Sorts the input sequence using the provided sort function. Terminal sequence are kept in place.
 
     :param sequence: The sequence or ProFormaAnnotation object.
-    :type sequence: str | ProFormaAnnotation
+    :type sequence: Union[str, ProFormaAnnotation]
 
     :raises ValueError: If the input sequence contains multiple sequences.
     :raises ProFormaFormatError: if the proforma sequence is not valid
@@ -822,16 +819,16 @@ def sort(sequence: str | ProFormaAnnotation) -> str:
     return sorted_annotation.serialize()
 
 
-def find_subsequence_indices(sequence: str | ProFormaAnnotation,
-                             subsequence: str | ProFormaAnnotation,
+def find_subsequence_indices(sequence: Union[str, ProFormaAnnotation],
+                             subsequence: Union[str, ProFormaAnnotation],
                              ignore_mods: bool = False) -> List[int]:
     """
     Retrieves all starting indexes of a given subsequence within a sequence.
 
     :param sequence: The sequence or ProFormaAnnotation objectto look for the 'subsequence' in.
-    :type sequence: str | ProFormaAnnotation
+    :type sequence: Union[str, ProFormaAnnotation]
     :param subsequence: The sequence or ProFormaAnnotation object to be found within 'sequence'.
-    :type subsequence: str | ProFormaAnnotation
+    :type subsequence: Union[str, ProFormaAnnotation]
     :param ignore_mods: Whether to ignore modifications.
     :type ignore_mods: bool
 
@@ -888,8 +885,8 @@ def find_subsequence_indices(sequence: str | ProFormaAnnotation,
     return subsequence.find_indices(sequence)
 
 
-def coverage(sequence: str | ProFormaAnnotation,
-             subsequences: List[str | ProFormaAnnotation],
+def coverage(sequence: Union[str, ProFormaAnnotation],
+             subsequences: List[Union[str, ProFormaAnnotation]],
              accumulate: bool = False,
              ignore_mods: bool = False) -> List[int]:
     """
@@ -899,9 +896,9 @@ def coverage(sequence: str | ProFormaAnnotation,
     is covered by at least one peptide and 0 otherwise.
 
     :param sequence: The sequence or ProFormaAnnotation object to be covered.
-    :type sequence: str | ProFormaAnnotation
+    :type sequence: Union[str, ProFormaAnnotation]
     :param subsequences: The sequence's or ProFormaAnnotation object's subsequences to be used for coverage.
-    :type subsequences: List[str | ProFormaAnnotation]
+    :type subsequences: List[Union[str, ProFormaAnnotation]]
     :param accumulate: If True, the coverage array will be accumulated, i.e. if a position is covered by more than
                         one subsequence, it will be marked as the sum of the number of subsequences covering it.
                         If False, the coverage array will be binary, i.e. if a position is covered by more than one
@@ -950,16 +947,16 @@ def coverage(sequence: str | ProFormaAnnotation,
     return cov_arr
 
 
-def percent_coverage(sequence: str | ProFormaAnnotation,
-                     subsequences: List[str | ProFormaAnnotation],
+def percent_coverage(sequence: Union[str, ProFormaAnnotation],
+                     subsequences: List[Union[str, ProFormaAnnotation]],
                      ignore_mods: bool = False) -> float:
     """
     Calculates the coverage given a list of subsequences.
 
     :param sequence: The sequence or ProFormaAnnotation object to be covered.
-    :type sequence: str | ProFormaAnnotation
+    :type sequence: Union[str, ProFormaAnnotation]
     :param subsequences: The sequence's or ProFormaAnnotation object's subsequences to be used for coverage.
-    :type subsequences: List[str | ProFormaAnnotation]
+    :type subsequences: List[Union[str, ProFormaAnnotation]]
     :param ignore_mods: Whether to ignore modifications when calcualting the coverage.
     :type ignore_mods: bool
 

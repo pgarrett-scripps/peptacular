@@ -11,11 +11,51 @@ from typing import List, Dict, IO, Any, Union, Iterator
 from peptacular.chem.chem_util import write_chem_formula, _parse_isotope_component, parse_chem_formula, chem_mass, \
     _parse_split_chem_formula
 from peptacular.errors import InvalidChemFormulaError, InvalidGlycanFormulaError
-from peptacular.mods.mod_db_setup import ModEntry
 from peptacular.util import convert_type
+from peptacular.types import ChemComposition
 
-from src.peptacular.types import ChemComposition
 
+@dataclasses.dataclass
+class ModEntry:
+    id: str
+    name: str
+    mono_mass: Union[float, None]
+    avg_mass: Union[float, None]
+    composition: Union[str, None]
+    synonyms: Union[List[str], None] = None
+    parents: Union[List[str], None] = None
+    entry_type: Union[Any, None] = None
+
+    @cached_property
+    def calc_mono_mass(self):
+        if self.composition is not None:
+            try:
+                return chem_mass(self.composition, monoisotopic=True)
+            except InvalidChemFormulaError:  # could be glycan
+                return chem_mass(_glycan_comp(self.composition), monoisotopic=True)
+
+        return None
+
+    @cached_property
+    def calc_avg_mass(self):
+        if self.composition is not None:
+            try:
+                return chem_mass(self.composition, monoisotopic=False)
+            except InvalidChemFormulaError:  # could be glycan
+                return chem_mass(_glycan_comp(self.composition), monoisotopic=False)
+        return None
+
+    def dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'mono_mass': self.mono_mass,
+            'avg_mass': self.avg_mass,
+            'composition': self.composition,
+            'synonyms': self.synonyms,
+            'parents': self.parents,
+            'entry_type': self.entry_type
+        }
 
 def _parse_glycan_formula(formula: str, sep: str) -> ChemComposition:
     """
@@ -856,48 +896,6 @@ def get_entries(db_type: DbType, file_path: str) -> List[ModEntry]:
     else:
         raise ValueError(f"Invalid type: {db_type}")
 
-
-@dataclasses.dataclass
-class ModEntry:
-    id: str
-    name: str
-    mono_mass: Union[float, None]
-    avg_mass: Union[float, None]
-    composition: Union[str, None]
-    synonyms: Union[List[str], None] = None
-    parents: Union[List[str], None] = None
-    entry_type: Union[Any, None] = None
-
-    @cached_property
-    def calc_mono_mass(self):
-        if self.composition is not None:
-            try:
-                return chem_mass(self.composition, monoisotopic=True)
-            except InvalidChemFormulaError:  # could be glycan
-                return chem_mass(_glycan_comp(self.composition), monoisotopic=True)
-
-        return None
-
-    @cached_property
-    def calc_avg_mass(self):
-        if self.composition is not None:
-            try:
-                return chem_mass(self.composition, monoisotopic=False)
-            except InvalidChemFormulaError:  # could be glycan
-                return chem_mass(_glycan_comp(self.composition), monoisotopic=False)
-        return None
-
-    def dict(self):
-        return {
-            'id': self.id,
-            'name': self.name,
-            'mono_mass': self.mono_mass,
-            'avg_mass': self.avg_mass,
-            'composition': self.composition,
-            'synonyms': self.synonyms,
-            'parents': self.parents,
-            'entry_type': self.entry_type
-        }
 
 
 class EntryDb:

@@ -1828,7 +1828,7 @@ class _ProFormaParser:
         self._intervals = None
         self._current_connection = None
 
-    def parse(self) -> Generator[(ProFormaAnnotation, bool), None, None]:
+    def parse(self) -> Generator[Tuple[ProFormaAnnotation, bool], None, None]:
         """
         Parse the proforma sequence, yielding annotations and connections
 

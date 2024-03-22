@@ -1,6 +1,4 @@
-from __future__ import annotations
-
-from typing import Dict, List, Generator
+from typing import Dict, List, Generator, Union, Optional
 
 from peptacular.sequence.sequence import sequence_to_annotation
 from peptacular.proforma.proforma import ProFormaAnnotation
@@ -10,11 +8,11 @@ from peptacular.util import get_regex_match_indices
 from peptacular.input_convert import fix_list_of_list_of_mods, fix_list_of_mods
 
 
-def apply_static_mods(sequence: str | ProFormaAnnotation,
-                      residue_mods: Dict[str, List[ModValue] | ModValue],
-                      nterm_mods: Dict[str, List[ModValue] | ModValue] | None = None,
-                      cterm_mods: Dict[str, List[ModValue] | ModValue] | None = None,
-                      mode: str = 'skip') -> str | ProFormaAnnotation:
+def apply_static_mods(sequence: Union[str, ProFormaAnnotation],
+                      residue_mods: Dict[str, Union[List[ModValue], ModValue]],
+                      nterm_mods: Optional[Dict[str, Union[List[ModValue], ModValue]]] = None,
+                      cterm_mods: Optional[Dict[str, Union[List[ModValue], ModValue]]] = None,
+                      mode: str = 'skip') -> Union[str, ProFormaAnnotation]:
     """
     Add static modifications to an amino acid sequence. If a modification is already present in the sequence,
     it will be replaced by the new one.
@@ -235,12 +233,12 @@ def _variable_mods_builder(annotation: ProFormaAnnotation,
     return var_annotations
 
 
-def apply_variable_mods(sequence: str | ProFormaAnnotation,
-                        mod_map: Dict[str, List[List[ModValue]] | List[ModValue] | ModValue],
+def apply_variable_mods(sequence: Union[str, ProFormaAnnotation],
+                        mod_map: Dict[str, Union[List[List[ModValue]], List[ModValue], ModValue]],
                         max_mods: int,
-                        nterm_mods: Dict[str, List[List[ModValue]] | List[ModValue] | ModValue] | None = None,
-                        cterm_mods: Dict[str, List[List[ModValue]] | List[ModValue] | ModValue] | None = None,
-                        mode: str = 'skip') -> List[str] | List[ProFormaAnnotation]:
+                        nterm_mods: Optional[Dict[str, Union[List[List[ModValue]], List[ModValue], ModValue]]] = None,
+                        cterm_mods: Optional[Dict[str, Union[List[List[ModValue]], List[ModValue], ModValue]]] = None,
+                        mode: str = 'skip') -> Union[List[str], List[ProFormaAnnotation]]:
     """
     Apply variable modifications to a sequence.
 
