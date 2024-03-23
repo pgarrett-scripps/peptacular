@@ -5,14 +5,13 @@ All notable changes to this project will be documented in this file.
 
 
 TODO:
-- Fix Fragment internal ions (might not be correct)
-- Fix Terminal Fragment neutral masses (these are not correct, since they don't really exist)
-- Add precursor ion type and remove last terminal fragment ion (since they don't exist)?
-- Ambiguous error? + some other unique errors
-- figure out what to do with testing suite as I moved most of the tests to docstrings
-- fix mod_dict (its messy and has lots of code duplication), possibly make new package for it similar to psims
-- improve errors messages, there are a quite a few now
-- Fix charge adduct handling (its a mess)
+- Fix internal fragment ions (Some might not be correct).
+- Cleanup custom erros as many are not used.
+- Update tests
+- Fix charge adduct handling, its probably wrong...
+- Add a mode to all mods additions: overwrite, append, skip...
+- Take valid mod values from the respective dbs for randomizer
+
 
 ## [2.0.0]
 ### Added:
@@ -30,7 +29,7 @@ TODO:
 - gno, resid, and xlmod support
 - randomizer.py for generating random proforma sequences
 - added mods module to handle loading obo files and finding mods
-- make reloading safer
+- added fragmenter to fragment.py
 
 ### Changed:
 - Terminal modifications notation has been changed to use []- and -[] for N- and C-terminal modifications, respectively
@@ -41,6 +40,8 @@ TODO:
 - moved combinatorics funcs to combinatorics.py
 - mass, fragment, digest, sequence, chem, glycan, and isotope are accessible from peptacular base (suggest using import peptacular as pt)
 - Most functions now call back to a ProFormaAnnotation object
+- sped up digest and fragment functions
+- Improved docs
 
 ## [1.3.0]
 ### Added:

@@ -218,7 +218,7 @@ def _get_terminal_fragments(annotation: ProFormaAnnotation,
 
 
 def fragment(sequence: Union[str, ProFormaAnnotation],
-             ion_types: List[str],
+             ion_types: Union[List[str], str],
              charges: Union[List[int], int],
              monoisotopic: bool = True,
              isotopes: Union[List[int], int] = 0,
@@ -348,7 +348,7 @@ class Fragmenter:
                                 component in self.components]
 
     def fragment(self,
-                 ion_types: List[str],
+                 ion_types: Union[List[str], str],
                  charges: Union[List[int], int],
                  isotopes: Union[List[int], int] = 0,
                  losses: Union[List[float], float] = 0.0,

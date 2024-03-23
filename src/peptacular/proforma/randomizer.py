@@ -7,8 +7,6 @@ from peptacular.proforma.proforma_dataclasses import Mod, Interval
 from peptacular.proforma.proforma import ProFormaAnnotation, parse
 from pyteomics.proforma import parse as parse_proforma, ProForma
 
-# TODO: Take valid values from the respective dbs
-
 # reset_all_databases()
 
 UNIMOD_LEVEL_BASE_MOD_VALS = ['Oxidation', 'UNIMOD:10']
@@ -37,8 +35,6 @@ LEVEL2_AMINO_ACIDS_WITHOUT_AMBIGUITY = BASE_AMINO_ACIDS + 'OU'
 BASE_MODS = UNIMOD_LEVEL_BASE_MOD_VALS + PSI_LEVEL_BASE_MOD_VALS + DELTA_MASS_MOD_VALS
 LEVEL2_MODS = UNIMOD_LEVEL2_MOD_VALS + PSI_LEVEL2_MOD_VALS + BASE_MODS
 
-
-# TODO: Need to check that added localization and cross linking mods arr at unoccupied positions (maybe)
 
 class ProformaComplianceLevel(Enum):
     BASE = auto()

@@ -3,11 +3,6 @@
 
 A spectacularly simple package for working with peptide sequences.
 
-Now level 2-ProForma compliant.
-
-Note: This package is still in development and the github / pip package are different versions. I'm hoping for v2.0.0 to be
-a stable release, to have everything cleaned up. 
-
 ## ReadTheDocs
 https://peptacular.readthedocs.io/en/latest/index.html
 
@@ -21,11 +16,16 @@ pip install peptacular
 - https://pubs.acs.org/doi/suppl/10.1021/acs.jproteome.1c00771/suppl_file/pr1c00771_si_001.pdf
 
 ### Modification Types:
-- Modifications can be represented as strings, integers, or floats.
+- Modifications can be represented as str, int, or float.
 - During parsing, the module automatically identifies the modification type based on its representation.
 
-## Working with Sequences
+## Ion Types:
+ - Terminal: a, b, c, x, y, z
+ - Internal: ax, ay, az, bx, by, bz, cx, cy, cz
+ - Immonium: i
+ - special: p, n (precursor, none)
 
+## Working with Sequences
 ```python
 import peptacular as pt
 
@@ -49,7 +49,6 @@ assert mods == {'cterm': [pt.Mod('Amide', 1)], 0: [pt.Mod(1.2345, 1)], 5: [pt.Mo
 # Reverse sequence
 reverse_sequence = pt.reverse(sequence, swap_terms=False)
 assert reverse_sequence == 'ED[1]ITPEP[1.2345]-[Amide]'
-
 ```
 
 ## Calculating mass and m/z
@@ -68,6 +67,10 @@ assert peptide_mz == 402.187
 # Calculate m/z (average)
 peptide_mz = pt.mz('PEP[1.0]TIDE-[2.0]', charge=2, monoisotopic=False, precision=3)
 assert peptide_mz == 402.419
+
+# For a given ion type
+peptide_mz = pt.mz('PEP[1.0]TIDE-[2.0]', ion_type='y', charge=2, precision=3)
+assert peptide_mz == 402.419
 ```
 
 ## Building Fragment Ions
@@ -76,13 +79,19 @@ assert peptide_mz == 402.419
 import peptacular as pt
 
 # Calculate the m/z values for the y+ fragments.
-fragments = pt.fragment('P[1.0]TIDE-[2.0]', ion_types='y', charges=1, monoisotopic=True)
+pt.fragment('P[1.0]TIDE-[2.0]', ion_types='y', charges=1, monoisotopic=True)
 
 # Or for multiple ion types and charges.
-fragments = pt.fragment('P[1.0]EP', ion_types=['y', 'b'], charges=[1, 2], monoisotopic=True)
+pt.fragment('P[1.0]EP', ion_types=['y', 'b'], charges=[1, 2], monoisotopic=True)
 
 # Or for internal ions
-fragments = pt.fragment('P[1.0]EP', ion_types=['by'], charges=[1, 2], monoisotopic=True)
+pt.fragment('P[1.0]EP', ion_types='by', charges=[1, 2], monoisotopic=True)
+
+# Immonium ions
+pt.fragment('P[1.0]EP', ion_types='i', charges=1, monoisotopic=True)
+
+# Can also return M/Z values rather than Fragment objects
+pt.fragment('P[1.0]EP', ion_types='y', charges=1, monoisotopic=True, return_type='mz')
 ```
 
 ## Digesting Sequences
@@ -153,5 +162,4 @@ sequence = 'PEPTIDE'
 composition = pt.comp(sequence)
 isotopes = pt.isotopic_distribution(chemical_formula=composition, max_isotopes=3, use_neutron_count=True)
 assert isotopes == [(0, 1.0), (1, 0.4051174337315902), (2, 0.11084816056223826)]
-
 ```

@@ -329,7 +329,7 @@ def mass(sequence: Union[str, ProFormaAnnotation],
         peptide_composition, delta_mass = comp_mass(annotation, ion_type)
         return chem_mass(peptide_composition, monoisotopic=monoisotopic, precision=precision) + delta_mass
 
-    if ion_type != 'p':
+    if ion_type != 'p' and ion_type != 'n':
         if charge == 0:
             warnings.warn('Calculating the mass of a fragment ion with charge state 0. Fragment ions should have a '
                           'charge state greater than 0 since the neutral mass doesnt exist.')

@@ -21,8 +21,6 @@ end of the sequence and if not raise an error.
 
 """
 
-# TODO: add mode to all mods additions: overwrite, append, skip...
-
 import regex as re
 from typing import Dict, List, Tuple, Counter, Callable, Union
 from typing import Counter as CounterType
