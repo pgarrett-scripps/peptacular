@@ -10,7 +10,8 @@ MONOISOTOPIC_FRAGMENT_ADJUSTMENTS: Dict[str, float] = \
 AVERAGE_FRAGMENT_ADJUSTMENTS: Dict[str, float] = \
     {aa: chem_mass(comp, monoisotopic=False) for aa, comp in NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS.items()}
 
-FRAGMENT_ION_ADJUSTMENTS: Dict[str, float] = {aa: chem_mass(comp) for aa, comp in FRAGMENT_ION_COMPOSITIONS.items()}
+MONOISOTOPIC_FRAGMENT_ION_ADJUSTMENTS: Dict[str, float] = {aa: chem_mass(comp) for aa, comp in FRAGMENT_ION_COMPOSITIONS.items()}
+AVERAGE_FRAGMENT_ION_ADJUSTMENTS: Dict[str, float] = {aa: chem_mass(comp, monoisotopic=False) for aa, comp in FRAGMENT_ION_COMPOSITIONS.items()}
 
 # FRAGMENT ION MASSES (+1)
 MONOISOTOPIC_ION_ADJUSTMENTS: Dict[str, float] = \

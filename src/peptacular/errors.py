@@ -1,7 +1,8 @@
 class AmbiguousAminoAcidError(ValueError):
-    def __init__(self, aa: str, *args):
+    def __init__(self, aa: str, msg: str, *args):
         self.aa = aa
-        message = f"Ambiguous amino acid: {aa}"
+        self.msg = msg
+        message = f"Ambiguous amino acid: {aa}! {msg}"
         super().__init__(message, *args)
 
 

@@ -2,18 +2,19 @@
 mass.py is a simple module for computing the m/z and mass of an amino acid sequence.
 """
 import warnings
-from typing import Dict, Union, Optional
+from typing import Dict, Union, Optional, Tuple, List
 
 from peptacular.constants import PROTON_MASS
 from peptacular.chem.chem import parse_chem_formula, _sequence_comp, _parse_mod_delta_mass_only, estimate_comp
 from peptacular.chem.chem_util import chem_mass, _parse_charge_adducts_mass, NEUTRON_MASS
 from peptacular.mods.mod_db_setup import MONOSACCHARIDES_DB
 from peptacular.chem.chem_constants import MONOISOTOPIC_AA_MASSES, AVERAGE_AA_MASSES, MONOISOTOPIC_ION_ADJUSTMENTS, \
-    AVERAGE_ION_ADJUSTMENTS
+    AVERAGE_ION_ADJUSTMENTS, AVERAGE_FRAGMENT_ADJUSTMENTS, MONOISOTOPIC_FRAGMENT_ADJUSTMENTS, \
+    MONOISOTOPIC_FRAGMENT_ION_ADJUSTMENTS, AVERAGE_FRAGMENT_ION_ADJUSTMENTS
 from peptacular.proforma.proforma import parse_static_mods, ProFormaAnnotation, Mod
 from peptacular.util import convert_type
 from peptacular.errors import InvalidDeltaMassError, InvalidModificationMassError, UnknownAminoAcidError, \
-    InvalidGlycanFormulaError, InvalidChemFormulaError
+    InvalidGlycanFormulaError, InvalidChemFormulaError, AmbiguousAminoAcidError
 from peptacular.glycan import parse_glycan_formula
 from peptacular.mods.mod_db import parse_psi_mass, parse_unimod_mass, is_unimod_str, is_psi_mod_str, parse_xlmod_mass, \
     parse_resid_mass, is_gno_str, parse_gno_mass, is_xlmod_str, is_resid_str
@@ -21,22 +22,24 @@ from peptacular.sequence.sequence import sequence_to_annotation
 from peptacular.types import ChemComposition
 
 
-def comp_mass(sequence: Union[str, ProFormaAnnotation], ion_type: str = 'p',
-              charge: Optional[int] = None, charge_adducts: Optional[str] = None) -> (Dict[str, int], float):
+def comp_mass(sequence: Union[str, ProFormaAnnotation],
+              ion_type: str = 'p',
+              charge: Optional[int] = None,
+              charge_adducts: Optional[str] = None) -> Tuple[ChemComposition, float]:
     """
     Get the chemical composition of a peptide sequence and its delta mass.
 
-    :param sequence: The amino acid sequence.
-    :type sequence: str
-    :param ion_type: The ion type.
+    :param sequence: A sequence or ProFormaAnnotation.
+    :type sequence: str | ProFormaAnnotation
+    :param ion_type: The ion type. Default is 'p'.
     :type ion_type: str
-    :param charge: The charge state of the ion.
-    :type charge: int
-    :param charge_adducts: The charge adducts.
-    :type charge_adducts: str
+    :param charge: The charge state of the ion. Default is None.
+    :type charge: int | None
+    :param charge_adducts: The charge adducts. Default is None.
+    :type charge_adducts: str | None
 
-    :return: The chemical composition and delta mass of the peptide sequence.
-    :rtype: tuple
+    :return: A tuple containing the chemical composition and delta mass.
+    :rtype: Tuple[ChemComposition, float]
 
     .. code-block:: python
 
@@ -72,27 +75,30 @@ def comp_mass(sequence: Union[str, ProFormaAnnotation], ion_type: str = 'p',
     return peptide_composition, delta_mass
 
 
-def comp(sequence: Union[str, ProFormaAnnotation], ion_type: str = 'p', estimate_delta: bool = False,
-         charge: Optional[int] = None, charge_adducts: Optional[str] = None) -> Dict[str, int]:
+def comp(sequence: Union[str, ProFormaAnnotation],
+         ion_type: str = 'p',
+         estimate_delta: bool = False,
+         charge: Optional[int] = None,
+         charge_adducts: Optional[str] = None) -> ChemComposition:
     """
     Calculates the elemental composition of a peptide sequence, including modifications,
     and optionally estimates the composition based on the delta mass from modifications.
 
-    :param sequence: The peptide sequence to analyze.
-    :type sequence: str
-    :param ion_type: The type of ion ('p' for precursor, or other types indicating different ionization forms).
+    :param sequence: A sequence or ProFormaAnnotation.
+    :type sequence: str | ProFormaAnnotation
+    :param ion_type: The type of ion. Default is 'p'.
     :type ion_type: str
-    :param estimate_delta: If True, estimate the composition based on the delta mass from modifications.
+    :param estimate_delta: If True, estimate the composition based on the delta mass from modifications. Default is False.
     :type estimate_delta: bool
-    :param charge: The charge state of the ion.
-    :type charge: int
-    :param charge_adducts: The charge adducts.
-    :type charge_adducts: str
+    :param charge: The charge state of the ion. Default is None.
+    :type charge: int | None
+    :param charge_adducts: The charge adducts. Default is None.
+    :type charge_adducts: int | None
 
     :raises ValueError: If delta_mass is nonzero and estimate_delta is False, indicating an unaccounted modification.
 
-    :return: A dictionary with elements as keys and their counts as values.
-    :raises ValueError: If delta_mass is nonzero and estimate_delta is False, indicating an unaccounted modification.
+    :return: The elemental composition of the peptide sequence.
+    :rtype: Dict[str, int | float]
 
     .. code-block:: python
 
@@ -134,6 +140,59 @@ def comp(sequence: Union[str, ProFormaAnnotation], ion_type: str = 'p', estimate
     return composition
 
 
+def adjust_mass(base_mass: float,
+                charge: int,
+                ion_type: str = 'p',
+                monoisotopic: bool = True,
+                isotope: int = 0,
+                loss: float = 0.0,
+                charge_adducts: Optional[str] = None,
+                precision: Optional[int] = None) -> float:
+
+    if charge is None:
+        charge = 0
+
+    if charge_adducts is None:
+        charge_adducts = '+H+'
+
+    m = base_mass
+
+    charge_adduct_mass = _parse_charge_adducts_mass(charge_adducts)
+
+    # Base mass
+    m += MONOISOTOPIC_FRAGMENT_ADJUSTMENTS[ion_type] if monoisotopic else AVERAGE_FRAGMENT_ADJUSTMENTS[ion_type]
+
+    if ion_type != 'p' and ion_type != 'n':
+        m += MONOISOTOPIC_FRAGMENT_ION_ADJUSTMENTS[ion_type] if monoisotopic else AVERAGE_FRAGMENT_ION_ADJUSTMENTS[
+            ion_type]  # +1 ion mass
+        m -= charge_adduct_mass  # Subtract charge adduct mass to obtain fake Neutral Fragment Mass (Doesnt really exist)
+
+    m += (charge * charge_adduct_mass)
+    m += isotope * NEUTRON_MASS + loss  # Add isotope and loss
+
+    if precision is not None:
+        m = round(m, precision)
+
+    return m
+
+
+def adjust_mz(base_mass: float,
+              charge: int,
+              precision: Optional[int] = None) -> float:
+
+    if charge is None:
+        charge = 0
+
+    m = base_mass
+
+    m = m if charge == 0 else m / charge
+
+    if precision is not None:
+        m = round(m, precision)
+
+    return m
+
+
 def mass(sequence: Union[str, ProFormaAnnotation],
          charge: Optional[int] = None,
          ion_type: str = 'p',
@@ -145,26 +204,26 @@ def mass(sequence: Union[str, ProFormaAnnotation],
     """
     Calculate the mass of an amino acid 'sequence'.
 
-    :param sequence: The amino acid sequence, which can include modifications.
-    :type sequence: str
-    :param charge: The charge state, default is [0].
-    :type charge: int
-    :param ion_type: The ion type, default is [y].
+    :param sequence: A sequence or ProFormaAnnotation.
+    :type sequence: str | ProFormaAnnotation
+    :param charge: The charge state, default is None.
+    :type charge: int | None
+    :param ion_type: The ion type. Default is 'p'.
     :type ion_type: str
-    :param monoisotopic: If True, use monoisotopic mass else use average mass, defaults to [True].
+    :param monoisotopic: If True, use monoisotopic mass else use average mass. Default is True.
     :type monoisotopic: bool
-    :param isotope: The isotope number, defaults to [0].
+    :param isotope: The number of Neutrons to add/subtract from the final mass. Default is 0.
     :type isotope: int
-    :param loss: The loss, defaults to [0.0].
+    :param loss: The loss to add/subtract to the final mass. Default is 0.0.
     :type loss: float
-    :param charge_adducts: The charge adducts, defaults to [None].
-    :type charge_adducts: str
-    :param precision: The precision of the mass, defaults to [None].
-    :type precision: int
+    :param charge_adducts: The charge adducts. Default is None.
+    :type charge_adducts: int | None
+    :param precision: The precision of the mass. Default is None.
+    :type precision: int | None
 
-    :raise ValueError: If the ion type is not supported
+    :raise ValueError: If the ion type is not supported.
 
-    :return: Mass of the peptide sequence.
+    :return: The mass of the sequence.
     :rtype: float
 
     .. code-block:: python
@@ -242,6 +301,11 @@ def mass(sequence: Union[str, ProFormaAnnotation],
         >>> mass('PEPTIDE/2[+2Na+,+H+]', precision=3)
         893.332
 
+        # Ambiguous amino acid
+        >>> mass('B', 'by')
+        Traceback (most recent call last):
+        peptacular.errors.AmbiguousAminoAcidError: Ambiguous amino acid: B! Cannot determine the mass of a sequence with an ambiguous amino acid.
+
     """
 
     if isinstance(sequence, str):
@@ -251,16 +315,15 @@ def mass(sequence: Union[str, ProFormaAnnotation],
 
     if annotation.charge is not None and charge is None:
         charge = annotation.charge
-    if charge is None:
-        charge = 0
 
     if annotation.charge_adducts is not None and charge_adducts is None:
         charge_adducts = annotation.charge_adducts[0]
-    if charge_adducts is None:
-        charge_adducts = '+H+'
 
-    if 'B' in annotation.sequence or 'J' in annotation.sequence:
-        raise ValueError('Invalid amino acid sequence: B and J are ambiguous')
+    if 'B' in annotation.sequence:
+        raise AmbiguousAminoAcidError('B', 'Cannot determine the mass of a sequence with an ambiguous amino acid.')
+
+    if 'Z' in annotation.sequence:
+        raise AmbiguousAminoAcidError('Z', 'Cannot determine the mass of a sequence with an ambiguous amino acid.')
 
     if annotation.isotope_mods is not None and len(annotation.isotope_mods) > 0:
         peptide_composition, delta_mass = comp_mass(annotation, ion_type)
@@ -333,16 +396,7 @@ def mass(sequence: Union[str, ProFormaAnnotation],
         for mod in annotation.cterm_mods:
             m += mod_mass(mod)
 
-    charge_adduct_mass = _parse_charge_adducts_mass(charge_adducts)
-    m += (charge * charge_adduct_mass)  # Add charge
-    m += isotope * NEUTRON_MASS + loss  # Add isotope and loss
-    m += MONOISOTOPIC_ION_ADJUSTMENTS[ion_type] if monoisotopic else AVERAGE_ION_ADJUSTMENTS[ion_type]  # +1 ion mass
-    m -= PROTON_MASS  # Subtract proton mass
-
-    if precision is not None:
-        m = round(m, precision)
-
-    return m
+    return adjust_mass(m, charge, ion_type, monoisotopic, isotope, loss, charge_adducts, precision)
 
 
 def mz(sequence: Union[str, ProFormaAnnotation],
@@ -356,26 +410,26 @@ def mz(sequence: Union[str, ProFormaAnnotation],
     """
     Calculate the m/z (mass-to-charge ratio) of an amino acid 'sequence'.
 
-    :param sequence: The amino acid sequence, which can include modifications.
-    :type sequence: str
-    :param charge: The charge state, default is [0].
-    :type charge: int
-    :param ion_type: The ion type, default is [y].
+    :param sequence: A sequence or ProFormaAnnotation.
+    :type sequence: str | ProFormaAnnotation
+    :param charge: The charge state, default is None.
+    :type charge: int | None
+    :param ion_type: The ion type. Default is 'p'.
     :type ion_type: str
-    :param monoisotopic: If True, use monoisotopic mass else use average mass, defaults to [True].
+    :param monoisotopic: If True, use monoisotopic mass else use average mass. Default is True.
     :type monoisotopic: bool
-    :param isotope: The isotope number, defaults to [0].
+    :param isotope: The number of Neutrons to add/subtract from the final mass. Default is 0.
     :type isotope: int
-    :param loss: The loss, defaults to [0.0].
+    :param loss: The loss to add/subtract to the final mass. Default is 0.0.
     :type loss: float
-    :param charge_adducts: The charge adducts, defaults to +H+.
-    :type charge_adducts: str
-    :param precision: The precision of the m/z, defaults to [None].
-    :type precision: int
+    :param charge_adducts: The charge adducts. Default is None.
+    :type charge_adducts: int | None
+    :param precision: The precision of the mass. Default is None.
+    :type precision: int | None
 
-    :raise ValueError: If the ion type is not one of 'a', 'b', 'c', 'x', 'y', or 'z'.
+    :raise ValueError: If the ion type is not supported.
 
-    :return: m/z of the peptide sequence.
+    :return: The Mass to Charge ratio (m/z) of the sequence.
     :rtype: float
 
     .. code-block:: python
@@ -410,18 +464,10 @@ def mz(sequence: Union[str, ProFormaAnnotation],
     if annotation.charge is not None and charge is None:
         charge = annotation.charge
 
-    if charge is None:
-        charge = 0
-
     m = mass(sequence=annotation, charge=charge, ion_type=ion_type,
              monoisotopic=monoisotopic, isotope=isotope, loss=loss, charge_adducts=charge_adducts, precision=None)
 
-    m = m if charge == 0 else m / charge
-
-    if precision is not None:
-        m = round(m, precision)
-
-    return m
+    return adjust_mz(m, charge, precision)
 
 
 def glycan_mass(formula: Union[str, ChemComposition],
@@ -430,16 +476,16 @@ def glycan_mass(formula: Union[str, ChemComposition],
     """
     Calculate the mass of a glycan formula.
 
-    :param formula: The glycan formula.
-    :type formula: dict
-    :param monoisotopic: Whether to use monoisotopic masses.
+    :param formula: A glycan formula or ChemComposition.
+    :type formula: str | Dict[str, int | float]
+    :param monoisotopic: If True, use monoisotopic mass else use average mass. Default is True.
     :type monoisotopic: bool
-    :param precision: The precision of the mass.
-    :type precision: int
+    :param precision: The precision of the mass. Default is None.
+    :type precision: int | None
 
     :raises UnknownGlycanError: If the glycan formula contains an unknown monosaccharide.
 
-    :return: The mass of the glycan formula.
+    :return: The mass of the glycan.
     :rtype: float
 
     .. code-block:: python
@@ -492,12 +538,12 @@ def mod_mass(mod: Union[str, Mod], monoisotopic: bool = True, precision: Optiona
     """
     Parse a modification string.
 
-    :param mod: The modification string.
-    :type mod: str
-    :param monoisotopic: Whether to use monoisotopic masses.
+    :param mod: The modification string or Mod.
+    :type mod: str | Mod
+    :param monoisotopic: If True, use monoisotopic mass else use average mass. Default is True.
     :type monoisotopic: bool
-    :param precision: The number of decimal places to round to.
-    :type precision: int
+    :param precision: The precision of the mass. Default is None.
+    :type precision: int | None
 
     :raises UnknownModificationError: If the modification is unknown.
     :raises InvalidDeltaMassError: If the modification contains an invalid delta mass.
@@ -506,7 +552,7 @@ def mod_mass(mod: Union[str, Mod], monoisotopic: bool = True, precision: Optiona
     :raises NotImplementedError: If the modification is not implemented.
     :raises InvalidModificationMassError: If the modification cannot be parsed.
 
-    :return: The parsed modification.
+    :return: The parsed modification mass.
     :rtype: float
 
     .. code-block:: python
@@ -538,7 +584,7 @@ def mod_mass(mod: Union[str, Mod], monoisotopic: bool = True, precision: Optiona
     """
 
     if isinstance(mod, Mod):
-        return mod_mass(mod.val, monoisotopic, precision)*mod.mult
+        return mod_mass(mod.val, monoisotopic, precision) * mod.mult
 
     if isinstance(mod, int):
         return mod
@@ -561,8 +607,8 @@ def _parse_obs_mass_from_proforma_str(obs_str: str, precision: Optional[int] = N
 
     :param obs_str: The observed mass string to parse.
     :type obs_str: str
-    :param precision: The precision of the mass.
-    :type precision: int
+    :param precision: The precision of the mass. Default is None.
+    :type precision: int | None
 
     :raises InvalidDeltaMassError: If the observed mass string contains an invalid delta mass.
 
@@ -609,8 +655,8 @@ def _parse_glycan_mass_from_proforma_str(glycan_str: str, monoisotopic: bool, pr
     :type glycan_str: str
     :param monoisotopic: Whether to use monoisotopic masses.
     :type monoisotopic: bool
-    :param precision: The precision of the mass.
-    :type precision: int
+    :param precision: The precision of the mass. Default is None.
+    :type precision: int | None
 
     :raises InvalidGlycanFormulaError: If the glycan formula is invalid.
 
@@ -686,8 +732,8 @@ def _parse_chem_mass_from_proforma_str(chem_str: str, monoisotopic: bool, precis
     :type chem_str: str
     :param monoisotopic: Whether to use monoisotopic masses.
     :type monoisotopic: bool
-    :param precision: The precision of the mass.
-    :type precision: int
+    :param precision: The precision of the mass. Default is None.
+    :type precision: int | None
 
     :raises InvalidChemFormulaError: If the chemical formula is invalid.
 
@@ -729,8 +775,8 @@ def _parse_mod_mass(mod: str, monoisotopic: bool = True, precision: Optional[int
     :type mod: str
     :param monoisotopic: Whether to use monoisotopic masses.
     :type monoisotopic: bool
-    :param precision: The precision of the mass.
-    :type precision: int
+    :param precision: The precision of the mass. Default is None.
+    :type precision: int | None
 
     :raises UnknownModificationError: If the modification is unknown.
     :raises InvalidDeltaMassError: If the modification contains an invalid delta mass.
@@ -738,8 +784,8 @@ def _parse_mod_mass(mod: str, monoisotopic: bool = True, precision: Optional[int
     :raises UnknownGlycanError: If the modification contains an unknown glycan.
     :raises NotImplementedError: If the modification is not implemented.
 
-    :return: The mass of the modification.
-    :rtype: float
+    :return: The mass of the modification or None if the modification has no mass.
+    :rtype:  float | None
 
     .. code-block:: python
 
@@ -850,8 +896,8 @@ def _pop_delta_mass_mods(annotation: ProFormaAnnotation) -> float:
     Pop the delta mass modifications from the modifications' dictionary. This leaves only modifications which
     can have their elemental composition calculated.
 
-    :param mods: The modifications' dictionary.
-    :type mods: dict
+    :param annotation: The ProForma annotation.
+    :type annotation: ProFormaAnnotation
 
     :return: The delta mass.
     :rtype: float
@@ -928,4 +974,3 @@ def _pop_delta_mass_mods(annotation: ProFormaAnnotation) -> float:
     annotation.clear_empty_mods()
 
     return delta_mass
-

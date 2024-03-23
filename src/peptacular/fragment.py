@@ -3,12 +3,13 @@ fragment.py contains functions for fragmenting peptides
 """
 from dataclasses import dataclass
 from functools import cached_property
-from typing import List, Generator, Union
+from typing import List, Generator, Union, Dict
 
 from peptacular.proforma.proforma import ProFormaAnnotation
-from peptacular.constants import FORWARD_ION_TYPES, BACKWARD_ION_TYPES, INTERNAL_ION_TYPES, TERMINAL_ION_TYPES
-from peptacular.mass import mz, mass
-from peptacular.sequence.sequence import sequence_length, span_to_sequence, sequence_to_annotation
+from peptacular.constants import FORWARD_ION_TYPES, BACKWARD_ION_TYPES, INTERNAL_ION_TYPES, TERMINAL_ION_TYPES, \
+    NEUTRON_MASS
+from peptacular.mass import mz, mass, comp, adjust_mass, adjust_mz
+from peptacular.sequence.sequence import sequence_length, span_to_sequence, sequence_to_annotation, split
 from peptacular.spans import build_non_enzymatic_spans, build_right_semi_spans, build_left_semi_spans, Span
 from peptacular.types import IonTypeType, IsotopeType, LossType, ChargeType
 
@@ -52,54 +53,12 @@ class Fragment:
     isotope: int
     loss: float
     parent_sequence: Union[str, ProFormaAnnotation]
-
-    @cached_property
-    def internal(self):
-        return self.start != 0 and self.end != sequence_length(self.parent_sequence)
-
-    @cached_property
-    def sequence(self):
-        span = (self.start, self.end, 0)
-        return span_to_sequence(self.parent_sequence, span)
-
-    @cached_property
-    def mass(self):
-        """
-        Returns the mass of the fragment.
-
-        :return: Mass of the fragment.
-        :rtype: float
-        """
-
-        return mass(sequence=self.sequence, charge=self.charge, ion_type=self.ion_type,
-                    monoisotopic=self.monoisotopic, isotope=self.isotope,
-                    loss=self.loss)
-
-    @cached_property
-    def neutral_mass(self):
-        """
-        Returns the neutral mass of the fragment.
-
-        :return: Neutral mass of the fragment.
-        :rtype: float
-        """
-
-        return mass(sequence=self.sequence, charge=0, ion_type=self.ion_type,
-                    monoisotopic=self.monoisotopic, isotope=self.isotope,
-                    loss=self.loss)
-
-    @cached_property
-    def mz(self):
-        """
-        Returns the mass-to-charge (m/z) ratio of the fragment.
-
-        :return: Mass-to-charge (m/z) ratio of the fragment.
-        :rtype: float
-        """
-
-        return mz(sequence=self.sequence, charge=self.charge, ion_type=self.ion_type,
-                  monoisotopic=self.monoisotopic, isotope=self.isotope,
-                  loss=self.loss)
+    mass: float
+    neutral_mass: float
+    mz: float
+    sequence: str
+    unmod_sequence: str
+    internal: bool
 
     @cached_property
     def label(self):
@@ -113,10 +72,10 @@ class Fragment:
         if self.ion_type in FORWARD_ION_TYPES:
             number = self.end
         elif self.ion_type in BACKWARD_ION_TYPES:
-            number = sequence_length(self.parent_sequence) - self.start
+            number = len(self.unmod_sequence) - self.start
         elif self.ion_type in INTERNAL_ION_TYPES:
             number = f'{self.start}-{self.end}'
-        elif self.ion_type == 'I':
+        elif self.ion_type == 'i':
             number = self.start
         else:
             raise ValueError('Wrong Ion Type')
@@ -130,20 +89,17 @@ class Fragment:
     def __iter__(self):
         # Include regular attributes
         for key, value in self.__dict__.items():
-            yield key, value
+            if key == 'parent_sequence' and isinstance(value, ProFormaAnnotation):
+                yield key, value.serialize()
+            else:
+                yield key, value
 
         # Explicitly include cached properties
-        yield 'start', self.start
-        yield 'end', self.end
-        yield 'mass', self.mass
-        yield 'neutral_mass', self.neutral_mass
-        yield 'mz', self.mz
         yield 'label', self.label
-        yield 'internal', self.internal
-        yield 'sequence', self.sequence
 
     # Method to convert the object into a dictionary including cached properties
     def to_dict(self):
+
         return {
             key: value for key, value in self
         }
@@ -155,33 +111,64 @@ def _build_fragments(spans: List[Span],
                      losses: List[float],
                      isotopes: List[int],
                      monoisotopic: bool,
-                     sequence: Union[str, ProFormaAnnotation]) -> Generator[Fragment, None, None]:
+                     sequence: Union[str, ProFormaAnnotation],
+                     return_type: str,
+                     mass_components: List[float] = None) -> Union[Generator[Fragment, None, None], Generator[float, None, None]]:
+
+    if isinstance(sequence, str):
+        annotation = sequence_to_annotation(sequence)
+    else:
+        annotation = sequence
+
+    if mass_components is None:
+        components = annotation.split()
+        mass_components = [mass(sequence=component, charge=0, ion_type='n', monoisotopic=monoisotopic) for component in components]
+
     for span in spans:
+        base_mass = adjust_mass(sum(mass_components[span[0]:span[1]]), charge=0, ion_type='n', monoisotopic=monoisotopic)
+        base_annotation = annotation.slice(span[0], span[1])
+        base_sequence = base_annotation.serialize()
+        base_unmod_sequence = base_annotation.sequence
         for ion_type in ion_types:
+            base_fragment_mass = adjust_mass(base_mass, charge=0, ion_type=ion_type, monoisotopic=monoisotopic)
             for iso in isotopes:
                 for loss in losses:
                     for c in charges:
-                        yield Fragment(charge=c, ion_type=ion_type,
-                                       start=span[0], end=span[1], monoisotopic=monoisotopic, isotope=iso,
-                                       loss=loss, parent_sequence=sequence)
+                        fragment_neutral_mass = adjust_mass(base_fragment_mass, charge=0, ion_type='n', monoisotopic=monoisotopic, isotope=iso, loss=loss)
+                        fragment_mass = adjust_mass(fragment_neutral_mass, charge=c, ion_type='n', monoisotopic=monoisotopic)
+                        fragment_mz = adjust_mz(fragment_mass, charge=c)
+
+                        if return_type == 'fragment':
+                            yield Fragment(charge=c, ion_type=ion_type, start=span[0], end=span[1], monoisotopic=monoisotopic,
+                                           isotope=iso, loss=loss, parent_sequence=annotation, mass=fragment_mass,
+                                           neutral_mass=fragment_neutral_mass, mz=fragment_mz, sequence=base_sequence,
+                                           unmod_sequence=base_unmod_sequence, internal=span[0] != 0 and span[1] != len(annotation))
+
+                        elif return_type == 'mass':
+                            yield fragment_mass
+
+                        elif return_type == 'mz':
+                            yield fragment_mz
 
 
-def get_internal_fragments(sequence: Union[str, ProFormaAnnotation],
-                           ion_types: IonTypeType,
-                           charges: ChargeType,
-                           monoisotopic: bool = True,
-                           isotopes: IsotopeType = 0,
-                           losses: LossType = 0.0) -> List[Fragment]:
+def _get_internal_fragments(sequence: Union[str, ProFormaAnnotation],
+                            ion_types: IonTypeType,
+                            charges: ChargeType,
+                            monoisotopic: bool = True,
+                            isotopes: IsotopeType = 0,
+                            losses: LossType = 0.0,
+                            return_type: str = 'fragment',
+                            mass_components: List[float] = None) -> Union[List[float], List[Fragment]]:
     """
     .. code-block:: python
 
-        >>> [frag.sequence for frag in get_internal_fragments('TIDE', 'by', 1)]
+        >>> [frag.sequence for frag in _get_internal_fragments('TIDE', 'by', 1)]
         ['I', 'ID', 'D']
 
-        >>> [round(frag.mz, 3) for frag in get_internal_fragments('TIDE', 'by', 1)]
+        >>> [round(frag.mz, 3) for frag in _get_internal_fragments('TIDE', 'by', 1)]
         [131.094, 246.121, 133.037]
 
-        >>> [frag.label for frag in get_internal_fragments('TIDE', 'by', 1)]
+        >>> [frag.label for frag in _get_internal_fragments('TIDE', 'by', 1)]
         ['+by1-2', '+by1-3', '+by2-3']
 
     """
@@ -208,12 +195,14 @@ def get_internal_fragments(sequence: Union[str, ProFormaAnnotation],
 
     spans = build_non_enzymatic_spans((0, len(annotation), 0))
     internal_spans = [span for span in spans if span[0] != 0 and span[1] != len(annotation)]
-    return list(_build_fragments(internal_spans, ion_types, charges, losses, isotopes, monoisotopic, annotation))
+    return list(_build_fragments(internal_spans, ion_types, charges, losses, isotopes, monoisotopic, annotation, return_type, mass_components))
 
 
-def get_immonium_fragments(sequence: Union[str, ProFormaAnnotation], charges: ChargeType, monoisotopic: bool = True,
-                           isotopes: IsotopeType = 0,
-                           losses: LossType = 0.0) -> List[Fragment]:
+def _get_immonium_fragments(sequence: Union[str, ProFormaAnnotation], charges: ChargeType, monoisotopic: bool = True,
+                            isotopes: IsotopeType = 0,
+                            losses: LossType = 0.0,
+                            return_type: str = 'fragment',
+                            mass_components: List[float] = None) -> Union[List[float], List[Fragment]]:
     """
     Build immonium ions for a given sequence.
 
@@ -233,14 +222,14 @@ def get_immonium_fragments(sequence: Union[str, ProFormaAnnotation], charges: Ch
 
     .. code-block:: python
 
-        >>> [frag.sequence for frag in get_immonium_fragments('TIDE', 1)]
+        >>> [frag.sequence for frag in _get_immonium_fragments('TIDE', 1)]
         ['T', 'I', 'D', 'E']
 
-        >>> [round(frag.mz,3) for frag in get_immonium_fragments('TIDE', 1)]
+        >>> [round(frag.mz,3) for frag in _get_immonium_fragments('TIDE', 1)]
         [74.06, 86.096, 88.039, 102.055]
 
-        >>> [frag.label for frag in get_immonium_fragments('TIDE', 1)]
-        ['+I0', '+I1', '+I2', '+I3']
+        >>> [frag.label for frag in _get_immonium_fragments('TIDE', 1)]
+        ['+i0', '+i1', '+i2', '+i3']
 
     """
     if isinstance(charges, int):
@@ -258,43 +247,58 @@ def get_immonium_fragments(sequence: Union[str, ProFormaAnnotation], charges: Ch
         annotation = sequence
 
     spans = [(i, i + 1, 0) for i in range(len(annotation))]
-    return list(_build_fragments(spans, ['I'], charges, losses, isotopes, monoisotopic, annotation))
+    return list(_build_fragments(spans, ['i'], charges, losses, isotopes, monoisotopic, annotation, return_type, mass_components))
 
 
-def _get_forward_fragments(sequence: Union[str, ProFormaAnnotation], ion_types: List[str], charges: List[int],
+def _get_forward_fragments(sequence: Union[str, ProFormaAnnotation],
+                           ion_types: List[str],
+                           charges: List[int],
                            monoisotopic: bool,
-                           isotopes: List[int], losses: List[float]) -> List[Fragment]:
+                           isotopes: List[int],
+                           losses: List[float],
+                           return_type: str = 'fragment',
+                           mass_components: List[float] = None) -> Union[List[float], List[Fragment]]:
     start_span = (0, sequence_length(sequence), 0)
     spans = [start_span] + build_left_semi_spans(start_span)
-    return list(_build_fragments(spans, ion_types, charges, losses, isotopes, monoisotopic, sequence))
+    return list(_build_fragments(spans, ion_types, charges, losses, isotopes, monoisotopic, sequence, return_type, mass_components))
 
 
-def _get_backward_fragments(sequence: Union[str, ProFormaAnnotation], ion_types: List[str], charges: List[int],
+def _get_backward_fragments(sequence: Union[str, ProFormaAnnotation],
+                            ion_types: List[str],
+                            charges: List[int],
                             monoisotopic: bool,
-                            isotopes: List[int], losses: List[float]) -> Union[float, List[Fragment]]:
+                            isotopes: List[int],
+                            losses: List[float],
+                            return_type: str = 'fragment',
+                           mass_components: List[float] = None)-> Union[List[float], List[Fragment]]:
     start_span = (0, sequence_length(sequence), 0)
     spans = [start_span] + build_right_semi_spans(start_span)
-    return list(_build_fragments(spans, ion_types, charges, losses, isotopes, monoisotopic, sequence))
+    return list(_build_fragments(spans, ion_types, charges, losses, isotopes, monoisotopic, sequence, return_type, mass_components))
 
 
-def get_terminal_fragments(sequence: Union[str, ProFormaAnnotation], ion_types: IonTypeType, charges: ChargeType,
-                           monoisotopic: bool = True,
-                           isotopes: IsotopeType = 0, losses: LossType = 0.0) -> List[Fragment]:
+def _get_terminal_fragments(sequence: Union[str, ProFormaAnnotation],
+                            ion_types: IonTypeType,
+                            charges: ChargeType,
+                            monoisotopic: bool = True,
+                            isotopes: IsotopeType = 0,
+                            losses: LossType = 0.0,
+                            return_type: str = 'fragment',
+                            mass_components: List[float] = None) -> Union[List[float], List[Fragment]]:
     """
 
     .. code-block:: python
 
-        >>> frags = get_terminal_fragments('TIDE', 'b', 2)
+        >>> frags = _get_terminal_fragments('TIDE', 'b', 2)
         >>> [round(frag.mass,3) for frag in frags]
         [460.216, 331.173, 216.146, 103.062]
 
-        >>> [round(frag.mz,3) for frag in get_terminal_fragments("TIDE", ion_types="y", charges=1)]
+        >>> [round(frag.mz,3) for frag in _get_terminal_fragments("TIDE", ion_types="y", charges=1)]
         [477.219, 376.171, 263.087, 148.06]
 
-        >>> [round(frag.mz,3) for frag in get_terminal_fragments("TIDE", ion_types="b", charges=2)]
+        >>> [round(frag.mz,3) for frag in _get_terminal_fragments("TIDE", ion_types="b", charges=2)]
         [230.108, 165.587, 108.073, 51.531]
 
-        >>> [round(frag.mz,3) for frag in get_terminal_fragments("T[10]IDE", ion_types="y", charges=1)]
+        >>> [round(frag.mz,3) for frag in _get_terminal_fragments("T[10]IDE", ion_types="y", charges=1)]
         [487.219, 376.171, 263.087, 148.06]
 
     """
@@ -319,15 +323,24 @@ def get_terminal_fragments(sequence: Union[str, ProFormaAnnotation], ion_types: 
     forward_ions = [ion for ion in ion_types if ion in FORWARD_ION_TYPES]
     backward_ions = [ion for ion in ion_types if ion in BACKWARD_ION_TYPES]
 
+    if mass_components is None:
+        components = annotation.split()
+        mass_components = [mass(sequence=component, charge=0, ion_type='n', monoisotopic=monoisotopic) for component in components]
+
     frags = []
-    frags.extend(_get_forward_fragments(annotation, forward_ions, charges, monoisotopic, isotopes, losses))
-    frags.extend(_get_backward_fragments(annotation, backward_ions, charges, monoisotopic, isotopes, losses))
+    frags.extend(_get_forward_fragments(annotation, forward_ions, charges, monoisotopic, isotopes, losses, return_type, mass_components))
+    frags.extend(_get_backward_fragments(annotation, backward_ions, charges, monoisotopic, isotopes, losses, return_type, mass_components))
 
     return frags
 
 
-def fragment(sequence: Union[str, ProFormaAnnotation], ion_types: IonTypeType, charges: ChargeType, monoisotopic: bool = True,
-             isotopes: IsotopeType = 0, losses: LossType = 0.0) -> List[Fragment]:
+def fragment(sequence: Union[str, ProFormaAnnotation],
+             ion_types: IonTypeType,
+             charges: ChargeType,
+             monoisotopic: bool = True,
+             isotopes: IsotopeType = 0,
+             losses: LossType = 0.0,
+             return_type: str = 'fragment') -> Union[List[float], List[Fragment]]:
     """
     Builds all Fragment objects or a given input 'sequence'.
 
@@ -384,18 +397,22 @@ def fragment(sequence: Union[str, ProFormaAnnotation], ion_types: IonTypeType, c
 
     terminal_fragment_types = [i for i in ion_types if i in TERMINAL_ION_TYPES]
     internal_fragment_types = [i for i in ion_types if i in INTERNAL_ION_TYPES]
-    immonium = 'I' in ion_types
+    immonium = 'i' in ion_types
+
+    components = annotation.split()
+    mass_components = [mass(sequence=component, charge=0, ion_type='n', monoisotopic=monoisotopic) for component in
+                       components]
 
     frags = []
     if terminal_fragment_types:
-        frags.extend(get_terminal_fragments(sequence, terminal_fragment_types, charges,
-                                            monoisotopic, isotopes, losses))
+        frags.extend(_get_terminal_fragments(sequence, terminal_fragment_types, charges,
+                                             monoisotopic, isotopes, losses, return_type, mass_components))
 
     if internal_fragment_types:
-        frags.extend(get_internal_fragments(sequence, internal_fragment_types, charges,
-                                            monoisotopic, isotopes, losses))
+        frags.extend(_get_internal_fragments(sequence, internal_fragment_types, charges,
+                                             monoisotopic, isotopes, losses, return_type, mass_components))
 
     if immonium:
-        frags.extend(get_immonium_fragments(sequence, charges, monoisotopic, isotopes, losses))
+        frags.extend(_get_immonium_fragments(sequence, charges, monoisotopic, isotopes, losses, return_type, mass_components))
 
     return frags

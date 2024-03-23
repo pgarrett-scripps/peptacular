@@ -35,22 +35,23 @@ CTERM_COMPOSITION = {"O": 1, "H": 1}
 
 FRAGMENT_ION_COMPOSITIONS: Dict[str, Dict[str, int]] = {
     "p": {'H': 1, 'e': -1},
+    "n": {},
     "a": {'e': -1},
     "b": {'e': -1},
     "c": {'H': 2, 'e': -1},
     "x": {'e': -1},
     "y": {'H': 2, 'e': -1},
     "z": {'e': -1},
-    "ax": {},
-    "ay": {},
-    "az": {},
-    "bx": {},
-    "by": {},
-    "bz": {},
-    "cx": {},
-    "cy": {},
-    "cz": {},
-    'i': {'e': -1}
+    "ax": {'e': -1}, # Could have a +2 charge with -e2
+    "ay": {'H': 1, 'e': -1},  # amino-immonium ion (according to mascot)
+    "az": {'e': -1},
+    "bx": {'e': -1},
+    "by": {'H': 1, 'e': -1},  # amino-acylium ion (according to mascot)
+    "bz": {'e': -1},
+    "cx": {'H': 1, 'e': -1},
+    "cy": {'H': 3, 'e': -1},  # No IDEA what this would look like
+    "cz": {'H': 1, 'e': -1},
+    'i': {'H': 1, 'e': -1}
 }
 
 
@@ -62,7 +63,8 @@ NEUTRAL_FRAGMENT_START_COMPOSITIONS: Dict[str, Dict[str, int]] = {
     "x": {"O": 1, "C": 1},
     "y": {},
     "z": {"N": -1, "H": -1},
-    "i": NTERM_COMPOSITION,
+    "i": {},
+    'n': {}
 }
 
 NEUTRAL_FRAGMENT_END_COMPOSITIONS: Dict[str, Dict[str, int]] = {
@@ -74,10 +76,12 @@ NEUTRAL_FRAGMENT_END_COMPOSITIONS: Dict[str, Dict[str, int]] = {
     "y": CTERM_COMPOSITION,
     "z": CTERM_COMPOSITION,
     "i": {"O": -1, "C": -1},
+    'n': {}
 }
 
 NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS: Dict[str, Dict[str, int]] = {
     "p": merge_dicts(NEUTRAL_FRAGMENT_START_COMPOSITIONS['p'], NEUTRAL_FRAGMENT_END_COMPOSITIONS['p']),
+    "n": merge_dicts(NEUTRAL_FRAGMENT_START_COMPOSITIONS['n'], NEUTRAL_FRAGMENT_END_COMPOSITIONS['n']),
     "a": merge_dicts(NEUTRAL_FRAGMENT_START_COMPOSITIONS['a'], NEUTRAL_FRAGMENT_END_COMPOSITIONS['a']),
     "b": merge_dicts(NEUTRAL_FRAGMENT_START_COMPOSITIONS['b'], NEUTRAL_FRAGMENT_END_COMPOSITIONS['b']),
     "c": merge_dicts(NEUTRAL_FRAGMENT_START_COMPOSITIONS['c'], NEUTRAL_FRAGMENT_END_COMPOSITIONS['c']),
@@ -98,6 +102,7 @@ NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS: Dict[str, Dict[str, int]] = {
 
 FRAGMENT_ION_COMPOSITION_ADJUSTMENTS: Dict[str, Dict[str, int]] = {
     "p": merge_dicts(NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS['p'], FRAGMENT_ION_COMPOSITIONS['p']),
+    "n": merge_dicts(NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS['n'], FRAGMENT_ION_COMPOSITIONS['n']),
     "a": merge_dicts(NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS['a'], FRAGMENT_ION_COMPOSITIONS['a']),
     "b": merge_dicts(NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS['b'], FRAGMENT_ION_COMPOSITIONS['b']),
     "c": merge_dicts(NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS['c'], FRAGMENT_ION_COMPOSITIONS['c']),

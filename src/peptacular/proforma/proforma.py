@@ -520,7 +520,7 @@ def parse_isotope_mods(mods: List[ModValue]) -> Dict[str, str]:
     Parse isotope modifications into a dictionary, mapping the elemental symbol to its isotope.
 
     :param mods: List of isotope modifications.
-    :type mods: List[Mod | str]
+    :type mods: List[ModValue]
 
     :raises TypeError: If the mod is not a string or Mod instance.
 
@@ -2157,7 +2157,7 @@ def parse(sequence: str) -> Union[ProFormaAnnotation, MultiProFormaAnnotation]:
     :raises ProFormaFormatError: If the sequence is not valid.
 
     :return: Either a ProFormaAnnotation or a MultiProFormaAnnotation, based on the input
-    :rtype: ProFormaAnnotation | MultiProFormaAnnotation
+    :rtype: Union[ProFormaAnnotation, MultiProFormaAnnotation]
 
     .. python::
 
@@ -2189,7 +2189,7 @@ def serialize(annotation: Union[ProFormaAnnotation, MultiProFormaAnnotation]) ->
     Serializes a ProForma annotation or multiple ProForma annotations into a single string representation.
 
     :param annotation: Either a ProFormaAnnotation or a MultiProFormaAnnotation.
-    :type annotation: ProFormaAnnotation | MultiProFormaAnnotation
+    :type annotation: Union[ProFormaAnnotation, MultiProFormaAnnotation]
 
     :return: A string representation of the ProForma annotation.
     :rtype: str

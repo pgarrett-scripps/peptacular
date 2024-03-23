@@ -1,11 +1,9 @@
 """
-Digest.py contains functions to handle all your digestion needs and of course it works with peptacular's standard
-modification notation. From generating left/right semi enzymatic sequences to calculating protease cleavage sites
-there is likely a function for it here.
+Digest.py contains functions for generating enzymatic and non-enzymatic peptides from a given sequence. All functions
+in this module are designed to work with both standard sequences and ProFormaAnnotations.
 
-Proteases can be a name of a protease in peptacular.constants.PROTEASES, or they can be a custom regex string. When
-specifying more than one protease, all cleavage sites will be combined (as if both proteases were present at the
-same time)
+Since creating ProFormaAnnotation objects takes more resources than working with strings, ensure that return_str is set
+to True when working with large datasets.
 """
 
 from typing import Union, List, Optional
@@ -42,19 +40,20 @@ def get_left_semi_enzymatic_sequences(sequence: Union[str, ProFormaAnnotation],
     """
     Builds all left-hand semi-enzymatic subsequences derived from the input `sequence`.
 
-    :param sequence: The amino acid sequence, which can include modifications.
-    :type sequence: str
+    :param sequence: A sequence or ProFormaAnnotation.
+    :type sequence: Union[str, ProFormaAnnotation]
     :param min_len: Minimum length for the subsequences (inclusive), defaults to [None]. If None, min_len will be
                     equal to 1.
-    :type min_len: int
+    :type min_len: Optional[int]
     :param max_len: Maximum length for the subsequences (inclusive). If None, the subsequences will go up to
                     1 - length of the `sequence`, defaults to [None].
-    :type max_len: Union[int, None]
+    :type max_len: Optional[int]
     :param return_str: Whether to return the digested sequences as strings or as ProFormaAnnotations, defaults to [True].
     :type return_str: bool
 
-    :return: Left-hand semi-enzymatic subsequences.
-    :rtype: List[str]
+    :return: Left-hand semi-enzymatic subsequences. If `return_str` is True, the peptides are returned as strings, otherwise as
+                ProFormaAnnotations.
+    :rtype: Union[List[str], List[ProFormaAnnotation]]
 
     .. code-block:: python
 
@@ -97,19 +96,20 @@ def get_right_semi_enzymatic_sequences(sequence: Union[str, ProFormaAnnotation],
     """
     Builds all right-hand semi-enzymatic subsequences derived from the input `sequence`.
 
-    :param sequence: The amino acid sequence, which can include modifications.
-    :type sequence: str
+    :param sequence: A sequence or ProFormaAnnotation.
+    :type sequence: Union[str, ProFormaAnnotation]
     :param min_len: Minimum length for the subsequences (inclusive), default is [None]. If None, min_len will be
                     equal to 1.
-    :type min_len: int
+    :type min_len: Optional[int]
     :param max_len: Maximum length for the subsequences (inclusive). If None, the subsequences will go up to
                     1 - length of the `sequence`, defaults to [None].
-    :type max_len: Union[int, None]
+    :type max_len: Optional[int]
     :param return_str: Whether to return the digested sequences as strings or as ProFormaAnnotations, defaults to [True].
     :type return_str: bool
 
-    :return: Right-hand semi-enzymatic subsequences
-    :rtype: List[str]
+    :return: Right-hand semi-enzymatic subsequences. If `return_str` is True, the peptides are returned as strings, otherwise as
+                ProFormaAnnotations.
+    :rtype: Union[List[str], List[ProFormaAnnotation]]
 
     .. code-block:: python
 
@@ -152,19 +152,20 @@ def get_semi_enzymatic_sequences(sequence: Union[str, ProFormaAnnotation],
     """
     Builds allsemi-enzymatic sequences from the given input `sequence`.
 
-    :param sequence: The amino acid sequence, which can include modifications.
-    :type sequence: str
+    :param sequence: A sequence or ProFormaAnnotation.
+    :type sequence: Union[str, ProFormaAnnotation]
     :param min_len: Minimum length for the subsequences (inclusive), default is [None]. If None, min_len will be
                     equal to 1.
-    :type min_len: int
+    :type min_len: Optional[int]
     :param max_len: Maximum length for the subsequences (inclusive). If None, the subsequences will go up  to
                     1 - length of the `sequence`, defaults to [None].
-    :type max_len: Union[int, None]
+    :type max_len: Optional[int]
     :param return_str: Whether to return the digested sequences as strings or as ProFormaAnnotations, defaults to [True].
     :type return_str: bool
 
-    :return: Semi-enzymatic subsequences.
-    :rtype: List[str]
+    :return: Semi-enzymatic subsequences. If `return_str` is True, the peptides are returned as strings, otherwise as
+                ProFormaAnnotations.
+    :rtype: Union[List[str], List[ProFormaAnnotation]]
 
     .. code-block:: python
 
@@ -175,8 +176,8 @@ def get_semi_enzymatic_sequences(sequence: Union[str, ProFormaAnnotation],
 
     """
 
-    return get_left_semi_enzymatic_sequences(sequence=sequence, min_len=min_len, max_len=max_len) + \
-        get_right_semi_enzymatic_sequences(sequence=sequence, min_len=min_len, max_len=max_len)
+    return get_left_semi_enzymatic_sequences(sequence=sequence, min_len=min_len, max_len=max_len, return_str=return_str) + \
+        get_right_semi_enzymatic_sequences(sequence=sequence, min_len=min_len, max_len=max_len, return_str=return_str)
 
 
 def get_non_enzymatic_sequences(sequence: Union[str, ProFormaAnnotation],
@@ -186,19 +187,20 @@ def get_non_enzymatic_sequences(sequence: Union[str, ProFormaAnnotation],
     """
     Builds all non-enzymatic sequences from the given input `sequence`.
 
-    :param sequence: The amino acid sequence, which can include modifications.
-    :type sequence: str
+    :param sequence: A sequence or ProFormaAnnotation.
+    :type sequence: Union[str, ProFormaAnnotation]
     :param min_len: Minimum length for the subsequences (inclusive), default is [None]. If None, min_len will be
                     equal to 1.
-    :type min_len: int
+    :type min_len: Optional[int]
     :param max_len: Maximum length for the subsequences (inclusive). If None, the subsequences will go up  to
                     1 - length of the `sequence`, defaults to [None].
-    :type max_len: Union[int, None]
+    :type max_len: Optional[int]
     :param return_str: Whether to return the digested sequences as strings or as ProFormaAnnotations, defaults to [True].
     :type return_str: bool
 
-    :return: Non-enzymatic subsequences
-    :rtype: List[str]
+    :return: Non-enzymatic subsequences. If `return_str` is True, the peptides are returned as strings, otherwise as
+                ProFormaAnnotations.
+    :rtype: Union[List[str], List[ProFormaAnnotation]]
 
     .. code-block:: python
 
@@ -243,8 +245,8 @@ def get_enzymatic_sequences(sequence: Union[str, ProFormaAnnotation],
     """
     Builds all enzymatic sequences from the given input `sequence`.
 
-    :param sequence: The amino acid sequence, which can include modifications.
-    :type sequence: str
+    :param sequence: A sequence or ProFormaAnnotation.
+    :type sequence: Union[str, ProFormaAnnotation]
     :param enzyme_regex: Regular expression or key in PROTEASES dictionary defining the enzyme's cleavage rule.
     :type enzyme_regex: str
     :param missed_cleavages: Maximum number of missed cleavages.
@@ -253,15 +255,16 @@ def get_enzymatic_sequences(sequence: Union[str, ProFormaAnnotation],
     :type semi: bool
     :param min_len: Minimum length for the subsequences (inclusive), default is [None]. If None, min_len will be
                     equal to 1.
-    :type min_len: int
+    :type min_len: Optional[int]
     :param max_len: Maximum length for the subsequences (inclusive). If None, the subsequences will go up  to
                     1 - length of the `sequence`, defaults to [None].
-    :type max_len: Union[int, None]
+    :type max_len: Optional[int]
     :param return_str: Whether to return the digested sequences as strings or as ProFormaAnnotations, defaults to [True].
     :type return_str: bool
 
-    :return: Enzymatic subsequences.
-    :rtype: List[str]
+    :return: Enzymatic subsequences. If `return_str` is True, the peptides are returned as strings, otherwise as
+                ProFormaAnnotations.
+    :rtype: Union[List[str], List[ProFormaAnnotation]]
 
     .. code-block:: python
 
@@ -308,8 +311,8 @@ def get_cleavage_sites(sequence: Union[str, ProFormaAnnotation], enzyme_regex: s
     """
     Return a list of positions where cleavage occurs in input `sequence` based on the provided enzyme regex.
 
-    :param sequence: The amino acid sequence, which can include modifications.
-    :type sequence: str
+    :param sequence: A sequence or ProFormaAnnotation.
+    :type sequence: Union[str, ProFormaAnnotation]
     :param enzyme_regex: Regular expression or key in PROTEASES dictionary defining enzyme's cleavage rule.
     :type enzyme_regex: str
 
@@ -374,8 +377,8 @@ def digest(sequence: Union[str, ProFormaAnnotation],
     """
     Returns a list of digested sequences derived from the input `sequence`.
 
-    :param sequence: The amino acid sequence, which can include modifications.
-    :type sequence: str
+    :param sequence: A sequence or ProFormaAnnotation.
+    :type sequence: Union[str, ProFormaAnnotation]
     :param enzyme_regex: Regular expression or list of regular expressions representing enzyme's cleavage rules.
     :type enzyme_regex: Union[List[str], str]
     :param missed_cleavages: Maximum number of missed cleavages, defaults to [0].
@@ -384,15 +387,16 @@ def digest(sequence: Union[str, ProFormaAnnotation],
     :type semi: bool
     :param min_len: Minimum length for the subsequences (inclusive), default is [None]. If None, min_len will be
                     equal to 1.
-    :type min_len: int
+    :type min_len: Optional[int]
     :param max_len: Maximum length for the subsequences (inclusive). If None, the subsequences will go up  to
                     1 - length of the `sequence`, defaults to [None].
-    :type max_len: Union[int, None]
+    :type max_len: Optional[int]
     :param return_str: Whether to return the digested sequences as strings or as ProFormaAnnotations, defaults to [True].
     :type return_str: bool
 
-    :return: List of digested peptides.
-    :rtype: List[str]
+    :return: List of digested peptides. If `return_str` is True, the peptides are returned as strings, otherwise as
+                ProFormaAnnotations.
+    :rtype: Union[List[str], List[ProFormaAnnotation]]
 
     .. code-block:: python
 

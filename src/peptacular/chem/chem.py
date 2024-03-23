@@ -2,7 +2,7 @@
 chem.py contains functions for parsing and writing chemical formulas, and for calculating the composition of a sequence
 with/and modifications.
 """
-from typing import Dict, Union, List, Optional
+from typing import Union, List, Optional
 
 from peptacular.chem.chem_constants import ISOTOPIC_AVERAGINE_MASS
 from peptacular.types import ModValue, ChemComposition
@@ -25,7 +25,7 @@ def glycan_to_chem(glycan: Union[ChemComposition, str]) -> str:
     Converts a glycan composition/formula to a chemical formula.
 
     :param glycan: A dictionary containing the glycan components and their counts, or a glycan formula string.
-    :type glycan: Union[ChemComposition, str]
+    :type glycan: Dict[str, int | float] | str
 
     :return: A chemical formula string.
     :rtype: str
@@ -48,12 +48,12 @@ def mod_comp(mod: ModValue) -> ChemComposition:
     Parse a modification string.
 
     :param mod: The modification string.
-    :type mod: ModValue
+    :type mod: str | int | float | Mod
 
-    :raises InvalidCompositionError: If the modification string is invalid.
+    :raises InvalidCompositionError: If no composition can be retrieved from the modification string.
 
-    :return: The parsed composition.
-    :rtype: ChemComposition
+    :return: The composition of the modification.
+    :rtype: Dict[str, int | float]
 
     .. code-block:: python
 
@@ -91,10 +91,10 @@ def estimate_comp(neutral_mass: float,
     :param neutral_mass: The total neutral mass of the molecule.
     :type neutral_mass: float
     :param isotopic_mods: The isotopic modifications. Defaults to None.
-    :type isotopic_mods: Optional[List[ModValue]]
+    :type isotopic_mods: List[str | Mod] | None
 
     :return: The estimated composition.
-    :rtype: ChemComposition
+    :rtype: Dict[str, int | float]
 
     .. python::
 
@@ -123,11 +123,11 @@ def _parse_glycan_comp(glycan_str: str) -> ChemComposition:
     :param glycan_str: The glycan string to parse.
     :type glycan_str: str
 
-    :raises UnknownGlycanError: If the glycan string contains an unknown monosaccharide.
-    :raises InvalidFormulaError: If the formula is invalid.
+    :raises UnknownGlycanError: If the glycan formula contains an unknown monosaccharide.
+    :raises InvalidFormulaError: If the glycan formula is invalid.
 
     :return: The composition of the glycan.
-    :rtype: ChemComposition
+    :rtype: Dict[str, int | float]
 
     .. code-block:: python
 
@@ -191,8 +191,8 @@ def _parse_mod_comp(mod: str) -> Union[ChemComposition, None]:
     :raises UnknownModificationError: If the modification is unknown.
     :raises NotImplementedError: If the modification is not implemented.
 
-    :return: A dictionary with the element and their counts.
-    :rtype: Union[ChemComposition, None]
+    :return: The parsed composition, or None if the composition cannot be parsed.
+    :rtype: Dict[str, int | float] | None
 
     .. code-block:: python
 
@@ -264,8 +264,9 @@ def _parse_mod_delta_mass(mod: str) -> Union[float, None]:
 
     :param mod: The mod to parse.
     :type mod: str
+
     :return: The parsed delta mass, or None if the delta mass cannot be parsed.
-    :rtype: Union[float, None]
+    :rtype: float | None
 
     .. code-block:: python
 
@@ -330,17 +331,17 @@ def _sequence_comp(sequence: Union[str, ProFormaAnnotation],
     """
     Calculate the composition of a sequence.
 
-    :param sequence: The sequence.
-    :type sequence: str
+    :param sequence: The sequence or ProForma annotation.
+    :type sequence: str | ProFormaAnnotation
     :param ion_type: The ion type.
     :type ion_type: str
     :param charge: The charge of the ion. Defaults to None.
-    :type charge:  Optional[int]
+    :type charge:  int | None
     :param charge_adducts: The charge adducts. Defaults to None.
-    :type charge_adducts: Optional[str]
+    :type charge_adducts: str | None
 
-    :return: A dictionary with the element and their counts.
-    :rtype: ChemComposition
+    :return: The composition of the sequence.
+    :rtype: Dict[str, int | float]
 
     .. code-block:: python
 
@@ -388,7 +389,7 @@ def _sequence_comp(sequence: Union[str, ProFormaAnnotation],
         # Ambiguous amino acid
         >>> _sequence_comp('B', 'by')
         Traceback (most recent call last):
-        peptacular.errors.AmbiguousAminoAcidError: Ambiguous amino acid: B
+        peptacular.errors.AmbiguousAminoAcidError: Ambiguous amino acid: B! Cannot determine the composition of a sequence with an ambiguous amino acid.
 
     """
 
@@ -407,10 +408,10 @@ def _sequence_comp(sequence: Union[str, ProFormaAnnotation],
         _ = annotation.pop_labile_mods()
 
     if 'B' in annotation.sequence:
-        raise AmbiguousAminoAcidError('B')
+        raise AmbiguousAminoAcidError('B', 'Cannot determine the composition of a sequence with an ambiguous amino acid.')
 
-    if 'J' in annotation.sequence:
-        raise AmbiguousAminoAcidError('J')
+    if 'Z' in annotation.sequence:
+        raise AmbiguousAminoAcidError('Z', 'Cannot determine the composition of a sequence with an ambiguous amino acid.')
 
     # Get the composition of the base sequence
     composition = {}
@@ -526,12 +527,12 @@ def _parse_mod_delta_mass_only(mod: Union[str, Mod]) -> Union[float, None]:
     Parse a modification string.
 
     :param mod: The modification string.
-    :type mod: Union[str, Mod]
+    :type mod: str | Mod
 
-    :raises ValueError: If the modification string is invalid.
+    :raises ValueError: If no delta mass or composition can be retrieved from the modification string.
 
     :return: The delta mass of the modification or None if the modification is not a delta mass.
-    :rtype: Union[float, None]
+    :rtype: float | None
 
     .. code-block:: python
 
@@ -571,17 +572,17 @@ def _parse_mod_delta_mass_only(mod: Union[str, Mod]) -> Union[float, None]:
 
 
 def apply_isotope_mods_to_composition(composition: ChemComposition,
-                                      isotopic_mods: List[ModValue]) -> ChemComposition:
+                                      isotopic_mods: Optional[List[ModValue]]) -> ChemComposition:
     """
     Apply isotopic modifications to a composition.
 
-    :param composition: The composition.
-    :type composition: dict
+    :param composition: The composition to apply the isotopic modifications to.
+    :type composition: ChemComposition
     :param isotopic_mods: The isotopic modifications.
-    :type isotopic_mods: List[ModValue]
+    :type isotopic_mods: List[str | Mod] | None
 
     :return: The modified composition.
-    :rtype: dict
+    :rtype: Dict[str, int | float]
 
     .. code-block:: python
 
@@ -598,9 +599,12 @@ def apply_isotope_mods_to_composition(composition: ChemComposition,
         {'H': 12, 'O': 6, '13C': 6.6}
 
     """
+    composition = composition.copy()
+
+    if isotopic_mods is None:
+        return composition
 
     isotope_map = parse_isotope_mods(isotopic_mods)
-    composition = composition.copy()
     for element, isotope_label in isotope_map.items():
         if element in composition:
 
@@ -630,7 +634,7 @@ def _parse_adduct_comp(adduct: str) -> ChemComposition:
     :raises InvalidDeltaMassError: If the adduct contains an invalid delta mass.
 
     :return: The composition of the adduct.
-    :rtype: ChemComposition
+    :rtype: Dict[str, int | float]
 
     .. code-block:: python
 
@@ -661,8 +665,8 @@ def _parse_charge_adducts_comp(adducts: ModValue) -> ChemComposition:
     :param adducts: The charge adducts to parse.
     :type adducts: ModValue
 
-    :return: The mass of the charge adducts.
-    :rtype: ChemComposition
+    :return: The composition of the charge adducts.
+    :rtype: Dict[str, int | float]
 
     .. code-block:: python
 

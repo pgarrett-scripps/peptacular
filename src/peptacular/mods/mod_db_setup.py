@@ -57,6 +57,7 @@ class ModEntry:
             'entry_type': self.entry_type
         }
 
+
 def _parse_glycan_formula(formula: str, sep: str) -> ChemComposition:
     """
     Here to avoid a circular import. Real function is in peptacular.glycan
@@ -371,7 +372,7 @@ def _get_unimod_entries(terms: List[Dict[str, Any]]) -> List[ModEntry]:
         synonyms = [syn.split('"')[1] for syn in synonyms]
 
         delta_formula = None
-        if delta_composition:
+        if delta_composition is not None and isinstance(delta_composition, str):
 
             delta_composition = delta_composition.split(' ')
             elem_counter = Counter()
@@ -897,7 +898,6 @@ def get_entries(db_type: DbType, file_path: str) -> List[ModEntry]:
         raise ValueError(f"Invalid type: {db_type}")
 
 
-
 class EntryDb:
     """
     A database of entries.
@@ -1152,8 +1152,9 @@ def count_invalid_entries(entries: List[ModEntry]) -> (int, int, int):
 
     return none_mono, none_avg, none_comp
 
-#import pkgutil
-#data = pkgutil.get_data(__name__, "../data/monosaccharides_updated.obo")
+
+# import pkgutil
+# data = pkgutil.get_data(__name__, "../data/monosaccharides_updated.obo")
 
 _dir_name = os.path.dirname(__file__)
 _obo_path = os.path.join(_dir_name, "..", "data")

@@ -189,7 +189,7 @@ def get_mods(sequence: Union[str, ProFormaAnnotation]) -> ModDict:
     :raises ProFormaFormatError: if the proforma sequence is not valid
 
     :return: A dictionary with the modifications
-    :rtype: Dict[int | str, List[str, int, float, Mod]
+    :rtype: ModDict
 
     .. code-block:: python
 
@@ -256,7 +256,7 @@ def add_mods(sequence: Union[str, ProFormaAnnotation],
     :param sequence: The sequence or ProFormaAnnotation object.
     :type sequence: Union[str, ProFormaAnnotation]
     :param mods: Dictionary representing the modifications to be added to the sequence.
-    :type mods: Dict[str | int, List[ModValue] | ModValue]
+    :type mods: Dict
     :param append: If True, the modifications will be appended to the existing modifications.
                       If False, the existing modifications will be replaced. Defaults to True.
     :type append: bool

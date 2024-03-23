@@ -25,11 +25,10 @@ Welcome to Peptacular's Documentation
    digest
    fragment
    mass
-   protein
-   sequence
-   term_modification
-   term_residue
    spans
+   chem
+   proforma
+   sequence
 
 Indices and Tables
 ------------------
