@@ -1,39 +1,24 @@
-.. _index:
+.. peptacular documentation master file, created by
+   sphinx-quickstart on Fri Mar 22 15:23:07 2024.
+   You can adapt this file completely to your liking, but it should at least
+   contain the root `toctree` directive.
 
+Welcome to peptacular's documentation!
 ======================================
-Welcome to Peptacular's Documentation
-======================================
-
-.. include:: homepage.rst
 
 .. toctree::
    :maxdepth: 2
-   :caption: Getting Started:
+   :caption: Contents:
 
-   installation
+   peptacular
 
-.. toctree::
-   :maxdepth: 2
-   :caption: User Guide:
 
-   tutorials
 
-.. toctree::
-   :maxdepth: 2
-   :caption: API Reference:
 
-   digest
-   fragment
-   mass
-   spans
-   chem
-   proforma
-   sequence
 
-Indices and Tables
-------------------
+Indices and tables
+==================
 
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-

@@ -19,12 +19,6 @@ Span = Tuple[int, int, int]
 # Chem Composition Type
 ChemComposition = Dict[str, Union[int, float]]
 
-# Fragments
-ChargeType = Union[List[int], int]
-IsotopeType = Union[List[int], int]
-LossType = Union[List[float], float]
-IonTypeType = Union[List[str], str]
-
 ACCEPTED_MOD_INPUT = Union[List[ModValue], ModValue]
 IntervalValue = Union[Tuple[int, int, bool, Union[ACCEPTED_MOD_INPUT, None]], Interval]
 ACCEPTED_INTERVAL_INPUT = Union[List[IntervalValue], IntervalValue]
