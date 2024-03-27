@@ -199,12 +199,8 @@ def build_enzymatic_spans(max_index: int, enzyme_sites: List[int], missed_cleava
         max_len = max_index
 
     enzyme_sites = set(enzyme_sites)
-    if 0 not in enzyme_sites:
-        enzyme_sites.add(0)
-
-    if max_index not in enzyme_sites:
-        enzyme_sites.add(max_index)
-
+    enzyme_sites.add(0)
+    enzyme_sites.add(max_index)
     enzyme_sites = sorted(list(enzyme_sites))
 
     spans = []

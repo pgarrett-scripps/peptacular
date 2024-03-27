@@ -9,12 +9,12 @@ from typing import List, Dict, Optional, Generator, Any, Callable, Tuple, Union
 from typing import Counter as CounterType
 import regex as re
 
-from peptacular.input_convert import fix_list_of_mods, fix_dict_of_mods, fix_interval_input
+from peptacular.input_convert import fix_list_of_mods, fix_dict_of_mods, fix_intervals_input
 from peptacular.proforma.proforma_dataclasses import Mod, Interval, are_mods_equal, are_intervals_equal
 from peptacular.constants import AMINO_ACIDS, AMBIGUOUS_AMINO_ACIDS, MASS_AMBIGUOUS_AMINO_ACIDS, ADDUCT_PATTERN, \
     ISOTOPE_NUM_PATTERN
 from peptacular.errors import ProFormaFormatError
-from peptacular.types import ACCEPTED_MOD_INPUT, ACCEPTED_INTERVAL_INPUT, ModValue, ChemComposition
+from peptacular.types import ACCEPTED_MOD_INPUT, ACCEPTED_INTERVAL_INPUT, ModValue, ChemComposition, IntervalValue
 
 
 def _parse_modifications(proforma_sequence: str, opening_bracket: str = '[', closing_bracket: str = ']') -> List[Mod]:
@@ -426,7 +426,7 @@ def parse_ion_elements(ion: str) -> Tuple[int, str, int]:
     return count, symbol, charge
 
 
-def parse_static_mods(mods: List[ModValue]) -> Dict[str, List[Mod]]:
+def parse_static_mods(mods: Optional[List[ModValue]]) -> Dict[str, List[Mod]]:
     """
     Parse static modifications into a dictionary, mapping the location to the modifications.
 
@@ -458,6 +458,9 @@ def parse_static_mods(mods: List[ModValue]) -> Dict[str, List[Mod]]:
     """
 
     static_mod_dict = {}
+
+    if mods is None:
+        return static_mod_dict
 
     for mod in mods:
 
@@ -691,78 +694,96 @@ class ProFormaAnnotation:
         return self._isotope_mods
 
     @isotope_mods.setter
-    def isotope_mods(self, value: Optional[Union[List[Mod], Mod]]) -> None:
-        if isinstance(value, Mod):
-            value = [value]
-        self._isotope_mods = copy.deepcopy(value)
+    def isotope_mods(self, value: Optional[Union[List[ModValue], ModValue]]) -> None:
+        if value is None:
+            self._isotope_mods = None
+        else:
+            value = fix_list_of_mods(value)
+            self._isotope_mods = copy.deepcopy(value)
 
     @property
     def static_mods(self) -> Union[List[Mod], None]:
         return self._static_mods
 
     @static_mods.setter
-    def static_mods(self, value: Optional[Union[List[Mod], Mod]]) -> None:
-        if isinstance(value, Mod):
-            value = [value]
-        self._static_mods = copy.deepcopy(value)
+    def static_mods(self, value: Optional[Union[List[ModValue], ModValue]]) -> None:
+        if value is None:
+            self._static_mods = None
+        else:
+            value = fix_list_of_mods(value)
+            self._static_mods = copy.deepcopy(value)
 
     @property
     def labile_mods(self) -> Union[List[Mod], None]:
         return self._labile_mods
 
     @labile_mods.setter
-    def labile_mods(self, value: Optional[Union[List[Mod], Mod]]) -> None:
-        if isinstance(value, Mod):
-            value = [value]
-        self._labile_mods = copy.deepcopy(value)
+    def labile_mods(self, value: Optional[Union[List[ModValue], ModValue]]) -> None:
+        if value is None:
+            self._labile_mods = None
+        else:
+            value = fix_list_of_mods(value)
+            self._labile_mods = copy.deepcopy(value)
 
     @property
     def unknown_mods(self) -> Union[List[Mod], None]:
         return self._unknown_mods
 
     @unknown_mods.setter
-    def unknown_mods(self, value: Optional[Union[List[Mod], Mod]]) -> None:
-        if isinstance(value, Mod):
-            value = [value]
-        self._unknown_mods = copy.deepcopy(value)
+    def unknown_mods(self, value: Optional[Union[List[ModValue], ModValue]]) -> None:
+        if value is None:
+            self._unknown_mods = None
+        else:
+            value = fix_list_of_mods(value)
+            self._unknown_mods = copy.deepcopy(value)
 
     @property
     def nterm_mods(self) -> Union[List[Mod], None]:
         return self._nterm_mods
 
     @nterm_mods.setter
-    def nterm_mods(self, value: Optional[Union[List[Mod], Mod]]) -> None:
-        if isinstance(value, Mod):
-            value = [value]
-        self._nterm_mods = copy.deepcopy(value)
+    def nterm_mods(self, value: Optional[Union[List[ModValue], ModValue]]) -> None:
+        if value is None:
+            self._nterm_mods = None
+        else:
+            value = fix_list_of_mods(value)
+            self._nterm_mods = copy.deepcopy(value)
 
     @property
     def cterm_mods(self) -> Union[List[Mod], None]:
         return self._cterm_mods
 
     @cterm_mods.setter
-    def cterm_mods(self, value: Optional[Union[List[Mod], Mod]]) -> None:
-        if isinstance(value, Mod):
-            value = [value]
-        self._cterm_mods = copy.deepcopy(value)
+    def cterm_mods(self, value: Optional[Union[List[ModValue], ModValue]]) -> None:
+        if value is None:
+            self._cterm_mods = None
+        else:
+            value = fix_list_of_mods(value)
+            self._cterm_mods = copy.deepcopy(value)
 
     @property
     def internal_mods(self) -> Union[Dict[int, List[Mod]], None]:
         return self._internal_mods
 
     @internal_mods.setter
-    def internal_mods(self, value: Optional[Dict[int, List[Mod]]]) -> None:
-        self._internal_mods = copy.deepcopy(value)
+    def internal_mods(self, value: Optional[Dict[int, Union[List[ModValue], ModValue]]]) -> None:
+        if value is None:
+            self._internal_mods = None
+        else:
+            value = fix_dict_of_mods(value)
+            self._internal_mods = copy.deepcopy(value)
 
     @property
     def intervals(self) -> Union[List[Interval], None]:
         return self._intervals
 
     @intervals.setter
-    def intervals(self, value: Optional[Union[List[Interval], Interval]]) -> None:
-        if isinstance(value, Interval):
-            value = [value]
-        self._intervals = copy.deepcopy(value)
+    def intervals(self, value: Optional[Union[List[IntervalValue], IntervalValue]]) -> None:
+        if value is None:
+            self._intervals = None
+        else:
+            value = fix_intervals_input(value)
+            self._intervals = copy.deepcopy(value)
 
     @property
     def charge(self) -> Union[int, None]:
@@ -777,10 +798,12 @@ class ProFormaAnnotation:
         return self._charge_adducts
 
     @charge_adducts.setter
-    def charge_adducts(self, value: Optional[Union[List[Mod], Mod]]) -> None:
-        if isinstance(value, Mod):
-            value = [value]
-        self._charge_adducts = copy.deepcopy(value)
+    def charge_adducts(self, value: Optional[Union[List[ModValue], ModValue]]) -> None:
+        if value is None:
+            self._charge_adducts = None
+        else:
+            value = fix_list_of_mods(value)
+            self._charge_adducts = copy.deepcopy(value)
 
     def __repr__(self) -> str:
         """
@@ -1097,14 +1120,13 @@ class ProFormaAnnotation:
             else:
                 self.labile_mods = mods
 
-    def add_unknown_mods(self, mods: Optional[Union[List[Mod], Mod]], append: bool = False) -> None:
+    def add_unknown_mods(self, mods: Optional[Union[List[ModValue], ModValue]], append: bool = False) -> None:
         if mods is None:
             if not append:
                 self.unknown_mods = None
             return
 
-        if isinstance(mods, Mod):
-            mods = [mods]
+        mods = fix_list_of_mods(mods)
 
         if not append:
             self.unknown_mods = mods
@@ -1114,14 +1136,13 @@ class ProFormaAnnotation:
             else:
                 self.unknown_mods = mods
 
-    def add_nterm_mods(self, mods: Optional[Union[List[Mod], Mod]], append: bool = False) -> None:
+    def add_nterm_mods(self, mods: Optional[Union[List[ModValue], ModValue]], append: bool = False) -> None:
         if mods is None:
             if not append:
                 self.nterm_mods = None
             return
 
-        if isinstance(mods, Mod):
-            mods = [mods]
+        mods = fix_list_of_mods(mods)
 
         if not append:
             self.nterm_mods = mods
@@ -1131,14 +1152,13 @@ class ProFormaAnnotation:
             else:
                 self.nterm_mods = mods
 
-    def add_cterm_mods(self, mods: Optional[Union[List[Mod], Mod]], append: bool = False) -> None:
+    def add_cterm_mods(self, mods: Optional[Union[List[ModValue], ModValue]], append: bool = False) -> None:
         if mods is None:
             if not append:
                 self.cterm_mods = None
             return
 
-        if isinstance(mods, Mod):
-            mods = [mods]
+        mods = fix_list_of_mods(mods)
 
         if not append:
             self.cterm_mods = mods  # Uses the setter to ensure proper copying
@@ -1181,13 +1201,10 @@ class ProFormaAnnotation:
 
         return self.internal_mods.pop(index)
 
-    def add_internal_mod(self, index: int, mods: Optional[Union[List[Mod], Mod]], append: bool = False) -> None:
+    def add_internal_mod(self, index: int, mods: Optional[Union[List[ModValue], ModValue]], append: bool = False) -> None:
         """
         Add internal mods to the annotation. If not append, existing mods will be replaced.
         """
-
-        if isinstance(mods, Mod):
-            mods = [mods]
 
         if mods is None:
             if not append:
@@ -1195,6 +1212,8 @@ class ProFormaAnnotation:
                     self._internal_mods = {}
                 self._internal_mods.pop(index, None)
             return
+
+        mods = fix_list_of_mods(mods)
 
         if not self.has_internal_mods():
             self._internal_mods = {}
@@ -1207,7 +1226,7 @@ class ProFormaAnnotation:
             else:
                 self._internal_mods[index] = copy.deepcopy(mods)
 
-    def add_internal_mods(self, mods: Optional[Dict[int, List[Mod]]], append: bool = False) -> None:
+    def add_internal_mods(self, mods: Optional[Dict[int, Union[List[ModValue], ModValue]]], append: bool = False) -> None:
         """
         Add internal mods to the annotation. If not append, existing mods will be replaced.
         """
@@ -1216,6 +1235,8 @@ class ProFormaAnnotation:
             if not append:
                 self.internal_mods = None
             return
+
+        mods = fix_dict_of_mods(mods)
 
         if not append:
             self.internal_mods = mods
@@ -1229,7 +1250,7 @@ class ProFormaAnnotation:
                     else:
                         self.internal_mods[k] = copy.deepcopy(v)
 
-    def add_intervals(self, intervals: Optional[Union[List[Interval], Interval]], append: bool = False) -> None:
+    def add_intervals(self, intervals: Optional[Union[List[IntervalValue], IntervalValue]], append: bool = False) -> None:
         """
         Add intervals to the annotation. If not append, existing mods will be replaced.
         """
@@ -1239,8 +1260,7 @@ class ProFormaAnnotation:
                 self.intervals = None
             return
 
-        if isinstance(intervals, Interval):
-            intervals = [intervals]
+        intervals = fix_intervals_input(intervals)
 
         if append is False:
             self.intervals = intervals  # Uses the setter to ensure proper copying
@@ -1256,7 +1276,7 @@ class ProFormaAnnotation:
         """
         self.charge = charge
 
-    def add_charge_adducts(self, charge_adducts: Optional[Union[List[Mod], Mod]], append: bool = False) -> None:
+    def add_charge_adducts(self, charge_adducts: Optional[Union[List[ModValue], ModValue]], append: bool = False) -> None:
         """
         Add charge adducts to the annotation
         """
@@ -1265,8 +1285,7 @@ class ProFormaAnnotation:
                 self.charge_adducts = None
             return
 
-        if isinstance(charge_adducts, Mod):
-            charge_adducts = [charge_adducts]
+        charge_adducts = fix_list_of_mods(charge_adducts)
 
         if not append:
             self.charge_adducts = charge_adducts  # Uses the setter to ensure proper copying
@@ -1276,7 +1295,7 @@ class ProFormaAnnotation:
             else:
                 self.charge_adducts = charge_adducts
 
-    def add_isotope_mods(self, mods: Optional[Union[List[Mod], Mod]], append: bool = False) -> None:
+    def add_isotope_mods(self, mods: Optional[Union[List[ModValue], ModValue]], append: bool = False) -> None:
         """
         Add isotope mods to the annotation. If not append, existing mods will be replaced.
         """
@@ -1286,8 +1305,7 @@ class ProFormaAnnotation:
                 self.isotope_mods = None
             return
 
-        if isinstance(mods, Mod):
-            mods = [mods]
+        mods = fix_list_of_mods(mods)
 
         if not append:
             self.isotope_mods = mods  # Uses the setter to ensure proper copying
@@ -1297,7 +1315,7 @@ class ProFormaAnnotation:
             else:
                 self.isotope_mods = mods
 
-    def add_static_mods(self, mods: Optional[Union[List[Mod], Mod]], append: bool = False) -> None:
+    def add_static_mods(self, mods: Optional[Union[List[ModValue], ModValue]], append: bool = False) -> None:
         """
         Add static mods to the annotation. If not append, existing mods will be replaced.
         """
@@ -1307,8 +1325,7 @@ class ProFormaAnnotation:
                 self.static_mods = None
             return
 
-        if isinstance(mods, Mod):
-            mods = [mods]
+        mods = fix_list_of_mods(mods)
 
         if not append:
             self.static_mods = mods  # Uses the setter to ensure proper copying
@@ -1721,7 +1738,7 @@ def create_annotation(sequence: str,
     nterm_mods = fix_list_of_mods(nterm_mods) if nterm_mods is not None else None
     cterm_mods = fix_list_of_mods(cterm_mods) if cterm_mods is not None else None
     internal_mods = fix_dict_of_mods(internal_mods) if internal_mods is not None else None
-    intervals = [fix_interval_input(interval) for interval in intervals] if intervals is not None else None
+    intervals = fix_intervals_input(intervals) if intervals is not None else None
     charge_adducts = fix_list_of_mods(charge_adducts) if charge_adducts is not None else None
 
     return ProFormaAnnotation(

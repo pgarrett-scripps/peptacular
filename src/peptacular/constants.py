@@ -23,6 +23,7 @@ _infos = get_element_info(_element_path)
 AVERAGE_ATOMIC_MASSES: Dict[str, float] = map_atomic_symbol_to_average_mass(_infos)
 ISOTOPIC_ATOMIC_MASSES: Dict[str, float] = get_isotopic_atomic_masses(_infos)
 ATOMIC_NUMBER_TO_SYMBOL: Dict[int, str] = map_atomic_number_to_symbol(_infos)
+ATOMIC_SYMBOL_TO_NUMBER: Dict[str, int] = {v: k for k, v in ATOMIC_NUMBER_TO_SYMBOL.items()}
 ATOMIC_SYMBOL_TO_ISOTOPE_NEUTRON_OFFSETS_AND_ABUNDANCES: Dict[str, List[Tuple[int, float]]] = \
     map_atomic_number_to_comp_neutron_offset(_infos)
 ATOMIC_SYMBOL_TO_ISOTOPE_MASSES_AND_ABUNDANCES: Dict[str, List[Tuple[float, float]]] = \
@@ -54,6 +55,24 @@ FRAGMENT_ION_COMPOSITIONS: Dict[str, Dict[str, int]] = {
     'i': {'H': 1, 'e': -1}
 }
 
+FRAGMENT_ION_BASE_CHARGE_ADDUCTS: Dict[str, str] = {
+    "a": '-e-',
+    "b": '-e-',
+    "c": '+2H+,+e-',
+    "x": '-e-',
+    "y": '+2H+,+e-',
+    "z": '-e-',
+    "ax": '-e-', # Could have a +2 charge with -e2
+    "ay": '+H+',  # amino-immonium ion (according to mascot)
+    "az": '-e-',
+    "bx": '-e-',
+    "by": '+H+',  # amino-acylium ion (according to mascot)
+    "bz": '-e-',
+    "cx": '+H+',
+    "cy": '+H+',  # No IDEA what this would look like
+    "cz": '+H+',
+    'i': '+H+'
+}
 
 NEUTRAL_FRAGMENT_START_COMPOSITIONS: Dict[str, Dict[str, int]] = {
     "p": NTERM_COMPOSITION,
@@ -142,7 +161,7 @@ AA_COMPOSITIONS: Dict[str, Dict[str, int]] = {
     "F": {"C": 9, "H": 9, "N": 1, "O": 1},  # Phenylalanine
     "R": {"C": 6, "H": 12, "N": 4, "O": 1},  # Arginine
     "Y": {"C": 9, "H": 9, "N": 1, "O": 2},  # Tyrosine
-    "W": {"C": 11, "H": 10, "N": 2},  # Tryptophan
+    "W": {"C": 11, "H": 10, "N": 2, "O": 1},  # Tryptophan
     "U": {"C": 3, "H": 5, "N": 1, "O": 1, "Se": 1},  # Selenocysteine
     "O": {"C": 12, "H": 19, "N": 3, "O": 2},  # Pyrrolysine
     "X": {},  # Unknown amino acid

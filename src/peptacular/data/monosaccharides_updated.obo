@@ -228,6 +228,15 @@ property_value: has_average_mass "14.026617" xsd:float
 id: MONO:995CFFA1
 name: Kdn
 def: "3-deoxy-D-glycero-D-galacto-non-2-ulopyranosonic acid"
-property_value: has_chemical_formula "C9H16O9" xsd:string
-property_value: has_monoisotopic_mass "268.0794321125" xsd:float
-property_value: has_average_mass "268.218319" xsd:float
+property_value: has_chemical_formula "C9H14O8" xsd:string
+property_value: has_monoisotopic_mass "250.06886740778" xsd:float
+property_value: has_average_mass "250.20303302194432" xsd:float
+
+[Term]
+id: MONO:FF3DD423
+name: Acetyl
+def: "Acetyl is a functional group with the chemical formula CH3CO. It is derived from acetic acid and is fundamental to biochemistry, particularly in the modification of proteins."
+synonym: "Ac" EXACT
+property_value: has_chemical_formula "C2H2O" xsd:string
+property_value: has_monoisotopic_mass "42.010564" xsd:float
+property_value: has_average_mass "42.036758" xsd:float

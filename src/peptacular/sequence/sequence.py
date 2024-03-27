@@ -26,10 +26,10 @@ from typing import Dict, List, Tuple, Counter, Callable, Union
 from typing import Counter as CounterType
 
 from peptacular.proforma.proforma import parse, ProFormaAnnotation, serialize, MultiProFormaAnnotation
-from peptacular.proforma.proforma_dataclasses import Mod, Interval
+from peptacular.proforma.proforma_dataclasses import Mod
 from peptacular.spans import Span
-from peptacular.types import ModDict, ModValue, IntervalValue
-from peptacular.input_convert import fix_list_of_mods, fix_interval_input, fix_intervals_input
+from peptacular.types import ModDict
+from peptacular.input_convert import fix_list_of_mods, fix_intervals_input
 
 
 def sequence_to_annotation(sequence: str) -> ProFormaAnnotation:
@@ -161,6 +161,7 @@ def is_modified(sequence: Union[str, ProFormaAnnotation]) -> bool:
         annotation = sequence
 
     return annotation.has_mods()
+
 
 def get_mods(sequence: Union[str, ProFormaAnnotation]) -> ModDict:
     """
@@ -708,7 +709,8 @@ def count_residues(sequence: Union[str, ProFormaAnnotation]) -> CounterType:
     return new_annotation.count_residues()
 
 
-def is_subsequence(subsequence: Union[str, ProFormaAnnotation], sequence: Union[str, ProFormaAnnotation], order: bool = True) -> bool:
+def is_subsequence(subsequence: Union[str, ProFormaAnnotation], sequence: Union[str, ProFormaAnnotation],
+                   order: bool = True) -> bool:
     """
     Checks if the input subsequence is a subsequence of the input sequence. If order is True, the subsequence must be in
     the same order as in the sequence. If order is False, the subsequence can be in any order.

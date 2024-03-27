@@ -4,13 +4,15 @@
 All notable changes to this project will be documented in this file.
 
 
-TODO:
+### TODO (Next Release?)
 - Fix internal fragment ions (Some might not be correct).
-- Cleanup custom erros as many are not used.
+- Cleanup custom errors as many are not used.
 - Update tests
-- Fix charge adduct handling, its probably wrong...
 - Add a mode to all mods additions: overwrite, append, skip...
 - Take valid mod values from the respective dbs for randomizer
+- Fix readthedocs build
+- Have Mod objects work for fragment loss?
+- Can improve the performance of mass calculations with isotopes and use_isotope_on_mods, by not calculating the composition of mods
 
 
 ## [2.0.0]
@@ -40,7 +42,7 @@ TODO:
 - moved combinatorics funcs to combinatorics.py
 - mass, fragment, digest, sequence, chem, glycan, and isotope are accessible from peptacular base (suggest using import peptacular as pt)
 - Most functions now call back to a ProFormaAnnotation object
-- sped up digest and fragment functions
+- Improved digest and fragment performance
 - Improved docs
 
 ## [1.3.0]

@@ -40,7 +40,7 @@ functions_to_benchmark = [
     (get_mods, "<13C>[Acetyl]-PE[3.1415][1]PTIDE-[Amide]"),
     (add_mods, "<13C>[Acetyl]-PEPTIDE-[Amide]", {1: [Mod(3.1415, 1)]}),
     (strip_mods, "<13C>[Acetyl]-PE[3.1415]PTIDE-[Amide]"),
-    (mass, "<13C>[Acetyl]-PE[3.1415]PTIDE-[100]"),
+    (mass, "[Acetyl]-PE[3.1415]PTIDE-[100]"),
     (fragment, "<13C>[Acetyl]-PE[3.1415]PTIDE-[100]", ['a', 'b', 'c', 'x', 'y', 'z'], [1, 2, 3]),
     (digest, "MASFRLFLLCLAGLVFVSEAGSVGAGEPKCPLMVKVLDAVRGSPAANVGVKVFK"*25, 'Trypsin'),
     #(fragment, "PE(3.1415)PTIDE", ['a', 'b', 'c', 'x', 'y', 'z'], [1, 2, 3], True, False),

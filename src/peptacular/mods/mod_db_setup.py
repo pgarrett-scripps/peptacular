@@ -8,6 +8,7 @@ from collections import Counter
 from functools import cached_property
 from typing import List, Dict, IO, Any, Union, Iterator
 
+from peptacular.constants import ISOTOPIC_ATOMIC_MASSES
 from peptacular.chem.chem_util import write_chem_formula, _parse_isotope_component, parse_chem_formula, chem_mass, \
     _parse_split_chem_formula
 from peptacular.errors import InvalidChemFormulaError, InvalidGlycanFormulaError
@@ -29,20 +30,13 @@ class ModEntry:
     @cached_property
     def calc_mono_mass(self):
         if self.composition is not None:
-            try:
-                return chem_mass(self.composition, monoisotopic=True)
-            except InvalidChemFormulaError:  # could be glycan
-                return chem_mass(_glycan_comp(self.composition), monoisotopic=True)
-
+            return chem_mass(self.composition, monoisotopic=True)
         return None
 
     @cached_property
     def calc_avg_mass(self):
         if self.composition is not None:
-            try:
-                return chem_mass(self.composition, monoisotopic=False)
-            except InvalidChemFormulaError:  # could be glycan
-                return chem_mass(_glycan_comp(self.composition), monoisotopic=False)
+            return chem_mass(self.composition, monoisotopic=False)
         return None
 
     def dict(self):
@@ -278,19 +272,17 @@ def _get_parent_ids(term: Dict[str, Any]) -> List[str]:
     return parent_ids
 
 
-def _fix_unimod_entry(entry: ModEntry) -> None:
+def _fix_unimod_entry(delta_formula: str) -> None:
     """
     1 - Unimod entries can have a glycan based composition
     """
 
-    delta_formula = entry.composition
-
     try:
-        _ = parse_chem_formula(delta_formula)
+        _ = chem_mass(delta_formula)
     except InvalidChemFormulaError as e:  # could be a glycan composition
 
         # replace 'H1O3P1' to Phospho and 'O3S1' to Sulpho
-        delta_formula = entry.composition.replace('Sulf', 'Sulpho').replace('Phos', 'Phospho')
+        delta_formula = delta_formula.replace('Sulf', 'Sulpho').replace('Phos', 'Phospho')
 
         # Sulphate looks like O(num1)S(num2)
         sulfate_match = re.search(r'O(\d+)S(\d+)', delta_formula)
@@ -317,7 +309,7 @@ def _fix_unimod_entry(entry: ModEntry) -> None:
             assert num2 / num1 == 3
             delta_formula = delta_formula.replace(phosphate_match.group(), f'Phospho{num3}')
 
-    entry.composition = delta_formula
+    return delta_formula
 
 
 def _get_unimod_entries(terms: List[Dict[str, Any]]) -> List[ModEntry]:
@@ -374,23 +366,31 @@ def _get_unimod_entries(terms: List[Dict[str, Any]]) -> List[ModEntry]:
         delta_formula = None
         if delta_composition is not None and isinstance(delta_composition, str):
 
-            delta_composition = delta_composition.split(' ')
-            elem_counter = Counter()
-            for comp in delta_composition:
-                if '(' in comp:  # get number between ()
-                    num = comp.split('(')[1].split(')')[0]
-                    comp = comp.split('(')[0]
-                    elem_counter[comp] += int(num)
-                else:
-                    elem_counter[comp] += 1
+            delta_composition = delta_composition.replace('(', ' ').replace(')', '')
+            delta_composition = parse_chem_formula(delta_composition, sep=' ')
 
-            delta_formula = write_chem_formula(elem_counter)
+            combined_comp = {}
+            for k, v in delta_composition.items():
+                if k =='Me' or k == 'Ac' or k not in ISOTOPIC_ATOMIC_MASSES:
+                    glycan_composition = _glycan_comp(k)
+                    for elem, count in glycan_composition.items():
+                        combined_comp[elem] = combined_comp.get(elem, 0) + count * v
+                else:
+                    combined_comp[k] = combined_comp.get(k, 0) + v
+
+            delta_formula = write_chem_formula(combined_comp)
 
         if delta_monoisotopic_mass is not None:
             delta_monoisotopic_mass = float(delta_monoisotopic_mass)
 
         if delta_average_mass is not None:
             delta_average_mass = float(delta_average_mass)
+
+        try:
+            _ = chem_mass(delta_formula)
+        except InvalidChemFormulaError as e:
+            orig_comp = property_values.get('delta_composition', [None])
+            warnings.warn(f'Cannot parse Unimod: {term_id}, {delta_formula}, {orig_comp}. {e}')
 
         mod = ModEntry(
             id=term_id,
@@ -403,7 +403,6 @@ def _get_unimod_entries(terms: List[Dict[str, Any]]) -> List[ModEntry]:
             entry_type=DbType.UNIMOD
         )
 
-        _fix_unimod_entry(mod)
         yield mod
 
 
@@ -469,7 +468,7 @@ def _get_psimod_entries(terms: List[Dict[str, Any]]) -> List[ModEntry]:
         synonyms = [syn.split('"')[1] for syn in synonyms]
 
         delta_formula = None
-        if delta_composition:
+        if isinstance(delta_composition, str):
             delta_composition = delta_composition.split(' ')
 
             elem_counter = Counter()

@@ -4,14 +4,13 @@ mass.py is a simple module for computing the m/z and mass of an amino acid seque
 import warnings
 from typing import Dict, Union, Optional, Tuple, List
 
-from peptacular.constants import PROTON_MASS
+from peptacular.constants import PROTON_MASS, AVERAGE_ATOMIC_MASSES, ELECTRON_MASS, ISOTOPIC_ATOMIC_MASSES, NEUTRON_MASS
 from peptacular.chem.chem import parse_chem_formula, _sequence_comp, _parse_mod_delta_mass_only, estimate_comp
-from peptacular.chem.chem_util import chem_mass, _parse_charge_adducts_mass, NEUTRON_MASS
+from peptacular.chem.chem_util import chem_mass
 from peptacular.mods.mod_db_setup import MONOSACCHARIDES_DB
-from peptacular.chem.chem_constants import MONOISOTOPIC_AA_MASSES, AVERAGE_AA_MASSES, MONOISOTOPIC_ION_ADJUSTMENTS, \
-    AVERAGE_ION_ADJUSTMENTS, AVERAGE_FRAGMENT_ADJUSTMENTS, MONOISOTOPIC_FRAGMENT_ADJUSTMENTS, \
-    MONOISOTOPIC_FRAGMENT_ION_ADJUSTMENTS, AVERAGE_FRAGMENT_ION_ADJUSTMENTS
-from peptacular.proforma.proforma import parse_static_mods, ProFormaAnnotation, Mod
+from peptacular.chem.chem_constants import MONOISOTOPIC_AA_MASSES, AVERAGE_AA_MASSES, AVERAGE_FRAGMENT_ADJUSTMENTS, \
+    MONOISOTOPIC_FRAGMENT_ADJUSTMENTS, MONOISOTOPIC_FRAGMENT_ION_ADJUSTMENTS, AVERAGE_FRAGMENT_ION_ADJUSTMENTS
+from peptacular.proforma.proforma import parse_static_mods, ProFormaAnnotation, Mod, parse_ion_elements
 from peptacular.util import convert_type
 from peptacular.errors import InvalidDeltaMassError, InvalidModificationMassError, UnknownAminoAcidError, \
     InvalidGlycanFormulaError, InvalidChemFormulaError, AmbiguousAminoAcidError
@@ -19,13 +18,16 @@ from peptacular.glycan import parse_glycan_formula
 from peptacular.mods.mod_db import parse_psi_mass, parse_unimod_mass, is_unimod_str, is_psi_mod_str, parse_xlmod_mass, \
     parse_resid_mass, is_gno_str, parse_gno_mass, is_xlmod_str, is_resid_str
 from peptacular.sequence.sequence import sequence_to_annotation
-from peptacular.types import ChemComposition
+from peptacular.types import ChemComposition, ModValue
 
 
 def comp_mass(sequence: Union[str, ProFormaAnnotation],
               ion_type: str = 'p',
               charge: Optional[int] = None,
-              charge_adducts: Optional[str] = None) -> Tuple[ChemComposition, float]:
+              isotope: int = 0,
+              charge_adducts: Optional[str] = None,
+              isotope_mods: Optional[List[ModValue]] = None,
+              use_isotope_on_mods: bool = False) -> Tuple[ChemComposition, float]:
     """
     Get the chemical composition of a peptide sequence and its delta mass.
 
@@ -35,8 +37,14 @@ def comp_mass(sequence: Union[str, ProFormaAnnotation],
     :type ion_type: str
     :param charge: The charge state of the ion. Default is None.
     :type charge: int | None
+    :param isotope: The number of Neutrons to add/subtract from the final mass. Default is 0.
+    :type isotope: int
     :param charge_adducts: The charge adducts. Default is None.
     :type charge_adducts: str | None
+    :param isotope_mods: The isotope modifications. Default is None.
+    :type isotope_mods: List[ModValue] | None
+    :param use_isotope_on_mods: If True, use the isotope on the modifications. Default is False.
+    :type use_isotope_on_mods: bool
 
     :return: A tuple containing the chemical composition and delta mass.
     :rtype: Tuple[ChemComposition, float]
@@ -59,19 +67,34 @@ def comp_mass(sequence: Union[str, ProFormaAnnotation],
         ({'C': 34, 'H': 54, 'N': 7, 'O': 15, 'e': -1}, 0.0)
 
         # Charge adducts in ProForma sequence
-        >>> comp_mass('PEPTIDE/2[+2Na+,+H+]')
-        ({'C': 34, 'H': 54, 'N': 7, 'O': 15, 'e': -3, 'Na': 2}, 0.0)
+        >>> comp_mass('PEPTIDE/2[+2Na+]')
+        ({'C': 34, 'H': 53, 'N': 7, 'O': 15, 'Na': 2, 'e': -2}, 0.0)
 
     """
 
     if isinstance(sequence, str):
         annotation = sequence_to_annotation(sequence)
     else:
-        annotation = sequence
+        annotation = sequence.copy()
 
-    annotation = annotation.condense_static_mods(inplace=False)
-    delta_mass = _pop_delta_mass_mods(annotation)  # get delta mass and pop these mods
-    peptide_composition = _sequence_comp(annotation, ion_type, charge, charge_adducts)
+    if charge is not None:
+        annotation.charge = charge
+
+    if charge_adducts is not None:
+        annotation.charge_adducts = charge_adducts
+
+    if isotope_mods is not None:
+        annotation.isotope_mods = isotope_mods
+
+    annotation.condense_static_mods(inplace=True)
+
+    delta_mass = _pop_delta_mass_mods(annotation)  # sum delta mass mods and remove them from the annotation
+    peptide_composition = _sequence_comp(annotation, ion_type, isotope, use_isotope_on_mods)
+
+    if use_isotope_on_mods is True and delta_mass != 0:
+        warnings.warn(
+            'use_isotope_on_mods=True and delta_mass != 0. Cannot apply isotopic modifications to the delta mass.')
+
     return peptide_composition, delta_mass
 
 
@@ -79,7 +102,10 @@ def comp(sequence: Union[str, ProFormaAnnotation],
          ion_type: str = 'p',
          estimate_delta: bool = False,
          charge: Optional[int] = None,
-         charge_adducts: Optional[str] = None) -> ChemComposition:
+         isotope: int = 0,
+         charge_adducts: Optional[str] = None,
+         isotope_mods: Optional[List[ModValue]] = None,
+         use_isotope_on_mods: bool = False) -> ChemComposition:
     """
     Calculates the elemental composition of a peptide sequence, including modifications,
     and optionally estimates the composition based on the delta mass from modifications.
@@ -92,8 +118,14 @@ def comp(sequence: Union[str, ProFormaAnnotation],
     :type estimate_delta: bool
     :param charge: The charge state of the ion. Default is None.
     :type charge: int | None
+    :param isotope: The number of Neutrons to add/subtract from the final mass. Default is 0.
+    :type isotope: int
     :param charge_adducts: The charge adducts. Default is None.
     :type charge_adducts: int | None
+    :param isotope_mods: The isotope modifications. Default is None.
+    :type isotope_mods: List[Mod] | None
+    :param use_isotope_on_mods: If True, use the isotope on the modifications. Default is False.
+    :type use_isotope_on_mods: bool
 
     :raises ValueError: If delta_mass is nonzero and estimate_delta is False, indicating an unaccounted modification.
 
@@ -123,14 +155,22 @@ def comp(sequence: Union[str, ProFormaAnnotation],
     else:
         annotation = sequence
 
-    composition, delta_mass = comp_mass(annotation, ion_type, charge, charge_adducts)
-
-    if delta_mass != 0 and not estimate_delta:
-        raise ValueError(f"Non-zero delta mass ({delta_mass}) encountered without estimation enabled for "
-                         f"sequence '{sequence}'.")
+    composition, delta_mass = comp_mass(annotation, ion_type, charge, isotope, charge_adducts, isotope_mods,
+                                        use_isotope_on_mods)
 
     if delta_mass != 0:
-        delta_mass_comp = estimate_comp(delta_mass, annotation.isotope_mods)
+
+        if estimate_delta is False:
+            raise ValueError(f"Non-zero delta mass ({delta_mass}) encountered without estimation enabled for "
+                             f"sequence '{sequence}'.")
+
+        if use_isotope_on_mods is True:
+            delta_mass_comp = estimate_comp(delta_mass, annotation.isotope_mods)
+            warnings.warn(
+                'Applying isotopic modifications to the predicted composition. This will not be accurate.'
+            )
+        else:
+            delta_mass_comp = estimate_comp(delta_mass, None)
 
         # Combine the compositions of the sequence and the delta mass
         for element in delta_mass_comp:
@@ -148,26 +188,55 @@ def adjust_mass(base_mass: float,
                 loss: float = 0.0,
                 charge_adducts: Optional[str] = None,
                 precision: Optional[int] = None) -> float:
+    """
+    Adjust the mass.
+
+    :param base_mass: The base mass of the sequence.
+    :type base_mass: float
+    :param charge: The charge state, default is None.
+    :type charge: int | None
+    :param ion_type: The ion type. Default is 'p'.
+    :type ion_type: str
+    :param monoisotopic: If True, use monoisotopic mass else use average mass. Default is True.
+    :type monoisotopic: bool
+    :param isotope: The number of Neutrons to add/subtract from the final mass. Default is 0.
+    :type isotope: int
+    :param loss: The loss to add/subtract to the final mass. Default is 0.0.
+    :type loss: float
+    :param charge_adducts: The charge adducts. Default is None.
+    :type charge_adducts: int | None
+    :param precision: The precision of the mass. Default is None.
+    :type precision: int | None
+
+    :return: The mass of the sequence.
+    :rtype: float
+    """
 
     if charge is None:
         charge = 0
 
-    if charge_adducts is None:
-        charge_adducts = '+H+'
-
     m = base_mass
 
-    charge_adduct_mass = _parse_charge_adducts_mass(charge_adducts)
+    if charge_adducts is None:
+        if ion_type == 'p' or ion_type == 'n':
+            charge_adduct_mass = PROTON_MASS * charge
+        else:
+            charge_adduct_mass = PROTON_MASS * (charge - 1) + MONOISOTOPIC_FRAGMENT_ION_ADJUSTMENTS[
+                ion_type] if monoisotopic else AVERAGE_FRAGMENT_ION_ADJUSTMENTS[ion_type]
+    else:
+        charge_adduct_mass = _parse_charge_adducts_mass(charge_adducts)
+
+    m += charge_adduct_mass
 
     # Base mass
     m += MONOISOTOPIC_FRAGMENT_ADJUSTMENTS[ion_type] if monoisotopic else AVERAGE_FRAGMENT_ADJUSTMENTS[ion_type]
 
-    if ion_type != 'p' and ion_type != 'n':
-        m += MONOISOTOPIC_FRAGMENT_ION_ADJUSTMENTS[ion_type] if monoisotopic else AVERAGE_FRAGMENT_ION_ADJUSTMENTS[
-            ion_type]  # +1 ion mass
-        m -= charge_adduct_mass  # Subtract charge adduct mass to obtain fake Neutral Fragment Mass (Doesnt really exist)
+    # if ion_type != 'p' and ion_type != 'n':
+    #    m += MONOISOTOPIC_FRAGMENT_ION_ADJUSTMENTS[ion_type] if monoisotopic else AVERAGE_FRAGMENT_ION_ADJUSTMENTS[
+    #        ion_type]  # +1 ion mass
+    #    m -= charge_adduct_mass  # Subtract charge adduct mass to obtain fake Neutral Fragment Mass (Doesnt really exist)
 
-    m += (charge * charge_adduct_mass)
+    # m += (charge * charge_adduct_mass)
     m += isotope * NEUTRON_MASS + loss  # Add isotope and loss
 
     if precision is not None:
@@ -179,6 +248,19 @@ def adjust_mass(base_mass: float,
 def adjust_mz(base_mass: float,
               charge: int,
               precision: Optional[int] = None) -> float:
+    """
+    Adjust the mass to charge ratio (m/z).
+
+    :param base_mass: The base mass of the sequence.
+    :type base_mass: float
+    :param charge: The charge state of the ion.
+    :type charge: int
+    :param precision: The precision of the mass. Default is None.
+    :type precision: int | None
+
+    :return: The adjusted m/z of the sequence.
+    :rtype: float
+    """
 
     if charge is None:
         charge = 0
@@ -200,6 +282,8 @@ def mass(sequence: Union[str, ProFormaAnnotation],
          isotope: int = 0,
          loss: float = 0.0,
          charge_adducts: Optional[str] = None,
+         isotope_mods: Optional[List[Mod]] = None,
+         use_isotope_on_mods: bool = False,
          precision: Optional[int] = None) -> float:
     """
     Calculate the mass of an amino acid 'sequence'.
@@ -218,6 +302,9 @@ def mass(sequence: Union[str, ProFormaAnnotation],
     :type loss: float
     :param charge_adducts: The charge adducts. Default is None.
     :type charge_adducts: int | None
+    :param isotope_mods: The isotope modifications. Default is None.
+    :type isotope_mods: List[Mod] | None
+    :param use_isotope_on_mods:
     :param precision: The precision of the mass. Default is None.
     :type precision: int | None
 
@@ -285,7 +372,7 @@ def mass(sequence: Union[str, ProFormaAnnotation],
         811.375
 
         >>> mass('(?DQ)NGTWEMESNENFEGYMK', precision=3)
-        2291.91
+        2307.905
 
         >>> mass('EM[Oxidation]EVT[#g1(0.01)]S[#g1(0.09)]ES[Phospho#g1(0.90)]PEK', precision=3)
         1360.511
@@ -299,10 +386,10 @@ def mass(sequence: Union[str, ProFormaAnnotation],
 
         # Or specify the charge directly
         >>> mass('PEPTIDE/2[+2Na+,+H+]', precision=3)
-        893.332
+        846.346
 
         # Ambiguous amino acid
-        >>> mass('B', 'by')
+        >>> mass('B', ion_type='by')
         Traceback (most recent call last):
         peptacular.errors.AmbiguousAminoAcidError: Ambiguous amino acid: B! Cannot determine the mass of a sequence with an ambiguous amino acid.
 
@@ -319,24 +406,27 @@ def mass(sequence: Union[str, ProFormaAnnotation],
     if annotation.charge_adducts is not None and charge_adducts is None:
         charge_adducts = annotation.charge_adducts[0]
 
+    if annotation.isotope_mods is not None and isotope_mods is None:
+        isotope_mods = annotation.isotope_mods
+
     if 'B' in annotation.sequence:
         raise AmbiguousAminoAcidError('B', 'Cannot determine the mass of a sequence with an ambiguous amino acid.')
 
     if 'Z' in annotation.sequence:
         raise AmbiguousAminoAcidError('Z', 'Cannot determine the mass of a sequence with an ambiguous amino acid.')
 
-    if annotation.isotope_mods is not None and len(annotation.isotope_mods) > 0:
-        peptide_composition, delta_mass = comp_mass(annotation, ion_type)
+    if isotope_mods is not None and len(isotope_mods) > 0:
+        peptide_composition, delta_mass = comp_mass(annotation, ion_type, charge, isotope, charge_adducts, isotope_mods,
+                                                    use_isotope_on_mods)
         return chem_mass(peptide_composition, monoisotopic=monoisotopic, precision=precision) + delta_mass
 
     if ion_type != 'p' and ion_type != 'n':
         if charge == 0:
             warnings.warn('Calculating the mass of a fragment ion with charge state 0. Fragment ions should have a '
                           'charge state greater than 0 since the neutral mass doesnt exist.')
-        _ = annotation.pop_labile_mods()
 
     m = 0.0
-    if annotation.static_mods is not None:
+    if annotation.has_static_mods():
         static_map = parse_static_mods(annotation.static_mods)
 
         n_term_mod = static_map.get('N-Term')
@@ -355,8 +445,6 @@ def mass(sequence: Union[str, ProFormaAnnotation],
             aa_count = annotation.sequence.count(aa)
             m += sum(mod_mass(m, monoisotopic, precision=None) for m in mod) * aa_count
 
-        annotation.pop_static_mods()
-
     try:
         m += sum(MONOISOTOPIC_AA_MASSES[aa] if monoisotopic
                  else AVERAGE_AA_MASSES[aa] for aa in annotation.sequence)
@@ -364,35 +452,35 @@ def mass(sequence: Union[str, ProFormaAnnotation],
         raise UnknownAminoAcidError(e)
 
     # Apply labile mods
-    if annotation.labile_mods is not None:
+    if annotation.has_labile_mods() and ion_type == 'p':
         for mod in annotation.labile_mods:
             m += mod_mass(mod)
 
     # Apply Unknown mods
-    if annotation.unknown_mods is not None:
+    if annotation.has_unknown_mods():
         for mod in annotation.unknown_mods:
             m += mod_mass(mod)
 
     # Apply N-term mods
-    if annotation.nterm_mods is not None:
+    if annotation.has_nterm_mods():
         for mod in annotation.nterm_mods:
             m += mod_mass(mod)
 
     # Apply intervals
-    if annotation.intervals is not None:
+    if annotation.has_intervals():
         for interval in annotation.intervals:
             if interval.mods is not None:
                 for mod in interval.mods:
                     m += mod_mass(mod)
 
     # apply internal mods
-    if annotation.internal_mods is not None:
+    if annotation.has_internal_mods():
         for k, mods in annotation.internal_mods.items():
             for mod in mods:
                 m += mod_mass(mod)
 
     # apply C-term mods
-    if annotation.cterm_mods is not None:
+    if annotation.has_cterm_mods():
         for mod in annotation.cterm_mods:
             m += mod_mass(mod)
 
@@ -406,11 +494,12 @@ def mz(sequence: Union[str, ProFormaAnnotation],
        isotope: int = 0,
        loss: float = 0.0,
        charge_adducts: Optional[str] = None,
+       isotope_mods: Optional[List[Mod]] = None,
        precision: Optional[int] = None) -> float:
     """
     Calculate the m/z (mass-to-charge ratio) of an amino acid 'sequence'.
 
-    :param sequence: A sequence or ProFormaAnnotation.
+:param sequence: A sequence or ProFormaAnnotation.
     :type sequence: str | ProFormaAnnotation
     :param charge: The charge state, default is None.
     :type charge: int | None
@@ -424,6 +513,8 @@ def mz(sequence: Union[str, ProFormaAnnotation],
     :type loss: float
     :param charge_adducts: The charge adducts. Default is None.
     :type charge_adducts: int | None
+    :param isotope_mods: The isotope modifications. Default is None.
+    :type isotope_mods: List[Mod] | None
     :param precision: The precision of the mass. Default is None.
     :type precision: int | None
 
@@ -465,7 +556,8 @@ def mz(sequence: Union[str, ProFormaAnnotation],
         charge = annotation.charge
 
     m = mass(sequence=annotation, charge=charge, ion_type=ion_type,
-             monoisotopic=monoisotopic, isotope=isotope, loss=loss, charge_adducts=charge_adducts, precision=None)
+             monoisotopic=monoisotopic, isotope=isotope, loss=loss, charge_adducts=charge_adducts,
+             isotope_mods=isotope_mods, precision=None)
 
     return adjust_mz(m, charge, precision)
 
@@ -974,3 +1066,103 @@ def _pop_delta_mass_mods(annotation: ProFormaAnnotation) -> float:
     annotation.clear_empty_mods()
 
     return delta_mass
+
+def _parse_adduct_mass(adduct: str,
+                       precision: Optional[int] = None,
+                       monoisotopic: bool = True) -> float:
+    """
+    Parse an adduct string and return its mass.
+
+    :param adduct: The adduct string to parse.
+    :type adduct: str
+    :param precision: The precision of the mass. Default is None.
+    :type precision: Optional[int]
+    :param monoisotopic: Whether to use monoisotopic masses. Default is True.
+    :type monoisotopic: bool
+
+    :raises InvalidDeltaMassError: If the adduct contains an invalid delta mass.
+
+    :return: The mass of the adduct.
+    :rtype: float
+
+    .. code-block:: python
+
+        # Parse an adduct string.
+        >>> _parse_adduct_mass('+Na+', precision=5)
+        22.98922
+
+        >>> _parse_adduct_mass('+2Na+', precision=5)
+        45.97899
+
+        >>> _parse_adduct_mass('H+', precision=5)
+        1.00728
+
+    """
+
+    mass = 0.0
+    element_count, element_symbol, element_charge = parse_ion_elements(adduct)
+
+    if element_symbol == 'e':
+        mass += element_count*ELECTRON_MASS
+
+    else:
+
+        if monoisotopic is True:
+            mass += element_count * ISOTOPIC_ATOMIC_MASSES[element_symbol]
+            mass -= element_charge * ELECTRON_MASS
+        else:
+            mass += element_count * AVERAGE_ATOMIC_MASSES[element_symbol]
+            mass -= element_charge * ELECTRON_MASS
+
+        if precision is not None:
+            mass = round(mass, precision)
+
+    return mass
+
+
+def _parse_charge_adducts_mass(adducts: ModValue,
+                               precision: Optional[int] = None,
+                               monoisotopic: bool = True) -> float:
+    """
+    Parse the charge adducts and return their mass.
+
+    :param adducts: The charge adducts to parse.
+    :type adducts: ModValue
+    :param precision: The precision of the mass. Default is None.
+    :type precision: Optional[int]
+    :param monoisotopic: Whether to use monoisotopic masses. Default is True.
+    :type monoisotopic: bool
+
+    :raises InvalidDeltaMassError: If the adduct contains an invalid delta mass.
+
+    :return: The mass of the charge adducts.
+    :rtype: float
+
+    .. code-block:: python
+
+        # Parse the charge adducts and return their mass.
+        >>> _parse_charge_adducts_mass('+Na+,+H+', precision=5)
+        23.9965
+
+    """
+
+    if isinstance(adducts, Mod):
+        return _parse_charge_adducts_mass(adducts.val, precision, monoisotopic)
+
+    if not isinstance(adducts, str):
+        raise TypeError(f'Invalid type for adducts: {type(adducts)}! Must be a string.')
+
+    if adducts == '+H+':
+        return PROTON_MASS
+
+    adducts = adducts.split(',')
+
+    mass = 0.0
+
+    for adduct in adducts:
+        mass += _parse_adduct_mass(adduct, None, monoisotopic)
+
+    if precision is not None:
+        mass = round(mass, precision)
+
+    return mass
