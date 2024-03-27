@@ -1,11 +1,7 @@
 from typing import Union, Optional
 
-from peptacular import ModValue
-from peptacular.proforma.proforma_dataclasses import Mod
 from peptacular.constants import HILL_ORDER, ISOTOPIC_ATOMIC_MASSES, ELECTRON_MASS, PROTON_MASS, \
     NEUTRON_MASS, AVERAGE_ATOMIC_MASSES, ISOTOPE_COMPONENT_PATTERN, CONDENSED_CHEM_FORMULA_PATTERN
-from peptacular.proforma.proforma import parse_ion_elements
-
 from peptacular.errors import InvalidChemFormulaError
 from peptacular.util import convert_type
 

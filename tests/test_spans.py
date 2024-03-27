@@ -3,7 +3,7 @@ import unittest
 from peptacular.spans import build_non_enzymatic_spans, build_left_semi_spans, build_right_semi_spans, \
     build_enzymatic_spans, build_semi_spans
 
-from peptacular.sequence import _span_to_sequence
+from peptacular import span_to_sequence
 
 
 class TestSpans(unittest.TestCase):
@@ -42,16 +42,16 @@ class TestSpans(unittest.TestCase):
         expected_output = [(1, 3, 2), (2, 3, 2)]
         self.assertEqual(build_right_semi_spans(span, min_len, max_len), expected_output)
 
-    def test_span_to_sequence(self):
+    def testspan_to_sequence(self):
         sequence = "ABCDEFGH"
         span = (0, 4, 1)
         expected_output = "ABCD"
-        self.assertEqual(_span_to_sequence(sequence, span), expected_output)
+        self.assertEqual(span_to_sequence(sequence, span), expected_output)
 
         sequence = "IJKLMNOP"
         span = (2, 6, 1)
         expected_output = "KLMN"
-        self.assertEqual(_span_to_sequence(sequence, span), expected_output)
+        self.assertEqual(span_to_sequence(sequence, span), expected_output)
 
     def test_get_non_enzymatic_spans_no_sub_spans(self):
         span = (0, 0, 1)
@@ -68,23 +68,27 @@ class TestSpans(unittest.TestCase):
         expected_output = []
         self.assertEqual(build_right_semi_spans(span), expected_output)
 
-    def test_span_to_sequence_empty_sequence(self):
+    def testspan_to_sequence_empty_sequence(self):
         sequence = ""
         span = (0, 0, 1)
         expected_output = ""
-        self.assertEqual(_span_to_sequence(sequence, span), expected_output)
+        self.assertEqual(span_to_sequence(sequence, span), expected_output)
 
-    def test_span_to_sequence_span_beyond_sequence_length(self):
+    def testspan_to_sequence_span_beyond_sequence_length(self):
         sequence = "ABC"
         span = (0, 10, 1)
         expected_output = "ABC"
-        self.assertEqual(_span_to_sequence(sequence, span), expected_output)
+        self.assertEqual(span_to_sequence(sequence, span), expected_output)
 
-    def test_span_to_sequence_negative_span(self):
+    def testspan_to_sequence_negative_span(self):
         sequence = "ABCDEFGH"
         span = (-4, -1, 1)
-        with self.assertRaises(ValueError):
-            _span_to_sequence(sequence, span)
+        self.assertEqual(span_to_sequence(sequence, span), 'EFG')
+
+    def testspan_to_sequence_none_span(self):
+        sequence = "ABCDEFGH"
+        span = (-4, None, 1)
+        self.assertEqual(span_to_sequence(sequence, span), 'EFGH')
 
     def test_get_non_enzymatic_spans_non_integer_input(self):
         span = (0.5, 4.5, 1)
@@ -101,11 +105,11 @@ class TestSpans(unittest.TestCase):
         with self.assertRaises(TypeError):
             build_right_semi_spans(span)
 
-    def test_span_to_sequence_non_integer_input(self):
+    def testspan_to_sequence_non_integer_input(self):
         sequence = "ABCDEFGH"
         span = (0.5, 4.5, 1)
         with self.assertRaises(TypeError):
-            _span_to_sequence(sequence, span)
+            span_to_sequence(sequence, span)
 
     def test_get_enzymatic_spans(self):
         end_index = 10

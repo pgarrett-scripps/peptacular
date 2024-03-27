@@ -1,7 +1,15 @@
 from typing import List, Dict, Any, Union, Tuple
 
-from peptacular.types import ModValue, IntervalValue
 from peptacular.proforma.proforma_dataclasses import Mod, Interval
+
+ModIndex = Union[int, str]
+ModValue = Union[str, int, float, Mod]
+ModDictValue = Union[List[Mod], List[Interval], int]
+ModDict = Dict[ModIndex, ModDictValue]
+
+ACCEPTED_MOD_INPUT = Union[List[ModValue], ModValue]
+IntervalValue = Union[Tuple[int, int, bool, Union[ACCEPTED_MOD_INPUT, None]], Interval]
+ACCEPTED_INTERVAL_INPUT = Union[List[IntervalValue], IntervalValue]
 
 
 def convert_to_mod(mod: ModValue) -> Mod:

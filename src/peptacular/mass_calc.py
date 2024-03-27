@@ -1,24 +1,25 @@
 """
-mass.py is a simple module for computing the m/z and mass of an amino acid sequence.
+mass_calc.py is a simple module for computing the m/z and mass of an amino acid sequence.
 """
 import warnings
 from typing import Dict, Union, Optional, Tuple, List
 
 from peptacular.constants import PROTON_MASS, AVERAGE_ATOMIC_MASSES, ELECTRON_MASS, ISOTOPIC_ATOMIC_MASSES, NEUTRON_MASS
-from peptacular.chem.chem import parse_chem_formula, _sequence_comp, _parse_mod_delta_mass_only, estimate_comp
+from peptacular.chem.chem_calc import parse_chem_formula, _sequence_comp, _parse_mod_delta_mass_only, estimate_comp
 from peptacular.chem.chem_util import chem_mass
 from peptacular.mods.mod_db_setup import MONOSACCHARIDES_DB
 from peptacular.chem.chem_constants import MONOISOTOPIC_AA_MASSES, AVERAGE_AA_MASSES, AVERAGE_FRAGMENT_ADJUSTMENTS, \
     MONOISOTOPIC_FRAGMENT_ADJUSTMENTS, MONOISOTOPIC_FRAGMENT_ION_ADJUSTMENTS, AVERAGE_FRAGMENT_ION_ADJUSTMENTS
-from peptacular.proforma.proforma import parse_static_mods, ProFormaAnnotation, Mod, parse_ion_elements
+from peptacular.proforma.proforma_parser import parse_static_mods, ProFormaAnnotation, Mod, parse_ion_elements
 from peptacular.util import convert_type
 from peptacular.errors import InvalidDeltaMassError, InvalidModificationMassError, UnknownAminoAcidError, \
     InvalidGlycanFormulaError, InvalidChemFormulaError, AmbiguousAminoAcidError
 from peptacular.glycan import parse_glycan_formula
 from peptacular.mods.mod_db import parse_psi_mass, parse_unimod_mass, is_unimod_str, is_psi_mod_str, parse_xlmod_mass, \
     parse_resid_mass, is_gno_str, parse_gno_mass, is_xlmod_str, is_resid_str
-from peptacular.sequence.sequence import sequence_to_annotation
-from peptacular.types import ChemComposition, ModValue
+from peptacular.sequence.sequence_funcs import sequence_to_annotation
+from peptacular.types import ChemComposition
+from peptacular.proforma.input_convert import ModValue
 
 
 def comp_mass(sequence: Union[str, ProFormaAnnotation],
@@ -221,20 +222,16 @@ def adjust_mass(base_mass: float,
         if ion_type == 'p' or ion_type == 'n':
             charge_adduct_mass = PROTON_MASS * charge
         else:
-            charge_adduct_mass = PROTON_MASS * (charge - 1) + MONOISOTOPIC_FRAGMENT_ION_ADJUSTMENTS[
-                ion_type] if monoisotopic else AVERAGE_FRAGMENT_ION_ADJUSTMENTS[ion_type]
+            frag_ion_offset = MONOISOTOPIC_FRAGMENT_ION_ADJUSTMENTS[ion_type] if monoisotopic is True \
+                else AVERAGE_FRAGMENT_ION_ADJUSTMENTS[ion_type]
+            charge_adduct_mass = PROTON_MASS * (charge - 1) + frag_ion_offset
     else:
-        charge_adduct_mass = _parse_charge_adducts_mass(charge_adducts)
+        charge_adduct_mass = _parse_charge_adducts_mass(charge_adducts, monoisotopic=monoisotopic)
 
     m += charge_adduct_mass
 
     # Base mass
     m += MONOISOTOPIC_FRAGMENT_ADJUSTMENTS[ion_type] if monoisotopic else AVERAGE_FRAGMENT_ADJUSTMENTS[ion_type]
-
-    # if ion_type != 'p' and ion_type != 'n':
-    #    m += MONOISOTOPIC_FRAGMENT_ION_ADJUSTMENTS[ion_type] if monoisotopic else AVERAGE_FRAGMENT_ION_ADJUSTMENTS[
-    #        ion_type]  # +1 ion mass
-    #    m -= charge_adduct_mass  # Subtract charge adduct mass to obtain fake Neutral Fragment Mass (Doesnt really exist)
 
     # m += (charge * charge_adduct_mass)
     m += isotope * NEUTRON_MASS + loss  # Add isotope and loss

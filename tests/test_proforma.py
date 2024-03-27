@@ -1,7 +1,7 @@
 import unittest
 
 from peptacular.errors import ProFormaFormatError
-from peptacular.sequence.proforma import parse, ProFormaAnnotation, Mod, Interval, serialize, MultiProFormaAnnotation
+from peptacular.proforma.proforma import parse, ProFormaAnnotation, Mod, Interval, serialize, MultiProFormaAnnotation
 
 
 class TestProForma(unittest.TestCase):
@@ -298,5 +298,3 @@ class TestProForma(unittest.TestCase):
         self.assertEqual(parse(proforma), expected_output)
         self.assertEqual(serialize(expected_output), proforma)
 
-
-    def test_

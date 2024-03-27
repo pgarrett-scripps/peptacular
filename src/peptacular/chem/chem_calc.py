@@ -1,15 +1,16 @@
 """
-chem.py contains functions for parsing and writing chemical formulas, and for calculating the composition of a sequence
+chem_calc.py contains functions for parsing and writing chemical formulas, and for calculating the composition of a sequence
 with/and modifications.
 """
 import warnings
 from typing import Union, List, Optional
 
 from peptacular.chem.chem_constants import ISOTOPIC_AVERAGINE_MASS
-from peptacular.types import ModValue, ChemComposition
+from peptacular.types import ChemComposition
+from peptacular.proforma.input_convert import ModValue
 from peptacular.chem.chem_util import parse_chem_formula, write_chem_formula
 from peptacular.mods.mod_db_setup import MONOSACCHARIDES_DB
-from peptacular.sequence.sequence import sequence_to_annotation
+from peptacular.sequence.sequence_funcs import sequence_to_annotation
 from peptacular.constants import AA_COMPOSITIONS, AVERAGINE_RATIOS, NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS, \
     FRAGMENT_ION_COMPOSITIONS, FRAGMENT_ION_BASE_CHARGE_ADDUCTS
 from peptacular.errors import InvalidCompositionError, AmbiguousAminoAcidError, \
@@ -17,7 +18,7 @@ from peptacular.errors import InvalidCompositionError, AmbiguousAminoAcidError, 
 from peptacular.glycan import glycan_comp
 from peptacular.mods.mod_db import parse_unimod_comp, parse_psi_comp, is_psi_mod_str, is_unimod_str, parse_xlmod_comp, \
     parse_resid_comp, is_resid_str, is_xlmod_str, is_gno_str, parse_gno_comp
-from peptacular.proforma.proforma import parse_static_mods, ProFormaAnnotation, Mod, parse_isotope_mods, \
+from peptacular.proforma.proforma_parser import parse_static_mods, ProFormaAnnotation, Mod, parse_isotope_mods, \
     parse_ion_elements
 from peptacular.util import convert_type
 
@@ -156,12 +157,12 @@ def _parse_glycan_comp(glycan_str: str) -> ChemComposition:
         # Invalid glycan ID
         >>> _parse_glycan_comp('6BAAXE121B1')
         Traceback (most recent call last):
-        peptacular.errors.UnknownGlycanError: Unknown glycan: 6BAAXE121B1
+        peptacular.errors.InvalidGlycanFormulaError: Error parsing glycan formula: "6BAAXE121B1". Unknown glycan: "6BAAXE121B1"!
 
         # Invalid glycan str
         >>> _parse_glycan_comp('HeSNAc2Hex3Neu1')
         Traceback (most recent call last):
-        peptacular.errors.UnknownGlycanError: Unknown glycan: HeSNAc2Hex3Neu1
+        peptacular.errors.InvalidGlycanFormulaError: Error parsing glycan formula: "HeSNAc2Hex3Neu1". Unknown glycan: "HeSNAc2Hex3Neu1"!
 
     """
 
@@ -717,11 +718,3 @@ def _parse_charge_adducts_comp(adducts: ModValue) -> ChemComposition:
             composition[k] = composition.get(k, 0) + v
 
     return composition
-
-
-if __name__ == '__main__':
-    print(f"{'EMEVEESPEK/2'}:\t\t\t\t\t{_sequence_comp('EMEVEESPEK/2', 'p')}")
-    print(f"{'EMEVEESPEK/2[+2Na+,+H+]'}:\t\t{_sequence_comp('EMEVEESPEK/2[+2Na+,+H+]', 'p')}")
-    print(f"{'EMEVEESPEK/1[+2Na+,-H+]'}:\t\t{_sequence_comp('EMEVEESPEK/1[+2Na+,-H+]', 'p')}")
-    print(f"{'EMEVEESPEK/-2[2I-]'}:\t\t\t\t{_sequence_comp('EMEVEESPEK/-2[2I-]', 'p')}")
-    print(f"{'EMEVEESPEK/-1[+e-]'}:\t\t\t\t{_sequence_comp('EMEVEESPEK/-1[+e-]', 'p')}")

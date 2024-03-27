@@ -9,12 +9,13 @@ from typing import List, Dict, Optional, Generator, Any, Callable, Tuple, Union
 from typing import Counter as CounterType
 import regex as re
 
-from peptacular.input_convert import fix_list_of_mods, fix_dict_of_mods, fix_intervals_input
+from peptacular.proforma.input_convert import fix_list_of_mods, fix_dict_of_mods, fix_intervals_input, \
+    ACCEPTED_MOD_INPUT, ACCEPTED_INTERVAL_INPUT, ModValue, IntervalValue
 from peptacular.proforma.proforma_dataclasses import Mod, Interval, are_mods_equal, are_intervals_equal
 from peptacular.constants import AMINO_ACIDS, AMBIGUOUS_AMINO_ACIDS, MASS_AMBIGUOUS_AMINO_ACIDS, ADDUCT_PATTERN, \
     ISOTOPE_NUM_PATTERN
 from peptacular.errors import ProFormaFormatError
-from peptacular.types import ACCEPTED_MOD_INPUT, ACCEPTED_INTERVAL_INPUT, ModValue, ChemComposition, IntervalValue
+from peptacular.types import ChemComposition
 
 
 def _parse_modifications(proforma_sequence: str, opening_bracket: str = '[', closing_bracket: str = ']') -> List[Mod]:
@@ -1355,10 +1356,17 @@ class ProFormaAnnotation:
 
         return ProFormaAnnotation(_sequence=self.sequence)
 
-    def slice(self, start: int, stop: int, inplace: bool = False) -> Union['ProFormaAnnotation', None]:
+    def slice(self, start: Optional[int], stop: Optional[int], inplace: bool = False) -> Union['ProFormaAnnotation', None]:
         """
         Slice the annotation sequence and return a new annotation with the sliced sequence and modifications.
         """
+
+        if start is None:
+            start = 0
+
+        if stop is None:
+            stop = len(self.sequence)
+
         new_sequence = self.sequence[start:stop]
 
         if not self.has_mods():

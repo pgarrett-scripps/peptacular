@@ -1,7 +1,7 @@
 import copy
 from collections import Counter
 from dataclasses import dataclass
-from typing import List, Union, Any, Optional, Dict
+from typing import List, Union, Any, Optional, Dict, Tuple
 
 from peptacular.util import convert_type
 

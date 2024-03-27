@@ -1,4 +1,4 @@
-from peptacular.constants import ISOTOPIC_ATOMIC_MASSES, AVERAGE_ATOMIC_MASSES, PROTON_MASS
+from peptacular.constants import PROTON_MASS
 from peptacular.mass import mz, mass
 
 import unittest
@@ -23,7 +23,7 @@ class TestMass(unittest.TestCase):
         self.assertAlmostEqual(200.962906, mz(sequence, charge=4, ion_type='y', monoisotopic=False), places)
 
     def test_calculate_mz_with_modified_peptide(self):
-        sequence = '(15)P(-10)EPTIDE(100)'
+        sequence = '[15]-P[-10]EPTIDE[100]'
         places = 2
 
         self.assertAlmostEqual(799.359964 + 105, mz(sequence, charge=0, ion_type='y', monoisotopic=True),
@@ -73,7 +73,7 @@ class TestMass(unittest.TestCase):
                                mass(sequence, charge=4, ion_type='y', monoisotopic=False), places)
 
     def test_calculate_mass_with_unmodified_peptide(self):
-        sequence = '(15)P(-10)EPTIDE(100)'
+        sequence = '[15]-P[-10]EPTIDE[100]'
         places = 2
 
         self.assertAlmostEqual(799.359964 + 105, mass(sequence, charge=0, ion_type='y', monoisotopic=True),

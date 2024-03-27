@@ -1,7 +1,7 @@
 from typing import List, Union
 
-from peptacular.proforma.proforma import ProFormaAnnotation
-from peptacular.sequence.sequence import sequence_to_annotation
+from peptacular.proforma.proforma_parser import ProFormaAnnotation
+from peptacular.sequence.sequence_funcs import sequence_to_annotation
 
 
 def permutations(sequence: Union[str, ProFormaAnnotation], size: int = None) -> List[str]:

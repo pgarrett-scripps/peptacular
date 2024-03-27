@@ -1,14 +1,14 @@
 """
-fragment.py contains functions for fragmenting peptides
+fragmentation.py contains functions for fragmenting peptides
 """
 from dataclasses import dataclass
 from functools import cached_property
 from typing import List, Union, TypeAlias, Literal, Optional
 
-from peptacular.proforma.proforma import ProFormaAnnotation
+from peptacular.proforma.proforma_parser import ProFormaAnnotation
 from peptacular.constants import FORWARD_ION_TYPES, BACKWARD_ION_TYPES, INTERNAL_ION_TYPES, TERMINAL_ION_TYPES
-from peptacular.mass import mass, adjust_mass, adjust_mz
-from peptacular.sequence.sequence import sequence_length, sequence_to_annotation
+from peptacular.mass_calc import mass, adjust_mass, adjust_mz
+from peptacular.sequence.sequence_funcs import sequence_length, sequence_to_annotation
 from peptacular.spans import build_non_enzymatic_spans, build_right_semi_spans, build_left_semi_spans, Span
 
 

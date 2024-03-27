@@ -1,8 +1,8 @@
 import math
 from dataclasses import dataclass
 from typing import List, Tuple, Union, Dict, Any, Optional
-from peptacular.fragment import Fragment
-from peptacular.sequence.sequence import strip_mods
+from peptacular.fragmentation import Fragment
+from peptacular.sequence.sequence_funcs import strip_mods
 
 
 def get_matched_indices(mz_spectrum1: List[float], mz_spectrum2: List[float], tolerance_value: float = 0.1,

@@ -25,11 +25,10 @@ import regex as re
 from typing import Dict, List, Tuple, Counter, Callable, Union
 from typing import Counter as CounterType
 
-from peptacular.proforma.proforma import parse, ProFormaAnnotation, serialize, MultiProFormaAnnotation
+from peptacular.proforma.proforma_parser import parse, ProFormaAnnotation, serialize, MultiProFormaAnnotation
 from peptacular.proforma.proforma_dataclasses import Mod
 from peptacular.spans import Span
-from peptacular.types import ModDict
-from peptacular.input_convert import fix_list_of_mods, fix_intervals_input
+from peptacular.proforma.input_convert import ModDict, fix_list_of_mods, fix_intervals_input
 
 
 def sequence_to_annotation(sequence: str) -> ProFormaAnnotation:
@@ -878,6 +877,12 @@ def find_subsequence_indices(sequence: Union[str, ProFormaAnnotation],
     if isinstance(subsequence, str):
         subsequence = sequence_to_annotation(subsequence)
 
+    if not sequence.has_sequence() or sequence.sequence == '':
+        return []
+
+    if not subsequence.has_sequence() or subsequence.sequence == '':
+        return []
+
     if ignore_mods:
         sequence = sequence.strip()
         subsequence = subsequence.strip()
@@ -1036,3 +1041,26 @@ def convert_ip2_sequence(sequence: str) -> str:
     sequence = re.sub(r'\]\[', r']-[', sequence)
 
     return sequence
+
+
+def is_sequence_valid(sequence: Union[str, ProFormaAnnotation]) -> bool:
+    """
+    Checks if the input sequence is a valid ProForma sequence.
+
+    :param sequence: The sequence or ProFormaAnnotation object to be validated.
+    :type sequence: Union[str, ProFormaAnnotation]
+
+    :return: True if the sequence is a valid ProForma sequence, False otherwise.
+    :rtype: bool
+
+    """
+
+    if isinstance(sequence, str):
+        try:
+            _ = sequence_to_annotation(sequence)
+        except Exception as e:
+            return False
+
+    return True
+
+

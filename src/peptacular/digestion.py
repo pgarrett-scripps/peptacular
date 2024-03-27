@@ -18,9 +18,9 @@ from typing import Union, List, Optional, TypeAlias, Literal, Tuple
 
 from peptacular.spans import Span
 from peptacular.constants import PROTEASES_COMPILED
-from peptacular.proforma.proforma import ProFormaAnnotation, create_annotation
+from peptacular.proforma.proforma_parser import ProFormaAnnotation, create_annotation
 from peptacular.spans import build_left_semi_spans, build_right_semi_spans, build_non_enzymatic_spans, build_spans
-from peptacular.sequence.sequence import sequence_to_annotation
+from peptacular.sequence.sequence_funcs import sequence_to_annotation
 from peptacular.util import get_regex_match_indices
 
 DigestReturnType: TypeAlias = Literal["str", "annotation", "span", "str-span", "annotation-span"]

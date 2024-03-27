@@ -1,11 +1,10 @@
 from typing import Dict, List, Generator, Union, Optional, TypeAlias, Literal
 
-from peptacular.sequence.sequence import sequence_to_annotation
-from peptacular.proforma.proforma import ProFormaAnnotation
+from peptacular.sequence.sequence_funcs import sequence_to_annotation
+from peptacular.proforma.proforma_parser import ProFormaAnnotation
 from peptacular.proforma.proforma_dataclasses import Mod
-from peptacular.types import ModIndex, ModValue
 from peptacular.util import get_regex_match_indices
-from peptacular.input_convert import fix_list_of_list_of_mods, fix_list_of_mods
+from peptacular.proforma.input_convert import fix_list_of_list_of_mods, fix_list_of_mods, ModIndex, ModValue
 
 ModMode: TypeAlias = Literal["skip", "append", "overwrite"]
 

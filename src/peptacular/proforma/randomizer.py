@@ -2,9 +2,8 @@ from random import randint, choice, sample
 from enum import Enum, auto
 from typing import List, Union
 
-from peptacular.mass import mass, comp_mass
 from peptacular.proforma.proforma_dataclasses import Mod, Interval
-from peptacular.proforma.proforma import ProFormaAnnotation, parse
+from peptacular.proforma.proforma_parser import ProFormaAnnotation, parse
 from pyteomics.proforma import parse as parse_proforma, ProForma
 
 # reset_all_databases()
@@ -286,26 +285,6 @@ if __name__ == '__main__':
         # top_down_randomizer(anot)
         # glycan_randomizer(anot)
         # cross_linking_randomizer(anot)
-
-        mass(anot)
-        sequence = anot.serialize()
-        print(sequence)
-
-        """
-        anot.pop_labile_mods()
-        anot.pop_unknown_mods()
-        anot.pop_static_mods()
-        anot.pop_unknown_mods()
-        sequence = anot.serialize()
-        parse_proforma(sequence)
-        """
-
-        annotation2 = parse(sequence)
-        mass(annotation2)
-        comp_mass(annotation2)
-        anot.reverse()
-        annotation2.shift(2)
-        annotation2.shuffle()
 
 # seq = ProForma.parse('EMEVEESPEK/2[+2Na+,+H+]')
 # print(seq.mass)
