@@ -3,10 +3,8 @@ from enum import Enum, auto
 from typing import List, Union
 
 from peptacular.proforma.proforma_dataclasses import Mod, Interval
-from peptacular.proforma.proforma_parser import ProFormaAnnotation, parse
-from pyteomics.proforma import parse as parse_proforma, ProForma
+from peptacular.proforma.proforma_parser import ProFormaAnnotation
 
-# reset_all_databases()
 
 UNIMOD_LEVEL_BASE_MOD_VALS = ['Oxidation', 'UNIMOD:10']
 UNIMOD_LEVEL2_MOD_VALS = ['U:Oxidation', 'U:10', 'U:+1', 'U:-1', 'U:+3.1415', 'U:-3.1415']
@@ -278,13 +276,3 @@ def spectrum_randomizer(annotation: ProFormaAnnotation):
             annotation.add_charge_adducts(Mod(choice(CHARGE_ADDUCT_VALS), 1))
 
 
-if __name__ == '__main__':
-    for _ in range(1000):
-        anot = compliance_randomizer(ProformaComplianceLevel.BASE, sequence_ambiguity=False)
-        spectrum_randomizer(anot)
-        # top_down_randomizer(anot)
-        # glycan_randomizer(anot)
-        # cross_linking_randomizer(anot)
-
-# seq = ProForma.parse('EMEVEESPEK/2[+2Na+,+H+]')
-# print(seq.mass)

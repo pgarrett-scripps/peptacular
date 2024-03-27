@@ -21,7 +21,7 @@ class InvalidModificationMassError(ValueError):
 
     def __init__(self, modification_str: str, *args):
         self.modification_str = modification_str
-        message = f"Cannot determine mass for modification: {modification_str}"
+        message = f'Cannot determine mass for modification: "{modification_str}"'
         super().__init__(message, *args)
 
 

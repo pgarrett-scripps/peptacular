@@ -17,7 +17,7 @@ All notable changes to this project will be documented in this file.
 
 ## [2.0.0]
 ### Added:
-- Limited ProForma2.0 support
+- Full ProForma2.0 support
 - Support for Unimod, psi-mod, glycan formulas, and chemical formulas (using Proforma2.0 notation)
 - Support for all types of internal fragment ions (ax, ay, bx, bx...)
 - support for global mods: isotope, static, labile, and unknown modification

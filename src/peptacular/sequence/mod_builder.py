@@ -6,26 +6,32 @@ from peptacular.proforma.proforma_dataclasses import Mod
 from peptacular.util import get_regex_match_indices
 from peptacular.proforma.input_convert import fix_list_of_list_of_mods, fix_list_of_mods, ModIndex, ModValue
 
-ModMode: TypeAlias = Literal["skip", "append", "overwrite"]
+ModMode: TypeAlias = Literal['skip', 'append', 'overwrite']
+MOD_MODE_VALUES = ['skip', 'append', 'overwrite']
 
+ModBuilderReturnType: TypeAlias = Literal["str", "annotation"]
+MOD_BUILDER_RETURN_TYPE_VALUES = ['str', 'annotation']
+
+STATIC_MOD_INPUT = Union[List[ModValue], ModValue]
 
 def apply_static_mods(sequence: Union[str, ProFormaAnnotation],
-                      residue_mods: Dict[str, Union[List[ModValue], ModValue]],
-                      nterm_mods: Optional[Dict[str, Union[List[ModValue], ModValue]]] = None,
-                      cterm_mods: Optional[Dict[str, Union[List[ModValue], ModValue]]] = None,
-                      mode: ModMode = 'skip') -> Union[str, ProFormaAnnotation]:
+                      internal_mods: Optional[Dict[str, STATIC_MOD_INPUT]],
+                      nterm_mods: Optional[Union[STATIC_MOD_INPUT, Dict[str, STATIC_MOD_INPUT]]] = None,
+                      cterm_mods: Optional[Union[STATIC_MOD_INPUT, Dict[str, STATIC_MOD_INPUT]]] = None,
+                      mode: ModMode = 'skip',
+                      return_type: ModBuilderReturnType = 'str') -> Union[str, ProFormaAnnotation]:
     """
     Add static modifications to an amino acid sequence. If a modification is already present in the sequence,
     it will be replaced by the new one.
 
     :param sequence: Original amino acid sequence.
     :type sequence: str
-    :param residue_mods: Dictionary mapping amino acids to the mass of their modifications.
-    :type residue_mods: Dict[str, Any]
+    :param internal_mods: Dictionary mapping amino acids to the mass of their modifications.
+    :type internal_mods: Dict[str, ModValue | List[ModValue]]
     :param nterm_mods: Dictionary mapping the N-terminal amino acid to the mass of its modification.
-    :type nterm_mods: Dict[str, Any]
+    :type nterm_mods: Dict[str, ModValue | List[ModValue]] | List[ModValue] | ModValue | None
     :param cterm_mods: Dictionary mapping the C-terminal amino acid to the mass of its modification.
-    :type cterm_mods: Dict[str, Any]
+    :type cterm_mods: Dict[str, ModValue | List[ModValue]] | List[ModValue] | ModValue | None
     :param mode: overwrite, append, skip
     :type mode: str
 
@@ -70,35 +76,49 @@ def apply_static_mods(sequence: Union[str, ProFormaAnnotation],
         >>> apply_static_mods('(?PE)PTIDE', {'P': ['phospho']})
         '(?P[phospho]E)P[phospho]TIDE'
 
-        # Term mods
-        >>> apply_static_mods('PEPTIDE', {}, nterm_mods={'P': ['acetyl']}, cterm_mods={'P': ['amide']})
+        # Term mods, macth must be either start or end index for N and C term
+        >>> apply_static_mods('PEPTIDE', None, nterm_mods={'P': ['acetyl']}, cterm_mods={'P': ['amide']})
         '[acetyl]-PEPTIDE'
 
-        >>> apply_static_mods('PEPTIDE', {}, nterm_mods={'PE': ['acetyl']}, cterm_mods={'P': ['amide']})
+        >>> apply_static_mods('PEPTIDE', None, nterm_mods={'PE': 'acetyl'}, cterm_mods={'P': 'amide'})
         '[acetyl]-PEPTIDE'
 
-        >>> apply_static_mods('PEPTIDE', {}, nterm_mods={'PP': ['acetyl']}, cterm_mods={'(?<=D)E': ['amide']})
+        >>> apply_static_mods('PEPTIDE', None, nterm_mods={'PP': ['acetyl']}, cterm_mods={'(?<=D)E': ['amide']})
         'PEPTIDE-[amide]'
 
-        >>> apply_static_mods('PEPTIDE', {}, nterm_mods={'': ['acetyl']}, cterm_mods={'': ['amide']})
+        # Can also specify a terminla mod to apply without any regex info
+        >>> apply_static_mods('PEPTIDE', None, nterm_mods='acetyl', cterm_mods='amide')
         '[acetyl]-PEPTIDE-[amide]'
 
     """
 
     if isinstance(sequence, str):
         annotation = sequence_to_annotation(sequence)
-        input_type = str
     else:
         annotation = sequence
-        input_type = ProFormaAnnotation
 
-    residue_mods = {k: fix_list_of_mods(v) for k, v in residue_mods.items()}
-    nterm_mods = {k: fix_list_of_mods(v) for k, v in nterm_mods.items()} if nterm_mods else {}
-    cterm_mods = {k: fix_list_of_mods(v) for k, v in cterm_mods.items()} if cterm_mods else {}
+    if internal_mods is not None:
+        internal_mods = {k: fix_list_of_mods(v) for k, v in internal_mods.items()}
+    else:
+        internal_mods = {}
+
+    if isinstance(nterm_mods, Dict):
+        nterm_mods = {k: fix_list_of_mods(v) for k, v in nterm_mods.items()} if nterm_mods else {}
+    elif nterm_mods is not None:
+        nterm_mods = {'': fix_list_of_mods(nterm_mods)}
+    else:
+        nterm_mods = {}
+
+    if isinstance(cterm_mods, Dict):
+        cterm_mods = {k: fix_list_of_mods(v) for k, v in cterm_mods.items()} if cterm_mods else {}
+    elif cterm_mods is not None:
+        cterm_mods = {'': fix_list_of_mods(cterm_mods)}
+    else:
+        cterm_mods = {}
 
     new_annotation = annotation.copy()
 
-    for regex_str, mods in residue_mods.items():
+    for regex_str, mods in internal_mods.items():
         for mod_index in get_regex_match_indices(annotation.sequence, regex_str):
             if annotation.has_internal_mods_at_index(mod_index):  # mod already present
                 if mode == 'overwrite':
@@ -142,7 +162,7 @@ def apply_static_mods(sequence: Union[str, ProFormaAnnotation],
                 else:
                     new_annotation.add_cterm_mods(mods, True)
 
-    if input_type == str:
+    if return_type == 'str':
         return new_annotation.serialize()
 
     return new_annotation
@@ -234,36 +254,52 @@ def _variable_mods_builder(annotation: ProFormaAnnotation,
     return var_annotations
 
 
+VAR_MOD_INPUT = Union[List[List[ModValue]], List[ModValue], ModValue]
+
+
 def apply_variable_mods(sequence: Union[str, ProFormaAnnotation],
-                        mod_map: Dict[str, Union[List[List[ModValue]], List[ModValue], ModValue]],
+                        internal_mods: Optional[Dict[str, VAR_MOD_INPUT]],
                         max_mods: int,
-                        nterm_mods: Optional[Dict[str, Union[List[List[ModValue]], List[ModValue], ModValue]]] = None,
-                        cterm_mods: Optional[Dict[str, Union[List[List[ModValue]], List[ModValue], ModValue]]] = None,
-                        mode: ModMode = 'skip') -> Union[List[str], List[ProFormaAnnotation]]:
+                        nterm_mods: Optional[Union[Dict[str, VAR_MOD_INPUT], VAR_MOD_INPUT]] = None,
+                        cterm_mods: Optional[Union[Dict[str, VAR_MOD_INPUT], VAR_MOD_INPUT]] = None,
+                        mode: ModMode = 'skip',
+                        return_type: ModBuilderReturnType = 'str') -> Union[List[str], List[ProFormaAnnotation]]:
     """
     Apply variable modifications to a sequence.
 
     :param sequence: Original amino acid sequence.
     :type sequence: str
-    :param mod_map: Dictionary mapping amino acids  /regex to modifications.
-    :type mod_map: Dict[str, List[List[ModValue]]]
+    :param internal_mods: Dictionary mapping amino acids  /regex to modifications.
+    :type internal_mods: Dict[str, List[List[ModValue]] | List[ModValue] | ModValue] | None
     :param max_mods: Maximum number of modifications allowed on the peptide.
     :type max_mods: int
     :param nterm_mods: Dictionary mapping the N-terminal amino acids / regex to modifications.
-    :type nterm_mods: Dict[str, List[List[ModValue]]]
+    :type nterm_mods: Dict[str, List[List[ModValue]] | List[ModValue] | ModValue] | List[List[ModValue]] | List[ModValue] | ModValue | None
     :param cterm_mods: Dictionary mapping the C-terminal amino acids / regex to modifications.
-    :type cterm_mods: Dict[str, List[List[ModValue]]]
+    :type cterm_mods: Dict[str, List[List[ModValue]] | List[ModValue] | ModValue] | List[List[ModValue]] | List[ModValue] | ModValue | None
     :param mode: overwrite, append, skip
     :type mode: str
-
 
     :return: List of all possible modified peptide sequences.
     :rtype: List[str]
 
     .. code-block:: python
 
+        # Dict: Double list
         >>> apply_variable_mods('PEPTIDE', {'P': [['phospho']]}, 1)
         ['P[phospho]EPTIDE', 'PEP[phospho]TIDE', 'PEPTIDE']
+
+        # Dict: Single list
+        >>> apply_variable_mods('PEPTIDE', {'P': ['phospho']}, 1)
+        ['P[phospho]EPTIDE', 'PEP[phospho]TIDE', 'PEPTIDE']
+
+        # Dict: Single Value
+        >>> apply_variable_mods('PEPTIDE', {'P': 'phospho'}, 1)
+        ['P[phospho]EPTIDE', 'PEP[phospho]TIDE', 'PEPTIDE']
+
+        # Terms can be Dict or List
+        >>> apply_variable_mods('PEPTIDE', None, 1, nterm_mods={'': 'phospho'}, cterm_mods='acetyl')
+        ['[phospho]-PEPTIDE', '[phospho]-PEPTIDE-[acetyl]', 'PEPTIDE-[acetyl]', 'PEPTIDE']
 
         # When multiple mods are specified in the same group, they are applied together
         >>> apply_variable_mods('PEPTIDE', {'P': [['phospho', 1]]}, 1)
@@ -303,33 +339,54 @@ def apply_variable_mods(sequence: Union[str, ProFormaAnnotation],
 
     if isinstance(sequence, str):
         annotation = sequence_to_annotation(sequence)
-        input_type = str
     else:
         annotation = sequence
-        input_type = ProFormaAnnotation
 
-    mod_map = {k: fix_list_of_list_of_mods(v) for k, v in mod_map.items()}
-    nterm_mods = {k: fix_list_of_list_of_mods(v) for k, v in nterm_mods.items()} if nterm_mods else {}
-    cterm_mods = {k: fix_list_of_list_of_mods(v) for k, v in cterm_mods.items()} if cterm_mods else {}
+    if internal_mods is not None:
+        internal_mods = {k: fix_list_of_list_of_mods(v) for k, v in internal_mods.items()}
+    else:
+        internal_mods = {}
 
-    var_annotations = []
+    if isinstance(nterm_mods, Dict):
+        nterm_mods = {k: fix_list_of_list_of_mods(v) for k, v in nterm_mods.items()} if nterm_mods else {}
+    elif nterm_mods is not None:
+        nterm_mods = {'': fix_list_of_list_of_mods(nterm_mods)}
+    else:
+        nterm_mods = {}
+
+    if isinstance(cterm_mods, Dict):
+        cterm_mods = {k: fix_list_of_list_of_mods(v) for k, v in cterm_mods.items()} if cterm_mods else {}
+    elif cterm_mods is not None:
+        cterm_mods = {'': fix_list_of_list_of_mods(cterm_mods)}
+    else:
+        cterm_mods = {}
+
+    n_term_annotations = []
     if nterm_mods:
         for regex_str, mods_list in nterm_mods.items():
             for mods in mods_list:
-                nterm_annot = apply_static_mods(annotation, {}, nterm_mods={regex_str: mods}, mode=mode)
+                nterm_annot = apply_static_mods(annotation, {}, nterm_mods={regex_str: mods}, mode=mode, return_type='annotation')
                 if nterm_annot != annotation:
-                    var_annotations.extend(_variable_mods_builder(nterm_annot, mod_map, max_mods, mode=mode))
+                    n_term_annotations.extend(_variable_mods_builder(nterm_annot, internal_mods, max_mods, mode=mode))
 
+    var_annotations = []
     if cterm_mods:
         for regex_str, mods_list in cterm_mods.items():
             for mods in mods_list:
-                cterm_annot = apply_static_mods(annotation, {}, cterm_mods={regex_str: mods}, mode=mode)
+
+                for n_term_annot in n_term_annotations:
+                    cterm_annot = apply_static_mods(n_term_annot, {}, cterm_mods={regex_str: mods}, mode=mode, return_type='annotation')
+                    if cterm_annot != n_term_annot:
+                        var_annotations.extend(_variable_mods_builder(cterm_annot, internal_mods, max_mods, mode=mode))
+
+                cterm_annot = apply_static_mods(annotation, {}, cterm_mods={regex_str: mods}, mode=mode, return_type='annotation')
                 if cterm_annot != annotation:
-                    var_annotations.extend(_variable_mods_builder(cterm_annot, mod_map, max_mods, mode=mode))
+                    var_annotations.extend(_variable_mods_builder(cterm_annot, internal_mods, max_mods, mode=mode))
 
-    var_annotations.extend(_variable_mods_builder(annotation, mod_map, max_mods, mode=mode))
+    var_annotations.extend(_variable_mods_builder(annotation, internal_mods, max_mods, mode=mode))
+    var_annotations = n_term_annotations + var_annotations
 
-    if input_type == str:
+    if return_type == 'str':
         return [a.serialize() for a in var_annotations]
 
     return var_annotations
