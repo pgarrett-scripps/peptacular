@@ -34,46 +34,50 @@ HILL_ORDER: Dict[str, int] = map_hill_order(_infos)
 NTERM_COMPOSITION = {"H": 1}
 CTERM_COMPOSITION = {"O": 1, "H": 1}
 
+# Additions to get the +1 ion
 FRAGMENT_ION_COMPOSITIONS: Dict[str, Dict[str, int]] = {
-    "p": {'H': 1, 'e': -1},
-    "n": {},
-    "a": {'e': -1},
-    "b": {'e': -1},
-    "c": {'H': 2, 'e': -1},
-    "x": {'e': -1},
-    "y": {'H': 2, 'e': -1},
+    "p": {'H': 1, 'e': -1},  # Proton
+    "n": {},  # Nothing
+    "a": {'e': -1},  # -electron
+    "b": {'e': -1},  # -electron
+    "c": {'H': 2, 'e': -1},  # Steals proton and hydrogen from neutral fragment
+    "x": {'e': -1},  # -electron
+    "y": {'H': 2, 'e': -1},  # Steals proton and hydrogen from neutral fragment
     "z": {'e': -1},
-    "ax": {'e': -1}, # Could have a +2 charge with -e2
-    "ay": {'H': 1, 'e': -1},  # amino-immonium ion (according to mascot)
+    "ax": {'e': -1},
+    "ay": {'H': 1, 'e': -1},
     "az": {'e': -1},
     "bx": {'e': -1},
-    "by": {'H': 1, 'e': -1},  # amino-acylium ion (according to mascot)
+    "by": {'H': 1, 'e': -1},
     "bz": {'e': -1},
     "cx": {'H': 1, 'e': -1},
-    "cy": {'H': 3, 'e': -1},  # No IDEA what this would look like
+    "cy": {'H': 3, 'e': -1},
     "cz": {'H': 1, 'e': -1},
     'i': {'H': 1, 'e': -1}
 }
 
 FRAGMENT_ION_BASE_CHARGE_ADDUCTS: Dict[str, str] = {
+    "p": '+H+',
+    "n": '',
     "a": '-e-',
     "b": '-e-',
     "c": '+2H+,+e-',
     "x": '-e-',
     "y": '+2H+,+e-',
     "z": '-e-',
-    "ax": '-e-', # Could have a +2 charge with -e2
-    "ay": '+H+',  # amino-immonium ion (according to mascot)
+    "ax": '-e-',
+    "ay": '+H+',
     "az": '-e-',
     "bx": '-e-',
-    "by": '+H+',  # amino-acylium ion (according to mascot)
+    "by": '+H+',
     "bz": '-e-',
     "cx": '+H+',
-    "cy": '+H+',  # No IDEA what this would look like
+    "cy": '+3H+,+e-',
     "cz": '+H+',
     'i': '+H+'
 }
 
+# According to the dissociation sites
 NEUTRAL_FRAGMENT_START_COMPOSITIONS: Dict[str, Dict[str, int]] = {
     "p": NTERM_COMPOSITION,
     "a": NTERM_COMPOSITION,
@@ -86,6 +90,7 @@ NEUTRAL_FRAGMENT_START_COMPOSITIONS: Dict[str, Dict[str, int]] = {
     'n': {}
 }
 
+# According to the dissociation sites
 NEUTRAL_FRAGMENT_END_COMPOSITIONS: Dict[str, Dict[str, int]] = {
     "p": CTERM_COMPOSITION,
     "a": {"O": -1, "C": -1},

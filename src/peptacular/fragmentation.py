@@ -144,7 +144,8 @@ def _build_fragments(spans: List[Span],
                         fragment_neutral_mass = adjust_mass(base_mass=base_mass, charge=0, ion_type=ion_type,
                                                             monoisotopic=monoisotopic, isotope=iso, loss=loss)
                         fragment_mass = adjust_mass(base_mass=base_mass, charge=c, ion_type=ion_type,
-                                                    monoisotopic=monoisotopic, precision=precision)
+                                                    monoisotopic=monoisotopic, precision=precision,
+                                                    isotope=iso, loss=loss)
                         fragment_mz = adjust_mz(base_mass=fragment_mass, charge=c, precision=precision)
 
                         if return_type == 'fragment':

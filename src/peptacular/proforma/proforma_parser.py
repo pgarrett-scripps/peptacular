@@ -2245,27 +2245,27 @@ def _serialize_annotation_start(annotation: ProFormaAnnotation) -> str:
     comps = []
 
     # add labile mods
-    if annotation.labile_mods:
+    if annotation.has_labile_mods():
         for mod in annotation.labile_mods:
             comps.append(mod.serialize('{}'))
 
-    if annotation.static_mods:
+    if annotation.has_static_mods():
         for mod in annotation.static_mods:
             comps.append(mod.serialize('<>'))
 
     # Add global mods
-    if annotation.isotope_mods:
+    if annotation.has_isotope_mods():
         for mod in annotation.isotope_mods:
             comps.append(mod.serialize('<>'))
 
     # Unknown mods
-    if annotation.unknown_mods:
+    if annotation.has_unknown_mods():
         for mod in annotation.unknown_mods:
             comps.append(mod.serialize('[]'))
         comps.append("?")
 
     # N-term mods
-    if annotation.nterm_mods:
+    if annotation.has_nterm_mods():
         for mod in annotation.nterm_mods:
             comps.append(mod.serialize('[]'))
         comps.append("-")

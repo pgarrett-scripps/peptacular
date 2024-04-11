@@ -13,21 +13,15 @@ All notable changes to this project will be documented in this file.
 - Fix readthedocs build
 - Have Mod objects work for fragment loss?
 - Can improve the performance of mass calculations with isotopes and use_isotope_on_mods, by not calculating the composition of mods
-
+- Add MultiProformaAnnot support to mass/chem/fragment/isotope....
 
 ## [2.0.0]
 ### Added:
 - Full ProForma2.0 support
-- Support for Unimod, psi-mod, glycan formulas, and chemical formulas (using Proforma2.0 notation)
+- proforma.py for handling ProForma strings (full support for ProForma2.0)
 - Support for all types of internal fragment ions (ax, ay, bx, bx...)
-- support for global mods: isotope, static, labile, and unknown modification
-- support for mod localization scores
-- support for multiple mods per site and []^x notation
-- support for chimeric and charged sequences
-- gen_data submodule for generating modification and atom mass lookup tables
 - isotope.py for generating isotope distributions
 - apply_static_mod and apply_variable_mods now support n/c term mods
-- proforma.py for handling ProForma strings (full support for ProForma2.0)
 - gno, resid, and xlmod support
 - randomizer.py for generating random proforma sequences
 - added mods module to handle loading obo files and finding mods
@@ -37,11 +31,10 @@ All notable changes to this project will be documented in this file.
 - Terminal modifications notation has been changed to use []- and -[] for N- and C-terminal modifications, respectively
 - All internal modifications now use [] notation
 - Element masses/isotopes are generated using physics.nist.gov db
-- many sequence functions have been renamed to support importing peptacular as pt
-- move static/var mod builders to modbuilder.py
-- moved combinatorics funcs to combinatorics.py
-- mass, fragment, digest, sequence, chem, glycan, and isotope are accessible from peptacular base (suggest using import peptacular as pt)
-- Most functions now call back to a ProFormaAnnotation object
+- Move static/var mod builders to mod_builder.py
+- Moved combinatorics funcs to combinatorics.py
+- All public functions are accessible from peptacular base (suggest using import peptacular as pt)
+- Most functions now support a ProFormaAnnotation object
 - Improved digest and fragment performance
 - Improved docs
 
