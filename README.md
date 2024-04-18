@@ -1,7 +1,14 @@
 
 # Peptacular
 
-A spectacularly simple package for working with peptide sequences.
+A spectacularly simple package for working with peptide sequences. Now proforma2.0 compliant.
+
+# Warnings
+
+- The fragment ion mass calculation may not be accurate. Fairly certain that the ay, by, and cy internal fragments are 
+correct since the y fragment is really just a smaller parent ion.
+- GNO and RESID mods are disabled for now. I will add them back in later.
+- Project is still under development. I will be adding more features and fixing bugs as I find them.
 
 ## ReadTheDocs
 https://peptacular.readthedocs.io/en/latest/index.html

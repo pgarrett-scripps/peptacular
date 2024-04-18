@@ -668,7 +668,7 @@ def mod_mass(mod: Union[str, Mod], monoisotopic: bool = True, precision: Optiona
         >>> mod_mass('info:HelloWorld', precision=3)
         Traceback (most recent call last):
         ...
-        peptacular.errors.InvalidModificationMassError: Cannot determine mass for modification: info:HelloWorld
+        peptacular.errors.InvalidModificationMassError: Cannot determine mass for modification: "info:HelloWorld"
 
     """
 
@@ -1064,6 +1064,7 @@ def _pop_delta_mass_mods(annotation: ProFormaAnnotation) -> float:
 
     return delta_mass
 
+
 def _parse_adduct_mass(adduct: str,
                        precision: Optional[int] = None,
                        monoisotopic: bool = True) -> float:
@@ -1091,8 +1092,14 @@ def _parse_adduct_mass(adduct: str,
         >>> _parse_adduct_mass('+2Na+', precision=5)
         45.97899
 
+        >>> _parse_adduct_mass('+2Na-', precision=5)
+        45.98009
+
         >>> _parse_adduct_mass('H+', precision=5)
         1.00728
+
+        >>> _parse_adduct_mass('H-', precision=5)
+        1.00837
 
     """
 
@@ -1100,7 +1107,7 @@ def _parse_adduct_mass(adduct: str,
     element_count, element_symbol, element_charge = parse_ion_elements(adduct)
 
     if element_symbol == 'e':
-        mass += element_count*ELECTRON_MASS
+        mass += element_count * ELECTRON_MASS
 
     else:
 
@@ -1135,7 +1142,7 @@ def _parse_charge_adducts_mass(adducts: ModValue,
     :return: The mass of the charge adducts.
     :rtype: float
 
-    .. code-block:: python
+    . code-block:: python
 
         # Parse the charge adducts and return their mass.
         >>> _parse_charge_adducts_mass('+Na+,+H+', precision=5)

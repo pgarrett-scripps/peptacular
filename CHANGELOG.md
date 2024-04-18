@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - Take valid mod values from the respective dbs for randomizer
 - Fix readthedocs build
 - Have Mod objects work for fragment loss?
+- Improve fragment loss handling based on ion type and sequence
 - Can improve the performance of mass calculations with isotopes and use_isotope_on_mods, by not calculating the composition of mods
 - Add MultiProformaAnnot support to mass/chem/fragment/isotope....
 

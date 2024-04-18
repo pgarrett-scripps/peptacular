@@ -6,31 +6,31 @@ from peptacular.proforma.proforma_dataclasses import Mod, Interval
 from peptacular.proforma.proforma_parser import ProFormaAnnotation
 
 
-UNIMOD_LEVEL_BASE_MOD_VALS = ['Oxidation', 'UNIMOD:10']
-UNIMOD_LEVEL2_MOD_VALS = ['U:Oxidation', 'U:10', 'U:+1', 'U:-1', 'U:+3.1415', 'U:-3.1415']
-PSI_LEVEL_BASE_MOD_VALS = ['O-phospho-L-serine', 'MOD:00046']
-PSI_LEVEL2_MOD_VALS = ['M:O-phospho-L-serine', 'M:00046', 'M:+1', 'M:-1', 'M:+3.1415', 'M:-3.1415']
-DELTA_MASS_MOD_VALS = ['+1', '-1', '+3.1415', '-3.1415']
-MOD_INFO_VALS = ['INFO:Cool', 'INFO:Awesome', 'INFO:Radical', 'INFO:Amazing', 'INFO:Fantastic']
-CHEM_FORMULA_MOD_VALS = ['Formula:C12H22O11', 'Formula:[13C6]H12O6[12C-4]', 'Formula:CHO', 'Formula:C2H-5O']
-GLYCAN_MOD_VALS = ['Glycan:HexNAc2Hex3Neu1', 'Glycan:Hex', 'Glycan:6BAAE1B1']
-GNO_MOD_VALS = ['GNO:G59626AS', 'GNO:G62765YT', 'G:G59626AS', 'G:G62765YT', 'G:+1', 'G:-1', 'G:+3.1415', 'G:-3.1415']
-RESID_MOD_VALS = ['RESID:AA0581', 'RESID:AA0037', 'R:AA0581', 'R:AA0037', 'R:+1', 'R:-1', 'R:+3.1415', 'R:-3.1415']
-ISOTOPE_MOD_VALS = ['13C', '15N', '18O', '2H', 'T', 'D']
-STATIC_MOD_VALS = ['[Oxidation]@M', '[Oxidation]@M,C,D', '[+1]@C', '[-1]@C', '[+3.1415]@C', '[-3.1415]@C']
-XLMOD_VALS = ['XLMOD:02001', 'XLMOD:02010', 'XLMOD:02000', 'X:02001', 'X:02010', 'X:02000']
-CHARGE_ADDUCT_VALS = ['+H+', '+2Na+,-H+', '+2Na+,+H+', '2I-', '+e-']
+_UNIMOD_LEVEL_BASE_MOD_VALS = ['Oxidation', 'UNIMOD:10']
+_UNIMOD_LEVEL2_MOD_VALS = ['U:Oxidation', 'U:10', 'U:+1', 'U:-1', 'U:+3.1415', 'U:-3.1415']
+_PSI_LEVEL_BASE_MOD_VALS = ['O-phospho-L-serine', 'MOD:00046']
+_PSI_LEVEL2_MOD_VALS = ['M:O-phospho-L-serine', 'M:00046', 'M:+1', 'M:-1', 'M:+3.1415', 'M:-3.1415']
+_DELTA_MASS_MOD_VALS = ['+1', '-1', '+3.1415', '-3.1415']
+_MOD_INFO_VALS = ['INFO:Cool', 'INFO:Awesome', 'INFO:Radical', 'INFO:Amazing', 'INFO:Fantastic']
+_CHEM_FORMULA_MOD_VALS = ['Formula:C12H22O11', 'Formula:[13C6]H12O6[12C-4]', 'Formula:CHO', 'Formula:C2H-5O']
+_GLYCAN_MOD_VALS = ['Glycan:HexNAc2Hex3Neu1', 'Glycan:Hex', 'Glycan:6BAAE1B1']
+_GNO_MOD_VALS = ['GNO:G59626AS', 'GNO:G62765YT', 'G:G59626AS', 'G:G62765YT', 'G:+1', 'G:-1', 'G:+3.1415', 'G:-3.1415']
+_RESID_MOD_VALS = ['RESID:AA0581', 'RESID:AA0037', 'R:AA0581', 'R:AA0037', 'R:+1', 'R:-1', 'R:+3.1415', 'R:-3.1415']
+_ISOTOPE_MOD_VALS = ['13C', '15N', '18O', '2H', 'T', 'D']
+_STATIC_MOD_VALS = ['[Oxidation]@M', '[Oxidation]@M,C,D', '[+1]@C', '[-1]@C', '[+3.1415]@C', '[-3.1415]@C']
+_XLMOD_VALS = ['XLMOD:02001', 'XLMOD:02010', 'XLMOD:02000', 'X:02001', 'X:02010', 'X:02000']
+_CHARGE_ADDUCT_VALS = ['+H+', '+2Na+,-H+', '+2Na+,+H+', '2I-', '+e-']
 
-TOP_DOWN_MODS = CHEM_FORMULA_MOD_VALS + RESID_MOD_VALS
-CROSS_LINKING_MODS = XLMOD_VALS
-GLYCAN_MODS = GLYCAN_MOD_VALS + GNO_MOD_VALS
+_TOP_DOWN_MODS = _CHEM_FORMULA_MOD_VALS + _RESID_MOD_VALS
+_CROSS_LINKING_MODS = _XLMOD_VALS
+_GLYCAN_MODS = _GLYCAN_MOD_VALS + _GNO_MOD_VALS
 
-BASE_AMINO_ACIDS = "VWPSDCYTAIMHGQENFLKR"
-LEVEL2_AMINO_ACIDS = BASE_AMINO_ACIDS + 'OUBZXJ'
-LEVEL2_AMINO_ACIDS_WITHOUT_AMBIGUITY = BASE_AMINO_ACIDS + 'OU'
+_BASE_AMINO_ACIDS = "VWPSDCYTAIMHGQENFLKR"
+_LEVEL2_AMINO_ACIDS = _BASE_AMINO_ACIDS + 'OUBZXJ'
+_LEVEL2_AMINO_ACIDS_WITHOUT_AMBIGUITY = _BASE_AMINO_ACIDS + 'OU'
 
-BASE_MODS = UNIMOD_LEVEL_BASE_MOD_VALS + PSI_LEVEL_BASE_MOD_VALS + DELTA_MASS_MOD_VALS
-LEVEL2_MODS = UNIMOD_LEVEL2_MOD_VALS + PSI_LEVEL2_MOD_VALS + BASE_MODS
+_BASE_MODS = _UNIMOD_LEVEL_BASE_MOD_VALS + _PSI_LEVEL_BASE_MOD_VALS + _DELTA_MASS_MOD_VALS
+_LEVEL2_MODS = _UNIMOD_LEVEL2_MOD_VALS + _PSI_LEVEL2_MOD_VALS + _BASE_MODS
 
 
 class ProformaComplianceLevel(Enum):
@@ -49,11 +49,11 @@ def _random_sequence(amino_acids: str, min_sequence_length: int, max_sequence_le
 def random_sequence(level: ProformaComplianceLevel, min_sequence_length: int = 5, max_sequence_length: int = 50,
                     sequence_ambiguity: bool = True) -> str:
     if level == ProformaComplianceLevel.BASE:
-        return _random_sequence(BASE_AMINO_ACIDS, min_sequence_length, max_sequence_length)
+        return _random_sequence(_BASE_AMINO_ACIDS, min_sequence_length, max_sequence_length)
     elif level == ProformaComplianceLevel.LEVEL2:
         if sequence_ambiguity:
-            return _random_sequence(LEVEL2_AMINO_ACIDS, min_sequence_length, max_sequence_length)
-        return _random_sequence(LEVEL2_AMINO_ACIDS_WITHOUT_AMBIGUITY, min_sequence_length, max_sequence_length)
+            return _random_sequence(_LEVEL2_AMINO_ACIDS, min_sequence_length, max_sequence_length)
+        return _random_sequence(_LEVEL2_AMINO_ACIDS_WITHOUT_AMBIGUITY, min_sequence_length, max_sequence_length)
     else:
         raise ValueError("Invalid level")
 
@@ -62,21 +62,21 @@ def _random_mod(mods: List[str], count: int, info: bool) -> Mod:
     mod = choice(mods)
     if info:
         for _ in range(randint(1, 2)):
-            mod += f"|{choice(MOD_INFO_VALS)}"
+            mod += f"|{choice(_MOD_INFO_VALS)}"
     return Mod(mod, count)
 
 
 def random_mod(level: ProformaComplianceLevel, count: int = 1, info: bool = False) -> Mod:
     if level == ProformaComplianceLevel.BASE:
-        return _random_mod(BASE_MODS, count, info)
+        return _random_mod(_BASE_MODS, count, info)
     elif level == ProformaComplianceLevel.LEVEL2:
-        return _random_mod(LEVEL2_MODS, count, info)
+        return _random_mod(_LEVEL2_MODS, count, info)
     elif level == ProformaComplianceLevel.TOP_DOWN:
-        return _random_mod(TOP_DOWN_MODS, count, info)
+        return _random_mod(_TOP_DOWN_MODS, count, info)
     elif level == ProformaComplianceLevel.CROSS_LINKING:
-        return _random_mod(CROSS_LINKING_MODS, count, info)
+        return _random_mod(_CROSS_LINKING_MODS, count, info)
     elif level == ProformaComplianceLevel.GLYCAN:
-        return _random_mod(GLYCAN_MODS, count, info)
+        return _random_mod(_GLYCAN_MODS, count, info)
     elif level == ProformaComplianceLevel.SPECTRUM:
         return _random_mod([], count, info)
     else:
@@ -262,17 +262,17 @@ def spectrum_randomizer(annotation: ProFormaAnnotation):
         annotation.add_charge(choice([1, 2, 3]))
 
     for _ in range(randint(0, 3)):
-        mod = _random_mod(ISOTOPE_MOD_VALS, 1, False)
+        mod = _random_mod(_ISOTOPE_MOD_VALS, 1, False)
         annotation.add_isotope_mods(mod)
 
     for _ in range(randint(0, 3)):
-        mod = _random_mod(STATIC_MOD_VALS, 1, False)
+        mod = _random_mod(_STATIC_MOD_VALS, 1, False)
         annotation.add_static_mods(mod)
 
     if annotation.has_charge():
 
         # Add adducts
         if choice([True, False]):
-            annotation.add_charge_adducts(Mod(choice(CHARGE_ADDUCT_VALS), 1))
+            annotation.add_charge_adducts(Mod(choice(_CHARGE_ADDUCT_VALS), 1))
 
 

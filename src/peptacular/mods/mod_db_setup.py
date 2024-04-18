@@ -272,46 +272,6 @@ def _get_parent_ids(term: Dict[str, Any]) -> List[str]:
     return parent_ids
 
 
-def _fix_unimod_entry(delta_formula: str) -> None:
-    """
-    1 - Unimod entries can have a glycan based composition
-    """
-
-    try:
-        _ = chem_mass(delta_formula)
-    except InvalidChemFormulaError as e:  # could be a glycan composition
-
-        # replace 'H1O3P1' to Phospho and 'O3S1' to Sulpho
-        delta_formula = delta_formula.replace('Sulf', 'Sulpho').replace('Phos', 'Phospho')
-
-        # Sulphate looks like O(num1)S(num2)
-        sulfate_match = re.search(r'O(\d+)S(\d+)', delta_formula)
-
-        # replace with 'Sulpho(num2)'
-        if sulfate_match:
-            num1 = int(sulfate_match.group(1))
-            num2 = int(sulfate_match.group(2))
-
-            assert num1 / num2 == 3
-            delta_formula = delta_formula.replace(sulfate_match.group(), f'Sulpho{num2}')
-
-        # use regex to find phosphate location
-        # Sulphate loos like H(num1)O(num2)P(num3)
-        phosphate_match = re.search(r'H(\d+)O(\d+)P(\d+)', delta_formula)
-
-        # replace with 'Phospho(num3)'
-        if phosphate_match:
-            num1 = int(phosphate_match.group(1))
-            num2 = int(phosphate_match.group(2))
-            num3 = int(phosphate_match.group(3))
-
-            assert num2 / num3 == 3
-            assert num2 / num1 == 3
-            delta_formula = delta_formula.replace(phosphate_match.group(), f'Phospho{num3}')
-
-    return delta_formula
-
-
 def _get_unimod_entries(terms: List[Dict[str, Any]]) -> List[ModEntry]:
     for term in terms:
 
@@ -1168,10 +1128,8 @@ MONOSACCHARIDES_DB.reload_from_file(os.path.join(_obo_path, "monosaccharides_upd
 UNIMOD_DB.reload_from_file(os.path.join(_obo_path, "unimod.obo"))
 PSI_MOD_DB.reload_from_file(os.path.join(_obo_path, "psi-mod.obo"))
 XLMOD_DB.reload_from_file(os.path.join(_obo_path, "xlmod.obo"))
-
-
-# GNO_DB.reload_from_file(os.path.join(_obo_path, "gno.obo"))
-# RESID_DB.reload_from_file(os.path.join(_obo_path, "psi-mod.obo"))
+#GNO_DB.reload_from_file(os.path.join(_obo_path, "gno.obo"))
+#RESID_DB.reload_from_file(os.path.join(_obo_path, "psi-mod.obo"))
 
 
 def reload_all_databases_from_online() -> None:
