@@ -21,12 +21,12 @@ end of the sequence and if not raise an error.
 
 """
 
-import regex as re
-from typing import Dict, List, Tuple, Counter, Callable, Union
 from typing import Counter as CounterType
+from typing import Dict, List, Tuple, Callable, Union
+
+import regex as re
 
 from peptacular.proforma.proforma_parser import parse, ProFormaAnnotation, serialize, MultiProFormaAnnotation
-from peptacular.proforma.proforma_dataclasses import Mod
 from peptacular.spans import Span
 from peptacular.proforma.input_convert import ModDict, fix_list_of_mods, fix_intervals_input
 
@@ -266,6 +266,8 @@ def add_mods(sequence: Union[str, ProFormaAnnotation],
     :rtype: str
 
     . code-block:: python
+
+        >>> from peptacular.proforma.proforma_dataclasses import Mod
 
         # Add internal modifications to an unmodified peptide
         >>> add_mods('PEPTIDE', {2: [Mod('phospho', 1)]})
@@ -582,7 +584,7 @@ def shift(sequence: Union[str, ProFormaAnnotation], n: int) -> str:
     return shifted_annotation.serialize()
 
 
-def span_to_sequence(sequence: Union[str, ProFormaAnnotation], span: Span) -> str:
+def span_to_sequence(sequence: Union[str, ProFormaAnnotation], span: Span, sliced_annotation) -> str:
     """
     Extracts a subsequence from the input sequence based on the provided span.
 
@@ -629,8 +631,7 @@ def span_to_sequence(sequence: Union[str, ProFormaAnnotation], span: Span) -> st
     else:
         annotation = sequence
 
-    sliced_annotation = annotation.slice(span[0], span[1])
-    return sliced_annotation.serialize()
+    return annotation.slice(span[0], span[1]).serialize()
 
 
 def split(sequence: Union[str, ProFormaAnnotation]) -> List[str]:
@@ -767,7 +768,6 @@ def _sort_mods(mods: ModDict, sort_function: Callable[[str], str] = lambda x: st
     :type sort_function: Callable[[str], str]
 
     :return: None
-    :rtype: None
 
     . code-block:: python
 
@@ -1058,9 +1058,7 @@ def is_sequence_valid(sequence: Union[str, ProFormaAnnotation]) -> bool:
     if isinstance(sequence, str):
         try:
             _ = sequence_to_annotation(sequence)
-        except Exception as e:
+        except Exception as err:
             return False
 
     return True
-
-

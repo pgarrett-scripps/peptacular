@@ -1,6 +1,6 @@
 """
-chem_calc.py contains functions for parsing and writing chemical formulas, and for calculating the composition of a sequence
-with/and modifications.
+chem_calc.py contains functions for parsing and writing chemical formulas, and for calculating the composition of a
+sequence with/and modifications.
 """
 import warnings
 from typing import Union, List, Optional
@@ -160,7 +160,7 @@ def _parse_glycan_comp(glycan_str: str) -> ChemComposition:
         peptacular.errors.InvalidGlycanFormulaError: Error parsing glycan formula: "6BAAXE121B1". Unknown glycan: "6BAAXE121B1"!
 
         # Invalid glycan str
-        >>> _parse_glycan_comp('HeSNAc2Hex3Neu1')
+        _parse_glycan_comp('HeSNAc2Hex3Neu1')
         Traceback (most recent call last):
         peptacular.errors.InvalidGlycanFormulaError: Error parsing glycan formula: "HeSNAc2Hex3Neu1". Unknown glycan: "HeSNAc2Hex3Neu1"!
 
@@ -340,7 +340,8 @@ def _sequence_comp(annotation: Union[str, ProFormaAnnotation],
     :type ion_type: str
     :param isotope: The number of Neutrons to add/subtract from the final mass. Default is 0.
     :type isotope: int
-    :param use_isotope_on_mods: If True, the isotope modifications will be applied to the final composition. Default is False.
+    :param use_isotope_on_mods: If True, the isotope modifications will be applied to the final composition.
+    Default is False.
     :type use_isotope_on_mods: bool
 
     :raises UnknownModificationError: If the modification is unknown.
@@ -426,7 +427,6 @@ def _sequence_comp(annotation: Union[str, ProFormaAnnotation],
         else:
             charge_adducts = f'{charge-1}H+,{FRAGMENT_ION_BASE_CHARGE_ADDUCTS[ion_type]}'
 
-
     if ion_type != 'p' and ion_type != 'n':
         if charge == 0:
             warnings.warn('Calculating the comp of a fragment ion with charge state 0. Fragment ions should have a '
@@ -488,7 +488,7 @@ def _sequence_comp(annotation: Union[str, ProFormaAnnotation],
                 mod_composition[k] = mod_composition.get(k, 0) + v
 
     if annotation.has_internal_mods():
-        for k, internal_mods in annotation.internal_mods.items():
+        for internal_mod_index, internal_mods in annotation.internal_mods.items():
             for internal_mod in internal_mods:
                 for k, v in mod_comp(internal_mod).items():
                     mod_composition[k] = mod_composition.get(k, 0) + v

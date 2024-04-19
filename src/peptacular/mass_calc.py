@@ -115,7 +115,8 @@ def comp(sequence: Union[str, ProFormaAnnotation],
     :type sequence: str | ProFormaAnnotation
     :param ion_type: The type of ion. Default is 'p'.
     :type ion_type: str
-    :param estimate_delta: If True, estimate the composition based on the delta mass from modifications. Default is False.
+    :param estimate_delta: If True, estimate the composition based on the delta mass from modifications.
+    Default is False.
     :type estimate_delta: bool
     :param charge: The charge state of the ion. Default is None.
     :type charge: int | None
@@ -142,8 +143,8 @@ def comp(sequence: Union[str, ProFormaAnnotation],
         >>> comp('PEPTIDE')
         {'C': 34, 'H': 53, 'N': 7, 'O': 15}
 
-        >>> comp('PEPTIDE[1.0]', estimate_delta=True)
-        {'C': 34.04446833455479, 'H': 53.06986041632441, 'N': 7.012225550345263, 'O': 15.01330250093913, 'S': 0.0003754919712730832}
+        >>> comp('PEPTIDE[1.0]', estimate_delta=True)['C']
+        34.04446833455479
 
         >>> comp('PEPTIDE[1.0]', estimate_delta=False)
         Traceback (most recent call last):

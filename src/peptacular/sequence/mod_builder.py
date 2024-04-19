@@ -13,6 +13,8 @@ ModBuilderReturnType: TypeAlias = Literal["str", "annotation"]
 MOD_BUILDER_RETURN_TYPE_VALUES = ['str', 'annotation']
 
 STATIC_MOD_INPUT = Union[List[ModValue], ModValue]
+VAR_MOD_INPUT = Union[List[List[ModValue]], List[ModValue], ModValue]
+
 
 def apply_static_mods(sequence: Union[str, ProFormaAnnotation],
                       internal_mods: Optional[Dict[str, STATIC_MOD_INPUT]],
@@ -25,7 +27,7 @@ def apply_static_mods(sequence: Union[str, ProFormaAnnotation],
     it will be replaced by the new one.
 
     :param sequence: Original amino acid sequence.
-    :type sequence: str
+    :type sequence: str | ProFormaAnnotation
     :param internal_mods: Dictionary mapping amino acids to the mass of their modifications.
     :type internal_mods: Dict[str, ModValue | List[ModValue]]
     :param nterm_mods: Dictionary mapping the N-terminal amino acid to the mass of its modification.
@@ -34,6 +36,8 @@ def apply_static_mods(sequence: Union[str, ProFormaAnnotation],
     :type cterm_mods: Dict[str, ModValue | List[ModValue]] | List[ModValue] | ModValue | None
     :param mode: overwrite, append, skip
     :type mode: str
+    :param return_type: Type of the return value. Either 'str' or 'annotation'.
+    :type return_type: ModBuilderReturnType
 
     :return: Modified amino acid sequence.
     :rtype: str
@@ -254,9 +258,6 @@ def _variable_mods_builder(annotation: ProFormaAnnotation,
     return var_annotations
 
 
-VAR_MOD_INPUT = Union[List[List[ModValue]], List[ModValue], ModValue]
-
-
 def apply_variable_mods(sequence: Union[str, ProFormaAnnotation],
                         internal_mods: Optional[Dict[str, VAR_MOD_INPUT]],
                         max_mods: int,
@@ -268,17 +269,21 @@ def apply_variable_mods(sequence: Union[str, ProFormaAnnotation],
     Apply variable modifications to a sequence.
 
     :param sequence: Original amino acid sequence.
-    :type sequence: str
+    :type sequence: str | ProFormaAnnotation
     :param internal_mods: Dictionary mapping amino acids  /regex to modifications.
     :type internal_mods: Dict[str, List[List[ModValue]] | List[ModValue] | ModValue] | None
     :param max_mods: Maximum number of modifications allowed on the peptide.
     :type max_mods: int
     :param nterm_mods: Dictionary mapping the N-terminal amino acids / regex to modifications.
-    :type nterm_mods: Dict[str, List[List[ModValue]] | List[ModValue] | ModValue] | List[List[ModValue]] | List[ModValue] | ModValue | None
+    :type nterm_mods: Dict[str, List[List[ModValue]] | List[ModValue] | ModValue] | List[List[ModValue]] |
+    List[ModValue] | ModValue | None
     :param cterm_mods: Dictionary mapping the C-terminal amino acids / regex to modifications.
-    :type cterm_mods: Dict[str, List[List[ModValue]] | List[ModValue] | ModValue] | List[List[ModValue]] | List[ModValue] | ModValue | None
+    :type cterm_mods: Dict[str, List[List[ModValue]] | List[ModValue] | ModValue] | List[List[ModValue]] |
+    List[ModValue] | ModValue | None
     :param mode: overwrite, append, skip
     :type mode: str
+    :param return_type: Type of the return value. Either 'str' or 'annotation'.
+    :type return_type: ModBuilderReturnType
 
     :return: List of all possible modified peptide sequences.
     :rtype: List[str]
@@ -365,7 +370,8 @@ def apply_variable_mods(sequence: Union[str, ProFormaAnnotation],
     if nterm_mods:
         for regex_str, mods_list in nterm_mods.items():
             for mods in mods_list:
-                nterm_annot = apply_static_mods(annotation, {}, nterm_mods={regex_str: mods}, mode=mode, return_type='annotation')
+                nterm_annot = apply_static_mods(annotation, {}, nterm_mods={regex_str: mods},
+                                                mode=mode, return_type='annotation')
                 if nterm_annot != annotation:
                     n_term_annotations.extend(_variable_mods_builder(nterm_annot, internal_mods, max_mods, mode=mode))
 
@@ -375,11 +381,13 @@ def apply_variable_mods(sequence: Union[str, ProFormaAnnotation],
             for mods in mods_list:
 
                 for n_term_annot in n_term_annotations:
-                    cterm_annot = apply_static_mods(n_term_annot, {}, cterm_mods={regex_str: mods}, mode=mode, return_type='annotation')
+                    cterm_annot = apply_static_mods(n_term_annot, {}, cterm_mods={regex_str: mods},
+                                                    mode=mode, return_type='annotation')
                     if cterm_annot != n_term_annot:
                         var_annotations.extend(_variable_mods_builder(cterm_annot, internal_mods, max_mods, mode=mode))
 
-                cterm_annot = apply_static_mods(annotation, {}, cterm_mods={regex_str: mods}, mode=mode, return_type='annotation')
+                cterm_annot = apply_static_mods(annotation, {}, cterm_mods={regex_str: mods},
+                                                mode=mode, return_type='annotation')
                 if cterm_annot != annotation:
                     var_annotations.extend(_variable_mods_builder(cterm_annot, internal_mods, max_mods, mode=mode))
 

@@ -777,14 +777,16 @@ def _get_monosaccharide_entries(terms: List[Dict[str, Any]]) -> List[ModEntry]:
 
         if len(delta_monoisotopic_mass) > 1:
             warnings.warn(
-                f'[{DbType.MONOSACCHARIDES}]Multiple delta mono masses for {term_id} {term_name} {delta_monoisotopic_mass}')
+                f'[{DbType.MONOSACCHARIDES}]Multiple delta mono masses for {term_id} {term_name} '
+                f'{delta_monoisotopic_mass}')
             delta_monoisotopic_mass = delta_monoisotopic_mass[0]
         elif len(delta_monoisotopic_mass) == 1:
             delta_monoisotopic_mass = delta_monoisotopic_mass[0]
 
         if len(delta_average_mass) > 1:
             warnings.warn(
-                f'[{DbType.MONOSACCHARIDES}] Multiple delta average masses for {term_id} {term_name} {delta_average_mass}')
+                f'[{DbType.MONOSACCHARIDES}] Multiple delta average masses for {term_id} {term_name} '
+                f'{delta_average_mass}')
             delta_average_mass = delta_average_mass[0]
         elif len(delta_average_mass) == 1:
             delta_average_mass = delta_average_mass[0]

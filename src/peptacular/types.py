@@ -6,4 +6,3 @@ Span = Tuple[int, int, int]
 
 # Chem Composition Type
 ChemComposition = Dict[str, Union[int, float]]
-

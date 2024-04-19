@@ -99,8 +99,8 @@ def get_regex_match_indices(input_str: str, regex_str: Union[str, regex.Pattern]
         return [i[0] for i in get_regex_match_range(input_str, regex_str, offset)]
 
 
-def get_regex_match_range(input_str: str, regex_str: Union[str, regex.Pattern], offset: int = 0) -> List[
-    Tuple[int, int]]:
+def get_regex_match_range(input_str: str, regex_str: Union[str, regex.Pattern], offset: int = 0)\
+        -> List[Tuple[int, int]]:
     """
     Identify the starting indexes of occurrences of a given regex pattern within a string.
 

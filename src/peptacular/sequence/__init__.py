@@ -1,3 +1,7 @@
+"""
+This module contains functions for generating and manipulating peptide sequences.
+"""
+
 from . import combinatoric
 from . import mod_builder
 from . import sequence_funcs

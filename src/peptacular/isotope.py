@@ -126,8 +126,8 @@ def isotopic_distribution(
         normalized_distribution = [(mass + delta_mass + particle_mass_offset, abundance)
                                    for mass, abundance in normalized_distribution]
 
-
     return normalized_distribution
+
 
 def estimate_isotopic_distribution(neutral_mass: float,
                                    max_isotopes: Union[int, None] = None,
@@ -327,4 +327,3 @@ def _fix_chemical_formula(chemical_formula: Dict[str, float]) -> Dict[str, int]:
     total_atoms['H'] += int((starting_mass - chem_mass(total_atoms)) / constants.ISOTOPIC_ATOMIC_MASSES['H'])
 
     return total_atoms
-

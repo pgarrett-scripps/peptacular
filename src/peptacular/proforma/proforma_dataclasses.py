@@ -1,7 +1,7 @@
 import copy
 from collections import Counter
 from dataclasses import dataclass
-from typing import List, Union, Any, Optional, Dict, Tuple
+from typing import List, Union, Any, Optional, Dict
 
 from peptacular.util import convert_type
 
@@ -170,14 +170,14 @@ def are_intervals_equal(intervals1: Optional[List[Interval]], intervals2: Option
         >>> are_intervals_equal([Interval(1, 2, False, [Mod(1, 1)])], [Interval(1, 2, False, [Mod(1, 1)])])
         True
 
-        >>> intervals1 = [Interval(1, 2, False, [Mod(1, 1)]), Interval(3, 4, False, [Mod(1, 1)])]
-        >>> intervals2 = [Interval(1, 2, False, [Mod(1, 1)]), Interval(3, 4, False, [Mod(1, 1)])]
-        >>> are_intervals_equal(intervals1, intervals2)
+        >>> ints1 = [Interval(1, 2, False, [Mod(1, 1)]), Interval(3, 4, False, [Mod(1, 1)])]
+        >>> ints2 = [Interval(1, 2, False, [Mod(1, 1)]), Interval(3, 4, False, [Mod(1, 1)])]
+        >>> are_intervals_equal(ints1, ints2)
         True
 
-        >>> intervals1 = [Interval(1, 20, False, [Mod(1, 1)]), Interval(3, 4, False, [Mod(1, 1)])]
-        >>> intervals2 = [Interval(1, 2, False, [Mod(1, 1)]), Interval(3, 4, False, [Mod(1, 1)])]
-        >>> are_intervals_equal(intervals1, intervals2)
+        >>> ints1 = [Interval(1, 20, False, [Mod(1, 1)]), Interval(3, 4, False, [Mod(1, 1)])]
+        >>> ints2 = [Interval(1, 2, False, [Mod(1, 1)]), Interval(3, 4, False, [Mod(1, 1)])]
+        >>> are_intervals_equal(ints1, ints2)
         False
 
         >>> are_intervals_equal(None, None)
