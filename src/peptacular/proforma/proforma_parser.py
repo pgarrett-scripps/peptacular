@@ -32,7 +32,7 @@ def _parse_modifications(proforma_sequence: str, opening_bracket: str = '[', clo
     :return: The parsed modifications.
     :rtype: List[Mod]
 
-    .. code-block:: python
+    . code-block:: python
 
         >>> _parse_modifications('PEPTIDE[1]@C')
         [Mod(1, 1)]

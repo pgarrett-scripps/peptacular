@@ -16,7 +16,7 @@ def permutations(sequence: Union[str, ProFormaAnnotation], size: int = None) -> 
     :return: A list of all permutations of the input sequence.
     :rtype: List[str]
 
-    .. code-block:: python
+    . code-block:: python
 
         >>> permutations('PET')
         ['PET', 'PTE', 'EPT', 'ETP', 'TPE', 'TEP']
@@ -52,7 +52,7 @@ def product(sequence: Union[str, ProFormaAnnotation], repeat: Union[int, None]) 
     :return: A list of all combinations of the input sequence of the given size.
     :rtype: List[str]
 
-    .. code-block:: python
+    . code-block:: python
 
         >>> product('PET', 2)
         ['PP', 'PE', 'PT', 'EP', 'EE', 'ET', 'TP', 'TE', 'TT']
@@ -89,7 +89,7 @@ def combinations(sequence: Union[str, ProFormaAnnotation], size: Union[int, None
     :return: A list of all combinations of the input sequence of the given size.
     :rtype: List[str]
 
-    .. code-block:: python
+    . code-block:: python
 
         >>> combinations('PET', 2)
         ['PE', 'PT', 'ET']
@@ -127,7 +127,7 @@ def combinations_with_replacement(sequence: Union[str, ProFormaAnnotation], size
     :return: A list of all combinations of the input sequence of the given size.
     :rtype: List[str]
 
-    .. code-block:: python
+    . code-block:: python
 
         >>> combinations_with_replacement('PET', 2)
         ['PP', 'PE', 'PT', 'EE', 'ET', 'TT']

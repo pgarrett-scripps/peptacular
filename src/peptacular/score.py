@@ -24,7 +24,7 @@ def get_matched_indices(mz_spectrum1: List[float], mz_spectrum2: List[float], to
     :return: List of index pairs representing matched peaks between the two spectra.
     :rtype: List[Tuple[int, int]]
 
-    .. code-block:: python
+    . code-block:: python
 
         >>> get_matched_indices([100, 200, 300], [100, 200, 300])
         [(0, 1), (1, 2), (2, 3)]
@@ -100,7 +100,7 @@ def match_spectra(fragments: List[float], mz_spectra: List[float], tolerance_val
     :return: List of index pairs representing matched peaks between the two spectra.
     :rtype: List[int]
     
-    .. code-block:: python
+    . code-block:: python
 
             >>> match_spectra([100, 200, 300], [100, 200, 300], 1, 'th')
             [0, 1, 2]
@@ -486,7 +486,7 @@ def binomial_score(fragments: Union[List[Fragment], List[float]], mz_spectra: Li
     :return: Score based on binomial probability.
     :rtype: float
 
-    .. code-block:: python
+    . code-block:: python
 
             >>> binomial_score([100, 200, 300], [100, 300, 400], 1, 'th')
             0.000297

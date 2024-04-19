@@ -38,7 +38,7 @@ def apply_static_mods(sequence: Union[str, ProFormaAnnotation],
     :return: Modified amino acid sequence.
     :rtype: str
 
-    .. code-block:: python
+    . code-block:: python
 
         # Applies static modifcation to all matching residues in the sequence:
         >>> apply_static_mods('PEPTIDE', {'P': ['phospho']})
@@ -283,7 +283,7 @@ def apply_variable_mods(sequence: Union[str, ProFormaAnnotation],
     :return: List of all possible modified peptide sequences.
     :rtype: List[str]
 
-    .. code-block:: python
+    . code-block:: python
 
         # Dict: Double list
         >>> apply_variable_mods('PEPTIDE', {'P': [['phospho']]}, 1)

@@ -88,7 +88,7 @@ def get_left_semi_enzymatic_sequences(sequence: Union[str, ProFormaAnnotation],
     :return: The left-hand semi-enzymatic subsequences. Return type is determined by the `return_type` parameter.
     :rtype: List[str] | List[ProFormaAnnotation] | List[Span] |List[(str, Span)] | List[(ProFormaAnnotation, Span)]
 
-    .. code-block:: python
+    . code-block:: python
 
         # Generates all left-hand semi enzymatic sequences (Returned values does not include input sequence)
         >>> get_left_semi_enzymatic_sequences('PEPTIDE')
@@ -143,7 +143,7 @@ def get_right_semi_enzymatic_sequences(sequence: Union[str, ProFormaAnnotation],
     :return: The right-hand semi-enzymatic subsequences. Return type is determined by the `return_type` parameter.
     :rtype: List[str] | List[ProFormaAnnotation] | List[Span] |List[(str, Span)] | List[(ProFormaAnnotation, Span)]
 
-    .. code-block:: python
+    . code-block:: python
 
         # Generates all right-hand semi enzymatic sequences (Returned values does not include input sequence)
         >>> get_right_semi_enzymatic_sequences('PEPTIDE')
@@ -198,7 +198,7 @@ def get_semi_enzymatic_sequences(sequence: Union[str, ProFormaAnnotation],
     :return: Semi-enzymatic subsequences. Return type is determined by the `return_type` parameter.
     :rtype: List[str] | List[ProFormaAnnotation] | List[Span] |List[(str, Span)] | List[(ProFormaAnnotation, Span)]
 
-    .. code-block:: python
+    . code-block:: python
 
         # Equivalent to build_left_semi_sequences + build_right_semi_sequences
         >>> res = get_left_semi_enzymatic_sequences('PEPTIDE') + get_right_semi_enzymatic_sequences('PEPTIDE')
@@ -234,7 +234,7 @@ def get_non_enzymatic_sequences(sequence: Union[str, ProFormaAnnotation],
     :return: Non-enzymatic subsequences. Return type is determined by the `return_type` parameter.
     :rtype: List[str] | List[ProFormaAnnotation] | List[Span] |List[(str, Span)] | List[(ProFormaAnnotation, Span)]
 
-    .. code-block:: python
+    . code-block:: python
 
         # Generates non-enzymatic sequences (Returned values does not include input sequence):
         >>> get_non_enzymatic_sequences('PEP')
@@ -279,7 +279,7 @@ def get_cleavage_sites(sequence: Union[str, ProFormaAnnotation], enzyme_regex: s
     :return: List of positions where cleavage occurs in the sequence.
     :rtype: List[int]
 
-    .. code-block:: python
+    . code-block:: python
 
         # Can use a key in PROTEASES to specify the enzyme_regex:
         >>> get_cleavage_sites(sequence='TIDERTIDEKTIDE', enzyme_regex='trypsin/P')
@@ -358,7 +358,7 @@ def digest(sequence: Union[str, ProFormaAnnotation],
     :return: List of digested peptides. Return type is determined by the `return_type` parameter.
     :rtype: List[str] | List[ProFormaAnnotation] | List[Span] |List[(str, Span)] | List[(ProFormaAnnotation, Span)]
 
-    .. code-block:: python
+    . code-block:: python
 
         # Can use a key in PROTEASES to specify the enzyme_regex:
         >>> digest(sequence='TIDERTIDEKTIDE', enzyme_regex='trypsin/P', missed_cleavages=2)

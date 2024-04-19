@@ -18,7 +18,7 @@ def write_glycan_formula(glycan_dict: ChemComposition, sep: str = '') -> str:
     :return: A glycan formula string.
     :rtype: str
 
-    .. code-block:: python
+    . code-block:: python
 
             # Int Counts
             >>> write_glycan_formula({'HexNAc': 2, 'Hex': 3, 'Neu': 1})
@@ -56,7 +56,7 @@ def glycan_comp(glycan: Union[ChemComposition, str]) -> ChemComposition:
     :return: A dictionary containing the glycan components and their counts.
     :rtype: ChemComposition
 
-    .. code-block:: python
+    . code-block:: python
 
             # Int Counts
             >>> glycan_comp({'HexNAc': 2, 'Hex': 3, 'Neu5Gc': 1})
@@ -98,7 +98,7 @@ def parse_glycan_formula(formula: str, sep: str = '') -> ChemComposition:
     :return: A dictionary containing the glycan components and their counts.
     :rtype: ChemComposition
 
-    .. code-block:: python
+    . code-block:: python
 
             # Int Counts
             >>> parse_glycan_formula('HexNAc2Hex3Neu1')
@@ -150,7 +150,7 @@ def convert_glycan_formula_to_chem_formula(glycan: Union[ChemComposition, str]) 
     :return: A chemical formula string.
     :rtype: str
 
-    .. code-block:: python
+    . code-block:: python
 
             # Int Counts
             >>> convert_glycan_formula_to_chem_formula({'HexNAc': 2, 'Hex': 3, 'Neu5Gc': 1})

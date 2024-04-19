@@ -14,16 +14,3 @@ from .constants import *
 from .score import *
 from .util import *
 from .spans import *
-
-"""from .sequence.combinatoric import *
-from .sequence.mod_builder import *
-from .sequence.sequence_funcs import *
-
-from .proforma.proforma_parser import *
-from .proforma.proforma_dataclasses import *
-
-
-from .mods.mod_db import *
-
-
-"""

@@ -118,7 +118,7 @@ def are_mods_equal(mods1: Optional[List[Mod]], mods2: Optional[List[Mod]]) -> bo
     :return: True if the lists are equal, False otherwise
     :rtype: bool
 
-    .. code-block:: python
+    . code-block:: python
 
         >>> are_mods_equal([Mod('phospho', 1)], [Mod('phospho', 1)])
         True
@@ -165,7 +165,7 @@ def are_intervals_equal(intervals1: Optional[List[Interval]], intervals2: Option
     :return: True if the lists are equal, False otherwise
     :rtype: bool
 
-    .. code-block:: python
+    . code-block:: python
 
         >>> are_intervals_equal([Interval(1, 2, False, [Mod(1, 1)])], [Interval(1, 2, False, [Mod(1, 1)])])
         True

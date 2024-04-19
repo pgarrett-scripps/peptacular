@@ -22,7 +22,7 @@ def parse_chem_formula(formula: str, sep: str = '') -> ChemComposition:
     :return: A dictionary with the element and their counts.
     :rtype: ChemComposition
 
-    .. code-block:: python
+    . code-block:: python
 
         >>> parse_chem_formula('C6H12O6666')
         {'C': 6, 'H': 12, 'O': 6666}
@@ -98,7 +98,7 @@ def write_chem_formula(composition: ChemComposition, sep: str = '', hill_order: 
     :return: The chemical formula.
     :rtype: str
 
-    .. code-block:: python
+    . code-block:: python
 
         # Calculate the mass of a peptide sequence.
         >>> write_chem_formula({'C': 6, 'H': 12, 'O': 6})
@@ -164,7 +164,7 @@ def chem_mass(formula: Union[ChemComposition, str],
     :return: The mass of the chemical formula.
     :rtype: float
 
-    .. code-block:: python
+    . code-block:: python
 
         # Calculate the mass of a chemical formula.
         >>> chem_mass({'C': 6, 'H': 12, 'O': 6}, precision=3)
@@ -239,7 +239,7 @@ def _split_chem_formula(formula: str) -> list[str]:
     :return: The components of the chemical formula, split by instances of the isotope notation.
     :rtype: list[str]
 
-    .. code-block:: python
+    . code-block:: python
 
         # Split a chemical formula into its components.
         >>> _split_chem_formula('C6H12O6')
@@ -283,7 +283,7 @@ def _parse_isotope_component(formula: str) -> ChemComposition:
     :return: A dictionary with the element and their counts.
     :rtype: ChemComposition
 
-    .. code-block:: python
+    . code-block:: python
 
         # Parse an isotope notation.
         >>> _parse_isotope_component('13C6')
@@ -351,7 +351,7 @@ def _parse_condensed_chem_formula(formula: str) -> ChemComposition:
     :return: A dictionary with the element and their counts.
     :rtype: ChemComposition
 
-    .. code-block:: python
+    . code-block:: python
 
         # Calculate the mass of a peptide sequence.
         >>> _parse_condensed_chem_formula('C6H12O6')
@@ -433,7 +433,7 @@ def _parse_split_chem_formula(formula: str, sep: str) -> ChemComposition:
     :return: A dictionary with the element and their counts.
     :rtype: ChemComposition
 
-    .. code-block:: python
+    . code-block:: python
 
         >>> _parse_split_chem_formula('C 6 H 12 O 6', ' ')
         {'C': 6, 'H': 12, 'O': 6}

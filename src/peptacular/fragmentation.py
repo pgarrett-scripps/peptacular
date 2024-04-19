@@ -311,7 +311,7 @@ def fragment(sequence: Union[str, ProFormaAnnotation],
     :return: List of Fragment objects or a list of masses or m/z values.
     :rtype: List[Fragment] | List[float]
 
-    .. code-block:: python
+    . code-block:: python
 
         # By default a frahment objectis returned
         >>> len(fragment("[1.0]-P[2.0]E[3.0]-[4.0]", 'y', 1))

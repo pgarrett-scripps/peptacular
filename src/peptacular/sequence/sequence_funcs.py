@@ -65,7 +65,7 @@ def sequence_length(sequence: Union[str, ProFormaAnnotation]) -> int:
     :return: The sequence length.
     :rtype: int
 
-    .. code-block:: python
+    . code-block:: python
 
         # The length of the unmodified sequence is the same as the length of the string
         >>> sequence_length("PEPTIDE")
@@ -102,7 +102,7 @@ def is_ambiguous(sequence: Union[str, ProFormaAnnotation]) -> bool:
     :return: True if the sequence contains ambiguous amino acids, False otherwise.
     :rtype: bool
 
-    .. code-block:: python
+    . code-block:: python
 
         # Any intervals will be considered ambiguous
         >>> is_ambiguous("(?PE)PTIDE")
@@ -142,7 +142,7 @@ def is_modified(sequence: Union[str, ProFormaAnnotation]) -> bool:
     :return: True if the sequence contains any modifications, False otherwise.
     :rtype: bool
 
-    .. code-block:: python
+    . code-block:: python
 
         # Any modifications will return True
         >>> is_modified("PEP[Phospho]TIDE")
@@ -189,7 +189,7 @@ def get_mods(sequence: Union[str, ProFormaAnnotation]) -> ModDict:
     :return: A dictionary with the modifications
     :rtype: ModDict
 
-    .. code-block:: python
+    . code-block:: python
 
         # All modifications will be returned as Mod objects which contain the modification value and multiplier
         >>> get_mods('PEP[Phospho]T[1]IDE[-3.14]')
@@ -265,7 +265,7 @@ def add_mods(sequence: Union[str, ProFormaAnnotation],
     :return: The peptide sequence with the specified modifications.
     :rtype: str
 
-    .. code-block:: python
+    . code-block:: python
 
         # Add internal modifications to an unmodified peptide
         >>> add_mods('PEPTIDE', {2: [Mod('phospho', 1)]})
@@ -335,7 +335,7 @@ def condense_static_mods(sequence: Union[str, ProFormaAnnotation]) -> str:
     :return: The peptide sequence with condensed static modifications.
     :rtype: str
 
-    .. code-block:: python
+    . code-block:: python
 
         # Condenses static modifications to specified internal modifications
         >>> condense_static_mods('<13C><[100]@P>PEPTIDE')
@@ -381,7 +381,7 @@ def pop_mods(sequence: Union[str, ProFormaAnnotation]) -> Tuple[str, ModDict]:
     :return: A tuple containing the unmodified sequence and a dictionary of the removed modifications.
     :rtype: Tuple[str, ModDict]
 
-    .. code-block:: python
+    . code-block:: python
 
         # Simply combines the functionality of strip_modifications and get_modifications
         >>> pop_mods('PEP[phospho]TIDE')
@@ -410,7 +410,7 @@ def strip_mods(sequence: Union[str, ProFormaAnnotation]) -> str:
     :return: The stripped sequence
     :rtype: str
 
-    .. code-block:: python
+    . code-block:: python
 
         # Removes internal modifications:
         >>> strip_mods('PEP[phospho]TIDE')
@@ -466,7 +466,7 @@ def reverse(sequence: Union[str, ProFormaAnnotation], swap_terms: bool = False) 
     :return: The reversed sequence with modifications preserved.
     :rtype: str
 
-    .. code-block:: python
+    . code-block:: python
 
         # For unmodified sequences, the result is the same as the built-in string reversal:
         >>> reverse('PEPTIDE')
@@ -510,7 +510,7 @@ def shuffle(sequence: Union[str, ProFormaAnnotation], seed: int = None) -> str:
     :return: The shuffled sequence with modifications preserved.
     :rtype: str
 
-    .. code-block:: python
+    . code-block:: python
 
         # For unmodified sequences, the result is a random permutation of the original sequence:
         >>> shuffle('PEPTIDE', seed=0)
@@ -550,7 +550,7 @@ def shift(sequence: Union[str, ProFormaAnnotation], n: int) -> str:
     :return: The shifted sequence with modifications preserved.
     :rtype: str
 
-    .. code-block:: python
+    . code-block:: python
 
         >>> shift('PEPTIDE', 2)
         'PTIDEPE'
@@ -597,7 +597,7 @@ def span_to_sequence(sequence: Union[str, ProFormaAnnotation], span: Span) -> st
     :return: The subsequence of the input sequence defined by the span.
     :rtype: str
 
-    .. code-block:: python
+    . code-block:: python
 
         # Works with unmodified sequences
         >>> span_to_sequence('PEPTIDE', (0, 4, 0))
@@ -646,7 +646,7 @@ def split(sequence: Union[str, ProFormaAnnotation]) -> List[str]:
     :return: A list of amino acids, preserving modifications.
     :rtype: List[str]
 
-    .. code-block:: python
+    . code-block:: python
 
         >>> split('PEPTIDE')
         ['P', 'E', 'P', 'T', 'I', 'D', 'E']
@@ -681,7 +681,7 @@ def count_residues(sequence: Union[str, ProFormaAnnotation]) -> CounterType:
     :return: A Counter object containing the occurrences of each amino acid in the input sequence.
     :rtype: Counter
 
-    .. code-block:: python
+    . code-block:: python
 
         >>> count_residues('PEPTIDE')
         Counter({'P': 2, 'E': 2, 'T': 1, 'I': 1, 'D': 1})
@@ -727,7 +727,7 @@ def is_subsequence(subsequence: Union[str, ProFormaAnnotation], sequence: Union[
     :return: True if the subsequence is a subsequence of the sequence, False otherwise.
     :rtype: bool
 
-    .. code-block:: python
+    . code-block:: python
 
         >>> is_subsequence('PEP', 'PEPTIDE')
         True
@@ -769,7 +769,7 @@ def _sort_mods(mods: ModDict, sort_function: Callable[[str], str] = lambda x: st
     :return: None
     :rtype: None
 
-    .. code-block:: python
+    . code-block:: python
 
         >>> mod_dict = {1: ['phospho', 1], 2: ['phospho']}
         >>> _sort_mods(mod_dict)
@@ -795,7 +795,7 @@ def sort(sequence: Union[str, ProFormaAnnotation]) -> str:
     :return: The input sequence sorted using the provided sort function.
     :rtype: str
 
-    .. code-block:: python
+    . code-block:: python
 
         >>> sort('PEPTIDE')
         'DEEIPPT'
@@ -837,7 +837,7 @@ def find_subsequence_indices(sequence: Union[str, ProFormaAnnotation],
     :return: A list of starting indexes of the subsequence within the sequence.
     :rtype: List[int]
 
-    .. code-block:: python
+    . code-block:: python
 
         # Find the starting indexes of a subsequence
         >>> find_subsequence_indices("PEPTIDE", "PEP")
@@ -918,7 +918,7 @@ def coverage(sequence: Union[str, ProFormaAnnotation],
     :return: The sequence coverage array.
     :rtype: List[int]
 
-    .. code-block:: python
+    . code-block:: python
 
         >>> coverage("PEPTIDE", ["PEP"])
         [1, 1, 1, 0, 0, 0, 0]
@@ -971,7 +971,7 @@ def percent_coverage(sequence: Union[str, ProFormaAnnotation],
     :return: The percent coverage.
     :rtype: float
 
-    .. code-block:: python
+    . code-block:: python
 
         >>> percent_coverage("PEPTIDE", ["PEP"])
         0.42857142857142855
@@ -999,7 +999,7 @@ def convert_ip2_sequence(sequence: str) -> str:
     :return: Proforma2.0 compatable sequence.
     :rtype: str
 
-    .. code-block:: python
+    . code-block:: python
 
         >>> convert_ip2_sequence('K.PEP(phospho)TIDE.K')
         'PEP[phospho]TIDE'
