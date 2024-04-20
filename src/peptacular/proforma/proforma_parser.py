@@ -32,7 +32,7 @@ def _parse_modifications(proforma_sequence: str, opening_bracket: str = '[', clo
     :return: The parsed modifications.
     :rtype: List[Mod]
 
-    . code-block:: python
+    .. code-block:: python
 
         >>> _parse_modifications('PEPTIDE[1]@C')
         [Mod(1, 1)]
@@ -71,7 +71,7 @@ def _parse_modification(proforma_sequence: str,
     :return: The parsed Mod and the position after the modification.
     :rtype: Tuple[Mod, int]
 
-    . code-block:: python
+    .. code-block:: python
 
         >>> _parse_modification('[1]@C')
         (Mod(1, 1), 3)
@@ -119,7 +119,7 @@ def _parse_integer(proforma_sequence: str) -> Tuple[int, int]:
     :return: The parsed integer and the number of characters parsed.
     :rtype: Tuple[int, int]
 
-    . code-block:: python
+    .. code-block:: python
 
         >>> _parse_integer('123')
         (123, 3)
@@ -159,7 +159,7 @@ def parse_charge_adducts(mod: ModValue) -> ChemComposition:
     :return: Dictionary of charge adducts.
     :rtype: ChemComposition
 
-    . code-block:: python
+    .. code-block:: python
 
         >>> parse_charge_adducts('+2Na+,+H+')
         {'Na+': 2, 'H+': 1}
@@ -224,7 +224,7 @@ def write_charge_adducts(charge_adducts: ChemComposition) -> Mod:
     :return: The charge adducts as a Mod instance.
     :rtype: Mod
 
-    . code-block:: python
+    .. code-block:: python
 
         >>> write_charge_adducts({'Na+': 2, 'H+': 1})
         Mod('+2Na+,+H+', 1)
@@ -263,7 +263,7 @@ def _pop_ion_count(ion: str) -> Tuple[int, str]:
     :return: A tuple containing the charge and the remaining ion string.
     :rtype: Tuple[int, str]
 
-    . code-block:: python
+    .. code-block:: python
 
         >>> _pop_ion_count('+H+')
         (1, 'H+')
@@ -310,7 +310,7 @@ def _pop_ion_symbol(ion: str) -> Tuple[str, str]:
     :return: A tuple containing the symbol and the remaining ion string.
     :rtype: Tuple[str, str]
 
-    . code-block:: python
+    .. code-block:: python
 
         >>> _pop_ion_symbol('H+')
         ('H', '+')
@@ -351,7 +351,7 @@ def _pop_ion_charge(ion: str) -> Tuple[int, str]:
     :return: A tuple containing the charge and the remaining ion string.
     :rtype: Tuple[int, str]
 
-    . code-block:: python
+    .. code-block:: python
 
         >>> _pop_ion_charge('+')
         (1, '')
@@ -439,7 +439,7 @@ def parse_static_mods(mods: Optional[List[ModValue]]) -> Dict[str, List[Mod]]:
     :return: A dictionary with locations as keys and lists of Mod objects as values.
     :rtype: Dict[str, List[Mod]]
 
-    . code-block:: python
+    .. code-block:: python
 
         >>> parse_static_mods([Mod('[1]@C', 1), Mod('[3.1415]@S,D',1)])
         {'C': [Mod(1, 1)], 'S': [Mod(3.1415, 1)], 'D': [Mod(3.1415, 1)]}
@@ -491,7 +491,7 @@ def write_static_mods(mods: Dict[str, List[Mod]]) -> List[Mod]:
     :return: List of static modifications.
     :rtype: List[Mod]
 
-    . code-block:: python
+    .. code-block:: python
 
         >>> write_static_mods({'C': [Mod(val=1,mult=1)], 'S': [Mod(val=3.1415,mult=1)], 'D': [Mod(val=3.1415,mult=1)]})
         [Mod('[1]@C', 1), Mod('[3.1415]@S,D', 1)]
@@ -531,7 +531,7 @@ def parse_isotope_mods(mods: List[ModValue]) -> Dict[str, str]:
     :return: Dictionary of isotope modifications.
     :rtype: Dict[str, str]
 
-    . code-block:: python
+    .. code-block:: python
 
         >>> parse_isotope_mods([Mod('13C', 1), Mod('15N', 1), Mod('D', 1)])
         {'C': '13C', 'N': '15N', 'H': 'D'}
@@ -580,7 +580,7 @@ def write_isotope_mods(mods: Dict[str, str]) -> List[Mod]:
     :return: List of isotope modifications.
     :rtype: List[Mod]
 
-    . code-block:: python
+    .. code-block:: python
 
         >>> write_isotope_mods({'C': '13C', 'N': '15N', 'H': 'D'})
         [Mod('13C', 1), Mod('15N', 1), Mod('D', 1)]
@@ -1737,7 +1737,7 @@ def create_annotation(sequence: str,
     """
     Create a ProFormaAnnotation from a sequence and modifications
 
-    . code-block:: python
+    .. code-block:: python
 
         >>> create_annotation('PEPTIDE', static_mods=['Carbamidomethyl'])
         ProFormaAnnotation(sequence=PEPTIDE, static_mods=[Mod('Carbamidomethyl', 1)])
@@ -1806,7 +1806,7 @@ def create_multi_annotation(annotations: List[ProFormaAnnotation], connections: 
     :param connections: The list of connections
     :type connections: List[bool]
 
-    . code-block:: python
+    .. code-block:: python
 
         >>> annotation = create_multi_annotation([create_annotation('PEP'), create_annotation('TIDE')], [False])
         >>> annotation.annotations[0]

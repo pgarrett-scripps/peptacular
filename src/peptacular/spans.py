@@ -29,7 +29,7 @@ def build_non_enzymatic_spans(span: Span, min_len: Optional[int] = None, max_len
     :return: All non-enymatic spans.
     :rtype: List[Tuple[int, int, int]]
 
-    . code-block:: python
+    .. code-block:: python
 
         # By default all spans are returned with lengths >= 1 and <= span length - 1
         >>> build_non_enzymatic_spans((0, 3, 0))
@@ -78,7 +78,7 @@ def build_left_semi_spans(span: Span, min_len: Optional[int] = None, max_len: Op
     :return: A list of all left-semi spans.
     :rtype: List[Tuple[int, int, int]]
 
-    . code-block:: python
+    .. code-block:: python
 
         # By default all spans are returned with lengths >= 1 and <= span length - 1
         >>> build_left_semi_spans((0, 3, 0))
@@ -126,7 +126,7 @@ def build_right_semi_spans(span: Span, min_len: int = 1, max_len: Optional[int] 
     :return: A list of all right-semi spans.
     :rtype: List[Tuple[int, int, int]]
 
-    . code-block:: python
+    .. code-block:: python
 
         # By default all spans are returned with lengths >= 1 and <= span length - 1
         >>> build_right_semi_spans((0, 3, 0))
@@ -177,7 +177,7 @@ def build_enzymatic_spans(max_index: int, enzyme_sites: List[int], missed_cleava
     :return: A list of all enzymatic spans.
     :rtype: List[Tuple[int, int, int]]
 
-    . code-block:: python
+    .. code-block:: python
 
         >>> build_enzymatic_spans(5, [3], 1)
         [(0, 3, 0), (0, 5, 1), (3, 5, 0)]
@@ -231,7 +231,7 @@ def _grouped_left_semi_span_builder(spans: List[Span], min_len: Optional[int] = 
     :return: A list of all left-semi spans.
     :rtype: List[Tuple[int, int, int]]
 
-    . code-block:: python
+    .. code-block:: python
 
         >>> _grouped_left_semi_span_builder([(0, 3, 0), (0, 5, 1), (3, 5, 0)], min_len=1, max_len=5)
         [(0, 4, 1), (0, 2, 0), (0, 1, 0), (3, 4, 0)]
@@ -286,7 +286,7 @@ def _grouped_right_semi_span_builder(spans: List[Span], min_len: Optional[int] =
     :return: A list of all right-semi spans.
     :rtype: List[Tuple[int, int, int]]
 
-    . code-block:: python
+    .. code-block:: python
 
         >>> _grouped_right_semi_span_builder([(0, 3, 0), (0, 5, 1), (3, 5, 0)], min_len=1, max_len=5)
         [(1, 3, 0), (2, 3, 0), (1, 5, 1), (2, 5, 1), (4, 5, 0)]
@@ -342,7 +342,7 @@ def build_semi_spans(spans: List[Span], min_len: Optional[int] = None, max_len: 
     :return: A list of all semi spans.
     :rtype: List[Tuple[int, int, int]]
 
-    . code-block:: python
+    .. code-block:: python
 
         >>> build_semi_spans([(0, 3, 0), (0, 5, 1), (3, 5, 0)], min_len=1, max_len=5)
         [(0, 4, 1), (0, 2, 0), (0, 1, 0), (3, 4, 0), (1, 3, 0), (2, 3, 0), (1, 5, 1), (2, 5, 1), (4, 5, 0)]
@@ -413,7 +413,7 @@ def calculate_span_coverage(spans: List[Span], max_index: int, accumulate: bool 
     :return: The coverage array.
     :rtype: List[int]
 
-    . code-block:: python
+    .. code-block:: python
 
         >>> calculate_span_coverage([(0, 3, 0), (3, 6, 0), (6, 9, 0)], 9)
         [1, 1, 1, 1, 1, 1, 1, 1, 1]

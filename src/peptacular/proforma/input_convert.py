@@ -19,7 +19,7 @@ def convert_to_mod(mod: ModValue) -> Mod:
     :param mod:
     :return:
 
-    . code-block:: python
+    .. code-block:: python
 
         >>> convert_to_mod('phospho')
         Mod('phospho', 1)
@@ -49,7 +49,7 @@ def fix_list_of_list_of_mods(mods: Union[List[List[ModValue]], List[ModValue], M
     :return: List of lists of Mod instances
     :return: List[List[Mod]]
 
-    . code-block:: python
+    .. code-block:: python
 
         >>> fix_list_of_list_of_mods('phospho')
         [[Mod('phospho', 1)]]
@@ -98,7 +98,7 @@ def fix_list_of_mods(mods: Union[List[ModValue], ModValue]) -> List[Mod]:
     :return: List of Mod instances
     :rtype: List[Mod]
 
-    . code-block:: python
+    .. code-block:: python
 
         >>> fix_list_of_mods('phospho')
         [Mod('phospho', 1)]
@@ -145,7 +145,7 @@ def fix_dict_of_mods(mods: Dict[Any, Union[List[ModValue], ModValue]]) -> Dict[A
     :return: Dictionary of lists of Mod instances
     :rtype: Dict[Any, List[Mod]]
 
-    . code-block:: python
+    .. code-block:: python
 
         >>> fix_dict_of_mods({1: 'phospho'})
         {1: [Mod('phospho', 1)]}
@@ -165,7 +165,7 @@ def fix_interval_input(interval: IntervalValue) -> Interval:
     :param interval:
     :return:
 
-    . code-block:: python
+    .. code-block:: python
 
         >>> fix_interval_input((1, 2, False, 'phospho'))
         Interval(1, 2, False, [Mod('phospho', 1)])
@@ -199,7 +199,7 @@ def fix_intervals_input(intervals: Union[List[IntervalValue], IntervalValue]) ->
     :return: List of Interval instances
     :rtype: List[Interval]
 
-    . code-block:: python
+    .. code-block:: python
 
         >>> fix_intervals_input([(1, 2, False, 'phospho')])
         [Interval(1, 2, False, [Mod('phospho', 1)])]

@@ -12,7 +12,7 @@ def convert_type(val: str) -> Union[str, int, float]:
     :return: The converted value.
     :rtype: Union[str, int, float]
 
-    . code-block:: python
+    .. code-block:: python
 
         >>> convert_type("1.234")
         1.234
@@ -75,7 +75,7 @@ def get_regex_match_indices(input_str: str, regex_str: Union[str, regex.Pattern]
     :return: A list of starting indexes where the regex pattern is found in the sequence.
     :rtype: List[int]
 
-    . code-block:: python
+    .. code-block:: python
 
         >>> get_regex_match_indices("PEPTIDE", "P")
         [0, 2]
@@ -113,7 +113,7 @@ def get_regex_match_range(input_str: str, regex_str: Union[str, regex.Pattern], 
     :return: A list of starting indexes where the regex pattern is found in the sequence.
     :rtype: List[int]
 
-    . code-block:: python
+    .. code-block:: python
 
         >>> get_regex_match_range("PEPTIDE", "P")
         [(0, 1), (2, 3)]
@@ -146,7 +146,7 @@ def _validate_span(span: Tuple[int, int, int]) -> None:
     :type span: Tuple[int, int, int]
     :raises ValueError: If the span is not valid.
 
-    . code-block:: python
+    .. code-block:: python
 
         >>> _validate_span((0, 5, 0))  # No error raised
 

@@ -50,7 +50,7 @@ def comp_mass(sequence: Union[str, ProFormaAnnotation],
     :return: A tuple containing the chemical composition and delta mass.
     :rtype: Tuple[ChemComposition, float]
 
-    . code-block:: python
+    .. code-block:: python
 
         # Unmodified Peptide
         >>> comp_mass('PEPTIDE')
@@ -134,7 +134,7 @@ def comp(sequence: Union[str, ProFormaAnnotation],
     :return: The elemental composition of the peptide sequence.
     :rtype: Dict[str, int | float]
 
-    . code-block:: python
+    .. code-block:: python
 
         # Calculate the elemental composition of a peptide sequence.
         >>> comp('PEPTIDE')
@@ -311,7 +311,7 @@ def mass(sequence: Union[str, ProFormaAnnotation],
     :return: The mass of the sequence.
     :rtype: float
 
-    . code-block:: python
+    .. code-block:: python
 
         # Calculate the mass of a peptide sequence.
         >>> mass('PEPTIDE', precision=3)
@@ -521,7 +521,7 @@ def mz(sequence: Union[str, ProFormaAnnotation],
     :return: The Mass to Charge ratio (m/z) of the sequence.
     :rtype: float
 
-    . code-block:: python
+    .. code-block:: python
 
         # Calculate the m/z of a peptide sequence.
         >>> mz('PEPTIDE', charge = 1, precision = 3)
@@ -578,7 +578,7 @@ def glycan_mass(formula: Union[str, ChemComposition],
     :return: The mass of the glycan.
     :rtype: float
 
-    . code-block:: python
+    .. code-block:: python
 
         # Calculate the mass of a glycan formula.
         >>> glycan_mass({'HexNAc': 2, 'Hex': 3, 'Neu': 1}, precision=3)
@@ -645,7 +645,7 @@ def mod_mass(mod: Union[str, Mod], monoisotopic: bool = True, precision: Optiona
     :return: The parsed modification mass.
     :rtype: float
 
-    . code-block:: python
+    .. code-block:: python
 
         >>> mod_mass('Acetyl|INFO:newly discovered', precision=3)
         42.011
@@ -706,7 +706,7 @@ def _parse_obs_mass_from_proforma_str(obs_str: str, precision: Optional[int] = N
     :rtype: float
 
 
-    . code-block:: python
+    .. code-block:: python
 
         # Parse an observed mass string.
         >>> _parse_obs_mass_from_proforma_str('42.0', precision=3)
@@ -753,7 +753,7 @@ def _parse_glycan_mass_from_proforma_str(glycan_str: str, monoisotopic: bool, pr
     :return: The mass of the glycan.
     :rtype: float
 
-    . code-block:: python
+    .. code-block:: python
 
         # Monoisotopic Mass
         >>> _parse_glycan_mass_from_proforma_str('HexNAc2Hex3Neu1', monoisotopic=True, precision=3)
@@ -830,7 +830,7 @@ def _parse_chem_mass_from_proforma_str(chem_str: str, monoisotopic: bool, precis
     :return: The mass of the chemical formula.
     :rtype: float
 
-    . code-block:: python
+    .. code-block:: python
 
         # Monoisotopic Mass
         >>> _parse_chem_mass_from_proforma_str('C2H4O2', monoisotopic=True, precision=3)
@@ -877,7 +877,7 @@ def _parse_mod_mass(mod: str, monoisotopic: bool = True, precision: Optional[int
     :return: The mass of the modification or None if the modification has no mass.
     :rtype:  float | None
 
-    . code-block:: python
+    .. code-block:: python
 
         # Parse numeric modifications.
         >>> _parse_mod_mass('42.0')
@@ -992,7 +992,7 @@ def _pop_delta_mass_mods(annotation: ProFormaAnnotation) -> float:
     :return: The delta mass.
     :rtype: float
 
-    . code-block:: python
+    .. code-block:: python
 
         >>> mods = ProFormaAnnotation(_sequence='', _nterm_mods = [42.0, -20.0])
         >>> _pop_delta_mass_mods(mods)
@@ -1084,7 +1084,7 @@ def _parse_adduct_mass(adduct: str,
     :return: The mass of the adduct.
     :rtype: float
 
-    . code-block:: python
+    .. code-block:: python
 
         # Parse an adduct string.
         >>> _parse_adduct_mass('+Na+', precision=5)
@@ -1143,7 +1143,7 @@ def _parse_charge_adducts_mass(adducts: ModValue,
     :return: The mass of the charge adducts.
     :rtype: float
 
-    . code-block:: python
+    .. code-block:: python
 
         # Parse the charge adducts and return their mass.
         >>> _parse_charge_adducts_mass('+Na+,+H+', precision=5)

@@ -37,7 +37,7 @@ def isotopic_distribution(
     :return: The isotopic distribution.
     :rtype: List[Tuple[float, float]]
 
-    . code-block:: python
+    .. code-block:: python
 
         # Example usage
         >>> formula = {'C': 12, 'H': 6, 'N': 3}
@@ -156,7 +156,7 @@ def estimate_isotopic_distribution(neutral_mass: float,
     :return: A list of tuples with (mass, abundance) representing the predicted isotopic distribution.
     :rtype: List[Tuple[float, float]]
 
-    . code-block:: python
+    .. code-block:: python
 
         # Example usage
         >>> estimate_isotopic_distribution(800, 3, 0.0, 5)
@@ -210,7 +210,7 @@ def _convolve_distributions(dist1: Dict[float, float],
     :return: A convolved isotopic distribution as a mass-to-abundance mapping.
     :rtype: Dict[float, float]
 
-    . code-block:: python
+    .. code-block:: python
 
         # Example usage
         >>> d1 = {1.0: 0.5, 2.0: 0.5}
@@ -266,7 +266,7 @@ def _calculate_elemental_distribution(element: str,
     :return: The isotopic distribution.
     :rtype: Counter[float, float]
 
-    . code-block:: python
+    .. code-block:: python
 
         # Example usage
         >>> _calculate_elemental_distribution('C', 2, False)
@@ -302,7 +302,7 @@ def _fix_chemical_formula(chemical_formula: Dict[str, float]) -> Dict[str, int]:
     :return: The fixed chemical formula.
     :rtype: Dict[str, int]
 
-    . code-block:: python
+    .. code-block:: python
 
         # Example usage
         >>> _fix_chemical_formula({'C': 12.0, 'H': 6.0, 'N': 3.0})

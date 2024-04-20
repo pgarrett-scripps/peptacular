@@ -33,7 +33,7 @@ def glycan_to_chem(glycan: Union[ChemComposition, str]) -> str:
     :return: A chemical formula string.
     :rtype: str
 
-    . code-block:: python
+    .. code-block:: python
 
             >>> glycan_to_chem({'HexNAc': 2, 'Hex': 3, 'Neu5Gc': 1})
             'C45H73N3O34'
@@ -58,7 +58,7 @@ def mod_comp(mod: ModValue) -> ChemComposition:
     :return: The composition of the modification.
     :rtype: Dict[str, int | float]
 
-    . code-block:: python
+    .. code-block:: python
 
         >>> mod_comp('Acetyl|INFO:newly discovered')
         {'H': 2, 'C': 2, 'O': 1}
@@ -132,7 +132,7 @@ def _parse_glycan_comp(glycan_str: str) -> ChemComposition:
     :return: The composition of the glycan.
     :rtype: Dict[str, int | float]
 
-    . code-block:: python
+    .. code-block:: python
 
         #  Get Composition
         >>> _parse_glycan_comp('HexNAc2Hex3Neu1')
@@ -197,7 +197,7 @@ def _parse_mod_comp(mod: str) -> Union[ChemComposition, None]:
     :return: The parsed composition, or None if the composition cannot be parsed.
     :rtype: Dict[str, int | float] | None
 
-    . code-block:: python
+    .. code-block:: python
 
         # Calculate the mass of a peptide sequence.
         >>> _parse_mod_comp('U:2')
@@ -271,7 +271,7 @@ def _parse_mod_delta_mass(mod: str) -> Union[float, None]:
     :return: The parsed delta mass, or None if the delta mass cannot be parsed.
     :rtype: float | None
 
-    . code-block:: python
+    .. code-block:: python
 
         >>> _parse_mod_delta_mass('42.0')
         42.0
@@ -350,7 +350,7 @@ def _sequence_comp(annotation: Union[str, ProFormaAnnotation],
     :return: The composition of the sequence.
     :rtype: Dict[str, int | float]
 
-    . code-block:: python
+    .. code-block:: python
 
         # Calculate the mass of a peptide sequence.
         >>> _sequence_comp('PEPTIDE/1', 'y')
@@ -551,7 +551,7 @@ def _parse_mod_delta_mass_only(mod: Union[str, Mod]) -> Union[float, None]:
     :return: The delta mass of the modification or None if the modification is not a delta mass.
     :rtype: float | None
 
-    . code-block:: python
+    .. code-block:: python
 
         >>> _parse_mod_delta_mass_only('Acetyl|INFO:newly discovered')
 
@@ -601,7 +601,7 @@ def apply_isotope_mods_to_composition(composition: Union[ChemComposition, str],
     :return: The modified composition.
     :rtype: Dict[str, int | float]
 
-    . code-block:: python
+    .. code-block:: python
 
         # Apply isotopic modifications to a composition.
         >>> apply_isotope_mods_to_composition({'C': 6, 'H': 12, 'O': 6}, ['13C'])
@@ -656,7 +656,7 @@ def _parse_adduct_comp(adduct: str) -> ChemComposition:
     :return: The composition of the adduct.
     :rtype: Dict[str, int | float]
 
-    . code-block:: python
+    .. code-block:: python
 
         # Parse an adduct string.
         >>> _parse_adduct_comp('+Na+')
@@ -688,7 +688,7 @@ def _parse_charge_adducts_comp(adducts: ModValue) -> ChemComposition:
     :return: The composition of the charge adducts.
     :rtype: Dict[str, int | float]
 
-    . code-block:: python
+    .. code-block:: python
 
         # Parse the charge adducts and return their mass.
         >>> _parse_charge_adducts_comp('+Na+,+H+')

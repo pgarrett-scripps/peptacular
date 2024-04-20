@@ -85,7 +85,7 @@ def is_unimod_str(unimod_str: str) -> bool:
     :return: Whether the string is a valid unimod id or name.
     :rtype: bool
 
-    . code-block:: python
+    .. code-block:: python
 
         >>> is_unimod_str('UniMod:1')
         True
@@ -118,7 +118,7 @@ def _strip_unimod_str(unimod_str: str) -> str:
     :return: The unimod id.
     :rtype: str
 
-    . code-block:: python
+    .. code-block:: python
 
         >>> _strip_unimod_str('UniMod:1')
         '1'
@@ -158,7 +158,7 @@ def parse_unimod_mass(mod_str: str, monoisotopic: bool, precision: Optional[int]
     :return: The mass of the modification.
     :rtype: float
 
-    . code-block:: python
+    .. code-block:: python
 
 
         >>> parse_unimod_mass('UniMod:1', monoisotopic=True, precision=3)
@@ -207,7 +207,7 @@ def parse_unimod_comp(mod_str: str) -> str:
     :return: The mods chemical formula (In Proforma2.0 Noation)
     :rtype: str
 
-    . code-block:: python
+    .. code-block:: python
 
         >>> parse_unimod_comp('UniMod:1')
         'H2C2O1'
@@ -244,7 +244,7 @@ def is_psi_mod_str(psi_str: str) -> bool:
     :return: Whether the string is a PSI id or name.
     :rtype: bool
 
-    . code-block:: python
+    .. code-block:: python
 
         >>> is_psi_mod_str('MOD:00046')
         True
@@ -280,7 +280,7 @@ def _strip_psi_str(psi_str: str) -> str:
     :return: The PSI id.
     :rtype: str
 
-    . code-block:: python
+    .. code-block:: python
 
         >>> _strip_psi_str('MOD:00046')
         '00046'
@@ -323,7 +323,7 @@ def parse_psi_mass(mod_str: str, monoisotopic: bool, precision: Optional[int] = 
     :return: The mass of the modification.
     :rtype: float
 
-    . code-block:: python
+    .. code-block:: python
 
 
         >>> parse_psi_mass('MOD:00046', monoisotopic=True, precision=3)
@@ -375,7 +375,7 @@ def parse_psi_comp(mod_str: str) -> str:
     :return: The mods chemical formula (In Proforma2.0 Noation)
     :rtype: str
 
-    . code-block:: python
+    .. code-block:: python
 
         >>> parse_psi_comp('MOD:00046')
         'H1O3P1'
@@ -455,7 +455,7 @@ def parse_xlmod_mass(mod_str: str, monoisotopic: bool, precision: Optional[int] 
     :return: The mass of the modification.
     :rtype: float
 
-    . code-block:: python
+    .. code-block:: python
 
         >>> parse_xlmod_mass('XLMOD:01000', monoisotopic=True, precision=3)
         156.079
@@ -495,7 +495,7 @@ def parse_xlmod_comp(mod_str: str) -> str:
     :return: The mods chemical formula (In Proforma2.0 Noation)
     :rtype: str
 
-    . code-block:: python
+    .. code-block:: python
 
         >>> parse_xlmod_comp('XLMOD:01000')
         'C8H12O3'
@@ -551,7 +551,7 @@ def parse_resid_mass(mod_str: str, monoisotopic: bool, precision: Optional[int] 
     :return: The mass of the modification.
     :rtype: float
 
-    . code-block:: python
+    .. code-block:: python
 
         >>> parse_resid_mass('RESID:AA0317', monoisotopic=True, precision=3)
         14.016
@@ -587,7 +587,7 @@ def parse_resid_comp(mod_str: str) -> str:
     :return: The mods chemical formula (In Proforma2.0 Noation)
     :rtype: str
 
-    . code-block:: python
+    .. code-block:: python
 
         >>> parse_resid_comp('RESID:AA0317')
         'C1H2'
@@ -618,7 +618,7 @@ def is_gno_str(gno_str: str) -> bool:
     :return: Whether the string is a GNO id or name.
     :rtype: bool
 
-    . code-block:: python
+    .. code-block:: python
 
         >>> is_gno_str('GNO:00000202')
         True
@@ -676,7 +676,7 @@ def parse_gno_mass(mod_str: str, monoisotopic: bool, precision: Optional[int] = 
     :return: The mass of the modification.
     :rtype: float
 
-    . code-block:: python
+    .. code-block:: python
 
         >>> parse_gno_mass('GNO:G35503UV', monoisotopic=True, precision=3)
         1631.618
@@ -716,7 +716,7 @@ def parse_gno_comp(mod_str: str) -> str:
     :return: The mods chemical formula (In Proforma2.0 Noation)
     :rtype: str
 
-    . code-block:: python
+    .. code-block:: python
 
         >>> parse_gno_comp('GNO:G35503UV')
         'C64H105N5O43'
