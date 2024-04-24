@@ -4,18 +4,10 @@ peptacular.chem package
 Submodules
 ----------
 
-peptacular.chem.chem module
+peptacular.chem.chem\_calc module
 ---------------------------
 
-.. automodule:: peptacular.chem.chem
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-peptacular.chem.chem\_constants module
---------------------------------------
-
-.. automodule:: peptacular.chem.chem_constants
+.. automodule:: peptacular.chem.chem_calc
    :members:
    :undoc-members:
    :show-inheritance:

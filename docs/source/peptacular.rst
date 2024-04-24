@@ -15,14 +15,6 @@ Subpackages
 Submodules
 ----------
 
-peptacular.constants module
----------------------------
-
-.. automodule:: peptacular.constants
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 peptacular.digest module
 ------------------------
 
@@ -79,10 +71,10 @@ peptacular.isotope module
    :undoc-members:
    :show-inheritance:
 
-peptacular.mass module
+peptacular.mass\_calc module
 ----------------------
 
-.. automodule:: peptacular.mass
+.. automodule:: peptacular.mass_calc
    :members:
    :undoc-members:
    :show-inheritance:
