@@ -497,7 +497,7 @@ def mz(sequence: Union[str, ProFormaAnnotation],
     """
     Calculate the m/z (mass-to-charge ratio) of an amino acid 'sequence'.
 
-:param sequence: A sequence or ProFormaAnnotation.
+    :param sequence: A sequence or ProFormaAnnotation.
     :type sequence: str | ProFormaAnnotation
     :param charge: The charge state, default is None.
     :type charge: int | None
@@ -557,6 +557,16 @@ def mz(sequence: Union[str, ProFormaAnnotation],
              monoisotopic=monoisotopic, isotope=isotope, loss=loss, charge_adducts=charge_adducts,
              isotope_mods=isotope_mods, precision=None)
 
+    return adjust_mz(m, charge, precision)
+
+
+def chem_mz(formula: Union[ChemComposition, str],
+            charge: int = 1,
+            monoisotopic: bool = True,
+            precision: Optional[int] = None,
+            sep: str = '') -> float:
+    # TODO: Add charge adducts?
+    m = chem_mass(formula, monoisotopic, precision, sep)
     return adjust_mz(m, charge, precision)
 
 
@@ -622,6 +632,15 @@ def glycan_mass(formula: Union[str, ChemComposition],
         m = round(m, precision)
 
     return m
+
+
+def glycan_mz(formula: Union[str, ChemComposition],
+                charge: int = 1,
+                monoisotopic: bool = True,
+                precision: Optional[int] = None) -> float:
+    # TODO: Add charge adducts?
+    m = glycan_mass(formula, monoisotopic, precision)
+    return adjust_mz(m, charge, precision)
 
 
 def mod_mass(mod: Union[str, Mod], monoisotopic: bool = True, precision: Optional[int] = None) -> float:

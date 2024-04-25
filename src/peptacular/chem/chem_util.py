@@ -143,6 +143,7 @@ def write_chem_formula(composition: ChemComposition, sep: str = '', hill_order: 
     return s
 
 
+# Must keep here to avoid circular dep with mod_db (since mod_db uses mass_calc, and mass_calc uses chem_util)
 def chem_mass(formula: Union[ChemComposition, str],
               monoisotopic: bool = True,
               precision: Optional[int] = None,
@@ -225,6 +226,7 @@ def chem_mass(formula: Union[ChemComposition, str],
         m = round(m, precision)
 
     return m
+
 
 
 def _split_chem_formula(formula: str) -> list[str]:
