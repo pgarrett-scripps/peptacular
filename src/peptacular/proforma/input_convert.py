@@ -88,6 +88,41 @@ def fix_list_of_list_of_mods(mods: Union[List[List[ModValue]], List[ModValue], M
     raise ValueError(f"Invalid mod input: {mods}")
 
 
+def remove_empty_list_of_list_of_mods(mods: List[List[Mod]]) -> Union[List[List[Mod]], None]:
+    """
+    Remove empty lists from a list of lists of Mod instances.
+
+    :param mods: List of lists of Mod instances
+    :type mods: List[List[Mod]]
+
+    :return: List of lists of Mod instances
+    :rtype: List[List[Mod]]
+
+    .. code-block:: python
+
+        >>> remove_empty_list_of_list_of_mods([[Mod('phospho', 1)], [Mod('acetyl', 1)], []])
+        [[Mod('phospho', 1)], [Mod('acetyl', 1)]]
+
+        >>> remove_empty_list_of_list_of_mods([[Mod('phospho', 1)], [], [Mod('acetyl', 1)]])
+        [[Mod('phospho', 1)], [Mod('acetyl', 1)]]
+
+        >>> remove_empty_list_of_list_of_mods([[], [], []])
+
+    """
+
+    new_mods2 = []
+    for mod_list in mods:
+        if mod_list:
+            new_mods2.append(mod_list)
+
+    if new_mods2:
+        return new_mods2
+
+    return None
+
+
+
+
 def fix_list_of_mods(mods: Union[List[ModValue], ModValue]) -> List[Mod]:
     """
     Convert the input mods to a list of lists of Mod instances.
@@ -105,6 +140,9 @@ def fix_list_of_mods(mods: Union[List[ModValue], ModValue]) -> List[Mod]:
 
         >>> fix_list_of_mods([3.0])
         [Mod(3.0, 1)]
+
+        >>> fix_list_of_mods([])
+        []
 
         >>> fix_list_of_mods(['phospho'])
         [Mod('phospho', 1)]
@@ -134,6 +172,28 @@ def fix_list_of_mods(mods: Union[List[ModValue], ModValue]) -> List[Mod]:
     raise ValueError(f"Invalid mod input: {mods}")
 
 
+def remove_empty_list_of_mods(mods: List[Mod]) -> Union[List[Mod], None]:
+    """
+    Remove empty lists from a list of Mod instances.
+
+    :param mods: List of Mod instances
+    :type mods: List[Mod]
+
+    :return: List of Mod instances
+    :rtype: List[Mod]
+
+    .. code-block:: python
+
+        >>> remove_empty_list_of_mods([Mod('phospho', 1), Mod('acetyl', 1), Mod('acetyl', 1)])
+        [Mod('phospho', 1), Mod('acetyl', 1), Mod('acetyl', 1)]
+
+        >>> remove_empty_list_of_mods([])
+
+    """
+
+    return mods if mods else None
+
+
 def fix_dict_of_mods(mods: Dict[Any, Union[List[ModValue], ModValue]]) -> Dict[Any, List[Mod]]:
     """
     Convert the input mods to a dictionary of lists of Mod instances. Mainly used to convert internal mod input to
@@ -152,6 +212,9 @@ def fix_dict_of_mods(mods: Dict[Any, Union[List[ModValue], ModValue]]) -> Dict[A
 
         >>> fix_dict_of_mods({2: [3.0]})
         {2: [Mod(3.0, 1)]}
+
+        >>> fix_dict_of_mods({2: []})
+        {2: []}
 
     """
 

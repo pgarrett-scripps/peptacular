@@ -26,6 +26,7 @@ from typing import Dict, List, Tuple, Callable, Union
 
 import regex as re
 
+from peptacular.constants import ORDERED_AMINO_ACIDS
 from peptacular.proforma.proforma_parser import parse, ProFormaAnnotation, serialize, MultiProFormaAnnotation
 from peptacular.spans import Span
 from peptacular.proforma.input_convert import ModDict, fix_list_of_mods, fix_intervals_input
@@ -584,7 +585,7 @@ def shift(sequence: Union[str, ProFormaAnnotation], n: int) -> str:
     return shifted_annotation.serialize()
 
 
-def span_to_sequence(sequence: Union[str, ProFormaAnnotation], span: Span, sliced_annotation) -> str:
+def span_to_sequence(sequence: Union[str, ProFormaAnnotation], span: Span) -> str:
     """
     Extracts a subsequence from the input sequence based on the provided span.
 
@@ -1042,6 +1043,80 @@ def convert_ip2_sequence(sequence: str) -> str:
 
     return sequence
 
+def convert_diann_sequence(sequence: str) -> str:
+    """
+    Converts a IP2-Like sequence to a proforma2.0 compatible sequence.
+
+    :param sequence: The sequence to be converted.
+    :type sequence: str
+
+    :return: Proforma2.0 compatable sequence.
+    :rtype: str
+
+    .. code-block:: python
+
+        >>> convert_diann_sequence('_YMGTLRGC[Carbamidomethyl]LLRLYHD_')
+        'YMGTLRGC[Carbamidomethyl]LLRLYHD'
+
+    """
+
+    # Use regex to check if sequence starts and ends with the specified pattern
+    if re.match(r'^_.*_$', sequence):
+        # If it matches, remove the leading and trailing characters (first and last two characters)
+        sequence = sequence[1:-1]
+
+    return sequence
+
+
+def convert_casanovo_sequence(sequence: str) -> str:
+    """
+    Converts a sequence with modifications to a proforma2.0 compatible sequence.
+    :param sequence: The sequence to be converted.
+    :type sequence: str
+    :return: Proforma2.0 compatable sequence.
+    :rtype: str
+
+    .. code-block:: python
+
+        >>> convert_modification_sequence('+43.006P+100EPTIDE')
+        '[+43.006]-P[+100]EPTIDE'
+
+    """
+    new_sequence = []
+    in_mod = False  # Tracks if we are within a modification
+    is_nterm = False  # Tracks if the current modification is at the N-terminus
+
+    for index, char in enumerate(sequence):
+        if char in {'+', '-'}:
+            # Check if it's at the start (N-terminal)
+            is_nterm = len(new_sequence) == 0
+
+            # Start a new modification block
+            new_sequence.append('[')
+            new_sequence.append(char)
+            in_mod = True
+        elif in_mod and char.isalpha():
+            # End the modification block
+            new_sequence.append(']')
+
+            if is_nterm:
+                # Add a dash if it's an N-terminal modification
+                new_sequence.append('-')
+                is_nterm = False
+
+            # Add the current character and close modification
+            in_mod = False
+            new_sequence.append(char)
+        else:
+            # Add regular characters
+            new_sequence.append(char)
+
+    # Close any unclosed modification at the end of the sequence
+    if in_mod:
+        new_sequence.append(']')
+
+    return ''.join(new_sequence)
+
 
 def is_sequence_valid(sequence: Union[str, ProFormaAnnotation]) -> bool:
     """
@@ -1062,3 +1137,19 @@ def is_sequence_valid(sequence: Union[str, ProFormaAnnotation]) -> bool:
             return False
 
     return True
+
+def count_aa(sequence: Union[str, ProFormaAnnotation]) -> Dict[str, int]:
+    """
+    Converts a sequence to a feature vector.
+    """
+
+    if isinstance(sequence, str):
+        annotation = sequence_to_annotation(sequence)
+    else:
+        annotation = sequence
+
+    d = {aa:0 for aa in ORDERED_AMINO_ACIDS}
+    for aa in annotation.sequence:
+        d[aa] += 1
+
+    return d

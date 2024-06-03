@@ -285,10 +285,6 @@ def get_cleavage_sites(sequence: Union[str, ProFormaAnnotation], enzyme_regex: s
         >>> get_cleavage_sites(sequence='TIDERTIDEKTIDE', enzyme_regex='trypsin/P')
         [5, 10]
 
-        # Or specify a regular expression:
-        >>> get_cleavage_sites(sequence='TIDERTIDEKTIDE', enzyme_regex='([KR])')
-        [5, 10]
-
         # No cleavage sites are identified if the enzyme_regex does not match the sequence:
         >>> get_cleavage_sites(sequence='TIDEPTIDEPTIDE', enzyme_regex='trypsin/P')
         []

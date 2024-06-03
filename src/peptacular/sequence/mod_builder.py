@@ -4,7 +4,8 @@ from peptacular.sequence.sequence_funcs import sequence_to_annotation
 from peptacular.proforma.proforma_parser import ProFormaAnnotation
 from peptacular.proforma.proforma_dataclasses import Mod
 from peptacular.util import get_regex_match_indices
-from peptacular.proforma.input_convert import fix_list_of_list_of_mods, fix_list_of_mods, ModIndex, ModValue
+from peptacular.proforma.input_convert import fix_list_of_list_of_mods, fix_list_of_mods, ModIndex, ModValue, \
+    remove_empty_list_of_list_of_mods
 
 ModMode: TypeAlias = Literal['skip', 'append', 'overwrite']
 MOD_MODE_VALUES = ['skip', 'append', 'overwrite']
@@ -94,6 +95,12 @@ def apply_static_mods(sequence: Union[str, ProFormaAnnotation],
         >>> apply_static_mods('PEPTIDE', None, nterm_mods='acetyl', cterm_mods='amide')
         '[acetyl]-PEPTIDE-[amide]'
 
+        # Test empty mods
+        >>> apply_static_mods('PEPTIDE', None, nterm_mods=[], cterm_mods='amide')
+        'PEPTIDE-[amide]'
+        >>> apply_static_mods('PEPTIDE', None, nterm_mods={'P': []}, cterm_mods='amide')
+        'PEPTIDE-[amide]'
+
     """
 
     if isinstance(sequence, str):
@@ -106,19 +113,29 @@ def apply_static_mods(sequence: Union[str, ProFormaAnnotation],
     else:
         internal_mods = {}
 
-    if isinstance(nterm_mods, Dict):
+    internal_mods = {k: v for k, v in internal_mods.items() if v}
+
+    if isinstance(nterm_mods, Dict) and len(nterm_mods) > 0:
         nterm_mods = {k: fix_list_of_mods(v) for k, v in nterm_mods.items()} if nterm_mods else {}
-    elif nterm_mods is not None:
+    elif isinstance(nterm_mods, list) and len(nterm_mods) > 0:
+        nterm_mods = {'': fix_list_of_mods(nterm_mods)}
+    elif isinstance(nterm_mods, (float, int, str, Mod)):
         nterm_mods = {'': fix_list_of_mods(nterm_mods)}
     else:
         nterm_mods = {}
 
-    if isinstance(cterm_mods, Dict):
+    nterm_mods = {k: v for k, v in nterm_mods.items() if v}
+
+    if isinstance(cterm_mods, Dict) and len(cterm_mods) > 0:
         cterm_mods = {k: fix_list_of_mods(v) for k, v in cterm_mods.items()} if cterm_mods else {}
-    elif cterm_mods is not None:
+    elif isinstance(cterm_mods, list) and len(cterm_mods) > 0:
+        cterm_mods = {'': fix_list_of_mods(cterm_mods)}
+    elif isinstance(cterm_mods, (float, int, str, Mod)):
         cterm_mods = {'': fix_list_of_mods(cterm_mods)}
     else:
         cterm_mods = {}
+
+    cterm_mods = {k: v for k, v in cterm_mods.items() if v}
 
     new_annotation = annotation.copy()
 
@@ -340,6 +357,12 @@ def apply_variable_mods(sequence: Union[str, ProFormaAnnotation],
         >>> apply_variable_mods('PEPTIDE', {'P': [['1']]}, 1, nterm_mods={'P': [['A']]}, cterm_mods={'P': [['B']]})
         ['[A]-P[1]EPTIDE', '[A]-PEP[1]TIDE', '[A]-PEPTIDE', 'P[1]EPTIDE', 'PEP[1]TIDE', 'PEPTIDE']
 
+        # Test for empty mods
+        >>> apply_variable_mods('PEPTIDE', None, 1, nterm_mods=[])
+        ['PEPTIDE']
+        >>> apply_variable_mods('PEPTIDE', None, 1, nterm_mods={'P': [[]]})
+        ['PEPTIDE']
+
     """
 
     if isinstance(sequence, str):
@@ -352,19 +375,32 @@ def apply_variable_mods(sequence: Union[str, ProFormaAnnotation],
     else:
         internal_mods = {}
 
-    if isinstance(nterm_mods, Dict):
+    internal_mods = {k: remove_empty_list_of_list_of_mods(v) for k, v in internal_mods.items()}
+    internal_mods = {k: v for k, v in internal_mods.items() if v}
+
+    if isinstance(nterm_mods, Dict) and len(nterm_mods) > 0:
         nterm_mods = {k: fix_list_of_list_of_mods(v) for k, v in nterm_mods.items()} if nterm_mods else {}
-    elif nterm_mods is not None:
+    elif isinstance(nterm_mods, list) and len(nterm_mods) > 0:
+        nterm_mods = {'': fix_list_of_list_of_mods(nterm_mods)}
+    elif isinstance(nterm_mods, (float, int, str, Mod)):
         nterm_mods = {'': fix_list_of_list_of_mods(nterm_mods)}
     else:
         nterm_mods = {}
 
-    if isinstance(cterm_mods, Dict):
+    nterm_mods = {k: remove_empty_list_of_list_of_mods(v) for k, v in nterm_mods.items()}
+    nterm_mods = {k: v for k, v in nterm_mods.items() if v}
+
+    if isinstance(cterm_mods, Dict) and len(cterm_mods) > 0:
         cterm_mods = {k: fix_list_of_list_of_mods(v) for k, v in cterm_mods.items()} if cterm_mods else {}
-    elif cterm_mods is not None:
+    elif isinstance(cterm_mods, list) and len(cterm_mods) > 0:
+        cterm_mods = {'': fix_list_of_list_of_mods(cterm_mods)}
+    elif isinstance(cterm_mods, (float, int, str, Mod)):
         cterm_mods = {'': fix_list_of_list_of_mods(cterm_mods)}
     else:
         cterm_mods = {}
+
+    cterm_mods = {k: remove_empty_list_of_list_of_mods(v) for k, v in cterm_mods.items()}
+    cterm_mods = {k: v for k, v in cterm_mods.items() if v}
 
     n_term_annotations = []
     if nterm_mods:

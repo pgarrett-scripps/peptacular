@@ -232,6 +232,11 @@ class FragmentMatch:
     def parent_sequence(self) -> str:
         return self.fragment.parent_sequence
 
+    @property
+    def number(self) -> int:
+        return self.fragment.number
+
+
     def to_dict(self) -> Dict:
         """
         Converts the FragmentMatch object to a dictionary.
@@ -257,7 +262,8 @@ class FragmentMatch:
                 'sequence': self.sequence,
                 'theo_mz': self.theo_mz,
                 'internal': self.internal,
-                'label': self.fragment.label
+                'label': self.fragment.label,
+                'number': self.number
             }
 
         else:
@@ -277,7 +283,8 @@ class FragmentMatch:
                 'sequence': '',
                 'theo_mz': 0,
                 'internal': False,
-                'label': ''
+                'label': '',
+                'number': 0
             }
 
 

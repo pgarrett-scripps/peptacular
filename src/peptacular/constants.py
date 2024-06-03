@@ -173,6 +173,7 @@ AA_COMPOSITIONS: Dict[str, Dict[str, int]] = {
 }
 
 AMINO_ACIDS: Set[str] = set(AA_COMPOSITIONS.keys()) | {'B', 'Z'}
+ORDERED_AMINO_ACIDS = sorted(list(AMINO_ACIDS))
 AMBIGUOUS_AMINO_ACIDS: Set[str] = {'J', 'B', 'Z', 'X'}
 MASS_AMBIGUOUS_AMINO_ACIDS: Set[str] = {'B', 'Z'}
 

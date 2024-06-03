@@ -1190,3 +1190,63 @@ def _parse_charge_adducts_mass(adducts: ModValue,
         mass = round(mass, precision)
 
     return mass
+
+
+def ppm_error(theo: float, expt: float, precision: Optional[int] = None) -> float:
+    """
+    Calculate the parts per million (ppm) error between two values.
+
+    :param theo: The theoretical value.
+    :type theo: float
+    :param expt: The experimental value.
+    :type expt: float
+    :param precision: The precision of the ppm error. Default is None.
+    :type precision: int | None
+
+    :return: The parts per million error.
+    :rtype: float
+
+    .. code-block:: python
+
+        # Calculate the parts per million error between two values.
+        >>> ppm_error(100.0, 100.1, 2)
+        1000.0
+
+    """
+
+    ppm_error = ((expt - theo) / theo) * 1e6
+
+    if precision is not None:
+        return round(ppm_error, precision)
+
+    return ppm_error
+
+
+def dalton_error(theo: float, expt: float, precision: Optional[int] = None) -> float:
+    """
+    Calculate the Dalton error between two values.
+
+    :param theo: The theoretical value.
+    :type theo: float
+    :param expt: The experimental value.
+    :type expt: float
+    :param precision: The precision of the Dalton error. Default is None.
+    :type precision: int | None
+
+    :return: The Dalton error.
+    :rtype: float
+
+    .. code-block:: python
+
+        # Calculate the Dalton error between two values.
+        >>> dalton_error(100.0, 100.1, 2)
+        0.1
+
+    """
+
+    dalton_error = expt - theo
+
+    if precision is not None:
+        return round(dalton_error, precision)
+
+    return dalton_error
