@@ -1043,6 +1043,7 @@ def convert_ip2_sequence(sequence: str) -> str:
 
     return sequence
 
+
 def convert_diann_sequence(sequence: str) -> str:
     """
     Converts a IP2-Like sequence to a proforma2.0 compatible sequence.
@@ -1058,12 +1059,27 @@ def convert_diann_sequence(sequence: str) -> str:
         >>> convert_diann_sequence('_YMGTLRGC[Carbamidomethyl]LLRLYHD_')
         'YMGTLRGC[Carbamidomethyl]LLRLYHD'
 
+        >>> convert_diann_sequence('_[Acytel]YMGTLRGC[Carbamidomethyl]LLRLYHD_')
+        '[Acytel]-YMGTLRGC[Carbamidomethyl]LLRLYHD'
+
+        >>> convert_diann_sequence('_[Acytel]YMGTLRGC[Carbamidomethyl]LLRLYHD[1.0]_[Methyl]')
+        '[Acytel]-YMGTLRGC[Carbamidomethyl]LLRLYHD[1.0]-[Methyl]'
+
     """
 
-    # Use regex to check if sequence starts and ends with the specified pattern
-    if re.match(r'^_.*_$', sequence):
-        # If it matches, remove the leading and trailing characters (first and last two characters)
-        sequence = sequence[1:-1]
+    # Check if sequence starts and ends with underscores and remove them
+    if sequence.startswith('_'):
+        sequence = sequence[1:]
+
+        # Check for a modification at the start of the sequence
+        if re.match(r'^\[[^\]]+\]', sequence):
+            sequence = re.sub(r'^\[([^\]]+)\]', r'[\1]-', sequence)
+
+    if sequence.endswith('_'):
+        sequence = sequence[:-1]
+
+    elif re.search(r'_\[[^\]]+\]$', sequence):
+            sequence = re.sub(r'_\[([^\]]+)\]$', r'-[\1]', sequence)
 
     return sequence
 
