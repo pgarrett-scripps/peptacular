@@ -245,7 +245,7 @@ def _get_internal_fragments(annotation: ProFormaAnnotation,
     Build internal fragments for a given sequence.
     """
 
-    spans = build_non_enzymatic_spans((0, len(annotation), 0))
+    spans = list(build_non_enzymatic_spans((0, len(annotation), 0)))
     internal_spans = [span for span in spans if span[0] != 0 and span[1] != len(annotation)]
     return list(_build_fragments(spans=internal_spans,
                                  ion_types=ion_types,
@@ -301,7 +301,7 @@ def _get_forward_fragments(annotation: ProFormaAnnotation,
     """
 
     start_span = (0, sequence_length(annotation), 0)
-    spans = [start_span] + build_left_semi_spans(start_span)
+    spans = [start_span] + list(build_left_semi_spans(start_span))
     return list(_build_fragments(spans=spans,
                                  ion_types=ion_types,
                                  charges=charges,
@@ -330,7 +330,7 @@ def _get_backward_fragments(annotation: ProFormaAnnotation,
     """
 
     start_span = (0, sequence_length(annotation), 0)
-    spans = [start_span] + build_right_semi_spans(start_span)
+    spans = [start_span] + list(build_right_semi_spans(start_span))
     return list(_build_fragments(spans=spans,
                                  ion_types=ion_types,
                                  charges=charges,
@@ -518,6 +518,8 @@ def fragment(sequence: Union[str, ProFormaAnnotation],
         annotation = sequence_to_annotation(sequence)
     else:
         annotation = sequence
+
+    annotation.pop_labile_mods()
 
     if annotation.contains_sequence_ambiguity():
         raise ValueError("Ambiguous sequence")

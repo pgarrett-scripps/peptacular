@@ -1021,7 +1021,7 @@ class ProFormaAnnotation:
             return new_annotation
 
     def contains_sequence_ambiguity(self) -> bool:
-        return self.intervals is not None or self.unknown_mods is not None
+        return self.intervals is not None or self.unknown_mods is not None or self.labile_mods is not None
 
     def contains_residue_ambiguity(self) -> bool:
         return any(aa in AMBIGUOUS_AMINO_ACIDS for aa in self.sequence)
@@ -1575,8 +1575,14 @@ class ProFormaAnnotation:
         Split each amino acid in the sequence into a separate ProFormaAnnotation
         """
 
+        # for labile mods only include on first amino acid
+        labile_mods = self.pop_labile_mods()
+
         for i, aa in enumerate(self.sequence):
-            yield self.slice(i, i + 1)
+            s = self.slice(i, i + 1)
+            if i == 0 and labile_mods:
+                s.add_labile_mods(labile_mods, append=True)
+            yield s
 
     def count_residues(self) -> CounterType:
         """
@@ -1612,17 +1618,17 @@ class ProFormaAnnotation:
         new_annotation._internal_mods = new_internal_mods  # already a copy
         return new_annotation
 
-    def serialize(self) -> str:
-        return _serialize_annotation(self)
+    def serialize(self, include_plus: bool = False) -> str:
+        return _serialize_annotation(self, include_plus)
 
-    def serialize_start(self) -> str:
-        return _serialize_annotation_start(self)
+    def serialize_start(self, include_plus: bool = False) -> str:
+        return _serialize_annotation_start(self, include_plus)
 
-    def serialize_middle(self) -> str:
-        return _serialize_annotation_middle(self)
+    def serialize_middle(self, include_plus: bool = False) -> str:
+        return _serialize_annotation_middle(self, include_plus)
 
-    def serialize_end(self) -> str:
-        return _serialize_annotation_end(self)
+    def serialize_end(self, include_plus: bool = False) -> str:
+        return _serialize_annotation_end(self, include_plus)
 
     def is_subsequence(self, other: 'ProFormaAnnotation') -> bool:
         """
@@ -2135,6 +2141,9 @@ class _ProFormaParser:
                 bracket_depth -= 1
             self.position += 1
 
+        if bracket_depth != 0:
+            raise ProFormaFormatError(f"Unmatched {opening_bracket} at position {self.position}", self.position, self.sequence)
+
         mod = self.sequence[start:self.position - 1]
 
         multiplier = 1
@@ -2214,7 +2223,7 @@ def parse(sequence: str) -> Union[ProFormaAnnotation, MultiProFormaAnnotation]:
     return MultiProFormaAnnotation(annotations, annotations_connections[:-1])
 
 
-def serialize(annotation: Union[ProFormaAnnotation, MultiProFormaAnnotation]) -> str:
+def serialize(annotation: Union[ProFormaAnnotation, MultiProFormaAnnotation], include_plus: bool = False) -> str:
     """
     Serializes a ProForma annotation or multiple ProForma annotations into a single string representation.
 
@@ -2246,42 +2255,42 @@ def serialize(annotation: Union[ProFormaAnnotation, MultiProFormaAnnotation]) ->
 
     """
 
-    return annotation.serialize()
+    return annotation.serialize(include_plus)
 
 
-def _serialize_annotation_start(annotation: ProFormaAnnotation) -> str:
+def _serialize_annotation_start(annotation: ProFormaAnnotation, include_plus: bool) -> str:
     comps = []
 
     # add labile mods
     if annotation.has_labile_mods():
         for mod in annotation.labile_mods:
-            comps.append(mod.serialize('{}'))
+            comps.append(mod.serialize('{}', include_plus))
 
     if annotation.has_static_mods():
         for mod in annotation.static_mods:
-            comps.append(mod.serialize('<>'))
+            comps.append(mod.serialize('<>', include_plus))
 
     # Add global mods
     if annotation.has_isotope_mods():
         for mod in annotation.isotope_mods:
-            comps.append(mod.serialize('<>'))
+            comps.append(mod.serialize('<>',include_plus))
 
     # Unknown mods
     if annotation.has_unknown_mods():
         for mod in annotation.unknown_mods:
-            comps.append(mod.serialize('[]'))
+            comps.append(mod.serialize('[]',include_plus))
         comps.append("?")
 
     # N-term mods
     if annotation.has_nterm_mods():
         for mod in annotation.nterm_mods:
-            comps.append(mod.serialize('[]'))
+            comps.append(mod.serialize('[]', include_plus))
         comps.append("-")
 
     return ''.join(comps)
 
 
-def _serialize_annotation_middle(annotation: ProFormaAnnotation) -> str:
+def _serialize_annotation_middle(annotation: ProFormaAnnotation, include_plus: bool) -> str:
     comps = []
     # Sequence
     for i, aa in enumerate(annotation.sequence):
@@ -2297,14 +2306,14 @@ def _serialize_annotation_middle(annotation: ProFormaAnnotation) -> str:
 
                     if interval.mods:
                         for mod in interval.mods:
-                            comps.append(mod.serialize('[]'))
+                            comps.append(mod.serialize('[]', include_plus))
 
         comps.append(aa)
 
         # Internal mods
         if annotation.internal_mods and i in annotation.internal_mods:
             for mod in annotation.internal_mods[i]:
-                comps.append(mod.serialize('[]'))
+                comps.append(mod.serialize('[]',include_plus))
 
     # add end interval
     i = len(annotation.sequence)
@@ -2314,18 +2323,18 @@ def _serialize_annotation_middle(annotation: ProFormaAnnotation) -> str:
                 comps.append(")")
                 if interval.mods:
                     for mod in interval.mods:
-                        comps.append(mod.serialize('[]'))
+                        comps.append(mod.serialize('[]',include_plus))
 
     return ''.join(comps)
 
 
-def _serialize_annotation_end(annotation: ProFormaAnnotation) -> str:
+def _serialize_annotation_end(annotation: ProFormaAnnotation, include_plus: bool) -> str:
     comps = []
     # C-term mods
     if annotation.cterm_mods:
         comps.append('-')
         for mod in annotation.cterm_mods:
-            comps.append(mod.serialize('[]'))
+            comps.append(mod.serialize('[]', include_plus))
 
     # Charge
     if annotation.charge:
@@ -2333,12 +2342,12 @@ def _serialize_annotation_end(annotation: ProFormaAnnotation) -> str:
 
     if annotation.charge_adducts:
         for mod in annotation.charge_adducts:
-            comps.append(mod.serialize('[]'))
+            comps.append(mod.serialize('[]', include_plus))
 
     return ''.join(comps)
 
 
-def _serialize_annotation(annotation: ProFormaAnnotation) -> str:
-    return _serialize_annotation_start(annotation) + \
-        _serialize_annotation_middle(annotation) + \
-        _serialize_annotation_end(annotation)
+def _serialize_annotation(annotation: ProFormaAnnotation, include_plus: bool) -> str:
+    return _serialize_annotation_start(annotation, include_plus) + \
+        _serialize_annotation_middle(annotation, include_plus) + \
+        _serialize_annotation_end(annotation, include_plus)

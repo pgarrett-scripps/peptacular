@@ -8,7 +8,7 @@ PROTEIN = 'MVIMSEFSADPAGQGQGQQKPLRVGFYDIERTLGKGNFAVVKLARHRVTKTQVAIKIIDKTRLDSSNLE
 class TestDigest(unittest.TestCase):
 
     def test_trypsin_sites(self):
-        cleavage_sites = pt.get_cleavage_sites(PROTEIN, pt.PROTEASES['trypsin'])
+        cleavage_sites = list(pt.get_cleavage_sites(PROTEIN, pt.PROTEASES['trypsin']))
 
         sites = [23, 31, 35, 42, 45, 47, 50, 56, 60, 62, 70, 73, 79, 88, 96]
 

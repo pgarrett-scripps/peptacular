@@ -17,7 +17,7 @@ from peptacular.errors import InvalidDeltaMassError, InvalidModificationMassErro
 from peptacular.glycan import parse_glycan_formula
 from peptacular.mods.mod_db import parse_psi_mass, parse_unimod_mass, is_unimod_str, is_psi_mod_str, parse_xlmod_mass, \
     parse_resid_mass, is_gno_str, parse_gno_mass, is_xlmod_str, is_resid_str
-from peptacular.sequence.sequence_funcs import sequence_to_annotation
+from peptacular.sequence.sequence_funcs import sequence_to_annotation, split, strip_mods
 from peptacular.types import ChemComposition
 from peptacular.proforma.input_convert import ModValue
 
@@ -307,6 +307,8 @@ def mass(sequence: Union[str, ProFormaAnnotation],
     :type precision: int | None
 
     :raise ValueError: If the ion type is not supported.
+    :raise UnknownAminoAcidError: If an unknown amino acid is encountered.
+    :raise AmbiguousAminoAcidError: If an ambiguous amino acid is encountered.
 
     :return: The mass of the sequence.
     :rtype: float
@@ -635,15 +637,15 @@ def glycan_mass(formula: Union[str, ChemComposition],
 
 
 def glycan_mz(formula: Union[str, ChemComposition],
-                charge: int = 1,
-                monoisotopic: bool = True,
-                precision: Optional[int] = None) -> float:
+              charge: int = 1,
+              monoisotopic: bool = True,
+              precision: Optional[int] = None) -> float:
     # TODO: Add charge adducts?
     m = glycan_mass(formula, monoisotopic, precision)
     return adjust_mz(m, charge, precision)
 
 
-def mod_mass(mod: Union[str, Mod], monoisotopic: bool = True, precision: Optional[int] = None) -> float:
+def mod_mass(mod: Union[str, Mod, List[Mod]], monoisotopic: bool = True, precision: Optional[int] = None) -> float:
     """
     Parse a modification string.
 
@@ -675,6 +677,9 @@ def mod_mass(mod: Union[str, Mod], monoisotopic: bool = True, precision: Optiona
         >>> mod_mass('1', precision=3)
         1
 
+        >>> mod_mass(['1', 1], precision=3)
+        2
+
         >>> mod_mass('Acetyl|Obs:+42.010565', precision=3)
         42.011
 
@@ -691,6 +696,9 @@ def mod_mass(mod: Union[str, Mod], monoisotopic: bool = True, precision: Optiona
         peptacular.errors.InvalidModificationMassError: Cannot determine mass for modification: "info:HelloWorld"
 
     """
+
+    if isinstance(mod, list):
+        return sum([mod_mass(m, monoisotopic, precision) for m in mod])
 
     if isinstance(mod, Mod):
         return mod_mass(mod.val, monoisotopic, precision) * mod.mult
@@ -943,6 +951,9 @@ def _parse_mod_mass(mod: str, monoisotopic: bool = True, precision: Optional[int
 
         >>> _parse_mod_mass('Acetyl#g1(0.1)')
         42.010565
+
+        >>> _parse_mod_mass('Amidated')
+        -0.984016
 
     """
 
@@ -1250,3 +1261,75 @@ def dalton_error(theo: float, expt: float, precision: Optional[int] = None) -> f
         return round(dalton_error, precision)
 
     return dalton_error
+
+
+def condense_to_mass_mods(sequence: Union[str, ProFormaAnnotation], include_plus: bool = False, precision: float = 6) -> str:
+    """
+    Converts all modifications in a sequence to their mass equivalents by calculating
+    the mass difference between modified and unmodified segments.
+
+    :param sequence: The sequence or ProFormaAnnotation object to convert.
+    :type sequence: Union[str, ProFormaAnnotation]
+    :param include_plus: Whether to include the plus sign for positive mass modifications.
+    :type include_plus: bool
+
+    :raises ValueError: If the input sequence contains multiple sequences.
+    :raises ProFormaFormatError: if the proforma sequence is not valid
+
+    :return: The sequence with all modifications converted to mass modifications.
+    :rtype: str
+
+    .. code-block:: python
+
+        >>> condense_to_mass_mods('PEP[Phospho]TIDE')
+        'PEP[79.966331]TIDE'
+
+        >>> condense_to_mass_mods('PEP[Phospho]TIDE', include_plus=True)
+        'PEP[+79.966331]TIDE'
+
+        >>> condense_to_mass_mods('[Acetyl]-PEPTIDE')
+        '[42.010565]-PEPTIDE'
+
+        >>> condense_to_mass_mods('PEPTIDE-[Amidated]')
+        'PEPTIDE-[-0.984016]'
+
+        >>> condense_to_mass_mods('<13C>PEP[Phospho]TIDE')
+        'P[5.016774]E[5.016774]P[84.983105]T[4.013419]I[6.020129]D[4.013419]E[5.016774]'
+
+    """
+    if isinstance(sequence, str):
+        annotation = sequence_to_annotation(sequence)
+    else:
+        annotation = sequence
+
+    n_term_mods = annotation.pop_nterm_mods()
+    c_term_mods = annotation.pop_cterm_mods()
+    labile_mods = annotation.pop_labile_mods()
+
+    # Split into segments and process each one
+    segments = list(annotation.split())
+    stripped_segments = [seg.strip() for seg in segments]
+
+    new_annotation = annotation.strip()
+
+    # Calculate mass differences
+    for i, (segment, stripped) in enumerate(zip(segments, stripped_segments)):
+        # Calculate mass difference
+        mod_mass_val = mass(segment) - mass(stripped)
+        if abs(mod_mass_val) > 1e-6:  # Only add if difference is significant
+            new_annotation.add_internal_mod(i, round(mod_mass_val, precision))
+
+    if n_term_mods is not None:
+        n_term_mods_mass = sum(mod_mass(mod) for mod in n_term_mods)
+
+        new_annotation.add_nterm_mods(round(n_term_mods_mass, precision))
+
+    if c_term_mods is not None:
+        c_term_mods_mass = sum(mod_mass(mod) for mod in c_term_mods)
+        new_annotation.add_cterm_mods(round(c_term_mods_mass, precision))
+
+    if labile_mods is not None:
+        labile_mods_mass = sum(mod_mass(mod) for mod in labile_mods)
+        new_annotation.add_labile_mods(round(labile_mods_mass, precision))
+
+    return new_annotation.serialize(include_plus=include_plus)

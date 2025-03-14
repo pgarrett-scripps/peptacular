@@ -20,9 +20,16 @@ class Mod:
     def flatten(self) -> List[Union[str, float, int]]:
         return [self.val] * self.mult
 
-    def serialize(self, brackets: str) -> str:
-        return f"{brackets[0]}{self.val}{brackets[1]}^{self.mult}" if self.mult > 1 else \
-            f"{brackets[0]}{self.val}{brackets[1]}"
+    def serialize(self, brackets: str, include_plus: bool = False) -> str:
+        # Determine if the value is positive and prefix '+' for positive numbers
+        if include_plus is True:
+            val_str = f"+{self.val}" if isinstance(self.val, (int, float)) and self.val > 0 else str(self.val)
+        else:
+            val_str = str(self.val)
+
+        # Return the formatted string based on the multiplier value
+        return f"{brackets[0]}{val_str}{brackets[1]}^{self.mult}" if self.mult > 1 else \
+            f"{brackets[0]}{val_str}{brackets[1]}"
 
     def __hash__(self) -> int:
         return hash((self.val, self.mult))

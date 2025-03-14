@@ -44,6 +44,7 @@ def sequence_to_annotation(sequence: str) -> ProFormaAnnotation:
 
     :return: A ProFormaAnnotation object representing the input sequence.
     :rtype: ProFormaAnnotation
+
     """
     annotation = parse(sequence)
 
@@ -247,7 +248,8 @@ def get_mods(sequence: Union[str, ProFormaAnnotation]) -> ModDict:
 
 def add_mods(sequence: Union[str, ProFormaAnnotation],
              mods: Dict,
-             append: bool = True) -> str:
+             append: bool = True,
+             include_plus: bool = False) -> str:
     """
     Adds modifications to the given sequence. The modifications can be of type Mod, str, int, or float, and can be
     a single value or a list of values. The modifications will be added to the sequence in the order they are provided.
@@ -277,6 +279,9 @@ def add_mods(sequence: Union[str, ProFormaAnnotation],
         # Can also add N and C terminal modifications
         >>> add_mods('PEPTIDE', {'nterm': 'Acetyl', 6: 1.234, 'cterm': 'Amide'})
         '[Acetyl]-PEPTIDE[1.234]-[Amide]'
+
+        >>> add_mods('PEPTIDE', {'nterm': 'Acetyl', 6: 1.234, 'cterm': 'Amide'}, True)
+        '[Acetyl]-PEPTIDE[+1.234]-[Amide]'
 
         # Can also add isotopic modifications
         >>> add_mods('PEPTIDE', {'isotope': ['13C', '15N']})
@@ -322,10 +327,10 @@ def add_mods(sequence: Union[str, ProFormaAnnotation],
             mods[k] = fix_list_of_mods(mods[k])
 
     annotation.add_mod_dict(mods, append=append)
-    return serialize(annotation)
+    return serialize(annotation, include_plus)
 
 
-def condense_static_mods(sequence: Union[str, ProFormaAnnotation]) -> str:
+def condense_static_mods(sequence: Union[str, ProFormaAnnotation], include_plus: bool = False) -> str:
     """
     Condenses static modifications into internal modifications.
 
@@ -367,7 +372,7 @@ def condense_static_mods(sequence: Union[str, ProFormaAnnotation]) -> str:
     else:
         annotation = sequence
 
-    return annotation.condense_static_mods().serialize()
+    return annotation.condense_static_mods().serialize(include_plus)
 
 
 def pop_mods(sequence: Union[str, ProFormaAnnotation]) -> Tuple[str, ModDict]:
@@ -454,7 +459,7 @@ def strip_mods(sequence: Union[str, ProFormaAnnotation]) -> str:
     return annotation.sequence
 
 
-def reverse(sequence: Union[str, ProFormaAnnotation], swap_terms: bool = False) -> str:
+def reverse(sequence: Union[str, ProFormaAnnotation], swap_terms: bool = False, include_plus: bool = False) -> str:
     """
     Reverses the sequence, while preserving the position of any modifications.
 
@@ -495,10 +500,10 @@ def reverse(sequence: Union[str, ProFormaAnnotation], swap_terms: bool = False) 
         annotation = sequence
 
     reversed_annotation = annotation.reverse(swap_terms=swap_terms)
-    return reversed_annotation.serialize()
+    return reversed_annotation.serialize(include_plus)
 
 
-def shuffle(sequence: Union[str, ProFormaAnnotation], seed: int = None) -> str:
+def shuffle(sequence: Union[str, ProFormaAnnotation], seed: int = None, include_plus: bool = False) -> str:
     """
     Shuffles the sequence, while preserving the position of any modifications.
 
@@ -535,10 +540,10 @@ def shuffle(sequence: Union[str, ProFormaAnnotation], seed: int = None) -> str:
         annotation = sequence
 
     shifted_annotation = annotation.shuffle(seed)
-    return shifted_annotation.serialize()
+    return shifted_annotation.serialize(include_plus)
 
 
-def shift(sequence: Union[str, ProFormaAnnotation], n: int) -> str:
+def shift(sequence: Union[str, ProFormaAnnotation], n: int, include_plus: bool = False) -> str:
     """
     Shifts the sequence to the left by a given number of positions, while preserving the position of any modifications.
 
@@ -582,10 +587,10 @@ def shift(sequence: Union[str, ProFormaAnnotation], n: int) -> str:
         annotation = sequence
 
     shifted_annotation = annotation.shift(n)
-    return shifted_annotation.serialize()
+    return shifted_annotation.serialize(include_plus)
 
 
-def span_to_sequence(sequence: Union[str, ProFormaAnnotation], span: Span) -> str:
+def span_to_sequence(sequence: Union[str, ProFormaAnnotation], span: Span, include_plus: bool = False) -> str:
     """
     Extracts a subsequence from the input sequence based on the provided span.
 
@@ -632,10 +637,10 @@ def span_to_sequence(sequence: Union[str, ProFormaAnnotation], span: Span) -> st
     else:
         annotation = sequence
 
-    return annotation.slice(span[0], span[1]).serialize()
+    return annotation.slice(span[0], span[1]).serialize(include_plus)
 
 
-def split(sequence: Union[str, ProFormaAnnotation]) -> List[str]:
+def split(sequence: Union[str, ProFormaAnnotation], include_plus: bool = False) -> List[str]:
     """
     Splits sequence into a list of amino acids, preserving modifications.
 
@@ -667,7 +672,7 @@ def split(sequence: Union[str, ProFormaAnnotation]) -> List[str]:
     else:
         annotation = sequence
 
-    return [annot.serialize() for annot in annotation.split()]
+    return [annot.serialize(include_plus) for annot in annotation.split()]
 
 
 def count_residues(sequence: Union[str, ProFormaAnnotation]) -> CounterType:
@@ -783,7 +788,7 @@ def _sort_mods(mods: ModDict, sort_function: Callable[[str], str] = lambda x: st
         mods[k].sort(key=sort_function)
 
 
-def sort(sequence: Union[str, ProFormaAnnotation]) -> str:
+def sort(sequence: Union[str, ProFormaAnnotation], include_plus: bool = False) -> str:
     """
     Sorts the input sequence using the provided sort function. Terminal sequence are kept in place.
 
@@ -816,7 +821,7 @@ def sort(sequence: Union[str, ProFormaAnnotation]) -> str:
         annotation = sequence
 
     sorted_annotation = annotation.sort_residues()
-    return sorted_annotation.serialize()
+    return sorted_annotation.serialize(include_plus)
 
 
 def find_subsequence_indices(sequence: Union[str, ProFormaAnnotation],
@@ -1094,7 +1099,7 @@ def convert_casanovo_sequence(sequence: str) -> str:
 
     .. code-block:: python
 
-        >>> convert_modification_sequence('+43.006P+100EPTIDE')
+        >>> convert_casanovo_sequence('+43.006P+100EPTIDE')
         '[+43.006]-P[+100]EPTIDE'
 
     """
