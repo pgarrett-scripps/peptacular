@@ -1,3 +1,7 @@
+"""
+This module provides functions to generate permutations, combinations, and products of sequences.
+"""
+
 from typing import List, Union
 
 from peptacular.proforma.proforma_parser import ProFormaAnnotation

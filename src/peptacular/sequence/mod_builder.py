@@ -1,3 +1,7 @@
+"""
+Modification builder for amino acid sequences.
+"""
+
 from typing import Dict, List, Generator, Union, Optional, Literal
 
 from peptacular.sequence.sequence_funcs import sequence_to_annotation

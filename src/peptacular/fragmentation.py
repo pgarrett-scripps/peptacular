@@ -5,7 +5,7 @@ import itertools
 import re
 from dataclasses import dataclass
 from functools import cached_property
-from typing import List, Union, TypeAlias, Literal, Optional, Tuple, Set
+from typing import List, Union, Literal, Optional, Tuple, Set
 
 from peptacular.proforma.proforma_parser import ProFormaAnnotation
 from peptacular.constants import FORWARD_ION_TYPES, BACKWARD_ION_TYPES, INTERNAL_ION_TYPES, TERMINAL_ION_TYPES
@@ -114,7 +114,7 @@ class Fragment:
         }
 
 
-FragmentReturnType: TypeAlias = Literal["fragment", "mass", "mz", "label", "mass-label", "mz-label"]
+FragmentReturnType = Literal["fragment", "mass", "mz", "label", "mass-label", "mz-label"]
 FRAGMENT_RETURN_TYPING = Union[List[Fragment], List[float], List[str], List[tuple[float, str]]]
 
 

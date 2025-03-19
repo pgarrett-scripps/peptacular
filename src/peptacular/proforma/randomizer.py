@@ -1,3 +1,7 @@
+"""
+Randomizer for ProForma annotations.
+"""
+
 from random import randint, choice, sample
 from enum import Enum, auto
 from typing import List, Union
@@ -34,6 +38,9 @@ _LEVEL2_MODS = _UNIMOD_LEVEL2_MOD_VALS + _PSI_LEVEL2_MOD_VALS + _BASE_MODS
 
 
 class ProformaComplianceLevel(Enum):
+    """
+    Enum for ProForma compliance levels.
+    """
     BASE = auto()
     LEVEL2 = auto()
     TOP_DOWN = auto()
@@ -43,19 +50,26 @@ class ProformaComplianceLevel(Enum):
 
 
 def _random_sequence(amino_acids: str, min_sequence_length: int, max_sequence_length: int) -> str:
+    """
+    Generate a random sequence of amino acids.
+    """
     return ''.join(choice(amino_acids) for _ in range(randint(min_sequence_length, max_sequence_length)))
 
 
 def random_sequence(level: ProformaComplianceLevel, min_sequence_length: int = 5, max_sequence_length: int = 50,
                     sequence_ambiguity: bool = True) -> str:
+    """
+    Generate a random sequence based on the compliance level.
+    """
     if level == ProformaComplianceLevel.BASE:
         return _random_sequence(_BASE_AMINO_ACIDS, min_sequence_length, max_sequence_length)
-    elif level == ProformaComplianceLevel.LEVEL2:
+
+    if level == ProformaComplianceLevel.LEVEL2:
         if sequence_ambiguity:
             return _random_sequence(_LEVEL2_AMINO_ACIDS, min_sequence_length, max_sequence_length)
         return _random_sequence(_LEVEL2_AMINO_ACIDS_WITHOUT_AMBIGUITY, min_sequence_length, max_sequence_length)
-    else:
-        raise ValueError("Invalid level")
+
+    raise ValueError("Invalid level")
 
 
 def _random_mod(mods: List[str], count: int, info: bool) -> Mod:
@@ -67,27 +81,36 @@ def _random_mod(mods: List[str], count: int, info: bool) -> Mod:
 
 
 def random_mod(level: ProformaComplianceLevel, count: int = 1, info: bool = False) -> Mod:
+    """
+    Generate a random modification based on the compliance level.
+    """
     if level == ProformaComplianceLevel.BASE:
         return _random_mod(_BASE_MODS, count, info)
-    elif level == ProformaComplianceLevel.LEVEL2:
+    if level == ProformaComplianceLevel.LEVEL2:
         return _random_mod(_LEVEL2_MODS, count, info)
-    elif level == ProformaComplianceLevel.TOP_DOWN:
+    if level == ProformaComplianceLevel.TOP_DOWN:
         return _random_mod(_TOP_DOWN_MODS, count, info)
-    elif level == ProformaComplianceLevel.CROSS_LINKING:
+    if level == ProformaComplianceLevel.CROSS_LINKING:
         return _random_mod(_CROSS_LINKING_MODS, count, info)
-    elif level == ProformaComplianceLevel.GLYCAN:
+    if level == ProformaComplianceLevel.GLYCAN:
         return _random_mod(_GLYCAN_MODS, count, info)
-    elif level == ProformaComplianceLevel.SPECTRUM:
+    if level == ProformaComplianceLevel.SPECTRUM:
         return _random_mod([], count, info)
-    else:
-        raise ValueError("Invalid level")
+
+    raise ValueError("Invalid level")
 
 
 def random_interval(level: ProformaComplianceLevel, start_index: int, end_index: int) -> Interval:
+    """
+    Generate a random interval within a given range.
+    """
     return _random_interval(level, start_index, end_index)
 
 
 def _random_interval(level: ProformaComplianceLevel, start_index: int, end_index: int) -> Interval:
+    """
+    Generate a random interval within a given range.
+    """
     # Ensure 'end' is strictly greater than 'start' to avoid zero-length intervals
     start = randint(start_index, end_index - 1)
     end = randint(start + 1, end_index)
@@ -97,6 +120,9 @@ def _random_interval(level: ProformaComplianceLevel, start_index: int, end_index
 
 
 def random_intervals(level: ProformaComplianceLevel, sequence: str, num_intervals: int) -> List[Interval]:
+    """
+    Generate a list of random intervals within a given sequence.
+    """
     intervals = []
     if num_intervals == 0:
         return intervals
@@ -143,7 +169,7 @@ def compliance_randomizer(level: Union[ProformaComplianceLevel],
         else:
             raise ValueError("Invalid level")
 
-    if level != ProformaComplianceLevel.BASE and level != ProformaComplianceLevel.LEVEL2:
+    if level not in (ProformaComplianceLevel.BASE, ProformaComplianceLevel.LEVEL2):
         raise ValueError("Invalid level")
 
     # Amino acid sequences

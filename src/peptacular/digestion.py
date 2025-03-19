@@ -14,7 +14,7 @@ Valid DigestReturnType's:
 
 """
 from dataclasses import dataclass
-from typing import Union, List, Optional, TypeAlias, Literal, Tuple, Generator, Iterable
+from typing import Union, List, Optional, Literal, Tuple, Generator, Iterable
 
 from peptacular.spans import Span
 from peptacular.constants import PROTEASES_COMPILED
@@ -23,7 +23,7 @@ from peptacular.spans import build_left_semi_spans, build_right_semi_spans, buil
 from peptacular.sequence.sequence_funcs import sequence_to_annotation
 from peptacular.util import get_regex_match_indices
 
-DigestReturnType: TypeAlias = Literal["str", "annotation", "span", "str-span", "annotation-span"]
+DigestReturnType = Literal["str", "annotation", "span", "str-span", "annotation-span"]
 
 DIGEST_RETURN_TYPING = Union[Generator[str, None, None], Generator[ProFormaAnnotation, None, None],
 Generator[Span, None, None], Generator[Tuple[str, Span], None, None],
@@ -113,8 +113,8 @@ def get_left_semi_enzymatic_sequences(sequence: Union[str, ProFormaAnnotation],
     else:
         raise ValueError(f"Unsupported input type: {type(sequence)}")
 
-    s = (0, len(annotation), 0)
-    spans = build_left_semi_spans(span=s, min_len=min_len, max_len=max_len)
+    span = (0, len(annotation), 0)
+    spans = build_left_semi_spans(span=span, min_len=min_len, max_len=max_len)
 
     return _return_digested_sequences(annotation, spans, return_type)
 
@@ -198,7 +198,8 @@ def get_semi_enzymatic_sequences(sequence: Union[str, ProFormaAnnotation],
     .. code-block:: python
 
         # Equivalent to build_left_semi_sequences + build_right_semi_sequences
-        >>> res = list(get_left_semi_enzymatic_sequences('PEPTIDE')) + list(get_right_semi_enzymatic_sequences('PEPTIDE'))
+        >>> res = list(get_left_semi_enzymatic_sequences('PEPTIDE'))
+        >>> res += list(get_right_semi_enzymatic_sequences('PEPTIDE'))
         >>> list(get_semi_enzymatic_sequences('PEPTIDE')) == list(res)
         True
 
@@ -366,7 +367,7 @@ def digest(sequence: Union[str, ProFormaAnnotation],
         ['TIDER', 'TIDERTIDEK', 'TIDERTIDEKTIDE', 'TIDEK', 'TIDEKTIDE', 'TIDE']
 
         # Inlcude spans in the returned values:
-        >>> list(digest(sequence='TIDERTIDEKTIDE', enzyme_regex='trypsin/P', missed_cleavages=0, return_type='str-span'))
+        >>> list(digest(sequence='TIDERTIDEKTIDE', enzyme_regex='trypsin/P', return_type='str-span'))
         [('TIDER', (0, 5, 0)), ('TIDEK', (5, 10, 0)), ('TIDE', (10, 14, 0))]
 
         # Or specify a regular expression:

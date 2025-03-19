@@ -1,3 +1,7 @@
+"""
+proforma_dataclasses.py
+"""
+
 import copy
 from collections import Counter
 from dataclasses import dataclass
@@ -18,6 +22,9 @@ class Mod:
         self.val = convert_type(self.val)
 
     def flatten(self) -> List[Union[str, float, int]]:
+        """
+        Flatten the mod into a list of repeated values based on the multiplier
+        """
         return [self.val] * self.mult
 
     def serialize(self, brackets: str, include_plus: bool = False) -> str:
@@ -40,7 +47,10 @@ class Mod:
             return f"Mod('{self.val}', {self.mult})"
         return f"Mod({self.val}, {self.mult})"
 
-    def dict(self) -> dict[str, Union[str, float, int]]:
+    def dict(self) -> Dict[str, Union[str, float, int]]:
+        """
+        Convert the mod to a dictionary
+        """
         return {
             "val": self.val,
             "mult": self.mult
@@ -82,7 +92,10 @@ class Interval:
     ambiguous: bool
     mods: Optional[List[Mod]] = None
 
-    def dict(self) -> Dict:
+    def dict(self) -> Dict[str, Any]:
+        """
+        Convert the interval to a dictionary
+        """
         result = {
             "start": self.start,
             "end": self.end,
@@ -109,6 +122,9 @@ class Interval:
         return hash((self.start, self.end, self.ambiguous, tuple(sorted(self.mods)) if self.mods else None))
 
     def has_mods(self) -> bool:
+        """
+        Check if the interval has modifications
+        """
         return self.mods is not None
 
 

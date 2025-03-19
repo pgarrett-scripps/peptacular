@@ -1,3 +1,7 @@
+"""
+This module provides functions to convert various input formats for modifications and intervals into standardized data structures.
+"""
+
 from typing import List, Dict, Any, Union, Tuple
 
 from peptacular.proforma.proforma_dataclasses import Mod, Interval
@@ -8,8 +12,8 @@ ModDictValue = Union[List[Mod], List[Interval], int]
 ModDict = Dict[ModIndex, ModDictValue]
 
 ACCEPTED_MOD_INPUT = Union[List[ModValue], ModValue]
-IntervalValue = Union[Tuple[int, int, bool, Union[ACCEPTED_MOD_INPUT, None]], Interval]
-ACCEPTED_INTERVAL_INPUT = Union[List[IntervalValue], IntervalValue]
+INTERVAL_VALUE = Union[Tuple[int, int, bool, Union[ACCEPTED_MOD_INPUT, None]], Interval]
+ACCEPTED_INTERVAL_INPUT = Union[List[INTERVAL_VALUE], INTERVAL_VALUE]
 
 
 def convert_to_mod(mod: ModValue) -> Mod:
@@ -34,8 +38,10 @@ def convert_to_mod(mod: ModValue) -> Mod:
     # Check if mod is already a Mod instance to avoid unnecessary conversion.
     if isinstance(mod, Mod):
         return mod
-    elif isinstance(mod, (str, int, float)):
+
+    if isinstance(mod, (str, int, float)):
         return Mod(mod, 1)
+
     raise ValueError(f"Invalid mod input: {mod}")
 
 
@@ -78,11 +84,11 @@ def fix_list_of_list_of_mods(mods: Union[List[List[ModValue]], List[ModValue], M
         return [[convert_to_mod(mods)]]
 
     # Case 2: mods is a SingleModList
-    elif isinstance(mods, list) and all(isinstance(mod, (str, int, float, Mod)) for mod in mods):
+    if isinstance(mods, list) and all(isinstance(mod, (str, int, float, Mod)) for mod in mods):
         return [fix_list_of_mods(mods)]
 
     # Case 3: mods is a MultiModList
-    elif isinstance(mods, list):
+    if isinstance(mods, list):
         return [fix_list_of_mods(sublist) for sublist in mods]
 
     raise ValueError(f"Invalid mod input: {mods}")
@@ -157,13 +163,13 @@ def fix_list_of_mods(mods: Union[List[ModValue], ModValue]) -> List[Mod]:
         return [convert_to_mod(mods)]
 
     # Case 2: mods is a list of ModValues
-    elif isinstance(mods, list):
+    if isinstance(mods, list):
 
         # No change needed if all elements are already Mod instances
         if all(isinstance(mod, Mod) for mod in mods):
             return mods
 
-        for i in range(len(mods)):
+        for i, _ in enumerate(mods):
             mods[i] = convert_to_mod(mods[i])
 
         return mods
@@ -221,7 +227,7 @@ def fix_dict_of_mods(mods: Dict[Any, Union[List[ModValue], ModValue]]) -> Dict[A
     return {k: fix_list_of_mods(v) for k, v in mods.items()}
 
 
-def fix_interval_input(interval: IntervalValue) -> Interval:
+def fix_interval_input(interval: INTERVAL_VALUE) -> Interval:
     """
     Convert the input intervals to a list of Interval instances.
 
@@ -252,7 +258,7 @@ def fix_interval_input(interval: IntervalValue) -> Interval:
     return Interval(interval[0], interval[1], interval[2], mods)
 
 
-def fix_intervals_input(intervals: Union[List[IntervalValue], IntervalValue]) -> List[Interval]:
+def fix_intervals_input(intervals: Union[List[INTERVAL_VALUE], INTERVAL_VALUE]) -> List[Interval]:
     """
     Convert the input intervals to a list of Interval instances.
 
@@ -281,14 +287,10 @@ def fix_intervals_input(intervals: Union[List[IntervalValue], IntervalValue]) ->
     if isinstance(intervals, (Tuple, Interval)):
         return [fix_interval_input(intervals)]
 
-    elif isinstance(intervals, list):
+    if isinstance(intervals, list):
         if all(isinstance(interval, Interval) for interval in intervals):
             return intervals
 
-        new_intervals = []
-        for i, interval in enumerate(intervals):
-            new_intervals.append(fix_interval_input(interval))
-
-        return new_intervals
+        return [fix_interval_input(interval) for interval in intervals]
 
     raise ValueError(f"Invalid interval input: {intervals}")

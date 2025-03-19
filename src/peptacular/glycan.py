@@ -134,8 +134,8 @@ def parse_glycan_formula(formula: str, sep: str = '') -> ChemComposition:
 
     try:
         return _parse_glycan_formula(formula, sep)
-    except InvalidGlycanFormulaError as e:
-        raise InvalidGlycanFormulaError(formula, e.msg) from e
+    except InvalidGlycanFormulaError as err:
+        raise InvalidGlycanFormulaError(formula, err.msg) from err
 
 
 def convert_glycan_formula_to_chem_formula(glycan: Union[ChemComposition, str]) -> str:

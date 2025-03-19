@@ -243,10 +243,9 @@ def _convolve_distributions(dist1: Dict[float, float],
     if max_isotopes != sys.maxsize:
         sorted_result = sorted(result.items(), key=lambda x: x[1], reverse=True)
         # Retain only the top `max_isotopes` isotopes based on abundance
-        filtered_result = {mass: abundance for mass, abundance in sorted_result[:max_isotopes]}
-        return filtered_result
-    else:
-        return result
+        return dict(sorted_result[:max_isotopes])
+
+    return result
 
 
 def _calculate_elemental_distribution(element: str,
@@ -287,7 +286,7 @@ def _calculate_elemental_distribution(element: str,
     distribution = {0: 1.0}
     for _ in range(count):
         # Update the distribution by convolving it with the isotopes' distribution each time
-        isotope_distribution = {mass: abundance for mass, abundance in isotopes}
+        isotope_distribution = dict(isotopes)
         distribution = _convolve_distributions(distribution, isotope_distribution, None, min_abundance_threshold, None)
     return distribution
 

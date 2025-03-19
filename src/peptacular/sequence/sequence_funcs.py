@@ -21,7 +21,7 @@ end of the sequence and if not raise an error.
 
 """
 
-from typing import Counter as CounterType
+from typing import Counter as CounterType, Optional
 from typing import Dict, List, Tuple, Callable, Union
 
 import regex as re
@@ -321,7 +321,7 @@ def add_mods(sequence: Union[str, ProFormaAnnotation],
     for k in mods:
         if k == 'charge':
             continue
-        elif k == 'intervals':
+        if k == 'intervals':
             mods[k] = fix_intervals_input(mods[k])
         else:
             mods[k] = fix_list_of_mods(mods[k])
@@ -758,13 +758,13 @@ def is_subsequence(subsequence: Union[str, ProFormaAnnotation], sequence: Union[
 
     if order is True:
         return len(find_subsequence_indices(sequence, subsequence)) != 0
-    else:
-        subsequence_counts = count_residues(subsequence)
-        sequence_counts = count_residues(sequence)
-        return all(subsequence_counts[aa] <= sequence_counts[aa] for aa in subsequence_counts)
+
+    subsequence_counts = count_residues(subsequence)
+    sequence_counts = count_residues(sequence)
+    return all(subsequence_counts[aa] <= sequence_counts[aa] for aa in subsequence_counts)
 
 
-def _sort_mods(mods: ModDict, sort_function: Callable[[str], str] = lambda x: str(x)) -> None:
+def _sort_mods(mods: ModDict, sort_function: Optional[Callable[[str], str]] = None) -> None:
     """
     Sorts the modifications in the input dictionary using the provided sort function.
 
@@ -783,6 +783,9 @@ def _sort_mods(mods: ModDict, sort_function: Callable[[str], str] = lambda x: st
         {1: [1, 'phospho'], 2: ['phospho']}
 
     """
+
+    if sort_function is None:
+        sort_function = lambda x: str(x)
 
     for k in mods:
         mods[k].sort(key=sort_function)
@@ -1084,7 +1087,7 @@ def convert_diann_sequence(sequence: str) -> str:
         sequence = sequence[:-1]
 
     elif re.search(r'_\[[^\]]+\]$', sequence):
-            sequence = re.sub(r'_\[([^\]]+)\]$', r'-[\1]', sequence)
+        sequence = re.sub(r'_\[([^\]]+)\]$', r'-[\1]', sequence)
 
     return sequence
 
@@ -1154,9 +1157,8 @@ def is_sequence_valid(sequence: Union[str, ProFormaAnnotation]) -> bool:
     if isinstance(sequence, str):
         try:
             _ = sequence_to_annotation(sequence)
-        except Exception as err:
+        except Exception:
             return False
-
     return True
 
 def count_aa(sequence: Union[str, ProFormaAnnotation]) -> Dict[str, int]:
@@ -1169,8 +1171,8 @@ def count_aa(sequence: Union[str, ProFormaAnnotation]) -> Dict[str, int]:
     else:
         annotation = sequence
 
-    d = {aa:0 for aa in ORDERED_AMINO_ACIDS}
+    aa_counts = {aa:0 for aa in ORDERED_AMINO_ACIDS}
     for aa in annotation.sequence:
-        d[aa] += 1
+        aa_counts[aa] += 1
 
-    return d
+    return aa_counts

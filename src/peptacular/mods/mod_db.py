@@ -54,8 +54,8 @@ def _get_comp(db: EntryDb, mod_str: str, orig_str: str) -> str:
     if mod_str.startswith('+') or mod_str.startswith('-'):
         try:
             _ = float(mod_str)
-        except ValueError:
-            raise InvalidDeltaMassError(orig_str)
+        except ValueError as err:
+            raise InvalidDeltaMassError(orig_str) from err
 
         raise DeltaMassCompositionError(orig_str)
 
@@ -71,8 +71,8 @@ def _get_comp(db: EntryDb, mod_str: str, orig_str: str) -> str:
         if comp is None:
             raise InvalidCompositionError(orig_str)
         return comp
-    else:
-        raise UnknownModificationError(orig_str)
+
+    raise UnknownModificationError(orig_str)
 
 
 def is_unimod_str(unimod_str: str) -> bool:
@@ -136,8 +136,7 @@ def _strip_unimod_str(unimod_str: str) -> str:
     unimod_str_lower = unimod_str.lower()
     if unimod_str_lower.startswith('unimod:') or unimod_str_lower.startswith('u:'):
         return unimod_str.split(':')[1]
-    else:
-        return unimod_str
+    return unimod_str
 
 
 def parse_unimod_mass(mod_str: str, monoisotopic: bool, precision: Optional[int] = None) -> float:
@@ -301,8 +300,7 @@ def _strip_psi_str(psi_str: str) -> str:
     psi_str_lower = psi_str.lower()
     if psi_str_lower.startswith('mod:') or psi_str_lower.startswith('m:') or psi_str_lower.startswith('psi-mod:'):
         return psi_str.split(':')[1]
-    else:
-        return psi_str
+    return psi_str
 
 
 def parse_psi_mass(mod_str: str, monoisotopic: bool, precision: Optional[int] = None) -> float:
@@ -433,8 +431,7 @@ def _strip_xlmod_str(xlmod_str: str) -> str:
     xlmod_str_lower = xlmod_str.lower()
     if xlmod_str_lower.startswith('xlmod:') or xlmod_str_lower.startswith('x:'):
         return xlmod_str.split(':')[1]
-    else:
-        return xlmod_str
+    return xlmod_str
 
 
 def parse_xlmod_mass(mod_str: str, monoisotopic: bool, precision: Optional[int] = None) -> float:
@@ -521,6 +518,9 @@ def parse_xlmod_comp(mod_str: str) -> str:
 
 
 def is_resid_str(resid_str: str) -> bool:
+    """
+    Check if a string is a RESID id or name.
+    """
     resid_str_lower = resid_str.lower()
     return resid_str_lower.startswith('resid:') or resid_str_lower.startswith('r:')
 
@@ -529,8 +529,7 @@ def _strip_resid_str(resid_str: str) -> str:
     resid_str_lower = resid_str.lower()
     if resid_str_lower.startswith('resid:') or resid_str_lower.startswith('r:'):
         return resid_str.split(':')[1]
-    else:
-        return resid_str
+    return resid_str
 
 
 def parse_resid_mass(mod_str: str, monoisotopic: bool, precision: Optional[int] = None) -> float:
@@ -654,8 +653,7 @@ def _strip_gno_str(gno_str: str) -> str:
     gno_str_lower = gno_str.lower()
     if gno_str_lower.startswith('gno:') or gno_str_lower.startswith('g:'):
         return gno_str.split(':')[1]
-    else:
-        return gno_str
+    return gno_str
 
 
 def parse_gno_mass(mod_str: str, monoisotopic: bool, precision: Optional[int] = None) -> float:

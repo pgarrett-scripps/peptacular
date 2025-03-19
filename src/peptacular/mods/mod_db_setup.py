@@ -6,7 +6,7 @@ import tempfile
 import warnings
 from collections import Counter
 from functools import cached_property
-from typing import List, Dict, IO, Any, Union, Iterator
+from typing import List, Dict, IO, Any, Union, Iterator, Tuple
 
 from peptacular.constants import ISOTOPIC_ATOMIC_MASSES
 from peptacular.chem.chem_util import write_chem_formula, _parse_isotope_component, parse_chem_formula, chem_mass, \
@@ -639,8 +639,8 @@ def _get_xlmod_entries(terms: List[Dict[str, Any]]) -> List[ModEntry]:
             delta_formula = write_chem_formula(elem_counter)
 
             try:
-                delta_monoisotopic_mass_recalc = chem_mass(delta_formula, monoisotopic=True)
-                delta_average_mass_recalc = chem_mass(delta_formula, monoisotopic=False)
+                _ = chem_mass(delta_formula, monoisotopic=True)
+                _ = chem_mass(delta_formula, monoisotopic=False)
             except InvalidChemFormulaError as e:
                 warnings.warn(f'[{DbType.XLMOD}] Error parsing {term_id} {term_name} {delta_formula}, {e}')
                 delta_formula = None
@@ -710,8 +710,8 @@ def _get_gno_entries(terms: List[Dict[str, Any]]) -> List[ModEntry]:
             for symbol, count in tokens:
                 try:
                     comp = _glycan_comp(symbol)
-                except ValueError as e:
-                    warnings.warn(f'[{DbType.GNO}] Error parsing {term_id} {term_name} {val}, {e}')
+                except ValueError as err:
+                    warnings.warn(f'[{DbType.GNO}] Error parsing {term_id} {term_name} {val}, {err}')
                     composition = None
                     break
 
@@ -724,8 +724,8 @@ def _get_gno_entries(terms: List[Dict[str, Any]]) -> List[ModEntry]:
                 try:
                     delta_monoisotopic_mass_recalc = chem_mass(delta_formula, monoisotopic=True)
                     delta_average_mass_recalc = chem_mass(delta_formula, monoisotopic=False)
-                except InvalidChemFormulaError as e:
-                    warnings.warn(f'[{DbType.GNO}] Error parsing {term_id} {term_name} {delta_formula}, {e}')
+                except InvalidChemFormulaError as err:
+                    warnings.warn(f'[{DbType.GNO}] Error parsing {term_id} {term_name} {delta_formula}, {err}')
                     delta_formula = None
 
         if delta_monoisotopic_mass is not None:
@@ -1084,10 +1084,10 @@ class EntryDb:
         try:
             self.reset()
             self.setup(entries, use_synonyms)
-        except Exception as e:
+        except Exception as err:
             self.id_map, self.name_map, self.synonym_map, self.mono_mass_map, self.avg_mass_map, self.use_synonyms, \
                 self.names_sorted, self.entries = old_maps
-            raise e
+            raise err
 
         # print(f'Reloaded {self.entry_type} database from {file}')
         # print('Entries:', len(self))
@@ -1098,10 +1098,11 @@ class EntryDb:
         return sorted(list(synonyms.union(names)), key=lambda x: len(x), reverse=True)
 
 
-def count_invalid_entries(entries: List[ModEntry]) -> (int, int, int):
-    none_mono = 0
-    none_avg = 0
-    none_comp = 0
+def count_invalid_entries(entries: List[ModEntry]) -> Tuple[int, int, int]:
+    """
+    Count the number of invalid entries in a list of ModEntry objects.
+    """
+    none_mono, none_avg, none_comp = 0, 0, 0
 
     for entry in entries:
         if entry.mono_mass is None:
@@ -1135,6 +1136,9 @@ XLMOD_DB.reload_from_file(os.path.join(_obo_path, "xlmod.obo"))
 
 
 def reload_all_databases_from_online() -> None:
+    """
+    Reload all databases from the online sources
+    """
     MONOSACCHARIDES_DB.reload_from_online()
     UNIMOD_DB.reload_from_online()
     PSI_MOD_DB.reload_from_online()
@@ -1144,6 +1148,9 @@ def reload_all_databases_from_online() -> None:
 
 
 def reload_all_databases() -> None:
+    """
+    Reload all databases from the local files
+    """
     reset_all_databases()
     MONOSACCHARIDES_DB.reload_from_file(os.path.join(_obo_path, "monosaccharides_updated.obo"))
     UNIMOD_DB.reload_from_file(os.path.join(_obo_path, "unimod.obo"))
@@ -1154,6 +1161,9 @@ def reload_all_databases() -> None:
 
 
 def reset_all_databases() -> None:
+    """
+    Reset all databases to empty
+    """
     MONOSACCHARIDES_DB.reset()
     UNIMOD_DB.reset()
     PSI_MOD_DB.reset()
