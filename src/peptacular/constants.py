@@ -1,3 +1,7 @@
+"""
+Constants used throughout the peptacular package.
+"""
+
 import os
 from typing import Dict, List, Tuple, Set
 

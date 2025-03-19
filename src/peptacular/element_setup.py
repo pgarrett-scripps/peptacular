@@ -1,3 +1,7 @@
+"""
+Element_seup.py
+"""
+
 from copy import deepcopy
 from dataclasses import dataclass
 from typing import Union, List, Dict, Tuple, Optional
@@ -5,6 +9,9 @@ from typing import Union, List, Dict, Tuple, Optional
 
 @dataclass
 class ElementInfo:
+    """
+    Class to store information about an element isotope
+    """
     atomic_number: int
     atomic_symbol: str
     mass_number: int

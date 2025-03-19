@@ -1,3 +1,7 @@
+"""
+chem_constants.py
+"""
+
 from typing import Dict
 
 from peptacular.chem.chem_util import chem_mass
@@ -24,5 +28,5 @@ AVERAGE_ION_ADJUSTMENTS: Dict[str, float] = \
 # AA MASSES
 MONOISOTOPIC_AA_MASSES: Dict[str, float] = {aa: chem_mass(comp) for aa, comp in AA_COMPOSITIONS.items()}
 AVERAGE_AA_MASSES: Dict[str, float] = {aa: chem_mass(comp, monoisotopic=False) for aa, comp in AA_COMPOSITIONS.items()}
-ISOTOPIC_AVERAGINE_MASS: float = sum([v * ISOTOPIC_ATOMIC_MASSES[k] for k, v in AVERAGINE_RATIOS.items()])
-AVERAGE_AVERAGINE_MASS: float = sum([v * AVERAGE_ATOMIC_MASSES[k] for k, v in AVERAGINE_RATIOS.items()])
+ISOTOPIC_AVERAGINE_MASS: float = sum(v * ISOTOPIC_ATOMIC_MASSES[k] for k, v in AVERAGINE_RATIOS.items())
+AVERAGE_AVERAGINE_MASS: float = sum(v * AVERAGE_ATOMIC_MASSES[k] for k, v in AVERAGINE_RATIOS.items())

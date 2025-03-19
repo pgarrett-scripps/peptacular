@@ -7,7 +7,7 @@ is used to denote the number of missed cleavages the span contains.
 Working with spans can be a more efficient way of processing the data, since a peptide can be reference with only
 3 ints.
 """
-from typing import Tuple, List, Optional, Union, Generator, Iterable
+from typing import Tuple, List, Optional, Generator, Iterable
 from itertools import groupby
 
 from peptacular.types import Span
@@ -293,7 +293,6 @@ def _grouped_right_semi_span_builder(spans: List[Span], min_len: Optional[int] =
     if min_len is None:
         min_len = 1
 
-    semi_spans = []
     spans = sorted(spans, key=lambda x: (x[1], -x[2]))
     for _, group in groupby(spans, key=lambda x: x[1]):
         group = list(group)
@@ -316,7 +315,8 @@ def _grouped_right_semi_span_builder(spans: List[Span], min_len: Optional[int] =
                 yield from build_right_semi_spans(span, new_min, new_max_len)
 
 
-def build_semi_spans(spans: List[Span], min_len: Optional[int] = None, max_len: Optional[int] = None) -> Generator[Span, None, None]:
+def build_semi_spans(spans: List[Span], min_len: Optional[int] = None, max_len: Optional[int] = None)\
+        -> Generator[Span, None, None]:
     """
     Efficiently generates all semi-spans from the given list of spans that have a length within the specified
     range. The input spans must be enzymatic spans where the values of the span represents the number of missed

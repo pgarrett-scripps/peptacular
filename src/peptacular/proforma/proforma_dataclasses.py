@@ -28,6 +28,9 @@ class Mod:
         return [self.val] * self.mult
 
     def serialize(self, brackets: str, include_plus: bool = False) -> str:
+        """
+        Serialize the mod into a string
+        """
         # Determine if the value is positive and prefix '+' for positive numbers
         if include_plus is True:
             val_str = f"+{self.val}" if isinstance(self.val, (int, float)) and self.val > 0 else str(self.val)

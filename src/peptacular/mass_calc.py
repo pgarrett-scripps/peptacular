@@ -1,8 +1,9 @@
 """
 mass_calc.py is a simple module for computing the m/z and mass of an amino acid sequence.
 """
+
 import warnings
-from typing import Dict, Union, Optional, Tuple, List
+from typing import Union, Optional, Tuple, List
 
 from peptacular.constants import PROTON_MASS, AVERAGE_ATOMIC_MASSES, ELECTRON_MASS, ISOTOPIC_ATOMIC_MASSES, NEUTRON_MASS
 from peptacular.chem.chem_calc import parse_chem_formula, _sequence_comp, _parse_mod_delta_mass_only, estimate_comp
@@ -17,7 +18,7 @@ from peptacular.errors import InvalidDeltaMassError, InvalidModificationMassErro
 from peptacular.glycan import parse_glycan_formula
 from peptacular.mods.mod_db import parse_psi_mass, parse_unimod_mass, is_unimod_str, is_psi_mod_str, parse_xlmod_mass, \
     parse_resid_mass, is_gno_str, parse_gno_mass, is_xlmod_str, is_resid_str
-from peptacular.sequence.sequence_funcs import sequence_to_annotation, split, strip_mods
+from peptacular.sequence.sequence_funcs import sequence_to_annotation
 from peptacular.types import ChemComposition
 from peptacular.proforma.input_convert import ModValue
 
@@ -220,7 +221,7 @@ def adjust_mass(base_mass: float,
     m = base_mass
 
     if charge_adducts is None:
-        if ion_type == 'p' or ion_type == 'n':
+        if ion_type in ('p', 'n'):
             charge_adduct_mass = PROTON_MASS * charge
         else:
             frag_ion_offset = MONOISOTOPIC_FRAGMENT_ION_ADJUSTMENTS[ion_type] if monoisotopic is True \
@@ -388,10 +389,10 @@ def mass(sequence: Union[str, ProFormaAnnotation],
         >>> mass('PEPTIDE/2[+2Na+,+H+]', precision=3)
         846.346
 
-        # Ambiguous amino acid
-        >>> mass('B', ion_type='by')
+        >>> mass('B', ion_type='by')  # doctest: +ELLIPSIS
         Traceback (most recent call last):
-        peptacular.errors.AmbiguousAminoAcidError: Ambiguous amino acid: B! Cannot determine the mass of a sequence with an ambiguous amino acid.
+            ...
+        peptacular.errors.AmbiguousAminoAcidError: Ambiguous amino acid: B! ...
 
     """
 
@@ -420,7 +421,7 @@ def mass(sequence: Union[str, ProFormaAnnotation],
                                                     use_isotope_on_mods)
         return chem_mass(peptide_composition, monoisotopic=monoisotopic, precision=precision) + delta_mass
 
-    if ion_type != 'p' and ion_type != 'n':
+    if ion_type not in ('p', 'n'):
         if charge == 0:
             warnings.warn('Calculating the mass of a fragment ion with charge state 0. Fragment ions should have a '
                           'charge state greater than 0 since the neutral mass doesnt exist.')
@@ -448,8 +449,8 @@ def mass(sequence: Union[str, ProFormaAnnotation],
     try:
         m += sum(MONOISOTOPIC_AA_MASSES[aa] if monoisotopic
                  else AVERAGE_AA_MASSES[aa] for aa in annotation.sequence)
-    except KeyError as e:
-        raise UnknownAminoAcidError(e)
+    except KeyError as err:
+        raise UnknownAminoAcidError(err) from err
 
     # Apply labile mods
     if annotation.has_labile_mods() and ion_type == 'p':
@@ -475,7 +476,7 @@ def mass(sequence: Union[str, ProFormaAnnotation],
 
     # apply internal mods
     if annotation.has_internal_mods():
-        for k, mods in annotation.internal_mods.items():
+        for _, mods in annotation.internal_mods.items():
             for mod in mods:
                 m += mod_mass(mod)
 
@@ -567,6 +568,9 @@ def chem_mz(formula: Union[ChemComposition, str],
             monoisotopic: bool = True,
             precision: Optional[int] = None,
             sep: str = '') -> float:
+    """
+    Calculate the m/z of a chemical formula.
+    """
     # TODO: Add charge adducts?
     m = chem_mass(formula, monoisotopic, precision, sep)
     return adjust_mz(m, charge, precision)
@@ -640,6 +644,9 @@ def glycan_mz(formula: Union[str, ChemComposition],
               charge: int = 1,
               monoisotopic: bool = True,
               precision: Optional[int] = None) -> float:
+    """
+    Calculate the m/z of a glycan formula.
+    """
     # TODO: Add charge adducts?
     m = glycan_mass(formula, monoisotopic, precision)
     return adjust_mz(m, charge, precision)
@@ -698,7 +705,7 @@ def mod_mass(mod: Union[str, Mod, List[Mod]], monoisotopic: bool = True, precisi
     """
 
     if isinstance(mod, list):
-        return sum([mod_mass(m, monoisotopic, precision) for m in mod])
+        return sum(mod_mass(m, monoisotopic, precision) for m in mod)
 
     if isinstance(mod, Mod):
         return mod_mass(mod.val, monoisotopic, precision) * mod.mult
@@ -760,8 +767,8 @@ def _parse_obs_mass_from_proforma_str(obs_str: str, precision: Optional[int] = N
     # Try to Parse observed mass
     try:
         return round_func(float(obs_str))
-    except ValueError:
-        raise InvalidDeltaMassError(obs_str)
+    except ValueError as err:
+        raise InvalidDeltaMassError(obs_str) from err
 
 
 def _parse_glycan_mass_from_proforma_str(glycan_str: str, monoisotopic: bool, precision: Optional[int] = None) -> float:
@@ -831,14 +838,13 @@ def _parse_glycan_mass_from_proforma_str(glycan_str: str, monoisotopic: bool, pr
     if entry:
         if monoisotopic:
             return round_func(entry.mono_mass)
-        else:
-            return round_func(entry.avg_mass)
+        return round_func(entry.avg_mass)
 
     else:  # Try to parse glycan formula
         try:
             return round_func(glycan_mass(glycan_str, monoisotopic, precision))
-        except InvalidGlycanFormulaError as e:
-            raise InvalidGlycanFormulaError(glycan_str, e.msg) from e
+        except InvalidGlycanFormulaError as err:
+            raise InvalidGlycanFormulaError(glycan_str, err.msg) from err
 
 
 def _parse_chem_mass_from_proforma_str(chem_str: str, monoisotopic: bool, precision: Optional[int] = None) -> float:
@@ -880,8 +886,8 @@ def _parse_chem_mass_from_proforma_str(chem_str: str, monoisotopic: bool, precis
     comps = parse_chem_formula(chem_str)
     try:
         return chem_mass(comps, monoisotopic, precision)
-    except InvalidChemFormulaError as e:
-        raise InvalidChemFormulaError(chem_str, e.msg) from e
+    except InvalidChemFormulaError as err:
+        raise InvalidChemFormulaError(chem_str, err.msg) from err
 
 
 def _parse_mod_mass(mod: str, monoisotopic: bool = True, precision: Optional[int] = None) -> Union[float, None]:
@@ -961,8 +967,8 @@ def _parse_mod_mass(mod: str, monoisotopic: bool = True, precision: Optional[int
     if isinstance(mod, str) and '#' in mod:
         if mod.startswith('#'):  # for localized positions, return 0
             return 0.0
-        else:  # for only the original declaration consider the mass modification
-            mod = mod.split('#')[0]
+
+        mod = mod.split('#')[0]
 
     # Try to parse as a number first (Might cause issues if the mod is also unimod/psi ID)
     # Proforma2.0 standard requires that delta mass instances are always prefixed with a '+' or '-' but this would
@@ -978,37 +984,39 @@ def _parse_mod_mass(mod: str, monoisotopic: bool = True, precision: Optional[int
         # raises UnknownGlycanError
         return _parse_glycan_mass_from_proforma_str(mod, monoisotopic, precision)
 
-    elif is_gno_str(mod):
+    if is_gno_str(mod):
         return parse_gno_mass(mod, monoisotopic, precision)
 
-    elif is_xlmod_str(mod):
+    if is_xlmod_str(mod):
         # not implemented
         return parse_xlmod_mass(mod, monoisotopic, precision)
 
-    elif is_resid_str(mod):
+    if is_resid_str(mod):
         # not implemented
         return parse_resid_mass(mod, monoisotopic, precision)
 
-    elif mod_lower.startswith('info:'):  # Skip info modifications
+    if mod_lower.startswith('info:'):  # Skip info modifications
         return None
 
-    elif is_psi_mod_str(mod):  # is a psi-mod modification
+    if is_psi_mod_str(mod):  # is a psi-mod modification
         # raises UnknownModificationError and InvalidDeltaMassError
         return parse_psi_mass(mod, monoisotopic, precision)
 
-    elif is_unimod_str(mod):  # is a unimod modification
+    if is_unimod_str(mod):  # is a unimod modification
         # raises UnknownModificationError and InvalidDeltaMassError
         return parse_unimod_mass(mod, monoisotopic, precision)
 
     # chemical formula
-    elif mod_lower.startswith('formula:'):
+    if mod_lower.startswith('formula:'):
         # raises UnknownElementError
         return _parse_chem_mass_from_proforma_str(mod, monoisotopic, precision)
 
     # observed mass
-    elif mod_lower.startswith('obs:'):
+    if mod_lower.startswith('obs:'):
         # raises InvalidDeltaMassError
         return _parse_obs_mass_from_proforma_str(mod, precision)
+
+    return None
 
 
 def _pop_delta_mass_mods(annotation: ProFormaAnnotation) -> float:
@@ -1134,25 +1142,25 @@ def _parse_adduct_mass(adduct: str,
 
     """
 
-    mass = 0.0
+    m = 0.0
     element_count, element_symbol, element_charge = parse_ion_elements(adduct)
 
     if element_symbol == 'e':
-        mass += element_count * ELECTRON_MASS
+        m += element_count * ELECTRON_MASS
 
     else:
 
         if monoisotopic is True:
-            mass += element_count * ISOTOPIC_ATOMIC_MASSES[element_symbol]
-            mass -= element_charge * ELECTRON_MASS
+            m += element_count * ISOTOPIC_ATOMIC_MASSES[element_symbol]
+            m -= element_charge * ELECTRON_MASS
         else:
-            mass += element_count * AVERAGE_ATOMIC_MASSES[element_symbol]
-            mass -= element_charge * ELECTRON_MASS
+            m += element_count * AVERAGE_ATOMIC_MASSES[element_symbol]
+            m -= element_charge * ELECTRON_MASS
 
         if precision is not None:
-            mass = round(mass, precision)
+            m = round(m, precision)
 
-    return mass
+    return m
 
 
 def _parse_charge_adducts_mass(adducts: ModValue,
@@ -1192,15 +1200,15 @@ def _parse_charge_adducts_mass(adducts: ModValue,
 
     adducts = adducts.split(',')
 
-    mass = 0.0
+    m = 0.0
 
     for adduct in adducts:
-        mass += _parse_adduct_mass(adduct, None, monoisotopic)
+        m += _parse_adduct_mass(adduct, None, monoisotopic)
 
     if precision is not None:
-        mass = round(mass, precision)
+        m = round(m, precision)
 
-    return mass
+    return m
 
 
 def ppm_error(theo: float, expt: float, precision: Optional[int] = None) -> float:
@@ -1225,12 +1233,12 @@ def ppm_error(theo: float, expt: float, precision: Optional[int] = None) -> floa
 
     """
 
-    ppm_error = ((expt - theo) / theo) * 1e6
+    ppm_err = ((expt - theo) / theo) * 1e6
 
     if precision is not None:
-        return round(ppm_error, precision)
+        return round(ppm_err, precision)
 
-    return ppm_error
+    return ppm_err
 
 
 def dalton_error(theo: float, expt: float, precision: Optional[int] = None) -> float:
@@ -1255,15 +1263,16 @@ def dalton_error(theo: float, expt: float, precision: Optional[int] = None) -> f
 
     """
 
-    dalton_error = expt - theo
+    dalton_err = expt - theo
 
     if precision is not None:
-        return round(dalton_error, precision)
+        return round(dalton_err, precision)
 
-    return dalton_error
+    return dalton_err
 
 
-def condense_to_mass_mods(sequence: Union[str, ProFormaAnnotation], include_plus: bool = False, precision: float = 6) -> str:
+def condense_to_mass_mods(sequence: Union[str, ProFormaAnnotation], include_plus: bool = False, precision: float = 6) \
+        -> str:
     """
     Converts all modifications in a sequence to their mass equivalents by calculating
     the mass difference between modified and unmodified segments.

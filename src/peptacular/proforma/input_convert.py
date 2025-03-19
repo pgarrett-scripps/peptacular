@@ -1,5 +1,6 @@
 """
-This module provides functions to convert various input formats for modifications and intervals into standardized data structures.
+This module provides functions to convert various input formats for modifications and intervals into standardized
+data structures.
 """
 
 from typing import List, Dict, Any, Union, Tuple

@@ -26,8 +26,8 @@ from peptacular.util import get_regex_match_indices
 DigestReturnType = Literal["str", "annotation", "span", "str-span", "annotation-span"]
 
 DIGEST_RETURN_TYPING = Union[Generator[str, None, None], Generator[ProFormaAnnotation, None, None],
-Generator[Span, None, None], Generator[Tuple[str, Span], None, None],
-Generator[Tuple[ProFormaAnnotation, Span], None, None]]
+                             Generator[Span, None, None], Generator[Tuple[str, Span], None, None],
+                             Generator[Tuple[ProFormaAnnotation, Span], None, None]]
 
 
 def _return_digested_sequences(annotation: ProFormaAnnotation,
@@ -40,28 +40,27 @@ def _return_digested_sequences(annotation: ProFormaAnnotation,
     if return_type == 'span':
         return (span for span in spans)
 
-    elif return_type == 'annotation':
+    if return_type == 'annotation':
         if not annotation.has_mods():
             return (create_annotation(annotation.sequence[span[0]: span[1]]) for span in spans)
         return (annotation.slice(span[0], span[1]) for span in spans)
 
-    elif return_type == 'str':
+    if return_type == 'str':
         if not annotation.has_mods():
             return (annotation.sequence[span[0]: span[1]] for span in spans)
         return (annotation.slice(span[0], span[1]).serialize() for span in spans)
 
-    elif return_type == 'str-span':
+    if return_type == 'str-span':
         if not annotation.has_mods():
             return ((annotation.sequence[span[0]: span[1]], span) for span in spans)
         return ((annotation.slice(span[0], span[1]).serialize(), span) for span in spans)
 
-    elif return_type == 'annotation-span':
+    if return_type == 'annotation-span':
         if not annotation.has_mods():
             return ((create_annotation(annotation.sequence[span[0]: span[1]]), span) for span in spans)
         return ((annotation.slice(span[0], span[1]), span) for span in spans)
 
-    else:
-        raise ValueError(f"Unsupported return type: {return_type}")
+    raise ValueError(f"Unsupported return type: {return_type}")
 
 
 def get_left_semi_enzymatic_sequences(sequence: Union[str, ProFormaAnnotation],
@@ -316,10 +315,9 @@ def get_cleavage_sites(sequence: Union[str, ProFormaAnnotation], enzyme_regex: s
     else:
         annotation = sequence
 
-    if enzyme_regex in PROTEASES_COMPILED:
-        enzyme_regex = PROTEASES_COMPILED[enzyme_regex]
-
+    enzyme_regex = PROTEASES_COMPILED.get(enzyme_regex, enzyme_regex)
     return get_regex_match_indices(input_str=annotation.sequence, regex_str=enzyme_regex)
+
 
 def digest(sequence: Union[str, ProFormaAnnotation],
            enzyme_regex: Union[List[str], str],
@@ -383,7 +381,8 @@ def digest(sequence: Union[str, ProFormaAnnotation],
         ['TIDERTIDEK', 'TIDERTIDEKTIDE', 'TIDEKTIDE']
 
         # Generate semi-enzymatic sequences:
-        >>> list(digest(sequence='TIDERTIDEK[1]TIDE-[2]', enzyme_regex='([KR])', missed_cleavages=1, min_len=9, semi=True))
+        >>> seq = 'TIDERTIDEK[1]TIDE-[2]'
+        >>> list(digest(sequence=seq, enzyme_regex='([KR])', missed_cleavages=1, min_len=9, semi=True))
         ['TIDERTIDE', 'TIDERTIDEK[1]', 'IDERTIDEK[1]', 'TIDEK[1]TIDE-[2]']
 
         # Generate sequences with a non-specific enzyme
@@ -398,8 +397,9 @@ def digest(sequence: Union[str, ProFormaAnnotation],
         >>> list(digest(sequence='TIDERTIDEKTIDE', enzyme_regex=['([KR])', '([D])'], missed_cleavages=0))
         ['TID', 'ER', 'TID', 'EK', 'TID', 'E']
 
-        # With complete_digestion=False, the function will return all possible digested sequences (Even original sequence)
-        >>> list(digest(sequence='TIDERTIDEKTIDE', enzyme_regex='([KR])', missed_cleavages=2, max_len=5, complete_digestion=False))
+        # With complete_digestion=False, the function will return all possible digested sequences
+        >>> seq = 'TIDERTIDEKTIDE'
+        >>> list(digest(sequence=seq, enzyme_regex='([KR])', missed_cleavages=2, max_len=5, complete_digestion=False))
         ['TIDER', 'TIDERTIDEKTIDE', 'TIDEK', 'TIDE']
 
         >>> list(digest(sequence='K', enzyme_regex='([KR])', missed_cleavages=0, complete_digestion=True))
@@ -551,10 +551,10 @@ def sequential_digest(
                 ))
 
                 # Fix span to be in reference to original sequence
-                for j in range(len(_digested_anot_spans)):
-                    digested_span = _digested_anot_spans[j][1]
+                for j, digested_anot_span in enumerate(_digested_anot_spans):
+                    digested_span = digested_anot_span[1]
                     fixed_digested_span = (span[0] + digested_span[0], span[0] + digested_span[1], span[2])
-                    _digested_anot_spans[j] = (_digested_anot_spans[j][0], fixed_digested_span)
+                    _digested_anot_spans[j] = (digested_anot_span[0], fixed_digested_span)
 
                 sequential_digested_anot_spans.extend(_digested_anot_spans)
 

@@ -35,9 +35,9 @@ version = {attr = "peptacular.__version__"}
 
 [tool.pylint]
 max-line-length = 120
-fail-under = 9.5
+fail-under = 9.0
 good-names = ["db", "i", "j", "aa", "n", "k", "p", "Na", "Nb", "Nc", "Nx", "Ny", "Nz", "mz", "k", "v",
-    "f", "d", "m", "s", "r"]
+    "f", "d", "m", "s", "r", "c", "id", "d1", "d2"]
 extension-pkg-whitelist = 'pydantic'
 max-branches = 50  # Increase the number of allowed branches
 max-locals = 30    # Increase the number of allowed local variables

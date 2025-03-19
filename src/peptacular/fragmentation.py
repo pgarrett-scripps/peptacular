@@ -106,12 +106,12 @@ class Fragment:
         yield 'label', self.label
         yield 'number', self.number
 
-    # Method to convert the object into a dictionary including cached properties
     def to_dict(self):
+        """
+        Convert the Fragment object to a dictionary, including cached properties.
+        """
 
-        return {
-            key: value for key, value in self
-        }
+        return dict(self)
 
 
 FragmentReturnType = Literal["fragment", "mass", "mz", "label", "mass-label", "mz-label"]

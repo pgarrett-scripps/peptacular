@@ -2,7 +2,7 @@
 mod_db.py - Functions for getting modification masses and compositions from unimod and psi-mod databases from
 peptacular/data/psi and peptacular/data/unimod.
 """
-from typing import Union, Optional
+from typing import Optional
 
 from peptacular.errors import UnknownModificationError, InvalidDeltaMassError, InvalidCompositionError, \
     DeltaMassCompositionError, UnknownModificationMassError
@@ -18,8 +18,8 @@ def _get_mass(db: EntryDb, mod_str: str, orig_str: str, monoisotopic: bool, prec
     if mod_str.startswith('+') or mod_str.startswith('-'):
         try:
             return round_func(float(mod_str))
-        except ValueError:
-            raise InvalidDeltaMassError(orig_str)
+        except ValueError as err:
+            raise InvalidDeltaMassError(orig_str) from err
 
     if db.contains_id(mod_str):
         entry = db.get_entry_by_id(mod_str)
@@ -28,23 +28,23 @@ def _get_mass(db: EntryDb, mod_str: str, orig_str: str, monoisotopic: bool, prec
     else:
         entry = None
 
-    if entry:
-        if monoisotopic is True:
-            m = entry.mono_mass
-            if m is None:
-                m = entry.calc_mono_mass
-        else:
-            m = entry.avg_mass
-            if m is None:
-                m = entry.calc_avg_mass
-
-        if m is None:
-            raise UnknownModificationMassError(orig_str)
-
-        return round_func(m)
-
-    else:
+    if not entry:
         raise UnknownModificationError(orig_str)
+
+    if monoisotopic is True:
+        m = entry.mono_mass
+        if m is None:
+            m = entry.calc_mono_mass
+    else:
+        m = entry.avg_mass
+        if m is None:
+            m = entry.calc_avg_mass
+
+    if m is None:
+        raise UnknownModificationMassError(orig_str)
+
+    return round_func(m)
+
 
 
 def _get_comp(db: EntryDb, mod_str: str, orig_str: str) -> str:

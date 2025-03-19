@@ -261,6 +261,8 @@ def add_mods(sequence: Union[str, ProFormaAnnotation],
     :param append: If True, the modifications will be appended to the existing modifications.
                       If False, the existing modifications will be replaced. Defaults to True.
     :type append: bool
+    :param include_plus: If True, the modifications will be serialized with a '+' sign for positive values.
+    :type include_plus: bool
 
     :raises ValueError: If the input sequence contains multiple sequences.
     :raises ProFormaFormatError: if the proforma sequence is not valid
@@ -280,7 +282,7 @@ def add_mods(sequence: Union[str, ProFormaAnnotation],
         >>> add_mods('PEPTIDE', {'nterm': 'Acetyl', 6: 1.234, 'cterm': 'Amide'})
         '[Acetyl]-PEPTIDE[1.234]-[Amide]'
 
-        >>> add_mods('PEPTIDE', {'nterm': 'Acetyl', 6: 1.234, 'cterm': 'Amide'}, True)
+        >>> add_mods('PEPTIDE', {'nterm': 'Acetyl', 6: 1.234, 'cterm': 'Amide'}, include_plus=True)
         '[Acetyl]-PEPTIDE[+1.234]-[Amide]'
 
         # Can also add isotopic modifications
@@ -1110,7 +1112,7 @@ def convert_casanovo_sequence(sequence: str) -> str:
     in_mod = False  # Tracks if we are within a modification
     is_nterm = False  # Tracks if the current modification is at the N-terminus
 
-    for index, char in enumerate(sequence):
+    for _, char in enumerate(sequence):
         if char in {'+', '-'}:
             # Check if it's at the start (N-terminal)
             is_nterm = len(new_sequence) == 0
@@ -1157,7 +1159,7 @@ def is_sequence_valid(sequence: Union[str, ProFormaAnnotation]) -> bool:
     if isinstance(sequence, str):
         try:
             _ = sequence_to_annotation(sequence)
-        except Exception:
+        except Exception as err:
             return False
     return True
 

@@ -1,6 +1,6 @@
 import math
 from dataclasses import dataclass
-from typing import List, Tuple, Union, Dict, Any, Optional
+from typing import List, Tuple, Union, Dict, Optional
 from peptacular.fragmentation import Fragment
 from peptacular.sequence.sequence_funcs import strip_mods
 
@@ -134,7 +134,7 @@ def match_spectra(fragments: List[float], mz_spectra: List[float], tolerance_val
         else:
 
             if mode == 'all':
-                results.append([i for i in range(indexes[0], indexes[1])])
+                results.append(list(range(indexes[0], indexes[1])))
 
             if mode == 'closest':
                 mz_diffs = [abs(fragments[i] - mz_spectra[idx]) for idx in range(indexes[0], indexes[1])]
@@ -266,26 +266,25 @@ class FragmentMatch:
                 'number': self.number
             }
 
-        else:
 
-            return {
-                'mz': self.mz,
-                'intensity': self.intensity,
-                'error': 0,
-                'error_ppm': 0,
-                'charge': 0,
-                'ion_type': '',
-                'start': 0,
-                'end': 0,
-                'monoisotopic': True,
-                'isotope': 0,
-                'loss': 0,
-                'sequence': '',
-                'theo_mz': 0,
-                'internal': False,
-                'label': '',
-                'number': 0
-            }
+        return {
+            'mz': self.mz,
+            'intensity': self.intensity,
+            'error': 0,
+            'error_ppm': 0,
+            'charge': 0,
+            'ion_type': '',
+            'start': 0,
+            'end': 0,
+            'monoisotopic': True,
+            'isotope': 0,
+            'loss': 0,
+            'sequence': '',
+            'theo_mz': 0,
+            'internal': False,
+            'label': '',
+            'number': 0
+        }
 
 
 def get_fragment_matches(fragments: List[Fragment], mz_spectra: List[float],
@@ -373,8 +372,7 @@ def _get_monoisotopic_label(label: str) -> str:
 def _remove_isotope_from_label(label: str) -> str:
     if label.endswith('*'):
         return label[:-1]
-    else:
-        return ''
+    return ''
 
 
 def _add_isotope_to_label(label: str) -> str:
@@ -392,7 +390,7 @@ def filter_missing_mono_isotope(fragment_matches: List[FragmentMatch]) -> List[F
     :rtype: List[FragmentMatch]
     """
 
-    mono_labels = set([f.label for f in fragment_matches if f.isotope == 0])
+    mono_labels = set(f.label for f in fragment_matches if f.isotope == 0)
     return [f for f in fragment_matches if _get_monoisotopic_label(f.label) in mono_labels]
 
 

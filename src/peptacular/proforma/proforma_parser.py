@@ -1,3 +1,7 @@
+"""
+ProForma Parser Module
+"""
+
 import copy
 import itertools
 import random
@@ -191,11 +195,11 @@ def parse_charge_adducts(mod: ModValue) -> ChemComposition:
     charge_adducts = {}
 
     mods = mod.split(',')
-    for mod in mods:
-        if isinstance(mod, Mod):
-            mod_str = mod.val
+    for m in mods:
+        if isinstance(m, Mod):
+            mod_str = m.val
         else:
-            mod_str = mod
+            mod_str = m
 
         for sign, count, ion in ADDUCT_PATTERN.findall(mod_str):
             if count == '':
@@ -336,8 +340,7 @@ def _pop_ion_symbol(ion: str) -> Tuple[str, str]:
     for i, c in enumerate(ion):
         if c.isdigit() or c in ['+', '-']:
             return symbol, ion[i:]
-        else:
-            symbol += c
+        symbol += c
     return symbol, ''
 
 
@@ -375,13 +378,12 @@ def _pop_ion_charge(ion: str) -> Tuple[int, str]:
         (-2, '')
 
     """
-    count_str = ''
-    sign = 1
+    count_str, sign = '', 1
     for c in ion:
         if c == '-':
             sign = -1
         elif c == '+':
-            pass
+            continue
         else:
             count_str += c
     cnt = int(count_str) if count_str else 1
@@ -906,7 +908,7 @@ class ProFormaAnnotation:
         """
         Only shows non None types
         """
-        seq = f'ProFormaAnnotation('
+        seq = 'ProFormaAnnotation('
         for k, v in self.dict().items():
             if v is not None:
                 seq += f"{k}={v}, "
@@ -967,6 +969,9 @@ class ProFormaAnnotation:
         return True
 
     def copy(self) -> 'ProFormaAnnotation':
+        """
+        Returns a deep copy of the ProFormaAnnotation instance.
+        """
         return deepcopy(self)
 
     def clear_empty_mods(self) -> None:
@@ -1110,7 +1115,7 @@ class ProFormaAnnotation:
         if c_term_mod is not None:
             new_annotation.add_cterm_mods(c_term_mod, append=True)
 
-        for aa in static_mod_dict:
+        for aa, mod in static_mod_dict.items():
 
             if aa in ['N-Term', 'C-Term']:
                 continue
@@ -1118,7 +1123,7 @@ class ProFormaAnnotation:
             # get indexes of the amino acid
             indexes = [m.start() for m in re.finditer(aa, new_annotation.sequence)]
             for index in indexes:
-                new_annotation.add_internal_mods({index: static_mod_dict[aa]}, append=True)
+                new_annotation.add_internal_mods({index: mod}, append=True)
 
         if inplace is False:
             return new_annotation
@@ -1750,7 +1755,7 @@ class ProFormaAnnotation:
         # for labile mods only include on first amino acid
         labile_mods = self.pop_labile_mods()
 
-        for i, aa in enumerate(self.sequence):
+        for i, _ in enumerate(self.sequence):
             s = self.slice(i, i + 1)
             if i == 0 and labile_mods:
                 s.add_labile_mods(labile_mods, append=True)
@@ -2233,14 +2238,13 @@ class _ProFormaParser:
                 self._skip(1)
                 self._add_cterm_mod(self._parse_modifications('[', ']'))
                 return
-            elif cur == '/' or cur == '+':  # charge ( end of sequence)
+            elif cur in ('/', '+'):  # charge ( end of sequence)
                 return
             elif cur == '(':  # Interval start
                 if dummy_interval is not None:
                     raise ProFormaFormatError("Overlapping intervals!", self.position, self.sequence)
-                else:
-                    dummy_interval = [len(self._amino_acids), None, False, None]
-                    self._skip(1)
+                dummy_interval = [len(self._amino_acids), None, False, None]
+                self._skip(1)
             elif cur == ')':  # Interval end
                 if dummy_interval is None:
                     raise ProFormaFormatError("Interval ended without starting!", self.position, self.sequence)
@@ -2259,10 +2263,10 @@ class _ProFormaParser:
             elif cur == '?':  # unknown mods
                 if dummy_interval is None:
                     raise ProFormaFormatError("Unknown mod outside of interval", self.position, self.sequence)
-                else:
-                    # interval is ambiguous
-                    dummy_interval[2] = True
-                    self._skip(1)
+
+                # interval is ambiguous
+                dummy_interval[2] = True
+                self._skip(1)
             else:
                 raise ProFormaFormatError(
                     f"Expected either '[', '(', '?', '-', or '/' but got: {cur}", self.position, self.sequence)
@@ -2434,12 +2438,12 @@ def serialize(annotation: Union[ProFormaAnnotation, MultiProFormaAnnotation], in
         >>> pfa2 = ProFormaAnnotation(_sequence='PEPTIDE')
 
         Serializing a MultiProFormaAnnotation with chimeric connections:
-        >>> multi_annotation = MultiProFormaAnnotation([pfa1, pfa2], [False, False])
+        >>> multi_annotation = MultiProFormaAnnotation([pfa1, pfa2], [False])
         >>> serialize(multi_annotation)
         'PEPTIDE+PEPTIDE'
 
         Serializing a MultiProFormaAnnotation with crosslink connections:
-        >>> multi_annotation = MultiProFormaAnnotation([pfa1, pfa2], [True, True])
+        >>> multi_annotation = MultiProFormaAnnotation([pfa1, pfa2], [True])
         >>> p = serialize(multi_annotation)
         >>> p == r'PEPTIDE\\\PEPTIDE'
         True

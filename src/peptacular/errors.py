@@ -1,3 +1,8 @@
+"""
+Errors
+"""
+
+
 class AmbiguousAminoAcidError(ValueError):
     def __init__(self, aa: str, msg: str, *args):
         self.aa = aa
@@ -8,12 +13,10 @@ class AmbiguousAminoAcidError(ValueError):
 
 class AmbiguousModificationError(ValueError):
     """Exception raised for errors due to ambiguous modifications."""
-    pass
 
 
 class AmbiguousSequenceError(ValueError):
     """Exception raised for errors due to ambiguous sequences."""
-    pass
 
 
 class InvalidModificationMassError(ValueError):
@@ -27,7 +30,6 @@ class InvalidModificationMassError(ValueError):
 
 class InvalidSequenceError(ValueError):
     """Exception raised for errors due to invalid sequences."""
-    pass
 
 
 class UnknownModificationError(ValueError):

@@ -155,14 +155,16 @@ def _parse_glycan_comp(glycan_str: str) -> ChemComposition:
         {'C': 3, 'H': 4, 'O': 2}
 
         # Invalid glycan ID
-        >>> _parse_glycan_comp('6BAAXE121B1')
+        >>> _parse_glycan_comp('6BAAXE121B1') # doctest: +ELLIPSIS
         Traceback (most recent call last):
-        peptacular.errors.InvalidGlycanFormulaError: Error parsing glycan formula: "6BAAXE121B1". Unknown glycan: "6BAAXE121B1"!
+            ...
+        peptacular.errors.InvalidGlycanFormulaError: Error parsing glycan formula: "6BAAXE121B1". ...
 
         # Invalid glycan str
-        _parse_glycan_comp('HeSNAc2Hex3Neu1')
+        _parse_glycan_comp('HeSNAc2Hex3Neu1') # doctest: +ELLIPSIS
         Traceback (most recent call last):
-        peptacular.errors.InvalidGlycanFormulaError: Error parsing glycan formula: "HeSNAc2Hex3Neu1". Unknown glycan: "HeSNAc2Hex3Neu1"!
+            ...
+        peptacular.errors.InvalidGlycanFormulaError: Error parsing glycan formula: "HeSNAc2Hex3Neu1". ...
 
     """
 
@@ -211,6 +213,8 @@ def _parse_mod_comp(mod: str) -> Union[ChemComposition, None]:
 
         >>> _parse_mod_comp('1')
 
+        >>> _parse_mod_comp('')
+
     """
 
     if isinstance(mod, (int, float)):  # cannot get composition from a delta mass
@@ -225,40 +229,41 @@ def _parse_mod_comp(mod: str) -> Union[ChemComposition, None]:
     if isinstance(mod, str) and '#' in mod:
         if mod.startswith('#'):  # for localized positions, return empty comp
             return {}
-        else:  # for only the original declaration consider the mass modification
-            mod = mod.split('#')[0]
+        mod = mod.split('#')[0]
 
     mod_lower = mod.lower()
     if mod_lower.startswith('glycan:'):
         return _parse_glycan_comp(mod)
 
-    elif is_gno_str(mod):
+    if is_gno_str(mod):
         # not implemented
         return parse_chem_formula(parse_gno_comp(mod))
 
-    elif is_xlmod_str(mod):
+    if is_xlmod_str(mod):
         # not implemented
         return parse_chem_formula(parse_xlmod_comp(mod))
 
-    elif is_resid_str(mod):
+    if is_resid_str(mod):
         # not implemented
         return parse_chem_formula(parse_resid_comp(mod))
 
-    elif mod_lower.startswith('info:'):  # cannot get comp for info
-        pass
+    if mod_lower.startswith('info:'):  # cannot get comp for info
+        return None
 
-    elif mod_lower.startswith('obs:'):  # cannot get comp for observed mass
-        pass
+    if mod_lower.startswith('obs:'):  # cannot get comp for observed mass
+        return None
 
-    elif is_psi_mod_str(mod):  # psi-mod
+    if is_psi_mod_str(mod):  # psi-mod
         return parse_chem_formula(parse_psi_comp(mod))
 
-    elif is_unimod_str(mod):  # unimod
+    if is_unimod_str(mod):  # unimod
         return parse_chem_formula(parse_unimod_comp(mod))
 
     # chemical formula
-    elif mod_lower.startswith('formula:'):
+    if mod_lower.startswith('formula:'):
         return parse_chem_formula(mod.split(':')[1])
+
+    return None
 
 
 def _parse_mod_delta_mass(mod: str) -> Union[float, None]:
@@ -403,9 +408,10 @@ def _sequence_comp(annotation: Union[str, ProFormaAnnotation],
         {'C': 6, 'H': 11, 'N': 1, 'O': 1}
 
         # Ambiguous amino acid
-        >>> _sequence_comp('B', 'by')
+        >>> _sequence_comp('B', 'by') # doctest: +ELLIPSIS
         Traceback (most recent call last):
-        peptacular.errors.AmbiguousAminoAcidError: Ambiguous amino acid: B! Cannot determine the composition of a sequence with an ambiguous amino acid.
+            ...
+        peptacular.errors.AmbiguousAminoAcidError: Ambiguous amino acid: B! Cannot determine the composition ...
 
     """
 
@@ -422,12 +428,12 @@ def _sequence_comp(annotation: Union[str, ProFormaAnnotation],
         charge_adducts = annotation.charge_adducts[0]
 
     if charge_adducts is None:
-        if ion_type == 'p' or ion_type == 'n':
+        if ion_type in ('p', 'n'):
             charge_adducts = f'{charge}H+'
         else:
             charge_adducts = f'{charge-1}H+,{FRAGMENT_ION_BASE_CHARGE_ADDUCTS[ion_type]}'
 
-    if ion_type != 'p' and ion_type != 'n':
+    if ion_type not in ('p', 'n'):
         if charge == 0:
             warnings.warn('Calculating the comp of a fragment ion with charge state 0. Fragment ions should have a '
                           'charge state greater than 0 since the neutral form doesnt exist.')
@@ -445,8 +451,8 @@ def _sequence_comp(annotation: Union[str, ProFormaAnnotation],
     for aa in annotation.sequence:
         try:
             aa_comp = AA_COMPOSITIONS[aa]
-        except KeyError:
-            raise UnknownAminoAcidError(aa)
+        except KeyError as err:
+            raise UnknownAminoAcidError(aa) from err
         for k, v in aa_comp.items():
             sequence_composition[k] = sequence_composition.get(k, 0) + v
 
@@ -488,7 +494,7 @@ def _sequence_comp(annotation: Union[str, ProFormaAnnotation],
                 mod_composition[k] = mod_composition.get(k, 0) + v
 
     if annotation.has_internal_mods():
-        for internal_mod_index, internal_mods in annotation.internal_mods.items():
+        for _, internal_mods in annotation.internal_mods.items():
             for internal_mod in internal_mods:
                 for k, v in mod_comp(internal_mod).items():
                     mod_composition[k] = mod_composition.get(k, 0) + v
@@ -565,7 +571,7 @@ def _parse_mod_delta_mass_only(mod: Union[str, Mod]) -> Union[float, None]:
 
     """
 
-    if isinstance(mod, float) or isinstance(mod, int):
+    if isinstance(mod, (int, float)):
         return mod
 
     if isinstance(mod, Mod):

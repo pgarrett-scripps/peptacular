@@ -1,3 +1,7 @@
+"""
+Glycan.py
+"""
+
 from typing import Union
 
 from peptacular.types import ChemComposition
@@ -182,5 +186,5 @@ def convert_glycan_formula_to_chem_formula(glycan: Union[ChemComposition, str]) 
 
     try:
         return write_chem_formula(glycan_comp(glycan))
-    except InvalidGlycanFormulaError as e:
-        raise InvalidGlycanFormulaError(glycan, e.msg) from e
+    except InvalidGlycanFormulaError as err:
+        raise InvalidGlycanFormulaError(glycan, err.msg) from err

@@ -1,3 +1,7 @@
+"""
+mode_db_setup.py
+"""
+
 import dataclasses
 import os
 import pickle
@@ -155,12 +159,8 @@ _OBO_FILE_SOURCES = {
 def _read_obo(file: IO[str]) -> List[Dict[str, Any]]:
     file.seek(0)
 
-    info = {}
-    l = []
+    info, elems, skip, d = {}, [], None, None
 
-    skip = False
-
-    d = None
     for line in file:
 
         line = line.rstrip()
@@ -174,7 +174,7 @@ def _read_obo(file: IO[str]) -> List[Dict[str, Any]]:
         if line.startswith('[Term]'):
             skip = False
             if d is not None:
-                l.append(d)
+                elems.append(d)
             d = {}
             continue
 
@@ -195,9 +195,9 @@ def _read_obo(file: IO[str]) -> List[Dict[str, Any]]:
                 d[key].append(value)
 
     if d is not None:
-        l.append(d)
+        elems.append(d)
 
-    return l
+    return elems
 
 
 def _is_obsolete(term: Dict[str, Any]) -> bool:
@@ -221,22 +221,22 @@ def _fix_entry(entry: ModEntry):
         # try to parse formula
         try:
             _ = parse_chem_formula(entry.composition)
-        except Exception as e:
-            warnings.warn(f'Error parsing {entry.id} {entry.name} {entry.composition}, {e}')
+        except Exception as err:
+            warnings.warn(f'Error parsing {entry.id} {entry.name} {entry.composition}, {err}')
             entry.composition = None
 
     if entry.mono_mass is None and entry.composition is not None:
         try:
             entry.mono_mass = chem_mass(entry.composition, monoisotopic=True)
-        except Exception as e:
-            ValueError(f'Error parsing {entry.id} {entry.name} {entry.composition}, {e}')
+        except Exception as err:
+            raise ValueError(f'Error parsing {entry.id} {entry.name} {entry.composition}, {err}') from err
             entry.mono_mass = None
 
     if entry.avg_mass is None and entry.composition is not None:
         try:
             entry.avg_mass = chem_mass(entry.composition, monoisotopic=False)
-        except Exception as e:
-            ValueError(f'Error parsing {entry.id} {entry.name} {entry.composition}, {e}')
+        except Exception as err:
+            raise ValueError(f'Error parsing {entry.id} {entry.name} {entry.composition}, {err}') from err
             entry.avg_mass = None
 
 
@@ -348,9 +348,9 @@ def _get_unimod_entries(terms: List[Dict[str, Any]]) -> List[ModEntry]:
 
         try:
             _ = chem_mass(delta_formula)
-        except InvalidChemFormulaError as e:
+        except InvalidChemFormulaError as err:
             orig_comp = property_values.get('delta_composition', [None])
-            warnings.warn(f'Cannot parse Unimod: {term_id}, {delta_formula}, {orig_comp}. {e}')
+            warnings.warn(f'Cannot parse Unimod: {term_id}, {delta_formula}, {orig_comp}. {err}')
 
         mod = ModEntry(
             id=term_id,
@@ -845,18 +845,23 @@ def get_entries(db_type: DbType, file_path: str) -> List[ModEntry]:
 
     if db_type == DbType.UNIMOD:
         return list(_get_unimod_entries(data))
-    elif db_type == DbType.PSI_MOD:
+
+    if db_type == DbType.PSI_MOD:
         return list(_get_psimod_entries(data))
+
     elif db_type == DbType.GNO:
         return list(_get_gno_entries(data))
-    elif db_type == DbType.RESID:
+
+    if db_type == DbType.RESID:
         return list(_get_resid_entries(data))
-    elif db_type == DbType.XLMOD:
+
+    if db_type == DbType.XLMOD:
         return list(_get_xlmod_entries(data))
-    elif db_type == DbType.MONOSACCHARIDES:
+
+    if db_type == DbType.MONOSACCHARIDES:
         return list(_get_monosaccharide_entries(data))
-    else:
-        raise ValueError(f"Invalid type: {db_type}")
+
+    raise ValueError(f"Invalid type: {db_type}")
 
 
 class EntryDb:
@@ -978,6 +983,9 @@ class EntryDb:
             self.avg_mass_map.sort(key=lambda x: x.avg_mass)
 
     def add_entry(self, entries: Union[ModEntry, List[ModEntry]]) -> None:
+        """
+        Add an entry or a list of entries to the database.
+        """
 
         if isinstance(entries, ModEntry):
             entries = [entries]
@@ -1039,8 +1047,8 @@ class EntryDb:
         """
         try:
             import requests
-        except ImportError:
-            raise ImportError("The requests module is required to download the obo file from the internet")
+        except ImportError as err:
+            raise ImportError("The requests module is required to download the obo file from the internet") from err
 
         file_url = _OBO_FILE_SOURCES.get(self.entry_type)
         if file_url is None:

@@ -144,7 +144,7 @@ def apply_static_mods(sequence: Union[str, ProFormaAnnotation],
     new_annotation = annotation.copy()
 
     for regex_str, mods in internal_mods.items():
-        for mod_index in get_regex_match_indices(annotation.sequence, regex_str):
+        for mod_index in get_regex_match_indices(annotation.sequence, regex_str, offset=-1):
             if annotation.has_internal_mods_at_index(mod_index):  # mod already present
                 if mode == 'overwrite':
                     new_annotation.add_internal_mod(mod_index, mods, False)
@@ -158,7 +158,7 @@ def apply_static_mods(sequence: Union[str, ProFormaAnnotation],
                 new_annotation.add_internal_mod(mod_index, mods, True)
 
     for regex_str, mods in nterm_mods.items():
-        for mod_index in get_regex_match_indices(annotation.sequence, regex_str):
+        for mod_index in get_regex_match_indices(annotation.sequence, regex_str, offset=-1):
             if mod_index == 0:
                 if annotation.has_nterm_mods():
                     if mode == 'overwrite':
@@ -173,7 +173,7 @@ def apply_static_mods(sequence: Union[str, ProFormaAnnotation],
                     new_annotation.add_nterm_mods(mods, True)
 
     for regex_str, mods in cterm_mods.items():
-        for mod_index in get_regex_match_indices(annotation.sequence, regex_str):
+        for mod_index in get_regex_match_indices(annotation.sequence, regex_str, offset=-1):
             if mod_index == len(annotation.sequence) - 1:
                 if annotation.has_cterm_mods():
                     if mode == 'overwrite':
@@ -270,7 +270,7 @@ def _variable_mods_builder(annotation: ProFormaAnnotation,
 
     new_mod_map: Dict[int, List[List[Mod]]] = {}
     for regex_str, list_of_list_of_mods in mod_map.items():
-        for mod_index in get_regex_match_indices(annotation.sequence, regex_str):
+        for mod_index in get_regex_match_indices(annotation.sequence, regex_str, offset=-1):
             for list_of_mods in list_of_list_of_mods:
                 new_mod_map.setdefault(mod_index, []).append(list_of_mods)
 

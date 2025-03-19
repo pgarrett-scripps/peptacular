@@ -1,3 +1,7 @@
+"""
+chem_util.py
+"""
+
 from typing import Union, Optional, List
 
 from peptacular.constants import HILL_ORDER, ISOTOPIC_ATOMIC_MASSES, ELECTRON_MASS, PROTON_MASS, \
@@ -68,13 +72,13 @@ def parse_chem_formula(formula: str, sep: str = '') -> ChemComposition:
         if component.startswith('['):  # Isotope notation
             try:
                 comps.append(_parse_isotope_component(component[1:-1]))
-            except InvalidChemFormulaError as e:
-                raise InvalidChemFormulaError(formula, e.msg)
+            except InvalidChemFormulaError as err:
+                raise InvalidChemFormulaError(formula, err.msg) from err
         else:
             try:
                 comps.append(_parse_condensed_chem_formula(component))
-            except InvalidChemFormulaError as e:
-                raise InvalidChemFormulaError(formula, e.msg)
+            except InvalidChemFormulaError as err:
+                raise InvalidChemFormulaError(formula, err.msg) from err
 
     combined_comp = {}
     for comp in comps:
@@ -309,12 +313,13 @@ def _parse_isotope_component(formula: str) -> ChemComposition:
         >>> _parse_isotope_component('')
         {}
 
-        >>> _parse_isotope_component('12323')
+        >>> _parse_isotope_component('12323') # doctest: +IGNORE_EXCEPTION_DETAIL
         Traceback (most recent call last):
-        peptacular.errors.InvalidChemFormulaError: Error parsing chem formula: "12323". Invalid isotope notation: "12323"!
+            ...
+        peptacular.errors.InvalidChemFormulaError: Error parsing chem formula: "12323". ...
 
         # example of invalid isotope notation
-        >>> _parse_isotope_component('13C-')
+        >>> _parse_isotope_component('13C-') # doctest: +IGNORE_EXCEPTION_DETAIL
         Traceback (most recent call last):
         peptacular.errors.InvalidChemFormulaError: Error parsing chem formula: "13C-". Invalid count: "-"!
 

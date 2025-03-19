@@ -320,7 +320,7 @@ def _fix_chemical_formula(chemical_formula: Dict[str, float]) -> Dict[str, int]:
     starting_mass = chem_mass(chemical_formula)
 
     # get the floor of the total atoms
-    total_atoms = {k: int(v) for k, v in chemical_formula.items()}
+    total_atoms = {k: round(v) for k, v in chemical_formula.items()}
 
     # add hydrogen's till the molecular mass is reached
     total_atoms['H'] += int((starting_mass - chem_mass(total_atoms)) / constants.ISOTOPIC_ATOMIC_MASSES['H'])
