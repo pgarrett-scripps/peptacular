@@ -115,7 +115,7 @@ class Fragment:
 
 
 FragmentReturnType = Literal["fragment", "mass", "mz", "label", "mass-label", "mz-label"]
-FRAGMENT_RETURN_TYPING = Union[List[Fragment], List[float], List[str], List[tuple[float, str]]]
+FRAGMENT_RETURN_TYPING = Union[List[Fragment], List[float], List[str], List[Tuple[float, str]]]
 
 
 def get_losses(sequence: str, losses: List[Tuple[str, float]], max_losses: int) -> Set[float]:
