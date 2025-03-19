@@ -1,4 +1,4 @@
-from typing import Dict, List, Generator, Union, Optional, TypeAlias, Literal
+from typing import Dict, List, Generator, Union, Optional, Literal
 
 from peptacular.sequence.sequence_funcs import sequence_to_annotation
 from peptacular.proforma.proforma_parser import ProFormaAnnotation
@@ -7,10 +7,10 @@ from peptacular.util import get_regex_match_indices
 from peptacular.proforma.input_convert import fix_list_of_list_of_mods, fix_list_of_mods, ModIndex, ModValue, \
     remove_empty_list_of_list_of_mods
 
-ModMode: TypeAlias = Literal['skip', 'append', 'overwrite']
+ModMode = Literal['skip', 'append', 'overwrite']
 MOD_MODE_VALUES = ['skip', 'append', 'overwrite']
 
-ModBuilderReturnType: TypeAlias = Literal["str", "annotation"]
+ModBuilderReturnType = Literal["str", "annotation"]
 MOD_BUILDER_RETURN_TYPE_VALUES = ['str', 'annotation']
 
 STATIC_MOD_INPUT = Union[List[ModValue], ModValue]

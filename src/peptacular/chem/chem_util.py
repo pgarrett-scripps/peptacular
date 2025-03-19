@@ -1,4 +1,4 @@
-from typing import Union, Optional
+from typing import Union, Optional, List
 
 from peptacular.constants import HILL_ORDER, ISOTOPIC_ATOMIC_MASSES, ELECTRON_MASS, PROTON_MASS, \
     NEUTRON_MASS, AVERAGE_ATOMIC_MASSES, ISOTOPE_COMPONENT_PATTERN, CONDENSED_CHEM_FORMULA_PATTERN
@@ -229,7 +229,7 @@ def chem_mass(formula: Union[ChemComposition, str],
 
 
 
-def _split_chem_formula(formula: str) -> list[str]:
+def _split_chem_formula(formula: str) -> List[str]:
     """
     Splits a chemical formula into its components. The formula is assumed to be proForma2.0 compliant, wherase the
     isotope notation for an element and its count is enclosed in square brackets and the formula contains no
@@ -239,7 +239,7 @@ def _split_chem_formula(formula: str) -> list[str]:
     :type formula: str
 
     :return: The components of the chemical formula, split by instances of the isotope notation.
-    :rtype: list[str]
+    :rtype: List[str]
 
     .. code-block:: python
 
