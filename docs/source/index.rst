@@ -27,16 +27,15 @@ The library is designed to be easy to use, with all functions available directly
    :maxdepth: 2
    :caption: Contents:
 
-   modules/installation
    modules/getting_started
    modules/examples
 
-API Reference
-============
+Module Reference
+=================
 
 .. toctree::
    :maxdepth: 4
-   :caption: API Documentation:
+   :caption: Module Documentation:
 
    api/peptacular
 
