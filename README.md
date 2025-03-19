@@ -4,7 +4,7 @@
 A spectacularly simple package for working with peptide sequences. Now proforma2.0 compliant.
 
 ## Documentation
-https://peptacular.readthedocs.io/en/latest/index.html
+https://peptacular.readthedocs.io/en/latest/
 
 
 ## Installation
