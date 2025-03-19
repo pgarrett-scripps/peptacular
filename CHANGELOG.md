@@ -20,7 +20,13 @@ All notable changes to this project will be documented in this file.
 ### Added:
 - condense_mods function to condense_to_mass_mods.py
 - [potentially breaking] updated digestion and span functions to return generator objects
-- sequential_digest function to digest.py
+- added sequential_digest, digest_from_config and EnzymeConfig to digest.py
+- regex strings which don't have the same start/end site will give a warning such as ([KR])
+- fixed regex bug with nterm enzymes
+- simplified supported enzyme regexes
+- added simple fasta_parser since I kept recreating it in other projects, works with several input types
+- some more tests
+- added condense_to_mass_mods to mass_calc.py which condenses modifications to a single +/- mass value
 
 ## [2.0.0]
 ### Added:
