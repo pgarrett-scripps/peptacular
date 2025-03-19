@@ -253,51 +253,34 @@ AVERAGINE_RATIOS: Dict[str, float] = {'C': 4.9384, 'H': 7.7583, 'N': 1.3577, 'O'
 
 PROTEASES: Dict[str, str] = \
     {
-        'arg-c': 'R',
-        'asp-n': '\\w(?=D)',
-        'bnps-skatole': 'W',
-        'caspase 1': '(?<=[FWYL]\\w[HAT])D(?=[^PEDQKR])',
-        'caspase 2': '(?<=DVA)D(?=[^PEDQKR])',
-        'caspase 3': '(?<=DMQ)D(?=[^PEDQKR])',
-        'caspase 4': '(?<=LEV)D(?=[^PEDQKR])',
-        'caspase 5': '(?<=[LW]EH)D',
-        'caspase 6': '(?<=VE[HI])D(?=[^PEDQKR])',
-        'caspase 7': '(?<=DEV)D(?=[^PEDQKR])',
-        'caspase 8': '(?<=[IL]ET)D(?=[^PEDQKR])',
-        'caspase 9': '(?<=LEH)D',
-        'caspase 10': '(?<=IEA)D',
-        'chymotrypsin high specificity': '([FY](?=[^P]))|(W(?=[^MP]))',
-        'chymotrypsin low specificity': '([FLY](?=[^P]))|(W(?=[^MP]))|(M(?=[^PY]))|(H(?=[^DMPW]))',
-        'chymotrypsin': '([FLY](?=[^P]))|(W(?=[^MP]))|(M(?=[^PY]))|(H(?=[^DMPW]))',
-        'clostripain': 'R',
-        'cnbr': 'M',
-        'enterokinase': '(?<=[DE]{3})K',
-        'factor xa': '(?<=[AFGILTVM][DE]G)R',
-        'formic acid': 'D',
-        'glutamyl endopeptidase': 'E',
-        'glu-c': 'E',
-        'granzyme b': '(?<=IEP)D',
-        'hydroxylamine': 'N(?=G)',
-        'iodosobenzoic acid': 'W',
-        'lys-c': 'K',
-        'lys-n': '\\w(?=K)',
-        'ntcb': '\\w(?=C)',
-        'pepsin ph1.3': '((?<=[^HKR][^P])[^R](?=[FL][^P]))|((?<=[^HKR][^P])[FL](?=\\w[^P]))',
-        'pepsin ph2.0': '((?<=[^HKR][^P])[^R](?=[FLWY][^P]))|((?<=[^HKR][^P])[FLWY](?=\\w[^P]))',
-        'proline endopeptidase': '(?<=[HKR])P(?=[^P])',
-        'proteinase k': '[AEFILTVWY]',
-        'staphylococcal peptidase i': '(?<=[^E])E',
-        'thermolysin': '[^DE](?=[AFILMV])',
-        'thrombin': '((?<=G)R(?=G))|((?<=[AFGILTVM][AFGILTVWA]P)R(?=[^DE][^DE]))',
-        'trypsin_full': '([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))',
-        'trypsin_exception': '((?<=[CD])K(?=D))|((?<=C)K(?=[HY]))|((?<=C)R(?=K))|((?<=R)R(?=[HR]))',
-        'trypsin': '([KR](?=[^P]))',
-        'trypsin/P': '([KR])',
+        'arg-c': '(?<=R)',
+        'asp-n': '(?=D)',
+        'chymotrypsin': '(?<=[FWYL])(?!P)',
+        'chymotrypsin/P': '(?<=[FWYL])',
+        'promega-chymotrypsin-high-specificity': '(?<=[YFW])',
+        'promega-chymotrypsin-low-specificity': '(?<=[YFWLM])',
+        'glu-c': '(?<=E)',
+        'lys-c': '(?<=K)',
+        'lys-n': '(?=K)',
+        'proteinase k': '(?<=[AEFILTVWY])',
+        'trypsin': '(?<=[KR])(?=[^P])',
+        'trypsin/P': '(?<=[KR])',
+        'proalanase': '(?<=[PA])',
+        'elastase': r'(?<=[AGSVLI])',
+        'pepsin': r'(?<=[FLWY])',
+        'thermolysin': r'(?<=[LFIAVM])',
+        'proalanase-low-specificity': '(?<=[PASG])',
         'non-specific': '()',
-        'no-cleave': '_'
+        'no-cleave': '_',
     }
 
-PROTEASES_COMPILED = {k: regex.compile(v) for k, v in PROTEASES.items()}
+PROTEASES_COMPILED = {}
+for key, value in PROTEASES.items():
+    try:
+        PROTEASES_COMPILED[key] = regex.compile(value)
+    except Exception as e:
+        print(f"Error compiling regex for {key}: {e}")
+        raise e
 
 # Compiling regex patterns used in your module
 ISOTOPE_COMPONENT_PATTERN = regex.compile(r'([0-9]*)([A-Za-z]+)(-?\d*\.?\d*)')

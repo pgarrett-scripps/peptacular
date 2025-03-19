@@ -1,4 +1,4 @@
-__version__ = '2.1.0'
+__version__ = '2.2.0'
 
 from .chem import *
 from .sequence import *
@@ -14,3 +14,4 @@ from .constants import *
 from .score import *
 from .util import *
 from .spans import *
+from .fasta import *

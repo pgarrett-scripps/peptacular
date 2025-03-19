@@ -16,6 +16,12 @@ All notable changes to this project will be documented in this file.
 - Can improve the performance of mass calculations with isotopes and use_isotope_on_mods, by not calculating the composition of mods
 - Add MultiProformaAnnot support to mass/chem/fragment/isotope....
 
+## [2.2.0]
+### Added:
+- condense_mods function to condense_to_mass_mods.py
+- [potentially breaking] updated digestion and span functions to return generator objects
+- sequential_digest function to digest.py
+
 ## [2.0.0]
 ### Added:
 - Full ProForma2.0 support

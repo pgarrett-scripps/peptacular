@@ -13,7 +13,7 @@ Valid DigestReturnType's:
     - 'annotation-span': Returns the digested sequences as a tuple of ProFormaAnnotations and Span objects.
 
 """
-
+from dataclasses import dataclass
 from typing import Union, List, Optional, TypeAlias, Literal, Tuple, Generator, Iterable
 
 from peptacular.spans import Span
@@ -205,9 +205,9 @@ def get_semi_enzymatic_sequences(sequence: Union[str, ProFormaAnnotation],
     """
 
     yield from get_left_semi_enzymatic_sequences(sequence=sequence, min_len=min_len, max_len=max_len,
-                                             return_type=return_type)
+                                                 return_type=return_type)
     yield from get_right_semi_enzymatic_sequences(sequence=sequence, min_len=min_len, max_len=max_len,
-                                           return_type=return_type)
+                                                  return_type=return_type)
 
 
 def get_non_enzymatic_sequences(sequence: Union[str, ProFormaAnnotation],
@@ -288,11 +288,11 @@ def get_cleavage_sites(sequence: Union[str, ProFormaAnnotation], enzyme_regex: s
 
         # If the protease cleaves at the N-terminus, the first position is included:
         >>> list(get_cleavage_sites(sequence='KPEPTIDEK', enzyme_regex='lys-n'))
-        [8]
+        [0, 8]
 
         # Similarly, if the protease cleaves at the C-terminus, the last position is included:
         >>> list(get_cleavage_sites(sequence='KPEPTIDEK', enzyme_regex='lys-c'))
-        [1]
+        [1, 9]
 
         # Will also work with modified sequences
         >>> list(get_cleavage_sites(sequence='[Acetyl]-TIDERT[1.0]IDEKTIDE-[Amide]', enzyme_regex='trypsin/P'))
@@ -300,10 +300,13 @@ def get_cleavage_sites(sequence: Union[str, ProFormaAnnotation], enzyme_regex: s
 
         # Non-specific cleavage sites are also identified
         >>> list(get_cleavage_sites(sequence='PEPTIDE', enzyme_regex='non-specific'))
-        [1, 2, 3, 4, 5, 6]
+        [0, 1, 2, 3, 4, 5, 6, 7]
 
         >>> list(get_cleavage_sites(sequence='PPPP', enzyme_regex='PP'))
         [1, 2, 3]
+
+        >>> list(get_cleavage_sites(sequence='PEPCTIDE', enzyme_regex='(?=C)'))
+        [3]
 
     """
 
@@ -315,15 +318,12 @@ def get_cleavage_sites(sequence: Union[str, ProFormaAnnotation], enzyme_regex: s
     if enzyme_regex in PROTEASES_COMPILED:
         enzyme_regex = PROTEASES_COMPILED[enzyme_regex]
 
-    last_index = len(annotation)
-    return (i + 1 for i in get_regex_match_indices(input_str=annotation.sequence, regex_str=enzyme_regex)
-            if i < last_index - 1)
-
+    return get_regex_match_indices(input_str=annotation.sequence, regex_str=enzyme_regex)
 
 def digest(sequence: Union[str, ProFormaAnnotation],
            enzyme_regex: Union[List[str], str],
-           missed_cleavages: Union[List[int], int] = 0,
-           semi: Union[List[bool], bool] = False,
+           missed_cleavages: int = 0,
+           semi: bool = False,
            min_len: Optional[int] = None,
            max_len: Optional[int] = None,
            complete_digestion: bool = True,
@@ -393,17 +393,20 @@ def digest(sequence: Union[str, ProFormaAnnotation],
         >>> list(digest(sequence='<13C>T[1][2]IDERTIDEKTIDE', enzyme_regex='([KR])', missed_cleavages=2, min_len=6))
         ['<13C>T[1][2]IDERTIDEK', '<13C>T[1][2]IDERTIDEKTIDE', '<13C>TIDEKTIDE']
 
-        # Can specify multiple enzyme_regex and missed_cleavages:
-        >>> list(digest(sequence='TIDERTIDEKTIDE', enzyme_regex=['([KR])', '([D])'], missed_cleavages=[0, 1]))
-        ['TID', 'TIDER', 'TIDERTID', 'ERTID', 'ERTIDEKTID', 'TIDEK', 'EKTID', 'EKTIDE', 'TIDE', 'E']
-
         # Can specify multiple enzyme_regex and singlular missed_cleavages:
         >>> list(digest(sequence='TIDERTIDEKTIDE', enzyme_regex=['([KR])', '([D])'], missed_cleavages=0))
-        ['TID', 'TIDER', 'ERTID', 'TIDEK', 'EKTID', 'TIDE', 'E']
+        ['TID', 'ER', 'TID', 'EK', 'TID', 'E']
 
         # With complete_digestion=False, the function will return all possible digested sequences (Even original sequence)
         >>> list(digest(sequence='TIDERTIDEKTIDE', enzyme_regex='([KR])', missed_cleavages=2, max_len=5, complete_digestion=False))
         ['TIDER', 'TIDERTIDEKTIDE', 'TIDEK', 'TIDE']
+
+        >>> list(digest(sequence='K', enzyme_regex='([KR])', missed_cleavages=0, complete_digestion=True))
+        ['K']
+
+        >>> list(digest(sequence='PEPCTIDE', enzyme_regex='(?=C)', missed_cleavages=0, complete_digestion=True))
+        ['PEP', 'CTIDE']
+
 
     """
 
@@ -417,42 +420,17 @@ def digest(sequence: Union[str, ProFormaAnnotation],
     if isinstance(enzyme_regex, str):
         enzyme_regex = [enzyme_regex]
 
-    if isinstance(missed_cleavages, int):
-        missed_cleavages = [missed_cleavages] * len(enzyme_regex)
-    elif isinstance(missed_cleavages, list):
-        if all(isinstance(i, int) for i in missed_cleavages):
-            pass
-        else:
-            raise TypeError(f'Missed Cleavages should be of type Int, not: {type(missed_cleavages)}')
-        if len(missed_cleavages) != len(enzyme_regex):
-            raise ValueError("Length of enzyme_regex and missed_cleavages should be the same or "
-                             "missed_cleavages should be a single integer.")
-    else:
-        raise TypeError(f'Missed Cleavages should be of type Int, not: {type(missed_cleavages)}')
-
-    if isinstance(semi, bool):
-        semi = [semi] * len(enzyme_regex)
-    elif isinstance(semi, list):
-        if all(isinstance(i, bool) for i in semi):
-            pass
-        else:
-            raise TypeError(f'Semi should be of type Bool, not: {type(semi)}')
-
-        if len(semi) != len(enzyme_regex):
-            raise ValueError("Length of enzyme_regex and semi should be the same or "
-                             "semi should be a single boolean.")
-    else:
-        raise TypeError(f'Semi should be of type Bool, not: {type(semi)}')
-
     all_spans = set()
     if not complete_digestion:
         all_spans.add((0, len(annotation), 0))
 
-    for regex, mc, s in zip(enzyme_regex, missed_cleavages, semi):
-        cleavage_sites = get_cleavage_sites(sequence=annotation, enzyme_regex=regex)
-        spans = build_spans(max_index=len(annotation), enzyme_sites=cleavage_sites, missed_cleavages=mc,
-                            min_len=min_len, max_len=max_len, semi=s)
-        all_spans.update(spans)
+    cleavage_sites = []
+    for regex in enzyme_regex:
+        cleavage_sites.extend(list(get_cleavage_sites(sequence=annotation, enzyme_regex=regex)))
+
+    spans = build_spans(max_index=len(annotation), enzyme_sites=cleavage_sites, missed_cleavages=missed_cleavages,
+                        min_len=min_len, max_len=max_len, semi=semi)
+    all_spans.update(spans)
 
     if sort_output:
         all_spans = sorted(all_spans, key=lambda x: (x[0], x[1], x[2]))
@@ -460,52 +438,72 @@ def digest(sequence: Union[str, ProFormaAnnotation],
     return _return_digested_sequences(annotation, all_spans, return_type)
 
 
-def sequential_digest(sequence: Union[str, ProFormaAnnotation],
-                      enzyme_regex: List[List[str]],
-                      missed_cleavages: List[List[int]],
-                      semi: List[List[int]],
-                      complete_digestion: List[bool],
-                      min_len: Optional[int] = None,
-                      max_len: Optional[int] = None,
-                      return_type: DigestReturnType = 'str') -> DIGEST_RETURN_TYPING:
+@dataclass
+class EnzymeConfig:
+    """Configuration for a single enzyme in a digestion process."""
+    regex: Union[List[str], str]  # Regular expressions for enzyme cleavage sites
+    missed_cleavages: int = 0  # Allowed missed cleavages
+    semi_enzymatic: bool = False  # Whether to include semi-enzymatic peptides
+    complete_digestion: bool = True  # Whether to omit original sequence
+
+    def __post_init__(self):
+        # Convert single values to lists if needed
+        if isinstance(self.regex, str):
+            self.regex = [self.regex]
+
+
+def digest_from_config(sequence: Union[str, ProFormaAnnotation],
+                       config: EnzymeConfig,
+                       min_len: Optional[int] = None,
+                       max_len: Optional[int] = None,
+                       return_type: DigestReturnType = 'str',
+                       sort_output: bool = True) -> DIGEST_RETURN_TYPING:
     """
-       Returns a list of digested sequences derived from the input `sequence`.
+    Same as digest() but with a simplified configuration object for a single enzyme.
+    """
 
-       :param sequence: A sequence or ProFormaAnnotation.
-       :type sequence: Union[str, ProFormaAnnotation]
-       :param enzyme_regex: Regular expression or list of regular expressions representing enzyme's cleavage rules.
-       :type enzyme_regex: Union[List[str], str]
-       :param missed_cleavages: Maximum number of missed cleavages, defaults to [0].
-       :type missed_cleavages: int
-       :param semi: Whether to include semi-enzymatic peptides, defaults to [False].
-       :type semi: bool
-       :param min_len: Minimum length for the subsequences (inclusive), default is [None]. If None, min_len will be
-                       equal to 1.
-       :type min_len: Optional[int]
-       :param max_len: Maximum length for the subsequences (inclusive). If None, the subsequences will go up  to
-                       1 - length of the `sequence`, defaults to [None].
-       :type max_len: Optional[int]
-       :param complete_digestion: Whether the digestion is complete or partial. If True no original sequence will be
-       included in the output. If False, the original sequence will be included in the output. Defaults to [True].
-       :type complete_digestion: bool
-       :param return_type: Whether to return the digested sequences as strings, ProFormaAnnotations, or Spans,
-       defaults to ['str'].
-       :type return_type: DigestReturnType
+    return digest(sequence=sequence,
+                  enzyme_regex=config.regex,
+                  missed_cleavages=config.missed_cleavages,
+                  semi=config.semi_enzymatic,
+                  min_len=min_len,
+                  max_len=max_len,
+                  complete_digestion=config.complete_digestion,
+                  return_type=return_type,
+                  sort_output=sort_output)
 
-       :return: List of digested peptides. Return type is determined by the `return_type` parameter.
-       :rtype: List[str] | List[ProFormaAnnotation] | List[Span] |List[(str, Span)] | List[(ProFormaAnnotation, Span)]
 
-       .. code-block:: python
+def sequential_digest(
+        sequence: Union[str, 'ProFormaAnnotation'],
+        enzyme_configs: List[EnzymeConfig],
+        min_len: Optional[int] = None,
+        max_len: Optional[int] = None,
+        return_type: DigestReturnType = 'str'
+) -> DIGEST_RETURN_TYPING:
+    """
+    Returns a list of digested sequences derived from the input `sequence` using sequential digestion
+    with multiple enzymes.
 
-           # Can use a key in PROTEASES to specify the enzyme_regex:
-           >>> sequential_digest(sequence='XXXKXXXDXXX', enzyme_regex=[['([KR])'], ['([D])']], missed_cleavages=[[0], [0]])
-           ['XXXK', 'XXXD', 'XXX']
+    :param sequence: A sequence or ProFormaAnnotation
+    :param enzyme_configs: List of EnzymeConfig objects, each representing an enzyme to apply sequentially
+    :param min_len: Minimum length for peptides (inclusive), defaults to 1 if None
+    :param max_len: Maximum length for peptides (inclusive), defaults to sequence length if None
+    :param return_type: Format to return results ('str', 'annotation', 'span', 'str-span', 'annotation-span')
+    :return: List of digested peptides in the format specified by return_type
 
-           # Can use a key in PROTEASES to specify the enzyme_regex:
-           >>> sequential_digest(sequence='XXXKXXXDXXX', enzyme_regex=[['([KR])'], ['([D])']], missed_cleavages=[[0], [0]], complete_digestion=False)
-           ['XXXK', 'XXXKXXXD', 'XXXKXXXDXXX', 'XXX', 'XXXD', 'XXXDXXX', 'XXX']
+    Examples:
+        >>> trypsin = EnzymeConfig(regex=['([KR])'], missed_cleavages=0, semi_enzymatic=False, complete_digestion=True)
+        >>> asp_n = EnzymeConfig(regex=['([D])'], missed_cleavages=0, semi_enzymatic=False, complete_digestion=True)
+        >>> list(sequential_digest(sequence='XXXKXXXDXXX', enzyme_configs=[trypsin, asp_n], return_type='str'))
+        ['XXXK', 'XXXD', 'XXX']
 
-       """
+        >>> partial_digest = [
+        ...     EnzymeConfig(regex=['([KR])'], missed_cleavages=0, semi_enzymatic=False, complete_digestion=False),
+        ...     EnzymeConfig(regex=['([D])'], missed_cleavages=0, semi_enzymatic=False, complete_digestion=False)
+        ... ]
+        >>> list(sequential_digest(sequence='XXXKXXXDXXX', enzyme_configs=partial_digest, return_type='str'))
+        ['XXXK', 'XXXKXXXD', 'XXXKXXXDXXX', 'XXX', 'XXXD', 'XXXDXXX', 'XXX']
+    """
 
     if isinstance(sequence, str):
         annotation = sequence_to_annotation(sequence)
@@ -514,42 +512,56 @@ def sequential_digest(sequence: Union[str, ProFormaAnnotation],
     else:
         raise ValueError(f"Unsupported input type: {type(sequence)}")
 
-    assert len(enzyme_regex) == len(missed_cleavages) == len(semi), "enzyme_regex and missed_cleavages should be of the same length"
+    # Start with the whole sequence
+    digested_anot_spans = []
 
-    for i, enzymes in enumerate(enzyme_regex):
-        if isinstance(enzymes, str):
-            enzyme_regex[i] = [enzymes]
-
-    for i, (enzymes, mc, s) in enumerate(zip(enzyme_regex, missed_cleavages, semi)):
+    # Apply each enzyme sequentially
+    for i, enzyme_config in enumerate(enzyme_configs):
         if i == 0:
-            digested_anot_spans = digest(sequence=annotation, enzyme_regex=enzymes, missed_cleavages=mc, semi=semi,
-                                         min_len=min_len, max_len=None, return_type='annotation-span',
-                                         complete_digestion=complete_digestion)
+            # First enzyme digests the original sequence
+            digested_anot_spans = list(digest(
+                sequence=annotation,
+                enzyme_regex=enzyme_config.regex,
+                missed_cleavages=enzyme_config.missed_cleavages,
+                semi=enzyme_config.semi_enzymatic,
+                min_len=min_len,
+                max_len=None,
+                return_type='annotation-span',
+                complete_digestion=enzyme_config.complete_digestion
+            ))
         else:
-
+            # Break early if previous enzyme digestion yielded nothing
             if len(digested_anot_spans) == 0:
                 break
 
             sequential_digested_anot_spans = []
 
+            # Apply this enzyme to each fragment from previous digestion
             for anot, span in digested_anot_spans:
+                _digested_anot_spans = list(digest(
+                    anot,
+                    enzyme_regex=enzyme_config.regex,
+                    missed_cleavages=enzyme_config.missed_cleavages,
+                    semi=enzyme_config.semi_enzymatic,
+                    min_len=min_len,
+                    max_len=None,
+                    return_type='annotation-span',
+                    complete_digestion=enzyme_config.complete_digestion
+                ))
 
-                _digested_anot_spans = digest(anot, enzyme_regex=enzymes, missed_cleavages=mc, semi=semi,
-                                              min_len=min_len, max_len=None, return_type='annotation-span',
-                                              complete_digestion=complete_digestion)
-
-                # fix span to be in reference to original sequence
+                # Fix span to be in reference to original sequence
                 for j in range(len(_digested_anot_spans)):
                     digested_span = _digested_anot_spans[j][1]
-                    fixed_digested_span = (span[0] + digested_span[0], span[0] + digested_span[1])
-
+                    fixed_digested_span = (span[0] + digested_span[0], span[0] + digested_span[1], span[2])
                     _digested_anot_spans[j] = (_digested_anot_spans[j][0], fixed_digested_span)
 
                 sequential_digested_anot_spans.extend(_digested_anot_spans)
 
             digested_anot_spans = sequential_digested_anot_spans
 
+    # Apply max_len filter if specified
     if max_len is not None:
         digested_anot_spans = [(anot, span) for anot, span in digested_anot_spans if span[1] - span[0] <= max_len]
 
+    # Format and return the results
     return _return_digested_sequences(annotation, [span for anot, span in digested_anot_spans], return_type)

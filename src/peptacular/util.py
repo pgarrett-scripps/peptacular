@@ -1,3 +1,4 @@
+import warnings
 from typing import Union, List, Tuple, Dict
 import regex
 
@@ -83,6 +84,9 @@ def get_regex_match_indices(input_str: str, regex_str: Union[str, regex.Pattern]
         >>> get_regex_match_indices("PEPTIDE", regex.compile("E"))
         [1, 6]
 
+        >>> get_regex_match_indices("PEPTIDE", 'E')
+        [1, 6]
+
         # More complex regex
         >>> get_regex_match_indices("PEPTIDE", "P[ST]")
         [2]
@@ -90,13 +94,39 @@ def get_regex_match_indices(input_str: str, regex_str: Union[str, regex.Pattern]
         >>> get_regex_match_indices("PPPP", "PP")
         [0, 1, 2]
 
+        >>> get_regex_match_indices("PEPCTIDE", "(?=C)")
+        [3]
+
+        >>> get_regex_match_indices("PEPCTIDE", "C")
+        [4]
+
+        >>> get_regex_match_indices("PEPCTIDE", "(?<=C)")
+        [4]
+
     """
+
+    if not isinstance(regex_str, regex.Pattern):
+        regex_pattern = regex.compile(regex_str)
+    else:
+        regex_pattern = regex_str
+
+    indicies = []
+    for match in regex_pattern.finditer(input_str, overlapped=True):
+        if match.start() != match.end():
+            warnings.warn("The regex pattern has a match with a none zero length. Using start index + 1 for the match.")
+            indicies.append(match.start() + 1 + offset)
+        else:
+            indicies.append(match.start() + offset)
+
+    return indicies
 
     # if regex is compiled
     if isinstance(regex_str, regex.Pattern):
         return [i.start() + offset for i in regex_str.finditer(input_str, overlapped=True)]
     else:
-        return [i[0] for i in get_regex_match_range(input_str, regex_str, offset)]
+        # return [i[0] for i in get_regex_match_range(input_str, regex_str, offset)]
+        regex_pattern = regex.compile(regex_str)
+        return [match.start() + offset for match in regex_pattern.finditer(input_str, overlapped=True)]
 
 
 def get_regex_match_range(input_str: str, regex_str: Union[str, regex.Pattern], offset: int = 0)\

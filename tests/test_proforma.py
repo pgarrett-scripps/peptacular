@@ -1,6 +1,7 @@
 import unittest
 
 import peptacular as pt
+from peptacular.proforma.proforma_dataclasses import Mod
 
 
 class TestProForma(unittest.TestCase):
@@ -297,3 +298,97 @@ class TestProForma(unittest.TestCase):
         self.assertEqual(pt.parse(proforma), expected_output)
         self.assertEqual(pt.serialize(expected_output), proforma)
 
+
+    def test_multi_annotation_crosslink(self):
+        # Test creating and serializing crosslinked peptides
+        pfa1 = pt.ProFormaAnnotation(_sequence='PEPTIDE')
+        pfa2 = pt.ProFormaAnnotation(_sequence='ANOTHER')
+        multi = pt.MultiProFormaAnnotation([pfa1, pfa2], [True])
+        self.assertEqual(pt.serialize(multi), r'PEPTIDE\\ANOTHER')
+        
+    def test_multi_annotation_chain(self):
+        # Test a chain of multiple peptides with different connection types
+        pfa1 = pt.ProFormaAnnotation(_sequence='PEPTIDE')
+        pfa2 = pt.ProFormaAnnotation(_sequence='ANOTHER')
+        pfa3 = pt.ProFormaAnnotation(_sequence='THIRD')
+        multi = pt.MultiProFormaAnnotation([pfa1, pfa2, pfa3], [True, False])
+        self.assertEqual(pt.serialize(multi), r'PEPTIDE\\ANOTHER+THIRD')
+        
+    def test_multi_annotation_with_modifications(self):
+        # Test with modifications on multiple peptides
+        pfa1 = pt.ProFormaAnnotation(
+            _sequence='PEPTIDE', 
+            _internal_mods={2: [pt.Mod('Phospho', 1)]}
+        )
+        pfa2 = pt.ProFormaAnnotation(
+            _sequence='ANOTHER', 
+            _nterm_mods=[pt.Mod('Acetyl', 1)]
+        )
+        multi = pt.MultiProFormaAnnotation([pfa1, pfa2], [False])
+        self.assertEqual(pt.parse(pt.serialize(multi)), multi)
+
+    def test_slice_annotation(self):
+        # Test slicing a ProForma annotation
+        proforma = "P[Phospho]EPTIDE"
+        annotation = pt.parse(proforma)
+        sliced = annotation.slice(0, 4)
+        self.assertEqual(sliced.sequence, "PEPT")
+        self.assertEqual(sliced.internal_mods, {0: [Mod('Phospho', 1)]})
+        
+    def test_reverse_annotation(self):
+        # Test reversing a ProForma annotation
+        proforma = "P[Phospho]EPTIDE"
+        annotation = pt.parse(proforma)
+        reversed_annotation = annotation.reverse()
+        self.assertEqual(reversed_annotation.sequence, "EDITPEP")
+        self.assertEqual(reversed_annotation.internal_mods, {6: [Mod('Phospho', 1)]})
+        
+    def test_shuffle_annotation(self):
+        # Test shuffling a ProForma annotation with a fixed seed
+        proforma = "P[Phospho]EPTIDE"
+        annotation = pt.parse(proforma)
+        shuffled = annotation.shuffle(seed=42)
+        self.assertEqual(len(shuffled.sequence), len(annotation.sequence))
+        self.assertEqual(shuffled.serialize(), "ETIPEP[Phospho]D")
+        
+    def test_shift_annotation(self):
+        # Test shifting a ProForma annotation
+        proforma = "P[Phospho]EPTIDE"
+        annotation = pt.parse(proforma)
+        shifted = annotation.shift(2)
+        self.assertEqual(shifted.serialize(), "PTIDEP[Phospho]E")
+
+    def test_is_subsequence(self):
+        # Test subsequence detection
+        parent = pt.parse("PEPTIDEPEPTIDE")
+        child = pt.parse("TIDE")
+        self.assertTrue(child.is_subsequence(parent))
+        
+    def test_find_indices(self):
+        # Test finding indices of a subsequence
+        parent = pt.parse("PEPTIDEPEPTIDE")
+        child = pt.parse("PEP")
+        indices = child.find_indices(parent)
+        self.assertEqual(indices, [0, 7])
+        
+    def test_count_residues(self):
+        # Test counting residues
+        annotation = pt.parse("PEPTIDE")
+        counts = annotation.count_residues()
+        self.assertEqual(counts['P'], 2)
+        self.assertEqual(counts['E'], 2)
+        self.assertEqual(counts['T'], 1)
+        self.assertEqual(counts['I'], 1)
+        self.assertEqual(counts['D'], 1)
+        
+    def test_count_residues_with_modifications(self):
+        # Test counting residues with modifications
+        proforma = "P[Phospho]EPTIDE"
+        annotation = pt.parse(proforma)
+        counts = annotation.count_residues()
+        self.assertEqual(counts['P'], 1)
+        self.assertEqual(counts['P[Phospho]'], 1)
+        self.assertEqual(counts['E'], 2)
+        self.assertEqual(counts['T'], 1)
+        self.assertEqual(counts['I'], 1)
+        self.assertEqual(counts['D'], 1)

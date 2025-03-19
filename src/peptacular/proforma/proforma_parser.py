@@ -1780,7 +1780,7 @@ class MultiProFormaAnnotation:
     annotations: List[ProFormaAnnotation]
     connections: List[bool]
 
-    def serialize(self) -> str:
+    def serialize(self, include_plus: bool = False) -> str:
         """
         Convert the multi annotation to a proforma string.
 
@@ -1789,7 +1789,7 @@ class MultiProFormaAnnotation:
         """
         s = ''
         for i, annotation in enumerate(self.annotations):
-            s += annotation.serialize()
+            s += annotation.serialize(include_plus=include_plus)
             if i != len(self.annotations) - 1:
                 connection = self.connections[i]
                 if connection is True:

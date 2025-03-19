@@ -378,7 +378,7 @@ def build_spans(max_index: int, enzyme_sites: Iterable[int], missed_cleavages: i
 
     enzyme_sites = sorted(set(enzyme_sites))
 
-    if len(enzyme_sites) == max_index - 1:  # non-enzymatic case
+    if len(enzyme_sites) == max_index + 1:  # non-enzymatic case
         yield from build_non_enzymatic_spans((0, max_index, 0), min_len, max_len)
         return  # Exit early since we only need non-enzymatic spans
 
