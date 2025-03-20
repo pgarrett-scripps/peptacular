@@ -1,9 +1,15 @@
 
+
 # Peptacular
+
+[![DOI](https://zenodo.org/badge/591504879.svg)](https://doi.org/10.5281/zenodo.15054278)[![Python package](https://github.com/pgarrett-scripps/peptacular/actions/workflows/python-package.yml/badge.svg)](https://github.com/pgarrett-scripps/peptacular/actions/workflows/python-package.yml)[![Pylint](https://github.com/pgarrett-scripps/peptacular/actions/workflows/pylint.yml/badge.svg)](https://github.com/pgarrett-scripps/peptacular/actions/workflows/pylint.yml)
+
 
 **peptacular** is an extremely lightweight package with only one dependency: ``regex``.
 
 It contains functions for parsing and working with Proforma2.0 compliant peptide & protein sequences.
+
+If you use **peptacular** in your research, please cite: https://doi.org/10.5281/zenodo.15054278
 
 ## Documentation
 https://peptacular.readthedocs.io/en/latest/

@@ -6,22 +6,14 @@
 Welcome to peptacular's documentation!
 ======================================
 
-Peptacular is a Python library for peptide-related bioinformatics. It provides tools for:
+If you use **peptacular** in your research, please cite:
 
-* Peptide mass calculations
-* Enzymatic digestion
-* Spectral matching and scoring
-* Glycan and modification handling
-* Sequence manipulation and more
+.. image:: https://zenodo.org/badge/591504879.svg
+  :target: https://doi.org/10.5281/zenodo.15054278
 
-The library is designed to be easy to use, with all functions available directly from the main package:
+**peptacular** is an extremely lightweight package with only one dependency: ``regex``.
 
-.. code-block:: python
-
-   import peptacular as pt
-   
-   # Calculate the mass of a peptide
-   mass = pt.mass("PEPTIDE")
+It contains functions for parsing and working with Proforma2.0 compliant peptide & protein sequences.
 
 .. toctree::
    :maxdepth: 2

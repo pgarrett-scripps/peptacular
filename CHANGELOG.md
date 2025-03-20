@@ -27,6 +27,8 @@ All notable changes to this project will be documented in this file.
 - added simple fasta_parser since I kept recreating it in other projects, works with several input types
 - some more tests
 - added condense_to_mass_mods to mass_calc.py which condenses modifications to a single +/- mass value
+- Fixed Docs
+- Linting
 
 ## [2.0.0]
 ### Added:
