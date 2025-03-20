@@ -1,7 +1,9 @@
 
 # Peptacular
 
-A spectacularly simple package for working with peptide sequences. Now proforma2.0 compliant.
+**peptacular** is an extremely lightweight package with only one dependency: ``regex``.
+
+It contains functions for parsing and working with Proforma2.0 compliant peptide & protein sequences.
 
 ## Documentation
 https://peptacular.readthedocs.io/en/latest/
