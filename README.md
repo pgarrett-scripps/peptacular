@@ -12,7 +12,7 @@ It contains functions for parsing and working with Proforma2.0 compliant peptide
 If you use **peptacular** in your research, please cite: https://doi.org/10.5281/zenodo.15054278
 
 ## Documentation
-https://peptacular.readthedocs.io/en/latest/
+https://peptacular.readthedocs.io/en/latest/index.html
 
 
 ## Installation
