@@ -15,6 +15,10 @@ All notable changes to this project will be documented in this file.
 - Improve fragment loss handling based on ion type and sequence
 - Can improve the performance of mass calculations with isotopes and use_isotope_on_mods, by not calculating the composition of mods
 - Add MultiProformaAnnot support to mass/chem/fragment/isotope....
+- Add more inplace args to proforma annotation methods... add_mod, remove_mod ...
+
+## [2.2.1]
+- removed labile mod check from pt.contains_sequence_ambiguity()
 
 ## [2.2.0]
 ### Added:

@@ -1132,7 +1132,7 @@ class ProFormaAnnotation:
         """
         Check if the sequence contains any ambiguity (modifications or intervals).
         """
-        return self.intervals is not None or self.unknown_mods is not None or self.labile_mods is not None
+        return self.intervals is not None or self.unknown_mods is not None
 
     def contains_residue_ambiguity(self) -> bool:
         """
