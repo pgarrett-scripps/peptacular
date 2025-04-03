@@ -17,7 +17,7 @@ All notable changes to this project will be documented in this file.
 - Add MultiProformaAnnot support to mass/chem/fragment/isotope....
 - Add more inplace args to proforma annotation methods... add_mod, remove_mod ...
 
-## [2.3.1]
+## [2.3.0]
 - bug fixes for isotopes.py
 - added support to isotopes.py for:
   - scaling the intensity of isotopic distribution by an intensity factor
@@ -25,7 +25,6 @@ All notable changes to this project will be documented in this file.
   - optionally return mass of isotopic distributions calculated with neutron offsets
   - merge_isotopic_distributions
 - added C13_NEUTRON_MASS = 1.003350 & PEPTIDE_AVERAGINE_NEUTRON_MASS = 1.002856 to constants.py
-
 
 
 ## [2.2.1]
