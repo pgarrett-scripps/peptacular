@@ -88,7 +88,8 @@ def parse_chem_formula(formula: str, sep: str = '') -> ChemComposition:
     return combined_comp
 
 
-def write_chem_formula(composition: ChemComposition, sep: str = '', hill_order: bool = False) -> str:
+def write_chem_formula(composition: ChemComposition, sep: str = '', hill_order: bool = False,
+                       precision: Optional[float] = None) -> str:
     """
     Writes a chemical formula from a dict mapping elements to their counts.
 
@@ -117,7 +118,7 @@ def write_chem_formula(composition: ChemComposition, sep: str = '', hill_order: 
         >>> write_chem_formula({'13C': 6, 'H': 12, 'O': 6}, sep=' ')
         '13C 6 H 12 O 6'
 
-        >>> write_chem_formula({'13C': 6, 'H': 12, 'O': 6}, sep='|')
+        >>> write_chem_formula({'13C': 6, 'H': 12, 'O': 6}, sep='|', precision=1)
         '13C|6|H|12|O|6'
 
         >>> write_chem_formula({'O': 6, 'H': 12, '13C': 6, 'C': 10}, hill_order=True)
@@ -127,10 +128,17 @@ def write_chem_formula(composition: ChemComposition, sep: str = '', hill_order: 
         >>> write_chem_formula({'C': 4.45, 'N': 8.22, 'H': 59.99, '13C': 34, 'S': 0.04, 'e': -16.33}, hill_order=True)
         'C4.45[13C34]H59.99N8.22S0.04e-16.33'
 
+        # formula with precision
+        >>> write_chem_formula({'C': 4.123456, 'N': 8.5555, 'H': 59.1022}, precision=2)
+        'C4.12N8.56H59.1'
+
     """
 
     if hill_order:
         composition = dict(sorted(composition.items(), key=lambda item: HILL_ORDER.get(item[0], 10_000)))
+
+    if precision is not None:
+        composition = {k: round(v, precision) for k, v in composition.items()}
 
     if sep != '':
         return sep.join([f'{k}{sep}{v}' for k, v in composition.items() if v != 0])
