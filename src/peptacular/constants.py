@@ -14,8 +14,10 @@ from peptacular.util import merge_dicts
 
 # Partical masses
 PROTON_MASS = 1.00727646688
-NEUTRON_MASS = 1.00866491597
 ELECTRON_MASS = 0.00054857990946
+NEUTRON_MASS = 1.00866491597
+C13_NEUTRON_MASS = 1.003350
+PEPTIDE_AVERAGINE_NEUTRON_MASS = 1.002856
 
 _dir_name = os.path.dirname(__file__)
 _element_path = os.path.join(_dir_name, "data", "chem.txt")
