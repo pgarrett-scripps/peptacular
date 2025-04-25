@@ -1028,16 +1028,16 @@ def modification_coverage(sequence: Union[str, ProFormaAnnotation],
     .. code-block:: python
 
         >>> modification_coverage("PEPTIDE[Phospho]", ["TIDE"])
-        {6: 0}  # The modification at position 6 is not covered by the subsequence
+        {6: 0}
 
         >>> modification_coverage("PEPTIDE[Phospho]", ["TIDE[Phospho]"])
-        {6: 1}  # The modification at position 6 is covered by the subsequence
+        {6: 1}
 
         >>> modification_coverage("PEP[Phospho]TIDE[Methyl]", ["PEP[Phospho]", "TIDE[Methyl]"])
-        {2: 1, 6: 1}  # Both modifications are covered
+        {2: 1, 6: 1}
 
         >>> modification_coverage("PEP[Phospho]TIDE[Methyl]", ["PEP[Phospho]", "TIDE[Methyl]", "PEP[Phospho]"], accumulate=True)
-        {2: 2, 6: 1}  # Phospho modification is covered twice
+        {2: 2, 6: 1}
     """
     # Convert inputs to annotations if they are strings
     if isinstance(sequence, str):
