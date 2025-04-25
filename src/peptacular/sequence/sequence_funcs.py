@@ -1000,6 +1000,115 @@ def percent_coverage(sequence: Union[str, ProFormaAnnotation],
     return sum(cov_arr) / len(cov_arr)
 
 
+def modification_coverage(sequence: Union[str, ProFormaAnnotation],
+                         subsequences: List[Union[str, ProFormaAnnotation]],
+                         accumulate: bool = False) -> Dict[Union[int, str], int]:
+    """
+    Calculate the modification coverage given a list of subsequences.
+    
+    This function identifies which modifications in the main sequence are covered by
+    subsequences. It returns a dictionary where each key is a modification position/type
+    (matching the format from get_mods) and each value is the number of subsequences
+    that cover that modification.
+
+    :param sequence: The sequence or ProFormaAnnotation object representing the protein.
+    :type sequence: Union[str, ProFormaAnnotation]
+    :param subsequences: The sequence's or ProFormaAnnotation object's subsequences (peptides) to be used for coverage.
+    :type subsequences: List[Union[str, ProFormaAnnotation]]
+    :param accumulate: If True, the count will accumulate for each subsequence covering the modification.
+                       If False, the count will be binary (1 if covered, 0 if not).
+    :type accumulate: bool
+
+    :raises ValueError: If the input sequence contains multiple sequences.
+    :raises ProFormaFormatError: if the proforma sequence is not valid
+
+    :return: Dictionary mapping modification positions/types to coverage counts.
+    :rtype: Dict[Union[int, str], int]
+
+    .. code-block:: python
+
+        >>> modification_coverage("PEPTIDE[Phospho]", ["TIDE"])
+        {6: 0}  # The modification at position 6 is not covered by the subsequence
+
+        >>> modification_coverage("PEPTIDE[Phospho]", ["TIDE[Phospho]"])
+        {6: 1}  # The modification at position 6 is covered by the subsequence
+
+        >>> modification_coverage("PEP[Phospho]TIDE[Methyl]", ["PEP[Phospho]", "TIDE[Methyl]"])
+        {2: 1, 6: 1}  # Both modifications are covered
+
+        >>> modification_coverage("PEP[Phospho]TIDE[Methyl]", ["PEP[Phospho]", "TIDE[Methyl]", "PEP[Phospho]"], accumulate=True)
+        {2: 2, 6: 1}  # Phospho modification is covered twice
+    """
+    # Convert inputs to annotations if they are strings
+    if isinstance(sequence, str):
+        sequence = sequence_to_annotation(sequence)
+
+    # Get all modifications from the main sequence
+    sequence_mods = get_mods(sequence)
+    
+    # Initialize coverage dictionary with zeroes for all modification sites
+    coverage_dict = {pos: 0 for pos in sequence_mods}
+    
+    # Get the unmodified sequence
+    unmodified_sequence = strip_mods(sequence)
+    
+    # Process each subsequence
+    for subsequence in subsequences:
+        if isinstance(subsequence, str):
+            subsequence = sequence_to_annotation(subsequence)
+        
+        # Get the unmodified subsequence
+        unmodified_subsequence = strip_mods(subsequence)
+        
+        # Find all occurrences of the unmodified subsequence in the unmodified sequence
+        start_indices = find_subsequence_indices(unmodified_sequence, unmodified_subsequence)
+        
+        # Get the modifications of the subsequence
+        subsequence_mods = get_mods(subsequence)
+        
+        # For each occurrence, check if the subsequence contains modifications at the same positions
+        for start_idx in start_indices:
+            for mod_pos, mod_values in sequence_mods.items():
+                # Skip special mods that aren't numeric positions
+                if not isinstance(mod_pos, int):
+                    continue
+                
+                # Calculate the relative position in the subsequence
+                relative_pos = mod_pos - start_idx
+                
+                # Check if this position is within the subsequence
+                if 0 <= relative_pos < len(unmodified_subsequence):
+                    # Check if the subsequence has a modification at this relative position
+                    if relative_pos in subsequence_mods:
+                        # For each modification in the main sequence at this position
+                        for mod_value in mod_values:
+                            # Check if any modification in the subsequence matches
+                            if any(str(mod_value) == str(subseq_mod) for subseq_mod in subsequence_mods[relative_pos]):
+                                if accumulate:
+                                    coverage_dict[mod_pos] += 1
+                                else:
+                                    coverage_dict[mod_pos] = 1
+                                break
+            
+            # Handle terminal modifications
+            for mod_type in ['nterm', 'cterm']:
+                if mod_type in sequence_mods and mod_type in subsequence_mods:
+                    # For terminal mods, check if start or end of subsequence aligns with terminal
+                    terminal_match = (mod_type == 'nterm' and start_idx == 0) or \
+                                    (mod_type == 'cterm' and start_idx + len(unmodified_subsequence) == len(unmodified_sequence))
+                    
+                    if terminal_match:
+                        # Check if any terminal mod in the subsequence matches
+                        for mod_value in sequence_mods[mod_type]:
+                            if any(str(mod_value) == str(subseq_mod) for subseq_mod in subsequence_mods[mod_type]):
+                                if accumulate:
+                                    coverage_dict[mod_type] += 1
+                                else:
+                                    coverage_dict[mod_type] = 1
+                                break
+    
+    return coverage_dict
+
 def convert_ip2_sequence(sequence: str) -> str:
     """
     Converts a IP2-Like sequence to a proforma2.0 compatible sequence.
