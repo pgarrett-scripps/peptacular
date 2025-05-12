@@ -2,7 +2,7 @@
 Peptacular
 """
 
-__version__ = '2.4.0'
+__version__ = '2.4.1'
 
 from .chem import *
 from .sequence import *

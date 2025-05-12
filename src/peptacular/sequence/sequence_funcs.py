@@ -1124,8 +1124,8 @@ def convert_ip2_sequence(sequence: str) -> str:
         >>> convert_ip2_sequence('K.PEP(phospho)TIDE.K')
         'PEP[phospho]TIDE'
 
-        >>> convert_ip2_sequence('K.(1)PEP(phospho)TIDE.K')
-        '[1]-PEP[phospho]TIDE'
+        >>> convert_ip2_sequence('K.(-1)PEP(phospho)TIDE.K')
+        '[-1]-PEP[phospho]TIDE'
 
         >>> convert_ip2_sequence('K.PEPTIDE(2).K')
         'PEPTIDE[2]'
@@ -1154,8 +1154,8 @@ def convert_ip2_sequence(sequence: str) -> str:
     # Step 2: Replace () with []
     sequence = re.sub(r'\(([^)]+)\)', r'[\1]', sequence)
 
-    # Step 3: Handle modifications at the start
-    sequence = re.sub(r'^\[(\d+)\]', r'[\1]-', sequence)
+    # Step 3: Handle modifications at the start (can be any content, not just numbers)
+    sequence = re.sub(r'^\[([^\]]+)\]', r'[\1]-', sequence)
 
     # Step 4: Convert consecutive modifications to use a dash
     sequence = re.sub(r'\]\[', r']-[', sequence)
