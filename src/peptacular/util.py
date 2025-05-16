@@ -279,10 +279,24 @@ def _combine_ambiguity_intervals(
     *interval_lists: List[Tuple[int, int]]
 ) -> List[Tuple[int, int]]:
     """
-    merge many ambiguity intervals into a single list of intervals.
-    each index whcih is ambiguous must be ambiguous across list of intervals
+    Merge multiple lists of ambiguity intervals into a single list of common ambiguity intervals.
 
-    any intervals that have the same start and end values are removed.
+    This function identifies positions that are ambiguous across all provided interval lists.
+    For a position to be considered ambiguous in the result, it must be contained in at least
+    one interval from each input list. The function then constructs optimized intervals
+    covering these common ambiguous positions.
+
+    Intervals are represented as tuples (start, end) where:
+    - start is inclusive
+    - end is exclusive
+
+    Intervals with identical start and end values (zero-length intervals) are removed.
+
+    :param interval_lists: Variable number of lists containing ambiguity intervals
+    :type interval_lists: List[Tuple[int, int]]
+
+    :return: A list of merged intervals representing positions that are ambiguous across all input lists
+    :rtype: List[Tuple[int, int]]
 
     .. code-block:: python
 
@@ -300,12 +314,7 @@ def _combine_ambiguity_intervals(
 
         >>> _combine_ambiguity_intervals([(0, 1)], [(4, 6)])
         []
-
     """
-    # if a start and end are the same, subtract 1 from end and add 1 to start
-    # Never allow a interval to become longer than it was
-    # intervals of size 1 are not ambiguous
-    # the start and end of any interval must
 
     # First, collect all unique intervals from input lists
     all_intervals = set()
@@ -357,22 +366,31 @@ def _get_mass_shift_interval(
     forward_coverage: List[int], reverse_coverage: List[int]
 ) -> Optional[Tuple[int, int]]:
     """
-    add the
-    :param forward_coverage:
-    :param reverse_coverage:
-    :return:
+        Determine the interval where a mass shift should be placed based on fragment ion coverage.
+
+    This function examines the forward and reverse ion coverage to identify the region where
+    a mass shift (such as a modification) should be positioned. It returns the start and end
+    indices (inclusive) of this region, or None if no suitable region is found.
+
+    The mass shift interval is determined by:
+    1. Finding the highest position with forward ion coverage
+    2. Finding the lowest position with reverse ion coverage
+    3. The mass shift belongs between these two positions
+
+    :param forward_coverage: Binary list indicating forward ion coverage (1) or no coverage (0)
+    :type forward_coverage: List[int]
+    :param reverse_coverage: Binary list indicating reverse ion coverage (1) or no coverage (0)
+    :type reverse_coverage: List[int]
+
+    :return: A tuple containing the start and end indices (inclusive) for the mass shift,
+             or None if there is no valid interval
+    :rtype: Optional[Tuple[int, int]]
 
     .. code-block:: python
 
-        PEPTIDE
-        1110000
-        0000111
         >>> _get_mass_shift_interval([1,1,1,0,0,0,0], [0,0,0,0,1,1,1])
         (3, 3)
 
-        PEPTIDE
-        1110000
-        0001111
         >>> _get_mass_shift_interval([1,1,1,0,0,0,0], [0,0,0,1,1,1,1])
         (3, 3)
 
@@ -387,12 +405,7 @@ def _get_mass_shift_interval(
 
         >>> _get_mass_shift_interval([1,1,1,1,1,0,0], [0,0,0,0,1,1,1]) # None
 
-
     """
-
-    # if b and y ions overlap, throw error
-    # if b and i ionsmeet at same location... add X[mass_shift] to meeting point
-    # if there is a gap between b and y ions, then return interval
 
     highest_forward_fragment = [i for i, cnt in enumerate(forward_coverage) if cnt > 0]
     if len(highest_forward_fragment) == 0:
