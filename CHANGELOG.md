@@ -3,7 +3,6 @@
 
 All notable changes to this project will be documented in this file.
 
-
 ### TODO (Next Release?)
 - Fix internal fragment ions (Some might not be correct).
 - Cleanup custom errors as many are not used.
@@ -16,6 +15,9 @@ All notable changes to this project will be documented in this file.
 - Can improve the performance of mass calculations with isotopes and use_isotope_on_mods, by not calculating the composition of mods
 - Add MultiProformaAnnot support to mass/chem/fragment/isotope....
 - Add more inplace args to proforma annotation methods... add_mod, remove_mod ...
+
+## [2.5.0]
+- Added features to annotate peptides depending on fragment ions
 
 ## [2.4.0]
 - added modification_coverage function to sequence_funcs.py

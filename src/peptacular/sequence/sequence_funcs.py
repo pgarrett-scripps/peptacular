@@ -21,15 +21,17 @@ end of the sequence and if not raise an error.
 
 """
 
-from typing import Counter as CounterType, Optional
+from typing import Counter as CounterType, Optional, Any
 from typing import Dict, List, Tuple, Callable, Union
 
 import regex as re
 
 from peptacular.constants import ORDERED_AMINO_ACIDS
 from peptacular.proforma.proforma_parser import parse, ProFormaAnnotation, serialize, MultiProFormaAnnotation
+from peptacular.proforma.proforma_dataclasses import Mod, Interval
 from peptacular.spans import Span
 from peptacular.proforma.input_convert import ModDict, fix_list_of_mods, fix_intervals_input
+from peptacular.util import _construct_ambiguity_intervals, _combine_ambiguity_intervals, _get_mass_shift_interval
 
 
 def sequence_to_annotation(sequence: str) -> ProFormaAnnotation:
@@ -1001,8 +1003,8 @@ def percent_coverage(sequence: Union[str, ProFormaAnnotation],
 
 
 def modification_coverage(sequence: Union[str, ProFormaAnnotation],
-                         subsequences: List[Union[str, ProFormaAnnotation]],
-                         accumulate: bool = False) -> Dict[Union[int, str], int]:
+                          subsequences: List[Union[str, ProFormaAnnotation]],
+                          accumulate: bool = False) -> Dict[Union[int, str], int]:
     """
     Calculate the modification coverage given a list of subsequences.
     
@@ -1045,37 +1047,37 @@ def modification_coverage(sequence: Union[str, ProFormaAnnotation],
 
     # Get all modifications from the main sequence
     sequence_mods = get_mods(sequence)
-    
+
     # Initialize coverage dictionary with zeroes for all modification sites
     coverage_dict = {pos: 0 for pos in sequence_mods}
-    
+
     # Get the unmodified sequence
     unmodified_sequence = strip_mods(sequence)
-    
+
     # Process each subsequence
     for subsequence in subsequences:
         if isinstance(subsequence, str):
             subsequence = sequence_to_annotation(subsequence)
-        
+
         # Get the unmodified subsequence
         unmodified_subsequence = strip_mods(subsequence)
-        
+
         # Find all occurrences of the unmodified subsequence in the unmodified sequence
         start_indices = find_subsequence_indices(unmodified_sequence, unmodified_subsequence)
-        
+
         # Get the modifications of the subsequence
         subsequence_mods = get_mods(subsequence)
-        
+
         # For each occurrence, check if the subsequence contains modifications at the same positions
         for start_idx in start_indices:
             for mod_pos, mod_values in sequence_mods.items():
                 # Skip special mods that aren't numeric positions
                 if not isinstance(mod_pos, int):
                     continue
-                
+
                 # Calculate the relative position in the subsequence
                 relative_pos = mod_pos - start_idx
-                
+
                 # Check if this position is within the subsequence
                 if 0 <= relative_pos < len(unmodified_subsequence):
                     # Check if the subsequence has a modification at this relative position
@@ -1089,14 +1091,15 @@ def modification_coverage(sequence: Union[str, ProFormaAnnotation],
                                 else:
                                     coverage_dict[mod_pos] = 1
                                 break
-            
+
             # Handle terminal modifications
             for mod_type in ['nterm', 'cterm']:
                 if mod_type in sequence_mods and mod_type in subsequence_mods:
                     # For terminal mods, check if start or end of subsequence aligns with terminal
                     terminal_match = (mod_type == 'nterm' and start_idx == 0) or \
-                                    (mod_type == 'cterm' and start_idx + len(unmodified_subsequence) == len(unmodified_sequence))
-                    
+                                     (mod_type == 'cterm' and start_idx + len(unmodified_subsequence) == len(
+                                         unmodified_sequence))
+
                     if terminal_match:
                         # Check if any terminal mod in the subsequence matches
                         for mod_value in sequence_mods[mod_type]:
@@ -1106,8 +1109,9 @@ def modification_coverage(sequence: Union[str, ProFormaAnnotation],
                                 else:
                                     coverage_dict[mod_type] = 1
                                 break
-    
+
     return coverage_dict
+
 
 def convert_ip2_sequence(sequence: str) -> str:
     """
@@ -1272,6 +1276,7 @@ def is_sequence_valid(sequence: Union[str, ProFormaAnnotation]) -> bool:
             return False
     return True
 
+
 def count_aa(sequence: Union[str, ProFormaAnnotation]) -> Dict[str, int]:
     """
     Converts a sequence to a feature vector.
@@ -1282,8 +1287,87 @@ def count_aa(sequence: Union[str, ProFormaAnnotation]) -> Dict[str, int]:
     else:
         annotation = sequence
 
-    aa_counts = {aa:0 for aa in ORDERED_AMINO_ACIDS}
+    aa_counts = {aa: 0 for aa in ORDERED_AMINO_ACIDS}
     for aa in annotation.sequence:
         aa_counts[aa] += 1
 
     return aa_counts
+
+
+def annotate_ambiguity(sequence: Union[str, ProFormaAnnotation],
+                       forward_coverage: List[int], reverse_coverage: List[int],
+                       mass_shift: Optional[Any] = None) -> str:
+    """
+    Given a peptide sequence, and the forward and reverse fragment ion coverage, annotate the sequence with
+    ambiguity intervals.
+
+    .. code-block:: python
+
+        # [(0, 1), (4, 6)], [(0, 4), (5, 6)]
+        >>> annotate_ambiguity('PEPTIDE', [0,1,1,1,0,0,0], [0,0,0,0,0,1,0])
+        '(?PE)PTI(?DE)'
+
+        >>> annotate_ambiguity('PEPTIDE', [1,1,1,0,0,0,0], [0,0,0,0,0,1,1])
+        'PEP(?TI)DE'
+
+        >>> annotate_ambiguity('P[10]EPTIDE', [1,1,1,0,0,0,0], [0,0,0,0,0,1,1])
+        'P[10]EP(?TI)DE'
+
+        >>> annotate_ambiguity('PEPTIDE', [1,1,1,0,0,0,0], [0,0,0,0,1,1,1])
+        'PEPTIDE'
+
+        >>> annotate_ambiguity('PEPTIDE', [1,1,1,0,0,0,0], [0,0,0,0,1,1,1], 120)
+        'PEPT[120]IDE'
+
+        >>> annotate_ambiguity('PEPTIDE', [1,1,0,0,0,0,0], [0,0,0,0,1,1,1], 120)
+        'PE(?PT)[120]IDE'
+
+        >>> annotate_ambiguity('PEPTIDE', [0,1,1,0,0,0,0], [0,0,0,0,0,1,0], 120)
+        '(?PE)P(?TI)[120](?DE)'
+
+        >>> annotate_ambiguity('PEPTIDE', [0,1,1,1,1,0,0], [0,0,1,1,1,1,0], 120)
+        '{120}(?PE)PTI(?DE)'
+
+        (?SSGS)IA(?SS)(?YVQ)()[37.959]W(?YQQRPGSA)(?PT)TVIYEDDER(?PS)(?GV)(?PDR)
+        Seq: SSGSIASSYVQWYQQRPGSAPTTVIYEDDERPSGVPDR
+        For: 00011101001000000000000000000000000000
+        Rev: 00000000000110000000101111111111010100
+        >>> for_ions = list(map(int, '00011101001000000000000000000000000000'))
+        >>> rev_iosn = list(map(int, '00000000000110000000101111111111010100'))
+        >>> annotate_ambiguity('SSGSIASSYVQWYQQRPGSAPTTVIYEDDERPSGVPDR', for_ions, rev_iosn, 120)
+        '(?SSGS)IA(?SS)(?YVQ)W[120](?YQQRPGSA)(?PT)TVIYEDDER(?PS)(?GV)(?PDR)'
+    """
+
+    if isinstance(sequence, str):
+        annotation = sequence_to_annotation(sequence)
+    else:
+        annotation = sequence
+
+    # ensure that annotation does not contain intervals
+    if annotation.has_intervals():
+        raise ValueError("Annotation should not contain intervals")
+
+    if len(forward_coverage) != len(reverse_coverage) != len(annotation):
+        raise ValueError(
+            f"Coverage length does not match sequence length: {len(forward_coverage)} != {len(reverse_coverage)} != {len(annotation)}")
+
+    forward_intervals = _construct_ambiguity_intervals(forward_coverage, reverse=False)
+    reverse_intervals = _construct_ambiguity_intervals(reverse_coverage, reverse=True)
+    ambiguity_intervals = _combine_ambiguity_intervals(forward_intervals, reverse_intervals)
+
+    intervals = [Interval(start, end + 1, True, None) for start, end in ambiguity_intervals]
+
+    annotation.add_intervals(intervals, append=True)
+
+    if mass_shift is not None:
+        mass_shift_interval = _get_mass_shift_interval(forward_coverage, reverse_coverage)
+        if mass_shift_interval is None:
+            annotation.add_labile_mods(mass_shift, append=True)
+        elif mass_shift_interval[0] == mass_shift_interval[1]:
+            # add modification to the sequence
+            annotation.add_internal_mod(mass_shift_interval[0], mass_shift, append=True)
+        else:
+            mod_interval = Interval(mass_shift_interval[0], mass_shift_interval[1] + 1, False, [Mod(mass_shift, 1)])
+            annotation.add_intervals([mod_interval], append=True)
+
+    return annotation.serialize(include_plus=False)

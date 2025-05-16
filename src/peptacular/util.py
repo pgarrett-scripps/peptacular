@@ -3,7 +3,7 @@ Utils.py
 """
 
 import warnings
-from typing import Union, List, Tuple, Dict, Generator
+from typing import Union, List, Tuple, Dict, Generator, Optional
 import regex
 
 
@@ -197,3 +197,198 @@ def _validate_span(span: Tuple[int, int, int]) -> None:
         raise ValueError(f'End of span should be non-negative, got {end}.')
     if start > end:
         raise ValueError(f'Start of span: {start}, should be less than or equal to end of span: {end}.')
+
+
+def _construct_ambiguity_intervals(counts: List[int], reverse: bool) -> List[Tuple[int, int]]:
+    """
+    Construct intervals for sequences of zeros in the counts list. When reverse is false, start from the left hand side
+    and move to the right. When reverse is true, start from the right hand side and move to the left. Intervals start
+    at 0 and end on any positive value. Both are inclusive. Returned intervals should be in forwards format, that is
+    have a starting value less than the ending value.
+
+    :param counts: List of integers (typically counts)
+    :param reverse: If True, reverse the list before processing
+    :return: List of intervals [start, end] indicating runs of zeros
+
+    .. code-block:: python
+
+        # [0, 1, 1, 1, 0, 0, 0]
+        # [1, 1, 0, 0, 1, 1, 1] # ambiguity
+        >>> _construct_ambiguity_intervals([0, 1, 1, 1, 0, 0, 0], reverse=False)
+        [(0, 1), (4, 6)]
+
+        # [0, 0, 1, 1, 1, 1, 0]
+        # [1, 1, 0, 0, 0, 1, 1] # ambiguity
+        >>> _construct_ambiguity_intervals([0, 0, 1, 1, 1, 0, 0], reverse=True)
+        [(0, 1), (4, 6)]
+
+        >>> _construct_ambiguity_intervals([0, 1, 1, 1, 0, 0, 1], reverse=False)
+        [(0, 1), (4, 6)]
+    """
+
+    if reverse:
+        ambiguity_intervals = _construct_ambiguity_intervals(counts[::-1], reverse=False)
+        ambiguity_intervals = [(len(counts) - 1 - end, len(counts) - 1 - start) for start, end in ambiguity_intervals]
+        # sort the intervals
+        ambiguity_intervals.sort(key=lambda x: x[0])
+        return ambiguity_intervals
+
+    ambiguity_intervals = []
+    current_interval = None
+    for i, cnt in enumerate(counts):
+        if cnt == 0:
+            if current_interval is not None:
+                current_interval = (current_interval[0], i)
+            else:
+                current_interval = (i, i)
+
+        else:
+            if current_interval is not None:
+                current_interval = (current_interval[0], i)
+                ambiguity_intervals.append(current_interval)
+                current_interval = None
+            else:
+                continue
+
+    if current_interval is not None:
+        current_interval = (current_interval[0], len(counts) - 1)
+        ambiguity_intervals.append(current_interval)
+
+    return ambiguity_intervals
+
+
+def _combine_ambiguity_intervals(*interval_lists: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
+    """
+    merge many ambiguity intervals into a single list of intervals.
+    each index whcih is ambiguous must be ambiguous across list of intervals
+
+    any intervals that have the same start and end values are removed.
+
+    .. code-block:: python
+
+        >>> _combine_ambiguity_intervals([(0, 1), (4, 6)], [(0,1)])
+        [(0, 1)]
+
+        >>> _combine_ambiguity_intervals([(0, 1), (4, 6)], [(0,1), (4,5)])
+        [(0, 1), (4, 5)]
+
+        >>> _combine_ambiguity_intervals([(0, 1), (4, 6)], [(0, 4), (5, 6)])
+        [(0, 1), (5, 6)]
+
+        >>> _combine_ambiguity_intervals([(2, 5)], [(3, 6)])
+        [(3, 5)]
+
+        >>> _combine_ambiguity_intervals([(0, 1)], [(4, 6)])
+        []
+
+    """
+    # if a start and end are the same, subtract 1 from end and add 1 to start
+    # Never allow a interval to become longer than it was
+    # intervals of size 1 are not ambiguous
+    # the start and end of any interval must
+
+    # First, collect all unique intervals from input lists
+    all_intervals = set()
+    for interval_list in interval_lists:
+        for interval in interval_list:
+            all_intervals.add(interval)
+
+    # Remove intervals where start == end (these are not ambiguous)
+    filtered_intervals = {(start, end) for start, end in all_intervals if start != end}
+
+    # Find all possible indices that are covered by any interval
+    all_indices = set()
+    for start, end in filtered_intervals:
+        for i in range(start, end):
+            all_indices.add(i)
+
+    # For each index, check if it's contained in at least one interval from each input list
+    common_indices = set()
+    for idx in all_indices:
+        is_common = True
+        for interval_list in interval_lists:
+            if not any(start <= idx < end for start, end in interval_list):
+                is_common = False
+                break
+        if is_common:
+            common_indices.add(idx)
+
+    # If no common indices found, return empty list
+    if not common_indices:
+        return []
+
+    # Construct new intervals from the common indices
+    result = []
+    if common_indices:
+        sorted_indices = sorted(common_indices)
+        start = sorted_indices[0]
+        for i in range(1, len(sorted_indices)):
+            if sorted_indices[i] > sorted_indices[i - 1] + 1:
+                # Gap found, close the current interval and start a new one
+                result.append((start, sorted_indices[i - 1] + 1))
+                start = sorted_indices[i]
+        # Add the last interval
+        result.append((start, sorted_indices[-1] + 1))
+
+    return result
+
+
+def _get_mass_shift_interval(forward_coverage: List[int], reverse_coverage: List[int]) -> Optional[Tuple[int, int]]:
+    """
+    add the
+    :param forward_coverage:
+    :param reverse_coverage:
+    :return:
+
+    .. code-block:: python
+
+        PEPTIDE
+        1110000
+        0000111
+        >>> _get_mass_shift_interval([1,1,1,0,0,0,0], [0,0,0,0,1,1,1])
+        (3, 3)
+
+        PEPTIDE
+        1110000
+        0001111
+        >>> _get_mass_shift_interval([1,1,1,0,0,0,0], [0,0,0,1,1,1,1])
+        (3, 3)
+
+        >>> _get_mass_shift_interval([1,1,0,0,0,0,0], [0,0,0,0,1,1,1])
+        (2, 3)
+
+        >>> _get_mass_shift_interval([0,0,0,0,0,0,0], [0,0,0,0,1,1,1])
+        (0, 3)
+
+        >>> _get_mass_shift_interval([1,1,1,0,0,0,0], [0,0,0,0,0,0,0])
+        (3, 6)
+
+        >>> _get_mass_shift_interval([1,1,1,1,1,0,0], [0,0,0,0,1,1,1]) # None
+
+
+    """
+
+    # if b and y ions overlap, throw error
+    # if b and i ionsmeet at same location... add X[mass_shift] to meeting point
+    # if there is a gap between b and y ions, then return interval
+
+    highest_forward_fragment = [i for i, cnt in enumerate(forward_coverage) if cnt > 0]
+    if len(highest_forward_fragment) == 0:
+        highest_forward_fragment = -1
+    else:
+        highest_forward_fragment = max(highest_forward_fragment)
+
+    highest_reverse_fragment = [i for i, cnt in enumerate(reverse_coverage) if cnt > 0]
+    if len(highest_reverse_fragment) == 0:
+        highest_reverse_fragment = len(reverse_coverage)
+    else:
+        highest_reverse_fragment = min(highest_reverse_fragment)
+
+    if highest_forward_fragment >= highest_reverse_fragment:
+        return None
+
+    if highest_forward_fragment == highest_reverse_fragment - 1:
+        return (highest_forward_fragment + 1, highest_forward_fragment + 1)
+
+    # if there is a gap between the two, return the gap
+    return (highest_forward_fragment + 1, highest_reverse_fragment - 1)

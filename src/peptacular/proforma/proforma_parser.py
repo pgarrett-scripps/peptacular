@@ -1448,8 +1448,33 @@ class ProFormaAnnotation:
         else:
             if self.has_intervals():
                 self.intervals.extend(copy.deepcopy(intervals))
+                self.fix_intervals()
             else:
                 self.intervals = intervals
+
+    def fix_intervals(self) -> None:
+        # loop over all intervals and ensure there are not multiple intervals with the same start and end
+        # if there are merge them together. taking adding list of mods together and also taking true if any matching
+        # intervals have ambiguous=true
+
+        if not self.has_intervals():
+            return
+
+        intervals = {}
+        for interval in self.intervals:
+            key = (interval.start, interval.end)
+            if key not in intervals:
+                intervals[key] = copy.deepcopy(interval)
+                # if mods is None make list
+                if intervals[key].mods is None:
+                    intervals[key].mods = []
+            else:
+                intervals[key].mods.extend(copy.deepcopy(interval.mods))
+                intervals[key].ambiguous = intervals[key].ambiguous or interval.ambiguous
+
+        # sort intervals and add back
+        intervals = sorted(intervals.values(), key=lambda x: (x.start, x.end))
+        self.intervals = intervals
 
     def add_charge(self, charge: Optional[int]) -> None:
         """
