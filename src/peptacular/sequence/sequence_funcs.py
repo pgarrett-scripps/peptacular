@@ -24,8 +24,6 @@ end of the sequence and if not raise an error.
 from typing import Counter as CounterType, Optional, Any
 from typing import Dict, List, Tuple, Callable, Union
 
-import regex as re
-
 from peptacular.constants import ORDERED_AMINO_ACIDS
 from peptacular.proforma.proforma_parser import (
     parse,
@@ -33,17 +31,11 @@ from peptacular.proforma.proforma_parser import (
     serialize,
     MultiProFormaAnnotation,
 )
-from peptacular.proforma.proforma_dataclasses import Mod, Interval
 from peptacular.spans import Span
 from peptacular.proforma.input_convert import (
     ModDict,
     fix_list_of_mods,
     fix_intervals_input,
-)
-from peptacular.util import (
-    _construct_ambiguity_intervals,
-    _combine_ambiguity_intervals,
-    _get_mass_shift_interval,
 )
 
 

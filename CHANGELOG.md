@@ -18,6 +18,8 @@ All notable changes to this project will be documented in this file.
 
 ## [2.5.0]
 - Added features to annotate peptides depending on fragment ions
+- moved convertor functions to peptacular.sequence.convertors
+- formatting with black
 
 ## [2.4.0]
 - added modification_coverage function to sequence_funcs.py
