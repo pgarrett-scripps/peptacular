@@ -1,6 +1,7 @@
 """
 Isotope.py - A module for calculating isotopic distributions of molecules.
 """
+
 import sys
 from typing import List, Dict, Tuple, Union, Optional
 import warnings
@@ -12,17 +13,17 @@ from peptacular.mass_calc import chem_mass
 
 
 def isotopic_distribution(
-        chemical_formula: ChemComposition,
-        max_isotopes: Optional[int] = None,
-        min_abundance_threshold: Optional[float] = None,
-        distribution_resolution: Union[int] = 5,
-        use_neutron_count: bool = False,
-        conv_min_abundance_threshold: Optional[float] = None,
-        distribution_abundance: float = 1.0,
-        is_abundance_sum: bool = False,
-        output_masses_for_neutron_offset: bool = False,
-        neutron_mass: float = constants.NEUTRON_MASS,
-        precision: Optional[int] = None
+    chemical_formula: ChemComposition,
+    max_isotopes: Optional[int] = None,
+    min_abundance_threshold: Optional[float] = None,
+    distribution_resolution: Union[int] = 5,
+    use_neutron_count: bool = False,
+    conv_min_abundance_threshold: Optional[float] = None,
+    distribution_abundance: float = 1.0,
+    is_abundance_sum: bool = False,
+    output_masses_for_neutron_offset: bool = False,
+    neutron_mass: float = constants.NEUTRON_MASS,
+    precision: Optional[int] = None,
 ) -> List[Tuple[float, float]]:
     """
     Calculate the isotopic distribution for a given formula.
@@ -142,11 +143,14 @@ def isotopic_distribution(
         max_isotopes = sys.maxsize
 
     # Just use these to correct mass
-    electron_count = chemical_formula.pop('e', 0)
-    proton_count = chemical_formula.pop('p', 0)
-    neutron_count = chemical_formula.pop('n', 0)
-    particle_mass_offset = (proton_count * constants.PROTON_MASS) + (neutron_count * constants.NEUTRON_MASS) + (
-            electron_count * constants.ELECTRON_MASS)
+    electron_count = chemical_formula.pop("e", 0)
+    proton_count = chemical_formula.pop("p", 0)
+    neutron_count = chemical_formula.pop("n", 0)
+    particle_mass_offset = (
+        (proton_count * constants.PROTON_MASS)
+        + (neutron_count * constants.NEUTRON_MASS)
+        + (electron_count * constants.ELECTRON_MASS)
+    )
 
     # check if any values are negative:
     if any(v < 0 for v in chemical_formula.values()):
@@ -169,37 +173,56 @@ def isotopic_distribution(
     # raise warning
     if delta_mass != 0.0:
         warnings.warn(
-            f"The chemical formula has a mass difference of {delta_mass} Da. This is likely due to floating point errors. The mass will be corrected for this.")
+            f"The chemical formula has a mass difference of {delta_mass} Da. This is likely due to floating point errors. The mass will be corrected for this."
+        )
 
     total_distribution = {0: 1.0}  # Start with a base distribution
     for element, count in chemical_formula.items():
-        elemental_distribution = _calculate_elemental_distribution(element, count, use_neutron_count)
-        total_distribution = _convolve_distributions(total_distribution, elemental_distribution, max_isotopes,
-                                                     conv_min_abundance_threshold, distribution_resolution)
+        elemental_distribution = _calculate_elemental_distribution(
+            element, count, use_neutron_count
+        )
+        total_distribution = _convolve_distributions(
+            total_distribution,
+            elemental_distribution,
+            max_isotopes,
+            conv_min_abundance_threshold,
+            distribution_resolution,
+        )
 
     # Normalize abundances before filtering to ensure consistent abundance calculation
     max_abundance = max(total_distribution.values())
-    normalized_distribution = [(mass, abundance / max_abundance) for mass, abundance in
-                               sorted(total_distribution.items()) if
-                               abundance / max_abundance >= min_abundance_threshold]
+    normalized_distribution = [
+        (mass, abundance / max_abundance)
+        for mass, abundance in sorted(total_distribution.items())
+        if abundance / max_abundance >= min_abundance_threshold
+    ]
 
     if delta_mass != 0.0:
         if not use_neutron_count:
-            normalized_distribution = [(mass + delta_mass + particle_mass_offset, abundance)
-                                       for mass, abundance in normalized_distribution]
+            normalized_distribution = [
+                (mass + delta_mass + particle_mass_offset, abundance)
+                for mass, abundance in normalized_distribution
+            ]
         elif output_masses_for_neutron_offset:
-            normalized_distribution = [(mass + delta_mass + particle_mass_offset, abundance) for mass, abundance in
-                                       normalized_distribution]
+            normalized_distribution = [
+                (mass + delta_mass + particle_mass_offset, abundance)
+                for mass, abundance in normalized_distribution
+            ]
 
     if output_masses_for_neutron_offset and use_neutron_count:
-        normalized_distribution = [(formula_mass + offset * neutron_mass, abundance)
-                                   for offset, abundance in normalized_distribution]
+        normalized_distribution = [
+            (formula_mass + offset * neutron_mass, abundance)
+            for offset, abundance in normalized_distribution
+        ]
 
-    return _scale_isotope_abundances(normalized_distribution, distribution_abundance, is_abundance_sum, precision)
+    return _scale_isotope_abundances(
+        normalized_distribution, distribution_abundance, is_abundance_sum, precision
+    )
 
 
-def merge_isotopic_distributions(*distributions: List[Tuple[float, float]], precision: Optional[float] = None) \
-        -> List[Tuple[float, float]]:
+def merge_isotopic_distributions(
+    *distributions: List[Tuple[float, float]], precision: Optional[float] = None
+) -> List[Tuple[float, float]]:
     """
     Merge multiple isotopic distributions into one.
 
@@ -234,18 +257,19 @@ def merge_isotopic_distributions(*distributions: List[Tuple[float, float]], prec
     return sorted(merged_distribution.items(), key=lambda x: x[0])
 
 
-def estimate_isotopic_distribution(neutral_mass: float,
-                                   max_isotopes: Union[int, None] = None,
-                                   min_abundance_threshold: Union[float, None] = None,
-                                   distribution_resolution: Union[int, None] = 5,
-                                   use_neutron_count: bool = False,
-                                   conv_min_abundance_threshold: Union[float, None] = None,
-                                   distribution_abundance: float = 1.0,
-                                   is_abundance_sum: bool = False,
-                                   output_masses_for_neutron_offset: bool = False,
-                                   neutron_mass: float = constants.NEUTRON_MASS,
-                                   precision: Optional[int] = None
-                                   ) -> List[Tuple[float, float]]:
+def estimate_isotopic_distribution(
+    neutral_mass: float,
+    max_isotopes: Union[int, None] = None,
+    min_abundance_threshold: Union[float, None] = None,
+    distribution_resolution: Union[int, None] = 5,
+    use_neutron_count: bool = False,
+    conv_min_abundance_threshold: Union[float, None] = None,
+    distribution_abundance: float = 1.0,
+    is_abundance_sum: bool = False,
+    output_masses_for_neutron_offset: bool = False,
+    neutron_mass: float = constants.NEUTRON_MASS,
+    precision: Optional[int] = None,
+) -> List[Tuple[float, float]]:
     """
     Predict the isotopic distribution of a molecule using the averagine model.
 
@@ -290,26 +314,30 @@ def estimate_isotopic_distribution(neutral_mass: float,
     # Calculate the total number of each atom in the molecule based on its molecular mass
     total_atoms = estimate_comp(neutral_mass)
 
-    distributions = isotopic_distribution(total_atoms,
-                                          max_isotopes,
-                                          min_abundance_threshold,
-                                          distribution_resolution,
-                                          use_neutron_count,
-                                          conv_min_abundance_threshold,
-                                          distribution_abundance,
-                                          is_abundance_sum,
-                                          output_masses_for_neutron_offset,
-                                          neutron_mass,
-                                          precision)
+    distributions = isotopic_distribution(
+        total_atoms,
+        max_isotopes,
+        min_abundance_threshold,
+        distribution_resolution,
+        use_neutron_count,
+        conv_min_abundance_threshold,
+        distribution_abundance,
+        is_abundance_sum,
+        output_masses_for_neutron_offset,
+        neutron_mass,
+        precision,
+    )
 
     return distributions
 
 
-def _convolve_distributions(dist1: Dict[float, float],
-                            dist2: Dict[float, float],
-                            max_isotopes: Union[int, None],
-                            min_abundance_threshold: Union[float, None],
-                            distribution_resolution: Union[int, None]) -> Dict[float, float]:
+def _convolve_distributions(
+    dist1: Dict[float, float],
+    dist2: Dict[float, float],
+    max_isotopes: Union[int, None],
+    min_abundance_threshold: Union[float, None],
+    distribution_resolution: Union[int, None],
+) -> Dict[float, float]:
     """
     Convolve two distributions to calculate the distribution of their sum.
 
@@ -365,10 +393,12 @@ def _convolve_distributions(dist1: Dict[float, float],
     return result
 
 
-def _calculate_elemental_distribution(element: str,
-                                      count: int,
-                                      use_neutron_count: bool,
-                                      min_abundance_threshold: float = 10e-9) -> Dict[float, float]:
+def _calculate_elemental_distribution(
+    element: str,
+    count: int,
+    use_neutron_count: bool,
+    min_abundance_threshold: float = 10e-9,
+) -> Dict[float, float]:
     """
     Calculate the isotopic distribution for an element.
 
@@ -395,7 +425,9 @@ def _calculate_elemental_distribution(element: str,
     """
 
     if use_neutron_count is True:
-        isotopes = constants.ATOMIC_SYMBOL_TO_ISOTOPE_NEUTRON_OFFSETS_AND_ABUNDANCES[element]
+        isotopes = constants.ATOMIC_SYMBOL_TO_ISOTOPE_NEUTRON_OFFSETS_AND_ABUNDANCES[
+            element
+        ]
     else:
         isotopes = constants.ATOMIC_SYMBOL_TO_ISOTOPE_MASSES_AND_ABUNDANCES[element]
 
@@ -404,11 +436,15 @@ def _calculate_elemental_distribution(element: str,
     for _ in range(count):
         # Update the distribution by convolving it with the isotopes' distribution each time
         isotope_distribution = dict(isotopes)
-        distribution = _convolve_distributions(distribution, isotope_distribution, None, min_abundance_threshold, None)
+        distribution = _convolve_distributions(
+            distribution, isotope_distribution, None, min_abundance_threshold, None
+        )
     return distribution
 
 
-def _fix_chemical_formula(chemical_formula: Dict[str, float], add_hydrogens: bool = True) -> Dict[str, int]:
+def _fix_chemical_formula(
+    chemical_formula: Dict[str, float], add_hydrogens: bool = True
+) -> Dict[str, int]:
     """
     Fix a chemical formula, by rounding the atom counts to the nearest integer and adding hydrogen atoms to reach the
     correct molecular mass.
@@ -442,19 +478,24 @@ def _fix_chemical_formula(chemical_formula: Dict[str, float], add_hydrogens: boo
     total_atoms = {k: round(v) for k, v in chemical_formula.items()}
 
     if add_hydrogens:
-        if 'H' not in total_atoms:
-            total_atoms['H'] = 0
+        if "H" not in total_atoms:
+            total_atoms["H"] = 0
 
         # add hydrogen's till the molecular mass is reached
-        total_atoms['H'] += int((starting_mass - chem_mass(total_atoms)) / constants.ISOTOPIC_ATOMIC_MASSES['H'])
+        total_atoms["H"] += int(
+            (starting_mass - chem_mass(total_atoms))
+            / constants.ISOTOPIC_ATOMIC_MASSES["H"]
+        )
 
     return total_atoms
 
 
-def _scale_isotope_abundances(isotopes: List[Tuple[float, float]],
-                              distribution_abundance: float,
-                              is_abundance_sum: bool,
-                              precision: Optional[int] = None) -> List[Tuple[float, float]]:
+def _scale_isotope_abundances(
+    isotopes: List[Tuple[float, float]],
+    distribution_abundance: float,
+    is_abundance_sum: bool,
+    precision: Optional[int] = None,
+) -> List[Tuple[float, float]]:
     """
     Scale the abundances of the isotopes to the distribution abundance.
     """
@@ -465,9 +506,14 @@ def _scale_isotope_abundances(isotopes: List[Tuple[float, float]],
         isotopes = [(mass, abundance / total_abundance) for mass, abundance in isotopes]
 
     # multiply the abundances by the abundance factor
-    isotopes = [(mass, abundance * distribution_abundance) for mass, abundance in isotopes]
+    isotopes = [
+        (mass, abundance * distribution_abundance) for mass, abundance in isotopes
+    ]
 
     if precision is not None:
-        isotopes = [(round(mass, precision), round(abundance, precision)) for mass, abundance in isotopes]
+        isotopes = [
+            (round(mass, precision), round(abundance, precision))
+            for mass, abundance in isotopes
+        ]
 
     return isotopes

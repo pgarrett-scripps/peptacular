@@ -8,7 +8,9 @@ from peptacular.proforma.proforma_parser import ProFormaAnnotation
 from peptacular.sequence.sequence_funcs import sequence_to_annotation
 
 
-def permutations(sequence: Union[str, ProFormaAnnotation], size: int = None) -> List[str]:
+def permutations(
+    sequence: Union[str, ProFormaAnnotation], size: int = None
+) -> List[str]:
     """
     Generates all permutations of the input sequence. Terminal sequence are kept in place.
 
@@ -44,7 +46,9 @@ def permutations(sequence: Union[str, ProFormaAnnotation], size: int = None) -> 
     return [a.serialize() for a in annotation.permutations(size)]
 
 
-def product(sequence: Union[str, ProFormaAnnotation], repeat: Union[int, None]) -> List[str]:
+def product(
+    sequence: Union[str, ProFormaAnnotation], repeat: Union[int, None]
+) -> List[str]:
     """
     Generates all sartesian products of the input sequence of a given size. Terminal sequence are kept in place.
 
@@ -80,7 +84,9 @@ def product(sequence: Union[str, ProFormaAnnotation], repeat: Union[int, None]) 
     return [a.serialize() for a in annotation.product(repeat)]
 
 
-def combinations(sequence: Union[str, ProFormaAnnotation], size: Union[int, None]) -> List[str]:
+def combinations(
+    sequence: Union[str, ProFormaAnnotation], size: Union[int, None]
+) -> List[str]:
     """
     Generates all combinations of the input sequence of a given size. Terminal sequence are kept in place.
 
@@ -117,7 +123,9 @@ def combinations(sequence: Union[str, ProFormaAnnotation], size: Union[int, None
     return [a.serialize() for a in annotation.combinations(size)]
 
 
-def combinations_with_replacement(sequence: Union[str, ProFormaAnnotation], size: Union[int, None]) -> List[str]:
+def combinations_with_replacement(
+    sequence: Union[str, ProFormaAnnotation], size: Union[int, None]
+) -> List[str]:
     """
     Generates all combinations with replacement of the input sequence of a given size. Terminal sequence are kept
     in place.

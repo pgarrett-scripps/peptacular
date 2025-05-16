@@ -7,10 +7,13 @@ from typing import Union
 from peptacular.types import ChemComposition
 from peptacular.chem.chem_util import write_chem_formula
 from peptacular.errors import InvalidGlycanFormulaError
-from peptacular.mods.mod_db_setup import _glycan_comp, _parse_glycan_formula  # To avoid circular import
+from peptacular.mods.mod_db_setup import (
+    _glycan_comp,
+    _parse_glycan_formula,
+)  # To avoid circular import
 
 
-def write_glycan_formula(glycan_dict: ChemComposition, sep: str = '') -> str:
+def write_glycan_formula(glycan_dict: ChemComposition, sep: str = "") -> str:
     """
     Writes a glycan dictionary to a string.
 
@@ -45,7 +48,9 @@ def write_glycan_formula(glycan_dict: ChemComposition, sep: str = '') -> str:
             'HexNAc 2 Hex 3 Neu5Gc 1'
 
     """
-    return sep.join([f'{component}{sep}{count}' for component, count in glycan_dict.items()])
+    return sep.join(
+        [f"{component}{sep}{count}" for component, count in glycan_dict.items()]
+    )
 
 
 def glycan_comp(glycan: Union[ChemComposition, str]) -> ChemComposition:
@@ -88,7 +93,7 @@ def glycan_comp(glycan: Union[ChemComposition, str]) -> ChemComposition:
     return _glycan_comp(glycan)
 
 
-def parse_glycan_formula(formula: str, sep: str = '') -> ChemComposition:
+def parse_glycan_formula(formula: str, sep: str = "") -> ChemComposition:
     """
     Parses a glycan sequence into its constituent parts.
 

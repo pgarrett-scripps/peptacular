@@ -46,7 +46,9 @@ def convert_to_mod(mod: ModValue) -> Mod:
     raise ValueError(f"Invalid mod input: {mod}")
 
 
-def fix_list_of_list_of_mods(mods: Union[List[List[ModValue]], List[ModValue], ModValue]) -> List[List[Mod]]:
+def fix_list_of_list_of_mods(
+    mods: Union[List[List[ModValue]], List[ModValue], ModValue],
+) -> List[List[Mod]]:
     """
     Convert the input mods to a list of lists of Mod instances.
 
@@ -85,7 +87,9 @@ def fix_list_of_list_of_mods(mods: Union[List[List[ModValue]], List[ModValue], M
         return [[convert_to_mod(mods)]]
 
     # Case 2: mods is a SingleModList
-    if isinstance(mods, list) and all(isinstance(mod, (str, int, float, Mod)) for mod in mods):
+    if isinstance(mods, list) and all(
+        isinstance(mod, (str, int, float, Mod)) for mod in mods
+    ):
         return [fix_list_of_mods(mods)]
 
     # Case 3: mods is a MultiModList
@@ -95,7 +99,9 @@ def fix_list_of_list_of_mods(mods: Union[List[List[ModValue]], List[ModValue], M
     raise ValueError(f"Invalid mod input: {mods}")
 
 
-def remove_empty_list_of_list_of_mods(mods: List[List[Mod]]) -> Union[List[List[Mod]], None]:
+def remove_empty_list_of_list_of_mods(
+    mods: List[List[Mod]],
+) -> Union[List[List[Mod]], None]:
     """
     Remove empty lists from a list of lists of Mod instances.
 
@@ -126,8 +132,6 @@ def remove_empty_list_of_list_of_mods(mods: List[List[Mod]]) -> Union[List[List[
         return new_mods2
 
     return None
-
-
 
 
 def fix_list_of_mods(mods: Union[List[ModValue], ModValue]) -> List[Mod]:
@@ -201,7 +205,9 @@ def remove_empty_list_of_mods(mods: List[Mod]) -> Union[List[Mod], None]:
     return mods if mods else None
 
 
-def fix_dict_of_mods(mods: Dict[Any, Union[List[ModValue], ModValue]]) -> Dict[Any, List[Mod]]:
+def fix_dict_of_mods(
+    mods: Dict[Any, Union[List[ModValue], ModValue]],
+) -> Dict[Any, List[Mod]]:
     """
     Convert the input mods to a dictionary of lists of Mod instances. Mainly used to convert internal mod input to
     the correct format. This will not work when used on the whole mod dict.
@@ -259,7 +265,9 @@ def fix_interval_input(interval: INTERVAL_VALUE) -> Interval:
     return Interval(interval[0], interval[1], interval[2], mods)
 
 
-def fix_intervals_input(intervals: Union[List[INTERVAL_VALUE], INTERVAL_VALUE]) -> List[Interval]:
+def fix_intervals_input(
+    intervals: Union[List[INTERVAL_VALUE], INTERVAL_VALUE],
+) -> List[Interval]:
     """
     Convert the input intervals to a list of Interval instances.
 

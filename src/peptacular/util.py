@@ -67,8 +67,9 @@ def merge_dicts(d1: Dict, d2: Dict) -> Dict:
     return d
 
 
-def get_regex_match_indices(input_str: str, regex_str: Union[str, regex.Pattern], offset: int = 0) \
-        -> Generator[int, None, None]:
+def get_regex_match_indices(
+    input_str: str, regex_str: Union[str, regex.Pattern], offset: int = 0
+) -> Generator[int, None, None]:
     """
     Identify the starting indexes of occurrences of a given regex pattern within a string.
 
@@ -117,14 +118,17 @@ def get_regex_match_indices(input_str: str, regex_str: Union[str, regex.Pattern]
 
     for match in regex_pattern.finditer(input_str, overlapped=True):
         if match.start() != match.end():
-            warnings.warn("The regex pattern has a match with a none zero length. Using start index + 1 for the match.")
+            warnings.warn(
+                "The regex pattern has a match with a none zero length. Using start index + 1 for the match."
+            )
             yield match.start() + offset + 1
         else:
             yield match.start() + offset
 
 
-def get_regex_match_range(input_str: str, regex_str: Union[str, regex.Pattern], offset: int = 0) \
-        -> List[Tuple[int, int]]:
+def get_regex_match_range(
+    input_str: str, regex_str: Union[str, regex.Pattern], offset: int = 0
+) -> List[Tuple[int, int]]:
     """
     Identify the starting indexes of occurrences of a given regex pattern within a string.
 
@@ -156,10 +160,15 @@ def get_regex_match_range(input_str: str, regex_str: Union[str, regex.Pattern], 
 
     # if regex is compiled
     if isinstance(regex_str, regex.Pattern):
-        return [(i.start() + offset, i.end() + offset) for i in regex_str.finditer(input_str)]
+        return [
+            (i.start() + offset, i.end() + offset)
+            for i in regex_str.finditer(input_str)
+        ]
 
-    return [(match.start() + offset, match.end() + offset) for match in regex.finditer(regex_str, input_str,
-                                                                                       overlapped=True)]
+    return [
+        (match.start() + offset, match.end() + offset)
+        for match in regex.finditer(regex_str, input_str, overlapped=True)
+    ]
 
 
 def _validate_span(span: Tuple[int, int, int]) -> None:
@@ -192,14 +201,18 @@ def _validate_span(span: Tuple[int, int, int]) -> None:
 
     start, end, _ = span
     if start < 0:
-        raise ValueError(f'Start of span should be non-negative, got {start}.')
+        raise ValueError(f"Start of span should be non-negative, got {start}.")
     if end < 0:
-        raise ValueError(f'End of span should be non-negative, got {end}.')
+        raise ValueError(f"End of span should be non-negative, got {end}.")
     if start > end:
-        raise ValueError(f'Start of span: {start}, should be less than or equal to end of span: {end}.')
+        raise ValueError(
+            f"Start of span: {start}, should be less than or equal to end of span: {end}."
+        )
 
 
-def _construct_ambiguity_intervals(counts: List[int], reverse: bool) -> List[Tuple[int, int]]:
+def _construct_ambiguity_intervals(
+    counts: List[int], reverse: bool
+) -> List[Tuple[int, int]]:
     """
     Construct intervals for sequences of zeros in the counts list. When reverse is false, start from the left hand side
     and move to the right. When reverse is true, start from the right hand side and move to the left. Intervals start
@@ -227,8 +240,13 @@ def _construct_ambiguity_intervals(counts: List[int], reverse: bool) -> List[Tup
     """
 
     if reverse:
-        ambiguity_intervals = _construct_ambiguity_intervals(counts[::-1], reverse=False)
-        ambiguity_intervals = [(len(counts) - 1 - end, len(counts) - 1 - start) for start, end in ambiguity_intervals]
+        ambiguity_intervals = _construct_ambiguity_intervals(
+            counts[::-1], reverse=False
+        )
+        ambiguity_intervals = [
+            (len(counts) - 1 - end, len(counts) - 1 - start)
+            for start, end in ambiguity_intervals
+        ]
         # sort the intervals
         ambiguity_intervals.sort(key=lambda x: x[0])
         return ambiguity_intervals
@@ -257,7 +275,9 @@ def _construct_ambiguity_intervals(counts: List[int], reverse: bool) -> List[Tup
     return ambiguity_intervals
 
 
-def _combine_ambiguity_intervals(*interval_lists: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
+def _combine_ambiguity_intervals(
+    *interval_lists: List[Tuple[int, int]]
+) -> List[Tuple[int, int]]:
     """
     merge many ambiguity intervals into a single list of intervals.
     each index whcih is ambiguous must be ambiguous across list of intervals
@@ -333,7 +353,9 @@ def _combine_ambiguity_intervals(*interval_lists: List[Tuple[int, int]]) -> List
     return result
 
 
-def _get_mass_shift_interval(forward_coverage: List[int], reverse_coverage: List[int]) -> Optional[Tuple[int, int]]:
+def _get_mass_shift_interval(
+    forward_coverage: List[int], reverse_coverage: List[int]
+) -> Optional[Tuple[int, int]]:
     """
     add the
     :param forward_coverage:

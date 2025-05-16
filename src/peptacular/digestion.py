@@ -13,60 +13,80 @@ Valid DigestReturnType's:
     - 'annotation-span': Returns the digested sequences as a tuple of ProFormaAnnotations and Span objects.
 
 """
+
 from dataclasses import dataclass
 from typing import Union, List, Optional, Literal, Tuple, Generator, Iterable
 
 from peptacular.spans import Span
 from peptacular.constants import PROTEASES_COMPILED
 from peptacular.proforma.proforma_parser import ProFormaAnnotation, create_annotation
-from peptacular.spans import build_left_semi_spans, build_right_semi_spans, build_non_enzymatic_spans, build_spans
+from peptacular.spans import (
+    build_left_semi_spans,
+    build_right_semi_spans,
+    build_non_enzymatic_spans,
+    build_spans,
+)
 from peptacular.sequence.sequence_funcs import sequence_to_annotation
 from peptacular.util import get_regex_match_indices
 
 DigestReturnType = Literal["str", "annotation", "span", "str-span", "annotation-span"]
 
-DIGEST_RETURN_TYPING = Union[Generator[str, None, None], Generator[ProFormaAnnotation, None, None],
-                             Generator[Span, None, None], Generator[Tuple[str, Span], None, None],
-                             Generator[Tuple[ProFormaAnnotation, Span], None, None]]
+DIGEST_RETURN_TYPING = Union[
+    Generator[str, None, None],
+    Generator[ProFormaAnnotation, None, None],
+    Generator[Span, None, None],
+    Generator[Tuple[str, Span], None, None],
+    Generator[Tuple[ProFormaAnnotation, Span], None, None],
+]
 
 
-def _return_digested_sequences(annotation: ProFormaAnnotation,
-                               spans: Iterable[Span],
-                               return_type: DigestReturnType) -> DIGEST_RETURN_TYPING:
+def _return_digested_sequences(
+    annotation: ProFormaAnnotation, spans: Iterable[Span], return_type: DigestReturnType
+) -> DIGEST_RETURN_TYPING:
     """
     Helper function to return the digested sequences as strings or ProFormaAnnotations.
     """
 
-    if return_type == 'span':
+    if return_type == "span":
         return (span for span in spans)
 
-    if return_type == 'annotation':
+    if return_type == "annotation":
         if not annotation.has_mods():
-            return (create_annotation(annotation.sequence[span[0]: span[1]]) for span in spans)
+            return (
+                create_annotation(annotation.sequence[span[0] : span[1]])
+                for span in spans
+            )
         return (annotation.slice(span[0], span[1]) for span in spans)
 
-    if return_type == 'str':
+    if return_type == "str":
         if not annotation.has_mods():
-            return (annotation.sequence[span[0]: span[1]] for span in spans)
+            return (annotation.sequence[span[0] : span[1]] for span in spans)
         return (annotation.slice(span[0], span[1]).serialize() for span in spans)
 
-    if return_type == 'str-span':
+    if return_type == "str-span":
         if not annotation.has_mods():
-            return ((annotation.sequence[span[0]: span[1]], span) for span in spans)
-        return ((annotation.slice(span[0], span[1]).serialize(), span) for span in spans)
+            return ((annotation.sequence[span[0] : span[1]], span) for span in spans)
+        return (
+            (annotation.slice(span[0], span[1]).serialize(), span) for span in spans
+        )
 
-    if return_type == 'annotation-span':
+    if return_type == "annotation-span":
         if not annotation.has_mods():
-            return ((create_annotation(annotation.sequence[span[0]: span[1]]), span) for span in spans)
+            return (
+                (create_annotation(annotation.sequence[span[0] : span[1]]), span)
+                for span in spans
+            )
         return ((annotation.slice(span[0], span[1]), span) for span in spans)
 
     raise ValueError(f"Unsupported return type: {return_type}")
 
 
-def get_left_semi_enzymatic_sequences(sequence: Union[str, ProFormaAnnotation],
-                                      min_len: Optional[int] = None,
-                                      max_len: Optional[int] = None,
-                                      return_type: DigestReturnType = 'str') -> DIGEST_RETURN_TYPING:
+def get_left_semi_enzymatic_sequences(
+    sequence: Union[str, ProFormaAnnotation],
+    min_len: Optional[int] = None,
+    max_len: Optional[int] = None,
+    return_type: DigestReturnType = "str",
+) -> DIGEST_RETURN_TYPING:
     """
     Builds all left-hand semi-enzymatic subsequences derived from the input `sequence`.
 
@@ -118,10 +138,12 @@ def get_left_semi_enzymatic_sequences(sequence: Union[str, ProFormaAnnotation],
     return _return_digested_sequences(annotation, spans, return_type)
 
 
-def get_right_semi_enzymatic_sequences(sequence: Union[str, ProFormaAnnotation],
-                                       min_len: Optional[int] = None,
-                                       max_len: Optional[int] = None,
-                                       return_type: DigestReturnType = 'str') -> DIGEST_RETURN_TYPING:
+def get_right_semi_enzymatic_sequences(
+    sequence: Union[str, ProFormaAnnotation],
+    min_len: Optional[int] = None,
+    max_len: Optional[int] = None,
+    return_type: DigestReturnType = "str",
+) -> DIGEST_RETURN_TYPING:
     """
     Builds all right-hand semi-enzymatic subsequences derived from the input `sequence`.
 
@@ -173,10 +195,12 @@ def get_right_semi_enzymatic_sequences(sequence: Union[str, ProFormaAnnotation],
     return _return_digested_sequences(annotation, spans, return_type)
 
 
-def get_semi_enzymatic_sequences(sequence: Union[str, ProFormaAnnotation],
-                                 min_len: Optional[int] = None,
-                                 max_len: Optional[int] = None,
-                                 return_type: DigestReturnType = 'str') -> DIGEST_RETURN_TYPING:
+def get_semi_enzymatic_sequences(
+    sequence: Union[str, ProFormaAnnotation],
+    min_len: Optional[int] = None,
+    max_len: Optional[int] = None,
+    return_type: DigestReturnType = "str",
+) -> DIGEST_RETURN_TYPING:
     """
     Builds allsemi-enzymatic sequences from the given input `sequence`.
 
@@ -204,16 +228,20 @@ def get_semi_enzymatic_sequences(sequence: Union[str, ProFormaAnnotation],
 
     """
 
-    yield from get_left_semi_enzymatic_sequences(sequence=sequence, min_len=min_len, max_len=max_len,
-                                                 return_type=return_type)
-    yield from get_right_semi_enzymatic_sequences(sequence=sequence, min_len=min_len, max_len=max_len,
-                                                  return_type=return_type)
+    yield from get_left_semi_enzymatic_sequences(
+        sequence=sequence, min_len=min_len, max_len=max_len, return_type=return_type
+    )
+    yield from get_right_semi_enzymatic_sequences(
+        sequence=sequence, min_len=min_len, max_len=max_len, return_type=return_type
+    )
 
 
-def get_non_enzymatic_sequences(sequence: Union[str, ProFormaAnnotation],
-                                min_len: Optional[int] = None,
-                                max_len: Optional[int] = None,
-                                return_type: DigestReturnType = 'str') -> DIGEST_RETURN_TYPING:
+def get_non_enzymatic_sequences(
+    sequence: Union[str, ProFormaAnnotation],
+    min_len: Optional[int] = None,
+    max_len: Optional[int] = None,
+    return_type: DigestReturnType = "str",
+) -> DIGEST_RETURN_TYPING:
     """
     Builds all non-enzymatic sequences from the given input `sequence`.
 
@@ -264,7 +292,9 @@ def get_non_enzymatic_sequences(sequence: Union[str, ProFormaAnnotation],
     return _return_digested_sequences(annotation, spans, return_type)
 
 
-def get_cleavage_sites(sequence: Union[str, ProFormaAnnotation], enzyme_regex: str) -> Generator[int, None, None]:
+def get_cleavage_sites(
+    sequence: Union[str, ProFormaAnnotation], enzyme_regex: str
+) -> Generator[int, None, None]:
     """
     Return a list of positions where cleavage occurs in input `sequence` based on the provided enzyme regex.
 
@@ -316,18 +346,22 @@ def get_cleavage_sites(sequence: Union[str, ProFormaAnnotation], enzyme_regex: s
         annotation = sequence
 
     enzyme_regex = PROTEASES_COMPILED.get(enzyme_regex, enzyme_regex)
-    return get_regex_match_indices(input_str=annotation.sequence, regex_str=enzyme_regex)
+    return get_regex_match_indices(
+        input_str=annotation.sequence, regex_str=enzyme_regex
+    )
 
 
-def digest(sequence: Union[str, ProFormaAnnotation],
-           enzyme_regex: Union[List[str], str],
-           missed_cleavages: int = 0,
-           semi: bool = False,
-           min_len: Optional[int] = None,
-           max_len: Optional[int] = None,
-           complete_digestion: bool = True,
-           return_type: DigestReturnType = 'str',
-           sort_output: bool = True) -> DIGEST_RETURN_TYPING:
+def digest(
+    sequence: Union[str, ProFormaAnnotation],
+    enzyme_regex: Union[List[str], str],
+    missed_cleavages: int = 0,
+    semi: bool = False,
+    min_len: Optional[int] = None,
+    max_len: Optional[int] = None,
+    complete_digestion: bool = True,
+    return_type: DigestReturnType = "str",
+    sort_output: bool = True,
+) -> DIGEST_RETURN_TYPING:
     """
     Returns a list of digested sequences derived from the input `sequence`.
 
@@ -427,10 +461,18 @@ def digest(sequence: Union[str, ProFormaAnnotation],
 
     cleavage_sites = []
     for regex in enzyme_regex:
-        cleavage_sites.extend(list(get_cleavage_sites(sequence=annotation, enzyme_regex=regex)))
+        cleavage_sites.extend(
+            list(get_cleavage_sites(sequence=annotation, enzyme_regex=regex))
+        )
 
-    spans = build_spans(max_index=len(annotation), enzyme_sites=cleavage_sites, missed_cleavages=missed_cleavages,
-                        min_len=min_len, max_len=max_len, semi=semi)
+    spans = build_spans(
+        max_index=len(annotation),
+        enzyme_sites=cleavage_sites,
+        missed_cleavages=missed_cleavages,
+        min_len=min_len,
+        max_len=max_len,
+        semi=semi,
+    )
     all_spans.update(spans)
 
     if sort_output:
@@ -442,6 +484,7 @@ def digest(sequence: Union[str, ProFormaAnnotation],
 @dataclass
 class EnzymeConfig:
     """Configuration for a single enzyme in a digestion process."""
+
     regex: Union[List[str], str]  # Regular expressions for enzyme cleavage sites
     missed_cleavages: int = 0  # Allowed missed cleavages
     semi_enzymatic: bool = False  # Whether to include semi-enzymatic peptides
@@ -453,33 +496,37 @@ class EnzymeConfig:
             self.regex = [self.regex]
 
 
-def digest_from_config(sequence: Union[str, ProFormaAnnotation],
-                       config: EnzymeConfig,
-                       min_len: Optional[int] = None,
-                       max_len: Optional[int] = None,
-                       return_type: DigestReturnType = 'str',
-                       sort_output: bool = True) -> DIGEST_RETURN_TYPING:
+def digest_from_config(
+    sequence: Union[str, ProFormaAnnotation],
+    config: EnzymeConfig,
+    min_len: Optional[int] = None,
+    max_len: Optional[int] = None,
+    return_type: DigestReturnType = "str",
+    sort_output: bool = True,
+) -> DIGEST_RETURN_TYPING:
     """
     Same as digest() but with a simplified configuration object for a single enzyme.
     """
 
-    return digest(sequence=sequence,
-                  enzyme_regex=config.regex,
-                  missed_cleavages=config.missed_cleavages,
-                  semi=config.semi_enzymatic,
-                  min_len=min_len,
-                  max_len=max_len,
-                  complete_digestion=config.complete_digestion,
-                  return_type=return_type,
-                  sort_output=sort_output)
+    return digest(
+        sequence=sequence,
+        enzyme_regex=config.regex,
+        missed_cleavages=config.missed_cleavages,
+        semi=config.semi_enzymatic,
+        min_len=min_len,
+        max_len=max_len,
+        complete_digestion=config.complete_digestion,
+        return_type=return_type,
+        sort_output=sort_output,
+    )
 
 
 def sequential_digest(
-        sequence: Union[str, 'ProFormaAnnotation'],
-        enzyme_configs: List[EnzymeConfig],
-        min_len: Optional[int] = None,
-        max_len: Optional[int] = None,
-        return_type: DigestReturnType = 'str'
+    sequence: Union[str, "ProFormaAnnotation"],
+    enzyme_configs: List[EnzymeConfig],
+    min_len: Optional[int] = None,
+    max_len: Optional[int] = None,
+    return_type: DigestReturnType = "str",
 ) -> DIGEST_RETURN_TYPING:
     """
     Returns a list of digested sequences derived from the input `sequence` using sequential digestion
@@ -520,16 +567,18 @@ def sequential_digest(
     for i, enzyme_config in enumerate(enzyme_configs):
         if i == 0:
             # First enzyme digests the original sequence
-            digested_anot_spans = list(digest(
-                sequence=annotation,
-                enzyme_regex=enzyme_config.regex,
-                missed_cleavages=enzyme_config.missed_cleavages,
-                semi=enzyme_config.semi_enzymatic,
-                min_len=min_len,
-                max_len=None,
-                return_type='annotation-span',
-                complete_digestion=enzyme_config.complete_digestion
-            ))
+            digested_anot_spans = list(
+                digest(
+                    sequence=annotation,
+                    enzyme_regex=enzyme_config.regex,
+                    missed_cleavages=enzyme_config.missed_cleavages,
+                    semi=enzyme_config.semi_enzymatic,
+                    min_len=min_len,
+                    max_len=None,
+                    return_type="annotation-span",
+                    complete_digestion=enzyme_config.complete_digestion,
+                )
+            )
         else:
             # Break early if previous enzyme digestion yielded nothing
             if len(digested_anot_spans) == 0:
@@ -539,22 +588,31 @@ def sequential_digest(
 
             # Apply this enzyme to each fragment from previous digestion
             for anot, span in digested_anot_spans:
-                _digested_anot_spans = list(digest(
-                    anot,
-                    enzyme_regex=enzyme_config.regex,
-                    missed_cleavages=enzyme_config.missed_cleavages,
-                    semi=enzyme_config.semi_enzymatic,
-                    min_len=min_len,
-                    max_len=None,
-                    return_type='annotation-span',
-                    complete_digestion=enzyme_config.complete_digestion
-                ))
+                _digested_anot_spans = list(
+                    digest(
+                        anot,
+                        enzyme_regex=enzyme_config.regex,
+                        missed_cleavages=enzyme_config.missed_cleavages,
+                        semi=enzyme_config.semi_enzymatic,
+                        min_len=min_len,
+                        max_len=None,
+                        return_type="annotation-span",
+                        complete_digestion=enzyme_config.complete_digestion,
+                    )
+                )
 
                 # Fix span to be in reference to original sequence
                 for j, digested_anot_span in enumerate(_digested_anot_spans):
                     digested_span = digested_anot_span[1]
-                    fixed_digested_span = (span[0] + digested_span[0], span[0] + digested_span[1], span[2])
-                    _digested_anot_spans[j] = (digested_anot_span[0], fixed_digested_span)
+                    fixed_digested_span = (
+                        span[0] + digested_span[0],
+                        span[0] + digested_span[1],
+                        span[2],
+                    )
+                    _digested_anot_spans[j] = (
+                        digested_anot_span[0],
+                        fixed_digested_span,
+                    )
 
                 sequential_digested_anot_spans.extend(_digested_anot_spans)
 
@@ -562,7 +620,13 @@ def sequential_digest(
 
     # Apply max_len filter if specified
     if max_len is not None:
-        digested_anot_spans = [(anot, span) for anot, span in digested_anot_spans if span[1] - span[0] <= max_len]
+        digested_anot_spans = [
+            (anot, span)
+            for anot, span in digested_anot_spans
+            if span[1] - span[0] <= max_len
+        ]
 
     # Format and return the results
-    return _return_digested_sequences(annotation, [span for anot, span in digested_anot_spans], return_type)
+    return _return_digested_sequences(
+        annotation, [span for anot, span in digested_anot_spans], return_type
+    )

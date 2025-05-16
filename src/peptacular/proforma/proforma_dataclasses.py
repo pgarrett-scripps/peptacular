@@ -15,6 +15,7 @@ class Mod:
     """
     A modification with optional multiplier
     """
+
     val: Union[str, float, int]
     mult: int
 
@@ -33,13 +34,20 @@ class Mod:
         """
         # Determine if the value is positive and prefix '+' for positive numbers
         if include_plus is True:
-            val_str = f"+{self.val}" if isinstance(self.val, (int, float)) and self.val > 0 else str(self.val)
+            val_str = (
+                f"+{self.val}"
+                if isinstance(self.val, (int, float)) and self.val > 0
+                else str(self.val)
+            )
         else:
             val_str = str(self.val)
 
         # Return the formatted string based on the multiplier value
-        return f"{brackets[0]}{val_str}{brackets[1]}^{self.mult}" if self.mult > 1 else \
-            f"{brackets[0]}{val_str}{brackets[1]}"
+        return (
+            f"{brackets[0]}{val_str}{brackets[1]}^{self.mult}"
+            if self.mult > 1
+            else f"{brackets[0]}{val_str}{brackets[1]}"
+        )
 
     def __hash__(self) -> int:
         return hash((self.val, self.mult))
@@ -54,10 +62,7 @@ class Mod:
         """
         Convert the mod to a dictionary
         """
-        return {
-            "val": self.val,
-            "mult": self.mult
-        }
+        return {"val": self.val, "mult": self.mult}
 
     def __eq__(self, other: Any) -> bool:
 
@@ -90,6 +95,7 @@ class Interval:
     """
     A sequence interval with optional modifications
     """
+
     start: int
     end: int
     ambiguous: bool
@@ -103,7 +109,7 @@ class Interval:
             "start": self.start,
             "end": self.end,
             "ambiguous": self.ambiguous,
-            "mods": copy.deepcopy(self.mods)
+            "mods": copy.deepcopy(self.mods),
         }
         return result
 
@@ -122,7 +128,14 @@ class Interval:
         return True
 
     def __hash__(self) -> int:
-        return hash((self.start, self.end, self.ambiguous, tuple(sorted(self.mods)) if self.mods else None))
+        return hash(
+            (
+                self.start,
+                self.end,
+                self.ambiguous,
+                tuple(sorted(self.mods)) if self.mods else None,
+            )
+        )
 
     def has_mods(self) -> bool:
         """
@@ -178,7 +191,9 @@ def are_mods_equal(mods1: Optional[List[Mod]], mods2: Optional[List[Mod]]) -> bo
     return Counter(mods1) == Counter(mods2)
 
 
-def are_intervals_equal(intervals1: Optional[List[Interval]], intervals2: Optional[List[Interval]]) -> bool:
+def are_intervals_equal(
+    intervals1: Optional[List[Interval]], intervals2: Optional[List[Interval]]
+) -> bool:
     """
     Check if two lists of intervals are equal
 

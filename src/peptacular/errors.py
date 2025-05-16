@@ -112,14 +112,22 @@ class ProFormaFormatError(ValueError):
         # Creating a visual marker for the error position in the sequence.
         # Ensure index is within bounds to avoid IndexError.
         if 0 <= index < len(sequence):
-            highlighted_sequence = sequence[:index] + ">>>" + sequence[index] + "<<<" + sequence[index + 1:]
+            highlighted_sequence = (
+                sequence[:index]
+                + ">>>"
+                + sequence[index]
+                + "<<<"
+                + sequence[index + 1 :]
+            )
         else:
             highlighted_sequence = sequence
 
         self.msg = msg
-        message = (f"Invalid ProForma format detected:\n"
-                   f"  Error: {msg}\n"
-                   f"  At index: {index}\n"
-                   f"  In sequence: {highlighted_sequence}\n"
-                   f"  Note: The character in error is indicated by >>>ERROR<<<.")
+        message = (
+            f"Invalid ProForma format detected:\n"
+            f"  Error: {msg}\n"
+            f"  At index: {index}\n"
+            f"  In sequence: {highlighted_sequence}\n"
+            f"  Note: The character in error is indicated by >>>ERROR<<<."
+        )
         super().__init__(message, *args)

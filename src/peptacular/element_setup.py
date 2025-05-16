@@ -12,6 +12,7 @@ class ElementInfo:
     """
     Class to store information about an element isotope
     """
+
     atomic_number: int
     atomic_symbol: str
     mass_number: int
@@ -46,13 +47,15 @@ def get_element_info(chem_file_path: str) -> List[ElementInfo]:
         for line in file:
             line = line.strip()  # Remove leading and trailing whitespace
             if line == "":  # New block starts after an empty line
-                e = ElementInfo(atomic_number,
-                                atomic_symbol,
-                                mass_number,
-                                relative_atomic_mass,
-                                isotopic_composition,
-                                standard_atomic_weight,
-                                notes)
+                e = ElementInfo(
+                    atomic_number,
+                    atomic_symbol,
+                    mass_number,
+                    relative_atomic_mass,
+                    isotopic_composition,
+                    standard_atomic_weight,
+                    notes,
+                )
                 element_infos.append(e)
 
                 # Reset variables
@@ -66,7 +69,7 @@ def get_element_info(chem_file_path: str) -> List[ElementInfo]:
 
             else:  # Extract key and value from the current line
 
-                elems = line.split('=')
+                elems = line.split("=")
                 key = elems[0].rstrip()
                 value = elems[1].lstrip()
 
@@ -77,19 +80,21 @@ def get_element_info(chem_file_path: str) -> List[ElementInfo]:
                 elif key == "Mass Number":
                     mass_number = int(value)
                 elif key == "Relative Atomic Mass":
-                    relative_atomic_mass = float(value.split('(')[0])
+                    relative_atomic_mass = float(value.split("(")[0])
                 elif key == "Isotopic Composition":
-                    if value == '':
+                    if value == "":
                         isotopic_composition = 0.0
                     else:
-                        isotopic_composition = float(value.split('(')[0])
+                        isotopic_composition = float(value.split("(")[0])
                 elif key == "Standard Atomic Weight":
-                    if value == '':  # Can be empty
+                    if value == "":  # Can be empty
                         standard_atomic_weight = None
-                    elif value.startswith('[') and value.endswith(']'):
-                        standard_atomic_weight = list(map(float, value[1:-1].split(',')))
+                    elif value.startswith("[") and value.endswith("]"):
+                        standard_atomic_weight = list(
+                            map(float, value[1:-1].split(","))
+                        )
                     else:
-                        standard_atomic_weight = float(value.split('(')[0])
+                        standard_atomic_weight = float(value.split("(")[0])
                 elif key == "Notes":
                     notes = value
                 else:
@@ -97,19 +102,23 @@ def get_element_info(chem_file_path: str) -> List[ElementInfo]:
 
         # Don't forget to add the last entry after exiting the loop
         if atomic_number is not None:
-            e = ElementInfo(atomic_number,
-                            atomic_symbol,
-                            mass_number,
-                            relative_atomic_mass,
-                            isotopic_composition,
-                            standard_atomic_weight,
-                            notes)
+            e = ElementInfo(
+                atomic_number,
+                atomic_symbol,
+                mass_number,
+                relative_atomic_mass,
+                isotopic_composition,
+                standard_atomic_weight,
+                notes,
+            )
             element_infos.append(e)
 
     return element_infos
 
 
-def _map_atomic_number_to_infos(infos: List[ElementInfo]) -> Dict[int, List[ElementInfo]]:
+def _map_atomic_number_to_infos(
+    infos: List[ElementInfo],
+) -> Dict[int, List[ElementInfo]]:
     d = {}
     for info in infos:
         if info.atomic_number not in d:
@@ -133,7 +142,9 @@ def map_atomic_number_to_symbol(elem_infos: List[ElementInfo]) -> Dict[int, str]
     return d
 
 
-def map_atomic_symbol_to_average_mass(elem_infos: List[ElementInfo]) -> Dict[str, float]:
+def map_atomic_symbol_to_average_mass(
+    elem_infos: List[ElementInfo],
+) -> Dict[str, float]:
     # map atomic number to all element infos
     aa_infos = _map_atomic_number_to_infos(elem_infos)
 
@@ -144,7 +155,9 @@ def map_atomic_symbol_to_average_mass(elem_infos: List[ElementInfo]) -> Dict[str
         # first elem is monoisotopic
         monoisotopic_info = infos[0]
         ave_mass = sum([info.average_mass_component() for info in infos])
-        d[monoisotopic_info.atomic_symbol] = monoisotopic_info.relative_atomic_mass if ave_mass == 0 else ave_mass
+        d[monoisotopic_info.atomic_symbol] = (
+            monoisotopic_info.relative_atomic_mass if ave_mass == 0 else ave_mass
+        )
 
     return d
 
@@ -164,10 +177,10 @@ def get_isotopic_atomic_compositions(elem_infos: List[ElementInfo]) -> Dict[str,
         for info in infos:
             d[str(info)] = info.isotopic_composition
 
-    d['T'] = d['3T']
-    d['D'] = d['2D']
-    d['3H'] = d['3T']
-    d['2H'] = d['2D']
+    d["T"] = d["3T"]
+    d["D"] = d["2D"]
+    d["3H"] = d["3T"]
+    d["2H"] = d["2D"]
 
     return d
 
@@ -187,14 +200,16 @@ def get_isotopic_atomic_masses(elem_infos: List[ElementInfo]) -> Dict[str, float
         for info in infos:
             d[str(info)] = info.relative_atomic_mass
 
-    d['T'] = d['3T']
-    d['D'] = d['2D']
-    d['3H'] = d['3T']
-    d['2H'] = d['2D']
+    d["T"] = d["3T"]
+    d["D"] = d["2D"]
+    d["3H"] = d["3T"]
+    d["2H"] = d["2D"]
     return d
 
 
-def map_atomic_number_to_comp_neutron_offset(elem_infos: List[ElementInfo]) -> Dict[str, List[Tuple[int, float]]]:
+def map_atomic_number_to_comp_neutron_offset(
+    elem_infos: List[ElementInfo],
+) -> Dict[str, List[Tuple[int, float]]]:
     # map atomic number to all element infos
     aa_infos = _map_atomic_number_to_infos(elem_infos)
 
@@ -210,20 +225,26 @@ def map_atomic_number_to_comp_neutron_offset(elem_infos: List[ElementInfo]) -> D
             if info.isotopic_composition == 0.0:
                 continue
             d[monoisotopic_info.atomic_symbol].append(
-                ((info.mass_number - monoisotopic_info.mass_number), info.isotopic_composition))
+                (
+                    (info.mass_number - monoisotopic_info.mass_number),
+                    info.isotopic_composition,
+                )
+            )
 
         for info in infos:  # Add each isotopic composition for each isotope
             d[str(info)] = [(0, 1.0)]
 
-        d['T'] = d['3T']
-        d['D'] = d['2D']
-        d['3H'] = d['3T']
-        d['2H'] = d['2D']
+        d["T"] = d["3T"]
+        d["D"] = d["2D"]
+        d["3H"] = d["3T"]
+        d["2H"] = d["2D"]
 
     return d
 
 
-def map_atomic_number_to_comp(elem_infos: List[ElementInfo]) -> Dict[str, List[Tuple[float, float]]]:
+def map_atomic_number_to_comp(
+    elem_infos: List[ElementInfo],
+) -> Dict[str, List[Tuple[float, float]]]:
     # map atomic number to all element infos
     aa_infos = _map_atomic_number_to_infos(elem_infos)
 
@@ -238,15 +259,17 @@ def map_atomic_number_to_comp(elem_infos: List[ElementInfo]) -> Dict[str, List[T
         for info in infos:  # Add all isotopes for each atomic symbol
             if info.isotopic_composition == 0.0:
                 continue
-            d[monoisotopic_info.atomic_symbol].append((info.relative_atomic_mass, info.isotopic_composition))
+            d[monoisotopic_info.atomic_symbol].append(
+                (info.relative_atomic_mass, info.isotopic_composition)
+            )
 
         for info in infos:  # Add each isotopic composition for each isotope
             d[str(info)] = [(info.relative_atomic_mass, 1.0)]
 
-        d['T'] = d['3T']
-        d['D'] = d['2D']
-        d['3H'] = d['3T']
-        d['2H'] = d['2D']
+        d["T"] = d["3T"]
+        d["D"] = d["2D"]
+        d["3H"] = d["3T"]
+        d["2H"] = d["2D"]
 
     return d
 
@@ -274,13 +297,15 @@ def map_hill_order(elem_infos: List[ElementInfo]) -> Dict[str, int]:
     d.append(monoisotopic_hydrogen.atomic_symbol)
     d.extend([str(info) for info in hydrogen_infos])
 
-    d.append('T')
-    d.append('D')
-    d.append('3H')
-    d.append('2H')
+    d.append("T")
+    d.append("D")
+    d.append("3H")
+    d.append("2H")
 
     # add the rest alphabetically
-    for atomic_number, infos in sorted(aa_infos.items(), key=lambda x: x[1][0].atomic_symbol):
+    for atomic_number, infos in sorted(
+        aa_infos.items(), key=lambda x: x[1][0].atomic_symbol
+    ):
         infos.sort(key=lambda x: x.isotopic_composition, reverse=True)
         d.append(infos[0].atomic_symbol)
         for info in infos:

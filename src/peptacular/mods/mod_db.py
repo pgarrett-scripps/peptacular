@@ -2,20 +2,39 @@
 mod_db.py - Functions for getting modification masses and compositions from unimod and psi-mod databases from
 peptacular/data/psi and peptacular/data/unimod.
 """
+
 from typing import Optional
 
-from peptacular.errors import UnknownModificationError, InvalidDeltaMassError, InvalidCompositionError, \
-    DeltaMassCompositionError, UnknownModificationMassError
-from peptacular.mods.mod_db_setup import UNIMOD_DB, PSI_MOD_DB, XLMOD_DB, EntryDb, RESID_DB, GNO_DB
+from peptacular.errors import (
+    UnknownModificationError,
+    InvalidDeltaMassError,
+    InvalidCompositionError,
+    DeltaMassCompositionError,
+    UnknownModificationMassError,
+)
+from peptacular.mods.mod_db_setup import (
+    UNIMOD_DB,
+    PSI_MOD_DB,
+    XLMOD_DB,
+    EntryDb,
+    RESID_DB,
+    GNO_DB,
+)
 
 
-def _get_mass(db: EntryDb, mod_str: str, orig_str: str, monoisotopic: bool, precision: Optional[int]) -> float:
+def _get_mass(
+    db: EntryDb,
+    mod_str: str,
+    orig_str: str,
+    monoisotopic: bool,
+    precision: Optional[int],
+) -> float:
     """
     Helper function for getting the mass of a modification from a db.
     """
     round_func = lambda x: round(x, precision) if precision is not None else x
 
-    if mod_str.startswith('+') or mod_str.startswith('-'):
+    if mod_str.startswith("+") or mod_str.startswith("-"):
         try:
             return round_func(float(mod_str))
         except ValueError as err:
@@ -46,12 +65,11 @@ def _get_mass(db: EntryDb, mod_str: str, orig_str: str, monoisotopic: bool, prec
     return round_func(m)
 
 
-
 def _get_comp(db: EntryDb, mod_str: str, orig_str: str) -> str:
     """
     Helper function for getting the composition of a modification from a db.
     """
-    if mod_str.startswith('+') or mod_str.startswith('-'):
+    if mod_str.startswith("+") or mod_str.startswith("-"):
         try:
             _ = float(mod_str)
         except ValueError as err:
@@ -104,8 +122,12 @@ def is_unimod_str(unimod_str: str) -> bool:
 
     """
     unimod_str_lower = unimod_str.lower()
-    return unimod_str_lower.startswith('unimod:') or unimod_str_lower.startswith(
-        'u:') or UNIMOD_DB.contains_id(unimod_str) or UNIMOD_DB.contains_name(unimod_str)
+    return (
+        unimod_str_lower.startswith("unimod:")
+        or unimod_str_lower.startswith("u:")
+        or UNIMOD_DB.contains_id(unimod_str)
+        or UNIMOD_DB.contains_name(unimod_str)
+    )
 
 
 def _strip_unimod_str(unimod_str: str) -> str:
@@ -134,12 +156,14 @@ def _strip_unimod_str(unimod_str: str) -> str:
 
     """
     unimod_str_lower = unimod_str.lower()
-    if unimod_str_lower.startswith('unimod:') or unimod_str_lower.startswith('u:'):
-        return unimod_str.split(':')[1]
+    if unimod_str_lower.startswith("unimod:") or unimod_str_lower.startswith("u:"):
+        return unimod_str.split(":")[1]
     return unimod_str
 
 
-def parse_unimod_mass(mod_str: str, monoisotopic: bool, precision: Optional[int] = None) -> float:
+def parse_unimod_mass(
+    mod_str: str, monoisotopic: bool, precision: Optional[int] = None
+) -> float:
     """
     Get the mass of an unimod modification.
 
@@ -188,7 +212,9 @@ def parse_unimod_mass(mod_str: str, monoisotopic: bool, precision: Optional[int]
 
     """
 
-    return _get_mass(UNIMOD_DB, _strip_unimod_str(mod_str), mod_str, monoisotopic, precision)
+    return _get_mass(
+        UNIMOD_DB, _strip_unimod_str(mod_str), mod_str, monoisotopic, precision
+    )
 
 
 def parse_unimod_comp(mod_str: str) -> str:
@@ -265,8 +291,13 @@ def is_psi_mod_str(psi_str: str) -> bool:
 
     """
     psi_str_lower = psi_str.lower()
-    return psi_str_lower.startswith('mod:') or psi_str_lower.startswith('m:') or psi_str_lower.startswith(
-        'psi-mod:') or PSI_MOD_DB.contains_id(psi_str) or PSI_MOD_DB.contains_name(psi_str)
+    return (
+        psi_str_lower.startswith("mod:")
+        or psi_str_lower.startswith("m:")
+        or psi_str_lower.startswith("psi-mod:")
+        or PSI_MOD_DB.contains_id(psi_str)
+        or PSI_MOD_DB.contains_name(psi_str)
+    )
 
 
 def _strip_psi_str(psi_str: str) -> str:
@@ -298,12 +329,18 @@ def _strip_psi_str(psi_str: str) -> str:
 
     """
     psi_str_lower = psi_str.lower()
-    if psi_str_lower.startswith('mod:') or psi_str_lower.startswith('m:') or psi_str_lower.startswith('psi-mod:'):
-        return psi_str.split(':')[1]
+    if (
+        psi_str_lower.startswith("mod:")
+        or psi_str_lower.startswith("m:")
+        or psi_str_lower.startswith("psi-mod:")
+    ):
+        return psi_str.split(":")[1]
     return psi_str
 
 
-def parse_psi_mass(mod_str: str, monoisotopic: bool, precision: Optional[int] = None) -> float:
+def parse_psi_mass(
+    mod_str: str, monoisotopic: bool, precision: Optional[int] = None
+) -> float:
     """
     Get the mass of a PSI modification.
 
@@ -355,7 +392,9 @@ def parse_psi_mass(mod_str: str, monoisotopic: bool, precision: Optional[int] = 
 
     """
 
-    return _get_mass(PSI_MOD_DB, _strip_psi_str(mod_str), mod_str, monoisotopic, precision)
+    return _get_mass(
+        PSI_MOD_DB, _strip_psi_str(mod_str), mod_str, monoisotopic, precision
+    )
 
 
 def parse_psi_comp(mod_str: str) -> str:
@@ -418,7 +457,7 @@ def is_xlmod_str(xlmod_str: str) -> bool:
     :return:
     """
     xlmod_str_lower = xlmod_str.lower()
-    return xlmod_str_lower.startswith('xlmod:') or xlmod_str_lower.startswith('x:')
+    return xlmod_str_lower.startswith("xlmod:") or xlmod_str_lower.startswith("x:")
 
 
 def _strip_xlmod_str(xlmod_str: str) -> str:
@@ -429,12 +468,14 @@ def _strip_xlmod_str(xlmod_str: str) -> str:
     :return:
     """
     xlmod_str_lower = xlmod_str.lower()
-    if xlmod_str_lower.startswith('xlmod:') or xlmod_str_lower.startswith('x:'):
-        return xlmod_str.split(':')[1]
+    if xlmod_str_lower.startswith("xlmod:") or xlmod_str_lower.startswith("x:"):
+        return xlmod_str.split(":")[1]
     return xlmod_str
 
 
-def parse_xlmod_mass(mod_str: str, monoisotopic: bool, precision: Optional[int] = None) -> float:
+def parse_xlmod_mass(
+    mod_str: str, monoisotopic: bool, precision: Optional[int] = None
+) -> float:
     """
     Get the mass of a xlmod modification.
 
@@ -474,7 +515,9 @@ def parse_xlmod_mass(mod_str: str, monoisotopic: bool, precision: Optional[int] 
 
     """
 
-    return _get_mass(XLMOD_DB, _strip_xlmod_str(mod_str), mod_str, monoisotopic, precision)
+    return _get_mass(
+        XLMOD_DB, _strip_xlmod_str(mod_str), mod_str, monoisotopic, precision
+    )
 
 
 def parse_xlmod_comp(mod_str: str) -> str:
@@ -522,17 +565,19 @@ def is_resid_str(resid_str: str) -> bool:
     Check if a string is a RESID id or name.
     """
     resid_str_lower = resid_str.lower()
-    return resid_str_lower.startswith('resid:') or resid_str_lower.startswith('r:')
+    return resid_str_lower.startswith("resid:") or resid_str_lower.startswith("r:")
 
 
 def _strip_resid_str(resid_str: str) -> str:
     resid_str_lower = resid_str.lower()
-    if resid_str_lower.startswith('resid:') or resid_str_lower.startswith('r:'):
-        return resid_str.split(':')[1]
+    if resid_str_lower.startswith("resid:") or resid_str_lower.startswith("r:"):
+        return resid_str.split(":")[1]
     return resid_str
 
 
-def parse_resid_mass(mod_str: str, monoisotopic: bool, precision: Optional[int] = None) -> float:
+def parse_resid_mass(
+    mod_str: str, monoisotopic: bool, precision: Optional[int] = None
+) -> float:
     """
     Get the mass of a residue modification.
 
@@ -568,7 +613,9 @@ def parse_resid_mass(mod_str: str, monoisotopic: bool, precision: Optional[int] 
         -1.0
 
     """
-    return _get_mass(RESID_DB, _strip_resid_str(mod_str), mod_str, monoisotopic, precision)
+    return _get_mass(
+        RESID_DB, _strip_resid_str(mod_str), mod_str, monoisotopic, precision
+    )
 
 
 def parse_resid_comp(mod_str: str) -> str:
@@ -640,7 +687,7 @@ def is_gno_str(gno_str: str) -> bool:
     """
 
     gno_str_lower = gno_str.lower()
-    return gno_str_lower.startswith('gno:') or gno_str_lower.startswith('g:')
+    return gno_str_lower.startswith("gno:") or gno_str_lower.startswith("g:")
 
 
 def _strip_gno_str(gno_str: str) -> str:
@@ -651,12 +698,14 @@ def _strip_gno_str(gno_str: str) -> str:
     """
 
     gno_str_lower = gno_str.lower()
-    if gno_str_lower.startswith('gno:') or gno_str_lower.startswith('g:'):
-        return gno_str.split(':')[1]
+    if gno_str_lower.startswith("gno:") or gno_str_lower.startswith("g:"):
+        return gno_str.split(":")[1]
     return gno_str
 
 
-def parse_gno_mass(mod_str: str, monoisotopic: bool, precision: Optional[int] = None) -> float:
+def parse_gno_mass(
+    mod_str: str, monoisotopic: bool, precision: Optional[int] = None
+) -> float:
     """
     Get the mass of a GNO modification.
 

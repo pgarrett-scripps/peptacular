@@ -2,6 +2,7 @@
 chem_calc.py contains functions for parsing and writing chemical formulas, and for calculating the composition of a
 sequence with/and modifications.
 """
+
 import warnings
 from typing import Union, List, Optional
 
@@ -11,15 +12,38 @@ from peptacular.proforma.input_convert import ModValue
 from peptacular.chem.chem_util import parse_chem_formula, write_chem_formula
 from peptacular.mods.mod_db_setup import MONOSACCHARIDES_DB
 from peptacular.sequence.sequence_funcs import sequence_to_annotation
-from peptacular.constants import (AA_COMPOSITIONS, AVERAGINE_RATIOS, NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS,
-                                  FRAGMENT_ION_BASE_CHARGE_ADDUCTS)
-from peptacular.errors import InvalidCompositionError, AmbiguousAminoAcidError, \
-    UnknownAminoAcidError, DeltaMassCompositionError
+from peptacular.constants import (
+    AA_COMPOSITIONS,
+    AVERAGINE_RATIOS,
+    NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS,
+    FRAGMENT_ION_BASE_CHARGE_ADDUCTS,
+)
+from peptacular.errors import (
+    InvalidCompositionError,
+    AmbiguousAminoAcidError,
+    UnknownAminoAcidError,
+    DeltaMassCompositionError,
+)
 from peptacular.glycan import glycan_comp
-from peptacular.mods.mod_db import parse_unimod_comp, parse_psi_comp, is_psi_mod_str, is_unimod_str, parse_xlmod_comp, \
-    parse_resid_comp, is_resid_str, is_xlmod_str, is_gno_str, parse_gno_comp
-from peptacular.proforma.proforma_parser import parse_static_mods, ProFormaAnnotation, Mod, parse_isotope_mods, \
-    parse_ion_elements
+from peptacular.mods.mod_db import (
+    parse_unimod_comp,
+    parse_psi_comp,
+    is_psi_mod_str,
+    is_unimod_str,
+    parse_xlmod_comp,
+    parse_resid_comp,
+    is_resid_str,
+    is_xlmod_str,
+    is_gno_str,
+    parse_gno_comp,
+)
+from peptacular.proforma.proforma_parser import (
+    parse_static_mods,
+    ProFormaAnnotation,
+    Mod,
+    parse_isotope_mods,
+    parse_ion_elements,
+)
 from peptacular.util import convert_type
 
 
@@ -77,7 +101,7 @@ def mod_comp(mod: ModValue) -> ChemComposition:
     if isinstance(mod, (float, int)):
         raise InvalidCompositionError(mod)
 
-    mods = mod.split('|')
+    mods = mod.split("|")
     for m in mods:
         m = _parse_mod_comp(m)
         if m is not None:
@@ -86,8 +110,9 @@ def mod_comp(mod: ModValue) -> ChemComposition:
     raise InvalidCompositionError(mod)
 
 
-def estimate_comp(neutral_mass: float,
-                  isotopic_mods: Optional[List[ModValue]] = None) -> ChemComposition:
+def estimate_comp(
+    neutral_mass: float, isotopic_mods: Optional[List[ModValue]] = None
+) -> ChemComposition:
     """
     Estimate the number of each element in a molecule based on its molecular mass using the averagine model.
 
@@ -110,8 +135,10 @@ def estimate_comp(neutral_mass: float,
 
     """
 
-    composition = {atom: ratio * neutral_mass / ISOTOPIC_AVERAGINE_MASS for atom, ratio in
-                   AVERAGINE_RATIOS.items()}
+    composition = {
+        atom: ratio * neutral_mass / ISOTOPIC_AVERAGINE_MASS
+        for atom, ratio in AVERAGINE_RATIOS.items()
+    }
 
     if isotopic_mods is not None:
         composition = apply_isotope_mods_to_composition(composition, isotopic_mods)
@@ -168,8 +195,8 @@ def _parse_glycan_comp(glycan_str: str) -> ChemComposition:
 
     """
 
-    if glycan_str.lower().startswith('glycan:'):
-        glycan_str = ''.join(glycan_str.split(':')[1:])
+    if glycan_str.lower().startswith("glycan:"):
+        glycan_str = "".join(glycan_str.split(":")[1:])
 
     if MONOSACCHARIDES_DB.contains_id(glycan_str):
         entry = MONOSACCHARIDES_DB.get_entry_by_id(glycan_str)
@@ -222,17 +249,19 @@ def _parse_mod_comp(mod: str) -> Union[ChemComposition, None]:
 
     converted_mod = convert_type(mod)
 
-    if isinstance(converted_mod, (int, float)):  # cannot get composition from a delta mass
+    if isinstance(
+        converted_mod, (int, float)
+    ):  # cannot get composition from a delta mass
         return None
 
     # localization fix
-    if isinstance(mod, str) and '#' in mod:
-        if mod.startswith('#'):  # for localized positions, return empty comp
+    if isinstance(mod, str) and "#" in mod:
+        if mod.startswith("#"):  # for localized positions, return empty comp
             return {}
-        mod = mod.split('#')[0]
+        mod = mod.split("#")[0]
 
     mod_lower = mod.lower()
-    if mod_lower.startswith('glycan:'):
+    if mod_lower.startswith("glycan:"):
         return _parse_glycan_comp(mod)
 
     if is_gno_str(mod):
@@ -247,10 +276,10 @@ def _parse_mod_comp(mod: str) -> Union[ChemComposition, None]:
         # not implemented
         return parse_chem_formula(parse_resid_comp(mod))
 
-    if mod_lower.startswith('info:'):  # cannot get comp for info
+    if mod_lower.startswith("info:"):  # cannot get comp for info
         return None
 
-    if mod_lower.startswith('obs:'):  # cannot get comp for observed mass
+    if mod_lower.startswith("obs:"):  # cannot get comp for observed mass
         return None
 
     if is_psi_mod_str(mod):  # psi-mod
@@ -260,8 +289,8 @@ def _parse_mod_comp(mod: str) -> Union[ChemComposition, None]:
         return parse_chem_formula(parse_unimod_comp(mod))
 
     # chemical formula
-    if mod_lower.startswith('formula:'):
-        return parse_chem_formula(mod.split(':')[1])
+    if mod_lower.startswith("formula:"):
+        return parse_chem_formula(mod.split(":")[1])
 
     return None
 
@@ -296,11 +325,11 @@ def _parse_mod_delta_mass(mod: str) -> Union[float, None]:
         return mod
 
     mass = None
-    for mod_str in mod.split('|'):
+    for mod_str in mod.split("|"):
 
         # check if the mod contains a localization score
-        if '#' in mod_str:
-            mod_str = mod_str.split('#')[0]
+        if "#" in mod_str:
+            mod_str = mod_str.split("#")[0]
 
         try:
             mass = float(mod_str)
@@ -309,20 +338,28 @@ def _parse_mod_delta_mass(mod: str) -> Union[float, None]:
             pass
 
         mod_lower = mod_str.lower()
-        if mod_lower.startswith('unimod:') or mod_lower.startswith('u:') or \
-                mod_lower.startswith('psi-mod:') or mod_lower.startswith('mod:') or mod_lower.startswith('m:') or \
-                mod_lower.startswith('resid:') or mod_lower.startswith('r:') or \
-                mod_lower.startswith('xlmod:') or mod_lower.startswith('x:') or \
-                mod_lower.startswith('gno:') or mod_lower.startswith('g:'):
+        if (
+            mod_lower.startswith("unimod:")
+            or mod_lower.startswith("u:")
+            or mod_lower.startswith("psi-mod:")
+            or mod_lower.startswith("mod:")
+            or mod_lower.startswith("m:")
+            or mod_lower.startswith("resid:")
+            or mod_lower.startswith("r:")
+            or mod_lower.startswith("xlmod:")
+            or mod_lower.startswith("x:")
+            or mod_lower.startswith("gno:")
+            or mod_lower.startswith("g:")
+        ):
 
-            mod_str = mod_str.split(':')[1]
+            mod_str = mod_str.split(":")[1]
 
-            if mod_str.startswith('+') or mod_str.startswith('-'):
+            if mod_str.startswith("+") or mod_str.startswith("-"):
                 mass = float(mod_str)
                 break
 
-        if mod_str.lower().startswith('obs:'):
-            mod_str = mod_str.split(':')[1]
+        if mod_str.lower().startswith("obs:"):
+            mod_str = mod_str.split(":")[1]
             try:
                 mass = float(mod_str)
                 break
@@ -332,10 +369,12 @@ def _parse_mod_delta_mass(mod: str) -> Union[float, None]:
     return mass
 
 
-def _sequence_comp(annotation: Union[str, ProFormaAnnotation],
-                   ion_type: str,
-                   isotope: int = 0,
-                   use_isotope_on_mods: bool = False) -> ChemComposition:
+def _sequence_comp(
+    annotation: Union[str, ProFormaAnnotation],
+    ion_type: str,
+    isotope: int = 0,
+    use_isotope_on_mods: bool = False,
+) -> ChemComposition:
     """
     Calculate the composition of a sequence.
 
@@ -428,23 +467,31 @@ def _sequence_comp(annotation: Union[str, ProFormaAnnotation],
         charge_adducts = annotation.charge_adducts[0]
 
     if charge_adducts is None:
-        if ion_type in ('p', 'n'):
-            charge_adducts = f'{charge}H+'
+        if ion_type in ("p", "n"):
+            charge_adducts = f"{charge}H+"
         else:
-            charge_adducts = f'{charge-1}H+,{FRAGMENT_ION_BASE_CHARGE_ADDUCTS[ion_type]}'
+            charge_adducts = (
+                f"{charge-1}H+,{FRAGMENT_ION_BASE_CHARGE_ADDUCTS[ion_type]}"
+            )
 
-    if ion_type not in ('p', 'n'):
+    if ion_type not in ("p", "n"):
         if charge == 0:
-            warnings.warn('Calculating the comp of a fragment ion with charge state 0. Fragment ions should have a '
-                          'charge state greater than 0 since the neutral form doesnt exist.')
+            warnings.warn(
+                "Calculating the comp of a fragment ion with charge state 0. Fragment ions should have a "
+                "charge state greater than 0 since the neutral form doesnt exist."
+            )
 
-    if 'B' in annotation.sequence:
-        raise AmbiguousAminoAcidError('B',
-                                      'Cannot determine the composition of a sequence with an ambiguous amino acid.')
+    if "B" in annotation.sequence:
+        raise AmbiguousAminoAcidError(
+            "B",
+            "Cannot determine the composition of a sequence with an ambiguous amino acid.",
+        )
 
-    if 'Z' in annotation.sequence:
-        raise AmbiguousAminoAcidError('Z',
-                                      'Cannot determine the composition of a sequence with an ambiguous amino acid.')
+    if "Z" in annotation.sequence:
+        raise AmbiguousAminoAcidError(
+            "Z",
+            "Cannot determine the composition of a sequence with an ambiguous amino acid.",
+        )
 
     # Get the composition of the base sequence
     sequence_composition = {}
@@ -478,7 +525,7 @@ def _sequence_comp(annotation: Union[str, ProFormaAnnotation],
                     for k, v in mod_comp(interval_mod).items():
                         mod_composition[k] = mod_composition.get(k, 0) + v
 
-    if annotation.has_labile_mods() and ion_type == 'p':
+    if annotation.has_labile_mods() and ion_type == "p":
         for labile_mod in annotation.labile_mods:
             for k, v in mod_comp(labile_mod).items():
                 mod_composition[k] = mod_composition.get(k, 0) + v
@@ -502,20 +549,20 @@ def _sequence_comp(annotation: Union[str, ProFormaAnnotation],
     if annotation.has_static_mods():
         static_map = parse_static_mods(annotation.static_mods)
 
-        n_term_mod = static_map.get('N-Term')
+        n_term_mod = static_map.get("N-Term")
         if n_term_mod is not None:
             for m in n_term_mod:
                 for k, v in mod_comp(m.val).items():
                     mod_composition[k] = mod_composition.get(k, 0) + v
 
-        c_term_mod = static_map.get('C-Term')
+        c_term_mod = static_map.get("C-Term")
         if c_term_mod is not None:
             for m in c_term_mod:
                 for k, v in mod_comp(m.val).items():
                     mod_composition[k] = mod_composition.get(k, 0) + v
 
         for aa, mod in static_map.items():
-            if aa in ['N-Term', 'C-Term']:
+            if aa in ["N-Term", "C-Term"]:
                 continue
 
             aa_count = annotation.sequence.count(aa)
@@ -523,15 +570,21 @@ def _sequence_comp(annotation: Union[str, ProFormaAnnotation],
                 for k, v in mod_comp(m.val).items():
                     mod_composition[k] = mod_composition.get(k, 0) + v * aa_count
 
-    mod_composition['n'] = mod_composition.get('n', 0) + isotope
+    mod_composition["n"] = mod_composition.get("n", 0) + isotope
 
     # Apply isotopic mods
     if annotation.has_isotope_mods():
         if use_isotope_on_mods:
-            sequence_composition = apply_isotope_mods_to_composition(sequence_composition, annotation.isotope_mods)
-            mod_composition = apply_isotope_mods_to_composition(mod_composition, annotation.isotope_mods)
+            sequence_composition = apply_isotope_mods_to_composition(
+                sequence_composition, annotation.isotope_mods
+            )
+            mod_composition = apply_isotope_mods_to_composition(
+                mod_composition, annotation.isotope_mods
+            )
         else:
-            sequence_composition = apply_isotope_mods_to_composition(sequence_composition, annotation.isotope_mods)
+            sequence_composition = apply_isotope_mods_to_composition(
+                sequence_composition, annotation.isotope_mods
+            )
 
     composition = {}
     for k, v in sequence_composition.items():
@@ -577,7 +630,7 @@ def _parse_mod_delta_mass_only(mod: Union[str, Mod]) -> Union[float, None]:
     if isinstance(mod, Mod):
         return _parse_mod_delta_mass_only(mod.val)
 
-    mods = mod.split('|')
+    mods = mod.split("|")
     for m in mods:
         try:
             m = _parse_mod_comp(m)
@@ -591,11 +644,12 @@ def _parse_mod_delta_mass_only(mod: Union[str, Mod]) -> Union[float, None]:
         if m is not None:
             return m
 
-    raise ValueError(f'Invalid modification: {mod}')
+    raise ValueError(f"Invalid modification: {mod}")
 
 
-def apply_isotope_mods_to_composition(composition: Union[ChemComposition, str],
-                                      isotopic_mods: Optional[List[ModValue]]) -> ChemComposition:
+def apply_isotope_mods_to_composition(
+    composition: Union[ChemComposition, str], isotopic_mods: Optional[List[ModValue]]
+) -> ChemComposition:
     """
     Apply isotopic modifications to a composition.
 
@@ -679,7 +733,7 @@ def _parse_adduct_comp(adduct: str) -> ChemComposition:
     comp = {}
     element_count, element_symbol, element_charge = parse_ion_elements(adduct)
     comp[element_symbol] = element_count
-    comp['e'] = -1 * element_charge * element_count
+    comp["e"] = -1 * element_charge * element_count
 
     return comp
 
@@ -709,9 +763,9 @@ def _parse_charge_adducts_comp(adducts: ModValue) -> ChemComposition:
         return _parse_charge_adducts_comp(adducts.val)
 
     if not isinstance(adducts, str):
-        raise TypeError(f'Invalid type for adducts: {type(adducts)}! Must be a string.')
+        raise TypeError(f"Invalid type for adducts: {type(adducts)}! Must be a string.")
 
-    adducts = adducts.split(',')
+    adducts = adducts.split(",")
 
     comps = []
     for adduct in adducts:

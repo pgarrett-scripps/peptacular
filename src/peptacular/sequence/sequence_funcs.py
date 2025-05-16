@@ -27,11 +27,24 @@ from typing import Dict, List, Tuple, Callable, Union
 import regex as re
 
 from peptacular.constants import ORDERED_AMINO_ACIDS
-from peptacular.proforma.proforma_parser import parse, ProFormaAnnotation, serialize, MultiProFormaAnnotation
+from peptacular.proforma.proforma_parser import (
+    parse,
+    ProFormaAnnotation,
+    serialize,
+    MultiProFormaAnnotation,
+)
 from peptacular.proforma.proforma_dataclasses import Mod, Interval
 from peptacular.spans import Span
-from peptacular.proforma.input_convert import ModDict, fix_list_of_mods, fix_intervals_input
-from peptacular.util import _construct_ambiguity_intervals, _combine_ambiguity_intervals, _get_mass_shift_interval
+from peptacular.proforma.input_convert import (
+    ModDict,
+    fix_list_of_mods,
+    fix_intervals_input,
+)
+from peptacular.util import (
+    _construct_ambiguity_intervals,
+    _combine_ambiguity_intervals,
+    _get_mass_shift_interval,
+)
 
 
 def sequence_to_annotation(sequence: str) -> ProFormaAnnotation:
@@ -248,10 +261,12 @@ def get_mods(sequence: Union[str, ProFormaAnnotation]) -> ModDict:
     return annotation.mod_dict()
 
 
-def add_mods(sequence: Union[str, ProFormaAnnotation],
-             mods: Dict,
-             append: bool = True,
-             include_plus: bool = False) -> str:
+def add_mods(
+    sequence: Union[str, ProFormaAnnotation],
+    mods: Dict,
+    append: bool = True,
+    include_plus: bool = False,
+) -> str:
     """
     Adds modifications to the given sequence. The modifications can be of type Mod, str, int, or float, and can be
     a single value or a list of values. The modifications will be added to the sequence in the order they are provided.
@@ -323,9 +338,9 @@ def add_mods(sequence: Union[str, ProFormaAnnotation],
         annotation = sequence
 
     for k in mods:
-        if k == 'charge':
+        if k == "charge":
             continue
-        if k == 'intervals':
+        if k == "intervals":
             mods[k] = fix_intervals_input(mods[k])
         else:
             mods[k] = fix_list_of_mods(mods[k])
@@ -334,7 +349,9 @@ def add_mods(sequence: Union[str, ProFormaAnnotation],
     return serialize(annotation, include_plus)
 
 
-def condense_static_mods(sequence: Union[str, ProFormaAnnotation], include_plus: bool = False) -> str:
+def condense_static_mods(
+    sequence: Union[str, ProFormaAnnotation], include_plus: bool = False
+) -> str:
     """
     Condenses static modifications into internal modifications.
 
@@ -463,7 +480,11 @@ def strip_mods(sequence: Union[str, ProFormaAnnotation]) -> str:
     return annotation.sequence
 
 
-def reverse(sequence: Union[str, ProFormaAnnotation], swap_terms: bool = False, include_plus: bool = False) -> str:
+def reverse(
+    sequence: Union[str, ProFormaAnnotation],
+    swap_terms: bool = False,
+    include_plus: bool = False,
+) -> str:
     """
     Reverses the sequence, while preserving the position of any modifications.
 
@@ -507,7 +528,11 @@ def reverse(sequence: Union[str, ProFormaAnnotation], swap_terms: bool = False, 
     return reversed_annotation.serialize(include_plus)
 
 
-def shuffle(sequence: Union[str, ProFormaAnnotation], seed: int = None, include_plus: bool = False) -> str:
+def shuffle(
+    sequence: Union[str, ProFormaAnnotation],
+    seed: int = None,
+    include_plus: bool = False,
+) -> str:
     """
     Shuffles the sequence, while preserving the position of any modifications.
 
@@ -547,7 +572,9 @@ def shuffle(sequence: Union[str, ProFormaAnnotation], seed: int = None, include_
     return shifted_annotation.serialize(include_plus)
 
 
-def shift(sequence: Union[str, ProFormaAnnotation], n: int, include_plus: bool = False) -> str:
+def shift(
+    sequence: Union[str, ProFormaAnnotation], n: int, include_plus: bool = False
+) -> str:
     """
     Shifts the sequence to the left by a given number of positions, while preserving the position of any modifications.
 
@@ -594,7 +621,9 @@ def shift(sequence: Union[str, ProFormaAnnotation], n: int, include_plus: bool =
     return shifted_annotation.serialize(include_plus)
 
 
-def span_to_sequence(sequence: Union[str, ProFormaAnnotation], span: Span, include_plus: bool = False) -> str:
+def span_to_sequence(
+    sequence: Union[str, ProFormaAnnotation], span: Span, include_plus: bool = False
+) -> str:
     """
     Extracts a subsequence from the input sequence based on the provided span.
 
@@ -644,7 +673,9 @@ def span_to_sequence(sequence: Union[str, ProFormaAnnotation], span: Span, inclu
     return annotation.slice(span[0], span[1]).serialize(include_plus)
 
 
-def split(sequence: Union[str, ProFormaAnnotation], include_plus: bool = False) -> List[str]:
+def split(
+    sequence: Union[str, ProFormaAnnotation], include_plus: bool = False
+) -> List[str]:
     """
     Splits sequence into a list of amino acids, preserving modifications.
 
@@ -719,8 +750,11 @@ def count_residues(sequence: Union[str, ProFormaAnnotation]) -> CounterType:
     return new_annotation.count_residues()
 
 
-def is_subsequence(subsequence: Union[str, ProFormaAnnotation], sequence: Union[str, ProFormaAnnotation],
-                   order: bool = True) -> bool:
+def is_subsequence(
+    subsequence: Union[str, ProFormaAnnotation],
+    sequence: Union[str, ProFormaAnnotation],
+    order: bool = True,
+) -> bool:
     """
     Checks if the input subsequence is a subsequence of the input sequence. If order is True, the subsequence must be in
     the same order as in the sequence. If order is False, the subsequence can be in any order.
@@ -765,10 +799,14 @@ def is_subsequence(subsequence: Union[str, ProFormaAnnotation], sequence: Union[
 
     subsequence_counts = count_residues(subsequence)
     sequence_counts = count_residues(sequence)
-    return all(subsequence_counts[aa] <= sequence_counts[aa] for aa in subsequence_counts)
+    return all(
+        subsequence_counts[aa] <= sequence_counts[aa] for aa in subsequence_counts
+    )
 
 
-def _sort_mods(mods: ModDict, sort_function: Optional[Callable[[str], str]] = None) -> None:
+def _sort_mods(
+    mods: ModDict, sort_function: Optional[Callable[[str], str]] = None
+) -> None:
     """
     Sorts the modifications in the input dictionary using the provided sort function.
 
@@ -831,9 +869,11 @@ def sort(sequence: Union[str, ProFormaAnnotation], include_plus: bool = False) -
     return sorted_annotation.serialize(include_plus)
 
 
-def find_subsequence_indices(sequence: Union[str, ProFormaAnnotation],
-                             subsequence: Union[str, ProFormaAnnotation],
-                             ignore_mods: bool = False) -> List[int]:
+def find_subsequence_indices(
+    sequence: Union[str, ProFormaAnnotation],
+    subsequence: Union[str, ProFormaAnnotation],
+    ignore_mods: bool = False,
+) -> List[int]:
     """
     Retrieves all starting indexes of a given subsequence within a sequence.
 
@@ -890,10 +930,10 @@ def find_subsequence_indices(sequence: Union[str, ProFormaAnnotation],
     if isinstance(subsequence, str):
         subsequence = sequence_to_annotation(subsequence)
 
-    if not sequence.has_sequence() or sequence.sequence == '':
+    if not sequence.has_sequence() or sequence.sequence == "":
         return []
 
-    if not subsequence.has_sequence() or subsequence.sequence == '':
+    if not subsequence.has_sequence() or subsequence.sequence == "":
         return []
 
     if ignore_mods:
@@ -903,10 +943,12 @@ def find_subsequence_indices(sequence: Union[str, ProFormaAnnotation],
     return subsequence.find_indices(sequence)
 
 
-def coverage(sequence: Union[str, ProFormaAnnotation],
-             subsequences: List[Union[str, ProFormaAnnotation]],
-             accumulate: bool = False,
-             ignore_mods: bool = False) -> List[int]:
+def coverage(
+    sequence: Union[str, ProFormaAnnotation],
+    subsequences: List[Union[str, ProFormaAnnotation]],
+    accumulate: bool = False,
+    ignore_mods: bool = False,
+) -> List[int]:
     """
     Calculate the sequence coverage given a list of subsequecnes.
 
@@ -954,20 +996,32 @@ def coverage(sequence: Union[str, ProFormaAnnotation],
         if isinstance(subsequence, str):
             subsequence = sequence_to_annotation(subsequence)
 
-        peptide_indexes = find_subsequence_indices(sequence, subsequence, ignore_mods=ignore_mods)
+        peptide_indexes = find_subsequence_indices(
+            sequence, subsequence, ignore_mods=ignore_mods
+        )
         for peptide_index in peptide_indexes:
             if accumulate:
-                cov_arr[peptide_index:peptide_index + sequence_length(subsequence)] = \
-                    [x + 1 for x in cov_arr[peptide_index:peptide_index + sequence_length(subsequence)]]
+                cov_arr[
+                    peptide_index : peptide_index + sequence_length(subsequence)
+                ] = [
+                    x + 1
+                    for x in cov_arr[
+                        peptide_index : peptide_index + sequence_length(subsequence)
+                    ]
+                ]
             else:
-                cov_arr[peptide_index:peptide_index + sequence_length(subsequence)] = [1] * sequence_length(subsequence)
+                cov_arr[
+                    peptide_index : peptide_index + sequence_length(subsequence)
+                ] = [1] * sequence_length(subsequence)
 
     return cov_arr
 
 
-def percent_coverage(sequence: Union[str, ProFormaAnnotation],
-                     subsequences: List[Union[str, ProFormaAnnotation]],
-                     ignore_mods: bool = False) -> float:
+def percent_coverage(
+    sequence: Union[str, ProFormaAnnotation],
+    subsequences: List[Union[str, ProFormaAnnotation]],
+    ignore_mods: bool = False,
+) -> float:
     """
     Calculates the coverage given a list of subsequences.
 
@@ -994,7 +1048,9 @@ def percent_coverage(sequence: Union[str, ProFormaAnnotation],
 
     """
 
-    cov_arr = coverage(sequence, subsequences, accumulate=False, ignore_mods=ignore_mods)
+    cov_arr = coverage(
+        sequence, subsequences, accumulate=False, ignore_mods=ignore_mods
+    )
 
     if len(cov_arr) == 0:
         return 0
@@ -1002,12 +1058,14 @@ def percent_coverage(sequence: Union[str, ProFormaAnnotation],
     return sum(cov_arr) / len(cov_arr)
 
 
-def modification_coverage(sequence: Union[str, ProFormaAnnotation],
-                          subsequences: List[Union[str, ProFormaAnnotation]],
-                          accumulate: bool = False) -> Dict[Union[int, str], int]:
+def modification_coverage(
+    sequence: Union[str, ProFormaAnnotation],
+    subsequences: List[Union[str, ProFormaAnnotation]],
+    accumulate: bool = False,
+) -> Dict[Union[int, str], int]:
     """
     Calculate the modification coverage given a list of subsequences.
-    
+
     This function identifies which modifications in the main sequence are covered by
     subsequences. It returns a dictionary where each key is a modification position/type
     (matching the format from get_mods) and each value is the number of subsequences
@@ -1063,7 +1121,9 @@ def modification_coverage(sequence: Union[str, ProFormaAnnotation],
         unmodified_subsequence = strip_mods(subsequence)
 
         # Find all occurrences of the unmodified subsequence in the unmodified sequence
-        start_indices = find_subsequence_indices(unmodified_sequence, unmodified_subsequence)
+        start_indices = find_subsequence_indices(
+            unmodified_sequence, unmodified_subsequence
+        )
 
         # Get the modifications of the subsequence
         subsequence_mods = get_mods(subsequence)
@@ -1085,7 +1145,10 @@ def modification_coverage(sequence: Union[str, ProFormaAnnotation],
                         # For each modification in the main sequence at this position
                         for mod_value in mod_values:
                             # Check if any modification in the subsequence matches
-                            if any(str(mod_value) == str(subseq_mod) for subseq_mod in subsequence_mods[relative_pos]):
+                            if any(
+                                str(mod_value) == str(subseq_mod)
+                                for subseq_mod in subsequence_mods[relative_pos]
+                            ):
                                 if accumulate:
                                     coverage_dict[mod_pos] += 1
                                 else:
@@ -1093,17 +1156,22 @@ def modification_coverage(sequence: Union[str, ProFormaAnnotation],
                                 break
 
             # Handle terminal modifications
-            for mod_type in ['nterm', 'cterm']:
+            for mod_type in ["nterm", "cterm"]:
                 if mod_type in sequence_mods and mod_type in subsequence_mods:
                     # For terminal mods, check if start or end of subsequence aligns with terminal
-                    terminal_match = (mod_type == 'nterm' and start_idx == 0) or \
-                                     (mod_type == 'cterm' and start_idx + len(unmodified_subsequence) == len(
-                                         unmodified_sequence))
+                    terminal_match = (mod_type == "nterm" and start_idx == 0) or (
+                        mod_type == "cterm"
+                        and start_idx + len(unmodified_subsequence)
+                        == len(unmodified_sequence)
+                    )
 
                     if terminal_match:
                         # Check if any terminal mod in the subsequence matches
                         for mod_value in sequence_mods[mod_type]:
-                            if any(str(mod_value) == str(subseq_mod) for subseq_mod in subsequence_mods[mod_type]):
+                            if any(
+                                str(mod_value) == str(subseq_mod)
+                                for subseq_mod in subsequence_mods[mod_type]
+                            ):
                                 if accumulate:
                                     coverage_dict[mod_type] += 1
                                 else:
@@ -1151,18 +1219,18 @@ def convert_ip2_sequence(sequence: str) -> str:
     """
 
     # Use regex to check if sequence starts and ends with the specified pattern
-    if re.match(r'^([A-Z]|-)\..*\.([A-Z]|-)$', sequence):
+    if re.match(r"^([A-Z]|-)\..*\.([A-Z]|-)$", sequence):
         # If it matches, remove the leading and trailing characters (first and last two characters)
         sequence = sequence[2:-2]
 
     # Step 2: Replace () with []
-    sequence = re.sub(r'\(([^)]+)\)', r'[\1]', sequence)
+    sequence = re.sub(r"\(([^)]+)\)", r"[\1]", sequence)
 
     # Step 3: Handle modifications at the start (can be any content, not just numbers)
-    sequence = re.sub(r'^\[([^\]]+)\]', r'[\1]-', sequence)
+    sequence = re.sub(r"^\[([^\]]+)\]", r"[\1]-", sequence)
 
     # Step 4: Convert consecutive modifications to use a dash
-    sequence = re.sub(r'\]\[', r']-[', sequence)
+    sequence = re.sub(r"\]\[", r"]-[", sequence)
 
     return sequence
 
@@ -1191,18 +1259,18 @@ def convert_diann_sequence(sequence: str) -> str:
     """
 
     # Check if sequence starts and ends with underscores and remove them
-    if sequence.startswith('_'):
+    if sequence.startswith("_"):
         sequence = sequence[1:]
 
         # Check for a modification at the start of the sequence
-        if re.match(r'^\[[^\]]+\]', sequence):
-            sequence = re.sub(r'^\[([^\]]+)\]', r'[\1]-', sequence)
+        if re.match(r"^\[[^\]]+\]", sequence):
+            sequence = re.sub(r"^\[([^\]]+)\]", r"[\1]-", sequence)
 
-    if sequence.endswith('_'):
+    if sequence.endswith("_"):
         sequence = sequence[:-1]
 
-    elif re.search(r'_\[[^\]]+\]$', sequence):
-        sequence = re.sub(r'_\[([^\]]+)\]$', r'-[\1]', sequence)
+    elif re.search(r"_\[[^\]]+\]$", sequence):
+        sequence = re.sub(r"_\[([^\]]+)\]$", r"-[\1]", sequence)
 
     return sequence
 
@@ -1226,21 +1294,21 @@ def convert_casanovo_sequence(sequence: str) -> str:
     is_nterm = False  # Tracks if the current modification is at the N-terminus
 
     for _, char in enumerate(sequence):
-        if char in {'+', '-'}:
+        if char in {"+", "-"}:
             # Check if it's at the start (N-terminal)
             is_nterm = len(new_sequence) == 0
 
             # Start a new modification block
-            new_sequence.append('[')
+            new_sequence.append("[")
             new_sequence.append(char)
             in_mod = True
         elif in_mod and char.isalpha():
             # End the modification block
-            new_sequence.append(']')
+            new_sequence.append("]")
 
             if is_nterm:
                 # Add a dash if it's an N-terminal modification
-                new_sequence.append('-')
+                new_sequence.append("-")
                 is_nterm = False
 
             # Add the current character and close modification
@@ -1252,9 +1320,9 @@ def convert_casanovo_sequence(sequence: str) -> str:
 
     # Close any unclosed modification at the end of the sequence
     if in_mod:
-        new_sequence.append(']')
+        new_sequence.append("]")
 
-    return ''.join(new_sequence)
+    return "".join(new_sequence)
 
 
 def is_sequence_valid(sequence: Union[str, ProFormaAnnotation]) -> bool:
@@ -1294,37 +1362,53 @@ def count_aa(sequence: Union[str, ProFormaAnnotation]) -> Dict[str, int]:
     return aa_counts
 
 
-def annotate_ambiguity(sequence: Union[str, ProFormaAnnotation],
-                       forward_coverage: List[int], reverse_coverage: List[int],
-                       mass_shift: Optional[Any] = None) -> str:
+def annotate_ambiguity(
+    sequence: Union[str, ProFormaAnnotation],
+    forward_coverage: List[int],
+    reverse_coverage: List[int],
+    mass_shift: Optional[Any] = None,
+) -> str:
     """
-    Given a peptide sequence, and the forward and reverse fragment ion coverage, annotate the sequence with
-    ambiguity intervals.
+    Given a peptide sequence and coverage information for forward and reverse fragment ions,
+    annotate the sequence with ambiguity intervals and optional mass shift.
+
+    This function identifies regions in the sequence where there is insufficient fragment ion
+    coverage and marks them as ambiguous using ProForma notation with parentheses.
+    If a mass shift is provided, it will be added to the appropriate location.
+
+    :param sequence: The peptide sequence or ProFormaAnnotation object to annotate.
+    :type sequence: Union[str, ProFormaAnnotation]
+    :param forward_coverage: Binary list indicating which positions have forward ion coverage (1) or not (0).
+    :type forward_coverage: List[int]
+    :param reverse_coverage: Binary list indicating which positions have reverse ion coverage (1) or not (0).
+    :type reverse_coverage: List[int]
+    :param mass_shift: An optional mass shift to be added to the sequence at the appropriate position.
+    :type mass_shift: Optional[Any]
+
+    :raises ValueError: If the annotation already contains intervals or if coverage lengths don't match sequence length.
+
+    :return: The annotated sequence with ambiguity regions marked using ProForma notation.
+    :rtype: str
 
     .. code-block:: python
 
-        # [(0, 1), (4, 6)], [(0, 4), (5, 6)]
+        # Add ambiguity intervals based on fragment ion coverage
         >>> annotate_ambiguity('PEPTIDE', [0,1,1,1,0,0,0], [0,0,0,0,0,1,0])
         '(?PE)PTI(?DE)'
 
-        >>> annotate_ambiguity('PEPTIDE', [1,1,1,0,0,0,0], [0,0,0,0,0,1,1])
-        'PEP(?TI)DE'
+        # With a phosphorylation mass shift
+        >>> annotate_ambiguity('PEPTIDE', [1,1,1,0,0,0,0], [0,0,0,0,1,1,1], 79.966)
+        'PEPT[79.966]IDE'
 
+        # Handling existing modifications
         >>> annotate_ambiguity('P[10]EPTIDE', [1,1,1,0,0,0,0], [0,0,0,0,0,1,1])
         'P[10]EP(?TI)DE'
 
-        >>> annotate_ambiguity('PEPTIDE', [1,1,1,0,0,0,0], [0,0,0,0,1,1,1])
-        'PEPTIDE'
-
-        >>> annotate_ambiguity('PEPTIDE', [1,1,1,0,0,0,0], [0,0,0,0,1,1,1], 120)
-        'PEPT[120]IDE'
-
-        >>> annotate_ambiguity('PEPTIDE', [1,1,0,0,0,0,0], [0,0,0,0,1,1,1], 120)
-        'PE(?PT)[120]IDE'
-
+        # When mass shift can't be localized to a specific residue
         >>> annotate_ambiguity('PEPTIDE', [0,1,1,0,0,0,0], [0,0,0,0,0,1,0], 120)
         '(?PE)P(?TI)[120](?DE)'
 
+        # When mass shift is completely unlocalized, it becomes a labile modification
         >>> annotate_ambiguity('PEPTIDE', [0,1,1,1,1,0,0], [0,0,1,1,1,1,0], 120)
         '{120}(?PE)PTI(?DE)'
 
@@ -1337,37 +1421,16 @@ def annotate_ambiguity(sequence: Union[str, ProFormaAnnotation],
         >>> annotate_ambiguity('SSGSIASSYVQWYQQRPGSAPTTVIYEDDERPSGVPDR', for_ions, rev_iosn, 120)
         '(?SSGS)IA(?SS)(?YVQ)W[120](?YQQRPGSA)(?PT)TVIYEDDER(?PS)(?GV)(?PDR)'
     """
-
     if isinstance(sequence, str):
         annotation = sequence_to_annotation(sequence)
     else:
         annotation = sequence
 
-    # ensure that annotation does not contain intervals
-    if annotation.has_intervals():
-        raise ValueError("Annotation should not contain intervals")
-
-    if len(forward_coverage) != len(reverse_coverage) != len(annotation):
-        raise ValueError(
-            f"Coverage length does not match sequence length: {len(forward_coverage)} != {len(reverse_coverage)} != {len(annotation)}")
-
-    forward_intervals = _construct_ambiguity_intervals(forward_coverage, reverse=False)
-    reverse_intervals = _construct_ambiguity_intervals(reverse_coverage, reverse=True)
-    ambiguity_intervals = _combine_ambiguity_intervals(forward_intervals, reverse_intervals)
-
-    intervals = [Interval(start, end + 1, True, None) for start, end in ambiguity_intervals]
-
-    annotation.add_intervals(intervals, append=True)
-
-    if mass_shift is not None:
-        mass_shift_interval = _get_mass_shift_interval(forward_coverage, reverse_coverage)
-        if mass_shift_interval is None:
-            annotation.add_labile_mods(mass_shift, append=True)
-        elif mass_shift_interval[0] == mass_shift_interval[1]:
-            # add modification to the sequence
-            annotation.add_internal_mod(mass_shift_interval[0], mass_shift, append=True)
-        else:
-            mod_interval = Interval(mass_shift_interval[0], mass_shift_interval[1] + 1, False, [Mod(mass_shift, 1)])
-            annotation.add_intervals([mod_interval], append=True)
+    annotation.annotate_ambiguity(
+        forward_coverage=forward_coverage,
+        reverse_coverage=reverse_coverage,
+        mass_shift=mass_shift,
+        inplace=True,
+    )
 
     return annotation.serialize(include_plus=False)

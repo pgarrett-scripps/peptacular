@@ -7,9 +7,15 @@ from typing import Dict, List, Tuple, Set
 
 from regex import regex
 
-from peptacular.element_setup import get_element_info, map_atomic_symbol_to_average_mass, \
-    map_atomic_number_to_comp_neutron_offset, get_isotopic_atomic_masses, map_hill_order, map_atomic_number_to_comp, \
-    map_atomic_number_to_symbol
+from peptacular.element_setup import (
+    get_element_info,
+    map_atomic_symbol_to_average_mass,
+    map_atomic_number_to_comp_neutron_offset,
+    get_isotopic_atomic_masses,
+    map_hill_order,
+    map_atomic_number_to_comp,
+    map_atomic_number_to_symbol,
+)
 from peptacular.util import merge_dicts
 
 # Partical masses
@@ -29,11 +35,15 @@ _infos = get_element_info(_element_path)
 AVERAGE_ATOMIC_MASSES: Dict[str, float] = map_atomic_symbol_to_average_mass(_infos)
 ISOTOPIC_ATOMIC_MASSES: Dict[str, float] = get_isotopic_atomic_masses(_infos)
 ATOMIC_NUMBER_TO_SYMBOL: Dict[int, str] = map_atomic_number_to_symbol(_infos)
-ATOMIC_SYMBOL_TO_NUMBER: Dict[str, int] = {v: k for k, v in ATOMIC_NUMBER_TO_SYMBOL.items()}
-ATOMIC_SYMBOL_TO_ISOTOPE_NEUTRON_OFFSETS_AND_ABUNDANCES: Dict[str, List[Tuple[int, float]]] = \
-    map_atomic_number_to_comp_neutron_offset(_infos)
-ATOMIC_SYMBOL_TO_ISOTOPE_MASSES_AND_ABUNDANCES: Dict[str, List[Tuple[float, float]]] = \
+ATOMIC_SYMBOL_TO_NUMBER: Dict[str, int] = {
+    v: k for k, v in ATOMIC_NUMBER_TO_SYMBOL.items()
+}
+ATOMIC_SYMBOL_TO_ISOTOPE_NEUTRON_OFFSETS_AND_ABUNDANCES: Dict[
+    str, List[Tuple[int, float]]
+] = map_atomic_number_to_comp_neutron_offset(_infos)
+ATOMIC_SYMBOL_TO_ISOTOPE_MASSES_AND_ABUNDANCES: Dict[str, List[Tuple[float, float]]] = (
     map_atomic_number_to_comp(_infos)
+)
 HILL_ORDER: Dict[str, int] = map_hill_order(_infos)
 
 # Neutral Mass
@@ -42,45 +52,45 @@ CTERM_COMPOSITION = {"O": 1, "H": 1}
 
 # Additions to get the +1 ion
 FRAGMENT_ION_COMPOSITIONS: Dict[str, Dict[str, int]] = {
-    "p": {'H': 1, 'e': -1},  # Proton
+    "p": {"H": 1, "e": -1},  # Proton
     "n": {},  # Nothing
-    "a": {'e': -1},  # -electron
-    "b": {'e': -1},  # -electron
-    "c": {'H': 2, 'e': -1},  # Steals proton and hydrogen from neutral fragment
-    "x": {'e': -1},  # -electron
-    "y": {'H': 2, 'e': -1},  # Steals proton and hydrogen from neutral fragment
-    "z": {'e': -1},
-    "ax": {'e': -1},
-    "ay": {'H': 1, 'e': -1},
-    "az": {'e': -1},
-    "bx": {'e': -1},
-    "by": {'H': 1, 'e': -1},
-    "bz": {'e': -1},
-    "cx": {'H': 1, 'e': -1},
-    "cy": {'H': 3, 'e': -1},
-    "cz": {'H': 1, 'e': -1},
-    'i': {'H': 1, 'e': -1}
+    "a": {"e": -1},  # -electron
+    "b": {"e": -1},  # -electron
+    "c": {"H": 2, "e": -1},  # Steals proton and hydrogen from neutral fragment
+    "x": {"e": -1},  # -electron
+    "y": {"H": 2, "e": -1},  # Steals proton and hydrogen from neutral fragment
+    "z": {"e": -1},
+    "ax": {"e": -1},
+    "ay": {"H": 1, "e": -1},
+    "az": {"e": -1},
+    "bx": {"e": -1},
+    "by": {"H": 1, "e": -1},
+    "bz": {"e": -1},
+    "cx": {"H": 1, "e": -1},
+    "cy": {"H": 3, "e": -1},
+    "cz": {"H": 1, "e": -1},
+    "i": {"H": 1, "e": -1},
 }
 
 FRAGMENT_ION_BASE_CHARGE_ADDUCTS: Dict[str, str] = {
-    "p": '+H+',
-    "n": '',
-    "a": '-e-',
-    "b": '-e-',
-    "c": '+2H+,+e-',
-    "x": '-e-',
-    "y": '+2H+,+e-',
-    "z": '-e-',
-    "ax": '-e-',
-    "ay": '+H+',
-    "az": '-e-',
-    "bx": '-e-',
-    "by": '+H+',
-    "bz": '-e-',
-    "cx": '+H+',
-    "cy": '+3H+,+e-',
-    "cz": '+H+',
-    'i': '+H+'
+    "p": "+H+",
+    "n": "",
+    "a": "-e-",
+    "b": "-e-",
+    "c": "+2H+,+e-",
+    "x": "-e-",
+    "y": "+2H+,+e-",
+    "z": "-e-",
+    "ax": "-e-",
+    "ay": "+H+",
+    "az": "-e-",
+    "bx": "-e-",
+    "by": "+H+",
+    "bz": "-e-",
+    "cx": "+H+",
+    "cy": "+3H+,+e-",
+    "cz": "+H+",
+    "i": "+H+",
 }
 
 # According to the dissociation sites
@@ -93,7 +103,7 @@ NEUTRAL_FRAGMENT_START_COMPOSITIONS: Dict[str, Dict[str, int]] = {
     "y": {},
     "z": {"N": -1, "H": -1},
     "i": {},
-    'n': {}
+    "n": {},
 }
 
 # According to the dissociation sites
@@ -106,49 +116,121 @@ NEUTRAL_FRAGMENT_END_COMPOSITIONS: Dict[str, Dict[str, int]] = {
     "y": CTERM_COMPOSITION,
     "z": CTERM_COMPOSITION,
     "i": {"O": -1, "C": -1},
-    'n': {}
+    "n": {},
 }
 
 NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS: Dict[str, Dict[str, int]] = {
-    "p": merge_dicts(NEUTRAL_FRAGMENT_START_COMPOSITIONS['p'], NEUTRAL_FRAGMENT_END_COMPOSITIONS['p']),
-    "n": merge_dicts(NEUTRAL_FRAGMENT_START_COMPOSITIONS['n'], NEUTRAL_FRAGMENT_END_COMPOSITIONS['n']),
-    "a": merge_dicts(NEUTRAL_FRAGMENT_START_COMPOSITIONS['a'], NEUTRAL_FRAGMENT_END_COMPOSITIONS['a']),
-    "b": merge_dicts(NEUTRAL_FRAGMENT_START_COMPOSITIONS['b'], NEUTRAL_FRAGMENT_END_COMPOSITIONS['b']),
-    "c": merge_dicts(NEUTRAL_FRAGMENT_START_COMPOSITIONS['c'], NEUTRAL_FRAGMENT_END_COMPOSITIONS['c']),
-    "x": merge_dicts(NEUTRAL_FRAGMENT_START_COMPOSITIONS['x'], NEUTRAL_FRAGMENT_END_COMPOSITIONS['x']),
-    "y": merge_dicts(NEUTRAL_FRAGMENT_START_COMPOSITIONS['y'], NEUTRAL_FRAGMENT_END_COMPOSITIONS['y']),
-    "z": merge_dicts(NEUTRAL_FRAGMENT_START_COMPOSITIONS['z'], NEUTRAL_FRAGMENT_END_COMPOSITIONS['z']),
-    "ax": merge_dicts(NEUTRAL_FRAGMENT_END_COMPOSITIONS['a'], NEUTRAL_FRAGMENT_START_COMPOSITIONS['x']),
-    "ay": merge_dicts(NEUTRAL_FRAGMENT_END_COMPOSITIONS['a'], NEUTRAL_FRAGMENT_START_COMPOSITIONS['y']),
-    "az": merge_dicts(NEUTRAL_FRAGMENT_END_COMPOSITIONS['a'], NEUTRAL_FRAGMENT_START_COMPOSITIONS['z']),
-    "bx": merge_dicts(NEUTRAL_FRAGMENT_END_COMPOSITIONS['b'], NEUTRAL_FRAGMENT_START_COMPOSITIONS['x']),
-    "by": merge_dicts(NEUTRAL_FRAGMENT_END_COMPOSITIONS['b'], NEUTRAL_FRAGMENT_START_COMPOSITIONS['y']),
-    "bz": merge_dicts(NEUTRAL_FRAGMENT_END_COMPOSITIONS['b'], NEUTRAL_FRAGMENT_START_COMPOSITIONS['z']),
-    "cx": merge_dicts(NEUTRAL_FRAGMENT_END_COMPOSITIONS['c'], NEUTRAL_FRAGMENT_START_COMPOSITIONS['x']),
-    "cy": merge_dicts(NEUTRAL_FRAGMENT_END_COMPOSITIONS['c'], NEUTRAL_FRAGMENT_START_COMPOSITIONS['y']),
-    "cz": merge_dicts(NEUTRAL_FRAGMENT_END_COMPOSITIONS['c'], NEUTRAL_FRAGMENT_START_COMPOSITIONS['z']),
-    "i": merge_dicts(NEUTRAL_FRAGMENT_START_COMPOSITIONS['i'], NEUTRAL_FRAGMENT_END_COMPOSITIONS['i']),
+    "p": merge_dicts(
+        NEUTRAL_FRAGMENT_START_COMPOSITIONS["p"], NEUTRAL_FRAGMENT_END_COMPOSITIONS["p"]
+    ),
+    "n": merge_dicts(
+        NEUTRAL_FRAGMENT_START_COMPOSITIONS["n"], NEUTRAL_FRAGMENT_END_COMPOSITIONS["n"]
+    ),
+    "a": merge_dicts(
+        NEUTRAL_FRAGMENT_START_COMPOSITIONS["a"], NEUTRAL_FRAGMENT_END_COMPOSITIONS["a"]
+    ),
+    "b": merge_dicts(
+        NEUTRAL_FRAGMENT_START_COMPOSITIONS["b"], NEUTRAL_FRAGMENT_END_COMPOSITIONS["b"]
+    ),
+    "c": merge_dicts(
+        NEUTRAL_FRAGMENT_START_COMPOSITIONS["c"], NEUTRAL_FRAGMENT_END_COMPOSITIONS["c"]
+    ),
+    "x": merge_dicts(
+        NEUTRAL_FRAGMENT_START_COMPOSITIONS["x"], NEUTRAL_FRAGMENT_END_COMPOSITIONS["x"]
+    ),
+    "y": merge_dicts(
+        NEUTRAL_FRAGMENT_START_COMPOSITIONS["y"], NEUTRAL_FRAGMENT_END_COMPOSITIONS["y"]
+    ),
+    "z": merge_dicts(
+        NEUTRAL_FRAGMENT_START_COMPOSITIONS["z"], NEUTRAL_FRAGMENT_END_COMPOSITIONS["z"]
+    ),
+    "ax": merge_dicts(
+        NEUTRAL_FRAGMENT_END_COMPOSITIONS["a"], NEUTRAL_FRAGMENT_START_COMPOSITIONS["x"]
+    ),
+    "ay": merge_dicts(
+        NEUTRAL_FRAGMENT_END_COMPOSITIONS["a"], NEUTRAL_FRAGMENT_START_COMPOSITIONS["y"]
+    ),
+    "az": merge_dicts(
+        NEUTRAL_FRAGMENT_END_COMPOSITIONS["a"], NEUTRAL_FRAGMENT_START_COMPOSITIONS["z"]
+    ),
+    "bx": merge_dicts(
+        NEUTRAL_FRAGMENT_END_COMPOSITIONS["b"], NEUTRAL_FRAGMENT_START_COMPOSITIONS["x"]
+    ),
+    "by": merge_dicts(
+        NEUTRAL_FRAGMENT_END_COMPOSITIONS["b"], NEUTRAL_FRAGMENT_START_COMPOSITIONS["y"]
+    ),
+    "bz": merge_dicts(
+        NEUTRAL_FRAGMENT_END_COMPOSITIONS["b"], NEUTRAL_FRAGMENT_START_COMPOSITIONS["z"]
+    ),
+    "cx": merge_dicts(
+        NEUTRAL_FRAGMENT_END_COMPOSITIONS["c"], NEUTRAL_FRAGMENT_START_COMPOSITIONS["x"]
+    ),
+    "cy": merge_dicts(
+        NEUTRAL_FRAGMENT_END_COMPOSITIONS["c"], NEUTRAL_FRAGMENT_START_COMPOSITIONS["y"]
+    ),
+    "cz": merge_dicts(
+        NEUTRAL_FRAGMENT_END_COMPOSITIONS["c"], NEUTRAL_FRAGMENT_START_COMPOSITIONS["z"]
+    ),
+    "i": merge_dicts(
+        NEUTRAL_FRAGMENT_START_COMPOSITIONS["i"], NEUTRAL_FRAGMENT_END_COMPOSITIONS["i"]
+    ),
 }
 
 FRAGMENT_ION_COMPOSITION_ADJUSTMENTS: Dict[str, Dict[str, int]] = {
-    "p": merge_dicts(NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS['p'], FRAGMENT_ION_COMPOSITIONS['p']),
-    "n": merge_dicts(NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS['n'], FRAGMENT_ION_COMPOSITIONS['n']),
-    "a": merge_dicts(NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS['a'], FRAGMENT_ION_COMPOSITIONS['a']),
-    "b": merge_dicts(NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS['b'], FRAGMENT_ION_COMPOSITIONS['b']),
-    "c": merge_dicts(NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS['c'], FRAGMENT_ION_COMPOSITIONS['c']),
-    "x": merge_dicts(NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS['x'], FRAGMENT_ION_COMPOSITIONS['x']),
-    "y": merge_dicts(NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS['y'], FRAGMENT_ION_COMPOSITIONS['y']),
-    "z": merge_dicts(NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS['z'], FRAGMENT_ION_COMPOSITIONS['z']),
-    "ax": merge_dicts(NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS['ax'], FRAGMENT_ION_COMPOSITIONS['ax']),
-    "ay": merge_dicts(NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS['ay'], FRAGMENT_ION_COMPOSITIONS['ay']),
-    "az": merge_dicts(NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS['az'], FRAGMENT_ION_COMPOSITIONS['az']),
-    "bx": merge_dicts(NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS['bx'], FRAGMENT_ION_COMPOSITIONS['bx']),
-    "by": merge_dicts(NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS['by'], FRAGMENT_ION_COMPOSITIONS['by']),
-    "bz": merge_dicts(NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS['bz'], FRAGMENT_ION_COMPOSITIONS['bz']),
-    "cx": merge_dicts(NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS['cx'], FRAGMENT_ION_COMPOSITIONS['cx']),
-    "cy": merge_dicts(NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS['cy'], FRAGMENT_ION_COMPOSITIONS['cy']),
-    "cz": merge_dicts(NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS['cz'], FRAGMENT_ION_COMPOSITIONS['cz']),
-    "i": merge_dicts(NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS['i'], FRAGMENT_ION_COMPOSITIONS['i']),
+    "p": merge_dicts(
+        NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS["p"], FRAGMENT_ION_COMPOSITIONS["p"]
+    ),
+    "n": merge_dicts(
+        NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS["n"], FRAGMENT_ION_COMPOSITIONS["n"]
+    ),
+    "a": merge_dicts(
+        NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS["a"], FRAGMENT_ION_COMPOSITIONS["a"]
+    ),
+    "b": merge_dicts(
+        NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS["b"], FRAGMENT_ION_COMPOSITIONS["b"]
+    ),
+    "c": merge_dicts(
+        NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS["c"], FRAGMENT_ION_COMPOSITIONS["c"]
+    ),
+    "x": merge_dicts(
+        NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS["x"], FRAGMENT_ION_COMPOSITIONS["x"]
+    ),
+    "y": merge_dicts(
+        NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS["y"], FRAGMENT_ION_COMPOSITIONS["y"]
+    ),
+    "z": merge_dicts(
+        NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS["z"], FRAGMENT_ION_COMPOSITIONS["z"]
+    ),
+    "ax": merge_dicts(
+        NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS["ax"], FRAGMENT_ION_COMPOSITIONS["ax"]
+    ),
+    "ay": merge_dicts(
+        NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS["ay"], FRAGMENT_ION_COMPOSITIONS["ay"]
+    ),
+    "az": merge_dicts(
+        NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS["az"], FRAGMENT_ION_COMPOSITIONS["az"]
+    ),
+    "bx": merge_dicts(
+        NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS["bx"], FRAGMENT_ION_COMPOSITIONS["bx"]
+    ),
+    "by": merge_dicts(
+        NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS["by"], FRAGMENT_ION_COMPOSITIONS["by"]
+    ),
+    "bz": merge_dicts(
+        NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS["bz"], FRAGMENT_ION_COMPOSITIONS["bz"]
+    ),
+    "cx": merge_dicts(
+        NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS["cx"], FRAGMENT_ION_COMPOSITIONS["cx"]
+    ),
+    "cy": merge_dicts(
+        NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS["cy"], FRAGMENT_ION_COMPOSITIONS["cy"]
+    ),
+    "cz": merge_dicts(
+        NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS["cz"], FRAGMENT_ION_COMPOSITIONS["cz"]
+    ),
+    "i": merge_dicts(
+        NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS["i"], FRAGMENT_ION_COMPOSITIONS["i"]
+    ),
 }
 
 AA_COMPOSITIONS: Dict[str, Dict[str, int]] = {
@@ -178,10 +260,10 @@ AA_COMPOSITIONS: Dict[str, Dict[str, int]] = {
     "X": {},  # Unknown amino acid
 }
 
-AMINO_ACIDS: Set[str] = set(AA_COMPOSITIONS.keys()) | {'B', 'Z'}
+AMINO_ACIDS: Set[str] = set(AA_COMPOSITIONS.keys()) | {"B", "Z"}
 ORDERED_AMINO_ACIDS = sorted(list(AMINO_ACIDS))
-AMBIGUOUS_AMINO_ACIDS: Set[str] = {'J', 'B', 'Z', 'X'}
-MASS_AMBIGUOUS_AMINO_ACIDS: Set[str] = {'B', 'Z'}
+AMBIGUOUS_AMINO_ACIDS: Set[str] = {"J", "B", "Z", "X"}
+MASS_AMBIGUOUS_AMINO_ACIDS: Set[str] = {"B", "Z"}
 
 # 3 letter codes
 AA_TO_THREE_LETTER_CODE: Dict[str, str] = {
@@ -214,7 +296,9 @@ AA_TO_THREE_LETTER_CODE: Dict[str, str] = {
 }
 
 # Reverse 3 letter codes
-THREE_LETTER_CODE_TO_AA: Dict[str, str] = {v: k for k, v in AA_TO_THREE_LETTER_CODE.items()}
+THREE_LETTER_CODE_TO_AA: Dict[str, str] = {
+    v: k for k, v in AA_TO_THREE_LETTER_CODE.items()
+}
 
 # Amino acid to name
 AA_TO_NAME: Dict[str, str] = {
@@ -249,36 +333,41 @@ AA_TO_NAME: Dict[str, str] = {
 # Reverse amino acid to name
 NAME_TO_AA: Dict[str, str] = {v: k for k, v in AA_TO_NAME.items()}
 
-FORWARD_ION_TYPES: Set[str] = {'a', 'b', 'c'}
-BACKWARD_ION_TYPES: Set[str] = {'x', 'y', 'z'}
-INTERNAL_ION_TYPES: Set[str] = {'ax', 'ay', 'az', 'bx', 'by', 'bz', 'cx', 'cy', 'cz'}
+FORWARD_ION_TYPES: Set[str] = {"a", "b", "c"}
+BACKWARD_ION_TYPES: Set[str] = {"x", "y", "z"}
+INTERNAL_ION_TYPES: Set[str] = {"ax", "ay", "az", "bx", "by", "bz", "cx", "cy", "cz"}
 TERMINAL_ION_TYPES: Set[str] = FORWARD_ION_TYPES | BACKWARD_ION_TYPES
-IMMONIUM_ION_TYPES: Set[str] = {'i'}
+IMMONIUM_ION_TYPES: Set[str] = {"i"}
 VALID_ION_TYPES: Set[str] = TERMINAL_ION_TYPES | INTERNAL_ION_TYPES | IMMONIUM_ION_TYPES
-AVERAGINE_RATIOS: Dict[str, float] = {'C': 4.9384, 'H': 7.7583, 'N': 1.3577, 'O': 1.4773, 'S': 0.0417}
+AVERAGINE_RATIOS: Dict[str, float] = {
+    "C": 4.9384,
+    "H": 7.7583,
+    "N": 1.3577,
+    "O": 1.4773,
+    "S": 0.0417,
+}
 
-PROTEASES: Dict[str, str] = \
-    {
-        'arg-c': '(?<=R)',
-        'asp-n': '(?=D)',
-        'chymotrypsin': '(?<=[FWYL])(?!P)',
-        'chymotrypsin/P': '(?<=[FWYL])',
-        'promega-chymotrypsin-high-specificity': '(?<=[YFW])',
-        'promega-chymotrypsin-low-specificity': '(?<=[YFWLM])',
-        'glu-c': '(?<=E)',
-        'lys-c': '(?<=K)',
-        'lys-n': '(?=K)',
-        'proteinase k': '(?<=[AEFILTVWY])',
-        'trypsin': '(?<=[KR])(?=[^P])',
-        'trypsin/P': '(?<=[KR])',
-        'proalanase': '(?<=[PA])',
-        'elastase': r'(?<=[AGSVLI])',
-        'pepsin': r'(?<=[FLWY])',
-        'thermolysin': r'(?<=[LFIAVM])',
-        'proalanase-low-specificity': '(?<=[PASG])',
-        'non-specific': '()',
-        'no-cleave': '_',
-    }
+PROTEASES: Dict[str, str] = {
+    "arg-c": "(?<=R)",
+    "asp-n": "(?=D)",
+    "chymotrypsin": "(?<=[FWYL])(?!P)",
+    "chymotrypsin/P": "(?<=[FWYL])",
+    "promega-chymotrypsin-high-specificity": "(?<=[YFW])",
+    "promega-chymotrypsin-low-specificity": "(?<=[YFWLM])",
+    "glu-c": "(?<=E)",
+    "lys-c": "(?<=K)",
+    "lys-n": "(?=K)",
+    "proteinase k": "(?<=[AEFILTVWY])",
+    "trypsin": "(?<=[KR])(?=[^P])",
+    "trypsin/P": "(?<=[KR])",
+    "proalanase": "(?<=[PA])",
+    "elastase": r"(?<=[AGSVLI])",
+    "pepsin": r"(?<=[FLWY])",
+    "thermolysin": r"(?<=[LFIAVM])",
+    "proalanase-low-specificity": "(?<=[PASG])",
+    "non-specific": "()",
+    "no-cleave": "_",
+}
 
 PROTEASES_COMPILED = {}
 for key, value in PROTEASES.items():
@@ -289,7 +378,7 @@ for key, value in PROTEASES.items():
         raise e
 
 # Compiling regex patterns used in your module
-ISOTOPE_COMPONENT_PATTERN = regex.compile(r'([0-9]*)([A-Za-z]+)(-?\d*\.?\d*)')
-CONDENSED_CHEM_FORMULA_PATTERN = regex.compile(r'([A-Z][a-z]*|e|p|n)(-?\d*\.?\d*)')
+ISOTOPE_COMPONENT_PATTERN = regex.compile(r"([0-9]*)([A-Za-z]+)(-?\d*\.?\d*)")
+CONDENSED_CHEM_FORMULA_PATTERN = regex.compile(r"([A-Z][a-z]*|e|p|n)(-?\d*\.?\d*)")
 ADDUCT_PATTERN = regex.compile(r"([+-]?)(\d*)?([A-Za-z]{1,2}\d*\+?-?)")
-ISOTOPE_NUM_PATTERN = regex.compile(r'[0-9]')
+ISOTOPE_NUM_PATTERN = regex.compile(r"[0-9]")

@@ -13,16 +13,40 @@ from typing import List, Dict, Optional, Generator, Any, Callable, Tuple, Union
 from typing import Counter as CounterType
 import regex as re
 
-from peptacular.proforma.input_convert import fix_list_of_mods, fix_dict_of_mods, fix_intervals_input, \
-    ACCEPTED_MOD_INPUT, ACCEPTED_INTERVAL_INPUT, ModValue, INTERVAL_VALUE
-from peptacular.proforma.proforma_dataclasses import Mod, Interval, are_mods_equal, are_intervals_equal
-from peptacular.constants import AMINO_ACIDS, AMBIGUOUS_AMINO_ACIDS, MASS_AMBIGUOUS_AMINO_ACIDS, ADDUCT_PATTERN, \
-    ISOTOPE_NUM_PATTERN
+from peptacular.proforma.input_convert import (
+    fix_list_of_mods,
+    fix_dict_of_mods,
+    fix_intervals_input,
+    ACCEPTED_MOD_INPUT,
+    ACCEPTED_INTERVAL_INPUT,
+    ModValue,
+    INTERVAL_VALUE,
+)
+from peptacular.proforma.proforma_dataclasses import (
+    Mod,
+    Interval,
+    are_mods_equal,
+    are_intervals_equal,
+)
+from peptacular.constants import (
+    AMINO_ACIDS,
+    AMBIGUOUS_AMINO_ACIDS,
+    MASS_AMBIGUOUS_AMINO_ACIDS,
+    ADDUCT_PATTERN,
+    ISOTOPE_NUM_PATTERN,
+)
 from peptacular.errors import ProFormaFormatError
 from peptacular.types import ChemComposition
+from peptacular.util import (
+    _combine_ambiguity_intervals,
+    _construct_ambiguity_intervals,
+    _get_mass_shift_interval,
+)
 
 
-def _parse_modifications(proforma_sequence: str, opening_bracket: str = '[', closing_bracket: str = ']') -> List[Mod]:
+def _parse_modifications(
+    proforma_sequence: str, opening_bracket: str = "[", closing_bracket: str = "]"
+) -> List[Mod]:
     """
     Parse modifications from a proforma sequence with support for nested brackets.
 
@@ -50,7 +74,9 @@ def _parse_modifications(proforma_sequence: str, opening_bracket: str = '[', clo
     length = len(proforma_sequence)
     while position < length:
         if proforma_sequence[position] == opening_bracket:
-            mod, new_position = _parse_modification(proforma_sequence[position:], opening_bracket, closing_bracket)
+            mod, new_position = _parse_modification(
+                proforma_sequence[position:], opening_bracket, closing_bracket
+            )
             mods.append(mod)
             position += new_position  # Update position based on the length of the parsed modification.
         else:
@@ -58,9 +84,9 @@ def _parse_modifications(proforma_sequence: str, opening_bracket: str = '[', clo
     return mods
 
 
-def _parse_modification(proforma_sequence: str,
-                        opening_bracket: str = '[',
-                        closing_bracket: str = ']') -> Tuple[Mod, int]:
+def _parse_modification(
+    proforma_sequence: str, opening_bracket: str = "[", closing_bracket: str = "]"
+) -> Tuple[Mod, int]:
     """
     Parse a single modification from a proforma sequence, handling nested brackets.
     Returns the parsed Mod and the position after the modification.
@@ -105,10 +131,12 @@ def _parse_modification(proforma_sequence: str,
 
     multiplier = 1
     # Check for a multiplier immediately following the modification.
-    if position < len(proforma_sequence) and proforma_sequence[position] == '^':
+    if position < len(proforma_sequence) and proforma_sequence[position] == "^":
         multiplier_start = position + 1
         multiplier, parsed_length = _parse_integer(proforma_sequence[multiplier_start:])
-        position += parsed_length + 1  # Account for the '^' and the length of the integer parsed.
+        position += (
+            parsed_length + 1
+        )  # Account for the '^' and the length of the integer parsed.
 
     return Mod(mod_str, multiplier), position
 
@@ -144,7 +172,7 @@ def _parse_integer(proforma_sequence: str) -> Tuple[int, int]:
         if proforma_sequence[i].isdigit():
             digit_count += 1
             i += 1
-        elif digit_count == 0 and proforma_sequence[i] in ['+', '-']:
+        elif digit_count == 0 and proforma_sequence[i] in ["+", "-"]:
             i += 1
         else:
             break
@@ -190,11 +218,13 @@ def parse_charge_adducts(mod: ModValue) -> ChemComposition:
         return parse_charge_adducts(mod.val)
 
     if not isinstance(mod, str):
-        raise TypeError(f"Invalid type for charge adducts: {type(mod)}! Mod or Mod.val must be of type string.")
+        raise TypeError(
+            f"Invalid type for charge adducts: {type(mod)}! Mod or Mod.val must be of type string."
+        )
 
     charge_adducts = {}
 
-    mods = mod.split(',')
+    mods = mod.split(",")
     for m in mods:
         if isinstance(m, Mod):
             mod_str = m.val
@@ -202,12 +232,12 @@ def parse_charge_adducts(mod: ModValue) -> ChemComposition:
             mod_str = m
 
         for sign, count, ion in ADDUCT_PATTERN.findall(mod_str):
-            if count == '':
+            if count == "":
                 count = 1
             else:
                 count = int(count)
 
-            if sign == '-':
+            if sign == "-":
                 count = -count
 
             if ion in charge_adducts:
@@ -249,12 +279,12 @@ def write_charge_adducts(charge_adducts: ChemComposition) -> Mod:
 
     adducts_list = []
     for ion, count in charge_adducts.items():
-        sign = '+' if count >= 0 else ''
-        sign = '-' if count < 0 else sign
-        count_abs = abs(count) if abs(count) != 1 else ''
+        sign = "+" if count >= 0 else ""
+        sign = "-" if count < 0 else sign
+        count_abs = abs(count) if abs(count) != 1 else ""
         adducts_list.append(f"{sign}{count_abs}{ion}")
 
-    return Mod(','.join(adducts_list), 1)
+    return Mod(",".join(adducts_list), 1)
 
 
 def _pop_ion_count(ion: str) -> Tuple[int, str]:
@@ -286,16 +316,16 @@ def _pop_ion_count(ion: str) -> Tuple[int, str]:
 
         >>> _pop_ion_count('+2Mg2+')
         (2, 'Mg2+')
-        
+
     """
 
-    count_str = ''
+    count_str = ""
 
     charge = 1
     for i, c in enumerate(ion):
-        if c == '-':
+        if c == "-":
             charge = -1
-        elif c == '+':
+        elif c == "+":
             pass
         elif c.isdigit():
             count_str += c
@@ -336,12 +366,12 @@ def _pop_ion_symbol(ion: str) -> Tuple[str, str]:
 
     """
 
-    symbol = ''
+    symbol = ""
     for i, c in enumerate(ion):
-        if c.isdigit() or c in ['+', '-']:
+        if c.isdigit() or c in ["+", "-"]:
             return symbol, ion[i:]
         symbol += c
-    return symbol, ''
+    return symbol, ""
 
 
 def _pop_ion_charge(ion: str) -> Tuple[int, str]:
@@ -378,16 +408,16 @@ def _pop_ion_charge(ion: str) -> Tuple[int, str]:
         (-2, '')
 
     """
-    count_str, sign = '', 1
+    count_str, sign = "", 1
     for c in ion:
-        if c == '-':
+        if c == "-":
             sign = -1
-        elif c == '+':
+        elif c == "+":
             continue
         else:
             count_str += c
     cnt = int(count_str) if count_str else 1
-    return cnt * sign, ''
+    return cnt * sign, ""
 
 
 def parse_ion_elements(ion: str) -> Tuple[int, str, int]:
@@ -471,11 +501,13 @@ def parse_static_mods(mods: Optional[List[ModValue]]) -> Dict[str, List[Mod]]:
             mod = mod.val
 
         if not isinstance(mod, str):
-            raise TypeError(f"Invalid type for static mods: {type(mod)}! Mod or Mod.val must be of type string.")
+            raise TypeError(
+                f"Invalid type for static mods: {type(mod)}! Mod or Mod.val must be of type string."
+            )
 
-        mod_info, residues = mod.split('@')
-        residues = residues.split(',')
-        static_mods = _parse_modifications(mod_info, '[', ']')
+        mod_info, residues = mod.split("@")
+        residues = residues.split(",")
+        static_mods = _parse_modifications(mod_info, "[", "]")
 
         for residue in residues:  # Split on ',' for multiple residues
             static_mod_dict.setdefault(residue, []).extend(static_mods)
@@ -515,8 +547,8 @@ def write_static_mods(mods: Dict[str, List[Mod]]) -> List[Mod]:
     static_mods = []
     for mod_tuple, residues in reverse_mods.items():
         residue_str = ",".join(residues)
-        mod_str = ''.join(mod.serialize('[]') for mod in mod_tuple)
-        static_mods.append(Mod(f'{mod_str}@{residue_str}', 1))
+        mod_str = "".join(mod.serialize("[]") for mod in mod_tuple)
+        static_mods.append(Mod(f"{mod_str}@{residue_str}", 1))
 
     return static_mods
 
@@ -556,18 +588,20 @@ def parse_isotope_mods(mods: List[ModValue]) -> Dict[str, str]:
             mod = mod.val
 
         if not isinstance(mod, str):
-            raise TypeError(f"Invalid type for isotope mods: {type(mod)}! Mod or Mod.val must be of type string.")
+            raise TypeError(
+                f"Invalid type for isotope mods: {type(mod)}! Mod or Mod.val must be of type string."
+            )
 
         # remove digits
-        base_aa = re.sub(ISOTOPE_NUM_PATTERN, '', mod)
+        base_aa = re.sub(ISOTOPE_NUM_PATTERN, "", mod)
         isotope_map[base_aa] = mod
 
     # If any keys are D or T, then replace them with H
-    if 'D' in isotope_map:
-        isotope_map['H'] = isotope_map.pop('D')
+    if "D" in isotope_map:
+        isotope_map["H"] = isotope_map.pop("D")
 
-    if 'T' in isotope_map:
-        isotope_map['H'] = isotope_map.pop('T')
+    if "T" in isotope_map:
+        isotope_map["H"] = isotope_map.pop("T")
 
     return isotope_map
 
@@ -615,14 +649,18 @@ def _validate_single_mod_multiplier(func: Callable) -> Callable:
         if isinstance(mod, Mod):
             if mod.mult > 1:
                 raise ValueError(
-                    f"Invalid multiplier {mod.mult} for mod {mod.val}. Multiplier must not be greater than 1.", None,
-                    None)
+                    f"Invalid multiplier {mod.mult} for mod {mod.val}. Multiplier must not be greater than 1.",
+                    None,
+                    None,
+                )
         else:
             for m in mod:
                 if m.mult > 1:
                     raise ValueError(
                         f"Invalid multiplier {m.mult} for mod {m.val}. Multiplier must not be greater than 1.",
-                        None, None)
+                        None,
+                        None,
+                    )
 
         return func(self, mod)
 
@@ -634,6 +672,7 @@ class ProFormaAnnotation:
     """
     Represents a ProForma sequence annotation.
     """
+
     _sequence: str
     _isotope_mods: Optional[List[Mod]] = None
     _static_mods: Optional[List[Mod]] = None
@@ -716,9 +755,20 @@ class ProFormaAnnotation:
         """
         Returns True if any modifications are present, otherwise False.
         """
-        return any([self.has_isotope_mods(), self.has_static_mods(), self.has_labile_mods(), self.has_unknown_mods(),
-                    self.has_nterm_mods(), self.has_cterm_mods(), self.has_internal_mods(), self.has_intervals(),
-                    self.has_charge(), self.has_charge_adducts()])
+        return any(
+            [
+                self.has_isotope_mods(),
+                self.has_static_mods(),
+                self.has_labile_mods(),
+                self.has_unknown_mods(),
+                self.has_nterm_mods(),
+                self.has_cterm_mods(),
+                self.has_internal_mods(),
+                self.has_intervals(),
+                self.has_charge(),
+                self.has_charge_adducts(),
+            ]
+        )
 
     @property
     def sequence(self) -> str:
@@ -850,7 +900,9 @@ class ProFormaAnnotation:
         return self._internal_mods
 
     @internal_mods.setter
-    def internal_mods(self, value: Optional[Dict[int, Union[List[ModValue], ModValue]]]) -> None:
+    def internal_mods(
+        self, value: Optional[Dict[int, Union[List[ModValue], ModValue]]]
+    ) -> None:
         if value is None:
             self._internal_mods = None
         else:
@@ -865,7 +917,9 @@ class ProFormaAnnotation:
         return self._intervals
 
     @intervals.setter
-    def intervals(self, value: Optional[Union[List[INTERVAL_VALUE], INTERVAL_VALUE]]) -> None:
+    def intervals(
+        self, value: Optional[Union[List[INTERVAL_VALUE], INTERVAL_VALUE]]
+    ) -> None:
         """
         Sets the intervals.
         """
@@ -908,12 +962,12 @@ class ProFormaAnnotation:
         """
         Only shows non None types
         """
-        seq = 'ProFormaAnnotation('
+        seq = "ProFormaAnnotation("
         for k, v in self.dict().items():
             if v is not None:
                 seq += f"{k}={v}, "
-        seq = seq.rstrip(', ')
-        seq += ')'
+        seq = seq.rstrip(", ")
+        seq += ")"
 
         return seq
 
@@ -951,11 +1005,18 @@ class ProFormaAnnotation:
 
         # Compare internal modifications (more complex due to being a dictionary)
         if self.has_internal_mods() or other.has_internal_mods():
-            self_keys = set(self.internal_mods.keys()) if self.has_internal_mods() else set()
-            other_keys = set(other.internal_mods.keys()) if other.has_internal_mods() else set()
+            self_keys = (
+                set(self.internal_mods.keys()) if self.has_internal_mods() else set()
+            )
+            other_keys = (
+                set(other.internal_mods.keys()) if other.has_internal_mods() else set()
+            )
 
             for k in self_keys.union(other_keys):
-                if not are_mods_equal(self.get_internal_mods_by_index(k), other.get_internal_mods_by_index(k)):
+                if not are_mods_equal(
+                    self.get_internal_mods_by_index(k),
+                    other.get_internal_mods_by_index(k),
+                ):
                     return False
 
         # Compare intervals (if applicable and need to ensure a deep comparison)
@@ -968,7 +1029,7 @@ class ProFormaAnnotation:
 
         return True
 
-    def copy(self) -> 'ProFormaAnnotation':
+    def copy(self) -> "ProFormaAnnotation":
         """
         Returns a deep copy of the ProFormaAnnotation instance.
         """
@@ -1030,7 +1091,7 @@ class ProFormaAnnotation:
             "intervals": copy.deepcopy(self.intervals),
             "internal_mods": copy.deepcopy(self.internal_mods),
             "charge": copy.deepcopy(self.charge),
-            "charge_adducts": copy.deepcopy(self.charge_adducts)
+            "charge_adducts": copy.deepcopy(self.charge_adducts),
         }
 
     def mod_dict(self) -> Dict[str, Any]:
@@ -1040,17 +1101,21 @@ class ProFormaAnnotation:
         """
         result = {
             # Only include lists and dicts that are not None, maintaining a clean output
-            **{k: v for k, v in {
-                "isotope": self.isotope_mods,
-                "static": self.static_mods,
-                "labile": self.labile_mods,
-                "unknown": self.unknown_mods,
-                "nterm": self.nterm_mods,
-                "cterm": self.cterm_mods,
-                "intervals": self.intervals,
-                "charge": self.charge,
-                "charge_adducts": self.charge_adducts,
-            }.items() if v is not None}
+            **{
+                k: v
+                for k, v in {
+                    "isotope": self.isotope_mods,
+                    "static": self.static_mods,
+                    "labile": self.labile_mods,
+                    "unknown": self.unknown_mods,
+                    "nterm": self.nterm_mods,
+                    "cterm": self.cterm_mods,
+                    "intervals": self.intervals,
+                    "charge": self.charge,
+                    "charge_adducts": self.charge_adducts,
+                }.items()
+                if v is not None
+            }
         }
 
         # add internal mods as numbered keys
@@ -1064,24 +1129,24 @@ class ProFormaAnnotation:
         """
         Add mods from a dictionary
         """
-        if 'isotope' in mod_dict:
-            self.add_isotope_mods(mod_dict['isotope'], append)
-        if 'static' in mod_dict:
-            self.add_static_mods(mod_dict['static'], append)
-        if 'labile' in mod_dict:
-            self.add_labile_mods(mod_dict['labile'], append)
-        if 'unknown' in mod_dict:
-            self.add_unknown_mods(mod_dict['unknown'], append)
-        if 'nterm' in mod_dict:
-            self.add_nterm_mods(mod_dict['nterm'], append)
-        if 'cterm' in mod_dict:
-            self.add_cterm_mods(mod_dict['cterm'], append)
-        if 'intervals' in mod_dict:
-            self.add_intervals(mod_dict['intervals'], append)
-        if 'charge' in mod_dict:
-            self.charge = mod_dict['charge']
-        if 'charge_adducts' in mod_dict:
-            self.add_charge_adducts(mod_dict['charge_adducts'], append)
+        if "isotope" in mod_dict:
+            self.add_isotope_mods(mod_dict["isotope"], append)
+        if "static" in mod_dict:
+            self.add_static_mods(mod_dict["static"], append)
+        if "labile" in mod_dict:
+            self.add_labile_mods(mod_dict["labile"], append)
+        if "unknown" in mod_dict:
+            self.add_unknown_mods(mod_dict["unknown"], append)
+        if "nterm" in mod_dict:
+            self.add_nterm_mods(mod_dict["nterm"], append)
+        if "cterm" in mod_dict:
+            self.add_cterm_mods(mod_dict["cterm"], append)
+        if "intervals" in mod_dict:
+            self.add_intervals(mod_dict["intervals"], append)
+        if "charge" in mod_dict:
+            self.charge = mod_dict["charge"]
+        if "charge_adducts" in mod_dict:
+            self.add_charge_adducts(mod_dict["charge_adducts"], append)
 
         internal_mods = {}
         for k, v in mod_dict.items():
@@ -1091,7 +1156,9 @@ class ProFormaAnnotation:
         if len(internal_mods) > 0:
             self.add_internal_mods(internal_mods, append)
 
-    def condense_static_mods(self, inplace: bool = False) -> Union['ProFormaAnnotation', None]:
+    def condense_static_mods(
+        self, inplace: bool = False
+    ) -> Union["ProFormaAnnotation", None]:
         """
         Condense static mods into internal mods
         """
@@ -1107,17 +1174,17 @@ class ProFormaAnnotation:
 
         static_mod_dict = parse_static_mods(static_mods)
 
-        n_term_mod = static_mod_dict.get('N-Term')
+        n_term_mod = static_mod_dict.get("N-Term")
         if n_term_mod is not None:
             new_annotation.add_nterm_mods(n_term_mod, append=True)
 
-        c_term_mod = static_mod_dict.get('C-Term')
+        c_term_mod = static_mod_dict.get("C-Term")
         if c_term_mod is not None:
             new_annotation.add_cterm_mods(c_term_mod, append=True)
 
         for aa, mod in static_mod_dict.items():
 
-            if aa in ['N-Term', 'C-Term']:
+            if aa in ["N-Term", "C-Term"]:
                 continue
 
             # get indexes of the amino acid
@@ -1232,29 +1299,31 @@ class ProFormaAnnotation:
         """
         d = {}
         if self.has_isotope_mods():
-            d['isotope'] = self.pop_isotope_mods()
+            d["isotope"] = self.pop_isotope_mods()
         if self.has_static_mods():
-            d['static'] = self.pop_static_mods()
+            d["static"] = self.pop_static_mods()
         if self.has_labile_mods():
-            d['labile'] = self.pop_labile_mods()
+            d["labile"] = self.pop_labile_mods()
         if self.has_unknown_mods():
-            d['unknown'] = self.pop_unknown_mods()
+            d["unknown"] = self.pop_unknown_mods()
         if self.has_nterm_mods():
-            d['nterm'] = self.pop_nterm_mods()
+            d["nterm"] = self.pop_nterm_mods()
         if self.has_cterm_mods():
-            d['cterm'] = self.pop_cterm_mods()
+            d["cterm"] = self.pop_cterm_mods()
         if self.has_charge_adducts():
-            d['charge_adducts'] = self.pop_charge_adducts()
+            d["charge_adducts"] = self.pop_charge_adducts()
         if self.has_charge():
-            d['charge'] = self.pop_charge()
+            d["charge"] = self.pop_charge()
         if self.has_internal_mods():
-            d['internal'] = self.pop_internal_mods()
+            d["internal"] = self.pop_internal_mods()
         if self.has_intervals():
-            d['intervals'] = self.pop_intervals()
+            d["intervals"] = self.pop_intervals()
 
         return d
 
-    def add_labile_mods(self, mods: Optional[Union[List[Mod], Mod]], append: bool = False) -> None:
+    def add_labile_mods(
+        self, mods: Optional[Union[List[Mod], Mod]], append: bool = False
+    ) -> None:
         """
         Add labile mods to the annotation. If not append, existing mods will be replaced.
         """
@@ -1274,7 +1343,9 @@ class ProFormaAnnotation:
             else:
                 self.labile_mods = mods
 
-    def add_unknown_mods(self, mods: Optional[Union[List[ModValue], ModValue]], append: bool = False) -> None:
+    def add_unknown_mods(
+        self, mods: Optional[Union[List[ModValue], ModValue]], append: bool = False
+    ) -> None:
         """
         Add unknown mods to the annotation. If not append, existing mods will be replaced.
         """
@@ -1293,7 +1364,9 @@ class ProFormaAnnotation:
             else:
                 self.unknown_mods = mods
 
-    def add_nterm_mods(self, mods: Optional[Union[List[ModValue], ModValue]], append: bool = False) -> None:
+    def add_nterm_mods(
+        self, mods: Optional[Union[List[ModValue], ModValue]], append: bool = False
+    ) -> None:
         """
         Add nterm mods to the annotation. If not append, existing mods will be replaced.
         """
@@ -1312,7 +1385,9 @@ class ProFormaAnnotation:
             else:
                 self.nterm_mods = mods
 
-    def add_cterm_mods(self, mods: Optional[Union[List[ModValue], ModValue]], append: bool = False) -> None:
+    def add_cterm_mods(
+        self, mods: Optional[Union[List[ModValue], ModValue]], append: bool = False
+    ) -> None:
         """
         Add cterm mods to the annotation. If not append, existing mods will be replaced.
         """
@@ -1379,8 +1454,12 @@ class ProFormaAnnotation:
 
         return self.internal_mods.pop(index)
 
-    def add_internal_mod(self, index: int, mods: Optional[Union[List[ModValue], ModValue]],
-                         append: bool = False) -> None:
+    def add_internal_mod(
+        self,
+        index: int,
+        mods: Optional[Union[List[ModValue], ModValue]],
+        append: bool = False,
+    ) -> None:
         """
         Add internal mods to the annotation. If not append, existing mods will be replaced.
         """
@@ -1405,8 +1484,11 @@ class ProFormaAnnotation:
             else:
                 self._internal_mods[index] = copy.deepcopy(mods)
 
-    def add_internal_mods(self, mods: Optional[Dict[int, Union[List[ModValue], ModValue]]],
-                          append: bool = False) -> None:
+    def add_internal_mods(
+        self,
+        mods: Optional[Dict[int, Union[List[ModValue], ModValue]]],
+        append: bool = False,
+    ) -> None:
         """
         Add internal mods to the annotation. If not append, existing mods will be replaced.
         """
@@ -1430,8 +1512,11 @@ class ProFormaAnnotation:
                     else:
                         self.internal_mods[k] = copy.deepcopy(v)
 
-    def add_intervals(self, intervals: Optional[Union[List[INTERVAL_VALUE], INTERVAL_VALUE]],
-                      append: bool = False) -> None:
+    def add_intervals(
+        self,
+        intervals: Optional[Union[List[INTERVAL_VALUE], INTERVAL_VALUE]],
+        append: bool = False,
+    ) -> None:
         """
         Add intervals to the annotation. If not append, existing mods will be replaced.
         """
@@ -1470,7 +1555,9 @@ class ProFormaAnnotation:
                     intervals[key].mods = []
             else:
                 intervals[key].mods.extend(copy.deepcopy(interval.mods))
-                intervals[key].ambiguous = intervals[key].ambiguous or interval.ambiguous
+                intervals[key].ambiguous = (
+                    intervals[key].ambiguous or interval.ambiguous
+                )
 
         # sort intervals and add back
         intervals = sorted(intervals.values(), key=lambda x: (x.start, x.end))
@@ -1482,8 +1569,11 @@ class ProFormaAnnotation:
         """
         self.charge = charge
 
-    def add_charge_adducts(self, charge_adducts: Optional[Union[List[ModValue], ModValue]],
-                           append: bool = False) -> None:
+    def add_charge_adducts(
+        self,
+        charge_adducts: Optional[Union[List[ModValue], ModValue]],
+        append: bool = False,
+    ) -> None:
         """
         Add charge adducts to the annotation
         """
@@ -1495,14 +1585,18 @@ class ProFormaAnnotation:
         charge_adducts = fix_list_of_mods(charge_adducts)
 
         if not append:
-            self.charge_adducts = charge_adducts  # Uses the setter to ensure proper copying
+            self.charge_adducts = (
+                charge_adducts  # Uses the setter to ensure proper copying
+            )
         else:
             if self.has_charge_adducts():
                 self.charge_adducts.extend(copy.deepcopy(charge_adducts))
             else:
                 self.charge_adducts = charge_adducts
 
-    def add_isotope_mods(self, mods: Optional[Union[List[ModValue], ModValue]], append: bool = False) -> None:
+    def add_isotope_mods(
+        self, mods: Optional[Union[List[ModValue], ModValue]], append: bool = False
+    ) -> None:
         """
         Add isotope mods to the annotation. If not append, existing mods will be replaced.
         """
@@ -1522,7 +1616,9 @@ class ProFormaAnnotation:
             else:
                 self.isotope_mods = mods
 
-    def add_static_mods(self, mods: Optional[Union[List[ModValue], ModValue]], append: bool = False) -> None:
+    def add_static_mods(
+        self, mods: Optional[Union[List[ModValue], ModValue]], append: bool = False
+    ) -> None:
         """
         Add static mods to the annotation. If not append, existing mods will be replaced.
         """
@@ -1542,7 +1638,7 @@ class ProFormaAnnotation:
             else:
                 self.static_mods = mods
 
-    def strip(self, inplace: bool = False) -> Union['ProFormaAnnotation', None]:
+    def strip(self, inplace: bool = False) -> Union["ProFormaAnnotation", None]:
         """
         Remove all modifications from the annotation and return a new annotation with the stripped sequence.
         """
@@ -1562,8 +1658,9 @@ class ProFormaAnnotation:
 
         return ProFormaAnnotation(_sequence=self.sequence)
 
-    def slice(self, start: Optional[int], stop: Optional[int], inplace: bool = False) -> (
-            Union)['ProFormaAnnotation', None]:
+    def slice(
+        self, start: Optional[int], stop: Optional[int], inplace: bool = False
+    ) -> (Union)["ProFormaAnnotation", None]:
         """
         Slice the annotation sequence and return a new annotation with the sliced sequence and modifications.
         """
@@ -1597,10 +1694,14 @@ class ProFormaAnnotation:
                 if interval.start < stop and interval.end >= start:
                     new_start = max(0, interval.start - start)
                     new_end = max(0, interval.end - start)
-                    new_intervals.append(Interval(start=new_start,
-                                                  end=new_end,
-                                                  ambiguous=interval.ambiguous,
-                                                  mods=copy.deepcopy(interval.mods)))
+                    new_intervals.append(
+                        Interval(
+                            start=new_start,
+                            end=new_end,
+                            ambiguous=interval.ambiguous,
+                            mods=copy.deepcopy(interval.mods),
+                        )
+                    )
 
         if inplace is True:
             self._sequence = new_sequence
@@ -1624,13 +1725,15 @@ class ProFormaAnnotation:
 
         return new_annotation
 
-    def shift(self, n: int, inplace: bool = False) -> Union['ProFormaAnnotation', None]:
+    def shift(self, n: int, inplace: bool = False) -> Union["ProFormaAnnotation", None]:
         """
         Shift the annotation by n positions in a cyclic manner.
         """
         seq_len = len(self.sequence)
         effective_shift = n % seq_len
-        shifted_sequence = self.sequence[effective_shift:] + self.sequence[:effective_shift]
+        shifted_sequence = (
+            self.sequence[effective_shift:] + self.sequence[:effective_shift]
+        )
 
         new_internal_mods = None
         if self.has_internal_mods():
@@ -1648,15 +1751,22 @@ class ProFormaAnnotation:
             new_intervals = []
             for interval in self.intervals:
                 new_start = (interval.start - effective_shift) % seq_len
-                new_end = (interval.end - effective_shift) % seq_len if interval.end is not None else None
+                new_end = (
+                    (interval.end - effective_shift) % seq_len
+                    if interval.end is not None
+                    else None
+                )
                 # Ensure the start is always less than the end for non-ambiguous intervals
                 if new_end is not None and new_start > new_end:
                     new_end, new_start = new_start, new_end
                 new_intervals.append(
-                    Interval(start=new_start,
-                             end=new_end,
-                             ambiguous=interval.ambiguous,
-                             mods=copy.deepcopy(interval.mods)))
+                    Interval(
+                        start=new_start,
+                        end=new_end,
+                        ambiguous=interval.ambiguous,
+                        mods=copy.deepcopy(interval.mods),
+                    )
+                )
 
             if len(new_intervals) == 0:
                 new_intervals = None
@@ -1675,7 +1785,9 @@ class ProFormaAnnotation:
 
         return new_annotation
 
-    def shuffle(self, seed: Optional[Any] = None, inplace: bool = False) -> Union['ProFormaAnnotation', None]:
+    def shuffle(
+        self, seed: Optional[Any] = None, inplace: bool = False
+    ) -> Union["ProFormaAnnotation", None]:
         """
         Shuffle the annotation sequence and return a new annotation with the shuffled sequence.
         """
@@ -1696,7 +1808,9 @@ class ProFormaAnnotation:
         if self.internal_mods:
             new_internal_mods = {}
             # Create a mapping from original to new positions
-            position_mapping = {original: new for new, original in enumerate(shuffled_positions)}
+            position_mapping = {
+                original: new for new, original in enumerate(shuffled_positions)
+            }
             for original_pos, mods in self.internal_mods.items():
                 # Map each original position to its new position
                 new_pos = position_mapping[original_pos]
@@ -1705,7 +1819,7 @@ class ProFormaAnnotation:
             if len(new_internal_mods) == 0:
                 new_internal_mods = None
 
-        new_sequence = ''.join(shuffled_sequence)
+        new_sequence = "".join(shuffled_sequence)
         if inplace:
             self._sequence = new_sequence
             self._internal_mods = new_internal_mods
@@ -1716,7 +1830,9 @@ class ProFormaAnnotation:
         new_annotation._internal_mods = new_internal_mods
         return new_annotation
 
-    def reverse(self, inplace: bool = False, swap_terms: bool = False) -> Union['ProFormaAnnotation', None]:
+    def reverse(
+        self, inplace: bool = False, swap_terms: bool = False
+    ) -> Union["ProFormaAnnotation", None]:
         """
         Reverse the annotation sequence and return a new annotation with the reversed sequence.
         """
@@ -1738,15 +1854,22 @@ class ProFormaAnnotation:
             new_intervals = []
             for interval in self.intervals:
                 new_start = len(self.sequence) - interval.start - 1
-                new_end = len(self.sequence) - interval.end - 1 if interval.end is not None else None
+                new_end = (
+                    len(self.sequence) - interval.end - 1
+                    if interval.end is not None
+                    else None
+                )
                 # Ensure the start is always less than the end for non-ambiguous intervals
                 if new_end is not None and new_start > new_end:
                     new_end, new_start = new_start, new_end
                 new_intervals.append(
-                    Interval(start=new_start,
-                             end=new_end,
-                             ambiguous=interval.ambiguous,
-                             mods=copy.deepcopy(interval.mods)))
+                    Interval(
+                        start=new_start,
+                        end=new_end,
+                        ambiguous=interval.ambiguous,
+                        mods=copy.deepcopy(interval.mods),
+                    )
+                )
 
         if swap_terms:
             nterm_mods = self.cterm_mods
@@ -1772,7 +1895,7 @@ class ProFormaAnnotation:
         new_annotation._intervals = new_intervals  # already a copy
         return new_annotation
 
-    def split(self) -> Generator['ProFormaAnnotation', None, None]:
+    def split(self) -> Generator["ProFormaAnnotation", None, None]:
         """
         Split each amino acid in the sequence into a separate ProFormaAnnotation
         """
@@ -1792,13 +1915,17 @@ class ProFormaAnnotation:
         """
         return Counter([a.serialize() for a in self.split()])
 
-    def sort_residues(self, inplace: bool = False) -> Union['ProFormaAnnotation', None]:
+    def sort_residues(self, inplace: bool = False) -> Union["ProFormaAnnotation", None]:
         """
         Sort the residues in the annotation sequence and return a new annotation with the sorted sequence.
         """
         # Mapping original positions to their new positions after sorting
-        original_to_new_positions = {old: new for new, old in
-                                     enumerate(sorted(range(len(self.sequence)), key=lambda x: self.sequence[x]))}
+        original_to_new_positions = {
+            old: new
+            for new, old in enumerate(
+                sorted(range(len(self.sequence)), key=lambda x: self.sequence[x])
+            )
+        }
 
         # Creating new internal mods with adjusted positions
         new_internal_mods = {}
@@ -1811,7 +1938,7 @@ class ProFormaAnnotation:
             new_internal_mods = None
 
         # Generating sorted sequence
-        sorted_sequence = ''.join(sorted(self.sequence))
+        sorted_sequence = "".join(sorted(self.sequence))
 
         if inplace:
             self.sequence = sorted_sequence
@@ -1847,7 +1974,7 @@ class ProFormaAnnotation:
         """
         return _serialize_annotation_end(self, include_plus)
 
-    def is_subsequence(self, other: 'ProFormaAnnotation') -> bool:
+    def is_subsequence(self, other: "ProFormaAnnotation") -> bool:
         """
         Check if the annotation is a subsequence of another annotation.
         """
@@ -1856,7 +1983,9 @@ class ProFormaAnnotation:
         if self.sequence in other.sequence:
 
             # loop over all starting indexes where the sequence is found
-            for start in [m.start() for m in re.finditer(self.sequence, other.sequence)]:
+            for start in [
+                m.start() for m in re.finditer(self.sequence, other.sequence)
+            ]:
                 # check if all modifications are also a subsequence
                 sliced_annot = other.slice(start, start + len(self.sequence))
                 if sliced_annot == self:
@@ -1864,16 +1993,21 @@ class ProFormaAnnotation:
 
         return False
 
-    def find_indices(self, other: 'ProFormaAnnotation') -> List[int]:
+    def find_indices(self, other: "ProFormaAnnotation") -> List[int]:
         """
         Find all occurrences of the annotation in another annotation.
         """
 
         # find all starting indexes where the sequence is found and is a subsequence
-        return [m.start() for m in re.finditer(self.sequence, other.sequence) if
-                self.is_subsequence(other.slice(m.start(), m.start() + len(self.sequence)))]
+        return [
+            m.start()
+            for m in re.finditer(self.sequence, other.sequence)
+            if self.is_subsequence(
+                other.slice(m.start(), m.start() + len(self.sequence))
+            )
+        ]
 
-    def permutations(self, size: Optional[int] = None) -> List['ProFormaAnnotation']:
+    def permutations(self, size: Optional[int] = None) -> List["ProFormaAnnotation"]:
         """
         Generate all permutations of the annotation sequence.
         """
@@ -1885,13 +2019,16 @@ class ProFormaAnnotation:
         end = self.serialize_end()
 
         mods = self.pop_mods()
-        self._internal_mods = mods.get('internal')
+        self._internal_mods = mods.get("internal")
 
         components = [a.serialize() for a in self.split()]
 
-        return [parse(start + ''.join(i) + end) for i in itertools.permutations(components, size)]
+        return [
+            parse(start + "".join(i) + end)
+            for i in itertools.permutations(components, size)
+        ]
 
-    def product(self, repeat: Optional[int] = None) -> List['ProFormaAnnotation']:
+    def product(self, repeat: Optional[int] = None) -> List["ProFormaAnnotation"]:
         """
         Generate the product of the annotation sequence with itself.
         """
@@ -1903,13 +2040,16 @@ class ProFormaAnnotation:
         end = self.serialize_end()
 
         mods = self.pop_mods()
-        self._internal_mods = mods.get('internal')
+        self._internal_mods = mods.get("internal")
 
         components = [a.serialize() for a in self.split()]
 
-        return [parse(start + ''.join(i) + end) for i in itertools.product(components, repeat=repeat)]
+        return [
+            parse(start + "".join(i) + end)
+            for i in itertools.product(components, repeat=repeat)
+        ]
 
-    def combinations(self, size: Optional[int] = None) -> List['ProFormaAnnotation']:
+    def combinations(self, size: Optional[int] = None) -> List["ProFormaAnnotation"]:
         """
         Generate all combinations of the annotation sequence.
         """
@@ -1921,13 +2061,18 @@ class ProFormaAnnotation:
         end = self.serialize_end()
 
         mods = self.pop_mods()
-        self._internal_mods = mods.get('internal')
+        self._internal_mods = mods.get("internal")
 
         components = [a.serialize() for a in self.split()]
 
-        return [parse(start + ''.join(i) + end) for i in itertools.combinations(components, size)]
+        return [
+            parse(start + "".join(i) + end)
+            for i in itertools.combinations(components, size)
+        ]
 
-    def combinations_with_replacement(self, size: Optional[int] = None) -> List['ProFormaAnnotation']:
+    def combinations_with_replacement(
+        self, size: Optional[int] = None
+    ) -> List["ProFormaAnnotation"]:
         """
         Generate all combinations of the annotation sequence with replacement.
         """
@@ -1939,24 +2084,94 @@ class ProFormaAnnotation:
         end = self.serialize_end()
 
         mods = self.pop_mods()
-        self._internal_mods = mods.get('internal')
+        self._internal_mods = mods.get("internal")
 
         components = [a.serialize() for a in self.split()]
 
-        return [parse(start + ''.join(i) + end) for i in itertools.combinations_with_replacement(components, size)]
+        return [
+            parse(start + "".join(i) + end)
+            for i in itertools.combinations_with_replacement(components, size)
+        ]
+
+    def annotate_ambiguity(
+        self,
+        forward_coverage: List[int],
+        reverse_coverage: List[int],
+        mass_shift: Optional[Any] = None,
+        inplace: bool = False,
+    ) -> Union["ProFormaAnnotation", None]:
+        """
+        Generates ambiguity intervals based on the coverage of the sequence.
+        See :func:`~peptacular.sequence.sequence_funcs.annotate_ambiguity` for more details.
+        """
+
+        if inplace:
+            annotation = self
+        else:
+            annotation = copy.deepcopy(self)
+
+        # ensure that annotation does not contain intervals
+        if annotation.has_intervals():
+            raise ValueError("Annotation should not contain intervals")
+
+        if len(forward_coverage) != len(reverse_coverage) != len(annotation):
+            raise ValueError(
+                f"Coverage length does not match sequence length: {len(forward_coverage)} != {len(reverse_coverage)} != {len(annotation)}"
+            )
+
+        forward_intervals = _construct_ambiguity_intervals(
+            forward_coverage, reverse=False
+        )
+        reverse_intervals = _construct_ambiguity_intervals(
+            reverse_coverage, reverse=True
+        )
+        ambiguity_intervals = _combine_ambiguity_intervals(
+            forward_intervals, reverse_intervals
+        )
+
+        intervals = [
+            Interval(start, end + 1, True, None) for start, end in ambiguity_intervals
+        ]
+
+        annotation.add_intervals(intervals, append=True)
+
+        if mass_shift is not None:
+            mass_shift_interval = _get_mass_shift_interval(
+                forward_coverage, reverse_coverage
+            )
+            if mass_shift_interval is None:
+                annotation.add_labile_mods(mass_shift, append=True)
+            elif mass_shift_interval[0] == mass_shift_interval[1]:
+                # add modification to the sequence
+                annotation.add_internal_mod(
+                    mass_shift_interval[0], mass_shift, append=True
+                )
+            else:
+                mod_interval = Interval(
+                    mass_shift_interval[0],
+                    mass_shift_interval[1] + 1,
+                    False,
+                    [Mod(mass_shift, 1)],
+                )
+                annotation.add_intervals([mod_interval], append=True)
+
+        if inplace is False:
+            return annotation
 
 
-def create_annotation(sequence: str,
-                      isotope_mods: Optional[ACCEPTED_MOD_INPUT] = None,
-                      static_mods: Optional[ACCEPTED_MOD_INPUT] = None,
-                      labile_mods: Optional[ACCEPTED_MOD_INPUT] = None,
-                      unknown_mods: Optional[ACCEPTED_MOD_INPUT] = None,
-                      nterm_mods: Optional[ACCEPTED_MOD_INPUT] = None,
-                      cterm_mods: Optional[ACCEPTED_MOD_INPUT] = None,
-                      internal_mods: Optional[Dict[int, ACCEPTED_MOD_INPUT]] = None,
-                      intervals: Optional[ACCEPTED_INTERVAL_INPUT] = None,
-                      charge: Optional[int] = None,
-                      charge_adducts: Optional[ACCEPTED_MOD_INPUT] = None) -> ProFormaAnnotation:
+def create_annotation(
+    sequence: str,
+    isotope_mods: Optional[ACCEPTED_MOD_INPUT] = None,
+    static_mods: Optional[ACCEPTED_MOD_INPUT] = None,
+    labile_mods: Optional[ACCEPTED_MOD_INPUT] = None,
+    unknown_mods: Optional[ACCEPTED_MOD_INPUT] = None,
+    nterm_mods: Optional[ACCEPTED_MOD_INPUT] = None,
+    cterm_mods: Optional[ACCEPTED_MOD_INPUT] = None,
+    internal_mods: Optional[Dict[int, ACCEPTED_MOD_INPUT]] = None,
+    intervals: Optional[ACCEPTED_INTERVAL_INPUT] = None,
+    charge: Optional[int] = None,
+    charge_adducts: Optional[ACCEPTED_MOD_INPUT] = None,
+) -> ProFormaAnnotation:
     """
     Create a ProFormaAnnotation from a sequence and modifications
 
@@ -1973,9 +2188,13 @@ def create_annotation(sequence: str,
     unknown_mods = fix_list_of_mods(unknown_mods) if unknown_mods is not None else None
     nterm_mods = fix_list_of_mods(nterm_mods) if nterm_mods is not None else None
     cterm_mods = fix_list_of_mods(cterm_mods) if cterm_mods is not None else None
-    internal_mods = fix_dict_of_mods(internal_mods) if internal_mods is not None else None
+    internal_mods = (
+        fix_dict_of_mods(internal_mods) if internal_mods is not None else None
+    )
     intervals = fix_intervals_input(intervals) if intervals is not None else None
-    charge_adducts = fix_list_of_mods(charge_adducts) if charge_adducts is not None else None
+    charge_adducts = (
+        fix_list_of_mods(charge_adducts) if charge_adducts is not None else None
+    )
 
     return ProFormaAnnotation(
         _sequence=sequence,
@@ -1988,7 +2207,7 @@ def create_annotation(sequence: str,
         _internal_mods=internal_mods,
         _intervals=intervals,
         _charge=charge,
-        _charge_adducts=charge_adducts
+        _charge_adducts=charge_adducts,
     )
 
 
@@ -1997,6 +2216,7 @@ class MultiProFormaAnnotation:
     """
     A multi proforma annotation
     """
+
     annotations: List[ProFormaAnnotation]
     connections: List[bool]
 
@@ -2007,20 +2227,22 @@ class MultiProFormaAnnotation:
         :return: The serialized multi annotation
         :rtype: str
         """
-        seq = ''
+        seq = ""
         for i, annotation in enumerate(self.annotations):
             seq += annotation.serialize(include_plus=include_plus)
             if i != len(self.annotations) - 1:
                 connection = self.connections[i]
                 if connection is True:
-                    seq += r'\\'
+                    seq += r"\\"
                 else:
-                    seq += r'+'
+                    seq += r"+"
 
         return seq
 
 
-def create_multi_annotation(annotations: List[ProFormaAnnotation], connections: List[bool]) -> MultiProFormaAnnotation:
+def create_multi_annotation(
+    annotations: List[ProFormaAnnotation], connections: List[bool]
+) -> MultiProFormaAnnotation:
     """
     Create a MultiProFormaAnnotation from a list of annotations and connections
 
@@ -2044,7 +2266,9 @@ def create_multi_annotation(annotations: List[ProFormaAnnotation], connections: 
     """
 
     if len(annotations) != len(connections) + 1:
-        raise ValueError('The number of connections should be one less than the number of annotations')
+        raise ValueError(
+            "The number of connections should be one less than the number of annotations"
+        )
 
     return MultiProFormaAnnotation(annotations=annotations, connections=connections)
 
@@ -2103,7 +2327,7 @@ class _ProFormaParser:
 
     @property
     def _unmod_sequence(self) -> str:
-        return ''.join(self._amino_acids)
+        return "".join(self._amino_acids)
 
     def _get_result(self) -> ProFormaAnnotation:
         return ProFormaAnnotation(
@@ -2117,7 +2341,7 @@ class _ProFormaParser:
             _internal_mods=self._internal_mods,
             _intervals=self._intervals,
             _charge=self._charge,
-            _charge_adducts=self._charge_adducts
+            _charge_adducts=self._charge_adducts,
         )
 
     def _reset_sequence(self) -> None:
@@ -2219,34 +2443,49 @@ class _ProFormaParser:
         while not self._end_of_sequence():
 
             cur = self._current()
-            if cur in AMINO_ACIDS or cur == '(':  # End of start sequence
+            if cur in AMINO_ACIDS or cur == "(":  # End of start sequence
                 return None
-            if cur == '[':  # N-term or unknown mods
-                mods = self._parse_modifications('[', ']')
+            if cur == "[":  # N-term or unknown mods
+                mods = self._parse_modifications("[", "]")
                 next_char = self._parse_char()
-                if next_char == '-':
+                if next_char == "-":
                     self._add_nterm_mod(mods)
-                elif next_char == '?':
+                elif next_char == "?":
                     self._add_unknown_mod(mods)
                 else:
-                    raise ProFormaFormatError(f"Expected '-' or '?, but got {cur}", self.position, self.sequence)
-            elif cur == '<':  # Global mods
-                for mod in self._parse_modifications('<', '>'):
-                    if '@' in mod.val:  # Static mod
+                    raise ProFormaFormatError(
+                        f"Expected '-' or '?, but got {cur}",
+                        self.position,
+                        self.sequence,
+                    )
+            elif cur == "<":  # Global mods
+                for mod in self._parse_modifications("<", ">"):
+                    if "@" in mod.val:  # Static mod
                         try:
                             self._add_static_mod(mod)
-                        except ValueError as err:  # re-raise error with position, and sequence
-                            raise ProFormaFormatError(err, self.position, self.sequence) from err
+                        except (
+                            ValueError
+                        ) as err:  # re-raise error with position, and sequence
+                            raise ProFormaFormatError(
+                                err, self.position, self.sequence
+                            ) from err
                     else:  # Isotope mod
                         try:
                             self._add_isotope_mod(mod)
-                        except ValueError as err:  # re-raise error with position, and sequence
-                            raise ProFormaFormatError(err, self.position, self.sequence) from err
-            elif cur == '{':  # Labile mods
-                self._add_labile_mod(self._parse_modification('{', '}'))
+                        except (
+                            ValueError
+                        ) as err:  # re-raise error with position, and sequence
+                            raise ProFormaFormatError(
+                                err, self.position, self.sequence
+                            ) from err
+            elif cur == "{":  # Labile mods
+                self._add_labile_mod(self._parse_modification("{", "}"))
             else:
-                raise ProFormaFormatError(r"Expected amino acid, '[', '{', or '<' but got " + cur, self.position,
-                                          self.sequence)
+                raise ProFormaFormatError(
+                    r"Expected amino acid, '[', '{', or '<' but got " + cur,
+                    self.position,
+                    self.sequence,
+                )
 
     def _parse_sequence_middle(self) -> None:
         """
@@ -2257,44 +2496,57 @@ class _ProFormaParser:
             cur = self._current()
             if cur in AMINO_ACIDS:  # Amino acid
                 self._amino_acids.append(self._parse_char())
-            elif cur == '[':  # mods for the previous amino acid
-                self._add_internal_mod(self._parse_modifications('[', ']'))
-            elif cur == '-':  # cterm mods (end of sequence)
+            elif cur == "[":  # mods for the previous amino acid
+                self._add_internal_mod(self._parse_modifications("[", "]"))
+            elif cur == "-":  # cterm mods (end of sequence)
                 self._skip(1)
-                self._add_cterm_mod(self._parse_modifications('[', ']'))
+                self._add_cterm_mod(self._parse_modifications("[", "]"))
                 return
-            elif cur in ('/', '+'):  # charge ( end of sequence)
+            elif cur in ("/", "+"):  # charge ( end of sequence)
                 return
-            elif cur == '(':  # Interval start
+            elif cur == "(":  # Interval start
                 if dummy_interval is not None:
-                    raise ProFormaFormatError("Overlapping intervals!", self.position, self.sequence)
+                    raise ProFormaFormatError(
+                        "Overlapping intervals!", self.position, self.sequence
+                    )
                 dummy_interval = [len(self._amino_acids), None, False, None]
                 self._skip(1)
-            elif cur == ')':  # Interval end
+            elif cur == ")":  # Interval end
                 if dummy_interval is None:
-                    raise ProFormaFormatError("Interval ended without starting!", self.position, self.sequence)
+                    raise ProFormaFormatError(
+                        "Interval ended without starting!", self.position, self.sequence
+                    )
                 dummy_interval[1] = len(self._amino_acids)
 
                 self._skip(1)
-                if not self._end_of_sequence() and self._current() == '[':
-                    dummy_interval[3] = self._parse_modifications('[', ']')
+                if not self._end_of_sequence() and self._current() == "[":
+                    dummy_interval[3] = self._parse_modifications("[", "]")
 
-                self._add_interval(Interval(start=dummy_interval[0],
-                                            end=dummy_interval[1],
-                                            ambiguous=dummy_interval[2],
-                                            mods=dummy_interval[3]))
+                self._add_interval(
+                    Interval(
+                        start=dummy_interval[0],
+                        end=dummy_interval[1],
+                        ambiguous=dummy_interval[2],
+                        mods=dummy_interval[3],
+                    )
+                )
                 dummy_interval = None
 
-            elif cur == '?':  # unknown mods
+            elif cur == "?":  # unknown mods
                 if dummy_interval is None:
-                    raise ProFormaFormatError("Unknown mod outside of interval", self.position, self.sequence)
+                    raise ProFormaFormatError(
+                        "Unknown mod outside of interval", self.position, self.sequence
+                    )
 
                 # interval is ambiguous
                 dummy_interval[2] = True
                 self._skip(1)
             else:
                 raise ProFormaFormatError(
-                    f"Expected either '[', '(', '?', '-', or '/' but got: {cur}", self.position, self.sequence)
+                    f"Expected either '[', '(', '?', '-', or '/' but got: {cur}",
+                    self.position,
+                    self.sequence,
+                )
 
     def _parse_sequence_end(self) -> None:
         """
@@ -2302,11 +2554,11 @@ class _ProFormaParser:
         """
         while not self._end_of_sequence():
             cur = self._current()
-            if cur == '/':  # charge
+            if cur == "/":  # charge
                 self._skip(1)
 
                 # check for // (crosslink)
-                if not self._end_of_sequence() and self._current() == '/':
+                if not self._end_of_sequence() and self._current() == "/":
                     self._skip(1)
                     self._current_connection = True
                     return
@@ -2314,16 +2566,19 @@ class _ProFormaParser:
                 self._charge = self._parse_integer()
 
                 # check for charge adducts
-                if not self._end_of_sequence() and self._current() == '[':
-                    self._add_charge_adducts(self._parse_modifications('[', ']'))
+                if not self._end_of_sequence() and self._current() == "[":
+                    self._add_charge_adducts(self._parse_modifications("[", "]"))
 
-            elif cur == '+':  # next sequence
+            elif cur == "+":  # next sequence
                 self._skip(1)
                 self._current_connection = False
                 return
             else:
                 raise ProFormaFormatError(
-                    f"Invalid sequence: expected '/' or '+' but got {cur}", self.position, self.sequence)
+                    f"Invalid sequence: expected '/' or '+' but got {cur}",
+                    self.position,
+                    self.sequence,
+                )
 
     def _parse_char(self) -> str:
         # Assuming any character not a '[' or ']' is an amino acid for simplicity
@@ -2331,7 +2586,9 @@ class _ProFormaParser:
         self.position += 1
         return aa
 
-    def _parse_modifications(self, opening_bracket='[', closing_bracket=']') -> List[Mod]:
+    def _parse_modifications(
+        self, opening_bracket="[", closing_bracket="]"
+    ) -> List[Mod]:
         """
         Parses modifications from the sequence starting with the current position. The function will continue parsing
         until it reaches the end of the sequence or the there are no more sequential modifications.
@@ -2346,7 +2603,7 @@ class _ProFormaParser:
 
         return mods
 
-    def _parse_modification(self, opening_bracket='[', closing_bracket=']') -> Mod:
+    def _parse_modification(self, opening_bracket="[", closing_bracket="]") -> Mod:
         """
         Parses a single modification from the sequence starting with the current position.
         """
@@ -2364,15 +2621,15 @@ class _ProFormaParser:
             msg = f"Unmatched {opening_bracket} at position {self.position}"
             raise ProFormaFormatError(msg, self.position, self.sequence)
 
-        mod = self.sequence[start:self.position - 1]
+        mod = self.sequence[start : self.position - 1]
 
         multiplier = 1
-        if not self._end_of_sequence() and self._peek() == '^':
+        if not self._end_of_sequence() and self._peek() == "^":
             self.position += 1
             multiplier_start = self.position
             while not self._end_of_sequence() and self._peek().isdigit():
                 self.position += 1
-            multiplier = int(self.sequence[multiplier_start:self.position])
+            multiplier = int(self.sequence[multiplier_start : self.position])
 
         return Mod(mod, multiplier)
 
@@ -2383,11 +2640,11 @@ class _ProFormaParser:
             if self._peek().isdigit():
                 digit_count += 1
                 self.position += 1
-            elif digit_count == 0 and self._peek() in ['+', '-']:
+            elif digit_count == 0 and self._peek() in ["+", "-"]:
                 self.position += 1
             else:
                 break
-        return int(self.sequence[start:self.position])
+        return int(self.sequence[start : self.position])
 
     def _current(self) -> str:
         return self.sequence[self.position]
@@ -2443,7 +2700,10 @@ def parse(sequence: str) -> Union[ProFormaAnnotation, MultiProFormaAnnotation]:
     return MultiProFormaAnnotation(annotations, annotations_connections[:-1])
 
 
-def serialize(annotation: Union[ProFormaAnnotation, MultiProFormaAnnotation], include_plus: bool = False) -> str:
+def serialize(
+    annotation: Union[ProFormaAnnotation, MultiProFormaAnnotation],
+    include_plus: bool = False,
+) -> str:
     """
     Serializes a ProForma annotation or multiple ProForma annotations into a single string representation.
 
@@ -2478,39 +2738,43 @@ def serialize(annotation: Union[ProFormaAnnotation, MultiProFormaAnnotation], in
     return annotation.serialize(include_plus)
 
 
-def _serialize_annotation_start(annotation: ProFormaAnnotation, include_plus: bool) -> str:
+def _serialize_annotation_start(
+    annotation: ProFormaAnnotation, include_plus: bool
+) -> str:
     comps = []
 
     # add labile mods
     if annotation.has_labile_mods():
         for mod in annotation.labile_mods:
-            comps.append(mod.serialize('{}', include_plus))
+            comps.append(mod.serialize("{}", include_plus))
 
     if annotation.has_static_mods():
         for mod in annotation.static_mods:
-            comps.append(mod.serialize('<>', include_plus))
+            comps.append(mod.serialize("<>", include_plus))
 
     # Add global mods
     if annotation.has_isotope_mods():
         for mod in annotation.isotope_mods:
-            comps.append(mod.serialize('<>',include_plus))
+            comps.append(mod.serialize("<>", include_plus))
 
     # Unknown mods
     if annotation.has_unknown_mods():
         for mod in annotation.unknown_mods:
-            comps.append(mod.serialize('[]',include_plus))
+            comps.append(mod.serialize("[]", include_plus))
         comps.append("?")
 
     # N-term mods
     if annotation.has_nterm_mods():
         for mod in annotation.nterm_mods:
-            comps.append(mod.serialize('[]', include_plus))
+            comps.append(mod.serialize("[]", include_plus))
         comps.append("-")
 
-    return ''.join(comps)
+    return "".join(comps)
 
 
-def _serialize_annotation_middle(annotation: ProFormaAnnotation, include_plus: bool) -> str:
+def _serialize_annotation_middle(
+    annotation: ProFormaAnnotation, include_plus: bool
+) -> str:
     comps = []
     # Sequence
     for i, aa in enumerate(annotation.sequence):
@@ -2526,14 +2790,14 @@ def _serialize_annotation_middle(annotation: ProFormaAnnotation, include_plus: b
 
                     if interval.mods:
                         for mod in interval.mods:
-                            comps.append(mod.serialize('[]', include_plus))
+                            comps.append(mod.serialize("[]", include_plus))
 
         comps.append(aa)
 
         # Internal mods
         if annotation.internal_mods and i in annotation.internal_mods:
             for mod in annotation.internal_mods[i]:
-                comps.append(mod.serialize('[]',include_plus))
+                comps.append(mod.serialize("[]", include_plus))
 
     # add end interval
     i = len(annotation.sequence)
@@ -2543,18 +2807,20 @@ def _serialize_annotation_middle(annotation: ProFormaAnnotation, include_plus: b
                 comps.append(")")
                 if interval.mods:
                     for mod in interval.mods:
-                        comps.append(mod.serialize('[]',include_plus))
+                        comps.append(mod.serialize("[]", include_plus))
 
-    return ''.join(comps)
+    return "".join(comps)
 
 
-def _serialize_annotation_end(annotation: ProFormaAnnotation, include_plus: bool) -> str:
+def _serialize_annotation_end(
+    annotation: ProFormaAnnotation, include_plus: bool
+) -> str:
     comps = []
     # C-term mods
     if annotation.cterm_mods:
-        comps.append('-')
+        comps.append("-")
         for mod in annotation.cterm_mods:
-            comps.append(mod.serialize('[]', include_plus))
+            comps.append(mod.serialize("[]", include_plus))
 
     # Charge
     if annotation.charge:
@@ -2562,12 +2828,14 @@ def _serialize_annotation_end(annotation: ProFormaAnnotation, include_plus: bool
 
     if annotation.charge_adducts:
         for mod in annotation.charge_adducts:
-            comps.append(mod.serialize('[]', include_plus))
+            comps.append(mod.serialize("[]", include_plus))
 
-    return ''.join(comps)
+    return "".join(comps)
 
 
 def _serialize_annotation(annotation: ProFormaAnnotation, include_plus: bool) -> str:
-    return _serialize_annotation_start(annotation, include_plus) + \
-        _serialize_annotation_middle(annotation, include_plus) + \
-        _serialize_annotation_end(annotation, include_plus)
+    return (
+        _serialize_annotation_start(annotation, include_plus)
+        + _serialize_annotation_middle(annotation, include_plus)
+        + _serialize_annotation_end(annotation, include_plus)
+    )

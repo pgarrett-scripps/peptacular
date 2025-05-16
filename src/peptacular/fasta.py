@@ -6,7 +6,7 @@ Fasta.py
 def parse_fasta(input_data):
     """
     Parse FASTA formatted data from various input types.
-    
+
     Parameters:
     -----------
     input_data : str, pathlib.Path, or file-like object
@@ -14,7 +14,7 @@ def parse_fasta(input_data):
         - A string containing FASTA formatted text
         - A path to a FASTA file (as string or Path object)
         - A file-like object (already opened file or StringIO)
-    
+
     Returns:
     --------
     list of tuples
@@ -25,11 +25,11 @@ def parse_fasta(input_data):
     text = ""
 
     # Check if input is a file-like object with 'read' method
-    if hasattr(input_data, 'read'):
+    if hasattr(input_data, "read"):
         content = input_data.read()
         # Handle case where read() returns bytes (like with Streamlit's UploadedFile)
         if isinstance(content, bytes):
-            text = content.decode('utf-8')
+            text = content.decode("utf-8")
         else:
             text = content
 
@@ -38,7 +38,7 @@ def parse_fasta(input_data):
         # Try to open as file path if it doesn't look like FASTA content
         if not input_data.lstrip().startswith(">") and "\n" not in input_data[:100]:
             try:
-                with open(input_data, 'r') as f:
+                with open(input_data, "r") as f:
                     text = f.read()
             except (FileNotFoundError, IOError):
                 # If file not found, assume it's FASTA text
@@ -47,9 +47,9 @@ def parse_fasta(input_data):
             text = input_data
 
     # Handle pathlib.Path objects
-    elif hasattr(input_data, 'is_file') and hasattr(input_data, 'open'):
+    elif hasattr(input_data, "is_file") and hasattr(input_data, "open"):
         try:
-            with input_data.open('r') as f:
+            with input_data.open("r") as f:
                 text = f.read()
         except IOError as err:
             raise ValueError(f"Could not open file: {input_data}") from err

@@ -4,15 +4,23 @@ chem_util.py
 
 from typing import Union, Optional, List
 
-from peptacular.constants import HILL_ORDER, ISOTOPIC_ATOMIC_MASSES, ELECTRON_MASS, PROTON_MASS, \
-    NEUTRON_MASS, AVERAGE_ATOMIC_MASSES, ISOTOPE_COMPONENT_PATTERN, CONDENSED_CHEM_FORMULA_PATTERN
+from peptacular.constants import (
+    HILL_ORDER,
+    ISOTOPIC_ATOMIC_MASSES,
+    ELECTRON_MASS,
+    PROTON_MASS,
+    NEUTRON_MASS,
+    AVERAGE_ATOMIC_MASSES,
+    ISOTOPE_COMPONENT_PATTERN,
+    CONDENSED_CHEM_FORMULA_PATTERN,
+)
 from peptacular.errors import InvalidChemFormulaError
 from peptacular.util import convert_type
 
 from peptacular.types import ChemComposition
 
 
-def parse_chem_formula(formula: str, sep: str = '') -> ChemComposition:
+def parse_chem_formula(formula: str, sep: str = "") -> ChemComposition:
     """
     Parses a chemical formula and returns a dict mapping elements to their counts.
 
@@ -64,12 +72,12 @@ def parse_chem_formula(formula: str, sep: str = '') -> ChemComposition:
 
     """
 
-    if sep != '':
+    if sep != "":
         return _parse_split_chem_formula(formula, sep)
 
     comps = []
     for component in _split_chem_formula(formula):
-        if component.startswith('['):  # Isotope notation
+        if component.startswith("["):  # Isotope notation
             try:
                 comps.append(_parse_isotope_component(component[1:-1]))
             except InvalidChemFormulaError as err:
@@ -88,8 +96,12 @@ def parse_chem_formula(formula: str, sep: str = '') -> ChemComposition:
     return combined_comp
 
 
-def write_chem_formula(composition: ChemComposition, sep: str = '', hill_order: bool = False,
-                       precision: Optional[float] = None) -> str:
+def write_chem_formula(
+    composition: ChemComposition,
+    sep: str = "",
+    hill_order: bool = False,
+    precision: Optional[float] = None,
+) -> str:
     """
     Writes a chemical formula from a dict mapping elements to their counts.
 
@@ -135,31 +147,37 @@ def write_chem_formula(composition: ChemComposition, sep: str = '', hill_order: 
     """
 
     if hill_order:
-        composition = dict(sorted(composition.items(), key=lambda item: HILL_ORDER.get(item[0], 10_000)))
+        composition = dict(
+            sorted(
+                composition.items(), key=lambda item: HILL_ORDER.get(item[0], 10_000)
+            )
+        )
 
     if precision is not None:
         composition = {k: round(v, precision) for k, v in composition.items()}
 
-    if sep != '':
-        return sep.join([f'{k}{sep}{v}' for k, v in composition.items() if v != 0])
+    if sep != "":
+        return sep.join([f"{k}{sep}{v}" for k, v in composition.items() if v != 0])
 
-    s = ''
+    s = ""
     for k, v in composition.items():
-        if v == 0 or k == '':
+        if v == 0 or k == "":
             continue
-        if k[0].isdigit() or k == 'D' or k == 'T':
-            s += f'[{k}{v}]'
+        if k[0].isdigit() or k == "D" or k == "T":
+            s += f"[{k}{v}]"
         else:
-            s += f'{k}{v}'
+            s += f"{k}{v}"
 
     return s
 
 
 # Must keep here to avoid circular dep with mod_db (since mod_db uses mass_calc, and mass_calc uses chem_util)
-def chem_mass(formula: Union[ChemComposition, str],
-              monoisotopic: bool = True,
-              precision: Optional[int] = None,
-              sep: str = '') -> float:
+def chem_mass(
+    formula: Union[ChemComposition, str],
+    monoisotopic: bool = True,
+    precision: Optional[int] = None,
+    sep: str = "",
+) -> float:
     """
     Calculate the mass of a chemical formula or composition.
 
@@ -215,11 +233,11 @@ def chem_mass(formula: Union[ChemComposition, str],
     for element, count in formula.items():
 
         if element not in ISOTOPIC_ATOMIC_MASSES:
-            if element == 'e':
+            if element == "e":
                 m += ELECTRON_MASS * count
-            elif element == 'p':
+            elif element == "p":
                 m += PROTON_MASS * count
-            elif element == 'n':
+            elif element == "n":
                 m += NEUTRON_MASS * count
             else:
                 raise InvalidChemFormulaError(formula, f'Unknown element: "{element}"!')
@@ -229,7 +247,9 @@ def chem_mass(formula: Union[ChemComposition, str],
         if monoisotopic is True:
             m += ISOTOPIC_ATOMIC_MASSES[element] * count
         else:
-            if element[0].isdigit() or element == 'D' or element == 'T':  # element is a isotope
+            if (
+                element[0].isdigit() or element == "D" or element == "T"
+            ):  # element is a isotope
                 m += ISOTOPIC_ATOMIC_MASSES[element] * count
             else:
                 m += AVERAGE_ATOMIC_MASSES[element] * count
@@ -238,7 +258,6 @@ def chem_mass(formula: Union[ChemComposition, str],
         m = round(m, precision)
 
     return m
-
 
 
 def _split_chem_formula(formula: str) -> List[str]:
@@ -272,14 +291,14 @@ def _split_chem_formula(formula: str) -> List[str]:
     components = []
     i = 0
     while i < len(formula):
-        if formula[i] == '[':
+        if formula[i] == "[":
             component_start = i
-            component_end = formula.index(']', component_start)
-            components.append(formula[component_start:component_end + 1])
+            component_end = formula.index("]", component_start)
+            components.append(formula[component_start : component_end + 1])
             i = component_end + 1
         else:
             component_start = i
-            while i < len(formula) and formula[i] not in '[]':
+            while i < len(formula) and formula[i] not in "[]":
                 i += 1
             components.append(formula[component_start:i])
     return components
@@ -334,22 +353,28 @@ def _parse_isotope_component(formula: str) -> ChemComposition:
     """
     counts = {}
 
-    if formula == '':
+    if formula == "":
         return counts
 
-    if formula[0] == 'D' or formula[0] == 'T':
+    if formula[0] == "D" or formula[0] == "T":
         return _parse_condensed_chem_formula(formula)
 
     match = ISOTOPE_COMPONENT_PATTERN.match(formula)
     if match:
-        mass_number_and_element = match.group(1) + match.group(2)  # Combine mass number (if any) and element symbol
-        count = convert_type(match.group(3)) if match.group(3) else 1  # Get the count, defaulting to 1 if not provided
+        mass_number_and_element = match.group(1) + match.group(
+            2
+        )  # Combine mass number (if any) and element symbol
+        count = (
+            convert_type(match.group(3)) if match.group(3) else 1
+        )  # Get the count, defaulting to 1 if not provided
         if isinstance(count, str):
             raise InvalidChemFormulaError(formula, f'Invalid count: "{count}"!')
         counts.setdefault(mass_number_and_element, 0)
         counts[mass_number_and_element] += count
     else:
-        raise InvalidChemFormulaError(formula, f'Invalid isotope notation: "{formula}"!')
+        raise InvalidChemFormulaError(
+            formula, f'Invalid isotope notation: "{formula}"!'
+        )
 
     return counts
 
@@ -410,7 +435,7 @@ def _parse_condensed_chem_formula(formula: str) -> ChemComposition:
 
     element_counts = {}
 
-    if formula == '':
+    if formula == "":
         return element_counts
 
     # Find element and their counts in non-isotope components
@@ -431,7 +456,9 @@ def _parse_condensed_chem_formula(formula: str) -> ChemComposition:
         element_counts[element] += count
 
     if matched_chars != len(formula):
-        raise InvalidChemFormulaError(formula, f'Cannot parse: "{formula[matched_chars:]}"!')
+        raise InvalidChemFormulaError(
+            formula, f'Cannot parse: "{formula[matched_chars:]}"!'
+        )
 
     return element_counts
 
