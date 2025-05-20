@@ -940,6 +940,8 @@ def coverage(
     subsequences: List[Union[str, ProFormaAnnotation]],
     accumulate: bool = False,
     ignore_mods: bool = False,
+    ignore_ambiguity: bool = False,
+
 ) -> List[int]:
     """
     Calculate the sequence coverage given a list of subsequecnes.
@@ -958,6 +960,8 @@ def coverage(
     :type accumulate: bool
     :param ignore_mods: Whether to ignore modifications when calcualting the coverage.
     :type ignore_mods: bool
+    :param ignore_ambiguity: Whether to ignore ambiguity codes when calculating the coverage.
+    :type ignore_ambiguity: bool
 
     :raises ValueError: If the input sequence contains multiple sequences.
     :raises ProFormaFormatError: if the proforma sequence is not valid
@@ -977,6 +981,10 @@ def coverage(
         >>> coverage("PEPTIDE", ["PEP", "EPT"], accumulate=True)
         [1, 2, 2, 1, 0, 0, 0]
 
+        # By default ambiguity does not add to coverage
+        >>> coverage("PEPTIDE", ["P(?EP)"])
+        [1, 0, 0, 0, 0, 0, 0]
+
     """
 
     if isinstance(sequence, str):
@@ -988,23 +996,32 @@ def coverage(
         if isinstance(subsequence, str):
             subsequence = sequence_to_annotation(subsequence)
 
+        peptide_length = len(subsequence)
+
+        ambiguity_intervals = []
+        if subsequence.has_intervals():
+            ambiguity_intervals = subsequence.pop_intervals()
+            ambiguity_intervals = [i for i in ambiguity_intervals if i.ambiguous]
+
         peptide_indexes = find_subsequence_indices(
             sequence, subsequence, ignore_mods=ignore_mods
         )
+
+        peptide_cov = [1]*peptide_length
+        if ignore_ambiguity is False and ambiguity_intervals:
+            for interval in ambiguity_intervals:
+                for i in range(interval.start, interval.end):
+                    peptide_cov[i] = 0
+
         for peptide_index in peptide_indexes:
-            if accumulate:
-                cov_arr[
-                    peptide_index : peptide_index + sequence_length(subsequence)
-                ] = [
-                    x + 1
-                    for x in cov_arr[
-                        peptide_index : peptide_index + sequence_length(subsequence)
-                    ]
-                ]
-            else:
-                cov_arr[
-                    peptide_index : peptide_index + sequence_length(subsequence)
-                ] = [1] * sequence_length(subsequence)
+            start = peptide_index
+            end = peptide_index + peptide_length
+            
+            for i, cov in enumerate(peptide_cov):
+                if accumulate:
+                    cov_arr[start + i] += cov
+                else:
+                    cov_arr[start + i] = cov
 
     return cov_arr
 
@@ -1013,6 +1030,8 @@ def percent_coverage(
     sequence: Union[str, ProFormaAnnotation],
     subsequences: List[Union[str, ProFormaAnnotation]],
     ignore_mods: bool = False,
+    accumulate: bool = False,
+    ignore_ambiguity: bool = False,
 ) -> float:
     """
     Calculates the coverage given a list of subsequences.
@@ -1023,6 +1042,10 @@ def percent_coverage(
     :type subsequences: List[Union[str, ProFormaAnnotation]]
     :param ignore_mods: Whether to ignore modifications when calcualting the coverage.
     :type ignore_mods: bool
+    :param accumulate: If True, the coverage array will be accumulated
+    :param accumulate: bool
+    :param ignore_ambiguity: Whether to ignore ambiguity codes when calculating the coverage.
+    :type ignore_ambiguity: bool
 
     :raises ValueError: If the input sequence contains multiple sequences.
     :raises ProFormaFormatError: if the proforma sequence is not valid
@@ -1032,16 +1055,19 @@ def percent_coverage(
 
     .. code-block:: python
 
-        >>> percent_coverage("PEPTIDE", ["PEP"])
-        0.42857142857142855
+        >>> round(percent_coverage("PEPTIDE", ["PEP"]), 3)
+        0.429
 
-        >>> percent_coverage("PEPTIDE", ["PEP", "EPT"])
-        0.5714285714285714
+        >>> round(percent_coverage("PEPTIDE", ["PEP", "EPT"]), 3)
+        0.571
+
+        >>> round(percent_coverage("PEPTIDE", ["PEPTIDE", "PEPTIDE"], accumulate=True), 3)
+        2.0
 
     """
 
     cov_arr = coverage(
-        sequence, subsequences, accumulate=False, ignore_mods=ignore_mods
+        sequence, subsequences, accumulate=accumulate, ignore_mods=ignore_mods, ignore_ambiguity=ignore_ambiguity
     )
 
     if len(cov_arr) == 0:
@@ -1090,6 +1116,7 @@ def modification_coverage(
 
         >>> modification_coverage("PEP[Phospho]TIDE[Methyl]", ["PEP[Phospho]", "TIDE[Methyl]", "PEP[Phospho]"], accumulate=True)
         {2: 2, 6: 1}
+        
     """
     # Convert inputs to annotations if they are strings
     if isinstance(sequence, str):

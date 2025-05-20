@@ -17,6 +17,9 @@ All notable changes to this project will be documented in this file.
 - Add more inplace args to proforma annotation methods... add_mod, remove_mod ...
 
 ## [2.5.0]
+- added ambiguity support to coverage funcs
+
+## [2.5.0]
 - Added features to annotate peptides depending on fragment ions
 - moved convertor functions to peptacular.sequence.convertors
 - formatting with black
