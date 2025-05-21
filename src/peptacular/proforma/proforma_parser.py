@@ -1321,6 +1321,204 @@ class ProFormaAnnotation:
 
         return d
 
+    def remove_labile_mods(self, inplace: bool = False) -> "ProFormaAnnotation":
+        """
+        Remove all labile mods and return the modified annotation.
+        
+        :param inplace: If True, modify the current annotation. If False, create a copy.
+        :type inplace: bool
+        :return: The annotation with labile mods removed
+        :rtype: ProFormaAnnotation
+        """
+        annotation = self
+
+        if inplace is False:
+            annotation = deepcopy(self)
+
+        _ = annotation.pop_labile_mods()
+        
+        return annotation
+
+    def remove_unknown_mods(self, inplace: bool = False) -> "ProFormaAnnotation":
+        """
+        Remove all unknown mods and return the modified annotation.
+        
+        :param inplace: If True, modify the current annotation. If False, create a copy.
+        :type inplace: bool
+        :return: The annotation with unknown mods removed
+        :rtype: ProFormaAnnotation
+        """
+        annotation = self
+
+        if inplace is False:
+            annotation = deepcopy(self)
+
+        _ = annotation.pop_unknown_mods()
+        
+        return annotation
+
+    def remove_nterm_mods(self, inplace: bool = False) -> "ProFormaAnnotation":
+        """
+        Remove all N-terminal mods and return the modified annotation.
+        
+        :param inplace: If True, modify the current annotation. If False, create a copy.
+        :type inplace: bool
+        :return: The annotation with N-terminal mods removed
+        :rtype: ProFormaAnnotation
+        """
+        annotation = self
+
+        if inplace is False:
+            annotation = deepcopy(self)
+
+        _ = annotation.pop_nterm_mods()
+        
+        return annotation
+
+    def remove_cterm_mods(self, inplace: bool = False) -> "ProFormaAnnotation":
+        """
+        Remove all C-terminal mods and return the modified annotation.
+        
+        :param inplace: If True, modify the current annotation. If False, create a copy.
+        :type inplace: bool
+        :return: The annotation with C-terminal mods removed
+        :rtype: ProFormaAnnotation
+        """
+        annotation = self
+
+        if inplace is False:
+            annotation = deepcopy(self)
+
+        _ = annotation.pop_cterm_mods()
+        
+        return annotation
+
+    def remove_internal_mods(self, inplace: bool = False) -> "ProFormaAnnotation":
+        """
+        Remove all internal mods and return the modified annotation.
+        
+        :param inplace: If True, modify the current annotation. If False, create a copy.
+        :type inplace: bool
+        :return: The annotation with internal mods removed
+        :rtype: ProFormaAnnotation
+        """
+        annotation = self
+
+        if inplace is False:
+            annotation = deepcopy(self)
+
+        _ = annotation.pop_internal_mods()
+        
+        return annotation
+
+    def remove_intervals(self, inplace: bool = False) -> "ProFormaAnnotation":
+        """
+        Remove all intervals and return the modified annotation.
+        
+        :param inplace: If True, modify the current annotation. If False, create a copy.
+        :type inplace: bool
+        :return: The annotation with intervals removed
+        :rtype: ProFormaAnnotation
+        """
+        annotation = self
+
+        if inplace is False:
+            annotation = deepcopy(self)
+
+        _ = annotation.pop_intervals()
+        
+        return annotation
+
+    def remove_charge(self, inplace: bool = False) -> "ProFormaAnnotation":
+        """
+        Remove the charge and return the modified annotation.
+        
+        :param inplace: If True, modify the current annotation. If False, create a copy.
+        :type inplace: bool
+        :return: The annotation with charge removed
+        :rtype: ProFormaAnnotation
+        """
+        annotation = self
+
+        if inplace is False:
+            annotation = deepcopy(self)
+
+        _ = annotation.pop_charge()
+        
+        return annotation
+
+    def remove_charge_adducts(self, inplace: bool = False) -> "ProFormaAnnotation":
+        """
+        Remove all charge adducts and return the modified annotation.
+        
+        :param inplace: If True, modify the current annotation. If False, create a copy.
+        :type inplace: bool
+        :return: The annotation with charge adducts removed
+        :rtype: ProFormaAnnotation
+        """
+        annotation = self
+
+        if inplace is False:
+            annotation = deepcopy(self)
+
+        _ = annotation.pop_charge_adducts()
+        
+        return annotation
+
+    def remove_isotope_mods(self, inplace: bool = False) -> "ProFormaAnnotation":
+        """
+        Remove all isotope mods and return the modified annotation.
+        
+        :param inplace: If True, modify the current annotation. If False, create a copy.
+        :type inplace: bool
+        :return: The annotation with isotope mods removed
+        :rtype: ProFormaAnnotation
+        """
+        annotation = self
+
+        if inplace is False:
+            annotation = deepcopy(self)
+
+        _ = annotation.pop_isotope_mods()
+        
+        return annotation
+
+    def remove_static_mods(self, inplace: bool = False) -> "ProFormaAnnotation":
+        """
+        Remove all static mods and return the modified annotation.
+        
+        :param inplace: If True, modify the current annotation. If False, create a copy.
+        :type inplace: bool
+        :return: The annotation with static mods removed
+        :rtype: ProFormaAnnotation
+        """
+        annotation = self
+
+        if inplace is False:
+            annotation = deepcopy(self)
+
+        _ = annotation.pop_static_mods()
+        
+        return annotation
+
+    def remove_mods(self, inplace: bool = False) -> "ProFormaAnnotation":
+        """
+        Remove all modifications and return the modified annotation.
+        
+        :param inplace: If True, modify the current annotation. If False, create a copy.
+        :type inplace: bool
+        :return: The annotation with all modifications removed
+        :rtype: ProFormaAnnotation
+        """
+        annotation = self
+
+        if inplace is False:
+            annotation = deepcopy(self)
+
+        _ = annotation.pop_mods()
+        
+        return annotation
+
     def add_labile_mods(
         self, mods: Optional[Union[List[Mod], Mod]], append: bool = False
     ) -> None:
