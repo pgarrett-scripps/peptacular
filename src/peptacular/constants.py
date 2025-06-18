@@ -4,10 +4,11 @@ Constants used throughout the peptacular package.
 
 import os
 from typing import Dict, List, Tuple, Set
+from enum import Enum
 
 from regex import regex
 
-from peptacular.element_setup import (
+from .element_setup import (
     get_element_info,
     map_atomic_symbol_to_average_mass,
     map_atomic_number_to_comp_neutron_offset,
@@ -16,7 +17,7 @@ from peptacular.element_setup import (
     map_atomic_number_to_comp,
     map_atomic_number_to_symbol,
 )
-from peptacular.util import merge_dicts
+from .util import merge_dicts
 
 # Partical masses
 PROTON_MASS = 1.00727646688
@@ -382,3 +383,17 @@ ISOTOPE_COMPONENT_PATTERN = regex.compile(r"([0-9]*)([A-Za-z]+)(-?\d*\.?\d*)")
 CONDENSED_CHEM_FORMULA_PATTERN = regex.compile(r"([A-Z][a-z]*|e|p|n)(-?\d*\.?\d*)")
 ADDUCT_PATTERN = regex.compile(r"([+-]?)(\d*)?([A-Za-z]{1,2}\d*\+?-?)")
 ISOTOPE_NUM_PATTERN = regex.compile(r"[0-9]")
+
+
+# str enum
+class ModType(Enum):
+    NTERM = "nterm"
+    CTERM = "cterm"
+    ISOTOPE = "isotope"
+    STATIC = "static"
+    LABILE = "labile"
+    UNKNOWN = "unknown"
+    INTERVAL = "interval"
+    INTERNAL = "internal"
+    CHARGE = "charge"
+    CHARGE_ADDUCTS = "charge_adducts"

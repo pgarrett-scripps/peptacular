@@ -6,8 +6,8 @@ from random import randint, choice, sample
 from enum import Enum, auto
 from typing import List, Union
 
-from peptacular.proforma.proforma_dataclasses import Mod, Interval
-from peptacular.proforma.proforma_parser import ProFormaAnnotation
+from .proforma_dataclasses import Mod, Interval
+from .proforma_parser import ProFormaAnnotation
 
 
 _UNIMOD_LEVEL_BASE_MOD_VALS = ["Oxidation", "UNIMOD:10"]

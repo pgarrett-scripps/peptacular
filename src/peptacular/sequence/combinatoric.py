@@ -4,8 +4,8 @@ This module provides functions to generate permutations, combinations, and produ
 
 from typing import List, Union
 
-from peptacular.proforma.proforma_parser import ProFormaAnnotation
-from peptacular.sequence.sequence_funcs import sequence_to_annotation
+from ..proforma.proforma_parser import ProFormaAnnotation
+from .sequence_funcs import get_annotation_input
 
 
 def permutations(
@@ -37,12 +37,7 @@ def permutations(
         ['<13C>PET', '<13C>PTE', '<13C>EPT', '<13C>ETP', '<13C>TPE', '<13C>TEP']
 
     """
-
-    if isinstance(sequence, str):
-        annotation = sequence_to_annotation(sequence)
-    else:
-        annotation = sequence
-
+    annotation = get_annotation_input(sequence, copy=False)
     return [a.serialize() for a in annotation.permutations(size)]
 
 
@@ -76,11 +71,7 @@ def product(
 
     """
 
-    if isinstance(sequence, str):
-        annotation = sequence_to_annotation(sequence)
-    else:
-        annotation = sequence
-
+    annotation = get_annotation_input(sequence, copy=False)
     return [a.serialize() for a in annotation.product(repeat)]
 
 
@@ -114,12 +105,7 @@ def combinations(
         ['<13C>PE', '<13C>PT', '<13C>ET']
 
     """
-
-    if isinstance(sequence, str):
-        annotation = sequence_to_annotation(sequence)
-    else:
-        annotation = sequence
-
+    annotation = get_annotation_input(sequence, copy=False)
     return [a.serialize() for a in annotation.combinations(size)]
 
 
@@ -154,10 +140,5 @@ def combinations_with_replacement(
         ['<13C>PP', '<13C>PE', '<13C>PT', '<13C>EE', '<13C>ET', '<13C>TT']
 
     """
-
-    if isinstance(sequence, str):
-        annotation = sequence_to_annotation(sequence)
-    else:
-        annotation = sequence
-
+    annotation = get_annotation_input(sequence, copy=False)
     return [a.serialize() for a in annotation.combinations_with_replacement(size)]

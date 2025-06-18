@@ -6,10 +6,10 @@ import sys
 from typing import List, Dict, Tuple, Union, Optional
 import warnings
 
-from peptacular import constants
-from peptacular.types import ChemComposition
-from peptacular.chem.chem_calc import estimate_comp
-from peptacular.mass_calc import chem_mass
+from . import constants
+from .types import ChemComposition
+from .chem.chem_calc import estimate_comp
+from .mass_calc import chem_mass
 
 
 def isotopic_distribution(

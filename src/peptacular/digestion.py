@@ -17,17 +17,17 @@ Valid DigestReturnType's:
 from dataclasses import dataclass
 from typing import Union, List, Optional, Literal, Tuple, Generator, Iterable
 
-from peptacular.spans import Span
-from peptacular.constants import PROTEASES_COMPILED
-from peptacular.proforma.proforma_parser import ProFormaAnnotation, create_annotation
-from peptacular.spans import (
+from .spans import Span
+from .constants import PROTEASES_COMPILED
+from .proforma.proforma_parser import ProFormaAnnotation
+from .spans import (
     build_left_semi_spans,
     build_right_semi_spans,
     build_non_enzymatic_spans,
     build_spans,
 )
-from peptacular.sequence.sequence_funcs import sequence_to_annotation
-from peptacular.util import get_regex_match_indices
+from .sequence.sequence_funcs import get_annotation_input
+from .util import get_regex_match_indices
 
 DigestReturnType = Literal["str", "annotation", "span", "str-span", "annotation-span"]
 
@@ -51,32 +51,24 @@ def _return_digested_sequences(
         return (span for span in spans)
 
     if return_type == "annotation":
-        if not annotation.has_mods():
-            return (
-                create_annotation(annotation.sequence[span[0] : span[1]])
-                for span in spans
-            )
-        return (annotation.slice(span[0], span[1]) for span in spans)
+        return (annotation.slice(span[0], span[1], inplace=False) for span in spans)
 
     if return_type == "str":
-        if not annotation.has_mods():
-            return (annotation.sequence[span[0] : span[1]] for span in spans)
-        return (annotation.slice(span[0], span[1]).serialize() for span in spans)
+        return (
+            annotation.slice(span[0], span[1], inplace=False).serialize()
+            for span in spans
+        )
 
     if return_type == "str-span":
-        if not annotation.has_mods():
-            return ((annotation.sequence[span[0] : span[1]], span) for span in spans)
         return (
-            (annotation.slice(span[0], span[1]).serialize(), span) for span in spans
+            (annotation.slice(span[0], span[1], inplace=False).serialize(), span)
+            for span in spans
         )
 
     if return_type == "annotation-span":
-        if not annotation.has_mods():
-            return (
-                (create_annotation(annotation.sequence[span[0] : span[1]]), span)
-                for span in spans
-            )
-        return ((annotation.slice(span[0], span[1]), span) for span in spans)
+        return (
+            (annotation.slice(span[0], span[1], inplace=False), span) for span in spans
+        )
 
     raise ValueError(f"Unsupported return type: {return_type}")
 
@@ -124,17 +116,9 @@ def get_left_semi_enzymatic_sequences(
         ['<13C>TID', '<13C>TI', '<13C>T']
 
     """
-
-    if isinstance(sequence, str):
-        annotation = sequence_to_annotation(sequence)
-    elif isinstance(sequence, ProFormaAnnotation):
-        annotation = sequence
-    else:
-        raise ValueError(f"Unsupported input type: {type(sequence)}")
-
+    annotation = get_annotation_input(sequence, copy=True)
     span = (0, len(annotation), 0)
     spans = build_left_semi_spans(span=span, min_len=min_len, max_len=max_len)
-
     return _return_digested_sequences(annotation, spans, return_type)
 
 
@@ -181,14 +165,7 @@ def get_right_semi_enzymatic_sequences(
         ['<13C>IDE', '<13C>DE', '<13C>E']
 
     """
-
-    if isinstance(sequence, str):
-        annotation = sequence_to_annotation(sequence)
-    elif isinstance(sequence, ProFormaAnnotation):
-        annotation = sequence
-    else:
-        raise ValueError(f"Unsupported input type: {type(sequence)}")
-
+    annotation = get_annotation_input(sequence, copy=True)
     s = (0, len(annotation), 0)
     spans = build_right_semi_spans(span=s, min_len=min_len, max_len=max_len)
 
@@ -279,14 +256,7 @@ def get_non_enzymatic_sequences(
         ['<13C>P', '<13C>PE', '<13C>E', '<13C>EP', '<13C>P']
 
     """
-
-    if isinstance(sequence, str):
-        annotation = sequence_to_annotation(sequence)
-    elif isinstance(sequence, ProFormaAnnotation):
-        annotation = sequence
-    else:
-        raise ValueError(f"Unsupported input type: {type(sequence)}")
-
+    annotation = get_annotation_input(sequence, copy=True)
     s = (0, len(annotation), 0)
     spans = build_non_enzymatic_spans(span=s, min_len=min_len, max_len=max_len)
     return _return_digested_sequences(annotation, spans, return_type)
@@ -339,12 +309,7 @@ def get_cleavage_sites(
         [3]
 
     """
-
-    if isinstance(sequence, str):
-        annotation = sequence_to_annotation(sequence)
-    else:
-        annotation = sequence
-
+    annotation = get_annotation_input(sequence, copy=True)
     enzyme_regex = PROTEASES_COMPILED.get(enzyme_regex, enzyme_regex)
     return get_regex_match_indices(
         input_str=annotation.sequence, regex_str=enzyme_regex
@@ -444,13 +409,7 @@ def digest(
 
 
     """
-
-    if isinstance(sequence, str):
-        annotation = sequence_to_annotation(sequence)
-    elif isinstance(sequence, ProFormaAnnotation):
-        annotation = sequence
-    else:
-        raise ValueError(f"Unsupported input type: {type(sequence)}")
+    annotation = get_annotation_input(sequence, copy=True)
 
     if isinstance(enzyme_regex, str):
         enzyme_regex = [enzyme_regex]
@@ -553,12 +512,7 @@ def sequential_digest(
         ['XXXK', 'XXXKXXXD', 'XXXKXXXDXXX', 'XXX', 'XXXD', 'XXXDXXX', 'XXX']
     """
 
-    if isinstance(sequence, str):
-        annotation = sequence_to_annotation(sequence)
-    elif isinstance(sequence, ProFormaAnnotation):
-        annotation = sequence
-    else:
-        raise ValueError(f"Unsupported input type: {type(sequence)}")
+    annotation = get_annotation_input(sequence, copy=True)
 
     # Start with the whole sequence
     digested_anot_spans = []

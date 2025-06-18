@@ -16,7 +16,16 @@ All notable changes to this project will be documented in this file.
 - Add MultiProformaAnnot support to mass/chem/fragment/isotope....
 - Add more inplace args to proforma annotation methods... add_mod, remove_mod ...
 
-## [2.5.0]
+
+## [3.0.0]
+- added remove mod functions
+- added filter mods function
+- more inplace options
+- proforma objects now return proforma objects such that methods can be chained
+- some inplace options have changed
+- optional mods arg to many mod functions
+
+## [2.5.1]
 - added ambiguity support to coverage funcs
 
 ## [2.5.0]

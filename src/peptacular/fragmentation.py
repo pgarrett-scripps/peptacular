@@ -8,16 +8,16 @@ from dataclasses import dataclass
 from functools import cached_property
 from typing import List, Union, Literal, Optional, Tuple, Set
 
-from peptacular.proforma.proforma_parser import ProFormaAnnotation
-from peptacular.constants import (
+from .proforma.proforma_parser import ProFormaAnnotation
+from .constants import (
     FORWARD_ION_TYPES,
     BACKWARD_ION_TYPES,
     INTERNAL_ION_TYPES,
     TERMINAL_ION_TYPES,
 )
-from peptacular.mass_calc import mass, adjust_mass, adjust_mz
-from peptacular.sequence.sequence_funcs import sequence_length, sequence_to_annotation
-from peptacular.spans import (
+from .mass_calc import mass, adjust_mass, adjust_mz
+from .sequence.sequence_funcs import get_annotation_input, sequence_length
+from .spans import (
     build_non_enzymatic_spans,
     build_right_semi_spans,
     build_left_semi_spans,
@@ -215,7 +215,7 @@ def _build_fragments(
             ion_type="n",
             monoisotopic=monoisotopic,
         )
-        base_annotation = annotation.slice(span[0], span[1])
+        base_annotation = annotation.slice(span[0], span[1], inplace=False)
         base_sequence = base_annotation.serialize()
         base_unmod_sequence = base_annotation.sequence
 
@@ -625,11 +625,7 @@ def fragment(
     if ammonia_loss:
         losses.append(("[RKNQ]", -17.02655))
 
-    if isinstance(sequence, str):
-        annotation = sequence_to_annotation(sequence)
-    else:
-        annotation = sequence
-
+    annotation = get_annotation_input(sequence, copy=True)
     annotation.pop_labile_mods()
 
     if annotation.contains_sequence_ambiguity():
@@ -705,11 +701,7 @@ class Fragmenter:
     def __init__(
         self, sequence: Union[str, ProFormaAnnotation], monoisotopic: bool = True
     ):
-        if isinstance(sequence, str):
-            self.annotation = sequence_to_annotation(sequence)
-        else:
-            self.annotation = sequence
-
+        self.annotation = get_annotation_input(sequence, copy=True)
         self.monoisotopic = monoisotopic
 
         self.components = self.annotation.split()

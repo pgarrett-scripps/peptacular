@@ -4,10 +4,10 @@ Glycan.py
 
 from typing import Union
 
-from peptacular.types import ChemComposition
-from peptacular.chem.chem_util import write_chem_formula
-from peptacular.errors import InvalidGlycanFormulaError
-from peptacular.mods.mod_db_setup import (
+from .types import ChemComposition
+from .chem.chem_util import write_chem_formula
+from .errors import InvalidGlycanFormulaError
+from .mods.mod_db_setup import (
     _glycan_comp,
     _parse_glycan_formula,
 )  # To avoid circular import

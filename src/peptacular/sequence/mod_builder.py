@@ -4,11 +4,11 @@ Modification builder for amino acid sequences.
 
 from typing import Dict, List, Generator, Union, Optional, Literal
 
-from peptacular.sequence.sequence_funcs import sequence_to_annotation
-from peptacular.proforma.proforma_parser import ProFormaAnnotation
-from peptacular.proforma.proforma_dataclasses import Mod
-from peptacular.util import get_regex_match_indices
-from peptacular.proforma.input_convert import (
+from ..sequence.sequence_funcs import get_annotation_input
+from ..proforma.proforma_parser import ProFormaAnnotation
+from ..proforma.proforma_dataclasses import Mod
+from ..util import get_regex_match_indices
+from ..proforma.input_convert import (
     fix_list_of_list_of_mods,
     fix_list_of_mods,
     ModIndex,
@@ -114,10 +114,7 @@ def apply_static_mods(
 
     """
 
-    if isinstance(sequence, str):
-        annotation = sequence_to_annotation(sequence)
-    else:
-        annotation = sequence
+    annotation = get_annotation_input(sequence, copy=True)
 
     if internal_mods is not None:
         internal_mods = {k: fix_list_of_mods(v) for k, v in internal_mods.items()}
@@ -415,11 +412,7 @@ def apply_variable_mods(
 
     """
 
-    if isinstance(sequence, str):
-        annotation = sequence_to_annotation(sequence)
-    else:
-        annotation = sequence
-
+    annotation = get_annotation_input(sequence, copy=True)
     if internal_mods is not None:
         internal_mods = {
             k: fix_list_of_list_of_mods(v) for k, v in internal_mods.items()

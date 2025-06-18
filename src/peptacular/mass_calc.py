@@ -5,22 +5,22 @@ mass_calc.py is a simple module for computing the m/z and mass of an amino acid 
 import warnings
 from typing import Union, Optional, Tuple, List
 
-from peptacular.constants import (
+from .constants import (
     PROTON_MASS,
     AVERAGE_ATOMIC_MASSES,
     ELECTRON_MASS,
     ISOTOPIC_ATOMIC_MASSES,
     NEUTRON_MASS,
 )
-from peptacular.chem.chem_calc import (
+from .chem.chem_calc import (
     parse_chem_formula,
     _sequence_comp,
     _parse_mod_delta_mass_only,
     estimate_comp,
 )
-from peptacular.chem.chem_util import chem_mass
-from peptacular.mods.mod_db_setup import MONOSACCHARIDES_DB
-from peptacular.chem.chem_constants import (
+from .chem.chem_util import chem_mass
+from .mods.mod_db_setup import MONOSACCHARIDES_DB
+from .chem.chem_constants import (
     MONOISOTOPIC_AA_MASSES,
     AVERAGE_AA_MASSES,
     AVERAGE_FRAGMENT_ADJUSTMENTS,
@@ -28,14 +28,14 @@ from peptacular.chem.chem_constants import (
     MONOISOTOPIC_FRAGMENT_ION_ADJUSTMENTS,
     AVERAGE_FRAGMENT_ION_ADJUSTMENTS,
 )
-from peptacular.proforma.proforma_parser import (
+from .proforma.proforma_parser import (
     parse_static_mods,
     ProFormaAnnotation,
     Mod,
     parse_ion_elements,
 )
-from peptacular.util import convert_type
-from peptacular.errors import (
+from .util import convert_type
+from .errors import (
     InvalidDeltaMassError,
     InvalidModificationMassError,
     UnknownAminoAcidError,
@@ -43,8 +43,8 @@ from peptacular.errors import (
     InvalidChemFormulaError,
     AmbiguousAminoAcidError,
 )
-from peptacular.glycan import parse_glycan_formula
-from peptacular.mods.mod_db import (
+from .glycan import parse_glycan_formula
+from .mods.mod_db import (
     parse_psi_mass,
     parse_unimod_mass,
     is_unimod_str,
@@ -56,9 +56,9 @@ from peptacular.mods.mod_db import (
     is_xlmod_str,
     is_resid_str,
 )
-from peptacular.sequence.sequence_funcs import sequence_to_annotation
-from peptacular.types import ChemComposition
-from peptacular.proforma.input_convert import ModValue
+from .sequence.sequence_funcs import get_annotation_input
+from .types import ChemComposition
+from .proforma.input_convert import ModValue
 
 
 def comp_mass(
@@ -114,10 +114,7 @@ def comp_mass(
 
     """
 
-    if isinstance(sequence, str):
-        annotation = sequence_to_annotation(sequence)
-    else:
-        annotation = sequence.copy()
+    annotation = get_annotation_input(sequence, copy=True)
 
     if charge is not None:
         annotation.charge = charge
@@ -200,10 +197,7 @@ def comp(
 
     """
 
-    if isinstance(sequence, str):
-        annotation = sequence_to_annotation(sequence)
-    else:
-        annotation = sequence
+    annotation = get_annotation_input(sequence, copy=True)
 
     composition, delta_mass = comp_mass(
         annotation,
@@ -463,18 +457,15 @@ def mass(
 
     """
 
-    if isinstance(sequence, str):
-        annotation = sequence_to_annotation(sequence)
-    else:
-        annotation = sequence
+    annotation = get_annotation_input(sequence, copy=True)
 
-    if annotation.charge is not None and charge is None:
+    if annotation.has_charge() and charge is None:
         charge = annotation.charge
 
-    if annotation.charge_adducts is not None and charge_adducts is None:
+    if annotation.has_charge_adducts() and charge_adducts is None:
         charge_adducts = annotation.charge_adducts[0]
 
-    if annotation.isotope_mods is not None and isotope_mods is None:
+    if annotation.has_isotope_mods() and isotope_mods is None:
         isotope_mods = annotation.isotope_mods
 
     if "B" in annotation.sequence:
@@ -639,10 +630,7 @@ def mz(
 
     """
 
-    if isinstance(sequence, str):
-        annotation = sequence_to_annotation(sequence)
-    else:
-        annotation = sequence
+    annotation = get_annotation_input(sequence, copy=True)
 
     if annotation.charge is not None and charge is None:
         charge = annotation.charge
@@ -1428,10 +1416,7 @@ def condense_to_mass_mods(
         'P[5.016774]E[5.016774]P[84.983105]T[4.013419]I[6.020129]D[4.013419]E[5.016774]'
 
     """
-    if isinstance(sequence, str):
-        annotation = sequence_to_annotation(sequence)
-    else:
-        annotation = sequence
+    annotation = get_annotation_input(sequence, copy=True)
 
     n_term_mods = annotation.pop_nterm_mods()
     c_term_mods = annotation.pop_cterm_mods()
@@ -1439,7 +1424,7 @@ def condense_to_mass_mods(
 
     # Split into segments and process each one
     segments = list(annotation.split())
-    stripped_segments = [seg.strip() for seg in segments]
+    stripped_segments = [seg.strip(inplace=False) for seg in segments]
 
     new_annotation = annotation.strip()
 
@@ -1450,16 +1435,16 @@ def condense_to_mass_mods(
         if abs(mod_mass_val) > 1e-6:  # Only add if difference is significant
             new_annotation.add_internal_mod(i, round(mod_mass_val, precision))
 
-    if n_term_mods is not None:
+    if n_term_mods:
         n_term_mods_mass = sum(mod_mass(mod) for mod in n_term_mods)
 
         new_annotation.add_nterm_mods(round(n_term_mods_mass, precision))
 
-    if c_term_mods is not None:
+    if c_term_mods:
         c_term_mods_mass = sum(mod_mass(mod) for mod in c_term_mods)
         new_annotation.add_cterm_mods(round(c_term_mods_mass, precision))
 
-    if labile_mods is not None:
+    if labile_mods:
         labile_mods_mass = sum(mod_mass(mod) for mod in labile_mods)
         new_annotation.add_labile_mods(round(labile_mods_mass, precision))
 

@@ -331,7 +331,7 @@ class TestProForma(unittest.TestCase):
         # Test slicing a ProForma annotation
         proforma = "P[Phospho]EPTIDE"
         annotation = pt.parse(proforma)
-        sliced = annotation.slice(0, 4)
+        sliced = annotation.slice(0, 4, inplace=False)
         self.assertEqual(sliced.sequence, "PEPT")
         self.assertEqual(sliced.internal_mods, {0: [Mod('Phospho', 1)]})
         

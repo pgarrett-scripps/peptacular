@@ -7,7 +7,7 @@ from collections import Counter
 from dataclasses import dataclass
 from typing import List, Union, Any, Optional, Dict
 
-from peptacular.util import convert_type
+from ..util import convert_type
 
 
 @dataclass

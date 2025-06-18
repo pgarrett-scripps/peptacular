@@ -1,8 +1,9 @@
 import math
 from dataclasses import dataclass
 from typing import List, Tuple, Union, Dict, Optional
-from peptacular.fragmentation import Fragment
-from peptacular.sequence.sequence_funcs import strip_mods
+
+from .fragmentation import Fragment
+from .sequence.sequence_funcs import strip_mods
 
 
 def get_matched_indices(

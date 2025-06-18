@@ -5,7 +5,7 @@ data structures.
 
 from typing import List, Dict, Any, Union, Tuple
 
-from peptacular.proforma.proforma_dataclasses import Mod, Interval
+from .proforma_dataclasses import Mod, Interval
 
 ModIndex = Union[int, str]
 ModValue = Union[str, int, float, Mod]

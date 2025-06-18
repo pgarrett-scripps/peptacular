@@ -7,11 +7,11 @@ import warnings
 from typing import Union, List, Optional
 
 from peptacular.chem.chem_constants import ISOTOPIC_AVERAGINE_MASS
+from peptacular.sequence.sequence_funcs import get_annotation_input
 from peptacular.types import ChemComposition
 from peptacular.proforma.input_convert import ModValue
 from peptacular.chem.chem_util import parse_chem_formula, write_chem_formula
 from peptacular.mods.mod_db_setup import MONOSACCHARIDES_DB
-from peptacular.sequence.sequence_funcs import sequence_to_annotation
 from peptacular.constants import (
     AA_COMPOSITIONS,
     AVERAGINE_RATIOS,
@@ -370,7 +370,7 @@ def _parse_mod_delta_mass(mod: str) -> Union[float, None]:
 
 
 def _sequence_comp(
-    annotation: Union[str, ProFormaAnnotation],
+    sequence: Union[str, ProFormaAnnotation],
     ion_type: str,
     isotope: int = 0,
     use_isotope_on_mods: bool = False,
@@ -453,17 +453,16 @@ def _sequence_comp(
         peptacular.errors.AmbiguousAminoAcidError: Ambiguous amino acid: B! Cannot determine the composition ...
 
     """
-
-    if isinstance(annotation, str):
-        annotation = sequence_to_annotation(annotation)
+    annotation = get_annotation_input(sequence, copy=True)
 
     # If charge is not provided, set it to 0
-    charge = annotation.charge
-    if charge is None:
-        charge = 0
+    charge = 0
+    if annotation.has_charge():
+        charge = annotation.charge
 
-    charge_adducts = annotation.charge_adducts
-    if charge_adducts is not None:
+    # if charge_adducts is not provided, set it to None
+    charge_adducts = None
+    if annotation.has_charge_adducts():
         charge_adducts = annotation.charge_adducts[0]
 
     if charge_adducts is None:
