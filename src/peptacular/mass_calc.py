@@ -943,11 +943,10 @@ def _parse_glycan_mass_from_proforma_str(
             return round_func(entry.mono_mass)
         return round_func(entry.avg_mass)
 
-    else:  # Try to parse glycan formula
-        try:
-            return round_func(glycan_mass(glycan_str, monoisotopic, precision))
-        except InvalidGlycanFormulaError as err:
-            raise InvalidGlycanFormulaError(glycan_str, err.msg) from err
+    try:
+        return round_func(glycan_mass(glycan_str, monoisotopic, precision))
+    except InvalidGlycanFormulaError as err:
+        raise InvalidGlycanFormulaError(glycan_str, err.msg) from err
 
 
 def _parse_chem_mass_from_proforma_str(
@@ -1083,7 +1082,7 @@ def _parse_mod_mass(
     mod = convert_type(mod)
     if isinstance(mod, int):
         return mod
-    elif isinstance(mod, float):
+    if isinstance(mod, float):
         return round(mod, precision) if precision is not None else mod
 
     mod_lower = mod.lower()
@@ -1139,7 +1138,7 @@ def _pop_delta_mass_mods(annotation: ProFormaAnnotation) -> float:
 
     .. code-block:: python
 
-        >>> mods = ProFormaAnnotation(_sequence='', _nterm_mods = [42.0, -20.0])
+        >>> mods = ProFormaAnnotation(sequence='', nterm_mods = [42.0, -20.0])
         >>> _pop_delta_mass_mods(mods)
         22.0
         >>> mods

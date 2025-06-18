@@ -23,6 +23,7 @@ end of the sequence and if not raise an error.
 from typing import Counter as CounterType, Optional, Any
 from typing import Dict, List, Tuple, Callable, Union
 
+from ..errors import ProFormaFormatError
 from ..constants import ORDERED_AMINO_ACIDS
 from ..proforma.proforma_parser import (
     parse,
@@ -1264,7 +1265,9 @@ def is_sequence_valid(sequence: Union[str, ProFormaAnnotation]) -> bool:
     if isinstance(sequence, str):
         try:
             _ = sequence_to_annotation(sequence)
-        except Exception as err:
+        except ValueError:
+            return False
+        except ProFormaFormatError:
             return False
     return True
 

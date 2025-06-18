@@ -8,7 +8,7 @@ Working with spans can be a more efficient way of processing the data, since a p
 3 ints.
 """
 
-from typing import Tuple, List, Optional, Generator, Iterable
+from typing import List, Optional, Generator, Iterable
 from itertools import groupby
 
 from .types import Span

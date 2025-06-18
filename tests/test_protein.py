@@ -1,7 +1,7 @@
-from peptacular import coverage, find_subsequence_indices, \
-    percent_coverage
+from peptacular import coverage, find_subsequence_indices, percent_coverage
 
 import unittest
+
 
 class TestProtein(unittest.TestCase):
 
@@ -9,7 +9,9 @@ class TestProtein(unittest.TestCase):
         # Test basic functionality
         self.assertEqual(find_subsequence_indices("AAPEPTIDEAA", "PEPTIDE"), [2])
         # Test with multiple occurrences
-        self.assertEqual(find_subsequence_indices("AAPEPTIDEPEPTIDEAA", "PEPTIDE"), [2, 9])
+        self.assertEqual(
+            find_subsequence_indices("AAPEPTIDEPEPTIDEAA", "PEPTIDE"), [2, 9]
+        )
         # Test peptide not in protein
         self.assertEqual(find_subsequence_indices("AAPEPTIDEAA", "XYZ"), [])
 
@@ -44,8 +46,10 @@ class TestProtein(unittest.TestCase):
     def test_overlapping_peptides(self):
         protein = "AAPEPTIDEPEPTIDEAA"
         peptides = ["PEPTIDEPEP"]
-        self.assertEqual(coverage(protein, peptides),
-                         [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0])
+        self.assertEqual(
+            coverage(protein, peptides),
+            [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0],
+        )
 
     def test_empty_inputs(self):
         # Empty protein and peptides

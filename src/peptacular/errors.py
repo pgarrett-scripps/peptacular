@@ -47,6 +47,7 @@ class UnknownModificationMassError(ValueError):
     def __init__(self, modification, *args):
         self.mass = modification
         message = f"Unknown modification: {modification}"
+        super().__init__(message, *args)
 
 
 class UnknownAminoAcidError(ValueError):

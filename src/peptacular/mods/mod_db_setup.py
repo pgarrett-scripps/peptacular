@@ -243,7 +243,6 @@ def _fix_entry(entry: ModEntry):
             raise ValueError(
                 f"Error parsing {entry.id} {entry.name} {entry.composition}, {err}"
             ) from err
-            entry.mono_mass = None
 
     if entry.avg_mass is None and entry.composition is not None:
         try:
@@ -252,10 +251,9 @@ def _fix_entry(entry: ModEntry):
             raise ValueError(
                 f"Error parsing {entry.id} {entry.name} {entry.composition}, {err}"
             ) from err
-            entry.avg_mass = None
 
 
-def _get_id_and_name(term: Dict[str, Any]) -> (str, str):
+def _get_id_and_name(term: Dict[str, Any]) -> Tuple[str, str]:
     term_id = term.get("id", [])
     term_name = term.get("name", [])
 
@@ -902,7 +900,7 @@ def get_entries(db_type: DbType, file_path: str) -> List[ModEntry]:
     if db_type == DbType.PSI_MOD:
         return list(_get_psimod_entries(data))
 
-    elif db_type == DbType.GNO:
+    if db_type == DbType.GNO:
         return list(_get_gno_entries(data))
 
     if db_type == DbType.RESID:
@@ -976,8 +974,8 @@ class EntryDb:
 
         self.names_sorted = self._get_names_sorted()
 
-    def contains_id(self, id: str) -> bool:
-        return id in self.id_map
+    def contains_id(self, entry_id: str) -> bool:
+        return entry_id in self.id_map
 
     def contains_name(self, name: str) -> bool:
         return name in self.name_map
@@ -1070,8 +1068,8 @@ class EntryDb:
         valid_avg_entries = [entry for entry in entries if entry.avg_mass is not None]
         self.avg_mass_map = sorted(valid_avg_entries, key=lambda x: x.avg_mass)
 
-    def get_entry_by_id(self, id: str) -> ModEntry:
-        return self.id_map.get(id)
+    def get_entry_by_id(self, entry_id: str) -> ModEntry:
+        return self.id_map.get(entry_id)
 
     def get_entry_by_name(self, name: str) -> ModEntry:
         return self.name_map.get(name)
@@ -1122,7 +1120,7 @@ class EntryDb:
             raise ValueError(f"Invalid type: {self.entry_type}")
 
         # Download file to a temporary location
-        with requests.get(file_url, stream=True) as r:
+        with requests.get(file_url, stream=True, timeout=10) as r:
             r.raise_for_status()
             with tempfile.NamedTemporaryFile(mode="w+b", delete=False) as tmp_file:
                 for chunk in r.iter_content(chunk_size=8192):

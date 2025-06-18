@@ -154,7 +154,7 @@ def map_atomic_symbol_to_average_mass(
 
         # first elem is monoisotopic
         monoisotopic_info = infos[0]
-        ave_mass = sum([info.average_mass_component() for info in infos])
+        ave_mass = sum((info.average_mass_component() for info in infos))
         d[monoisotopic_info.atomic_symbol] = (
             monoisotopic_info.relative_atomic_mass if ave_mass == 0 else ave_mass
         )

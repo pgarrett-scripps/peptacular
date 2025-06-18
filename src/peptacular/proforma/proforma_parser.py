@@ -334,6 +334,8 @@ def _pop_ion_count(ion: str) -> Tuple[int, str]:
             cnt = int(count_str) if count_str else 1
             return cnt * charge, ion[i:]
 
+    raise ValueError(f'Bad Ion Count: {ion}')
+
 
 def _pop_ion_symbol(ion: str) -> Tuple[str, str]:
     """
@@ -668,90 +670,138 @@ def _validate_single_mod_multiplier(func: Callable) -> Callable:
     return wrapper
 
 
-@dataclass
 class ProFormaAnnotation:
-    """
-    Represents a ProForma sequence annotation.
-    """
 
-    _sequence: str
-    _isotope_mods: Optional[List[Mod]] = None
-    _static_mods: Optional[List[Mod]] = None
-    _labile_mods: Optional[List[Mod]] = None
-    _unknown_mods: Optional[List[Mod]] = None
-    _nterm_mods: Optional[List[Mod]] = None
-    _cterm_mods: Optional[List[Mod]] = None
-    _internal_mods: Optional[Dict[int, List[Mod]]] = None
-    _intervals: Optional[List[Interval]] = None
-    _charge: Optional[int] = None
-    _charge_adducts: Optional[List[Mod]] = None
+    def __init__(self, 
+                 sequence: str, 
+                 isotope_mods: Optional[List[Mod]] = None,
+                 static_mods: Optional[List[Mod]] = None,
+                 labile_mods: Optional[List[Mod]] = None,
+                 unknown_mods: Optional[List[Mod]] = None,
+                 nterm_mods: Optional[List[Mod]] = None,
+                 cterm_mods: Optional[List[Mod]] = None,
+                 internal_mods: Optional[Dict[int, List[Mod]]] = None,
+                 intervals: Optional[List[Interval]] = None,
+                 charge: Optional[int] = None,
+                 charge_adducts: Optional[List[Mod]] = None) -> None:
+        
+        self._sequence = sequence
+        self._isotope_mods = isotope_mods if isotope_mods is not None else []
+        self._static_mods = static_mods if static_mods is not None else []
+        self._labile_mods = labile_mods if labile_mods is not None else []
+        self._unknown_mods = unknown_mods if unknown_mods is not None else []
+        self._nterm_mods = nterm_mods if nterm_mods is not None else []
+        self._cterm_mods = cterm_mods if cterm_mods is not None else []
+        self._internal_mods = internal_mods if internal_mods is not None else {}
+        self._intervals = intervals if intervals is not None else []
+        self._charge = charge
+        self._charge_adducts = charge_adducts if charge_adducts is not None else []
 
     def has_sequence(self) -> bool:
+        """
+        Check if the annotation has a sequence.
+
+        :return: True if the annotation has a sequence, False otherwise
+        :rtype: bool
+        """
         return len(self.sequence) > 0
 
     def has_isotope_mods(self) -> bool:
         """
-        Returns True if any isotope modifications are present, otherwise False.
+        Check if the annotation has any isotope modifications.
+
+        :return: True if the annotation has isotope modifications, False otherwise
+        :rtype: bool
         """
         return len(self.isotope_mods) > 0
 
     def has_static_mods(self) -> bool:
         """
-        Returns True if any static modifications are present, otherwise False.
+        Check if the annotation has any static modifications.
+
+        :return: True if the annotation has static modifications, False otherwise
+        :rtype: bool
         """
         return len(self.static_mods) > 0
 
     def has_labile_mods(self) -> bool:
         """
-        Returns True if any labile modifications are present, otherwise False.
+        Check if the annotation has any labile modifications.
+
+        :return: True if the annotation has labile modifications, False otherwise
+        :rtype: bool
         """
         return len(self.labile_mods) > 0
 
     def has_unknown_mods(self) -> bool:
         """
-        Returns True if any unknown modifications are present, otherwise False.
+        Check if the annotation has any unknown modifications.
+
+        :return: True if the annotation has unknown modifications, False otherwise
+        :rtype: bool
         """
         return len(self.unknown_mods) > 0
 
     def has_nterm_mods(self) -> bool:
         """
-        Returns True if any N-terminal modifications are present, otherwise False.
+        Check if the annotation has any N-terminal modifications.
+
+        :return: True if the annotation has N-terminal modifications, False otherwise
+        :rtype: bool
         """
         return len(self.nterm_mods) > 0
 
     def has_cterm_mods(self) -> bool:
         """
-        Returns True if any C-terminal modifications are present, otherwise False.
+        Check if the annotation has any C-terminal modifications.
+
+        :return: True if the annotation has C-terminal modifications, False otherwise
+        :rtype: bool
         """
         return len(self.cterm_mods) > 0
 
     def has_internal_mods(self) -> bool:
         """
-        Returns True if any internal modifications are present, otherwise False.
+        Check if the annotation has any internal modifications.
+
+        :return: True if the annotation has internal modifications, False otherwise
+        :rtype: bool
         """
         return len(self.internal_mods) > 0
 
     def has_intervals(self) -> bool:
         """
-        Returns True if any intervals are present, otherwise False.
+        Check if the annotation has any intervals.
+
+        :return: True if the annotation has intervals, False otherwise
+        :rtype: bool
         """
         return len(self.intervals) > 0
 
     def has_charge(self) -> bool:
         """
-        Returns True if a charge is present, otherwise False.
+        Check if the annotation has a charge value.
+
+        :return: True if the annotation has a charge, False otherwise
+        :rtype: bool
         """
         return self._charge is not None
 
     def has_charge_adducts(self) -> bool:
         """
-        Returns True if any charge adducts are present, otherwise False.
+        Check if the annotation has any charge adducts.
+
+        :return: True if the annotation has charge adducts, False otherwise
+        :rtype: bool
         """
         return len(self.charge_adducts) > 0
 
     def has_mods(self) -> bool:
         """
-        Returns True if any modifications are present, otherwise False.
+        Check if the annotation has any modifications of any type.
+
+        :return: True if the annotation has any modifications, False otherwise
+        :rtype: bool
         """
         return any(
             [
@@ -1671,8 +1721,7 @@ class ProFormaAnnotation:
         """
         if inplace is False:
             # Create a copy of the annotation to modify
-            annotation = deepcopy(self)
-            return annotation.filter_mods(mods, inplace=True)
+            return self.copy().filter_mods(mods, inplace=True)
 
         if mods is None:
             # If no mods specified, remove all mods
@@ -1701,13 +1750,12 @@ class ProFormaAnnotation:
 
         if inplace is False:
             # Create a copy of the annotation to modify
-            annotation = deepcopy(self)
-            return annotation.add_labile_mods(mods, append, inplace=True)
+            return self.copy().add_labile_mods(mods, append, inplace=True)
 
         if mods is None:
             if not append:
                 self.labile_mods = None
-            return
+            return self
 
         if isinstance(mods, Mod):
             mods = [mods]
@@ -1734,13 +1782,12 @@ class ProFormaAnnotation:
 
         if inplace is False:
             # Create a copy of the annotation to modify
-            annotation = deepcopy(self)
-            return annotation.add_unknown_mods(mods, append, inplace=True)
+            return self.copy().add_unknown_mods(mods, append, inplace=True)
 
         if mods is None:
             if not append:
                 self.unknown_mods = None
-            return
+            return self
 
         mods = fix_list_of_mods(mods)
 
@@ -1766,13 +1813,12 @@ class ProFormaAnnotation:
 
         if inplace is False:
             # Create a copy of the annotation to modify
-            annotation = deepcopy(self)
-            return annotation.add_nterm_mods(mods, append, inplace=True)
+            return self.copy().add_nterm_mods(mods, append, inplace=True)
 
         if mods is None:
             if not append:
                 self.nterm_mods = None
-            return
+            return self
 
         mods = fix_list_of_mods(mods)
 
@@ -1798,13 +1844,12 @@ class ProFormaAnnotation:
 
         if inplace is False:
             # Create a copy of the annotation to modify
-            annotation = deepcopy(self)
-            return annotation.add_cterm_mods(mods, append, inplace=True)
+            return self.copy().add_cterm_mods(mods, append, inplace=True)
 
         if mods is None:
             if not append:
                 self.cterm_mods = None
-            return
+            return self
 
         mods = fix_list_of_mods(mods)
 
@@ -1863,20 +1908,18 @@ class ProFormaAnnotation:
             if default is not None:
                 return default
 
-            else:
-                raise KeyError(
-                    f"No internal mods found in the annotation to pop at index {index}."
-                )
+            raise KeyError(
+                f"No internal mods found in the annotation to pop at index {index}."
+            )
 
         if index not in self.internal_mods:
 
             if default is not None:
                 return default
 
-            else:
-                raise KeyError(
-                    f"No internal mods found in the annotation to pop at index {index}."
-                )
+            raise KeyError(
+                f"No internal mods found in the annotation to pop at index {index}."
+            )
 
         return self.internal_mods.pop(index)
 
@@ -2701,17 +2744,17 @@ def create_annotation(
     )
 
     return ProFormaAnnotation(
-        _sequence=sequence,
-        _isotope_mods=isotope_mods,
-        _static_mods=static_mods,
-        _labile_mods=labile_mods,
-        _unknown_mods=unknown_mods,
-        _nterm_mods=nterm_mods,
-        _cterm_mods=cterm_mods,
-        _internal_mods=internal_mods,
-        _intervals=intervals,
-        _charge=charge,
-        _charge_adducts=charge_adducts,
+        sequence=sequence,
+        isotope_mods=isotope_mods,
+        static_mods=static_mods,
+        labile_mods=labile_mods,
+        unknown_mods=unknown_mods,
+        nterm_mods=nterm_mods,
+        cterm_mods=cterm_mods,
+        internal_mods=internal_mods,
+        intervals=intervals,
+        charge=charge,
+        charge_adducts=charge_adducts,
     )
 
 
@@ -2835,17 +2878,17 @@ class _ProFormaParser:
 
     def _get_result(self) -> ProFormaAnnotation:
         return ProFormaAnnotation(
-            _sequence=self._unmod_sequence,
-            _isotope_mods=self._isotope_mods,
-            _static_mods=self._static_mods,
-            _labile_mods=self._labile_mods,
-            _unknown_mods=self._unknown_mods,
-            _nterm_mods=self._nterm_mods,
-            _cterm_mods=self._cterm_mods,
-            _internal_mods=self._internal_mods,
-            _intervals=self._intervals,
-            _charge=self._charge,
-            _charge_adducts=self._charge_adducts,
+            sequence=self._unmod_sequence,
+            isotope_mods=self._isotope_mods,
+            static_mods=self._static_mods,
+            labile_mods=self._labile_mods,
+            unknown_mods=self._unknown_mods,
+            nterm_mods=self._nterm_mods,
+            cterm_mods=self._cterm_mods,
+            internal_mods=self._internal_mods,
+            intervals=self._intervals,
+            charge=self._charge,
+            charge_adducts=self._charge_adducts,
         )
 
     def _reset_sequence(self) -> None:
@@ -2948,7 +2991,7 @@ class _ProFormaParser:
 
             cur = self._current()
             if cur in AMINO_ACIDS or cur == "(":  # End of start sequence
-                return None
+                return
             if cur == "[":  # N-term or unknown mods
                 mods = self._parse_modifications("[", "]")
                 next_char = self._parse_char()
@@ -3192,7 +3235,7 @@ def parse(sequence: str) -> Union[ProFormaAnnotation, MultiProFormaAnnotation]:
 
     """
     if _is_unmodified(sequence) is True:
-        return ProFormaAnnotation(_sequence=sequence)
+        return ProFormaAnnotation(sequence=sequence)
 
     annotations_connections = list(_ProFormaParser(sequence).parse())
     annotations = [annotation for annotation, _ in annotations_connections]
@@ -3220,11 +3263,11 @@ def serialize(
     . python::
 
         Serializing a simple ProForma annotation:
-        >>> serialize(ProFormaAnnotation(_sequence='PEPTIDE'))
+        >>> serialize(ProFormaAnnotation(sequence='PEPTIDE'))
         'PEPTIDE'
 
-        >>> pfa1 = ProFormaAnnotation(_sequence='PEPTIDE')
-        >>> pfa2 = ProFormaAnnotation(_sequence='PEPTIDE')
+        >>> pfa1 = ProFormaAnnotation(sequence='PEPTIDE')
+        >>> pfa2 = ProFormaAnnotation(sequence='PEPTIDE')
 
         Serializing a MultiProFormaAnnotation with chimeric connections:
         >>> multi_annotation = MultiProFormaAnnotation([pfa1, pfa2], [False])

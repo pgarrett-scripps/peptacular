@@ -44,3 +44,8 @@ max-locals = 30    # Increase the number of allowed local variables
 max-attributes = 50 # Increase the number of allowed attributes
 max-statements = 100  # Increase the number of allowed statements in a function
 max-args = 10  # Increase the number of allowed arguments in a function
+
+[tool.pytest.ini_options]
+filterwarnings = [
+    "ignore::UserWarning",
+]

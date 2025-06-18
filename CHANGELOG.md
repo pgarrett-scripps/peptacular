@@ -9,12 +9,10 @@ All notable changes to this project will be documented in this file.
 - Update tests
 - Add a mode to all mods additions: overwrite, append, skip...
 - Take valid mod values from the respective dbs for randomizer
-- Fix readthedocs build
 - Have Mod objects work for fragment loss?
 - Improve fragment loss handling based on ion type and sequence
 - Can improve the performance of mass calculations with isotopes and use_isotope_on_mods, by not calculating the composition of mods
 - Add MultiProformaAnnot support to mass/chem/fragment/isotope....
-- Add more inplace args to proforma annotation methods... add_mod, remove_mod ...
 
 
 ## [3.0.0]
@@ -24,6 +22,8 @@ All notable changes to this project will be documented in this file.
 - proforma objects now return proforma objects such that methods can be chained
 - some inplace options have changed
 - optional mods arg to many mod functions
+- Switched ProformaAnnotation to normal python class (was dataclass)
+- ProformaAnnotation mods objects dont return None anymore 
 
 ## [2.5.1]
 - added ambiguity support to coverage funcs

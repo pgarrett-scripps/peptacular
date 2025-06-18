@@ -119,7 +119,7 @@ def get_regex_match_indices(
     for match in regex_pattern.finditer(input_str, overlapped=True):
         if match.start() != match.end():
             warnings.warn(
-                "The regex pattern has a match with a none zero length. Using start index + 1 for the match."
+                message="The regex pattern has a match with a none zero length. Using start index + 1 for the match.",
             )
             yield match.start() + offset + 1
         else:
