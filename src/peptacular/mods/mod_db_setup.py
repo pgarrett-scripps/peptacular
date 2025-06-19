@@ -12,17 +12,17 @@ from collections import Counter
 from functools import cached_property
 from typing import List, Dict, IO, Any, Union, Iterator, Tuple
 
-from peptacular.constants import ISOTOPIC_ATOMIC_MASSES
-from peptacular.chem.chem_util import (
+from ..constants import ISOTOPIC_ATOMIC_MASSES
+from ..chem.chem_util import (
     write_chem_formula,
     _parse_isotope_component,
     parse_chem_formula,
     chem_mass,
     _parse_split_chem_formula,
 )
-from peptacular.errors import InvalidChemFormulaError, InvalidGlycanFormulaError
-from peptacular.util import convert_type
-from peptacular.types import ChemComposition
+from ..errors import InvalidChemFormulaError, InvalidGlycanFormulaError
+from ..utils2 import convert_type
+from ..types import ChemComposition
 
 
 @dataclasses.dataclass

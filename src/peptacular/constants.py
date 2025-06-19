@@ -17,7 +17,23 @@ from .element_setup import (
     map_atomic_number_to_comp,
     map_atomic_number_to_symbol,
 )
-from .util import merge_dicts
+
+
+def merge_dicts(d1: Dict, d2: Dict) -> Dict:
+    """
+    Merge two dictionaries. And remove any keys with value 0.
+    """
+    d = {}
+    for k, v in d1.items():
+        d[k] = v
+    for k, v in d2.items():
+        d[k] = d.get(k, 0) + v
+
+    # remove any keys with value 0
+    d = {k: v for k, v in d.items() if v != 0}
+
+    return d
+
 
 # Partical masses
 PROTON_MASS = 1.00727646688

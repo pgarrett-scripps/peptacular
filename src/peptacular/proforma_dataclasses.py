@@ -7,7 +7,8 @@ from collections import Counter
 from dataclasses import dataclass
 from typing import List, Union, Any, Optional, Dict
 
-from ..util import convert_type
+
+from .utils2 import convert_type
 
 
 @dataclass
@@ -28,19 +29,35 @@ class Mod:
         """
         return [self.val] * self.mult
 
-    def serialize(self, brackets: str, include_plus: bool = False) -> str:
+    def _serialize_val(self, precision: Optional[float] = None) -> str:
+        if precision is not None:
+            if isinstance(self.val, float):
+                return f"{self.val:.{precision}f}"
+            elif isinstance(self.val, int):
+                return str(self.val)
+            else:
+                return str(self.val)
+        else:
+            return str(self.val)
+
+    def serialize(
+        self,
+        brackets: str,
+        include_plus: bool = False,
+        precision: Optional[float] = None,
+    ) -> str:
         """
         Serialize the mod into a string
         """
         # Determine if the value is positive and prefix '+' for positive numbers
         if include_plus is True:
             val_str = (
-                f"+{self.val}"
+                f"+{self._serialize_val(precision)}"
                 if isinstance(self.val, (int, float)) and self.val > 0
-                else str(self.val)
+                else self._serialize_val(precision)
             )
         else:
-            val_str = str(self.val)
+            val_str = self._serialize_val(precision)
 
         # Return the formatted string based on the multiplier value
         return (

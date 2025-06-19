@@ -6,15 +6,15 @@ from typing import Dict, List, Generator, Union, Optional, Literal
 
 from ..sequence.sequence_funcs import get_annotation_input
 from ..proforma.proforma_parser import ProFormaAnnotation
-from ..proforma.proforma_dataclasses import Mod
+from ..proforma_dataclasses import Mod
 from ..util import get_regex_match_indices
 from ..proforma.input_convert import (
     fix_list_of_list_of_mods,
     fix_list_of_mods,
-    ModIndex,
-    ModValue,
     remove_empty_list_of_list_of_mods,
 )
+
+from ..types import ModIndex, ModValue
 
 ModMode = Literal["skip", "append", "overwrite"]
 MOD_MODE_VALUES = ["skip", "append", "overwrite"]

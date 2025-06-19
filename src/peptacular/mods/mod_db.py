@@ -5,14 +5,14 @@ peptacular/data/psi and peptacular/data/unimod.
 
 from typing import Optional
 
-from peptacular.errors import (
+from ..errors import (
     UnknownModificationError,
     InvalidDeltaMassError,
     InvalidCompositionError,
     DeltaMassCompositionError,
     UnknownModificationMassError,
 )
-from peptacular.mods.mod_db_setup import (
+from ..mods.mod_db_setup import (
     UNIMOD_DB,
     PSI_MOD_DB,
     XLMOD_DB,

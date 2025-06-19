@@ -5,16 +5,9 @@ data structures.
 
 from typing import List, Dict, Any, Union, Tuple
 
-from .proforma_dataclasses import Mod, Interval
+from ..types import INTERVAL_VALUE, ModValue
 
-ModIndex = Union[int, str]
-ModValue = Union[str, int, float, Mod]
-ModDictValue = Union[List[Mod], List[Interval], int]
-ModDict = Dict[ModIndex, ModDictValue]
-
-ACCEPTED_MOD_INPUT = Union[List[ModValue], ModValue]
-INTERVAL_VALUE = Union[Tuple[int, int, bool, Union[ACCEPTED_MOD_INPUT, None]], Interval]
-ACCEPTED_INTERVAL_INPUT = Union[List[INTERVAL_VALUE], INTERVAL_VALUE]
+from ..proforma_dataclasses import Mod, Interval
 
 
 def convert_to_mod(mod: ModValue) -> Mod:

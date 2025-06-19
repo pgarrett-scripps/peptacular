@@ -1024,6 +1024,3 @@ hplc_scales = {
     "Meek_7.4": hplc_meek_7_4,
     "Browne_TFA": hplc_browne_tfa
 }
-
-
-

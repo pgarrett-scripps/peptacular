@@ -15,7 +15,7 @@ from .constants import (
     INTERNAL_ION_TYPES,
     TERMINAL_ION_TYPES,
 )
-from .mass_calc import mass, adjust_mass, adjust_mz
+from .mass_calc import adjust_mass, adjust_mz
 from .sequence.sequence_funcs import get_annotation_input, sequence_length
 from .spans import (
     build_non_enzymatic_spans,
@@ -638,8 +638,8 @@ def fragment(
     if _mass_components is None:
         components = annotation.split()
         _mass_components = [
-            mass(sequence=component, charge=0, ion_type="n", monoisotopic=monoisotopic)
-            for component in components
+            c.add_charge(0).mass(ion_type="n", monoisotopic=monoisotopic)
+            for c in components
         ]
 
     frags = []
@@ -706,8 +706,7 @@ class Fragmenter:
 
         self.components = self.annotation.split()
         self.mass_components = [
-            mass(
-                sequence=component,
+            component.mass(
                 charge=0,
                 ion_type="n",
                 monoisotopic=self.monoisotopic,

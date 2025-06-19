@@ -3,29 +3,25 @@ chem_calc.py contains functions for parsing and writing chemical formulas, and f
 sequence with/and modifications.
 """
 
-import warnings
 from typing import Union, List, Optional
 
-from peptacular.chem.chem_constants import ISOTOPIC_AVERAGINE_MASS
-from peptacular.sequence.sequence_funcs import get_annotation_input
-from peptacular.types import ChemComposition
-from peptacular.proforma.input_convert import ModValue
-from peptacular.chem.chem_util import parse_chem_formula, write_chem_formula
-from peptacular.mods.mod_db_setup import MONOSACCHARIDES_DB
-from peptacular.constants import (
-    AA_COMPOSITIONS,
+from ..proforma_dataclasses import Mod
+from ..utils2 import parse_ion_elements
+from ..util import parse_isotope_mods
+
+from .chem_constants import ISOTOPIC_AVERAGINE_MASS
+from ..types import ChemComposition, ModValue
+from .chem_util import parse_chem_formula, write_chem_formula
+from ..mods.mod_db_setup import MONOSACCHARIDES_DB
+from ..constants import (
     AVERAGINE_RATIOS,
-    NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS,
-    FRAGMENT_ION_BASE_CHARGE_ADDUCTS,
 )
-from peptacular.errors import (
+from ..errors import (
     InvalidCompositionError,
-    AmbiguousAminoAcidError,
-    UnknownAminoAcidError,
     DeltaMassCompositionError,
 )
-from peptacular.glycan import glycan_comp
-from peptacular.mods.mod_db import (
+from ..glycan import glycan_comp
+from ..mods.mod_db import (
     parse_unimod_comp,
     parse_psi_comp,
     is_psi_mod_str,
@@ -37,14 +33,8 @@ from peptacular.mods.mod_db import (
     is_gno_str,
     parse_gno_comp,
 )
-from peptacular.proforma.proforma_parser import (
-    parse_static_mods,
-    ProFormaAnnotation,
-    Mod,
-    parse_isotope_mods,
-    parse_ion_elements,
-)
-from peptacular.util import convert_type
+
+from ..utils2 import convert_type
 
 
 def glycan_to_chem(glycan: Union[ChemComposition, str]) -> str:
@@ -367,234 +357,6 @@ def _parse_mod_delta_mass(mod: str) -> Union[float, None]:
                 pass
 
     return mass
-
-
-def _sequence_comp(
-    sequence: Union[str, ProFormaAnnotation],
-    ion_type: str,
-    isotope: int = 0,
-    use_isotope_on_mods: bool = False,
-) -> ChemComposition:
-    """
-    Calculate the composition of a sequence.
-
-    :param annotation: The sequence or ProForma annotation.
-    :type annotation: str | ProFormaAnnotation
-    :param ion_type: The ion type.
-    :type ion_type: str
-    :param isotope: The number of Neutrons to add/subtract from the final mass. Default is 0.
-    :type isotope: int
-    :param use_isotope_on_mods: If True, the isotope modifications will be applied to the final composition.
-    Default is False.
-    :type use_isotope_on_mods: bool
-
-    :raises UnknownModificationError: If the modification is unknown.
-    :raises AmbiguousAminoAcidError: If the sequence contains an ambiguous amino acid.
-
-    :return: The composition of the sequence.
-    :rtype: Dict[str, int | float]
-
-    .. code-block:: python
-
-        # Calculate the mass of a peptide sequence.
-        >>> _sequence_comp('PEPTIDE/1', 'y')
-        {'C': 34, 'H': 54, 'N': 7, 'O': 15, 'e': -1}
-
-        >>> _sequence_comp('PEPTIDE/1', 'y', isotope=1)
-        {'C': 34, 'H': 54, 'N': 7, 'O': 15, 'e': -1, 'n': 1}
-
-        >>> _sequence_comp('G/1', 'i')
-        {'C': 1, 'H': 4, 'N': 1, 'e': -1}
-
-        >>> _sequence_comp('PEPTIDE/1', 'b')
-        {'C': 34, 'H': 52, 'N': 7, 'O': 14, 'e': -1}
-
-        >>> _sequence_comp('<H>PEPTIDE/1', 'b')
-        {'C': 34, 'H': 52, 'N': 7, 'O': 14, 'e': -1}
-
-        >>> _sequence_comp('{Unimod:2}PEPTIDE', 'p')
-        {'C': 34, 'H': 54, 'N': 8, 'O': 14}
-
-        >>> _sequence_comp('<13C>PEPTIDE/1', 'b')
-        {'H': 52, 'N': 7, 'O': 14, 'e': -1, '13C': 34}
-
-        >>> _sequence_comp('PEPTIDE[Unimod:2]/1', 'y')
-        {'C': 34, 'H': 55, 'N': 8, 'O': 14, 'e': -1}
-
-        >>> _sequence_comp('<[Unimod:2]@T>PEPTIDE/1', 'y')
-        {'C': 34, 'H': 55, 'N': 8, 'O': 14, 'e': -1}
-
-        >>> _sequence_comp('<[Unimod:2]@N-Term>PEPTIDE/1', 'y')
-        {'C': 34, 'H': 55, 'N': 8, 'O': 14, 'e': -1}
-
-        >>> _sequence_comp('PEPTIDE/2', 'p')
-        {'C': 34, 'H': 55, 'N': 7, 'O': 15, 'e': -2}
-
-        >>> _sequence_comp('PEPTIDE/2[+2Na+]', 'p')
-        {'C': 34, 'H': 53, 'N': 7, 'O': 15, 'Na': 2, 'e': -2}
-
-        >>> _sequence_comp('<13C>PEPTIDE[Formula:C10]', 'p')
-        {'H': 53, 'N': 7, 'O': 15, '13C': 34, 'C': 10}
-
-        >>> _sequence_comp('<13C>PEPTIDE[Formula:C10]', 'p', use_isotope_on_mods=True)
-        {'H': 53, 'N': 7, 'O': 15, '13C': 44}
-
-        >>> _sequence_comp('<13C>PEPTIDE[Unimod:213413]', 'b')
-        Traceback (most recent call last):
-        peptacular.errors.UnknownModificationError: Unknown modification: Unimod:213413
-
-        >>> _sequence_comp('I', 'by')
-        {'C': 6, 'H': 11, 'N': 1, 'O': 1}
-
-        # Ambiguous amino acid
-        >>> _sequence_comp('B', 'by') # doctest: +ELLIPSIS
-        Traceback (most recent call last):
-            ...
-        peptacular.errors.AmbiguousAminoAcidError: Ambiguous amino acid: B! Cannot determine the composition ...
-
-    """
-    annotation = get_annotation_input(sequence, copy=True)
-
-    # If charge is not provided, set it to 0
-    charge = 0
-    if annotation.has_charge():
-        charge = annotation.charge
-
-    # if charge_adducts is not provided, set it to None
-    charge_adducts = None
-    if annotation.has_charge_adducts():
-        charge_adducts = annotation.charge_adducts[0]
-
-    if charge_adducts is None:
-        if ion_type in ("p", "n"):
-            charge_adducts = f"{charge}H+"
-        else:
-            charge_adducts = (
-                f"{charge-1}H+,{FRAGMENT_ION_BASE_CHARGE_ADDUCTS[ion_type]}"
-            )
-
-    if ion_type not in ("p", "n"):
-        if charge == 0:
-            warnings.warn(
-                "Calculating the comp of a fragment ion with charge state 0. Fragment ions should have a "
-                "charge state greater than 0 since the neutral form doesnt exist."
-            )
-
-    if "B" in annotation.sequence:
-        raise AmbiguousAminoAcidError(
-            "B",
-            "Cannot determine the composition of a sequence with an ambiguous amino acid.",
-        )
-
-    if "Z" in annotation.sequence:
-        raise AmbiguousAminoAcidError(
-            "Z",
-            "Cannot determine the composition of a sequence with an ambiguous amino acid.",
-        )
-
-    # Get the composition of the base sequence
-    sequence_composition = {}
-    for aa in annotation.sequence:
-        try:
-            aa_comp = AA_COMPOSITIONS[aa]
-        except KeyError as err:
-            raise UnknownAminoAcidError(aa) from err
-        for k, v in aa_comp.items():
-            sequence_composition[k] = sequence_composition.get(k, 0) + v
-
-    # Apply the adjustments for the neutral fragment composition based on strictly the ion dissociation points.
-    for k, v in NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS[ion_type].items():
-        sequence_composition[k] = sequence_composition.get(k, 0) + v
-
-    charge_adduct_comp = _parse_charge_adducts_comp(charge_adducts)
-
-    for k, v in charge_adduct_comp.items():
-        sequence_composition[k] = sequence_composition.get(k, 0) + v
-
-    mod_composition = {}
-    if annotation.has_unknown_mods():
-        for unknown_mod in annotation.unknown_mods:
-            for k, v in mod_comp(unknown_mod).items():
-                mod_composition[k] = mod_composition.get(k, 0) + v
-
-    if annotation.has_intervals():
-        for interval in annotation.intervals:
-            if interval.has_mods():
-                for interval_mod in interval.mods:
-                    for k, v in mod_comp(interval_mod).items():
-                        mod_composition[k] = mod_composition.get(k, 0) + v
-
-    if annotation.has_labile_mods() and ion_type == "p":
-        for labile_mod in annotation.labile_mods:
-            for k, v in mod_comp(labile_mod).items():
-                mod_composition[k] = mod_composition.get(k, 0) + v
-
-    if annotation.has_nterm_mods():
-        for nterm_mod in annotation.nterm_mods:
-            for k, v in mod_comp(nterm_mod).items():
-                mod_composition[k] = mod_composition.get(k, 0) + v
-
-    if annotation.has_cterm_mods():
-        for cterm_mod in annotation.cterm_mods:
-            for k, v in mod_comp(cterm_mod).items():
-                mod_composition[k] = mod_composition.get(k, 0) + v
-
-    if annotation.has_internal_mods():
-        for _, internal_mods in annotation.internal_mods.items():
-            for internal_mod in internal_mods:
-                for k, v in mod_comp(internal_mod).items():
-                    mod_composition[k] = mod_composition.get(k, 0) + v
-
-    if annotation.has_static_mods():
-        static_map = parse_static_mods(annotation.static_mods)
-
-        n_term_mod = static_map.get("N-Term")
-        if n_term_mod is not None:
-            for m in n_term_mod:
-                for k, v in mod_comp(m.val).items():
-                    mod_composition[k] = mod_composition.get(k, 0) + v
-
-        c_term_mod = static_map.get("C-Term")
-        if c_term_mod is not None:
-            for m in c_term_mod:
-                for k, v in mod_comp(m.val).items():
-                    mod_composition[k] = mod_composition.get(k, 0) + v
-
-        for aa, mod in static_map.items():
-            if aa in ["N-Term", "C-Term"]:
-                continue
-
-            aa_count = annotation.sequence.count(aa)
-            for m in mod:
-                for k, v in mod_comp(m.val).items():
-                    mod_composition[k] = mod_composition.get(k, 0) + v * aa_count
-
-    mod_composition["n"] = mod_composition.get("n", 0) + isotope
-
-    # Apply isotopic mods
-    if annotation.has_isotope_mods():
-        if use_isotope_on_mods:
-            sequence_composition = apply_isotope_mods_to_composition(
-                sequence_composition, annotation.isotope_mods
-            )
-            mod_composition = apply_isotope_mods_to_composition(
-                mod_composition, annotation.isotope_mods
-            )
-        else:
-            sequence_composition = apply_isotope_mods_to_composition(
-                sequence_composition, annotation.isotope_mods
-            )
-
-    composition = {}
-    for k, v in sequence_composition.items():
-        composition[k] = composition.get(k, 0) + v
-
-    for k, v in mod_composition.items():
-        composition[k] = composition.get(k, 0) + v
-
-    composition = {k: v for k, v in composition.items() if v != 0}
-
-    return composition
 
 
 def _parse_mod_delta_mass_only(mod: Union[str, Mod]) -> Union[float, None]:

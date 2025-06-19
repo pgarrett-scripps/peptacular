@@ -8,36 +8,55 @@ import random
 from collections import Counter
 from copy import deepcopy
 from dataclasses import dataclass
-from functools import wraps
-from typing import List, Dict, Optional, Generator, Any, Callable, Tuple, Union
+from typing import List, Dict, Optional, Generator, Any, Tuple, Union
 from typing import Counter as CounterType
+import warnings
 import regex as re
+
+
+from ..chem.chem_constants import AVERAGE_AA_MASSES, MONOISOTOPIC_AA_MASSES
+from ..chem.chem_util import chem_mass
+from ..mass_calc import adjust_mass, adjust_mz, mod_mass
+
+from ..chem.chem_calc import (
+    _parse_charge_adducts_comp,
+    _parse_mod_delta_mass_only,
+    apply_isotope_mods_to_composition,
+    estimate_comp,
+    mod_comp,
+)
+from .utils import _validate_single_mod_multiplier, parse_static_mods
+
 
 from .input_convert import (
     fix_list_of_mods,
     fix_dict_of_mods,
     fix_intervals_input,
-    ACCEPTED_MOD_INPUT,
-    ACCEPTED_INTERVAL_INPUT,
-    ModValue,
-    INTERVAL_VALUE,
 )
-from .proforma_dataclasses import (
+
+from ..proforma_dataclasses import (
     Mod,
     Interval,
     are_mods_equal,
     are_intervals_equal,
 )
 from ..constants import (
+    AA_COMPOSITIONS,
     AMINO_ACIDS,
     AMBIGUOUS_AMINO_ACIDS,
+    FRAGMENT_ION_BASE_CHARGE_ADDUCTS,
     MASS_AMBIGUOUS_AMINO_ACIDS,
-    ADDUCT_PATTERN,
-    ISOTOPE_NUM_PATTERN,
+    NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS,
     ModType,
 )
-from ..errors import ProFormaFormatError
-from ..types import ChemComposition
+from ..errors import AmbiguousAminoAcidError, ProFormaFormatError, UnknownAminoAcidError
+from ..types import (
+    ACCEPTED_INTERVAL_INPUT,
+    ACCEPTED_MOD_INPUT,
+    INTERVAL_VALUE,
+    ChemComposition,
+    ModValue,
+)
 from ..util import (
     _combine_ambiguity_intervals,
     _construct_ambiguity_intervals,
@@ -45,646 +64,23 @@ from ..util import (
 )
 
 
-def _parse_modifications(
-    proforma_sequence: str, opening_bracket: str = "[", closing_bracket: str = "]"
-) -> List[Mod]:
-    """
-    Parse modifications from a proforma sequence with support for nested brackets.
-
-    :param proforma_sequence: The proforma sequence to parse.
-    :type proforma_sequence: str
-    :param opening_bracket: The opening bracket character.
-    :type opening_bracket: str
-    :param closing_bracket: The closing bracket character.
-    :type closing_bracket: str
-
-    :return: The parsed modifications.
-    :rtype: List[Mod]
-
-    .. code-block:: python
-
-        >>> _parse_modifications('PEPTIDE[1]@C')
-        [Mod(1, 1)]
-
-        >>> _parse_modifications('PEPTIDE[Formula:[13C]H23]@S,D')
-        [Mod('Formula:[13C]H23', 1)]
-
-    """
-    mods = []
-    position = 0
-    length = len(proforma_sequence)
-    while position < length:
-        if proforma_sequence[position] == opening_bracket:
-            mod, new_position = _parse_modification(
-                proforma_sequence[position:], opening_bracket, closing_bracket
-            )
-            mods.append(mod)
-            position += new_position  # Update position based on the length of the parsed modification.
-        else:
-            position += 1  # Move to the next character if it's not an opening bracket.
-    return mods
-
-
-def _parse_modification(
-    proforma_sequence: str, opening_bracket: str = "[", closing_bracket: str = "]"
-) -> Tuple[Mod, int]:
-    """
-    Parse a single modification from a proforma sequence, handling nested brackets.
-    Returns the parsed Mod and the position after the modification.
-
-    :param proforma_sequence: The proforma sequence to parse.
-    :type proforma_sequence: str
-    :param opening_bracket: The opening bracket character. Default is '['.
-    :type opening_bracket: str
-    :param closing_bracket: The closing bracket character. Default is ']'.
-    :type closing_bracket: str
-
-    :return: The parsed Mod and the position after the modification.
-    :rtype: Tuple[Mod, int]
-
-    .. code-block:: python
-
-        >>> _parse_modification('[1]@C')
-        (Mod(1, 1), 3)
-
-        >>> _parse_modification('[3.1415]@S,D')
-        (Mod(3.1415, 1), 8)
-
-        >>> _parse_modification('[3.1415]^+2@S,D')
-        (Mod(3.1415, 2), 11)
-
-    """
-    bracket_depth = 1  # Start with a depth of 1 for the initial opening bracket.
-    position = 1  # Start from the character after the opening bracket.
-    mod_start = 1  # Modification starts after the opening bracket.
-
-    # Find the matching closing bracket, accounting for nesting.
-    while position < len(proforma_sequence) and bracket_depth > 0:
-        if proforma_sequence[position] == opening_bracket:
-            bracket_depth += 1
-        elif proforma_sequence[position] == closing_bracket:
-            bracket_depth -= 1
-        position += 1
-
-    # Extract the modification string.
-    mod_end = position - 1  # Exclude the closing bracket.
-    mod_str = proforma_sequence[mod_start:mod_end]
-
-    multiplier = 1
-    # Check for a multiplier immediately following the modification.
-    if position < len(proforma_sequence) and proforma_sequence[position] == "^":
-        multiplier_start = position + 1
-        multiplier, parsed_length = _parse_integer(proforma_sequence[multiplier_start:])
-        position += (
-            parsed_length + 1
-        )  # Account for the '^' and the length of the integer parsed.
-
-    return Mod(mod_str, multiplier), position
-
-
-def _parse_integer(proforma_sequence: str) -> Tuple[int, int]:
-    """
-    Parse an integer from the proforma sequence, returning the integer and the number of characters parsed.
-
-    :param proforma_sequence: The proforma sequence to parse.
-    :type proforma_sequence: str
-
-    :return: The parsed integer and the number of characters parsed.
-    :rtype: Tuple[int, int]
-
-    .. code-block:: python
-
-        >>> _parse_integer('123')
-        (123, 3)
-
-        >>> _parse_integer('+123')
-        (123, 4)
-
-        >>> _parse_integer('-123')
-        (-123, 4)
-
-        >>> _parse_integer('-123+PEPTIDE')
-        (-123, 4)
-
-    """
-    i = 0
-    digit_count = 0
-    while i < len(proforma_sequence):
-        if proforma_sequence[i].isdigit():
-            digit_count += 1
-            i += 1
-        elif digit_count == 0 and proforma_sequence[i] in ["+", "-"]:
-            i += 1
-        else:
-            break
-
-    return int(proforma_sequence[:i]), i
-
-
-def parse_charge_adducts(mod: ModValue) -> ChemComposition:
-    """
-    Parse charge adducts into a dictionary, mapping the ion to its count
-    :param mod: The charge adducts to parse.
-    :type mod: ModValue
-
-    :raises TypeError: If the mod is not a string or Mod instance.
-
-    :return: Dictionary of charge adducts.
-    :rtype: ChemComposition
-
-    .. code-block:: python
-
-        >>> parse_charge_adducts('+2Na+,+H+')
-        {'Na+': 2, 'H+': 1}
-
-        >>> parse_charge_adducts('+2Na+,-H+')
-        {'Na+': 2, 'H+': -1}
-
-        >>> parse_charge_adducts('2I-')
-        {'I-': 2}
-
-        >>> parse_charge_adducts('+e-')
-        {'e-': 1}
-
-        >>> parse_charge_adducts(Mod('-2Na+,+H+', 1))
-        {'Na+': -2, 'H+': 1}
-
-        >>> parse_charge_adducts(Mod('+2Mg2+,+H+', 1))
-        {'Mg2+': 2, 'H+': 1}
-
-
-    """
-
-    if isinstance(mod, Mod):
-        return parse_charge_adducts(mod.val)
-
-    if not isinstance(mod, str):
-        raise TypeError(
-            f"Invalid type for charge adducts: {type(mod)}! Mod or Mod.val must be of type string."
-        )
-
-    charge_adducts = {}
-
-    mods = mod.split(",")
-    for m in mods:
-        if isinstance(m, Mod):
-            mod_str = m.val
-        else:
-            mod_str = m
-
-        for sign, count, ion in ADDUCT_PATTERN.findall(mod_str):
-            if count == "":
-                count = 1
-            else:
-                count = int(count)
-
-            if sign == "-":
-                count = -count
-
-            if ion in charge_adducts:
-                charge_adducts[ion] += count
-            else:
-                charge_adducts[ion] = count
-
-    return charge_adducts
-
-
-def write_charge_adducts(charge_adducts: ChemComposition) -> Mod:
-    """
-    Converts the dictionary of charge adducts into a list of Mod instances.
-
-    :param charge_adducts: Dictionary of charge adducts.
-    :type: ChemComposition
-
-    :return: The charge adducts as a Mod instance.
-    :rtype: Mod
-
-    .. code-block:: python
-
-        >>> write_charge_adducts({'Na+': 2, 'H+': 1})
-        Mod('+2Na+,+H+', 1)
-
-        >>> write_charge_adducts({'Na+': 2, 'H+': -1})
-        Mod('+2Na+,-H+', 1)
-
-        >>> write_charge_adducts({'I-': 2})
-        Mod('+2I-', 1)
-
-        >>> write_charge_adducts({'e-': 1})
-        Mod('+e-', 1)
-
-        >>> write_charge_adducts({'Mg2+': 2, 'H+': 1})
-        Mod('+2Mg2+,+H+', 1)
-
-    """
-
-    adducts_list = []
-    for ion, count in charge_adducts.items():
-        sign = "+" if count >= 0 else ""
-        sign = "-" if count < 0 else sign
-        count_abs = abs(count) if abs(count) != 1 else ""
-        adducts_list.append(f"{sign}{count_abs}{ion}")
-
-    return Mod(",".join(adducts_list), 1)
-
-
-def _pop_ion_count(ion: str) -> Tuple[int, str]:
-    """
-    Parse the charge of an ion from a string.
-
-    :param ion: The ion string to parse.
-    :type ion: str
-
-    :return: A tuple containing the charge and the remaining ion string.
-    :rtype: Tuple[int, str]
-
-    .. code-block:: python
-
-        >>> _pop_ion_count('+H+')
-        (1, 'H+')
-
-        >>> _pop_ion_count('+2Na+')
-        (2, 'Na+')
-
-        >>> _pop_ion_count('2I-')
-        (2, 'I-')
-
-        >>> _pop_ion_count('+e-')
-        (1, 'e-')
-
-        >>> _pop_ion_count('-2Na+')
-        (-2, 'Na+')
-
-        >>> _pop_ion_count('+2Mg2+')
-        (2, 'Mg2+')
-
-    """
-
-    count_str = ""
-
-    charge = 1
-    for i, c in enumerate(ion):
-        if c == "-":
-            charge = -1
-        elif c == "+":
-            pass
-        elif c.isdigit():
-            count_str += c
-        else:
-            cnt = int(count_str) if count_str else 1
-            return cnt * charge, ion[i:]
-
-    raise ValueError(f'Bad Ion Count: {ion}')
-
-
-def _pop_ion_symbol(ion: str) -> Tuple[str, str]:
-    """
-    Parse the symbol of an ion from a string.
-
-    :param ion: The ion string to parse.
-    :type ion: str
-
-    :return: A tuple containing the symbol and the remaining ion string.
-    :rtype: Tuple[str, str]
-
-    .. code-block:: python
-
-        >>> _pop_ion_symbol('H+')
-        ('H', '+')
-
-        >>> _pop_ion_symbol('Na+')
-        ('Na', '+')
-
-        >>> _pop_ion_symbol('I-')
-        ('I', '-')
-
-        >>> _pop_ion_symbol('e-')
-        ('e', '-')
-
-        >>> _pop_ion_symbol('Na+')
-        ('Na', '+')
-
-        >>> _pop_ion_symbol('Mg2+')
-        ('Mg', '2+')
-
-    """
-
-    symbol = ""
-    for i, c in enumerate(ion):
-        if c.isdigit() or c in ["+", "-"]:
-            return symbol, ion[i:]
-        symbol += c
-    return symbol, ""
-
-
-def _pop_ion_charge(ion: str) -> Tuple[int, str]:
-    """
-    Parse the charge of an ion from a string.
-
-    :param ion: The ion string to parse.
-    :type ion: str
-
-    :return: A tuple containing the charge and the remaining ion string.
-    :rtype: Tuple[int, str]
-
-    .. code-block:: python
-
-        >>> _pop_ion_charge('+')
-        (1, '')
-
-        >>> _pop_ion_charge('+')
-        (1, '')
-
-        >>> _pop_ion_charge('-')
-        (-1, '')
-
-        >>> _pop_ion_charge('-')
-        (-1, '')
-
-        >>> _pop_ion_charge('+')
-        (1, '')
-
-        >>> _pop_ion_charge('2+')
-        (2, '')
-
-        >>> _pop_ion_charge('2-')
-        (-2, '')
-
-    """
-    count_str, sign = "", 1
-    for c in ion:
-        if c == "-":
-            sign = -1
-        elif c == "+":
-            continue
-        else:
-            count_str += c
-    cnt = int(count_str) if count_str else 1
-    return cnt * sign, ""
-
-
-def parse_ion_elements(ion: str) -> Tuple[int, str, int]:
-    """
-    Parse the count, element, and charge of an ion from a string.
-
-    :param ion: The ion string to parse.
-    :type ion: str
-
-    :return: A tuple containing the count, element, and charge of the ion.
-    :rtype: Tuple[int, str, int]
-
-    Examples:
-        >>> parse_ion_elements('+H+')
-        (1, 'H', 1)
-
-        >>> parse_ion_elements('+2Na+')
-        (2, 'Na', 1)
-
-        >>> parse_ion_elements('2I-')
-        (2, 'I', -1)
-
-        >>> parse_ion_elements('+e-')
-        (1, 'e', -1)
-
-        >>> parse_ion_elements('-2Na+')
-        (-2, 'Na', 1)
-
-        >>> parse_ion_elements('+2Mg2+')
-        (2, 'Mg', 2)
-
-        >>> parse_ion_elements('+2Mg2-')
-        (2, 'Mg', -2)
-
-    """
-    count, ion = _pop_ion_count(ion)
-    symbol, charge = _pop_ion_symbol(ion)
-    charge, _ = _pop_ion_charge(charge)
-    return count, symbol, charge
-
-
-def parse_static_mods(mods: Optional[List[ModValue]]) -> Dict[str, List[Mod]]:
-    """
-    Parse static modifications into a dictionary, mapping the location to the modifications.
-
-    :param mods: List of static modifications, where each modification can be a Mod object or a string representation.
-    :type mods: List[ModValue]
-
-    :raises TypeError: If the mod is not a string or Mod instance.
-
-    :return: A dictionary with locations as keys and lists of Mod objects as values.
-    :rtype: Dict[str, List[Mod]]
-
-    .. code-block:: python
-
-        >>> parse_static_mods([Mod('[1]@C', 1), Mod('[3.1415]@S,D',1)])
-        {'C': [Mod(1, 1)], 'S': [Mod(3.1415, 1)], 'D': [Mod(3.1415, 1)]}
-
-        >>> parse_static_mods([Mod('[1]^2@C', 1), Mod('[3.1415]@S,D', 1)])
-        {'C': [Mod(1, 2)], 'S': [Mod(3.1415, 1)], 'D': [Mod(3.1415, 1)]}
-
-        >>> parse_static_mods([Mod('[Formula:[13C]H20]@C', 1)])
-        {'C': [Mod('Formula:[13C]H20', 1)]}
-
-        >>> parse_static_mods([Mod('[100]@P', 1)])
-        {'P': [Mod(100, 1)]}
-
-        >>> parse_static_mods([])
-        {}
-
-    """
-
-    static_mod_dict = {}
-
-    if mods is None:
-        return static_mod_dict
-
-    for mod in mods:
-
-        if isinstance(mod, Mod):
-            mod = mod.val
-
-        if not isinstance(mod, str):
-            raise TypeError(
-                f"Invalid type for static mods: {type(mod)}! Mod or Mod.val must be of type string."
-            )
-
-        mod_info, residues = mod.split("@")
-        residues = residues.split(",")
-        static_mods = _parse_modifications(mod_info, "[", "]")
-
-        for residue in residues:  # Split on ',' for multiple residues
-            static_mod_dict.setdefault(residue, []).extend(static_mods)
-
-    return static_mod_dict
-
-
-def write_static_mods(mods: Dict[str, List[Mod]]) -> List[Mod]:
-    """
-    Converts the dictionary of static modifications into a list of Mod instances.
-
-    :param mods: Dictionary of static modifications.
-    :type: Dict[str, List[Mod]
-
-    :return: List of static modifications.
-    :rtype: List[Mod]
-
-    .. code-block:: python
-
-        >>> write_static_mods({'C': [Mod(val=1,mult=1)], 'S': [Mod(val=3.1415,mult=1)], 'D': [Mod(val=3.1415,mult=1)]})
-        [Mod('[1]@C', 1), Mod('[3.1415]@S,D', 1)]
-
-        >>> write_static_mods({'C': [Mod(val='Formula:[13C]H20', mult=1)]})
-        [Mod('[Formula:[13C]H20]@C', 1)]
-
-        >>> write_static_mods({})
-        []
-
-    """
-
-    reverse_mods = {}
-
-    for residue, mod_list in mods.items():
-        mod_tuple = tuple(mod_list)
-        reverse_mods.setdefault(mod_tuple, []).append(residue)
-
-    static_mods = []
-    for mod_tuple, residues in reverse_mods.items():
-        residue_str = ",".join(residues)
-        mod_str = "".join(mod.serialize("[]") for mod in mod_tuple)
-        static_mods.append(Mod(f"{mod_str}@{residue_str}", 1))
-
-    return static_mods
-
-
-def parse_isotope_mods(mods: List[ModValue]) -> Dict[str, str]:
-    """
-    Parse isotope modifications into a dictionary, mapping the elemental symbol to its isotope.
-
-    :param mods: List of isotope modifications.
-    :type mods: List[ModValue]
-
-    :raises TypeError: If the mod is not a string or Mod instance.
-
-    :return: Dictionary of isotope modifications.
-    :rtype: Dict[str, str]
-
-    .. code-block:: python
-
-        >>> parse_isotope_mods([Mod('13C', 1), Mod('15N', 1), Mod('D', 1)])
-        {'C': '13C', 'N': '15N', 'H': 'D'}
-
-        >>> parse_isotope_mods([Mod('13C', 1), Mod('15N', 1), Mod('T', 1)])
-        {'C': '13C', 'N': '15N', 'H': 'T'}
-
-        >>> parse_isotope_mods([Mod('13C', 1), Mod('15N', 1), Mod('H', 1)])
-        {'C': '13C', 'N': '15N', 'H': 'H'}
-
-        >>> parse_isotope_mods([])
-        {}
-
-    """
-
-    isotope_map = {}
-    for mod in mods:
-
-        if isinstance(mod, Mod):
-            mod = mod.val
-
-        if not isinstance(mod, str):
-            raise TypeError(
-                f"Invalid type for isotope mods: {type(mod)}! Mod or Mod.val must be of type string."
-            )
-
-        # remove digits
-        base_aa = re.sub(ISOTOPE_NUM_PATTERN, "", mod)
-        isotope_map[base_aa] = mod
-
-    # If any keys are D or T, then replace them with H
-    if "D" in isotope_map:
-        isotope_map["H"] = isotope_map.pop("D")
-
-    if "T" in isotope_map:
-        isotope_map["H"] = isotope_map.pop("T")
-
-    return isotope_map
-
-
-def write_isotope_mods(mods: Dict[str, str]) -> List[Mod]:
-    """
-    Converts the dictionary of isotope modifications into a list of Mod instances.
-
-    :param mods: Dictionary of isotope modifications.
-    :type: Dict[str, str]
-
-    :return: List of isotope modifications.
-    :rtype: List[Mod]
-
-    .. code-block:: python
-
-        >>> write_isotope_mods({'C': '13C', 'N': '15N', 'H': 'D'})
-        [Mod('13C', 1), Mod('15N', 1), Mod('D', 1)]
-
-        >>> write_isotope_mods({'C': '13C', 'N': '15N', 'H': 'T'})
-        [Mod('13C', 1), Mod('15N', 1), Mod('T', 1)]
-
-        >>> write_isotope_mods({})
-        []
-
-    """
-
-    return [Mod(val=v, mult=1) for v in mods.values()]
-
-
-def _validate_single_mod_multiplier(func: Callable) -> Callable:
-    """
-    A decorator that validates the multiplier of a Mod instance (or each Mod in a list of Mods)
-    before adding it through the decorated method. It raises a ValueError if any Mod has a multiplier greater than 1.
-
-    :param func: The function to decorate.
-    :type func: function
-
-    :return: The decorated function.
-    :rtype: function
-    """
-
-    @wraps(func)
-    def wrapper(self, mod: Union[Mod, List[Mod]]):
-        if isinstance(mod, Mod):
-            if mod.mult > 1:
-                raise ValueError(
-                    f"Invalid multiplier {mod.mult} for mod {mod.val}. Multiplier must not be greater than 1.",
-                    None,
-                    None,
-                )
-        else:
-            for m in mod:
-                if m.mult > 1:
-                    raise ValueError(
-                        f"Invalid multiplier {m.mult} for mod {m.val}. Multiplier must not be greater than 1.",
-                        None,
-                        None,
-                    )
-
-        return func(self, mod)
-
-    return wrapper
-
-
 class ProFormaAnnotation:
 
-    def __init__(self, 
-                 sequence: str, 
-                 isotope_mods: Optional[List[Mod]] = None,
-                 static_mods: Optional[List[Mod]] = None,
-                 labile_mods: Optional[List[Mod]] = None,
-                 unknown_mods: Optional[List[Mod]] = None,
-                 nterm_mods: Optional[List[Mod]] = None,
-                 cterm_mods: Optional[List[Mod]] = None,
-                 internal_mods: Optional[Dict[int, List[Mod]]] = None,
-                 intervals: Optional[List[Interval]] = None,
-                 charge: Optional[int] = None,
-                 charge_adducts: Optional[List[Mod]] = None) -> None:
-        
+    def __init__(
+        self,
+        sequence: str,
+        isotope_mods: Optional[List[Mod]] = None,
+        static_mods: Optional[List[Mod]] = None,
+        labile_mods: Optional[List[Mod]] = None,
+        unknown_mods: Optional[List[Mod]] = None,
+        nterm_mods: Optional[List[Mod]] = None,
+        cterm_mods: Optional[List[Mod]] = None,
+        internal_mods: Optional[Dict[int, List[Mod]]] = None,
+        intervals: Optional[List[Interval]] = None,
+        charge: Optional[int] = None,
+        charge_adducts: Optional[List[Mod]] = None,
+    ) -> None:
+
         self._sequence = sequence
         self._isotope_mods = isotope_mods if isotope_mods is not None else []
         self._static_mods = static_mods if static_mods is not None else []
@@ -1177,7 +573,6 @@ class ProFormaAnnotation:
             self._nterm_mods = None
         if not self.has_cterm_mods():
             self._cterm_mods = None
-
         if not self.has_charge():
             self._charge = None
         if not self.has_charge_adducts():
@@ -1196,9 +591,15 @@ class ProFormaAnnotation:
             self._internal_mods = None
 
         if self.has_intervals():
-            for interval in self.intervals:
+            intervals_to_remove = []
+            for i, interval in enumerate(self.intervals):
                 if interval.mods is not None and len(interval.mods) == 0:
                     interval.mods = None
+                if interval.ambiguous is False and interval.mods is None:
+                    intervals_to_remove.append(i)
+
+            for i in reversed(intervals_to_remove):
+                self.intervals.pop(i)
 
         if not self.has_intervals():
             self._intervals = None
@@ -1306,37 +707,30 @@ class ProFormaAnnotation:
         """
         Condense static mods into internal mods
         """
+
+        if not self.has_static_mods():
+            return self
+
         if inplace is False:
-            new_annotation = deepcopy(self)
-        else:
-            new_annotation = self
+            return self.copy().condense_static_mods(inplace=True)
 
-        static_mods = new_annotation.pop_static_mods()
-        if static_mods is None:
-            if inplace is False:
-                return new_annotation
+        static_mod_dict = parse_static_mods(self.pop_static_mods())
+        nterm_mod = static_mod_dict.pop("N-Term", None)
+        cterm_mod = static_mod_dict.pop("C-Term", None)
 
-        static_mod_dict = parse_static_mods(static_mods)
+        if nterm_mod is not None:
+            self.add_nterm_mods(nterm_mod, append=True)
 
-        n_term_mod = static_mod_dict.get("N-Term")
-        if n_term_mod is not None:
-            new_annotation.add_nterm_mods(n_term_mod, append=True)
+        if cterm_mod is not None:
+            self.add_cterm_mods(cterm_mod, append=True)
 
-        c_term_mod = static_mod_dict.get("C-Term")
-        if c_term_mod is not None:
-            new_annotation.add_cterm_mods(c_term_mod, append=True)
-
+        # Handle amino acid specific mods
         for aa, mod in static_mod_dict.items():
-
-            if aa in ["N-Term", "C-Term"]:
-                continue
-
-            # get indexes of the amino acid
-            indexes = [m.start() for m in re.finditer(aa, new_annotation.sequence)]
+            indexes = [m.start() for m in re.finditer(aa, self.sequence)]
             for index in indexes:
-                new_annotation.add_internal_mods({index: mod}, append=True)
+                self.add_internal_mods({index: mod}, append=True)
 
-        return new_annotation
+        return self
 
     def contains_sequence_ambiguity(self) -> bool:
         """
@@ -1348,13 +742,25 @@ class ProFormaAnnotation:
         """
         Check if the sequence contains any residue ambiguous amino acids.
         """
-        return any(aa in AMBIGUOUS_AMINO_ACIDS for aa in self.sequence)
+        return len(self.get_residue_ambiguity_residues()) > 0
+
+    def get_residue_ambiguity_residues(self) -> List[str]:
+        """
+        Get a list of residue ambiguous amino acids in the sequence.
+        """
+        return [aa for aa in self.sequence if aa in AMBIGUOUS_AMINO_ACIDS]
 
     def contains_mass_ambiguity(self) -> bool:
         """
         Check if the sequence contains any mass ambiguous amino acids.
         """
-        return any(aa in MASS_AMBIGUOUS_AMINO_ACIDS for aa in self.sequence)
+        return len(self.get_mass_ambiguity_residues()) > 0
+
+    def get_mass_ambiguity_residues(self) -> List[str]:
+        """
+        Check if the sequence contains any mass ambiguous amino acids.
+        """
+        return [aa for aa in self.sequence if aa in MASS_AMBIGUOUS_AMINO_ACIDS]
 
     def pop_labile_mods(self) -> List[Mod]:
         """
@@ -1699,7 +1105,9 @@ class ProFormaAnnotation:
         return annotation
 
     def remove_mods(
-        self, mods: Optional[Union[str, List[str]]] = None, inplace: bool = True,
+        self,
+        mods: Optional[Union[str, List[str]]] = None,
+        inplace: bool = True,
     ) -> "ProFormaAnnotation":
         """
         Remove all modifications and return the modified annotation.
@@ -2180,8 +1588,7 @@ class ProFormaAnnotation:
         """
 
         if inplace is False:
-            annotatio = deepcopy(self)
-            return annotatio.strip(inplace=True)
+            return self.copy().strip(inplace=True)
 
         self.isotope_mods = None
         self.static_mods = None
@@ -2193,6 +1600,7 @@ class ProFormaAnnotation:
         self.intervals = None
         self.charge = None
         self.charge_adducts = None
+
         return self
 
     def slice(
@@ -2291,11 +1699,13 @@ class ProFormaAnnotation:
         self._intervals = new_intervals
 
         return self
-    
-    def sliding_windows(self, window_size: int) -> Generator["ProFormaAnnotation", None, None]:
+
+    def sliding_windows(
+        self, window_size: int
+    ) -> Generator["ProFormaAnnotation", None, None]:
         """
         Generate sliding windows of the annotation with a specified size.
-        
+
         Similar to slicing but creates overlapping windows that slide across the sequence.
 
         :param window_size: Size of each window/subsequence
@@ -2311,7 +1721,7 @@ class ProFormaAnnotation:
             ['PEP', 'TID', 'E']
 
             >>> # Windows preserve modifications
-            >>> annotation = parse("PEP[Phospho]TIDE")  
+            >>> annotation = parse("PEP[Phospho]TIDE")
             >>> windows = list(annotation.sliding_windows(3))
             >>> [w.serialize() for w in windows]
             ['PEP[Phospho]', 'TID', 'E']
@@ -2520,29 +1930,37 @@ class ProFormaAnnotation:
         self.internal_mods = new_internal_mods
         return self
 
-    def serialize(self, include_plus: bool = False) -> str:
+    def serialize(
+        self, include_plus: bool = False, precision: Optional[float] = None
+    ) -> str:
         """
         Serialize the entire annotation
         """
-        return _serialize_annotation(self, include_plus)
+        return _serialize_annotation(self, include_plus, precision)
 
-    def serialize_start(self, include_plus: bool = False) -> str:
+    def serialize_start(
+        self, include_plus: bool = False, precision: Optional[float] = None
+    ) -> str:
         """
         Serialize the start of the annotation
         """
-        return _serialize_annotation_start(self, include_plus)
+        return _serialize_annotation_start(self, include_plus, precision)
 
-    def serialize_middle(self, include_plus: bool = False) -> str:
+    def serialize_middle(
+        self, include_plus: bool = False, precision: Optional[float] = None
+    ) -> str:
         """
         Serialize the middle of the annotation
         """
-        return _serialize_annotation_middle(self, include_plus)
+        return _serialize_annotation_middle(self, include_plus, precision)
 
-    def serialize_end(self, include_plus: bool = False) -> str:
+    def serialize_end(
+        self, include_plus: bool = False, precision: Optional[float] = None
+    ) -> str:
         """
         Serialize the end of the annotation
         """
-        return _serialize_annotation_end(self, include_plus)
+        return _serialize_annotation_end(self, include_plus, precision)
 
     def is_subsequence(
         self, other: "ProFormaAnnotation", ignore_mods: bool = False
@@ -2745,6 +2163,535 @@ class ProFormaAnnotation:
                     [Mod(mass_shift, 1)],
                 )
                 self.add_intervals([mod_interval], append=True)
+
+        return self
+
+    def pop_delta_mass_mods(self, inplace: bool = True) -> float:
+        """
+        Pop the delta mass modifications from the modifications' dictionary. This leaves only modifications which
+        can have their elemental composition calculated.
+
+        :param annotation: The ProForma annotation.
+        :type annotation: ProFormaAnnotation
+
+        :return: The delta mass.
+        :rtype: float
+
+        .. code-block:: python
+
+            >>> mods = ProFormaAnnotation(sequence='', nterm_mods = [42.0, -20.0])
+            >>> mods.pop_delta_mass_mods()
+            22.0
+            >>> mods
+            ProFormaAnnotation(sequence=)
+
+        """
+        if inplace is False:
+            # Create a copy of the annotation to modify
+            annotation = deepcopy(self)
+            return annotation.pop_delta_mass_mods(inplace=True)
+
+        delta_mass = 0.0
+
+        # Labile Mods
+        if self.has_labile_mods():
+            for i in range(len(self.labile_mods) - 1, -1, -1):
+                mod = self.labile_mods[i]
+                val = _parse_mod_delta_mass_only(mod)
+                if val is not None:
+                    delta_mass += val
+                    self.labile_mods.pop(i)
+
+        # Unknown Mods
+        if self.has_unknown_mods():
+            for i in range(len(self.unknown_mods) - 1, -1, -1):
+                mod = self.unknown_mods[i]
+                val = _parse_mod_delta_mass_only(mod)
+                if val is not None:
+                    delta_mass += val
+                    self.unknown_mods.pop(i)
+
+        # NTerm
+        if self.has_nterm_mods():
+            for i in range(len(self.nterm_mods) - 1, -1, -1):
+                mod = self.nterm_mods[i]
+                val = _parse_mod_delta_mass_only(mod)
+                if val is not None:
+                    delta_mass += val
+                    self.nterm_mods.pop(i)
+
+        # CTerm
+        if self.has_cterm_mods():
+            for i in range(len(self.cterm_mods) - 1, -1, -1):
+                mod = self.cterm_mods[i]
+                val = _parse_mod_delta_mass_only(mod)
+                if val is not None:
+                    delta_mass += val
+                    self.cterm_mods.pop(i)
+
+        # Intervals
+        if self.has_intervals():
+            for interval in self.intervals:
+                if interval.has_mods():
+                    for i in range(len(interval.mods) - 1, -1, -1):
+                        mod = interval.mods[i]
+                        val = _parse_mod_delta_mass_only(mod)
+                        if val is not None:
+                            delta_mass += val
+                            interval.mods.pop(i)
+
+        # Internal mods
+        if self.has_internal_mods():
+            for k in self.internal_mods:
+                for i in range(len(self.internal_mods[k]) - 1, -1, -1):
+                    mod = self.internal_mods[k][i]
+                    val = _parse_mod_delta_mass_only(mod)
+                    if val is not None:
+                        delta_mass += val
+                        self.internal_mods[k].pop(i)
+
+        self.clear_empty_mods()
+
+        return delta_mass
+
+    def sequence_comp(
+        self,
+        ion_type: str,
+        isotope: int = 0,
+        use_isotope_on_mods: bool = False,
+    ) -> ChemComposition:
+
+        # If charge is not provided, set it to 0
+        charge = 0
+        if self.has_charge():
+            charge = self.charge
+
+        # if charge_adducts is not provided, set it to None
+        charge_adducts = None
+        if self.has_charge_adducts():
+            charge_adducts = self.charge_adducts[0]
+
+        if charge_adducts is None:
+            if ion_type in ("p", "n"):
+                charge_adducts = f"{charge}H+"
+            else:
+                charge_adducts = (
+                    f"{charge-1}H+,{FRAGMENT_ION_BASE_CHARGE_ADDUCTS[ion_type]}"
+                )
+
+        if ion_type not in ("p", "n"):
+            if charge == 0:
+                warnings.warn(
+                    "Calculating the comp of a fragment ion with charge state 0. Fragment ions should have a "
+                    "charge state greater than 0 since the neutral form doesnt exist."
+                )
+
+        if "B" in self.sequence:
+            raise AmbiguousAminoAcidError(
+                "B",
+                "Cannot determine the composition of a sequence with an ambiguous amino acid.",
+            )
+
+        if "Z" in self.sequence:
+            raise AmbiguousAminoAcidError(
+                "Z",
+                "Cannot determine the composition of a sequence with an ambiguous amino acid.",
+            )
+
+        # Get the composition of the base sequence
+        sequence_composition = {}
+        for aa in self.sequence:
+            try:
+                aa_comp = AA_COMPOSITIONS[aa]
+            except KeyError as err:
+                raise UnknownAminoAcidError(aa) from err
+            for k, v in aa_comp.items():
+                sequence_composition[k] = sequence_composition.get(k, 0) + v
+
+        # Apply the adjustments for the neutral fragment composition based on strictly the ion dissociation points.
+        for k, v in NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS[ion_type].items():
+            sequence_composition[k] = sequence_composition.get(k, 0) + v
+
+        charge_adduct_comp = _parse_charge_adducts_comp(charge_adducts)
+
+        for k, v in charge_adduct_comp.items():
+            sequence_composition[k] = sequence_composition.get(k, 0) + v
+
+        mod_composition = {}
+        if self.has_unknown_mods():
+            for unknown_mod in self.unknown_mods:
+                for k, v in mod_comp(unknown_mod).items():
+                    mod_composition[k] = mod_composition.get(k, 0) + v
+
+        if self.has_intervals():
+            for interval in self.intervals:
+                if interval.has_mods():
+                    for interval_mod in interval.mods:
+                        for k, v in mod_comp(interval_mod).items():
+                            mod_composition[k] = mod_composition.get(k, 0) + v
+
+        if self.has_labile_mods() and ion_type == "p":
+            for labile_mod in self.labile_mods:
+                for k, v in mod_comp(labile_mod).items():
+                    mod_composition[k] = mod_composition.get(k, 0) + v
+
+        if self.has_nterm_mods():
+            for nterm_mod in self.nterm_mods:
+                for k, v in mod_comp(nterm_mod).items():
+                    mod_composition[k] = mod_composition.get(k, 0) + v
+
+        if self.has_cterm_mods():
+            for cterm_mod in self.cterm_mods:
+                for k, v in mod_comp(cterm_mod).items():
+                    mod_composition[k] = mod_composition.get(k, 0) + v
+
+        if self.has_internal_mods():
+            for _, internal_mods in self.internal_mods.items():
+                for internal_mod in internal_mods:
+                    for k, v in mod_comp(internal_mod).items():
+                        mod_composition[k] = mod_composition.get(k, 0) + v
+
+        if self.has_static_mods():
+            static_map = parse_static_mods(self.static_mods)
+
+            n_term_mod = static_map.get("N-Term")
+            if n_term_mod is not None:
+                for m in n_term_mod:
+                    for k, v in mod_comp(m.val).items():
+                        mod_composition[k] = mod_composition.get(k, 0) + v
+
+            c_term_mod = static_map.get("C-Term")
+            if c_term_mod is not None:
+                for m in c_term_mod:
+                    for k, v in mod_comp(m.val).items():
+                        mod_composition[k] = mod_composition.get(k, 0) + v
+
+            for aa, mod in static_map.items():
+                if aa in ["N-Term", "C-Term"]:
+                    continue
+
+                aa_count = self.sequence.count(aa)
+                for m in mod:
+                    for k, v in mod_comp(m.val).items():
+                        mod_composition[k] = mod_composition.get(k, 0) + v * aa_count
+
+        mod_composition["n"] = mod_composition.get("n", 0) + isotope
+
+        # Apply isotopic mods
+        if self.has_isotope_mods():
+            if use_isotope_on_mods:
+                sequence_composition = apply_isotope_mods_to_composition(
+                    sequence_composition, self.isotope_mods
+                )
+                mod_composition = apply_isotope_mods_to_composition(
+                    mod_composition, self.isotope_mods
+                )
+            else:
+                sequence_composition = apply_isotope_mods_to_composition(
+                    sequence_composition, self.isotope_mods
+                )
+
+        composition = {}
+        for k, v in sequence_composition.items():
+            composition[k] = composition.get(k, 0) + v
+
+        for k, v in mod_composition.items():
+            composition[k] = composition.get(k, 0) + v
+
+        composition = {k: v for k, v in composition.items() if v != 0}
+
+        return composition
+
+    def mass(
+        self,
+        ion_type: str = "p",
+        monoisotopic: bool = True,
+        isotope: int = 0,
+        loss: float = 0.0,
+        use_isotope_on_mods: bool = False,
+        precision: Optional[int] = None,
+        inplace: bool = False,
+    ) -> float:
+
+        if self.contains_mass_ambiguity():
+            raise AmbiguousAminoAcidError(
+                aa=",".join(self.get_residue_ambiguity_residues()),
+                msg="Cannot determine the mass of a sequence with ambiguous amino acids: {self.sequence}",
+            )
+
+        # inplace should not be true
+        if inplace is False:
+            # Create a copy of the annotation to modify
+            annotation = deepcopy(self)
+            return annotation.mass(
+                ion_type=ion_type,
+                monoisotopic=monoisotopic,
+                isotope=isotope,
+                loss=loss,
+                use_isotope_on_mods=use_isotope_on_mods,
+                precision=precision,
+                inplace=True,
+            )
+        else:
+            warnings.warn(
+                "Inplace mass calculation is not recommended. It may lead to unexpected behavior.",
+            )
+
+        self.condense_static_mods(inplace=True)
+
+        # more complex mass calculation (based on chem composition)
+        if self.has_isotope_mods():
+            peptide_composition, delta_mass = self.comp_mass(
+                ion_type, isotope, use_isotope_on_mods, True
+            )
+            return (
+                chem_mass(
+                    peptide_composition, monoisotopic=monoisotopic, precision=precision
+                )
+                + delta_mass
+            )
+
+        if ion_type not in ("p", "n"):
+            if self.charge is None or self.charge == 0:
+                warnings.warn(
+                    "Calculating the mass of a fragment ion with charge state 0. Fragment ions should have a "
+                    "charge state greater than 0 since the neutral mass doesnt exist."
+                )
+
+        m = 0.0
+        """
+        if self.has_static_mods():
+            static_map = parse_static_mods(self.static_mods)
+
+            n_term_mod = static_map.get("N-Term")
+            if n_term_mod is not None:
+                m += sum(mod_mass(m, monoisotopic, precision=None) for m in n_term_mod)
+
+            c_term_mod = static_map.get("C-Term")
+            if c_term_mod is not None:
+                m += sum(mod_mass(m, monoisotopic, precision=None) for m in c_term_mod)
+
+            for aa, mod in static_map.items():
+
+                if aa in ["N-Term", "C-Term"]:
+                    continue
+
+                aa_count = self.sequence.count(aa)
+                m += sum(mod_mass(m, monoisotopic, precision=None) for m in mod) * aa_count
+        """
+        try:
+            m += sum(
+                MONOISOTOPIC_AA_MASSES[aa] if monoisotopic else AVERAGE_AA_MASSES[aa]
+                for aa in self.sequence
+            )
+        except KeyError as err:
+            raise UnknownAminoAcidError(err) from err
+
+        # Apply labile mods
+        if self.has_labile_mods() and ion_type == "p":
+            for mod in self.labile_mods:
+                m += mod_mass(mod)
+
+        # Apply Unknown mods
+        if self.has_unknown_mods():
+            for mod in self.unknown_mods:
+                m += mod_mass(mod)
+
+        # Apply N-term mods
+        if self.has_nterm_mods():
+            for mod in self.nterm_mods:
+                m += mod_mass(mod)
+
+        # Apply intervals
+        if self.has_intervals():
+            for interval in self.intervals:
+                if interval.mods is not None:
+                    for mod in interval.mods:
+                        m += mod_mass(mod)
+
+        # apply internal mods
+        if self.has_internal_mods():
+            for _, mods in self.internal_mods.items():
+                for mod in mods:
+                    m += mod_mass(mod)
+
+        # apply C-term mods
+        if self.has_cterm_mods():
+            for mod in self.cterm_mods:
+                m += mod_mass(mod)
+
+        return adjust_mass(
+            base_mass=m,
+            charge=self.charge,
+            ion_type=ion_type,
+            monoisotopic=monoisotopic,
+            isotope=isotope,
+            loss=loss,
+            charge_adducts=self.charge_adducts,
+            precision=precision,
+        )
+
+    def mz(
+        self,
+        ion_type: str = "p",
+        monoisotopic: bool = True,
+        isotope: int = 0,
+        loss: float = 0.0,
+        precision: Optional[int] = None,
+    ) -> float:
+
+        m = self.mass(
+            ion_type=ion_type,
+            monoisotopic=monoisotopic,
+            isotope=isotope,
+            loss=loss,
+            precision=precision,
+        )
+
+        return adjust_mz(m, self.charge, precision)
+
+    def comp(
+        self,
+        ion_type: str = "p",
+        estimate_delta: bool = False,
+        isotope: int = 0,
+        use_isotope_on_mods: bool = False,
+        inplace: bool = False,
+    ) -> ChemComposition:
+
+        if inplace is False:
+            # Create a copy of the annotation to modify
+            annotation = deepcopy(self)
+            return annotation.comp(
+                ion_type=ion_type,
+                estimate_delta=estimate_delta,
+                isotope=isotope,
+                use_isotope_on_mods=use_isotope_on_mods,
+                inplace=True,
+            )
+
+        composition, delta_mass = self.comp_mass(
+            ion_type=ion_type,
+            isotope=isotope,
+            use_isotope_on_mods=use_isotope_on_mods,
+            inplace=False,
+        )
+
+        if delta_mass != 0:
+
+            if estimate_delta is False:
+                raise ValueError(
+                    f"Non-zero delta mass ({delta_mass}) encountered without estimation enabled for "
+                    f"sequence '{self.serialize(include_plus=True, precision=5)}'."
+                )
+
+            if use_isotope_on_mods is True:
+                delta_mass_comp = estimate_comp(delta_mass, self.isotope_mods)
+                warnings.warn(
+                    "Applying isotopic modifications to the predicted composition. This will not be accurate."
+                )
+            else:
+                delta_mass_comp = estimate_comp(delta_mass, None)
+
+            # Combine the compositions of the sequence and the delta mass
+            for element in delta_mass_comp:
+                composition.setdefault(element, 0)
+                composition[element] += delta_mass_comp[element]
+
+        return composition
+
+    def comp_mass(
+        self,
+        ion_type: str = "p",
+        isotope: int = 0,
+        use_isotope_on_mods: bool = False,
+        inplace: bool = False,
+    ) -> Tuple[ChemComposition, float]:
+        # if inplace is True -> Will condense static mods
+
+        if inplace is False:
+            # Create a copy of the annotation to modify
+            annotation = deepcopy(self)
+            return annotation.comp_mass(
+                ion_type=ion_type,
+                isotope=isotope,
+                use_isotope_on_mods=use_isotope_on_mods,
+                inplace=True,
+            )
+
+        # condenses static mods
+        self.condense_static_mods(inplace=True)
+        delta_mass = (
+            self.pop_delta_mass_mods()
+        )  # sum delta mass mods and remove them from the annotation
+        peptide_composition = self.sequence_comp(ion_type, isotope, use_isotope_on_mods)
+
+        if use_isotope_on_mods is True and delta_mass != 0:
+            warnings.warn(
+                "use_isotope_on_mods=True and delta_mass != 0. Cannot apply isotopic modifications to the delta mass."
+            )
+
+        return peptide_composition, delta_mass
+
+    def condense_to_mass_mods(
+        self, include_plus: bool = False, inplace: bool = True
+    ) -> "ProFormaAnnotation":
+
+        if inplace is False:
+            # Create a copy of the annotation to modify
+            annotation = deepcopy(self)
+            return annotation.condense_to_mass_mods(
+                include_plus=include_plus, inplace=True
+            )
+
+        labile_mods = self.pop_labile_mods()
+        isotope_mods = self.isotope_mods
+
+        # fix this so that isotopes get applied
+        n_term_mods = self.pop_nterm_mods()
+        c_term_mods = self.pop_cterm_mods()
+        n_term_mods_mass, c_term_mods_mass = None, None
+
+        if n_term_mods:
+            n_term_annot = ProFormaAnnotation(
+                sequence="",
+                nterm_mods=n_term_mods,
+                isotope_mods=isotope_mods,
+            )
+            n_term_mods_mass = n_term_annot.mass(ion_type="n")
+
+        if c_term_mods:
+            c_term_annot = ProFormaAnnotation(
+                sequence="",
+                cterm_mods=c_term_mods,
+                isotope_mods=isotope_mods,
+            )
+            c_term_mods_mass = c_term_annot.mass(ion_type="n")
+
+        # Split into segments and process each one
+        segments = list(self.split())
+        stripped_segments = [seg.strip(inplace=False) for seg in segments]
+
+        # Calculate mass differences
+        for i, (segment, stripped) in enumerate(zip(segments, stripped_segments)):
+            # Calculate mass difference
+            mass_diff = segment.mass() - stripped.mass()
+            if abs(mass_diff) > 1e-6:  # Only add if difference is significant
+                self.add_internal_mod(
+                    index=i, mods=mass_diff, append=False, inplace=True
+                )
+
+        if labile_mods:
+            labile_mods_mass = sum(mod_mass(mod) for mod in labile_mods)
+            self.add_labile_mods(mods=labile_mods_mass, append=False, inplace=True)
+
+        if n_term_mods_mass is not None:
+            self.add_nterm_mods(mods=n_term_mods_mass, append=False, inplace=True)
+
+        if c_term_mods_mass is not None:
+            self.add_cterm_mods(mods=c_term_mods_mass, append=False, inplace=True)
+
+        self.pop_isotope_mods()
 
         return self
 
@@ -3329,41 +3276,45 @@ def serialize(
 
 
 def _serialize_annotation_start(
-    annotation: ProFormaAnnotation, include_plus: bool
+    annotation: ProFormaAnnotation,
+    include_plus: bool,
+    precision: Optional[float] = None,
 ) -> str:
     comps = []
 
     # add labile mods
     if annotation.has_labile_mods():
         for mod in annotation.labile_mods:
-            comps.append(mod.serialize("{}", include_plus))
+            comps.append(mod.serialize("{}", include_plus, precision))
 
     if annotation.has_static_mods():
         for mod in annotation.static_mods:
-            comps.append(mod.serialize("<>", include_plus))
+            comps.append(mod.serialize("<>", include_plus, precision))
 
     # Add global mods
     if annotation.has_isotope_mods():
         for mod in annotation.isotope_mods:
-            comps.append(mod.serialize("<>", include_plus))
+            comps.append(mod.serialize("<>", include_plus, precision))
 
     # Unknown mods
     if annotation.has_unknown_mods():
         for mod in annotation.unknown_mods:
-            comps.append(mod.serialize("[]", include_plus))
+            comps.append(mod.serialize("[]", include_plus, precision))
         comps.append("?")
 
     # N-term mods
     if annotation.has_nterm_mods():
         for mod in annotation.nterm_mods:
-            comps.append(mod.serialize("[]", include_plus))
+            comps.append(mod.serialize("[]", include_plus, precision))
         comps.append("-")
 
     return "".join(comps)
 
 
 def _serialize_annotation_middle(
-    annotation: ProFormaAnnotation, include_plus: bool
+    annotation: ProFormaAnnotation,
+    include_plus: bool,
+    precision: Optional[float] = None,
 ) -> str:
     comps = []
     # Sequence
@@ -3380,14 +3331,14 @@ def _serialize_annotation_middle(
 
                     if interval.mods:
                         for mod in interval.mods:
-                            comps.append(mod.serialize("[]", include_plus))
+                            comps.append(mod.serialize("[]", include_plus, precision))
 
         comps.append(aa)
 
         # Internal mods
         if annotation.internal_mods and i in annotation.internal_mods:
             for mod in annotation.internal_mods[i]:
-                comps.append(mod.serialize("[]", include_plus))
+                comps.append(mod.serialize("[]", include_plus, precision))
 
     # add end interval
     i = len(annotation.sequence)
@@ -3397,20 +3348,22 @@ def _serialize_annotation_middle(
                 comps.append(")")
                 if interval.mods:
                     for mod in interval.mods:
-                        comps.append(mod.serialize("[]", include_plus))
+                        comps.append(mod.serialize("[]", include_plus, precision))
 
     return "".join(comps)
 
 
 def _serialize_annotation_end(
-    annotation: ProFormaAnnotation, include_plus: bool
+    annotation: ProFormaAnnotation,
+    include_plus: bool,
+    precision: Optional[float] = None,
 ) -> str:
     comps = []
     # C-term mods
     if annotation.cterm_mods:
         comps.append("-")
         for mod in annotation.cterm_mods:
-            comps.append(mod.serialize("[]", include_plus))
+            comps.append(mod.serialize("[]", include_plus, precision))
 
     # Charge
     if annotation.charge:
@@ -3418,14 +3371,18 @@ def _serialize_annotation_end(
 
     if annotation.charge_adducts:
         for mod in annotation.charge_adducts:
-            comps.append(mod.serialize("[]", include_plus))
+            comps.append(mod.serialize("[]", include_plus, precision))
 
     return "".join(comps)
 
 
-def _serialize_annotation(annotation: ProFormaAnnotation, include_plus: bool) -> str:
+def _serialize_annotation(
+    annotation: ProFormaAnnotation,
+    include_plus: bool,
+    precision: Optional[float] = None,
+) -> str:
     return (
-        _serialize_annotation_start(annotation, include_plus)
-        + _serialize_annotation_middle(annotation, include_plus)
-        + _serialize_annotation_end(annotation, include_plus)
+        _serialize_annotation_start(annotation, include_plus, precision)
+        + _serialize_annotation_middle(annotation, include_plus, precision)
+        + _serialize_annotation_end(annotation, include_plus, precision)
     )

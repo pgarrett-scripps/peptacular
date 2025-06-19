@@ -4,7 +4,7 @@ chem_util.py
 
 from typing import Union, Optional, List
 
-from peptacular.constants import (
+from ..constants import (
     HILL_ORDER,
     ISOTOPIC_ATOMIC_MASSES,
     ELECTRON_MASS,
@@ -14,10 +14,9 @@ from peptacular.constants import (
     ISOTOPE_COMPONENT_PATTERN,
     CONDENSED_CHEM_FORMULA_PATTERN,
 )
-from peptacular.errors import InvalidChemFormulaError
-from peptacular.util import convert_type
-
-from peptacular.types import ChemComposition
+from ..errors import InvalidChemFormulaError
+from ..utils2 import convert_type
+from ..types import ChemComposition
 
 
 def parse_chem_formula(formula: str, sep: str = "") -> ChemComposition:

@@ -1,7 +1,7 @@
 import unittest
 
 import peptacular as pt
-from peptacular.proforma.proforma_dataclasses import Mod
+from peptacular.proforma_dataclasses import Mod
 
 
 class TestProForma(unittest.TestCase):

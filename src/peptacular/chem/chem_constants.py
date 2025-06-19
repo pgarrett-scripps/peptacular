@@ -4,8 +4,8 @@ chem_constants.py
 
 from typing import Dict
 
-from peptacular.chem.chem_util import chem_mass
-from peptacular.constants import (
+from ..chem.chem_util import chem_mass
+from ..constants import (
     NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS,
     ISOTOPIC_ATOMIC_MASSES,
     AA_COMPOSITIONS,
