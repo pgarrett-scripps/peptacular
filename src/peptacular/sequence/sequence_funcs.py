@@ -813,6 +813,33 @@ def count_residues(sequence: Union[str, ProFormaAnnotation]) -> CounterType:
         .count_residues()
     )
 
+def percent_residues(
+    sequence: Union[str, ProFormaAnnotation], precision: Optional[int] = None) -> Dict[str, float]:
+    """
+    Calculates the percentage of each amino acid in the input sequence.
+    :param sequence: The sequence or ProFormaAnnotation object.
+    :type sequence: Union[str, ProFormaAnnotation]
+    :raises ValueError: If the input sequence contains multiple sequences.
+    :raises ProFormaFormatError: if the proforma sequence is not valid
+    :return: A dictionary containing the percentage of each amino acid in the input sequence.
+    :rtype: Dict[str, float]
+    .. code-block:: python
+
+        >>> percent_residues('PEPTIDE', precision=2)
+        {'P': 28.57, 'E': 28.57, 'T': 14.29, 'I': 14.29, 'D': 14.29}
+
+    """
+    counts = count_residues(sequence)
+    total = sum(counts.values())
+    if total == 0:
+        return {}
+    d = {aa: (count / total) * 100 for aa, count in counts.items()}
+
+    if precision is not None:
+        d = {aa: round(value, precision) for aa, value in d.items()}
+
+    return d
+
 
 def is_subsequence(
     subsequence: Union[str, ProFormaAnnotation],

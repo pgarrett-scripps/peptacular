@@ -837,6 +837,13 @@ class ProFormaAnnotation:
         self._sequence = value
 
     @property
+    def stripped_sequence(self) -> str:
+        """
+        Returns the sequence without any modifications.
+        """
+        return self.sequence
+
+    @property
     def isotope_mods(self) -> List[Mod]:
         """
         Returns the isotope modifications.
@@ -2284,6 +2291,42 @@ class ProFormaAnnotation:
         self._intervals = new_intervals
 
         return self
+    
+    def sliding_windows(self, window_size: int) -> Generator["ProFormaAnnotation", None, None]:
+        """
+        Generate sliding windows of the annotation with a specified size.
+        
+        Similar to slicing but creates overlapping windows that slide across the sequence.
+
+        :param window_size: Size of each window/subsequence
+        :type window_size: int
+        :return: Generator yielding ProFormaAnnotation objects for each window
+        :rtype: Generator["ProFormaAnnotation", None, None]
+
+        .. code-block:: python
+
+            >>> annotation = parse("PEPTIDE")
+            >>> windows = list(annotation.sliding_windows(3))
+            >>> [w.sequence for w in windows]
+            ['PEP', 'TID', 'E']
+
+            >>> # Windows preserve modifications
+            >>> annotation = parse("PEP[Phospho]TIDE")  
+            >>> windows = list(annotation.sliding_windows(3))
+            >>> [w.serialize() for w in windows]
+            ['PEP[Phospho]', 'TID', 'E']
+
+        """
+        if not self.sequence:
+            return
+
+        if window_size <= 0:
+            raise ValueError("Window size must be positive")
+
+        seq_len = len(self.sequence)
+        for start in range(0, seq_len, window_size):
+            stop = min(start + window_size, seq_len)
+            yield self.slice(start, stop, inplace=False)
 
     def shift(self, n: int, inplace: bool = False) -> "ProFormaAnnotation":
         """

@@ -7,6 +7,7 @@ modules = [
     pt.chem_util,
     pt.combinatoric,
     pt.sequence_funcs,
+    pt.sequence_properties,
     pt.mod_builder,
     pt.proforma_parser,
     pt.proforma_dataclasses,
