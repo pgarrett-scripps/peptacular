@@ -6,7 +6,7 @@ import copy
 from collections import Counter
 from dataclasses import dataclass
 from typing import List, Union, Any, Optional, Dict
-
+from typing import List, Dict, Any, Union, Tuple
 
 from .utils2 import convert_type
 
@@ -18,7 +18,10 @@ class Mod:
     """
 
     val: Union[str, float, int]
-    mult: int
+    mult: int = 1
+    tag: Optional[str] = None
+    loc_score: Optional[float] = None
+    dislpay_val: bool = True
 
     def __post_init__(self) -> None:
         self.val = convert_type(self.val)
@@ -30,15 +33,24 @@ class Mod:
         return [self.val] * self.mult
 
     def _serialize_val(self, precision: Optional[float] = None) -> str:
-        if precision is not None:
-            if isinstance(self.val, float):
-                return f"{self.val:.{precision}f}"
-            elif isinstance(self.val, int):
-                return str(self.val)
+        s = ""
+        if self.dislpay_val:
+            if precision is not None:
+                if isinstance(self.val, float):
+                    s = f"{self.val:.{precision}f}"
+                elif isinstance(self.val, int):
+                    s = str(self.val)
+                else:
+                    s = str(self.val)
             else:
-                return str(self.val)
-        else:
-            return str(self.val)
+                s = str(self.val)
+
+        if self.tag is not None:
+            s = f"{s}#{self.tag}"
+            if self.loc_score is not None:
+                s = f"{s}({self.loc_score})"
+
+        return s
 
     def serialize(
         self,
@@ -106,17 +118,70 @@ class Mod:
             return self.mult < other.mult
         return False
 
+    def copy(self, deep: bool = True) -> "Mod":
+        """
+        Create a copy of the mod
+        """
 
-@dataclass
+        if deep:
+            return copy.deepcopy(self)
+
+        return copy.copy(self)
+
+
 class Interval:
     """
     A sequence interval with optional modifications
     """
 
-    start: int
-    end: int
-    ambiguous: bool
-    mods: Optional[List[Mod]] = None
+    def __init__(
+        self, start: int, end: int, ambiguous: bool, mods: Optional[List[Mod]] = None
+    ) -> None:
+        """
+        Initialize an Interval object
+
+        :param start: Start position of the interval (inclusive)
+        :type start: int
+
+        :param end: End position of the interval (exclusive)
+        :type end: int
+
+        :param ambiguous: Whether the interval is ambiguous
+        :type ambiguous: bool
+
+        :param mods: Optional list of modifications for the interval
+        :type mods: Optional[List[Mod]]
+        """
+        self.start = start
+        self.end = end
+        self.ambiguous = ambiguous
+        self._mods = fix_list_of_mods(mods) if mods is not None else []
+
+    @property
+    def mods(self) -> List[Mod]:
+        """
+        Get the modifications of the interval
+        """
+        if self._mods is None:
+            return []
+        return self._mods
+
+    @mods.setter
+    def mods(self, value: Optional[List[Mod]]):
+        """
+        Set the modifications of the interval
+        """
+        if value is None:
+            self._mods = []
+        else:
+            self._mods = fix_list_of_mods(value)
+
+    @property
+    def has_mods(self) -> bool:
+        """
+        Check if the interval has modifications
+        """
+        return self._mods is not None and len(self._mods) > 0
 
     def dict(self) -> Dict[str, Any]:
         """
@@ -160,6 +225,29 @@ class Interval:
         """
         return self.mods is not None
 
+    def copy(self, deep: bool = True) -> "Interval":
+        """
+        Create a copy of the interval
+        """
+        if deep:
+            return copy.deepcopy(self)
+        return copy.copy(self)
+
+
+Span = Tuple[int, int, int]
+
+# Chem Composition Type
+ChemComposition = Dict[str, Union[int, float]]
+
+ModIndex = Union[int, str]
+ModValue = Union[str, int, float, Mod]
+ModDictValue = Union[List[Mod], List[Interval], int]
+ModDict = Dict[ModIndex, ModDictValue]
+
+ACCEPTED_MOD_INPUT = Union[List[ModValue], ModValue]
+INTERVAL_VALUE = Union[Tuple[int, int, bool, Union[ACCEPTED_MOD_INPUT, None]], Interval]
+ACCEPTED_INTERVAL_INPUT = Union[List[INTERVAL_VALUE], INTERVAL_VALUE]
+
 
 def are_mods_equal(mods1: Optional[List[Mod]], mods2: Optional[List[Mod]]) -> bool:
     """
@@ -196,14 +284,8 @@ def are_mods_equal(mods1: Optional[List[Mod]], mods2: Optional[List[Mod]]) -> bo
 
     """
 
-    if mods1 is None and mods2 is None:
-        return True
-
-    if mods1 is None and mods2 is not None:
-        return False
-
-    if mods1 is not None and mods2 is None:
-        return False
+    if mods1 is None or mods2 is None:
+        return mods1 is mods2
 
     return Counter(mods1) == Counter(mods2)
 
@@ -262,3 +344,291 @@ def are_intervals_equal(
         return False
 
     return Counter(intervals1) == Counter(intervals2)
+
+
+def convert_to_mod(mod: ModValue) -> Mod:
+    """
+    Convert the input mod to a Mod instance.
+
+    :param mod:
+    :return:
+
+    .. code-block:: python
+
+        >>> convert_to_mod('phospho')
+        Mod('phospho', 1)
+
+        >>> convert_to_mod(3.0)
+        Mod(3.0, 1)
+
+        >>> convert_to_mod(Mod('phospho', 1))
+        Mod('phospho', 1)
+
+    """
+    # Check if mod is already a Mod instance to avoid unnecessary conversion.
+    if isinstance(mod, Mod):
+        return mod
+
+    if isinstance(mod, (str, int, float)):
+        return Mod(mod, 1)
+
+    raise ValueError(f"Invalid mod input: {mod}")
+
+
+def fix_list_of_list_of_mods(
+    mods: Union[List[List[ModValue]], List[ModValue], ModValue],
+) -> List[List[Mod]]:
+    """
+    Convert the input mods to a list of lists of Mod instances.
+
+    :param mods: Either a list of lists of mods, a list of mods, or a single mod.
+    :type mods: Union[List[List[ModValue]], List[ModValue], ModValue]
+
+    :return: List of lists of Mod instances
+    :return: List[List[Mod]]
+
+    .. code-block:: python
+
+        >>> fix_list_of_list_of_mods('phospho')
+        [[Mod('phospho', 1)]]
+
+        >>> fix_list_of_list_of_mods([3.0])
+        [[Mod(3.0, 1)]]
+
+        >>> fix_list_of_list_of_mods(['phospho'])
+        [[Mod('phospho', 1)]]
+
+        >>> fix_list_of_list_of_mods(['phospho', 1])
+        [[Mod('phospho', 1), Mod(1, 1)]]
+
+        >>> fix_list_of_list_of_mods([['phospho']])
+        [[Mod('phospho', 1)]]
+
+        >>> fix_list_of_list_of_mods([['phospho', 1]])
+        [[Mod('phospho', 1), Mod(1, 1)]]
+
+        >>> fix_list_of_list_of_mods([['phospho', 1], ['acetyl', 2]])
+        [[Mod('phospho', 1), Mod(1, 1)], [Mod('acetyl', 1), Mod(2, 1)]]
+    """
+
+    # Case 1: mods is a ModValue (str or Mod)
+    if isinstance(mods, (str, int, float, Mod)):
+        return [[convert_to_mod(mods)]]
+
+    # Case 2: mods is a SingleModList
+    if isinstance(mods, list) and all(
+        isinstance(mod, (str, int, float, Mod)) for mod in mods
+    ):
+        return [fix_list_of_mods(mods)]
+
+    # Case 3: mods is a MultiModList
+    if isinstance(mods, list):
+        return [fix_list_of_mods(sublist) for sublist in mods]
+
+    raise ValueError(f"Invalid mod input: {mods}")
+
+
+def remove_empty_list_of_list_of_mods(
+    mods: List[List[Mod]],
+) -> Union[List[List[Mod]], None]:
+    """
+    Remove empty lists from a list of lists of Mod instances.
+
+    :param mods: List of lists of Mod instances
+    :type mods: List[List[Mod]]
+
+    :return: List of lists of Mod instances
+    :rtype: List[List[Mod]]
+
+    .. code-block:: python
+
+        >>> remove_empty_list_of_list_of_mods([[Mod('phospho', 1)], [Mod('acetyl', 1)], []])
+        [[Mod('phospho', 1)], [Mod('acetyl', 1)]]
+
+        >>> remove_empty_list_of_list_of_mods([[Mod('phospho', 1)], [], [Mod('acetyl', 1)]])
+        [[Mod('phospho', 1)], [Mod('acetyl', 1)]]
+
+        >>> remove_empty_list_of_list_of_mods([[], [], []])
+
+    """
+
+    new_mods2 = []
+    for mod_list in mods:
+        if mod_list:
+            new_mods2.append(mod_list)
+
+    if new_mods2:
+        return new_mods2
+
+    return None
+
+
+def fix_list_of_mods(mods: Union[List[ModValue], ModValue]) -> List[Mod]:
+    """
+    Convert the input mods to a list of lists of Mod instances.
+
+    :param mods: Either a list of mods or a single mod.
+    :type mods: Union[List[ModValue], ModValue]
+
+    :return: List of Mod instances
+    :rtype: List[Mod]
+
+    .. code-block:: python
+
+        >>> fix_list_of_mods('phospho')
+        [Mod('phospho', 1)]
+
+        >>> fix_list_of_mods([3.0])
+        [Mod(3.0, 1)]
+
+        >>> fix_list_of_mods([])
+        []
+
+        >>> fix_list_of_mods(['phospho'])
+        [Mod('phospho', 1)]
+
+        >>> fix_list_of_mods(['phospho', Mod(1, 1)])
+        [Mod('phospho', 1), Mod(1, 1)]
+
+    """
+
+    # Case 1: mods is a ModValue (str or Mod)
+    if isinstance(mods, (str, int, float, Mod)):
+        return [convert_to_mod(mods)]
+
+    # Case 2: mods is a list of ModValues
+    if isinstance(mods, list):
+
+        # No change needed if all elements are already Mod instances
+        if all(isinstance(mod, Mod) for mod in mods):
+            return mods
+
+        for i, _ in enumerate(mods):
+            mods[i] = convert_to_mod(mods[i])
+
+        return mods
+
+    # Case 3: mods is an invalid input
+    raise ValueError(f"Invalid mod input: {mods}")
+
+
+def remove_empty_list_of_mods(mods: List[Mod]) -> Union[List[Mod], None]:
+    """
+    Remove empty lists from a list of Mod instances.
+
+    :param mods: List of Mod instances
+    :type mods: List[Mod]
+
+    :return: List of Mod instances
+    :rtype: List[Mod]
+
+    .. code-block:: python
+
+        >>> remove_empty_list_of_mods([Mod('phospho', 1), Mod('acetyl', 1), Mod('acetyl', 1)])
+        [Mod('phospho', 1), Mod('acetyl', 1), Mod('acetyl', 1)]
+
+        >>> remove_empty_list_of_mods([])
+
+    """
+
+    return mods if mods else None
+
+
+def fix_dict_of_mods(
+    mods: Dict[Any, Union[List[ModValue], ModValue]],
+) -> Dict[Any, List[Mod]]:
+    """
+    Convert the input mods to a dictionary of lists of Mod instances. Mainly used to convert internal mod input to
+    the correct format. This will not work when used on the whole mod dict.
+
+    :param mods: Dictionary of mods
+    :type mods: Dict[Any, Union[List[ModValue], ModValue]]
+
+    :return: Dictionary of lists of Mod instances
+    :rtype: Dict[Any, List[Mod]]
+
+    .. code-block:: python
+
+        >>> fix_dict_of_mods({1: 'phospho'})
+        {1: [Mod('phospho', 1)]}
+
+        >>> fix_dict_of_mods({2: [3.0]})
+        {2: [Mod(3.0, 1)]}
+
+        >>> fix_dict_of_mods({2: []})
+        {2: []}
+
+    """
+
+    return {k: fix_list_of_mods(v) for k, v in mods.items()}
+
+
+def fix_interval_input(interval: INTERVAL_VALUE) -> Interval:
+    """
+    Convert the input intervals to a list of Interval instances.
+
+    :param interval:
+    :return:
+
+    .. code-block:: python
+
+        >>> fix_interval_input((1, 2, False, 'phospho'))
+        Interval(1, 2, False, [Mod('phospho', 1)])
+
+        >>> fix_interval_input((1, 2, False, [3.0]))
+        Interval(1, 2, False, [Mod(3.0, 1)])
+
+        >>> fix_interval_input((1, 2, False, ['phospho']))
+        Interval(1, 2, False, [Mod('phospho', 1)])
+
+        >>> fix_interval_input(Interval(1, 2, False, [Mod('phospho', 1)]))
+        Interval(1, 2, False, [Mod('phospho', 1)])
+
+    """
+
+    # parse mod
+    if isinstance(interval, Interval):
+        return interval
+
+    mods = fix_list_of_mods(interval[3]) if interval[3] else None
+    return Interval(interval[0], interval[1], interval[2], mods)
+
+
+def fix_intervals_input(
+    intervals: Union[List[INTERVAL_VALUE], INTERVAL_VALUE],
+) -> List[Interval]:
+    """
+    Convert the input intervals to a list of Interval instances.
+
+    :param intervals: List of intervals
+    :param intervals: Union[List[IntervalValue], IntervalValue]
+
+    :return: List of Interval instances
+    :rtype: List[Interval]
+
+    .. code-block:: python
+
+        >>> fix_intervals_input([(1, 2, False, 'phospho')])
+        [Interval(1, 2, False, [Mod('phospho', 1)])]
+
+        >>> fix_intervals_input((1, 2, False, [3.0]))
+        [Interval(1, 2, False, [Mod(3.0, 1)])]
+
+        >>> fix_intervals_input([(1, 2, False, ['phospho'])])
+        [Interval(1, 2, False, [Mod('phospho', 1)])]
+
+        >>> fix_intervals_input([Interval(1, 2, False, [Mod('phospho', 1)])])
+        [Interval(1, 2, False, [Mod('phospho', 1)])]
+
+    """
+
+    if isinstance(intervals, (Tuple, Interval)):
+        return [fix_interval_input(intervals)]
+
+    if isinstance(intervals, list):
+        if all(isinstance(interval, Interval) for interval in intervals):
+            return intervals
+
+        return [fix_interval_input(interval) for interval in intervals]
+
+    raise ValueError(f"Invalid interval input: {intervals}")

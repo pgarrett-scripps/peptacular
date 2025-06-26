@@ -1,10 +1,11 @@
 from functools import wraps
-import re
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import *
+
+import regex as re
 
 from ..constants import ADDUCT_PATTERN, ISOTOPE_NUM_PATTERN
-from .input_convert import ModValue
-from ..types import ChemComposition
+from ..proforma_dataclasses import ModValue
+from ..proforma_dataclasses import ChemComposition
 from ..proforma_dataclasses import (
     Mod,
 )
@@ -321,10 +322,10 @@ def write_static_mods(mods: Dict[str, List[Mod]]) -> List[Mod]:
 
     .. code-block:: python
 
-        >>> write_static_mods({'C': [Mod(val=1,mult=1)], 'S': [Mod(val=3.1415,mult=1)], 'D': [Mod(val=3.1415,mult=1)]})
+        >>> write_static_mods({'C': [Mod(val=1,multiple=1)], 'S': [Mod(val=3.1415,multiple=1)], 'D': [Mod(val=3.1415,multiple=1)]})
         [Mod('[1]@C', 1), Mod('[3.1415]@S,D', 1)]
 
-        >>> write_static_mods({'C': [Mod(val='Formula:[13C]H20', mult=1)]})
+        >>> write_static_mods({'C': [Mod(val='Formula:[13C]H20', multiple=1)]})
         [Mod('[Formula:[13C]H20]@C', 1)]
 
         >>> write_static_mods({})
@@ -459,3 +460,109 @@ def _validate_single_mod_multiplier(func: Callable) -> Callable:
         return func(self, mod)
 
     return wrapper
+
+
+"""
+This section is largely based on the code from the `biopython` library, specifically the `Bio.SeqUtils` module.
+"""
+
+from .property_data import *
+
+
+def get_aa_value(
+    aa: str,
+    aa_data: Dict[str, float],
+    missing_aa_handling: Literal[
+        "zero", "avg", "min", "max", "median", "error", "skip"
+    ],
+    weighting_scheme: float = 1,
+    normalize: bool = False,
+) -> Optional[float]:
+    if missing_aa_handling == "zero":
+        default_value = 0.0
+    elif missing_aa_handling == "avg":
+        default_value = sum(aa_data.values()) / len(aa_data)
+    elif missing_aa_handling == "min":
+        default_value = min(aa_data.values())
+    elif missing_aa_handling == "max":
+        default_value = max(aa_data.values())
+    elif missing_aa_handling == "median":
+        sorted_values = sorted(aa_data.values())
+        mid = len(sorted_values) // 2
+        if len(sorted_values) % 2 == 0:
+            default_value = (sorted_values[mid - 1] + sorted_values[mid]) / 2
+        else:
+            default_value = sorted_values[mid]
+    elif missing_aa_handling == "error":
+        default_value = "error"
+    elif missing_aa_handling == "skip":
+        return "skip"
+    else:
+        raise ValueError(
+            f"Invalid default value: {missing_aa_handling}. Choose from 'zero', 'avg', 'min', 'max', 'median', 'error', or 'skip'."
+        )
+
+    # B -> Aspartic acid or Asparagine
+    # J -> Leucine or Isoleucine
+    # Z -> Glutamic acid or Glutamine
+    # X -> Any amino acid (not a valid single-letter code)
+
+    if aa in aa_data:
+        if normalize:
+            # Normalize the value to a range of 0-1
+            min_value = min(aa_data.values())
+            max_value = max(aa_data.values())
+            return (
+                (aa_data[aa] - min_value) / (max_value - min_value)
+            ) * weighting_scheme
+        else:
+            # Return the raw value multiplied by the weight
+            return aa_data[aa] * weighting_scheme
+    elif aa == "B":
+        # average of Aspartic acid and Asparagine
+        return (
+            (
+                get_aa_value("D", aa_data, missing_aa_handling)
+                + get_aa_value("N", aa_data, missing_aa_handling)
+            )
+            / 2
+        ) * weighting_scheme
+    elif aa == "J":
+        # average of Leucine and Isoleucine
+        return (
+            (
+                get_aa_value("L", aa_data, missing_aa_handling)
+                + get_aa_value("I", aa_data, missing_aa_handling)
+            )
+            / 2
+        ) * weighting_scheme
+    elif aa == "Z":
+        # average of Glutamic acid and Glutamine
+        return (
+            (
+                get_aa_value("E", aa_data, missing_aa_handling)
+                + get_aa_value("Q", aa_data, missing_aa_handling)
+            )
+            / 2
+        ) * weighting_scheme
+    elif aa == "X":
+        # Mean of all
+        if normalize:
+            # Normalize the average value to a range of 0-1
+            min_value = min(aa_data.values())
+            max_value = max(aa_data.values())
+            return (
+                (sum(aa_data.values()) / len(aa_data) - min_value)
+                / (max_value - min_value)
+            ) * weighting_scheme
+        else:
+            # Return the average value multiplied by the weight
+            return (sum(aa_data.values()) / len(aa_data)) * weighting_scheme
+    else:
+        if default_value == "error":
+            raise ValueError(
+                f"Invalid amino acid: {aa}. No hydrophobicity value found."
+            )
+        elif default_value == "skip":
+            return None
+        return default_value * weighting_scheme

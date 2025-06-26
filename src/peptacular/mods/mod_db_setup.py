@@ -5,7 +5,7 @@ mode_db_setup.py
 import dataclasses
 import os
 import pickle
-import re
+import regex as re
 import tempfile
 import warnings
 from collections import Counter
@@ -22,7 +22,7 @@ from ..chem.chem_util import (
 )
 from ..errors import InvalidChemFormulaError, InvalidGlycanFormulaError
 from ..utils2 import convert_type
-from ..types import ChemComposition
+from ..proforma_dataclasses import ChemComposition
 
 
 @dataclasses.dataclass

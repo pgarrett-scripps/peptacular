@@ -16,14 +16,17 @@ All notable changes to this project will be documented in this file.
 
 
 ## [3.0.0]
-- added remove mod functions
-- added filter mods function
-- more inplace options
-- proforma objects now return proforma objects such that methods can be chained
-- some inplace options have changed
-- optional mods arg to many mod functions
+- added `remove mod` functions
+- added `filter mods` function
+- More inplace options available
+- Proforma objects now return proforma objects such that methods can be chained
+- Some inplace options have changed
+- Optional mods arg added to applicable functions to only remove/pop specific mods
 - Switched ProformaAnnotation to normal python class (was dataclass)
-- ProformaAnnotation mods objects dont return None anymore 
+- ProformaAnnotation mods objects dont return None anymorem, rather now return empty list/dict
+- Added sequence property functions
+- Moved mass/mz and composition logic to proforma class (mz/mass/comp function are available from annotations now)
+- Extensive tests
 
 ## [2.5.1]
 - added ambiguity support to coverage funcs

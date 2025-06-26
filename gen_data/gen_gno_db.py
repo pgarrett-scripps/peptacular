@@ -1,10 +1,10 @@
 import json
-import re
+import regex as re
 from collections import Counter
 from typing import List
 from obo import read_obo
 from peptacular import chem
-from peptacular.chem_util import glycan_comp, chem_mass
+from peptacular.chem import glycan_comp, chem_mass
 
 
 def generate_gno_db():

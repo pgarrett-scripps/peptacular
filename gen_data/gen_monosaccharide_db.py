@@ -1,5 +1,5 @@
 import json
-from peptacular.chem_util import chem_mass
+from peptacular.chem import chem_mass
 from typing import List
 from obo import read_obo
 

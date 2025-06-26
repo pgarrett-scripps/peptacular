@@ -19,14 +19,14 @@ from typing import Union, List, Optional, Literal, Tuple, Generator, Iterable
 
 from .spans import Span
 from .constants import PROTEASES_COMPILED
-from .proforma.proforma_parser import ProFormaAnnotation
+from .proforma.annotation import ProFormaAnnotation
 from .spans import (
     build_left_semi_spans,
     build_right_semi_spans,
     build_non_enzymatic_spans,
     build_spans,
 )
-from .sequence.sequence_funcs import get_annotation_input
+from .sequence.sequence import get_annotation_input
 from .util import get_regex_match_indices
 
 DigestReturnType = Literal["str", "annotation", "span", "str-span", "annotation-span"]

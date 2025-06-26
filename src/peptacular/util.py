@@ -4,20 +4,19 @@ Utils.py
 
 import warnings
 from typing import Union, List, Tuple, Dict, Generator, Optional
-import regex
 from functools import wraps
 import regex as re
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
 from .constants import ADDUCT_PATTERN, ISOTOPE_NUM_PATTERN
-from .types import ChemComposition, ModValue
+from .proforma_dataclasses import ChemComposition, ModValue
 from .proforma_dataclasses import (
     Mod,
 )
 
 
 def get_regex_match_indices(
-    input_str: str, regex_str: Union[str, regex.Pattern], offset: int = 0
+    input_str: str, regex_str: Union[str, re.Pattern], offset: int = 0
 ) -> Generator[int, None, None]:
     """
     Identify the starting indexes of occurrences of a given regex pattern within a string.
@@ -36,7 +35,7 @@ def get_regex_match_indices(
         >>> list(get_regex_match_indices("PEPTIDE", "P"))
         [1, 3]
 
-        >>> list(get_regex_match_indices("PEPTIDE", regex.compile("E")))
+        >>> list(get_regex_match_indices("PEPTIDE", re.compile("E")))
         [2, 7]
 
         >>> list(get_regex_match_indices("PEPTIDE", 'E'))
@@ -60,8 +59,8 @@ def get_regex_match_indices(
 
     """
 
-    if not isinstance(regex_str, regex.Pattern):
-        regex_pattern = regex.compile(regex_str)
+    if not isinstance(regex_str, re.Pattern):
+        regex_pattern = re.compile(regex_str)
     else:
         regex_pattern = regex_str
 
@@ -76,7 +75,7 @@ def get_regex_match_indices(
 
 
 def get_regex_match_range(
-    input_str: str, regex_str: Union[str, regex.Pattern], offset: int = 0
+    input_str: str, regex_str: Union[str, re.Pattern], offset: int = 0
 ) -> List[Tuple[int, int]]:
     """
     Identify the starting indexes of occurrences of a given regex pattern within a string.
@@ -95,7 +94,7 @@ def get_regex_match_range(
         >>> get_regex_match_range("PEPTIDE", "P")
         [(0, 1), (2, 3)]
 
-        >>> get_regex_match_range("PEPTIDE", regex.compile("E"))
+        >>> get_regex_match_range("PEPTIDE", re.compile("E"))
         [(1, 2), (6, 7)]
 
         # More complex regex
@@ -108,7 +107,7 @@ def get_regex_match_range(
     """
 
     # if regex is compiled
-    if isinstance(regex_str, regex.Pattern):
+    if isinstance(regex_str, re.Pattern):
         return [
             (i.start() + offset, i.end() + offset)
             for i in regex_str.finditer(input_str)
@@ -116,7 +115,7 @@ def get_regex_match_range(
 
     return [
         (match.start() + offset, match.end() + offset)
-        for match in regex.finditer(regex_str, input_str, overlapped=True)
+        for match in re.finditer(regex_str, input_str, overlapped=True)
     ]
 
 

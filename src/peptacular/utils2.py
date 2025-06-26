@@ -217,3 +217,68 @@ def parse_ion_elements(ion: str) -> Tuple[int, str, int]:
     symbol, charge = _pop_ion_symbol(ion)
     charge, _ = _pop_ion_charge(charge)
     return count, symbol, charge
+
+
+class ModLabler:
+    """
+    A class to label modifications in a peptide sequence.
+
+    :param mod: The modification to label.
+    :type mod: str
+
+    :param label: The label for the modification.
+    :type label: str
+    """
+
+    def __init__(self):
+        self.index = 0
+        self.letter_index = 0
+        self.curr_label = None
+
+    def increment_num(self):
+        """Generate a new numeric label based on the current index."""
+        self.index += 1
+
+    def increment_letter(self):
+        """
+        Generate a new letter label based on the current letter index.
+
+        :return: The new letter label.
+        :rtype: str
+        """
+        self.letter_index += 1
+
+    @property
+    def letter(self):
+        """Generate a new letter label based on the current letter index."""
+        # Convert index to letter(s): 0->a, 1->b, ..., 25->z, 26->aa, 27->ab, etc.
+        result = ""
+        temp_index = self.letter_index
+        while True:
+            result = chr(ord("a") + (temp_index % 26)) + result
+            temp_index //= 26
+            if temp_index == 0:
+                break
+            temp_index -= 1
+
+        return result
+
+    @property
+    def num(self):
+        """
+        Generate a new numeric label based on the current index.
+
+        :return: The new numeric label.
+        :rtype: str
+        """
+        return str(self.index + 1)
+
+    @property
+    def label(self):
+        """
+        Get the current label and increment the index.
+
+        :return: The current label.
+        :rtype: str
+        """
+        return f"{self.letter}{self.num}"

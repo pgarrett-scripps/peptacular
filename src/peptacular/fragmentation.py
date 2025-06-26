@@ -3,12 +3,12 @@ fragmentation.py contains functions for fragmenting peptides
 """
 
 import itertools
-import re
+import regex as re
 from dataclasses import dataclass
 from functools import cached_property
 from typing import List, Union, Literal, Optional, Tuple, Set
 
-from .proforma.proforma_parser import ProFormaAnnotation
+from .proforma.annotation import ProFormaAnnotation
 from .constants import (
     FORWARD_ION_TYPES,
     BACKWARD_ION_TYPES,
@@ -16,7 +16,7 @@ from .constants import (
     TERMINAL_ION_TYPES,
 )
 from .mass_calc import adjust_mass, adjust_mz
-from .sequence.sequence_funcs import get_annotation_input, sequence_length
+from .sequence.sequence import get_annotation_input, sequence_length
 from .spans import (
     build_non_enzymatic_spans,
     build_right_semi_spans,

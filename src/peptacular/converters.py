@@ -1,4 +1,4 @@
-import re
+import regex as re
 
 
 def convert_ip2_sequence(sequence: str) -> str:

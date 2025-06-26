@@ -4,7 +4,7 @@ Glycan.py
 
 from typing import Union
 
-from .types import ChemComposition
+from .proforma_dataclasses import ChemComposition
 from .chem.chem_util import write_chem_formula
 from .errors import InvalidGlycanFormulaError
 from .mods.mod_db_setup import (

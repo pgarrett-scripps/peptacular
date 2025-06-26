@@ -3,10 +3,10 @@ Constants used throughout the peptacular package.
 """
 
 import os
-from typing import Dict, List, Tuple, Set
+from typing import Dict, List, Tuple, Set, Union
 from enum import Enum
 
-from regex import regex
+import regex as re
 
 from .element_setup import (
     get_element_info,
@@ -389,16 +389,16 @@ PROTEASES: Dict[str, str] = {
 PROTEASES_COMPILED = {}
 for key, value in PROTEASES.items():
     try:
-        PROTEASES_COMPILED[key] = regex.compile(value)
+        PROTEASES_COMPILED[key] = re.compile(value)
     except Exception as e:
         print(f"Error compiling regex for {key}: {e}")
         raise e
 
 # Compiling regex patterns used in your module
-ISOTOPE_COMPONENT_PATTERN = regex.compile(r"([0-9]*)([A-Za-z]+)(-?\d*\.?\d*)")
-CONDENSED_CHEM_FORMULA_PATTERN = regex.compile(r"([A-Z][a-z]*|e|p|n)(-?\d*\.?\d*)")
-ADDUCT_PATTERN = regex.compile(r"([+-]?)(\d*)?([A-Za-z]{1,2}\d*\+?-?)")
-ISOTOPE_NUM_PATTERN = regex.compile(r"[0-9]")
+ISOTOPE_COMPONENT_PATTERN = re.compile(r"([0-9]*)([A-Za-z]+)(-?\d*\.?\d*)")
+CONDENSED_CHEM_FORMULA_PATTERN = re.compile(r"([A-Z][a-z]*|e|p|n)(-?\d*\.?\d*)")
+ADDUCT_PATTERN = re.compile(r"([+-]?)(\d*)?([A-Za-z]{1,2}\d*\+?-?)")
+ISOTOPE_NUM_PATTERN = re.compile(r"[0-9]")
 
 
 # str enum
@@ -413,3 +413,35 @@ class ModType(Enum):
     INTERNAL = "internal"
     CHARGE = "charge"
     CHARGE_ADDUCTS = "charge_adducts"
+
+
+def get_mod_type(mod: Union[str, ModType]) -> ModType:
+    # return ModType Enum for the given mod string
+    if isinstance(mod, ModType):
+        return mod
+
+    if isinstance(mod, str):
+        for mod_type in ModType:
+            if mod_type.value == mod:
+                return mod_type
+    else:
+        raise ValueError(f"mod must be a string or ModType, got {type(mod)}")
+
+    raise ValueError(f"Unknown mod type: {mod}")
+
+
+def get_mods(mods: Union[None, str, List[Union[str, ModType]]]) -> List[ModType]:
+    if mods is None:
+        mods = [mod_type for mod_type in ModType]
+    elif isinstance(mods, (str, ModType)):
+        # Single modification type
+        mods = [get_mod_type(mods)]
+    elif isinstance(mods, list):
+        # List of modification types
+        mods = [get_mod_type(mod) for mod in mods]
+    else:
+        raise ValueError(
+            f"mods parameter must be str, list of str, or None, got {type(mods)}"
+        )
+
+    return mods

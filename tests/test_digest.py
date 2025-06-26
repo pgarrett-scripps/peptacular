@@ -1,7 +1,7 @@
 import unittest
 
 import peptacular as pt
-from peptacular.proforma.proforma_parser import ProFormaAnnotation, create_annotation
+
 
 PROTEIN = "MVIMSEFSADPAGQGQGQQKPLRVGFYDIERTLGKGNFAVVKLARHRVTKTQVAIKIIDKTRLDSSNLEKIYREVQLMKLLNHPHIIKLYQVMETKDMLYIVTE"
 
@@ -15,7 +15,7 @@ class TestDigest(unittest.TestCase):
         self.assertEqual(cleavage_sites, sites)
 
         # Test with ProFormaAnnotation object
-        annotation = create_annotation(PROTEIN)
+        annotation = pt.create_annotation(PROTEIN)
         cleavage_sites_annotation = list(
             pt.get_cleavage_sites(annotation, pt.PROTEASES["trypsin"])
         )
@@ -288,7 +288,7 @@ class TestDigest(unittest.TestCase):
             )
         )
         self.assertEqual(len(peptides), 2)
-        self.assertIsInstance(peptides[0][0], ProFormaAnnotation)
+        self.assertIsInstance(peptides[0][0], pt.ProFormaAnnotation)
         self.assertEqual(peptides[0][0].serialize(), "[Acetyl]-PEPTIDER[Phospho]")
         # Don't check exact span values as they may vary depending on implementation
         self.assertIsInstance(peptides[0][1], tuple)
@@ -434,7 +434,7 @@ class TestDigest(unittest.TestCase):
             )
         )
         self.assertEqual(len(peptides), 2)
-        self.assertIsInstance(peptides[0], ProFormaAnnotation)
+        self.assertIsInstance(peptides[0], pt.ProFormaAnnotation)
         self.assertEqual(peptides[0].serialize(), "TIDEK")
 
         # Test return_type='span'
@@ -472,7 +472,7 @@ class TestDigest(unittest.TestCase):
             )
         )
         self.assertEqual(len(peptides), 2)
-        self.assertIsInstance(peptides[0][0], ProFormaAnnotation)
+        self.assertIsInstance(peptides[0][0], pt.ProFormaAnnotation)
         self.assertEqual(peptides[0][0].serialize(), "TIDEK")
         self.assertEqual(peptides[0][1], (0, 5, 0))
 

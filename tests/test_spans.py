@@ -97,8 +97,8 @@ class TestSpans(unittest.TestCase):
     def testspan_to_sequence_span_beyond_sequence_length(self):
         sequence = "ABC"
         span = (0, 10, 1)
-        expected_output = "ABC"
-        self.assertEqual(span_to_sequence(sequence, span), expected_output)
+        with self.assertRaises(ValueError):
+            span_to_sequence(sequence, span)
 
     def testspan_to_sequence_negative_span(self):
         sequence = "ABCDEFGH"

@@ -7,7 +7,7 @@ from typing import List, Dict, Tuple, Union, Optional
 import warnings
 
 from . import constants
-from .types import ChemComposition
+from .proforma_dataclasses import ChemComposition
 from .chem.chem_calc import estimate_comp
 from .mass_calc import chem_mass
 

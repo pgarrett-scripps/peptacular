@@ -5,7 +5,7 @@ from typing import List
 from obo import read_obo
 from peptacular import chem
 from peptacular.chem import _parse_isotope_component
-from peptacular.mass import chem_mass
+from peptacular import chem_mass
 
 
 def generate_xlmod_db():

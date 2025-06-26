@@ -4,10 +4,10 @@ Randomizer for ProForma annotations.
 
 from random import randint, choice, sample
 from enum import Enum, auto
-from typing import List, Union
+from typing import *
 
 from ..proforma_dataclasses import Mod, Interval
-from .proforma_parser import ProFormaAnnotation
+from .annotation import ProFormaAnnotation
 
 
 _UNIMOD_LEVEL_BASE_MOD_VALS = ["Oxidation", "UNIMOD:10"]

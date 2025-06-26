@@ -20,70 +20,22 @@ a result they can be positioned anywhere in the sequence. Maybe add a check to s
 end of the sequence and if not raise an error.
 """
 
-from typing import Counter as CounterType, Optional, Any
-from typing import Dict, List, Tuple, Callable, Union
-import warnings
+from typing import *
 
-from ..errors import ProFormaFormatError, UnknownAminoAcidError
+from .util import get_annotation_input
+
+from ..errors import ProFormaFormatError
 from ..constants import ORDERED_AMINO_ACIDS
 
-from ..proforma.proforma_parser import (
-    parse,
+from ..proforma.annotation import (
     ProFormaAnnotation,
-    MultiProFormaAnnotation,
 )
 
 from ..spans import Span
-from ..proforma.input_convert import (
-    fix_list_of_mods,
-    fix_intervals_input,
-)
 
-from ..types import (
-    ChemComposition,
+from ..proforma_dataclasses import (
     ModDict,
-    ModValue,
 )
-
-from ..proforma_dataclasses import Mod
-
-
-def get_annotation_input(
-    sequence: Union[str, ProFormaAnnotation], copy: bool = True
-) -> ProFormaAnnotation:
-    if isinstance(sequence, str):
-        annotation = sequence_to_annotation(sequence)
-    elif isinstance(sequence, ProFormaAnnotation):
-        if copy:
-            annotation = sequence.copy()
-        else:
-            annotation = sequence
-    else:
-        raise TypeError(f"Expected str or ProFormaAnnotation, got {type(sequence)}")
-
-    return annotation
-
-
-def sequence_to_annotation(sequence: str) -> ProFormaAnnotation:
-    """
-    Parses a peptide sequence with modifications and returns a ProFormaAnnotation object.
-
-    :param sequence: The amino acid sequence.
-    :type sequence: str
-
-    :raises ValueError: If the input sequence contains multiple sequences.
-    :raises ProFormaFormatError: if the proforma sequence is not valid
-
-    :return: A ProFormaAnnotation object representing the input sequence.
-    :rtype: ProFormaAnnotation
-
-    """
-    annotation = parse(sequence)
-
-    if isinstance(annotation, MultiProFormaAnnotation):
-        raise ValueError(f"Invalid sequence: {sequence}")
-
-    return annotation
 
 
 def sequence_length(sequence: Union[str, ProFormaAnnotation]) -> int:
@@ -289,7 +241,7 @@ def add_mods(
 
     .. code-block:: python
 
-        >>> from peptacular.proforma_dataclasses import Mod
+        >>> from peptacular import Mod
 
         # Add internal modifications to an unmodified peptide
         >>> add_mods('PEPTIDE', {2: [Mod('phospho', 1)]})
@@ -319,7 +271,7 @@ def add_mods(
         '[Phospho]^3?PEPTIDE'
 
         # Can also add intervals
-        >>> add_mods('PEPTIDE', {'intervals': (3, 5, False, 'Phospho')})
+        >>> add_mods('PEPTIDE', {'interval': (3, 5, False, 'Phospho')})
         'PEP(TI)[Phospho]DE'
 
         # Can also add charge state
@@ -332,14 +284,6 @@ def add_mods(
 
     """
 
-    for k in mods:
-        if k == "charge":
-            continue
-        if k == "intervals":
-            mods[k] = fix_intervals_input(mods[k])
-        else:
-            mods[k] = fix_list_of_mods(mods[k])
-
     return (
         get_annotation_input(sequence, copy=True)
         .add_mod_dict(mods, append=append)
@@ -348,7 +292,9 @@ def add_mods(
 
 
 def condense_static_mods(
-    sequence: Union[str, ProFormaAnnotation], include_plus: bool = False
+    sequence: Union[str, ProFormaAnnotation],
+    include_plus: bool = False,
+    precision: Optional[int] = None,
 ) -> str:
     """
     Condenses static modifications into internal modifications.
@@ -387,9 +333,9 @@ def condense_static_mods(
     """
 
     return (
-        get_annotation_input(sequence, copy=True)
+        get_annotation_input(sequence=sequence, copy=True)
         .condense_static_mods(inplace=False)
-        .serialize(include_plus)
+        .serialize(include_plus=include_plus, precision=precision)
     )
 
 
@@ -397,6 +343,7 @@ def pop_mods(
     sequence: Union[str, ProFormaAnnotation],
     mods: Optional[Union[str, List[str]]] = None,
     include_plus: bool = False,
+    precision: Optional[int] = None,
 ) -> Tuple[str, ModDict]:
     """
     Removes all modifications from the given sequence, returning the unmodified sequence and a dictionary of the
@@ -422,15 +369,21 @@ def pop_mods(
         ('PEPTIDE-[100]', {'internal': {2: [Mod('phospho', 1)]}})
 
     """
-    annotation = get_annotation_input(sequence, copy=True)
-    mod_dict = annotation.pop_mods(mods)
-    return annotation.serialize(include_plus=include_plus), mod_dict
+    annotation = get_annotation_input(sequence=sequence, copy=True)
+    mod_dict = annotation.pop_mods(
+        mods=mods, condense=True
+    )  # only include keys that have mods
+    return (
+        annotation.serialize(include_plus=include_plus, precision=precision),
+        mod_dict,
+    )
 
 
 def strip_mods(
     sequence: Union[str, ProFormaAnnotation],
     mods: Optional[Union[str, List[str]]] = None,
     include_plus: bool = False,
+    precision: Optional[int] = None,
 ) -> str:
     """
     Strips all modifications from the given sequence, returning the unmodified sequence.
@@ -477,13 +430,16 @@ def strip_mods(
 
     """
 
-    return pop_mods(sequence, mods, include_plus)[0]
+    return pop_mods(
+        sequence=sequence, mods=mods, include_plus=include_plus, precision=precision
+    )[0]
 
 
 def filter_mods(
     sequence: Union[str, ProFormaAnnotation],
     mods: Optional[Union[str, List[str]]] = None,
     include_plus: bool = False,
+    precision: Optional[int] = None,
 ) -> str:
     """
     Keeps only the specified modifications in the sequence, removing all others.
@@ -525,9 +481,9 @@ def filter_mods(
 
     """
     return (
-        get_annotation_input(sequence, copy=True)
-        .filter_mods(mods, inplace=True)
-        .serialize(include_plus=include_plus)
+        get_annotation_input(sequence=sequence, copy=True)
+        .filter_mods(mods=mods, inplace=True)
+        .serialize(include_plus=include_plus, precision=precision)
     )
 
 
@@ -535,6 +491,7 @@ def remove_mods(
     sequence: Union[str, ProFormaAnnotation],
     mods: Optional[Union[str, List[str]]] = None,
     include_plus: bool = False,
+    precision: Optional[int] = None,
 ) -> str:
     """
     Removes the specified modifications from the sequence, returning the modified sequence.
@@ -572,9 +529,9 @@ def remove_mods(
 
     """
     return (
-        get_annotation_input(sequence, copy=True)
-        .remove_mods(mods, inplace=True)
-        .serialize(include_plus=include_plus)
+        get_annotation_input(sequence=sequence, copy=True)
+        .remove_mods(mods=mods, inplace=True)
+        .serialize(include_plus=include_plus, precision=precision)
     )
 
 
@@ -582,6 +539,7 @@ def reverse(
     sequence: Union[str, ProFormaAnnotation],
     swap_terms: bool = False,
     include_plus: bool = False,
+    precision: Optional[int] = None,
 ) -> str:
     """
     Reverses the sequence, while preserving the position of any modifications.
@@ -616,9 +574,9 @@ def reverse(
 
     """
     return (
-        get_annotation_input(sequence, copy=True)
-        .reverse(swap_terms=swap_terms)
-        .serialize(include_plus)
+        get_annotation_input(sequence=sequence, copy=True)
+        .reverse(inplace=True, swap_terms=swap_terms)
+        .serialize(include_plus=include_plus, precision=precision)
     )
 
 
@@ -626,6 +584,7 @@ def shuffle(
     sequence: Union[str, ProFormaAnnotation],
     seed: int = None,
     include_plus: bool = False,
+    precision: Optional[int] = None,
 ) -> str:
     """
     Shuffles the sequence, while preserving the position of any modifications.
@@ -656,7 +615,9 @@ def shuffle(
 
     """
     return (
-        get_annotation_input(sequence, copy=True).shuffle(seed).serialize(include_plus)
+        get_annotation_input(sequence=sequence, copy=True)
+        .shuffle(seed=seed, inplace=True)
+        .serialize(include_plus=include_plus, precision=precision)
     )
 
 
@@ -699,11 +660,18 @@ def shift(
         '<13C>PTIDEPE'
 
     """
-    return get_annotation_input(sequence, copy=True).shift(n).serialize(include_plus)
+    return (
+        get_annotation_input(sequence=sequence, copy=True)
+        .shift(n=n, inplace=True)
+        .serialize(include_plus=include_plus)
+    )
 
 
 def span_to_sequence(
-    sequence: Union[str, ProFormaAnnotation], span: Span, include_plus: bool = False
+    sequence: Union[str, ProFormaAnnotation],
+    span: Span,
+    include_plus: bool = False,
+    precision: Optional[int] = None,
 ) -> str:
     """
     Extracts a subsequence from the input sequence based on the provided span.
@@ -746,14 +714,16 @@ def span_to_sequence(
 
     """
     return (
-        get_annotation_input(sequence, copy=True)
-        .slice(span[0], span[1], inplace=False)
-        .serialize(include_plus)
+        get_annotation_input(sequence=sequence, copy=True)
+        .slice(span[0], span[1], inplace=True)
+        .serialize(include_plus=include_plus, precision=precision)
     )
 
 
 def split(
-    sequence: Union[str, ProFormaAnnotation], include_plus: bool = False
+    sequence: Union[str, ProFormaAnnotation],
+    include_plus: bool = False,
+    precision: Optional[int] = None,
 ) -> List[str]:
     """
     Splits sequence into a list of amino acids, preserving modifications.
@@ -780,12 +750,12 @@ def split(
 
     """
     return [
-        a.serialize(include_plus)
-        for a in get_annotation_input(sequence, copy=True).split()
+        a.serialize(include_plus=include_plus, precision=precision)
+        for a in get_annotation_input(sequence=sequence, copy=True).split()
     ]
 
 
-def count_residues(sequence: Union[str, ProFormaAnnotation]) -> CounterType:
+def count_residues(sequence: Union[str, ProFormaAnnotation]) -> Counter:
     """
     Counts the occurrences of each amino acid in the input sequence.
 
@@ -840,16 +810,11 @@ def percent_residues(
         {'P': 28.57, 'E': 28.57, 'T': 14.29, 'I': 14.29, 'D': 14.29}
 
     """
-    counts = count_residues(sequence)
-    total = sum(counts.values())
-    if total == 0:
-        return {}
-    d = {aa: (count / total) * 100 for aa, count in counts.items()}
-
-    if precision is not None:
-        d = {aa: round(value, precision) for aa, value in d.items()}
-
-    return d
+    return (
+        get_annotation_input(sequence, copy=False)
+        .condense_static_mods(inplace=True)
+        .percent_residues(precision=precision)
+    )
 
 
 def is_subsequence(
@@ -935,7 +900,11 @@ def _sort_mods(
         mods[k].sort(key=sort_function)
 
 
-def sort(sequence: Union[str, ProFormaAnnotation], include_plus: bool = False) -> str:
+def sort(
+    sequence: Union[str, ProFormaAnnotation],
+    include_plus: bool = False,
+    precision: Optional[int] = None,
+) -> str:
     """
     Sorts the input sequence using the provided sort function. Terminal sequence are kept in place.
 
@@ -961,9 +930,9 @@ def sort(sequence: Union[str, ProFormaAnnotation], include_plus: bool = False) -
 
     """
     return (
-        get_annotation_input(sequence, copy=True)
+        get_annotation_input(sequence=sequence, copy=True)
         .sort(inplace=True)
-        .serialize(include_plus)
+        .serialize(include_plus=include_plus, precision=precision)
     )
 
 
@@ -1288,28 +1257,6 @@ def modification_coverage(
     return coverage_dict
 
 
-def is_sequence_valid(sequence: Union[str, ProFormaAnnotation]) -> bool:
-    """
-    Checks if the input sequence is a valid ProForma sequence.
-
-    :param sequence: The sequence or ProFormaAnnotation object to be validated.
-    :type sequence: Union[str, ProFormaAnnotation]
-
-    :return: True if the sequence is a valid ProForma sequence, False otherwise.
-    :rtype: bool
-
-    """
-
-    if isinstance(sequence, str):
-        try:
-            _ = sequence_to_annotation(sequence)
-        except ValueError:
-            return False
-        except ProFormaFormatError:
-            return False
-    return True
-
-
 def count_aa(sequence: Union[str, ProFormaAnnotation]) -> Dict[str, int]:
     """
     Converts a sequence to a feature vector.
@@ -1330,6 +1277,7 @@ def annotate_ambiguity(
     reverse_coverage: List[int],
     mass_shift: Optional[Any] = None,
     include_plus: bool = False,
+    precision: Optional[int] = None,
 ) -> str:
     """
     Given a peptide sequence and coverage information for forward and reverse fragment ions,
@@ -1385,425 +1333,12 @@ def annotate_ambiguity(
         '(?SSGS)IA(?SS)(?YVQ)W[120](?YQQRPGSA)(?PT)TVIYEDDER(?PS)(?GV)(?PDR)'
     """
     return (
-        get_annotation_input(sequence, copy=True)
+        get_annotation_input(sequence=sequence, copy=True)
         .annotate_ambiguity(
             forward_coverage=forward_coverage,
             reverse_coverage=reverse_coverage,
             mass_shift=mass_shift,
             inplace=True,
         )
-        .serialize(include_plus)
+        .serialize(include_plus=include_plus, precision=precision)
     )
-
-
-def _apply_specified_mods(
-    annotation: ProFormaAnnotation,
-    charge: Optional[int] = None,
-    charge_adducts: Optional[List[Mod]] = None,
-    isotope_mods: Optional[List[Mod]] = None,
-):
-    if annotation.charge is not None and charge is not None:
-        # warning
-        warnings.warn(
-            "Both 'annotation.charge' and 'charge' are provided. Using user provided 'charge'.",
-            UserWarning,
-        )
-        annotation.charge = charge
-    elif charge is not None:
-        annotation.charge = charge
-    else:
-        pass
-
-    if annotation.charge_adducts is not None and charge_adducts is not None:
-        # warning
-        warnings.warn(
-            "Both 'annotation.charge_adducts' and 'charge_adducts' are provided. Using user provided 'charge_adducts'.",
-            UserWarning,
-        )
-        annotation.charge_adducts = charge_adducts
-    elif charge_adducts is not None:
-        annotation.charge_adducts = charge_adducts
-    else:
-        pass
-
-    if annotation.isotope_mods is not None and isotope_mods is not None:
-        # warning
-        warnings.warn(
-            "Both 'annotation.isotope_mods' and 'isotope_mods' are provided. Using user provided 'isotope_mods'.",
-            UserWarning,
-        )
-        annotation.isotope_mods = isotope_mods
-    elif isotope_mods is not None:
-        annotation.isotope_mods = isotope_mods
-    else:
-        pass
-
-
-def mass(
-    sequence: Union[str, ProFormaAnnotation],
-    charge: Optional[int] = None,
-    ion_type: str = "p",
-    monoisotopic: bool = True,
-    isotope: int = 0,
-    loss: float = 0.0,
-    charge_adducts: Optional[List[Mod]] = None,
-    isotope_mods: Optional[List[Mod]] = None,
-    use_isotope_on_mods: bool = False,
-    precision: Optional[int] = None,
-) -> float:
-    """
-    Calculate the mass of an amino acid 'sequence'.
-
-    :param sequence: A sequence or ProFormaAnnotation.
-    :type sequence: str | ProFormaAnnotation
-    :param charge: The charge state, default is None.
-    :type charge: int | None
-    :param ion_type: The ion type. Default is 'p'.
-    :type ion_type: str
-    :param monoisotopic: If True, use monoisotopic mass else use average mass. Default is True.
-    :type monoisotopic: bool
-    :param isotope: The number of Neutrons to add/subtract from the final mass. Default is 0.
-    :type isotope: int
-    :param loss: The loss to add/subtract to the final mass. Default is 0.0.
-    :type loss: float
-    :param charge_adducts: The charge adducts. Default is None.
-    :type charge_adducts: int | None
-    :param isotope_mods: The isotope modifications. Default is None.
-    :type isotope_mods: List[Mod] | None
-    :param use_isotope_on_mods:
-    :param precision: The precision of the mass. Default is None.
-    :type precision: int | None
-
-    :raise ValueError: If the ion type is not supported.
-    :raise UnknownAminoAcidError: If an unknown amino acid is encountered.
-    :raise AmbiguousAminoAcidError: If an ambiguous amino acid is encountered.
-
-    :return: The mass of the sequence.
-    :rtype: float
-
-    .. code-block:: python
-
-        # Calculate the mass of a peptide sequence.
-        >>> mass('PEPTIDE', precision=3)
-        799.36
-
-        >>> mass('<12C>PEPTIDE', precision=3)
-        799.36
-
-        >>> mass('<13C>PEPTIDE', precision=3)
-        833.474
-
-        >>> mass('<13C>PEPT[10]IDE', precision=3)
-        843.474
-
-        >>> mass('<13C><[Formula:[13C6]H20]@T>PEPTIDE', precision=3)
-        931.651
-
-        >>> mass('<[10]@T>PEPTIDE', precision=3)
-        809.36
-
-        >>> mass('<[10]@N-Term>PEPTIDE', precision=3)
-        809.36
-
-        >>> mass('<13C><[10]@T>PEPTIDE', precision=3)
-        843.474
-
-        >>> mass('<[Formula:[13C6]H20]@T>PEPTIDE', precision=3)
-        897.537
-
-        # Calculate the b-ion mass of a peptide sequence.
-        >>> mass('PEPTIDE', ion_type='b', precision=3)
-        781.349
-
-        # Calulate the average mass of a peptide sequence.
-        >>> mass('PEPTIDE', monoisotopic=False, precision=3)
-        799.824
-
-        # Calculate the mass of a peptide sequence with a charge of 2.
-        >>> mass('PEPTIDE', charge=2, precision=3)
-        801.375
-
-        # Calculate the mass of a peptide sequence with a charge of -2.
-        >>> mass('PEPTIDE', charge=-2, precision=3)
-        797.345
-
-        # Calcualte the mass of a modified peptide sequence.
-        >>> mass('PE[3.14]PTIDE[Acetyl]', charge=2, precision=3)
-        846.525
-
-        # Calculate the mass of a peptide sequence with a charge of 2.
-        >>> mass('PEPT[10][10]IDE', charge=2, precision=3)
-        821.375
-
-        # Calculate the mass of a peptide sequence with ambiguity
-        >>> mass('(PEPT)[10]IDE', charge=2, precision=3)
-        811.375
-
-        >>> mass('(?DQ)NGTWEMESNENFEGYMK', precision=3)
-        2307.905
-
-        >>> mass('EM[Oxidation]EVT[#g1(0.01)]S[#g1(0.09)]ES[Phospho#g1(0.90)]PEK', precision=3)
-        1360.511
-
-        >>> mass('{100}PEPTIDE', charge=0, precision=3, ion_type='p')
-        899.36
-
-        # Can also use ProFormaAnnotation to specify the charge
-        >>> mass('PEPTIDE/2', precision=3)
-        801.375
-
-        # Or specify the charge directly
-        >>> mass('PEPTIDE/2[+2Na+,+H+]', precision=3)
-        846.346
-
-        >>> mass('B', ion_type='by')  # doctest: +ELLIPSIS
-        Traceback (most recent call last):
-            ...
-        peptacular.errors.AmbiguousAminoAcidError: ...
-
-    """
-
-    annotation = get_annotation_input(sequence, copy=True)
-
-    _apply_specified_mods(
-        annotation,
-        charge=charge,
-        charge_adducts=charge_adducts,
-        isotope_mods=isotope_mods,
-    )
-
-    return annotation.mass(
-        ion_type=ion_type,
-        monoisotopic=monoisotopic,
-        isotope=isotope,
-        loss=loss,
-        use_isotope_on_mods=use_isotope_on_mods,
-        precision=precision,
-    )
-
-
-def mz(
-    sequence: Union[str, ProFormaAnnotation],
-    charge: Optional[int] = None,
-    ion_type: str = "p",
-    monoisotopic: bool = True,
-    isotope: int = 0,
-    loss: float = 0.0,
-    charge_adducts: Optional[List[Mod]] = None,
-    isotope_mods: Optional[List[Mod]] = None,
-    precision: Optional[int] = None,
-) -> float:
-    """
-    Calculate the m/z (mass-to-charge ratio) of an amino acid 'sequence'.
-
-    :param sequence: A sequence or ProFormaAnnotation.
-    :type sequence: str | ProFormaAnnotation
-    :param charge: The charge state, default is None.
-    :type charge: int | None
-    :param ion_type: The ion type. Default is 'p'.
-    :type ion_type: str
-    :param monoisotopic: If True, use monoisotopic mass else use average mass. Default is True.
-    :type monoisotopic: bool
-    :param isotope: The number of Neutrons to add/subtract from the final mass. Default is 0.
-    :type isotope: int
-    :param loss: The loss to add/subtract to the final mass. Default is 0.0.
-    :type loss: float
-    :param charge_adducts: The charge adducts. Default is None.
-    :type charge_adducts: int | None
-    :param isotope_mods: The isotope modifications. Default is None.
-    :type isotope_mods: List[Mod] | None
-    :param precision: The precision of the mass. Default is None.
-    :type precision: int | None
-
-    :raise ValueError: If the ion type is not supported.
-
-    :return: The Mass to Charge ratio (m/z) of the sequence.
-    :rtype: float
-
-    .. code-block:: python
-
-        # Calculate the m/z of a peptide sequence.
-        >>> mz('PEPTIDE', charge = 1, precision = 3)
-        800.367
-
-        # Calculate the b-ion m/z of a peptide sequence.
-        >>> mz('PEPTIDE', charge = 1, ion_type='b', precision = 3)
-        782.357
-
-        # Calulate the average m/z of a peptide sequence.
-        >>> mz('PEPTIDE', charge = 1, monoisotopic=False, precision = 3)
-        800.831
-
-        # Calculate the m/z of a peptide sequence with a charge of 2.
-        >>> mz('PEPTIDE', charge=2, precision = 3)
-        400.688
-
-        # Calcualte the m/z of a modified peptide sequence.
-        >>> mz('PE[3.14]PTIDE-[80]', charge=2, precision = 3)
-        442.257
-
-    """
-
-    annotation = get_annotation_input(sequence, copy=True)
-
-    _apply_specified_mods(
-        annotation,
-        charge=charge,
-        charge_adducts=charge_adducts,
-        isotope_mods=isotope_mods,
-    )
-
-    return annotation.mz(
-        ion_type=ion_type,
-        monoisotopic=monoisotopic,
-        isotope=isotope,
-        loss=loss,
-        precision=precision,
-    )
-
-
-def comp(
-    sequence: Union[str, ProFormaAnnotation],
-    ion_type: str = "p",
-    estimate_delta: bool = False,
-    charge: Optional[int] = None,
-    isotope: int = 0,
-    charge_adducts: Optional[List[Mod]] = None,
-    isotope_mods: Optional[List[ModValue]] = None,
-    use_isotope_on_mods: bool = False,
-) -> ChemComposition:
-    """
-    Calculates the elemental composition of a peptide sequence, including modifications,
-    and optionally estimates the composition based on the delta mass from modifications.
-
-    :param sequence: A sequence or ProFormaAnnotation.
-    :type sequence: str | ProFormaAnnotation
-    :param ion_type: The type of ion. Default is 'p'.
-    :type ion_type: str
-    :param estimate_delta: If True, estimate the composition based on the delta mass from modifications.
-    Default is False.
-    :type estimate_delta: bool
-    :param charge: The charge state of the ion. Default is None.
-    :type charge: int | None
-    :param isotope: The number of Neutrons to add/subtract from the final mass. Default is 0.
-    :type isotope: int
-    :param charge_adducts: The charge adducts. Default is None.
-    :type charge_adducts: int | None
-    :param isotope_mods: The isotope modifications. Default is None.
-    :type isotope_mods: List[Mod] | None
-    :param use_isotope_on_mods: If True, use the isotope on the modifications. Default is False.
-    :type use_isotope_on_mods: bool
-
-    :raises ValueError: If delta_mass is nonzero and estimate_delta is False, indicating an unaccounted modification.
-
-    :return: The elemental composition of the peptide sequence.
-    :rtype: Dict[str, int | float]
-
-    .. code-block:: python
-
-        # Calculate the elemental composition of a peptide sequence.
-        >>> comp('PEPTIDE')
-        {'C': 34, 'H': 53, 'N': 7, 'O': 15}
-
-        >>> comp('PEPTIDE')
-        {'C': 34, 'H': 53, 'N': 7, 'O': 15}
-
-        >>> comp('PEPTIDE[1.0]', estimate_delta=True)['C']
-        34.04446833455479
-
-        >>> comp('PEPTIDE[1.0]', estimate_delta=False)  # doctest: +IGNORE_EXCEPTION_DETAIL
-        Traceback (most recent call last):
-            ...
-        ValueError: Non-zero delta mass (1.0) encountered without estimation enabled for sequence 'PEPTIDE[1.00]'.
-
-    """
-
-    annotation = get_annotation_input(sequence, copy=True)
-
-    _apply_specified_mods(
-        annotation,
-        charge=charge,
-        charge_adducts=charge_adducts,
-        isotope_mods=isotope_mods,
-    )
-
-    return annotation.comp(
-        ion_type=ion_type,
-        estimate_delta=estimate_delta,
-        isotope=isotope,
-        use_isotope_on_mods=use_isotope_on_mods,
-        inplace=True,
-    )
-
-
-def comp_mass(
-    sequence: Union[str, ProFormaAnnotation],
-    ion_type: str = "p",
-    charge: Optional[int] = None,
-    isotope: int = 0,
-    charge_adducts: Optional[List[Mod]] = None,
-    isotope_mods: Optional[List[ModValue]] = None,
-    use_isotope_on_mods: bool = False,
-) -> Tuple[ChemComposition, float]:
-
-    annotation = get_annotation_input(sequence, copy=True)
-
-    _apply_specified_mods(
-        annotation,
-        charge=charge,
-        charge_adducts=charge_adducts,
-        isotope_mods=isotope_mods,
-    )
-
-    return annotation.comp_mass(
-        ion_type=ion_type,
-        isotope=isotope,
-        use_isotope_on_mods=use_isotope_on_mods,
-        precision=None,
-    )
-
-
-def condense_to_mass_mods(
-    sequence: Union[str, ProFormaAnnotation],
-    include_plus: bool = False,
-    precision: Optional[int] = None,
-) -> str:
-    """
-    Converts all modifications in a sequence to their mass equivalents by calculating
-    the mass difference between modified and unmodified segments.
-
-    :param sequence: The sequence or ProFormaAnnotation object to convert.
-    :type sequence: Union[str, ProFormaAnnotation]
-    :param include_plus: Whether to include the plus sign for positive mass modifications.
-    :type include_plus: bool
-
-    :raises ValueError: If the input sequence contains multiple sequences.
-    :raises ProFormaFormatError: if the proforma sequence is not valid
-
-    :return: The sequence with all modifications converted to mass modifications.
-    :rtype: str
-
-    .. code-block:: python
-
-        >>> condense_to_mass_mods('PEP[Phospho]TIDE', include_plus=False, precision=3)
-        'PEP[79.966]TIDE'
-
-        >>> condense_to_mass_mods('PEP[Phospho]TIDE', include_plus=True, precision=3)
-        'PEP[+79.966]TIDE'
-
-        >>> condense_to_mass_mods('[Acetyl]-PEPTIDE', precision=3)
-        '[42.011]-PEPTIDE'
-
-        >>> condense_to_mass_mods('PEPTIDE-[Amidated]', precision=3)
-        'PEPTIDE-[-0.984]'
-
-        >>> condense_to_mass_mods('<13C>PEP[Phospho]TIDE', precision=3)
-        'P[5.017]E[5.017]P[84.983]T[4.013]I[6.020]D[4.013]E[5.017]'
-
-    """
-    annotation = get_annotation_input(sequence, copy=True)
-
-    return annotation.condense_to_mass_mods(
-        include_plus=include_plus,
-        inplace=True,
-    ).serialize(include_plus=include_plus, precision=precision)

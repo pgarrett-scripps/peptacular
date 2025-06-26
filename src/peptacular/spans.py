@@ -11,7 +11,7 @@ Working with spans can be a more efficient way of processing the data, since a p
 from typing import List, Optional, Generator, Iterable
 from itertools import groupby
 
-from .types import Span
+from .proforma_dataclasses import Span
 
 
 def build_non_enzymatic_spans(

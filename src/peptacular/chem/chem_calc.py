@@ -10,7 +10,7 @@ from ..utils2 import parse_ion_elements
 from ..util import parse_isotope_mods
 
 from .chem_constants import ISOTOPIC_AVERAGINE_MASS
-from ..types import ChemComposition, ModValue
+from ..proforma_dataclasses import ChemComposition, ModValue
 from .chem_util import parse_chem_formula, write_chem_formula
 from ..mods.mod_db_setup import MONOSACCHARIDES_DB
 from ..constants import (

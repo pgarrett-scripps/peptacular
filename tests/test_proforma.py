@@ -408,18 +408,15 @@ class TestProForma(unittest.TestCase):
 
     def test_reverse_annotation(self):
         # Test reversing a ProForma annotation
-        proforma = "P[Phospho]EPTIDE"
-        annotation = pt.parse(proforma)
+        annotation = pt.parse("P[Phospho]EPTIDE")
         reversed_annotation = annotation.reverse()
-        self.assertEqual(reversed_annotation.sequence, "EDITPEP")
-        self.assertEqual(reversed_annotation.internal_mods, {6: [Mod("Phospho", 1)]})
+        self.assertEqual(reversed_annotation.serialize(), "EDITPEP[Phospho]")
 
     def test_shuffle_annotation(self):
         # Test shuffling a ProForma annotation with a fixed seed
-        proforma = "P[Phospho]EPTIDE"
-        annotation = pt.parse(proforma)
+        annotation = pt.parse("P[Phospho]EPTIDE")
         shuffled = annotation.shuffle(seed=42)
-        self.assertEqual(len(shuffled.sequence), len(annotation.sequence))
+        self.assertEqual(len(shuffled.serialize()), len(annotation.serialize()))
         self.assertEqual(shuffled.serialize(), "ETIPEP[Phospho]D")
 
     def test_shift_annotation(self):
@@ -463,3 +460,4 @@ class TestProForma(unittest.TestCase):
         self.assertEqual(counts["T"], 1)
         self.assertEqual(counts["I"], 1)
         self.assertEqual(counts["D"], 1)
+        

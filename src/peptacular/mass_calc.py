@@ -52,8 +52,8 @@ from .mods.mod_db import (
     is_xlmod_str,
     is_resid_str,
 )
-from .types import ChemComposition
-from .proforma.input_convert import ModValue
+from .proforma_dataclasses import ChemComposition
+from .proforma_dataclasses import ModValue
 
 
 def _convert_adducts_to_str(

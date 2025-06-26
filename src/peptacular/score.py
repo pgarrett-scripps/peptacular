@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import List, Tuple, Union, Dict, Optional
 
 from .fragmentation import Fragment
-from .sequence.sequence_funcs import strip_mods
+from .sequence.sequence import strip_mods
 
 
 def get_matched_indices(

@@ -689,6 +689,25 @@ secondary_structure_scales = {
       "ChouFasmanBetaTurn": chou_fasman_beta_turn
       }
 
+secondary_structure_scales_by_name = {
+    'DeleageRoux' : {
+        'alpha_helix': deleage_roux_alpha_helix,
+        'beta_sheet': deleage_roux_beta_sheet,
+        'beta_turn': deleage_roux_beta_turn,
+        'coil': deleage_roux_coil
+    },
+    'Levitt' : {
+        'alpha_helix': levitt_alpha_helix,
+        'beta_sheet': levitt_beta_sheet,
+        'beta_turn': levitt_beta_turn
+    },
+    'ChouFasman' : {
+        'alpha_helix': chou_fasman_alpha_helix,
+        'beta_sheet': chou_fasman_beta_sheet,
+        'beta_turn': chou_fasman_beta_turn
+    }
+}
+
 
 """
 Amino acid scale: Conformational preference for parallel beta strand.
@@ -1023,4 +1042,81 @@ hplc_scales = {
     "Browne": hplc_browne,
     "Meek_7.4": hplc_meek_7_4,
     "Browne_TFA": hplc_browne_tfa
+}
+
+
+all_property_scales = {
+    'hphob_kyte_doolittle': hphob_kyte_doolittle,
+    "hphob_adoberin": hphob_adoberin,
+    "hphob_abraham_leo": hphob_abraham_leo,
+    "hphob_agros": hphob_agros,
+    "hphob_rao_argos": hphob_rao_argos,
+    "hphob_black_mould": hphob_black_mould,
+    "hphob_bull_breese": hphob_bull_breese,
+    "hphob_casari_sippl": hphob_casari_sippl,
+    "hphob_cid": hphob_cid,
+    "hphob_cowan_3_4": hphob_cowan_3_4,
+    "hphob_cowan_7_5": hphob_cowan_7_5,
+    "hphob_eisenberg": hphob_eisenberg,
+    "hphob_engelman": hphob_engelman,
+    "hphob_fasman": hphob_fasman,
+    "hphob_fauchere": hphob_fauchere,
+    "hphob_goldsack": hphob_goldsack,
+    "hphob_guy": hphob_guy,
+    "hphob_jones": hphob_jones,
+    "hphob_juretic": hphob_juretic,
+    "hphob_kidera": hphob_kidera,
+    "hphob_miyazawa": hphob_miyazawa,
+    "hphob_parker": hphob_parker,
+    "hphob_ponnuswamy": hphob_ponnuswamy,
+    "hphob_manavalan": hphob_manavalan,
+    "hphob_rose": hphob_rose,
+    "hphob_roseman": hphob_roseman,
+    "hphob_sweet": hphob_sweet,
+    "hphob_tanford": hphob_tanford,
+    "hphob_wilson": hphob_wilson,
+    "hphob_zimmerman": hphob_zimmerman,
+    "hphob_chothia": hphob_chothia,
+    "hphob_janin": hphob_janin,
+    "hphob_wolfenden": hphob_wolfenden,
+    "hphob_fauchere": hphob_fauchere,
+    "hphob_welling": hphob_welling,
+    "flexibility_vihinen": flexibility_vihinen,
+    "hydrophilicity_hop_wood": hydrophilicity_hop_wood,
+    "surface_accessibility_vergoten": surface_accessibility_vergoten,
+    "surface_accessiblility_janin": surface_accessiblility_janin,
+    "pk_nterminal": pk_nterminal,
+    "pk_cterminal": pk_cterminal,
+    "pk_sidechain": pk_sidechain,
+    "deleage_roux_alpha_helix": deleage_roux_alpha_helix,
+    "deleage_roux_beta_sheet": deleage_roux_beta_sheet,
+    "deleage_roux_beta_turn": deleage_roux_beta_turn,
+    "deleage_roux_coil": deleage_roux_coil,
+    "levitt_alpha_helix": levitt_alpha_helix,
+    "levitt_beta_sheet": levitt_beta_sheet,
+    "levitt_beta_turn": levitt_beta_turn,
+    "chou_fasman_alpha_helix": chou_fasman_alpha_helix,
+    "chou_fasman_beta_sheet": chou_fasman_beta_sheet,
+    "chou_fasman_beta_turn": chou_fasman_beta_turn,
+    "beta_strand_parallel": beta_strand_parallel,
+    "beta_strand_antiparallel": beta_strand_antiparallel,
+    "beta_strand_total": beta_strand_total,
+    "ratioside": ratioside,
+    "polarity_grantham": polarity_grantham,
+    "polarity_zimmerman": polarity_zimmerman,
+    "mutability": mutability,
+    "codons": codons,
+    "refractivity": refractivity,
+    "bulkiness": bulkiness,
+    "recognition_factors": recognition_factors,
+    "aa_composition_mccaldron": aa_composition_mccaldron,
+    "aa_composition_swissprot": aa_composition_swissprot,
+    "transmembrane_tendency": transmembrane_tendency,
+    "accessible_residues": accessible_residues,
+    "average_buried_area": average_buried_area,
+    "molecular_weights": molecular_weights,
+    "hplc_meek_2_1": hplc_meek_2_1,
+    "hplc_browne": hplc_browne,
+    "hplc_meek_7_4": hplc_meek_7_4,
+    "hplc_browne_tfa": hplc_browne_tfa,
 }

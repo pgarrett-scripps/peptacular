@@ -2,15 +2,18 @@
 This module provides functions to generate permutations, combinations, and products of sequences.
 """
 
-from typing import List, Union
+from typing import Generator, List, Optional, Union
 
-from ..proforma.proforma_parser import ProFormaAnnotation
-from .sequence_funcs import get_annotation_input
+from ..proforma.annotation import ProFormaAnnotation
+from .util import get_annotation_input
 
 
 def permutations(
-    sequence: Union[str, ProFormaAnnotation], size: int = None
-) -> List[str]:
+    sequence: Union[str, ProFormaAnnotation],
+    size: int = None,
+    include_plus: bool = False,
+    precision: Optional[int] = None,
+) -> Generator[str, None, None]:
     """
     Generates all permutations of the input sequence. Terminal sequence are kept in place.
 
@@ -24,26 +27,32 @@ def permutations(
 
     .. code-block:: python
 
-        >>> permutations('PET')
+        >>> list(permutations('PET'))
         ['PET', 'PTE', 'EPT', 'ETP', 'TPE', 'TEP']
 
-        >>> permutations('[3]-PET-[1]')
+        >>> list(permutations('[3]-PET-[1]'))
         ['[3]-PET-[1]', '[3]-PTE-[1]', '[3]-EPT-[1]', '[3]-ETP-[1]', '[3]-TPE-[1]', '[3]-TEP-[1]']
 
-        >>> permutations('PE[3.14]T')
+        >>> list(permutations('PE[3.14]T'))
         ['PE[3.14]T', 'PTE[3.14]', 'E[3.14]PT', 'E[3.14]TP', 'TPE[3.14]', 'TE[3.14]P']
 
-        >>> permutations('<13C>PET')
+        >>> list(permutations('<13C>PET'))
         ['<13C>PET', '<13C>PTE', '<13C>EPT', '<13C>ETP', '<13C>TPE', '<13C>TEP']
 
     """
     annotation = get_annotation_input(sequence, copy=False)
-    return [a.serialize() for a in annotation.permutations(size)]
+    return (
+        a.serialize(include_plus=include_plus, precision=precision)
+        for a in annotation.permutations(size=size)
+    )
 
 
 def product(
-    sequence: Union[str, ProFormaAnnotation], repeat: Union[int, None]
-) -> List[str]:
+    sequence: Union[str, ProFormaAnnotation],
+    repeat: Union[int, None],
+    include_plus: bool = False,
+    precision: Optional[int] = None,
+) -> Generator[str, None, None]:
     """
     Generates all sartesian products of the input sequence of a given size. Terminal sequence are kept in place.
 
@@ -57,27 +66,33 @@ def product(
 
     .. code-block:: python
 
-        >>> product('PET', 2)
+        >>> list(product('PET', 2))
         ['PP', 'PE', 'PT', 'EP', 'EE', 'ET', 'TP', 'TE', 'TT']
 
-        >>> product('[3]-PET-[1]', 2)[:5]
+        >>> list(product('[3]-PET-[1]', 2))[:5]
         ['[3]-PP-[1]', '[3]-PE-[1]', '[3]-PT-[1]', '[3]-EP-[1]', '[3]-EE-[1]']
 
-        >>> product('PE[3.14]T', 2)
+        >>> list(product('PE[3.14]T', 2))
         ['PP', 'PE[3.14]', 'PT', 'E[3.14]P', 'E[3.14]E[3.14]', 'E[3.14]T', 'TP', 'TE[3.14]', 'TT']
 
-        >>> product('<13C>PET', 2)
+        >>> list(product('<13C>PET', 2))
         ['<13C>PP', '<13C>PE', '<13C>PT', '<13C>EP', '<13C>EE', '<13C>ET', '<13C>TP', '<13C>TE', '<13C>TT']
 
     """
 
-    annotation = get_annotation_input(sequence, copy=False)
-    return [a.serialize() for a in annotation.product(repeat)]
+    annotation = get_annotation_input(sequence=sequence, copy=False)
+    return (
+        a.serialize(include_plus=include_plus, precision=precision)
+        for a in annotation.product(repeat=repeat)
+    )
 
 
 def combinations(
-    sequence: Union[str, ProFormaAnnotation], size: Union[int, None]
-) -> List[str]:
+    sequence: Union[str, ProFormaAnnotation],
+    size: Union[int, None],
+    include_plus: bool = False,
+    precision: Optional[int] = None,
+) -> Generator[str, None, None]:
     """
     Generates all combinations of the input sequence of a given size. Terminal sequence are kept in place.
 
@@ -92,26 +107,32 @@ def combinations(
 
     .. code-block:: python
 
-        >>> combinations('PET', 2)
+        >>> list(combinations('PET', 2))
         ['PE', 'PT', 'ET']
 
-        >>> combinations('[3]-PET-[1]', 2)
+        >>> list(combinations('[3]-PET-[1]', 2))
         ['[3]-PE-[1]', '[3]-PT-[1]', '[3]-ET-[1]']
 
-        >>> combinations('PE[3.14]T', 2)
+        >>> list(combinations('PE[3.14]T', 2))
         ['PE[3.14]', 'PT', 'E[3.14]T']
 
-        >>> combinations('<13C>PET', 2)
+        >>> list(combinations('<13C>PET', 2))
         ['<13C>PE', '<13C>PT', '<13C>ET']
 
     """
-    annotation = get_annotation_input(sequence, copy=False)
-    return [a.serialize() for a in annotation.combinations(size)]
+    annotation = get_annotation_input(sequence=sequence, copy=False)
+    return (
+        a.serialize(include_plus=include_plus, precision=precision)
+        for a in annotation.combinations(r=size)
+    )
 
 
 def combinations_with_replacement(
-    sequence: Union[str, ProFormaAnnotation], size: Union[int, None]
-) -> List[str]:
+    sequence: Union[str, ProFormaAnnotation],
+    size: Union[int, None],
+    include_plus: bool = False,
+    precision: Optional[int] = None,
+) -> Generator[str, None, None]:
     """
     Generates all combinations with replacement of the input sequence of a given size. Terminal sequence are kept
     in place.
@@ -127,18 +148,21 @@ def combinations_with_replacement(
 
     .. code-block:: python
 
-        >>> combinations_with_replacement('PET', 2)
+        >>> list(combinations_with_replacement('PET', 2))
         ['PP', 'PE', 'PT', 'EE', 'ET', 'TT']
 
-        >>> combinations_with_replacement('[3]-PET-[1]', 2)
+        >>> list(combinations_with_replacement('[3]-PET-[1]', 2))
         ['[3]-PP-[1]', '[3]-PE-[1]', '[3]-PT-[1]', '[3]-EE-[1]', '[3]-ET-[1]', '[3]-TT-[1]']
 
-        >>> combinations_with_replacement('PE[3.14]T', 2)
+        >>> list(combinations_with_replacement('PE[3.14]T', 2))
         ['PP', 'PE[3.14]', 'PT', 'E[3.14]E[3.14]', 'E[3.14]T', 'TT']
 
-        >>> combinations_with_replacement('<13C>PET', 2)
+        >>> list(combinations_with_replacement('<13C>PET', 2))
         ['<13C>PP', '<13C>PE', '<13C>PT', '<13C>EE', '<13C>ET', '<13C>TT']
 
     """
-    annotation = get_annotation_input(sequence, copy=False)
-    return [a.serialize() for a in annotation.combinations_with_replacement(size)]
+    annotation = get_annotation_input(sequence=sequence, copy=False)
+    return (
+        a.serialize(include_plus=include_plus, precision=precision)
+        for a in annotation.combinations_with_replacement(r=size)
+    )
