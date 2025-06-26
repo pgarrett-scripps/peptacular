@@ -3,7 +3,7 @@ import warnings
 
 from ..errors import ProFormaFormatError
 from ..proforma_dataclasses import Mod
-from ..proforma.annotation import (
+from ..proforma.annot import (
     ProFormaAnnotation,
 )
 from ..proforma.multi_annotation import MultiProFormaAnnotation

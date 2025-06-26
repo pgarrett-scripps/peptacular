@@ -9,7 +9,7 @@ modules = [
     pt.sequence,
     pt.properties,
     pt.mod_builder,
-    pt.annotation,
+    pt.annot,
     pt.proforma_dataclasses,
     pt.randomizer,
     pt.digestion,

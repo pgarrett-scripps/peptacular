@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from abc import ABC, abstractmethod
 
 from .util import get_annotation_input
-from ..proforma.annotation import ProFormaAnnotation
+from ..proforma.annot import ProFormaAnnotation
 from ..proforma_dataclasses import Mod
 from ..util import get_regex_match_indices
 from ..proforma_dataclasses import (

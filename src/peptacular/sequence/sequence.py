@@ -27,7 +27,7 @@ from .util import get_annotation_input
 from ..errors import ProFormaFormatError
 from ..constants import ORDERED_AMINO_ACIDS
 
-from ..proforma.annotation import (
+from ..proforma.annot import (
     ProFormaAnnotation,
 )
 

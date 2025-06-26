@@ -19,7 +19,7 @@ from typing import Union, List, Optional, Literal, Tuple, Generator, Iterable
 
 from .spans import Span
 from .constants import PROTEASES_COMPILED
-from .proforma.annotation import ProFormaAnnotation
+from .proforma.annot import ProFormaAnnotation
 from .spans import (
     build_left_semi_spans,
     build_right_semi_spans,

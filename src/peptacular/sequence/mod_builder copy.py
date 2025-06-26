@@ -5,7 +5,7 @@ Modification builder for amino acid sequences.
 from typing import Dict, List, Generator, Union, Optional, Literal
 
 from .util import get_annotation_input
-from ..proforma.annotation import ProFormaAnnotation
+from ..proforma.annot import ProFormaAnnotation
 from ..proforma_dataclasses import Mod
 from ..util import get_regex_match_indices
 from ..proforma_dataclasses import (

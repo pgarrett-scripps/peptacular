@@ -12,7 +12,7 @@ from ..proforma_dataclasses import (
     fix_list_of_mods,
 )
 from ..util import _validate_single_mod_multiplier
-from .annotation import ProFormaAnnotation
+from .annot import ProFormaAnnotation
 from .multi_annotation import MultiProFormaAnnotation
 
 

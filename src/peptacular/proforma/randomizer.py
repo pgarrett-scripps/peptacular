@@ -7,7 +7,7 @@ from enum import Enum, auto
 from typing import *
 
 from ..proforma_dataclasses import Mod, Interval
-from .annotation import ProFormaAnnotation
+from .annot import ProFormaAnnotation
 
 
 _UNIMOD_LEVEL_BASE_MOD_VALS = ["Oxidation", "UNIMOD:10"]

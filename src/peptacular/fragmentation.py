@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from functools import cached_property
 from typing import List, Union, Literal, Optional, Tuple, Set
 
-from .proforma.annotation import ProFormaAnnotation
+from .proforma.annot import ProFormaAnnotation
 from .constants import (
     FORWARD_ION_TYPES,
     BACKWARD_ION_TYPES,

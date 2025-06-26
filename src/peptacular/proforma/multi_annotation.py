@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import *
 
-from .annotation import ProFormaAnnotation
+from .annot import ProFormaAnnotation
 
 
 @dataclass

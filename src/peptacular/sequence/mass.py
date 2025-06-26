@@ -2,7 +2,7 @@ from typing import *
 
 from .util import get_annotation_input, override_annotation_properties
 
-from ..proforma.annotation import ProFormaAnnotation
+from ..proforma.annot import ProFormaAnnotation
 from ..proforma_dataclasses import ChemComposition, Mod, ModValue
 
 

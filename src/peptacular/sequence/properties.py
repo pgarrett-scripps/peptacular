@@ -2,7 +2,7 @@ from typing import Dict, List, Literal, Optional, Union
 
 from .util import get_annotation_input
 
-from ..proforma.annotation import ProFormaAnnotation
+from ..proforma.annot import ProFormaAnnotation
 
 
 def calc_property(
