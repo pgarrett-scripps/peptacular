@@ -324,4 +324,4 @@ def get_number(ion_type: str, len_sequence: int, start: int, end: int) -> str:
     else:
         raise ValueError("Wrong Ion Type")
 
-    return number
+    return str(number)

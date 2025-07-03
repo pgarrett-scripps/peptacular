@@ -11,7 +11,7 @@ from ..proforma_dataclasses import (
     fix_intervals_input,
     fix_list_of_mods,
 )
-from ..util import _validate_single_mod_multiplier
+from ..util import validate_single_mod_multiplier
 from .annot import ProFormaAnnotation
 from .multi_annotation import MultiProFormaAnnotation
 
@@ -100,7 +100,7 @@ class _ProFormaParser:
         self._charge_adducts = None
         self._intervals = None
 
-    @_validate_single_mod_multiplier
+    @validate_single_mod_multiplier
     def _add_static_mod(self, mod: Union[Mod, List[Mod]]) -> None:
         if self._static_mods is None:
             self._static_mods = []
@@ -109,7 +109,7 @@ class _ProFormaParser:
         else:
             self._static_mods.append(mod)
 
-    @_validate_single_mod_multiplier
+    @validate_single_mod_multiplier
     def _add_isotope_mod(self, mod: Union[Mod, List[Mod]]) -> None:
         if self._isotope_mods is None:
             self._isotope_mods = []
@@ -169,7 +169,7 @@ class _ProFormaParser:
         else:
             self._intervals.append(interval)
 
-    @_validate_single_mod_multiplier
+    @validate_single_mod_multiplier
     def _add_charge_adducts(self, mod: Union[Mod, List[Mod]]) -> None:
         if self._charge_adducts is None:
             self._charge_adducts = []

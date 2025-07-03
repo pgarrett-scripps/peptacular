@@ -2,16 +2,30 @@
 
 
 
+from dataclasses import dataclass
 from typing import Generator, Iterable, List, Literal, Optional, Tuple, Union
 
-from peptacular.constants import PROTEASES_COMPILED
-from peptacular.util import get_regex_match_indices
+from ..constants import PROTEASES_COMPILED
+from ..util import get_regex_match_indices
 
 from ..spans import build_left_semi_spans, build_non_enzymatic_spans, build_right_semi_spans, build_spans
 
 from ..proforma_dataclasses import Span
 from .annot_fragmentation import ProFormaAnnotationFragmentation
 
+@dataclass
+class EnzymeConfig:
+    """Configuration for a single enzyme in a digestion process."""
+
+    regex: Union[List[str], str]  # Regular expressions for enzyme cleavage sites
+    missed_cleavages: int = 0  # Allowed missed cleavages
+    semi_enzymatic: bool = False  # Whether to include semi-enzymatic peptides
+    complete_digestion: bool = True  # Whether to omit original sequence
+
+    def __post_init__(self):
+        # Convert single values to lists if needed
+        if isinstance(self.regex, str):
+            self.regex = [self.regex]
 
 DigestReturnType = Literal["str", "annotation", "span", "str-span", "annotation-span"]
 
@@ -159,44 +173,22 @@ class ProFormaAnnotationDigestion(ProFormaAnnotationFragmentation):
     
 
     def sequential_digest(
-    self,
-    enzyme_configs: List[EnzymeConfig],
-    min_len: Optional[int] = None,
-    max_len: Optional[int] = None,
-    return_type: DigestReturnType = "str",
-) -> DIGEST_RETURN_TYPING:
+        self,
+        enzyme_configs: List[EnzymeConfig],
+        min_len: Optional[int] = None,
+        max_len: Optional[int] = None,
+        return_type: DigestReturnType = "str",
+    ) -> DIGEST_RETURN_TYPING:
 
-    # Start with the whole sequence
-    digested_anot_spans = []
+        # Start with the whole sequence
+        digested_anot_spans = []
 
-    # Apply each enzyme sequentially
-    for i, enzyme_config in enumerate(enzyme_configs):
-        if i == 0:
-            # First enzyme digests the original sequence
-            digested_anot_spans = list(
-                digest(
-                    sequence=annotation,
-                    enzyme_regex=enzyme_config.regex,
-                    missed_cleavages=enzyme_config.missed_cleavages,
-                    semi=enzyme_config.semi_enzymatic,
-                    min_len=min_len,
-                    max_len=None,
-                    return_type="annotation-span",
-                    complete_digestion=enzyme_config.complete_digestion,
-                )
-            )
-        else:
-            # Break early if previous enzyme digestion yielded nothing
-            if len(digested_anot_spans) == 0:
-                break
-
-            sequential_digested_anot_spans = []
-
-            # Apply this enzyme to each fragment from previous digestion
-            for anot, span in digested_anot_spans:
-                _digested_anot_spans = list(
-                    digest(
-                        anot,
+        # Apply each enzyme sequentially
+        for i, enzyme_config in enumerate(enzyme_configs):
+            if i == 0:
+                # First enzyme digests the original sequence
+                digested_anot_spans = list(
+                    self.digest(
                         enzyme_regex=enzyme_config.regex,
                         missed_cleavages=enzyme_config.missed_cleavages,
                         semi=enzyme_config.semi_enzymatic,
@@ -206,33 +198,52 @@ class ProFormaAnnotationDigestion(ProFormaAnnotationFragmentation):
                         complete_digestion=enzyme_config.complete_digestion,
                     )
                 )
+            else:
+                # Break early if previous enzyme digestion yielded nothing
+                if len(digested_anot_spans) == 0:
+                    break
 
-                # Fix span to be in reference to original sequence
-                for j, digested_anot_span in enumerate(_digested_anot_spans):
-                    digested_span = digested_anot_span[1]
-                    fixed_digested_span = (
-                        span[0] + digested_span[0],
-                        span[0] + digested_span[1],
-                        span[2],
+                sequential_digested_anot_spans = []
+
+                # Apply this enzyme to each fragment from previous digestion
+                for anot, span in digested_anot_spans:
+                    _digested_anot_spans = list(
+                        anot.digest(
+                            enzyme_regex=enzyme_config.regex,
+                            missed_cleavages=enzyme_config.missed_cleavages,
+                            semi=enzyme_config.semi_enzymatic,
+                            min_len=min_len,
+                            max_len=None,
+                            return_type="annotation-span",
+                            complete_digestion=enzyme_config.complete_digestion,
+                        )
                     )
-                    _digested_anot_spans[j] = (
-                        digested_anot_span[0],
-                        fixed_digested_span,
-                    )
 
-                sequential_digested_anot_spans.extend(_digested_anot_spans)
+                    # Fix span to be in reference to original sequence
+                    for j, digested_anot_span in enumerate(_digested_anot_spans):
+                        digested_span = digested_anot_span[1]
+                        fixed_digested_span = (
+                            span[0] + digested_span[0],
+                            span[0] + digested_span[1],
+                            span[2],
+                        )
+                        _digested_anot_spans[j] = (
+                            digested_anot_span[0],
+                            fixed_digested_span,
+                        )
 
-            digested_anot_spans = sequential_digested_anot_spans
+                    sequential_digested_anot_spans.extend(_digested_anot_spans)
 
-    # Apply max_len filter if specified
-    if max_len is not None:
-        digested_anot_spans = [
-            (anot, span)
-            for anot, span in digested_anot_spans
-            if span[1] - span[0] <= max_len
-        ]
+                digested_anot_spans = sequential_digested_anot_spans
 
-    # Format and return the results
-    return _return_digested_sequences(
-        annotation, [span for anot, span in digested_anot_spans], return_type
-    )
+        # Apply max_len filter if specified
+        if max_len is not None:
+            digested_anot_spans = [
+                (anot, span)
+                for anot, span in digested_anot_spans
+                if span[1] - span[0] <= max_len
+            ]
+
+        # Format and return the results
+        return self._return_digested_sequences([span for anot, span in digested_anot_spans], return_type
+        )

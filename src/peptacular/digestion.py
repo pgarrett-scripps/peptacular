@@ -17,6 +17,8 @@ Valid DigestReturnType's:
 from dataclasses import dataclass
 from typing import Union, List, Optional, Literal, Tuple, Generator, Iterable
 
+from .proforma.annot_digestion import EnzymeConfig
+
 from .spans import Span
 from .constants import PROTEASES_COMPILED
 from .proforma.annot import ProFormaAnnotation
@@ -386,19 +388,7 @@ def digest(
     )
 
 
-@dataclass
-class EnzymeConfig:
-    """Configuration for a single enzyme in a digestion process."""
 
-    regex: Union[List[str], str]  # Regular expressions for enzyme cleavage sites
-    missed_cleavages: int = 0  # Allowed missed cleavages
-    semi_enzymatic: bool = False  # Whether to include semi-enzymatic peptides
-    complete_digestion: bool = True  # Whether to omit original sequence
-
-    def __post_init__(self):
-        # Convert single values to lists if needed
-        if isinstance(self.regex, str):
-            self.regex = [self.regex]
 
 
 def digest_from_config(
@@ -457,76 +447,9 @@ def sequential_digest(
         >>> list(sequential_digest(sequence='XXXKXXXDXXX', enzyme_configs=partial_digest, return_type='str'))
         ['XXXK', 'XXXKXXXD', 'XXXKXXXDXXX', 'XXX', 'XXXD', 'XXXDXXX', 'XXX']
     """
-
-    annotation = get_annotation_input(sequence, copy=True)
-
-    # Start with the whole sequence
-    digested_anot_spans = []
-
-    # Apply each enzyme sequentially
-    for i, enzyme_config in enumerate(enzyme_configs):
-        if i == 0:
-            # First enzyme digests the original sequence
-            digested_anot_spans = list(
-                digest(
-                    sequence=annotation,
-                    enzyme_regex=enzyme_config.regex,
-                    missed_cleavages=enzyme_config.missed_cleavages,
-                    semi=enzyme_config.semi_enzymatic,
-                    min_len=min_len,
-                    max_len=None,
-                    return_type="annotation-span",
-                    complete_digestion=enzyme_config.complete_digestion,
-                )
-            )
-        else:
-            # Break early if previous enzyme digestion yielded nothing
-            if len(digested_anot_spans) == 0:
-                break
-
-            sequential_digested_anot_spans = []
-
-            # Apply this enzyme to each fragment from previous digestion
-            for anot, span in digested_anot_spans:
-                _digested_anot_spans = list(
-                    digest(
-                        anot,
-                        enzyme_regex=enzyme_config.regex,
-                        missed_cleavages=enzyme_config.missed_cleavages,
-                        semi=enzyme_config.semi_enzymatic,
-                        min_len=min_len,
-                        max_len=None,
-                        return_type="annotation-span",
-                        complete_digestion=enzyme_config.complete_digestion,
-                    )
-                )
-
-                # Fix span to be in reference to original sequence
-                for j, digested_anot_span in enumerate(_digested_anot_spans):
-                    digested_span = digested_anot_span[1]
-                    fixed_digested_span = (
-                        span[0] + digested_span[0],
-                        span[0] + digested_span[1],
-                        span[2],
-                    )
-                    _digested_anot_spans[j] = (
-                        digested_anot_span[0],
-                        fixed_digested_span,
-                    )
-
-                sequential_digested_anot_spans.extend(_digested_anot_spans)
-
-            digested_anot_spans = sequential_digested_anot_spans
-
-    # Apply max_len filter if specified
-    if max_len is not None:
-        digested_anot_spans = [
-            (anot, span)
-            for anot, span in digested_anot_spans
-            if span[1] - span[0] <= max_len
-        ]
-
-    # Format and return the results
-    return _return_digested_sequences(
-        annotation, [span for anot, span in digested_anot_spans], return_type
+    return get_annotation_input(sequence, copy=False).sequential_digest(
+        enzyme_configs=enzyme_configs,
+        min_len=min_len,
+        max_len=max_len,
+        return_type=return_type,
     )

@@ -16,7 +16,7 @@ from .proforma_dataclasses import (
 
 
 def get_regex_match_indices(
-    input_str: str, regex_str: Union[str, re.Pattern], offset: int = 0
+    input_str: str, regex_str: Union[str, re.Pattern[str]], offset: int = 0
 ) -> Generator[int, None, None]:
     """
     Identify the starting indexes of occurrences of a given regex pattern within a string.
@@ -75,7 +75,7 @@ def get_regex_match_indices(
 
 
 def get_regex_match_range(
-    input_str: str, regex_str: Union[str, re.Pattern], offset: int = 0
+    input_str: str, regex_str: Union[str, re.Pattern[str]], offset: int = 0
 ) -> List[Tuple[int, int]]:
     """
     Identify the starting indexes of occurrences of a given regex pattern within a string.
@@ -119,7 +119,7 @@ def get_regex_match_range(
     ]
 
 
-def _validate_span(span: Tuple[int, int, int]) -> None:
+def validate_span(span: Tuple[int, int, int]) -> None:
     """
     Validates if a given span is valid.
 
@@ -223,7 +223,7 @@ def _construct_ambiguity_intervals(
     return ambiguity_intervals
 
 
-def _combine_ambiguity_intervals(
+def combine_ambiguity_intervals(
     *interval_lists: List[Tuple[int, int]]
 ) -> List[Tuple[int, int]]:
     """
@@ -310,7 +310,7 @@ def _combine_ambiguity_intervals(
     return result
 
 
-def _get_mass_shift_interval(
+def get_mass_shift_interval(
     forward_coverage: List[int], reverse_coverage: List[int]
 ) -> Optional[Tuple[int, int]]:
     """
@@ -967,7 +967,7 @@ def write_isotope_mods(mods: Dict[str, str]) -> List[Mod]:
     return [Mod(val=v, mult=1) for v in mods.values()]
 
 
-def _validate_single_mod_multiplier(func: Callable) -> Callable:
+def validate_single_mod_multiplier(func: Callable) -> Callable:
     """
     A decorator that validates the multiplier of a Mod instance (or each Mod in a list of Mods)
     before adding it through the decorated method. It raises a ValueError if any Mod has a multiplier greater than 1.
