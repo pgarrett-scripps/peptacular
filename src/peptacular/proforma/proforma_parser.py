@@ -39,9 +39,9 @@ from ..constants import (
 from ..errors import ProFormaFormatError
 from ..types import ChemComposition
 from ..util import (
-    _combine_ambiguity_intervals,
+    combine_ambiguity_intervals,
     _construct_ambiguity_intervals,
-    _get_mass_shift_interval,
+    get_mass_shift_interval,
 )
 
 
@@ -2675,7 +2675,7 @@ class ProFormaAnnotation:
         reverse_intervals = _construct_ambiguity_intervals(
             reverse_coverage, reverse=True
         )
-        ambiguity_intervals = _combine_ambiguity_intervals(
+        ambiguity_intervals = combine_ambiguity_intervals(
             forward_intervals, reverse_intervals
         )
 
@@ -2686,7 +2686,7 @@ class ProFormaAnnotation:
         self.add_intervals(intervals, append=True)
 
         if mass_shift is not None:
-            mass_shift_interval = _get_mass_shift_interval(
+            mass_shift_interval = get_mass_shift_interval(
                 forward_coverage, reverse_coverage
             )
             if mass_shift_interval is None:

@@ -11,7 +11,7 @@ def get_matched_indices(
     mz_spectrum2: List[float],
     tolerance_value: float = 0.1,
     tolerance_type: str = "ppm",
-) -> List[Tuple[int, int]]:
+) -> List[Optional[Tuple[int, int]]]:
     """
     Matches two m/z spectra based on a specified tolerance value and type.
 
@@ -45,7 +45,7 @@ def get_matched_indices(
     if tolerance_type not in ["ppm", "th"]:
         raise ValueError('Invalid tolerance type. Must be "ppm" or "th"')
 
-    indices = []
+    indices: List[Optional[Tuple[int, int]]] = []
     mz2_start_index = 0
     for mz1 in mz_spectrum1:
 
@@ -93,8 +93,8 @@ def match_spectra(
     tolerance_value: float,
     tolerance_type: str = "ppm",
     mode: str = "closest",
-    intensity_spectra: Optional[Union[List[float]]] = None,
-) -> List[Union[int, None]]:
+    intensity_spectra: Optional[List[float]] = None,
+) -> List[Optional[int]]:
     """
     Matches two m/z spectra based on a specified tolerance value and type.
 
@@ -144,7 +144,7 @@ def match_spectra(
     if mode not in ["closest", "largest", "all"]:
         raise ValueError('Invalid mode. Must be "closest" or "largest" or "all"')
 
-    results = []
+    results: List[Optional[Union[int, List[int]]]] = []
     for i, indexes in enumerate(
         get_matched_indices(fragments, mz_spectra, tolerance_value, tolerance_type)
     ):

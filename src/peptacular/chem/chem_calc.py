@@ -369,7 +369,7 @@ def _parse_mod_delta_mass(mod: str) -> Union[float, None]:
     return mass
 
 
-def _sequence_comp(
+def sequence_comp(
     sequence: Union[str, ProFormaAnnotation],
     ion_type: str,
     isotope: int = 0,
@@ -397,57 +397,57 @@ def _sequence_comp(
     .. code-block:: python
 
         # Calculate the mass of a peptide sequence.
-        >>> _sequence_comp('PEPTIDE/1', 'y')
+        >>> sequence_comp('PEPTIDE/1', 'y')
         {'C': 34, 'H': 54, 'N': 7, 'O': 15, 'e': -1}
 
-        >>> _sequence_comp('PEPTIDE/1', 'y', isotope=1)
+        >>> sequence_comp('PEPTIDE/1', 'y', isotope=1)
         {'C': 34, 'H': 54, 'N': 7, 'O': 15, 'e': -1, 'n': 1}
 
-        >>> _sequence_comp('G/1', 'i')
+        >>> sequence_comp('G/1', 'i')
         {'C': 1, 'H': 4, 'N': 1, 'e': -1}
 
-        >>> _sequence_comp('PEPTIDE/1', 'b')
+        >>> sequence_comp('PEPTIDE/1', 'b')
         {'C': 34, 'H': 52, 'N': 7, 'O': 14, 'e': -1}
 
-        >>> _sequence_comp('<H>PEPTIDE/1', 'b')
+        >>> sequence_comp('<H>PEPTIDE/1', 'b')
         {'C': 34, 'H': 52, 'N': 7, 'O': 14, 'e': -1}
 
-        >>> _sequence_comp('{Unimod:2}PEPTIDE', 'p')
+        >>> sequence_comp('{Unimod:2}PEPTIDE', 'p')
         {'C': 34, 'H': 54, 'N': 8, 'O': 14}
 
-        >>> _sequence_comp('<13C>PEPTIDE/1', 'b')
+        >>> sequence_comp('<13C>PEPTIDE/1', 'b')
         {'H': 52, 'N': 7, 'O': 14, 'e': -1, '13C': 34}
 
-        >>> _sequence_comp('PEPTIDE[Unimod:2]/1', 'y')
+        >>> sequence_comp('PEPTIDE[Unimod:2]/1', 'y')
         {'C': 34, 'H': 55, 'N': 8, 'O': 14, 'e': -1}
 
-        >>> _sequence_comp('<[Unimod:2]@T>PEPTIDE/1', 'y')
+        >>> sequence_comp('<[Unimod:2]@T>PEPTIDE/1', 'y')
         {'C': 34, 'H': 55, 'N': 8, 'O': 14, 'e': -1}
 
-        >>> _sequence_comp('<[Unimod:2]@N-Term>PEPTIDE/1', 'y')
+        >>> sequence_comp('<[Unimod:2]@N-Term>PEPTIDE/1', 'y')
         {'C': 34, 'H': 55, 'N': 8, 'O': 14, 'e': -1}
 
-        >>> _sequence_comp('PEPTIDE/2', 'p')
+        >>> sequence_comp('PEPTIDE/2', 'p')
         {'C': 34, 'H': 55, 'N': 7, 'O': 15, 'e': -2}
 
-        >>> _sequence_comp('PEPTIDE/2[+2Na+]', 'p')
+        >>> sequence_comp('PEPTIDE/2[+2Na+]', 'p')
         {'C': 34, 'H': 53, 'N': 7, 'O': 15, 'Na': 2, 'e': -2}
 
-        >>> _sequence_comp('<13C>PEPTIDE[Formula:C10]', 'p')
+        >>> sequence_comp('<13C>PEPTIDE[Formula:C10]', 'p')
         {'H': 53, 'N': 7, 'O': 15, '13C': 34, 'C': 10}
 
-        >>> _sequence_comp('<13C>PEPTIDE[Formula:C10]', 'p', use_isotope_on_mods=True)
+        >>> sequence_comp('<13C>PEPTIDE[Formula:C10]', 'p', use_isotope_on_mods=True)
         {'H': 53, 'N': 7, 'O': 15, '13C': 44}
 
-        >>> _sequence_comp('<13C>PEPTIDE[Unimod:213413]', 'b')
+        >>> sequence_comp('<13C>PEPTIDE[Unimod:213413]', 'b')
         Traceback (most recent call last):
         peptacular.errors.UnknownModificationError: Unknown modification: Unimod:213413
 
-        >>> _sequence_comp('I', 'by')
+        >>> sequence_comp('I', 'by')
         {'C': 6, 'H': 11, 'N': 1, 'O': 1}
 
         # Ambiguous amino acid
-        >>> _sequence_comp('B', 'by') # doctest: +ELLIPSIS
+        >>> sequence_comp('B', 'by') # doctest: +ELLIPSIS
         Traceback (most recent call last):
             ...
         peptacular.errors.AmbiguousAminoAcidError: Ambiguous amino acid: B! Cannot determine the composition ...
@@ -597,7 +597,7 @@ def _sequence_comp(
     return composition
 
 
-def _parse_mod_delta_mass_only(mod: Union[str, Mod]) -> Union[float, None]:
+def parse_mod_delta_mass_only(mod: Union[str, Mod]) -> Union[float, None]:
     """
     Parse a modification string.
 
@@ -611,14 +611,14 @@ def _parse_mod_delta_mass_only(mod: Union[str, Mod]) -> Union[float, None]:
 
     .. code-block:: python
 
-        >>> _parse_mod_delta_mass_only('Acetyl|INFO:newly discovered')
+        >>> parse_mod_delta_mass_only('Acetyl|INFO:newly discovered')
 
-        >>> _parse_mod_delta_mass_only('Acetyl|Obs:+42.010565')
+        >>> parse_mod_delta_mass_only('Acetyl|Obs:+42.010565')
 
-        >>> _parse_mod_delta_mass_only('Obs:+42.010565')
+        >>> parse_mod_delta_mass_only('Obs:+42.010565')
         42.010565
 
-        >>> _parse_mod_delta_mass_only('R:+1|INFO:Fantastic')
+        >>> parse_mod_delta_mass_only('R:+1|INFO:Fantastic')
         1.0
 
     """
@@ -627,7 +627,7 @@ def _parse_mod_delta_mass_only(mod: Union[str, Mod]) -> Union[float, None]:
         return mod
 
     if isinstance(mod, Mod):
-        return _parse_mod_delta_mass_only(mod.val)
+        return parse_mod_delta_mass_only(mod.val)
 
     mods = mod.split("|")
     for m in mods:

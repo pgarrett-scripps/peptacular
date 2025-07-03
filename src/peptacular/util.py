@@ -3,7 +3,7 @@ Utils.py
 """
 
 import warnings
-from typing import Union, List, Tuple, Dict, Generator, Optional
+from typing import Any, Set, Union, List, Tuple, Dict, Generator, Optional
 import regex
 
 
@@ -51,11 +51,11 @@ def convert_type(val: str) -> Union[str, int, float]:
             return val
 
 
-def merge_dicts(d1: Dict, d2: Dict) -> Dict:
+def merge_dicts(d1: Dict[Any, int], d2: Dict[Any, int]) -> Dict[Any, int]:
     """
     Merge two dictionaries. And remove any keys with value 0.
     """
-    d = {}
+    d: Dict[Any, int] = {}
     for k, v in d1.items():
         d[k] = v
     for k, v in d2.items():
@@ -68,7 +68,7 @@ def merge_dicts(d1: Dict, d2: Dict) -> Dict:
 
 
 def get_regex_match_indices(
-    input_str: str, regex_str: Union[str, regex.Pattern], offset: int = 0
+    input_str: str, regex_str: Union[str, regex.Pattern[str]], offset: int = 0
 ) -> Generator[int, None, None]:
     """
     Identify the starting indexes of occurrences of a given regex pattern within a string.
@@ -127,7 +127,7 @@ def get_regex_match_indices(
 
 
 def get_regex_match_range(
-    input_str: str, regex_str: Union[str, regex.Pattern], offset: int = 0
+    input_str: str, regex_str: Union[str, regex.Pattern[str]], offset: int = 0
 ) -> List[Tuple[int, int]]:
     """
     Identify the starting indexes of occurrences of a given regex pattern within a string.
@@ -171,7 +171,8 @@ def get_regex_match_range(
     ]
 
 
-def _validate_span(span: Tuple[int, int, int]) -> None:
+# TODO: Use this method
+def validate_span(span: Tuple[int, int, int]) -> None:
     """
     Validates if a given span is valid.
 
@@ -181,19 +182,19 @@ def _validate_span(span: Tuple[int, int, int]) -> None:
 
     .. code-block:: python
 
-        >>> _validate_span((0, 5, 0))  # No error raised
+        >>> validate_span((0, 5, 0))  # No error raised
 
-        >>> _validate_span((0, 0, 0))  # No error raised
+        >>> validate_span((0, 0, 0))  # No error raised
 
-        >>> _validate_span((5, 0, 0))  # Raises ValueError
+        >>> validate_span((5, 0, 0))  # Raises ValueError
         Traceback (most recent call last):
         ValueError: Start of span: 5, should be less than or equal to end of span: 0.
 
-        >>> _validate_span((-1, 0, 0))  # Raises ValueError
+        >>> validate_span((-1, 0, 0))  # Raises ValueError
         Traceback (most recent call last):
         ValueError: Start of span should be non-negative, got -1.
 
-        >>> _validate_span((0, -1, 0))  # Raises ValueError
+        >>> validate_span((0, -1, 0))  # Raises ValueError
         Traceback (most recent call last):
         ValueError: End of span should be non-negative, got -1.
 
@@ -251,7 +252,7 @@ def _construct_ambiguity_intervals(
         ambiguity_intervals.sort(key=lambda x: x[0])
         return ambiguity_intervals
 
-    ambiguity_intervals = []
+    ambiguity_intervals: List[Tuple[int, int]] = []
     current_interval = None
     for i, cnt in enumerate(counts):
         if cnt == 0:
@@ -275,7 +276,7 @@ def _construct_ambiguity_intervals(
     return ambiguity_intervals
 
 
-def _combine_ambiguity_intervals(
+def combine_ambiguity_intervals(
     *interval_lists: List[Tuple[int, int]]
 ) -> List[Tuple[int, int]]:
     """
@@ -300,24 +301,24 @@ def _combine_ambiguity_intervals(
 
     .. code-block:: python
 
-        >>> _combine_ambiguity_intervals([(0, 1), (4, 6)], [(0,1)])
+        >>> combine_ambiguity_intervals([(0, 1), (4, 6)], [(0,1)])
         [(0, 1)]
 
-        >>> _combine_ambiguity_intervals([(0, 1), (4, 6)], [(0,1), (4,5)])
+        >>> combine_ambiguity_intervals([(0, 1), (4, 6)], [(0,1), (4,5)])
         [(0, 1), (4, 5)]
 
-        >>> _combine_ambiguity_intervals([(0, 1), (4, 6)], [(0, 4), (5, 6)])
+        >>> combine_ambiguity_intervals([(0, 1), (4, 6)], [(0, 4), (5, 6)])
         [(0, 1), (5, 6)]
 
-        >>> _combine_ambiguity_intervals([(2, 5)], [(3, 6)])
+        >>> combine_ambiguity_intervals([(2, 5)], [(3, 6)])
         [(3, 5)]
 
-        >>> _combine_ambiguity_intervals([(0, 1)], [(4, 6)])
+        >>> combine_ambiguity_intervals([(0, 1)], [(4, 6)])
         []
     """
 
     # First, collect all unique intervals from input lists
-    all_intervals = set()
+    all_intervals: Set[Tuple[int, int]] = set()
     for interval_list in interval_lists:
         for interval in interval_list:
             all_intervals.add(interval)
@@ -326,13 +327,13 @@ def _combine_ambiguity_intervals(
     filtered_intervals = {(start, end) for start, end in all_intervals if start != end}
 
     # Find all possible indices that are covered by any interval
-    all_indices = set()
+    all_indices: Set[int] = set()
     for start, end in filtered_intervals:
         for i in range(start, end):
             all_indices.add(i)
 
     # For each index, check if it's contained in at least one interval from each input list
-    common_indices = set()
+    common_indices: Set[int] = set()
     for idx in all_indices:
         is_common = True
         for interval_list in interval_lists:
@@ -347,7 +348,7 @@ def _combine_ambiguity_intervals(
         return []
 
     # Construct new intervals from the common indices
-    result = []
+    result: List[Tuple[int, int]] = []
     if common_indices:
         sorted_indices = sorted(common_indices)
         start = sorted_indices[0]
@@ -362,7 +363,7 @@ def _combine_ambiguity_intervals(
     return result
 
 
-def _get_mass_shift_interval(
+def get_mass_shift_interval(
     forward_coverage: List[int], reverse_coverage: List[int]
 ) -> Optional[Tuple[int, int]]:
     """
@@ -388,22 +389,22 @@ def _get_mass_shift_interval(
 
     .. code-block:: python
 
-        >>> _get_mass_shift_interval([1,1,1,0,0,0,0], [0,0,0,0,1,1,1])
+        >>> get_mass_shift_interval([1,1,1,0,0,0,0], [0,0,0,0,1,1,1])
         (3, 3)
 
-        >>> _get_mass_shift_interval([1,1,1,0,0,0,0], [0,0,0,1,1,1,1])
+        >>> get_mass_shift_interval([1,1,1,0,0,0,0], [0,0,0,1,1,1,1])
         (3, 3)
 
-        >>> _get_mass_shift_interval([1,1,0,0,0,0,0], [0,0,0,0,1,1,1])
+        >>> get_mass_shift_interval([1,1,0,0,0,0,0], [0,0,0,0,1,1,1])
         (2, 3)
 
-        >>> _get_mass_shift_interval([0,0,0,0,0,0,0], [0,0,0,0,1,1,1])
+        >>> get_mass_shift_interval([0,0,0,0,0,0,0], [0,0,0,0,1,1,1])
         (0, 3)
 
-        >>> _get_mass_shift_interval([1,1,1,0,0,0,0], [0,0,0,0,0,0,0])
+        >>> get_mass_shift_interval([1,1,1,0,0,0,0], [0,0,0,0,0,0,0])
         (3, 6)
 
-        >>> _get_mass_shift_interval([1,1,1,1,1,0,0], [0,0,0,0,1,1,1]) # None
+        >>> get_mass_shift_interval([1,1,1,1,1,0,0], [0,0,0,0,1,1,1]) # None
 
     """
 

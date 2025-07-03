@@ -121,7 +121,7 @@ def build_left_semi_spans(
 
 
 def build_right_semi_spans(
-    span: Span, min_len: int = 1, max_len: Optional[int] = None
+    span: Span, min_len: Optional[int] = None, max_len: Optional[int] = None
 ) -> Generator[Span, None, None]:
     """
     Generates right-semi spans with span lengths <= max_len and >= min_len. A right-semi span is any span
@@ -212,13 +212,12 @@ def build_enzymatic_spans(
 
     if min_len is None:
         min_len = 1
+
     if max_len is None:
         max_len = max_index
 
-    enzyme_sites = set(enzyme_sites)
-    enzyme_sites.add(0)
-    enzyme_sites.add(max_index)
-    enzyme_sites = sorted(enzyme_sites)
+    enzyme_sites.extend([0, max_index])  # Ensure the first and last indices are included
+    enzyme_sites = sorted(list(set(enzyme_sites)))
 
     for i, start_site in enumerate(enzyme_sites):
         for j, end_site in enumerate(enzyme_sites[i + 1 : i + missed_cleavages + 2]):

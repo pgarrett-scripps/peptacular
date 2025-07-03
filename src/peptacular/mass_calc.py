@@ -14,8 +14,8 @@ from .constants import (
 )
 from .chem.chem_calc import (
     parse_chem_formula,
-    _sequence_comp,
-    _parse_mod_delta_mass_only,
+    sequence_comp,
+    parse_mod_delta_mass_only,
     estimate_comp,
 )
 from .chem.chem_util import chem_mass
@@ -130,7 +130,7 @@ def comp_mass(
     delta_mass = _pop_delta_mass_mods(
         annotation
     )  # sum delta mass mods and remove them from the annotation
-    peptide_composition = _sequence_comp(
+    peptide_composition = sequence_comp(
         annotation, ion_type, isotope, use_isotope_on_mods
     )
 
@@ -1152,7 +1152,7 @@ def _pop_delta_mass_mods(annotation: ProFormaAnnotation) -> float:
     if annotation.has_labile_mods():
         for i in range(len(annotation.labile_mods) - 1, -1, -1):
             mod = annotation.labile_mods[i]
-            val = _parse_mod_delta_mass_only(mod)
+            val = parse_mod_delta_mass_only(mod)
             if val is not None:
                 delta_mass += val
                 annotation.labile_mods.pop(i)
@@ -1161,7 +1161,7 @@ def _pop_delta_mass_mods(annotation: ProFormaAnnotation) -> float:
     if annotation.has_unknown_mods():
         for i in range(len(annotation.unknown_mods) - 1, -1, -1):
             mod = annotation.unknown_mods[i]
-            val = _parse_mod_delta_mass_only(mod)
+            val = parse_mod_delta_mass_only(mod)
             if val is not None:
                 delta_mass += val
                 annotation.unknown_mods.pop(i)
@@ -1170,7 +1170,7 @@ def _pop_delta_mass_mods(annotation: ProFormaAnnotation) -> float:
     if annotation.has_nterm_mods():
         for i in range(len(annotation.nterm_mods) - 1, -1, -1):
             mod = annotation.nterm_mods[i]
-            val = _parse_mod_delta_mass_only(mod)
+            val = parse_mod_delta_mass_only(mod)
             if val is not None:
                 delta_mass += val
                 annotation.nterm_mods.pop(i)
@@ -1179,7 +1179,7 @@ def _pop_delta_mass_mods(annotation: ProFormaAnnotation) -> float:
     if annotation.has_cterm_mods():
         for i in range(len(annotation.cterm_mods) - 1, -1, -1):
             mod = annotation.cterm_mods[i]
-            val = _parse_mod_delta_mass_only(mod)
+            val = parse_mod_delta_mass_only(mod)
             if val is not None:
                 delta_mass += val
                 annotation.cterm_mods.pop(i)
@@ -1190,7 +1190,7 @@ def _pop_delta_mass_mods(annotation: ProFormaAnnotation) -> float:
             if interval.has_mods():
                 for i in range(len(interval.mods) - 1, -1, -1):
                     mod = interval.mods[i]
-                    val = _parse_mod_delta_mass_only(mod)
+                    val = parse_mod_delta_mass_only(mod)
                     if val is not None:
                         delta_mass += val
                         interval.mods.pop(i)
@@ -1200,7 +1200,7 @@ def _pop_delta_mass_mods(annotation: ProFormaAnnotation) -> float:
         for k in annotation.internal_mods:
             for i in range(len(annotation.internal_mods[k]) - 1, -1, -1):
                 mod = annotation.internal_mods[k][i]
-                val = _parse_mod_delta_mass_only(mod)
+                val = parse_mod_delta_mass_only(mod)
                 if val is not None:
                     delta_mass += val
                     annotation.internal_mods[k].pop(i)
