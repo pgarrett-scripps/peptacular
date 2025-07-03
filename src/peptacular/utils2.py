@@ -1,5 +1,7 @@
 from typing import Tuple, Union
 
+from .constants import BACKWARD_ION_TYPES, FORWARD_ION_TYPES, INTERNAL_ION_TYPES
+
 
 def convert_type(val: str) -> Union[str, int, float]:
     """
@@ -282,3 +284,44 @@ class ModLabler:
         :rtype: str
         """
         return f"{self.letter}{self.num}"
+
+
+def get_label(
+    ion_type: str, charge: int, number: str, loss: float, isotope: int
+) -> str:
+    """
+    Returns the label of the fragment, e.g., b2, y3i, etc.
+
+    :return: Label of the fragment.
+    :rtype: str
+    """
+
+    return (
+        f"{'+' * charge}"
+        f"{ion_type}"
+        f"{number}"
+        f"{'(' + str(loss) + ')' if loss != 0.0 else ''}"
+        f"{'*' * isotope if isotope > 0 else ''}"
+    )
+
+
+def get_number(ion_type: str, len_sequence: int, start: int, end: int) -> str:
+    """
+    Returns the number of the fragment, e.g., 2 for b2, 3 for y3, etc.
+
+    :return: Number of the fragment.
+    :rtype: str
+    """
+
+    if ion_type in FORWARD_ION_TYPES:
+        number = end
+    elif ion_type in BACKWARD_ION_TYPES:
+        number = len_sequence - start
+    elif ion_type in INTERNAL_ION_TYPES:
+        number = f"{start}-{end}"
+    elif ion_type == "i":
+        number = start
+    else:
+        raise ValueError("Wrong Ion Type")
+
+    return number

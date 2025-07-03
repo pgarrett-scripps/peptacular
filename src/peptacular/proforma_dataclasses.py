@@ -5,10 +5,12 @@ proforma_dataclasses.py
 import copy
 from collections import Counter
 from dataclasses import dataclass
+from functools import cached_property
 from typing import List, Union, Any, Optional, Dict
 from typing import List, Dict, Any, Union, Tuple
 
-from .utils2 import convert_type
+from .utils2 import convert_type, get_label, get_number
+
 
 
 @dataclass

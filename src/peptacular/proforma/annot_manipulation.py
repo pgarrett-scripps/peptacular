@@ -155,7 +155,6 @@ class ProFormaAnnotationManipulation(ProFormaAnnotationBase):
 
         return self
 
-
     def shift(
         self,
         n: int,
@@ -347,7 +346,7 @@ class ProFormaAnnotationManipulation(ProFormaAnnotationBase):
             self.nterm_mods, self.cterm_mods = self.cterm_mods, self.nterm_mods
 
         return self
-    
+
     def sort(
         self,
         inplace: bool = False,
@@ -473,7 +472,6 @@ class ProFormaAnnotationManipulation(ProFormaAnnotationBase):
             if i == 0 and labile_mods:
                 s.add_labile_mods(labile_mods, append=True, inplace=True)
             yield s
-
 
     def permutations(
         self, size: Optional[int] = None

@@ -4,7 +4,7 @@ ProForma Parser Module
 
 from typing import *
 
-from .annot_manipulation import ProFormaAnnotationManipulation
+from .annot_digestion import ProFormaAnnotationDigestion
 from .utils import get_aa_value
 from ..weights import get_weights
 from .property_data import (
@@ -16,7 +16,7 @@ from .property_data import (
 )
 
 
-class ProFormaAnnotationProperty(ProFormaAnnotationManipulation):
+class ProFormaAnnotationProperty(ProFormaAnnotationDigestion):
     """
     A ProForma annotation with additional methods for serialization and parsing.
     This class is used to represent a ProForma annotation with a sequence, modifications, and other properties.

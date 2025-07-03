@@ -2,7 +2,7 @@ import math
 from dataclasses import dataclass
 from typing import List, Tuple, Union, Dict, Optional
 
-from .fragmentation import Fragment
+from .proforma.annot_fragmentation import Fragment
 from .sequence.sequence import strip_mods
 
 

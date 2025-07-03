@@ -10,7 +10,6 @@ from .proforma import *
 from .mods import *
 
 from .digestion import *
-from .fragmentation import *
 from .mass_calc import *
 from .glycan import *
 from .isotope import *
@@ -20,3 +19,4 @@ from .util import *
 from .spans import *
 from .fasta import *
 from .converters import *
+from .proforma_dataclasses import *

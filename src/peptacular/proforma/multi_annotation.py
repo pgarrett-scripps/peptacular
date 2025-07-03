@@ -19,7 +19,9 @@ class MultiProFormaAnnotation:
                 "Number of connections must be one less than the number of annotations."
             )
 
-    def serialize(self, include_plus: bool = False, precision: Optional[int] = None) -> str:
+    def serialize(
+        self, include_plus: bool = False, precision: Optional[int] = None
+    ) -> str:
         """
         Convert the multi annotation to a proforma string.
 
