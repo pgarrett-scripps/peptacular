@@ -1,5 +1,5 @@
 import math
-from typing import Literal, Union, List
+from typing import Any, Literal, Union, List
 
 
 def _get_uniform_weights(
@@ -40,7 +40,7 @@ def _get_linear_weights(
     if length == 2:
         return [max_weight, max_weight]
 
-    weights = []
+    weights: List[float] = []
     mid = (length - 1) / 2
 
     for i in range(length):
@@ -76,7 +76,7 @@ def _get_exponential_weights(
     start = -3.0
     end = 3.0
 
-    weights = []
+    weights: List[float] = []
 
     for i in range(length):
         # Map index to fixed range
@@ -117,7 +117,7 @@ def _get_gaussian_weights(
     end = 3.0
     sigma = 1.0
 
-    weights = []
+    weights: List[float] = []
 
     for i in range(length):
         # Map index to fixed range
@@ -160,7 +160,7 @@ def _get_sigmoid_weights(
     if length == 1:
         return [max_weight]
 
-    weights = []
+    weights: List[float] = []
     for i in range(length):
         # Map to range [-6, 6] for good sigmoid behavior
         x = -6 + 12 * i / (length - 1) if length > 1 else 0
@@ -197,7 +197,7 @@ def _get_cosine_weights(
     if length == 1:
         return [max_weight]
 
-    weights = []
+    weights: List[float] = []
     for i in range(length):
         # Cosine wave from 0 to cycles*2π
         angle = 2 * math.pi * cycles * i / (length - 1) if length > 1 else 0
@@ -228,7 +228,7 @@ def _get_sinusoidal_weights(
     if length == 1:
         return [max_weight]
 
-    weights = []
+    weights: List[float] = []
     for i in range(length):
         # Map to range [0, π] for half sine wave
         angle = math.pi * i / (length - 1) + phase if length > 1 else phase
@@ -259,7 +259,7 @@ def get_weights(
     ] = "uniform",
     min_weight: float = 0.1,
     max_weight: float = 1.0,
-    **kwargs,
+    **kwargs: Any
 ) -> list[float]:
     """
     Get weights for a sequence based on the specified weighting scheme.
@@ -271,54 +271,36 @@ def get_weights(
     :param kwargs: Additional parameters for specific weight functions
     :return: List of weights
     """
-    if weights is None:
-        raise ValueError(
-            "Weights cannot be None. Please provide a valid weights option or list."
-        )
-    elif isinstance(weights, list):
+    if isinstance(weights, list):
         if len(weights) != length:
             raise ValueError(
                 f"Length of weights list ({len(weights)}) does not match sequence length ({length})."
             )
         return weights
-    elif isinstance(weights, str):
-        if weights == "uniform":
-            return _get_uniform_weights(length, min_weight, max_weight)
-        elif weights == "linear":
-            return _get_linear_weights(length, min_weight, max_weight)
-        elif weights == "exponential":
-            return _get_exponential_weights(length, min_weight, max_weight)
-        elif weights == "gaussian":
-            return _get_gaussian_weights(length, min_weight, max_weight)
-        elif weights == "sigmoid":
-            return _get_sigmoid_weights(
-                length, min_weight, max_weight, kwargs.get("steepness", 2.0)
-            )
-        elif weights == "cosine":
-            return _get_cosine_weights(
-                length, min_weight, max_weight, kwargs.get("cycles", 1.0)
-            )
-        elif weights == "sinusoidal":
-            return _get_sinusoidal_weights(
-                length, min_weight, max_weight, kwargs.get("phase", 0.0)
-            )
-        else:
-            valid_options = [
-                "uniform",
-                "linear",
-                "exponential",
-                "gaussian",
-                "sigmoid",
-                "cosine",
-                "triangular",
-                "logarithmic",
-                "power",
-                "sinusoidal",
-            ]
-            raise ValueError(
-                f"Invalid weights option: {weights}. Choose from {valid_options} or provide a list of weights."
-            )
+
+    if weights == "uniform":
+        return _get_uniform_weights(length, min_weight, max_weight)
+    elif weights == "linear":
+        return _get_linear_weights(length, min_weight, max_weight)
+    elif weights == "exponential":
+        return _get_exponential_weights(length, min_weight, max_weight)
+    elif weights == "gaussian":
+        return _get_gaussian_weights(length, min_weight, max_weight)
+    elif weights == "sigmoid":
+        return _get_sigmoid_weights(
+            length, min_weight, max_weight, kwargs.get("steepness", 2.0)
+        )
+    elif weights == "cosine":
+        return _get_cosine_weights(
+            length, min_weight, max_weight, kwargs.get("cycles", 1.0)
+        )
+    elif weights == "sinusoidal":
+        return _get_sinusoidal_weights(
+            length, min_weight, max_weight, kwargs.get("phase", 0.0)
+        )
     else:
         raise ValueError(
-            f"Invalid weights type: {type(weights)}. Must be a list or one of the predefined options ('uniform', 'lin', 'exp', 'gauss')."
+            f"Unsupported weights type: {weights}. Supported types are: "
+            "'uniform', 'linear', 'exponential', 'gaussian', 'sigmoid', 'cosine', 'sinusoidal'."
         )
+

@@ -2,8 +2,7 @@
 mass_calc.py is a simple module for computing the m/z and mass of an amino acid sequence.
 """
 
-import warnings
-from typing import Union, Optional, Tuple, List
+from typing import Union, Optional, List
 
 from .proforma_dataclasses import Mod
 
@@ -16,14 +15,10 @@ from .constants import (
 )
 from .chem.chem_calc import (
     parse_chem_formula,
-    _parse_mod_delta_mass_only,
-    estimate_comp,
 )
 from .chem.chem_util import chem_mass
 from .mods.mod_db_setup import MONOSACCHARIDES_DB
 from .chem.chem_constants import (
-    MONOISOTOPIC_AA_MASSES,
-    AVERAGE_AA_MASSES,
     AVERAGE_FRAGMENT_ADJUSTMENTS,
     MONOISOTOPIC_FRAGMENT_ADJUSTMENTS,
     MONOISOTOPIC_FRAGMENT_ION_ADJUSTMENTS,
@@ -34,10 +29,8 @@ from .utils2 import convert_type, parse_ion_elements
 from .errors import (
     InvalidDeltaMassError,
     InvalidModificationMassError,
-    UnknownAminoAcidError,
     InvalidGlycanFormulaError,
     InvalidChemFormulaError,
-    AmbiguousAminoAcidError,
 )
 from .glycan import parse_glycan_formula
 from .mods.mod_db import (

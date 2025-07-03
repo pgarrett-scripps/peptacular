@@ -3,7 +3,7 @@ Utils.py
 """
 
 import warnings
-from typing import Union, List, Tuple, Dict, Generator, Optional
+from typing import Set, Union, List, Tuple, Dict, Generator, Optional
 from functools import wraps
 import regex as re
 from typing import Callable, Dict, List, Optional, Tuple, Union
@@ -199,7 +199,7 @@ def _construct_ambiguity_intervals(
         ambiguity_intervals.sort(key=lambda x: x[0])
         return ambiguity_intervals
 
-    ambiguity_intervals = []
+    ambiguity_intervals: List[Tuple[int, int]] = []
     current_interval = None
     for i, cnt in enumerate(counts):
         if cnt == 0:
@@ -248,24 +248,24 @@ def combine_ambiguity_intervals(
 
     .. code-block:: python
 
-        >>> _combine_ambiguity_intervals([(0, 1), (4, 6)], [(0,1)])
+        >>> combine_ambiguity_intervals([(0, 1), (4, 6)], [(0,1)])
         [(0, 1)]
 
-        >>> _combine_ambiguity_intervals([(0, 1), (4, 6)], [(0,1), (4,5)])
+        >>> combine_ambiguity_intervals([(0, 1), (4, 6)], [(0,1), (4,5)])
         [(0, 1), (4, 5)]
 
-        >>> _combine_ambiguity_intervals([(0, 1), (4, 6)], [(0, 4), (5, 6)])
+        >>> combine_ambiguity_intervals([(0, 1), (4, 6)], [(0, 4), (5, 6)])
         [(0, 1), (5, 6)]
 
-        >>> _combine_ambiguity_intervals([(2, 5)], [(3, 6)])
+        >>> combine_ambiguity_intervals([(2, 5)], [(3, 6)])
         [(3, 5)]
 
-        >>> _combine_ambiguity_intervals([(0, 1)], [(4, 6)])
+        >>> combine_ambiguity_intervals([(0, 1)], [(4, 6)])
         []
     """
 
     # First, collect all unique intervals from input lists
-    all_intervals = set()
+    all_intervals: Set[Tuple[int, int]] = set()
     for interval_list in interval_lists:
         for interval in interval_list:
             all_intervals.add(interval)
@@ -274,13 +274,13 @@ def combine_ambiguity_intervals(
     filtered_intervals = {(start, end) for start, end in all_intervals if start != end}
 
     # Find all possible indices that are covered by any interval
-    all_indices = set()
+    all_indices: Set[int] = set()
     for start, end in filtered_intervals:
         for i in range(start, end):
             all_indices.add(i)
 
     # For each index, check if it's contained in at least one interval from each input list
-    common_indices = set()
+    common_indices: Set[int] = set()
     for idx in all_indices:
         is_common = True
         for interval_list in interval_lists:
@@ -295,7 +295,7 @@ def combine_ambiguity_intervals(
         return []
 
     # Construct new intervals from the common indices
-    result = []
+    result: List[Tuple[int, int]] = []
     if common_indices:
         sorted_indices = sorted(common_indices)
         start = sorted_indices[0]
@@ -336,22 +336,22 @@ def get_mass_shift_interval(
 
     .. code-block:: python
 
-        >>> _get_mass_shift_interval([1,1,1,0,0,0,0], [0,0,0,0,1,1,1])
+        >>> get_mass_shift_interval([1,1,1,0,0,0,0], [0,0,0,0,1,1,1])
         (3, 3)
 
-        >>> _get_mass_shift_interval([1,1,1,0,0,0,0], [0,0,0,1,1,1,1])
+        >>> get_mass_shift_interval([1,1,1,0,0,0,0], [0,0,0,1,1,1,1])
         (3, 3)
 
-        >>> _get_mass_shift_interval([1,1,0,0,0,0,0], [0,0,0,0,1,1,1])
+        >>> get_mass_shift_interval([1,1,0,0,0,0,0], [0,0,0,0,1,1,1])
         (2, 3)
 
-        >>> _get_mass_shift_interval([0,0,0,0,0,0,0], [0,0,0,0,1,1,1])
+        >>> get_mass_shift_interval([0,0,0,0,0,0,0], [0,0,0,0,1,1,1])
         (0, 3)
 
-        >>> _get_mass_shift_interval([1,1,1,0,0,0,0], [0,0,0,0,0,0,0])
+        >>> get_mass_shift_interval([1,1,1,0,0,0,0], [0,0,0,0,0,0,0])
         (3, 6)
 
-        >>> _get_mass_shift_interval([1,1,1,1,1,0,0], [0,0,0,0,1,1,1]) # None
+        >>> get_mass_shift_interval([1,1,1,1,1,0,0], [0,0,0,0,1,1,1]) # None
 
     """
 
@@ -402,7 +402,7 @@ def _parse_modifications(
         [Mod('Formula:[13C]H23', 1)]
 
     """
-    mods = []
+    mods: List[Mod] = []
     position = 0
     length = len(proforma_sequence)
     while position < length:
@@ -555,14 +555,14 @@ def parse_charge_adducts(mod: ModValue) -> ChemComposition:
             f"Invalid type for charge adducts: {type(mod)}! Mod or Mod.val must be of type string."
         )
 
-    charge_adducts = {}
+    charge_adducts: ChemComposition = {}
 
-    mods = mod.split(",")
+    mods: List[str] = mod.split(",")
     for m in mods:
         if isinstance(m, Mod):
-            mod_str = m.val
+            mod_str = str(m.val)
         else:
-            mod_str = m
+            mod_str = str(m)
 
         for sign, count, ion in ADDUCT_PATTERN.findall(mod_str):
             if count == "":
@@ -610,7 +610,7 @@ def write_charge_adducts(charge_adducts: ChemComposition) -> Mod:
 
     """
 
-    adducts_list = []
+    adducts_list: List[str] = []
     for ion, count in charge_adducts.items():
         sign = "+" if count >= 0 else ""
         sign = "-" if count < 0 else sign
@@ -825,7 +825,7 @@ def parse_static_mods(mods: Optional[List[ModValue]]) -> Dict[str, List[Mod]]:
 
     """
 
-    static_mod_dict = {}
+    static_mod_dict: Dict[str, List[Mod]] = {}
 
     if mods is None:
         return static_mod_dict
@@ -873,13 +873,13 @@ def write_static_mods(mods: Dict[str, List[Mod]]) -> List[Mod]:
 
     """
 
-    reverse_mods = {}
+    reverse_mods: Dict[Tuple[Mod, ...], List[str]] = {}
 
     for residue, mod_list in mods.items():
         mod_tuple = tuple(mod_list)
         reverse_mods.setdefault(mod_tuple, []).append(residue)
 
-    static_mods = []
+    static_mods: List[Mod] = []
     for mod_tuple, residues in reverse_mods.items():
         residue_str = ",".join(residues)
         mod_str = "".join(mod.serialize("[]") for mod in mod_tuple)
@@ -916,7 +916,7 @@ def parse_isotope_mods(mods: List[ModValue]) -> Dict[str, str]:
 
     """
 
-    isotope_map = {}
+    isotope_map: Dict[str, str] = {}
     for mod in mods:
 
         if isinstance(mod, Mod):
@@ -967,7 +967,7 @@ def write_isotope_mods(mods: Dict[str, str]) -> List[Mod]:
     return [Mod(val=v, mult=1) for v in mods.values()]
 
 
-def validate_single_mod_multiplier(func: Callable) -> Callable:
+def validate_single_mod_multiplier(func: Callable[..., None]) -> Callable[..., None]:
     """
     A decorator that validates the multiplier of a Mod instance (or each Mod in a list of Mods)
     before adding it through the decorated method. It raises a ValueError if any Mod has a multiplier greater than 1.
@@ -980,7 +980,7 @@ def validate_single_mod_multiplier(func: Callable) -> Callable:
     """
 
     @wraps(func)
-    def wrapper(self, mod: Union[Mod, List[Mod]]):
+    def wrapper(self, mod: Union[Mod, List[Mod]]): # type: ignore
         if isinstance(mod, Mod):
             if mod.mult > 1:
                 raise ValueError(
@@ -999,4 +999,4 @@ def validate_single_mod_multiplier(func: Callable) -> Callable:
 
         return func(self, mod)
 
-    return wrapper
+    return wrapper # type: ignore

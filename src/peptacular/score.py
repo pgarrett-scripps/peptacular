@@ -1,6 +1,6 @@
 import math
 from dataclasses import dataclass
-from typing import List, Tuple, Union, Dict, Optional
+from typing import Any, List, Literal, Tuple, Union, Dict, Optional
 
 from .proforma.annot_fragmentation import Fragment
 from .sequence.sequence import strip_mods
@@ -11,7 +11,7 @@ def get_matched_indices(
     mz_spectrum2: List[float],
     tolerance_value: float = 0.1,
     tolerance_type: str = "ppm",
-) -> List[Tuple[int, int]]:
+) -> List[Optional[Tuple[int, int]]]:
     """
     Matches two m/z spectra based on a specified tolerance value and type.
 
@@ -45,7 +45,7 @@ def get_matched_indices(
     if tolerance_type not in ["ppm", "th"]:
         raise ValueError('Invalid tolerance type. Must be "ppm" or "th"')
 
-    indices = []
+    indices: List[Optional[Tuple[int, int]]] = []
     mz2_start_index = 0
     for mz1 in mz_spectrum1:
 
@@ -86,15 +86,15 @@ def get_matched_indices(
 
     return indices
 
-
+# TODO: Make this function return list of list always
 def match_spectra(
     fragments: List[float],
     mz_spectra: List[float],
     tolerance_value: float,
     tolerance_type: str = "ppm",
     mode: str = "closest",
-    intensity_spectra: Optional[Union[List[float]]] = None,
-) -> List[Union[int, None]]:
+    intensity_spectra: Optional[List[float]] = None,
+) -> List[Optional[Union[int, List[int]]]]:
     """
     Matches two m/z spectra based on a specified tolerance value and type.
 
@@ -144,7 +144,7 @@ def match_spectra(
     if mode not in ["closest", "largest", "all"]:
         raise ValueError('Invalid mode. Must be "closest" or "largest" or "all"')
 
-    results = []
+    results: List[Optional[Union[int, List[int]]]] = []
     for i, indexes in enumerate(
         get_matched_indices(fragments, mz_spectra, tolerance_value, tolerance_type)
     ):
@@ -165,6 +165,11 @@ def match_spectra(
                 results.append(indexes[0] + min_index)
 
             if mode == "largest":
+                if intensity_spectra is None:
+                    raise ValueError(
+                        'Intensity spectra must be provided when mode is "largest"'
+                    )
+
                 intensities = intensity_spectra[indexes[0] : indexes[1]]
                 largest_index = intensities.index(max(intensities))
 
@@ -205,61 +210,96 @@ class FragmentMatch:
         :return: error between the theoretical and experimental m/z values in parts-per-million (ppm).
         :rtype: float
         """
+        if self.fragment is None:
+            return 0.0
+
         return self.error / self.fragment.mz * 1e6
 
     @property
     def charge(self) -> int:
+        if self.fragment is None:
+            return 0
+
         return abs(self.fragment.charge)
 
     @property
     def ion_type(self) -> str:
+        if self.fragment is None:
+            return ""
+
         return self.fragment.ion_type
 
     @property
     def start(self) -> int:
+        if self.fragment is None:
+            return 0
+
         return self.fragment.start
 
     @property
     def end(self) -> int:
+        if self.fragment is None:
+            return 0
+
         return self.fragment.end
 
     @property
     def monoisotopic(self) -> bool:
+        if self.fragment is None:
+            return False
+
         return self.fragment.monoisotopic
 
     @property
     def isotope(self) -> int:
+        if self.fragment is None:
+            return 0
         return self.fragment.isotope
 
     @property
     def loss(self) -> float:
+        if self.fragment is None:
+            return 0.0
         return self.fragment.loss
 
     @property
     def sequence(self) -> str:
+        if self.fragment is None:
+            return ""
         return self.fragment.sequence
 
     @property
     def theo_mz(self) -> float:
+        if self.fragment is None:
+            return 0.0
         return self.fragment.mz
 
     @property
     def internal(self) -> bool:
+        if self.fragment is None:
+            return False
         return self.fragment.internal
 
     @property
     def label(self) -> str:
+        if self.fragment is None:
+            return ""
         return self.fragment.label
 
     @property
     def parent_sequence(self) -> str:
-        return self.fragment.parent_sequence
+        if self.fragment is None:
+            return ""
+        return self.fragment.parent_sequence.serialize()
 
     @property
-    def number(self) -> int:
+    def number(self) -> str:
+        if self.fragment is None:
+            return "0"
         return self.fragment.number
 
-    def to_dict(self) -> Dict:
+
+    def to_dict(self) -> Dict[str, Any]:
         """
         Converts the FragmentMatch object to a dictionary.
 
@@ -267,44 +307,23 @@ class FragmentMatch:
         :rtype: Dict[str, Any]
         """
 
-        if self.fragment is not None:
-
-            return {
-                "mz": self.mz,
-                "intensity": self.intensity,
-                "error": self.error,
-                "error_ppm": self.error_ppm,
-                "charge": self.charge,
-                "ion_type": self.ion_type,
-                "start": self.start,
-                "end": self.end,
-                "monoisotopic": self.monoisotopic,
-                "isotope": self.isotope,
-                "loss": self.loss,
-                "sequence": self.sequence,
-                "theo_mz": self.theo_mz,
-                "internal": self.internal,
-                "label": self.fragment.label,
-                "number": self.number,
-            }
-
         return {
             "mz": self.mz,
             "intensity": self.intensity,
-            "error": 0,
-            "error_ppm": 0,
-            "charge": 0,
-            "ion_type": "",
-            "start": 0,
-            "end": 0,
-            "monoisotopic": True,
-            "isotope": 0,
-            "loss": 0,
-            "sequence": "",
-            "theo_mz": 0,
-            "internal": False,
-            "label": "",
-            "number": 0,
+            "error": self.error,
+            "error_ppm": self.error_ppm,
+            "charge": self.charge,
+            "ion_type": self.ion_type,
+            "start": self.start,
+            "end": self.end,
+            "monoisotopic": self.monoisotopic,
+            "isotope": self.isotope,
+            "loss": self.loss,
+            "sequence": self.sequence,
+            "theo_mz": self.theo_mz,
+            "internal": self.internal,
+            "label": self.label,
+            "number": self.number,
         }
 
 
@@ -344,8 +363,8 @@ def get_fragment_matches(
     fragments.sort(key=lambda x: x.mz)
     fragment_spectrum = [f.mz for f in fragments]
 
-    # sort peaks
-    mz_spectra, intensity_spectra = zip(
+
+    mz_spectra, intensity_spectra = zip(  # type: ignore
         *sorted(zip(mz_spectra, intensity_spectra), key=lambda x: x[0])
     )
 
@@ -358,7 +377,7 @@ def get_fragment_matches(
         intensity_spectra,
     )
 
-    fragment_matches = []
+    fragment_matches: List[FragmentMatch] = []
     for i, index in enumerate(indices):
         if index is None:
             continue
@@ -366,7 +385,7 @@ def get_fragment_matches(
             fragment_matches.append(
                 FragmentMatch(fragments[i], mz_spectra[index], intensity_spectra[index])
             )
-        elif isinstance(index, List):
+        else:
             for j in index:
                 fragment_matches.append(
                     FragmentMatch(fragments[i], mz_spectra[j], intensity_spectra[j])
@@ -385,7 +404,7 @@ def get_match_coverage(fragment_matches: List[FragmentMatch]) -> Dict[str, List[
     :return: Dictionary of fragment coverage.
     :rtype: Dict[str, List[int]]
     """
-    cov = {}
+    cov: Dict[str, List[int]] = {}
 
     if not fragment_matches:
         return cov
@@ -480,8 +499,8 @@ def _estimate_probability_of_random_match(
     error_tolerance: float,
     mz_spectrum: List[float],
     tolerance_type: str = "ppm",
-    min_mz: float = None,
-    max_mz: float = None,
+    min_mz: Optional[float] = None,
+    max_mz: Optional[float] = None,
 ) -> float:
     """
     Estimate the probability of a random match between two peaks based on error tolerance and the experimental spectrum.
@@ -523,9 +542,9 @@ def binomial_score(
     fragments: Union[List[Fragment], List[float]],
     mz_spectra: List[float],
     tolerance_value: float,
-    tolerance_type="ppm",
-    min_mz: float = None,
-    max_mz: float = None,
+    tolerance_type: Literal['ppm', 'th'] = "ppm",
+    min_mz: Optional[float] = None,
+    max_mz: Optional[float] = None,
 ) -> float:
     """
     Computes a score based on binomial probability for a given set of fragments and an experimental spectrum.
@@ -557,11 +576,15 @@ def binomial_score(
 
     """
 
-    if fragments and isinstance(fragments[0], Fragment):
-        fragments = [fragment.mz for fragment in fragments]
+    fragments_mzs: List[float] = []
+    for fragment in fragments:
+        if isinstance(fragment, Fragment):
+            fragments_mzs.append(fragment.mz)
+        else:
+            fragments_mzs.append(fragment)
 
     indexes = get_matched_indices(
-        fragments, mz_spectra, tolerance_value, tolerance_type
+        fragments_mzs, mz_spectra, tolerance_value, tolerance_type
     )
     fragment_matches = [i is not None for i in indexes]
     matches = sum(fragment_matches)
@@ -599,8 +622,8 @@ def get_matched_intensity_percentage(
     """
 
     # group matches by mz
-    matches = {f.mz: f for f in fragment_matches}
-    matched_intensity = sum(f.intenisty for f in matches.values())
+    matches: Dict[float, FragmentMatch] = {f.mz: f for f in fragment_matches}
+    matched_intensity = sum(f.intensity for f in matches.values())
     total_intensity = sum(intensities)
 
     if total_intensity == 0:

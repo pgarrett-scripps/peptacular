@@ -5,11 +5,10 @@ proforma_dataclasses.py
 import copy
 from collections import Counter
 from dataclasses import dataclass
-from functools import cached_property
 from typing import List, Union, Any, Optional, Dict
 from typing import List, Dict, Any, Union, Tuple
 
-from .utils2 import convert_type, get_label, get_number
+from .utils2 import convert_type
 
 
 
@@ -26,7 +25,9 @@ class Mod:
     dislpay_val: bool = True
 
     def __post_init__(self) -> None:
-        self.val = convert_type(self.val)
+
+        if isinstance(self.val, str):
+            self.val = convert_type(self.val)
 
     def flatten(self) -> List[Union[str, float, int]]:
         """
@@ -154,18 +155,20 @@ class Interval:
         :param mods: Optional list of modifications for the interval
         :type mods: Optional[List[Mod]]
         """
+
         self.start = start
         self.end = end
         self.ambiguous = ambiguous
-        self._mods = fix_list_of_mods(mods) if mods is not None else []
+        if mods is not None:
+            self._mods = fix_list_of_mods(mods) # type: ignore
+        else:
+            self._mods = []
 
     @property
     def mods(self) -> List[Mod]:
         """
         Get the modifications of the interval
         """
-        if self._mods is None:
-            return []
         return self._mods
 
     @mods.setter
@@ -176,20 +179,19 @@ class Interval:
         if value is None:
             self._mods = []
         else:
-            self._mods = fix_list_of_mods(value)
+            self._mods = fix_list_of_mods(value) # type: ignore
 
-    @property
     def has_mods(self) -> bool:
         """
         Check if the interval has modifications
         """
-        return self._mods is not None and len(self._mods) > 0
+        return len(self.mods) > 0
 
     def dict(self) -> Dict[str, Any]:
         """
         Convert the interval to a dictionary
         """
-        result = {
+        result: Dict[str, Any] = {
             "start": self.start,
             "end": self.end,
             "ambiguous": self.ambiguous,
@@ -220,12 +222,6 @@ class Interval:
                 tuple(sorted(self.mods)) if self.mods else None,
             )
         )
-
-    def has_mods(self) -> bool:
-        """
-        Check if the interval has modifications
-        """
-        return self.mods is not None
 
     def copy(self, deep: bool = True) -> "Interval":
         """
@@ -342,7 +338,7 @@ def are_intervals_equal(
     if intervals1 is not None and intervals2 is None:
         return False
 
-    if len(intervals1) != len(intervals2):
+    if len(intervals1) != len(intervals2): # type: ignore
         return False
 
     return Counter(intervals1) == Counter(intervals2)
@@ -367,11 +363,10 @@ def convert_to_mod(mod: ModValue) -> Mod:
         Mod('phospho', 1)
 
     """
-    # Check if mod is already a Mod instance to avoid unnecessary conversion.
     if isinstance(mod, Mod):
         return mod
 
-    if isinstance(mod, (str, int, float)):
+    if isinstance(mod, (str, int, float)): # type: ignore
         return Mod(mod, 1)
 
     raise ValueError(f"Invalid mod input: {mod}")
@@ -418,13 +413,13 @@ def fix_list_of_list_of_mods(
         return [[convert_to_mod(mods)]]
 
     # Case 2: mods is a SingleModList
-    if isinstance(mods, list) and all(
+    if isinstance(mods, list) and all( # type: ignore
         isinstance(mod, (str, int, float, Mod)) for mod in mods
     ):
-        return [fix_list_of_mods(mods)]
+        return [fix_list_of_mods(mods)] # type: ignore
 
     # Case 3: mods is a MultiModList
-    if isinstance(mods, list):
+    if isinstance(mods, list):  # type: ignore
         return [fix_list_of_mods(sublist) for sublist in mods]
 
     raise ValueError(f"Invalid mod input: {mods}")
@@ -454,7 +449,7 @@ def remove_empty_list_of_list_of_mods(
 
     """
 
-    new_mods2 = []
+    new_mods2: List[List[Mod]] = []
     for mod_list in mods:
         if mod_list:
             new_mods2.append(mod_list)
@@ -499,16 +494,16 @@ def fix_list_of_mods(mods: Union[List[ModValue], ModValue]) -> List[Mod]:
         return [convert_to_mod(mods)]
 
     # Case 2: mods is a list of ModValues
-    if isinstance(mods, list):
+    if isinstance(mods, list): # type: ignore
 
         # No change needed if all elements are already Mod instances
         if all(isinstance(mod, Mod) for mod in mods):
-            return mods
+            return mods # type: ignore
 
         for i, _ in enumerate(mods):
             mods[i] = convert_to_mod(mods[i])
 
-        return mods
+        return mods # type: ignore
 
     # Case 3: mods is an invalid input
     raise ValueError(f"Invalid mod input: {mods}")
@@ -627,9 +622,9 @@ def fix_intervals_input(
     if isinstance(intervals, (Tuple, Interval)):
         return [fix_interval_input(intervals)]
 
-    if isinstance(intervals, list):
+    if isinstance(intervals, list): # type: ignore
         if all(isinstance(interval, Interval) for interval in intervals):
-            return intervals
+            return intervals  # type: ignore
 
         return [fix_interval_input(interval) for interval in intervals]
 
