@@ -2,8 +2,12 @@
 Fasta.py
 """
 
+from typing import Union, List, Tuple
+import pathlib
+import io
 
-def parse_fasta(input_data):
+
+def parse_fasta(input_data: Union[str, pathlib.Path, io.IOBase]) -> List[Tuple[str, str]]:
     """
     Parse FASTA formatted data from various input types.
 
@@ -22,16 +26,18 @@ def parse_fasta(input_data):
 
     """
 
-    text = ""
+    text: str = ""
 
     # Check if input is a file-like object with 'read' method
     if hasattr(input_data, "read"):
-        content = input_data.read()
+        content = input_data.read() # type: ignore
         # Handle case where read() returns bytes (like with Streamlit's UploadedFile)
         if isinstance(content, bytes):
             text = content.decode("utf-8")
-        else:
+        elif isinstance(content, str):
             text = content
+        else:
+            text = str(content) # type: ignore
 
     # Check if input is a string
     elif isinstance(input_data, str):
@@ -56,9 +62,27 @@ def parse_fasta(input_data):
 
     else:
         raise TypeError("Input must be a string, file path, or file-like object")
+    
+    return parse_fasta_text(text)
 
+
+def parse_fasta_text(text: str) -> List[Tuple[str, str]]:
+    """
+    Parse FASTA formatted text.
+
+    Parameters:
+    -----------
+    text : str
+        The input FASTA text.
+
+    Returns:
+    --------
+    list of tuples
+        Each tuple contains (header, sequence)
+
+    """
     # Now parse the text using the existing logic
-    sequences = []
+    sequences: List[Tuple[str, str]] = []
     header = None
     seq = ""
     for line in text.splitlines():

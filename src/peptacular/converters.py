@@ -109,37 +109,37 @@ def convert_casanovo_sequence(sequence: str) -> str:
         '[+43.006]-P[+100]EPTIDE'
 
     """
-    new_sequence = []
+    new_sequence_comps: list[str] = []
     in_mod = False  # Tracks if we are within a modification
     is_nterm = False  # Tracks if the current modification is at the N-terminus
 
     for _, char in enumerate(sequence):
         if char in {"+", "-"}:
             # Check if it's at the start (N-terminal)
-            is_nterm = len(new_sequence) == 0
+            is_nterm = len(new_sequence_comps) == 0
 
             # Start a new modification block
-            new_sequence.append("[")
-            new_sequence.append(char)
+            new_sequence_comps.append("[")
+            new_sequence_comps.append(char)
             in_mod = True
         elif in_mod and char.isalpha():
             # End the modification block
-            new_sequence.append("]")
+            new_sequence_comps.append("]")
 
             if is_nterm:
                 # Add a dash if it's an N-terminal modification
-                new_sequence.append("-")
+                new_sequence_comps.append("-")
                 is_nterm = False
 
             # Add the current character and close modification
             in_mod = False
-            new_sequence.append(char)
+            new_sequence_comps.append(char)
         else:
             # Add regular characters
-            new_sequence.append(char)
+            new_sequence_comps.append(char)
 
     # Close any unclosed modification at the end of the sequence
     if in_mod:
-        new_sequence.append("]")
+        new_sequence_comps.append("]")
 
-    return "".join(new_sequence)
+    return "".join(new_sequence_comps)

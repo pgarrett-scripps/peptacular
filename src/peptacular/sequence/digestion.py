@@ -14,32 +14,12 @@ Valid DigestReturnType's:
 
 """
 
-from dataclasses import dataclass
-from typing import Union, List, Optional, Literal, Tuple, Generator, Iterable
+from typing import Union, List, Optional, Generator
 
-from .proforma.annot_digestion import EnzymeConfig
+from ..proforma.annot_digestion import DIGEST_RETURN_TYPING, DigestReturnType, EnzymeConfig
 
-from .spans import Span
-from .constants import PROTEASES_COMPILED
-from .proforma.annot import ProFormaAnnotation
-from .spans import (
-    build_left_semi_spans,
-    build_right_semi_spans,
-    build_non_enzymatic_spans,
-    build_spans,
-)
-from .sequence.sequence import get_annotation_input
-from .util import get_regex_match_indices
-
-DigestReturnType = Literal["str", "annotation", "span", "str-span", "annotation-span"]
-
-DIGEST_RETURN_TYPING = Union[
-    Generator[str, None, None],
-    Generator[ProFormaAnnotation, None, None],
-    Generator[Span, None, None],
-    Generator[Tuple[str, Span], None, None],
-    Generator[Tuple[ProFormaAnnotation, Span], None, None],
-]
+from ..proforma.annot import ProFormaAnnotation
+from . import get_annotation_input
 
 def get_left_semi_enzymatic_sequences(
     sequence: Union[str, ProFormaAnnotation],

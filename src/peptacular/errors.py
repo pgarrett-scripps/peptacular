@@ -2,9 +2,10 @@
 Errors
 """
 
+from typing import Any
 
 class AmbiguousAminoAcidError(ValueError):
-    def __init__(self, aa: str, msg: str, *args):
+    def __init__(self, aa: str, msg: str, *args: Any):
         self.aa = aa
         self.msg = msg
         message = f"Ambiguous amino acid: {aa}! {msg}"
@@ -22,7 +23,7 @@ class AmbiguousSequenceError(ValueError):
 class InvalidModificationMassError(ValueError):
     """Exception raised for errors due to invalid modifications."""
 
-    def __init__(self, modification_str: str, *args):
+    def __init__(self, modification_str: str, *args: Any):
         self.modification_str = modification_str
         message = f'Cannot determine mass for modification: "{modification_str}"'
         super().__init__(message, *args)
@@ -35,7 +36,7 @@ class InvalidSequenceError(ValueError):
 class UnknownModificationError(ValueError):
     """Exception raised for errors due to unknown modifications."""
 
-    def __init__(self, modification, *args):
+    def __init__(self, modification: str, *args: Any):
         self.modification = modification
         message = f"Unknown modification: {modification}"
         super().__init__(message, *args)
@@ -44,7 +45,7 @@ class UnknownModificationError(ValueError):
 class UnknownModificationMassError(ValueError):
     """Exception raised for errors due to unknown masses."""
 
-    def __init__(self, modification, *args):
+    def __init__(self, modification: str, *args: Any):
         self.mass = modification
         message = f"Unknown modification: {modification}"
         super().__init__(message, *args)
@@ -53,7 +54,7 @@ class UnknownModificationMassError(ValueError):
 class UnknownAminoAcidError(ValueError):
     """Exception raised for errors due to unknown amino acids."""
 
-    def __init__(self, amino_acid, *args):
+    def __init__(self, amino_acid: str, *args: Any):
         self.amino_acid = amino_acid
         message = f"Unknown amino acid: {amino_acid}"
         super().__init__(message, *args)
@@ -62,7 +63,7 @@ class UnknownAminoAcidError(ValueError):
 class InvalidDeltaMassError(ValueError):
     """Exception raised for errors due to invalid delta mass."""
 
-    def __init__(self, mass, *args):
+    def __init__(self, mass: str, *args: Any):
         self.mass = mass
         message = f"Invalid delta mass: {mass}"
         super().__init__(message, *args)
@@ -71,7 +72,7 @@ class InvalidDeltaMassError(ValueError):
 class InvalidCompositionError(ValueError):
     """Exception raised for errors due to invalid composition."""
 
-    def __init__(self, composition, *args):
+    def __init__(self, composition: str, *args: Any):
         self.composition = composition
         message = f"Cannot retrieve composition for: {composition}"
         super().__init__(message, *args)
@@ -80,7 +81,7 @@ class InvalidCompositionError(ValueError):
 class DeltaMassCompositionError(ValueError):
     """Exception raised for errors due to invalid composition."""
 
-    def __init__(self, composition, *args):
+    def __init__(self, composition: str, *args: Any):
         self.composition = composition
         message = f"Cannot retrieve composition for: {composition}"
         super().__init__(message, *args)
@@ -89,7 +90,7 @@ class DeltaMassCompositionError(ValueError):
 class InvalidChemFormulaError(ValueError):
     """Exception raised for errors due to invalid formula."""
 
-    def __init__(self, formula, msg, *args):
+    def __init__(self, formula: str, msg: str, *args: Any):
         self.formula = formula
         self.msg = msg
         message = f'Error parsing chem formula: "{formula}". {msg}'
@@ -99,7 +100,7 @@ class InvalidChemFormulaError(ValueError):
 class InvalidGlycanFormulaError(ValueError):
     """Exception raised for errors due to invalid formula."""
 
-    def __init__(self, formula, msg, *args):
+    def __init__(self, formula: str, msg: str, *args: Any):
         self.formula = formula
         self.msg = msg
         message = f'Error parsing glycan formula: "{formula}". {msg}'
@@ -109,7 +110,7 @@ class InvalidGlycanFormulaError(ValueError):
 class ProFormaFormatError(ValueError):
     """Exception raised for errors due to invalid ProForma format."""
 
-    def __init__(self, msg, index, sequence, *args):
+    def __init__(self, msg: str, index: int, sequence: str, *args: Any):
         # Creating a visual marker for the error position in the sequence.
         # Ensure index is within bounds to avoid IndexError.
         if 0 <= index < len(sequence):

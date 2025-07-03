@@ -25,7 +25,7 @@ from .chem.chem_constants import (
     AVERAGE_FRAGMENT_ION_ADJUSTMENTS,
 )
 
-from .utils2 import convert_type, parse_ion_elements
+from .utils2 import convert_type, parse_ion_elements, round_to_precision
 from .errors import (
     InvalidDeltaMassError,
     InvalidModificationMassError,
@@ -51,7 +51,7 @@ from .proforma_dataclasses import ModValue
 
 def _convert_adducts_to_str(
     charge_adducts: Optional[Union[str, List[str], List[Mod]]] = None,
-) -> str:
+) -> Optional[str]:
     """
     Convert charge adducts to a string representation.
 
@@ -76,30 +76,29 @@ def _convert_adducts_to_str(
         >>> _convert_adducts_to_str(None)
     """
     if isinstance(charge_adducts, Mod):
-        adduct_str = ",".join([charge_adducts.val] * charge_adducts.mult)
+        return ",".join([str(charge_adducts.val)] * charge_adducts.mult)
 
     elif isinstance(charge_adducts, list):
-        adduct_str = []
+        adduct_str: list[str] = []
         for adduct in charge_adducts:
             if isinstance(adduct, Mod):
-                sub_list = [adduct.val] * adduct.mult
+                sub_list = [str(adduct.val)] * adduct.mult
                 adduct_str.extend(sub_list)
-            elif isinstance(adduct, str):
+            elif isinstance(adduct, str):  # type: ignore
                 adduct_str.append(adduct)
             else:
                 raise TypeError(
                     f"Invalid value for charge adducts: {adduct}! Must be a string or Mod, got: {type(adduct)}"
                 )
-        adduct_str = ",".join(adduct_str)
+        return ",".join(adduct_str)
     elif isinstance(charge_adducts, str):
-        adduct_str = charge_adducts
+        return charge_adducts
     elif charge_adducts is None:
-        adduct_str = None
-    else:
-        raise TypeError(
-            f"Invalid value for charge adducts: {charge_adducts}! Must be a string, list of strings, or Mod, got: {type(charge_adducts)}"
-        )
-    return adduct_str
+        return None
+
+    raise TypeError(
+        f"Invalid value for charge adducts: {charge_adducts}! Must be a string, list of strings, or Mod, got: {type(charge_adducts)}"
+    )
 
 
 def adjust_mass(
@@ -141,7 +140,7 @@ def adjust_mass(
 
     m = base_mass
 
-    adduct_str: str = _convert_adducts_to_str(charge_adducts)
+    adduct_str = _convert_adducts_to_str(charge_adducts)
 
     if adduct_str is None or adduct_str == "":
         if ion_type in ("p", "n"):
@@ -275,18 +274,21 @@ def glycan_mass(
             entry = MONOSACCHARIDES_DB.get_entry_by_synonym(monosaccharide)
         else:
             raise InvalidGlycanFormulaError(
-                original_formula, f'Unknown monosaccharide: "{monosaccharide}"!'
+                str(original_formula), f'Unknown monosaccharide: "{monosaccharide}"!'
             )
 
         if monoisotopic:
+            if entry.mono_mass is None:
+                raise ValueError(f'Cannot determine monoisotopic mass for: "{monosaccharide}"')
+
             m += entry.mono_mass * count
         else:
+            if entry.avg_mass is None:
+                raise ValueError(f'Cannot determine average mass for: "{monosaccharide}"')
+
             m += entry.avg_mass * count
 
-    if precision is not None:
-        m = round(m, precision)
-
-    return m
+    return round_to_precision(m, precision)
 
 
 def glycan_mz(
@@ -304,7 +306,7 @@ def glycan_mz(
 
 
 def mod_mass(
-    mod: Union[str, Mod, List[Mod]],
+    mod: Union[str, int, float, Mod, List[Mod]],
     monoisotopic: bool = True,
     precision: Optional[int] = None,
 ) -> float:
@@ -369,7 +371,7 @@ def mod_mass(
         return mod
 
     if isinstance(mod, float):
-        return round(mod, precision) if precision is not None else mod
+        return round_to_precision(mod, precision)
 
     mods = mod.split("|")
     for m in mods:
@@ -416,16 +418,17 @@ def _parse_obs_mass_from_proforma_str(
 
     """
 
-    round_func = lambda x: round(x, precision) if precision is not None else x
 
     if obs_str.lower().startswith("obs:"):
         obs_str = "".join(obs_str.split(":")[1:])
 
-    # Try to Parse observed mass
-    try:
-        return round_func(float(obs_str))
-    except ValueError as err:
-        raise InvalidDeltaMassError(obs_str) from err
+    obs_float = convert_type(obs_str)
+
+    if not isinstance(obs_float, (int, float)):
+        raise InvalidDeltaMassError(obs_str)
+
+    return round_to_precision(float(obs_float), precision)
+
 
 
 def _parse_glycan_mass_from_proforma_str(
@@ -480,8 +483,6 @@ def _parse_glycan_mass_from_proforma_str(
 
     """
 
-    round_func = lambda x: round(x, precision) if precision is not None else x
-
     if glycan_str.lower().startswith("glycan:"):
         glycan_str = "".join(glycan_str.split(":")[1:])
 
@@ -495,12 +496,20 @@ def _parse_glycan_mass_from_proforma_str(
         entry = None
 
     if entry:
-        if monoisotopic:
-            return round_func(entry.mono_mass)
-        return round_func(entry.avg_mass)
+        if monoisotopic is True:
+            if entry.mono_mass is None:
+                raise InvalidGlycanFormulaError(
+                    glycan_str, f'Glycan "{glycan_str}" has no monoisotopic mass!'
+                )
+            return round_to_precision(entry.mono_mass, precision)
+        if entry.avg_mass is None:
+            raise InvalidGlycanFormulaError(
+                glycan_str, f'Glycan "{glycan_str}" has no average mass!'
+            )
+        return round_to_precision(entry.avg_mass, precision)
 
     try:
-        return round_func(glycan_mass(glycan_str, monoisotopic, precision))
+        return round_to_precision(glycan_mass(glycan_str, monoisotopic, precision), precision)
     except InvalidGlycanFormulaError as err:
         raise InvalidGlycanFormulaError(glycan_str, err.msg) from err
 
@@ -626,7 +635,7 @@ def _parse_mod_mass(
     """
 
     # localization fix
-    if isinstance(mod, str) and "#" in mod:
+    if isinstance(mod, str) and "#" in mod: # type: ignore
         if mod.startswith("#"):  # for localized positions, return 0
             return 0.0
 
@@ -635,9 +644,12 @@ def _parse_mod_mass(
     # Try to parse as a number first (Might cause issues if the mod is also unimod/psi ID)
     # Proforma2.0 standard requires that delta mass instances are always prefixed with a '+' or '-' but this would
     # require a lot of changes....and make user input more difficult
-    mod = convert_type(mod)
+
+    mod = convert_type(mod) # type: ignore
+
     if isinstance(mod, int):
         return mod
+    
     if isinstance(mod, float):
         return round(mod, precision) if precision is not None else mod
 
@@ -777,11 +789,11 @@ def _parse_charge_adducts_mass(
     if adducts == "+H+":
         return PROTON_MASS
 
-    adducts = adducts.split(",")
+    adducts_comps: list[str] = adducts.split(",")
 
     m = 0.0
 
-    for adduct in adducts:
+    for adduct in adducts_comps:
         m += _parse_adduct_mass(adduct, None, monoisotopic)
 
     if precision is not None:

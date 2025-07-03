@@ -8,9 +8,9 @@ from .proforma_dataclasses import ChemComposition
 from .chem.chem_util import write_chem_formula
 from .errors import InvalidGlycanFormulaError
 from .mods.mod_db_setup import (
-    _glycan_comp,
-    _parse_glycan_formula,
-)  # To avoid circular import
+    glycan_comp_db,
+    parse_glycan_formula_db,
+)
 
 
 def write_glycan_formula(glycan_dict: ChemComposition, sep: str = "") -> str:
@@ -90,7 +90,7 @@ def glycan_comp(glycan: Union[ChemComposition, str]) -> ChemComposition:
             peptacular.errors.InvalidGlycanFormulaError: Error parsing glycan formula: "Hex2.1.". Invalid count: "2.1."!
 
     """
-    return _glycan_comp(glycan)
+    return glycan_comp_db(glycan)
 
 
 def parse_glycan_formula(formula: str, sep: str = "") -> ChemComposition:
@@ -142,7 +142,7 @@ def parse_glycan_formula(formula: str, sep: str = "") -> ChemComposition:
     """
 
     try:
-        return _parse_glycan_formula(formula, sep)
+        return parse_glycan_formula_db(formula, sep)
     except InvalidGlycanFormulaError as err:
         raise InvalidGlycanFormulaError(formula, err.msg) from err
 
@@ -192,4 +192,4 @@ def convert_glycan_formula_to_chem_formula(glycan: Union[ChemComposition, str]) 
     try:
         return write_chem_formula(glycan_comp(glycan))
     except InvalidGlycanFormulaError as err:
-        raise InvalidGlycanFormulaError(glycan, err.msg) from err
+        raise InvalidGlycanFormulaError(str(glycan), err.msg) from err

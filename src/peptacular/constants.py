@@ -19,11 +19,11 @@ from .element_setup import (
 )
 
 
-def merge_dicts(d1: Dict, d2: Dict) -> Dict:
+def merge_dicts(d1: Dict[str, int], d2: Dict[str, int]) -> Dict[str, int]:
     """
     Merge two dictionaries. And remove any keys with value 0.
     """
-    d = {}
+    d: Dict[str, int] = {}
     for k, v in d1.items():
         d[k] = v
     for k, v in d2.items():
@@ -420,7 +420,7 @@ def get_mod_type(mod: Union[str, ModType]) -> ModType:
     if isinstance(mod, ModType):
         return mod
 
-    if isinstance(mod, str):
+    if isinstance(mod, str): # type: ignore
         for mod_type in ModType:
             if mod_type.value == mod:
                 return mod_type
@@ -432,16 +432,14 @@ def get_mod_type(mod: Union[str, ModType]) -> ModType:
 
 def get_mods(mods: Union[None, str, List[Union[str, ModType]]]) -> List[ModType]:
     if mods is None:
-        mods = [mod_type for mod_type in ModType]
+        return [mod_type for mod_type in ModType]
     elif isinstance(mods, (str, ModType)):
         # Single modification type
-        mods = [get_mod_type(mods)]
-    elif isinstance(mods, list):
+        return [get_mod_type(mods)]
+    elif isinstance(mods, list):  # type: ignore
         # List of modification types
-        mods = [get_mod_type(mod) for mod in mods]
-    else:
-        raise ValueError(
-            f"mods parameter must be str, list of str, or None, got {type(mods)}"
-        )
-
-    return mods
+        return [get_mod_type(mod) for mod in mods]
+    
+    raise ValueError(
+        f"mods parameter must be str, list of str, or None, got {type(mods)}"
+    )

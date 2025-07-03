@@ -10,7 +10,7 @@ import tempfile
 import warnings
 from collections import Counter
 from functools import cached_property
-from typing import List, Dict, IO, Any, Union, Iterator, Tuple
+from typing import List, Dict, IO, Any, Optional, Union, Iterator, Tuple
 
 from ..constants import ISOTOPIC_ATOMIC_MASSES
 from ..chem.chem_util import (
@@ -29,12 +29,12 @@ from ..proforma_dataclasses import ChemComposition
 class ModEntry:
     id: str
     name: str
-    mono_mass: Union[float, None]
-    avg_mass: Union[float, None]
-    composition: Union[str, None]
-    synonyms: Union[List[str], None] = None
-    parents: Union[List[str], None] = None
-    entry_type: Union[Any, None] = None
+    mono_mass: Optional[float] = None
+    avg_mass: Optional[float] = None
+    composition: Optional[str] = None
+    synonyms: Optional[List[str]] = None
+    parents: Optional[List[str]] = None
+    entry_type: Optional[Any] = None
 
     @cached_property
     def calc_mono_mass(self):
@@ -61,7 +61,7 @@ class ModEntry:
         }
 
 
-def _parse_glycan_formula(formula: str, sep: str) -> ChemComposition:
+def parse_glycan_formula_db(formula: str, sep: str) -> ChemComposition:
     """
     Here to avoid a circular import. Real function is in peptacular.glycan
     """
@@ -113,12 +113,12 @@ def _parse_glycan_formula(formula: str, sep: str) -> ChemComposition:
     return d
 
 
-def _glycan_comp(glycan: Union[ChemComposition, str], sep: str = "") -> ChemComposition:
+def glycan_comp_db(glycan: Union[ChemComposition, str], sep: str = "") -> ChemComposition:
     """
     Here to avoid a circular import. Real function is in peptacular.glycan
     """
     if isinstance(glycan, str):
-        glycan = _parse_glycan_formula(glycan, sep)  # raises InvalidGlycanFormulaError
+        glycan = parse_glycan_formula_db(glycan, sep)  # raises InvalidGlycanFormulaError
 
     counts = {}
     for component, count in glycan.items():
@@ -348,7 +348,7 @@ def _get_unimod_entries(terms: List[Dict[str, Any]]) -> List[ModEntry]:
             combined_comp = {}
             for k, v in delta_composition.items():
                 if k == "Me" or k == "Ac" or k not in ISOTOPIC_ATOMIC_MASSES:
-                    glycan_composition = _glycan_comp(k)
+                    glycan_composition = glycan_comp_db(k)
                     for elem, count in glycan_composition.items():
                         combined_comp[elem] = combined_comp.get(elem, 0) + count * v
                 else:
@@ -747,7 +747,7 @@ def _get_gno_entries(terms: List[Dict[str, Any]]) -> List[ModEntry]:
             tokens = re.findall(r"([A-Za-z0-9]+)\((\d+)\)", val)
             for symbol, count in tokens:
                 try:
-                    comp = _glycan_comp(symbol)
+                    comp = glycan_comp_db(symbol)
                 except ValueError as err:
                     warnings.warn(
                         f"[{DbType.GNO}] Error parsing {term_id} {term_name} {val}, {err}"

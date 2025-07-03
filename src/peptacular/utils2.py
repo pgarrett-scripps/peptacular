@@ -1,4 +1,4 @@
-from typing import Tuple, Union
+from typing import Optional, Tuple, Union
 
 from .constants import BACKWARD_ION_TYPES, FORWARD_ION_TYPES, INTERNAL_ION_TYPES
 
@@ -325,3 +325,20 @@ def get_number(ion_type: str, len_sequence: int, start: int, end: int) -> str:
         raise ValueError("Wrong Ion Type")
 
     return str(number)
+
+
+def round_to_precision(value: float, precision: Optional[int] = None) -> float:
+    """
+    Round a float to a specified number of decimal places.
+
+    :param value: The float value to round.
+    :type value: float
+    :param precision: The number of decimal places to round to.
+    :type precision: int
+
+    :return: The rounded float value.
+    :rtype: float
+    """
+    if precision is not None:
+        value = round(value, precision)
+    return value

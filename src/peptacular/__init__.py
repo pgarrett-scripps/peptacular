@@ -9,7 +9,6 @@ from .sequence import *
 from .proforma import *
 from .mods import *
 
-from .digestion import *
 from .mass_calc import *
 from .glycan import *
 from .isotope import *

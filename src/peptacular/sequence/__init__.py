@@ -9,3 +9,4 @@ from .sequence import *
 from .properties import *
 from .mass import *
 from .comp import *
+from .digestion import *
