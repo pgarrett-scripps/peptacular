@@ -20,11 +20,10 @@ a result they can be positioned anywhere in the sequence. Maybe add a check to s
 end of the sequence and if not raise an error.
 """
 
-from typing import *
+from typing import Any, Union, Optional, List, Dict, Tuple, Callable
 
 from .util import get_annotation_input
 
-from ..errors import ProFormaFormatError
 from ..constants import ORDERED_AMINO_ACIDS
 
 from ..proforma.annot import (
@@ -210,12 +209,12 @@ def get_mods(
 
     """
 
-    return get_annotation_input(sequence, copy=True).mod_dict(mods)
+    return get_annotation_input(sequence, copy=True).mod_dict(mods) # type: ignore
 
 
 def add_mods(
     sequence: Union[str, ProFormaAnnotation],
-    mods: Dict,
+    mods: Dict[str, Any],
     append: bool = True,
     include_plus: bool = False,
 ) -> str:
@@ -344,7 +343,7 @@ def pop_mods(
     mods: Optional[Union[str, List[str]]] = None,
     include_plus: bool = False,
     precision: Optional[int] = None,
-) -> Tuple[str, ModDict]:
+) -> Tuple[str, Dict[str, Any]]:
     """
     Removes all modifications from the given sequence, returning the unmodified sequence and a dictionary of the
     removed modifications.
@@ -582,7 +581,7 @@ def reverse(
 
 def shuffle(
     sequence: Union[str, ProFormaAnnotation],
-    seed: int = None,
+    seed: Optional[int] = None,
     include_plus: bool = False,
     precision: Optional[int] = None,
 ) -> str:
@@ -755,7 +754,7 @@ def split(
     ]
 
 
-def count_residues(sequence: Union[str, ProFormaAnnotation]) -> Counter:
+def count_residues(sequence: Union[str, ProFormaAnnotation]) -> Dict[str, int]:
     """
     Counts the occurrences of each amino acid in the input sequence.
 
@@ -771,19 +770,19 @@ def count_residues(sequence: Union[str, ProFormaAnnotation]) -> Counter:
     .. code-block:: python
 
         >>> count_residues('PEPTIDE')
-        Counter({'P': 2, 'E': 2, 'T': 1, 'I': 1, 'D': 1})
+        {'P': 2, 'E': 2, 'T': 1, 'I': 1, 'D': 1}
 
         >>> count_residues('[Acetyl]-P[phospho]EP[phospho]TIDE-[Amide]')
-        Counter({'[Acetyl]-P[phospho]': 1, 'E': 1, 'P[phospho]': 1, 'T': 1, 'I': 1, 'D': 1, 'E-[Amide]': 1})
+        {'[Acetyl]-P[phospho]': 1, 'E': 1, 'P[phospho]': 1, 'T': 1, 'I': 1, 'D': 1, 'E-[Amide]': 1}
 
         >>> count_residues('<13C>PE[3.14]PTIDE')
-        Counter({'<13C>P': 2, '<13C>E[3.14]': 1, '<13C>T': 1, '<13C>I': 1, '<13C>D': 1, '<13C>E': 1})
+        {'<13C>P': 2, '<13C>E[3.14]': 1, '<13C>T': 1, '<13C>I': 1, '<13C>D': 1, '<13C>E': 1}
 
         >>> count_residues('<[3.14]@C>PEPTIDE')
-        Counter({'P': 2, 'E': 2, 'T': 1, 'I': 1, 'D': 1})
+        {'P': 2, 'E': 2, 'T': 1, 'I': 1, 'D': 1}
 
         >>> count_residues('<[3.14]@E>PEPTIDE')
-        Counter({'P': 2, 'E[3.14]': 2, 'T': 1, 'I': 1, 'D': 1})
+        {'P': 2, 'E[3.14]': 2, 'T': 1, 'I': 1, 'D': 1}
 
     """
     return (
@@ -871,37 +870,13 @@ def is_subsequence(
     )
 
 
-def _sort_mods(
-    mods: ModDict, sort_function: Optional[Callable[[str], str]] = None
-) -> None:
-    """
-    Sorts the modifications in the input dictionary using the provided sort function.
 
-    :param mods: The modifications to be sorted.
-    :type mods: Dict[int, List[ModValue]]
-    :param sort_function: The sort function to be used. Defaults to identity function.
-    :type sort_function: Callable[[str], str]
-
-    :return: None
-
-    .. code-block:: python
-
-        >>> mod_dict = {1: ['phospho', 1], 2: ['phospho']}
-        >>> _sort_mods(mod_dict)
-        >>> mod_dict
-        {1: [1, 'phospho'], 2: ['phospho']}
-
-    """
-
-    if sort_function is None:
-        sort_function = lambda x: str(x)
-
-    for k in mods:
-        mods[k].sort(key=sort_function)
 
 
 def sort(
     sequence: Union[str, ProFormaAnnotation],
+    key: Optional[Callable[[str], Any]] = None,
+    reverse: bool = False,
     include_plus: bool = False,
     precision: Optional[int] = None,
 ) -> str:
@@ -931,7 +906,7 @@ def sort(
     """
     return (
         get_annotation_input(sequence=sequence, copy=True)
-        .sort(inplace=True)
+        .sort(inplace=True, key=key, reverse=reverse)
         .serialize(include_plus=include_plus, precision=precision)
     )
 

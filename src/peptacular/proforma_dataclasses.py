@@ -427,7 +427,7 @@ def fix_list_of_list_of_mods(
 
 def remove_empty_list_of_list_of_mods(
     mods: List[List[Mod]],
-) -> Union[List[List[Mod]], None]:
+) -> Optional[List[List[Mod]]]:
     """
     Remove empty lists from a list of lists of Mod instances.
 

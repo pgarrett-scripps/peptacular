@@ -1,33 +1,23 @@
 from typing import Dict, List, Literal, Optional, Union
 
+from ..proforma.annot_properties import AGGREGATION_METHODS, MISSING_AA_HANDLING, WEIGHTING_SCHEMES
+
 from .util import get_annotation_input
 
 from ..proforma.annot import ProFormaAnnotation
 
 
+
 def calc_property(
     sequence: Union[str, ProFormaAnnotation],
     scale: Union[str, Dict[str, float]],
-    missing_aa_handling: Literal[
-        "zero", "avg", "min", "max", "median", "error", "skip"
-    ] = "error",
-    aggregation_method: Literal["sum", "avg"] = "avg",
+    missing_aa_handling: MISSING_AA_HANDLING = "error",
+    aggregation_method: AGGREGATION_METHODS = "avg",
     normalize: bool = False,
-    weighting_scheme: Union[
-        list[float],
-        Literal[
-            "uniform",
-            "linear",
-            "exponential",
-            "gaussian",
-            "sigmoid",
-            "cosine",
-            "sinusoidal",
-        ],
-    ] = "uniform",
+    weighting_scheme: WEIGHTING_SCHEMES = "uniform",
     min_weight: float = 0.1,
     max_weight: float = 1.0,
-    precision: Optional[float] = None,
+    precision: Optional[int] = None,
 ) -> float:
 
     annotation = get_annotation_input(sequence=sequence, copy=True)
@@ -46,10 +36,10 @@ def calc_property(
 def hydrophobicity(
     sequence: Union[str, ProFormaAnnotation],
     scale: str = "Kyte-Doolittle",
-    missing_aa_handling: str = "error",
-    aggregation_method: str = "avg",
+    missing_aa_handling: MISSING_AA_HANDLING = "error",
+    aggregation_method: AGGREGATION_METHODS = "avg",
     normalize: bool = True,
-    weighting_scheme: str = "uniform",
+    weighting_scheme: WEIGHTING_SCHEMES = "uniform",
     precision: Optional[int] = None,
 ) -> float:
 
@@ -67,10 +57,10 @@ def hydrophobicity(
 def flexibility(
     sequence: Union[str, ProFormaAnnotation],
     scale: str = "flexibility_vihinen",
-    missing_aa_handling: str = "error",
-    aggregation_method: str = "avg",
+    missing_aa_handling: MISSING_AA_HANDLING = "error",
+    aggregation_method: AGGREGATION_METHODS = "avg",
     normalize: bool = True,
-    weighting_scheme: str = "uniform",
+    weighting_scheme: WEIGHTING_SCHEMES = "uniform",
     precision: Optional[int] = None,
 ) -> float:
 
@@ -88,10 +78,10 @@ def flexibility(
 def hydrophilicity(
     sequence: Union[str, ProFormaAnnotation],
     scale: str = "hydrophilicity_hop_wood",
-    missing_aa_handling: str = "error",
-    aggregation_method: str = "avg",
+    missing_aa_handling: MISSING_AA_HANDLING = "error",
+    aggregation_method: AGGREGATION_METHODS = "avg",
     normalize: bool = True,
-    weighting_scheme: str = "uniform",
+    weighting_scheme: WEIGHTING_SCHEMES = "uniform",
     precision: Optional[int] = None,
 ) -> float:
 
@@ -109,10 +99,10 @@ def hydrophilicity(
 def surface_accessibility(
     sequence: Union[str, ProFormaAnnotation],
     scale: str = "surface_accessibility_vergoten",
-    missing_aa_handling: str = "error",
-    aggregation_method: str = "avg",
+    missing_aa_handling: MISSING_AA_HANDLING = "error",
+    aggregation_method: AGGREGATION_METHODS = "avg",
     normalize: bool = True,
-    weighting_scheme: str = "uniform",
+    weighting_scheme: WEIGHTING_SCHEMES = "uniform",
     precision: Optional[int] = None,
 ) -> float:
 
@@ -130,10 +120,10 @@ def surface_accessibility(
 def polarity(
     sequence: Union[str, ProFormaAnnotation],
     scale: str = "polarity_grantham",
-    missing_aa_handling: str = "error",
-    aggregation_method: str = "avg",
+    missing_aa_handling: MISSING_AA_HANDLING = "error",
+    aggregation_method: AGGREGATION_METHODS = "avg",
     normalize: bool = True,
-    weighting_scheme: str = "uniform",
+    weighting_scheme: WEIGHTING_SCHEMES = "uniform",
     precision: Optional[int] = None,
 ) -> float:
 
@@ -151,10 +141,10 @@ def polarity(
 def mutability(
     sequence: Union[str, ProFormaAnnotation],
     scale: str = "mutability",
-    missing_aa_handling: str = "error",
-    aggregation_method: str = "avg",
+    missing_aa_handling: MISSING_AA_HANDLING = "error",
+    aggregation_method: AGGREGATION_METHODS = "avg",
     normalize: bool = True,
-    weighting_scheme: str = "uniform",
+    weighting_scheme: WEIGHTING_SCHEMES = "uniform",
     precision: Optional[int] = None,
 ) -> float:
 
@@ -172,10 +162,10 @@ def mutability(
 def codons(
     sequence: Union[str, ProFormaAnnotation],
     scale: str = "codons",
-    missing_aa_handling: str = "error",
-    aggregation_method: str = "sum",
+    missing_aa_handling: MISSING_AA_HANDLING = "error",
+    aggregation_method: AGGREGATION_METHODS = "sum",
     normalize: bool = False,
-    weighting_scheme: str = "uniform",
+    weighting_scheme: WEIGHTING_SCHEMES = "uniform",
     precision: Optional[int] = None,
 ) -> float:
 
@@ -193,10 +183,10 @@ def codons(
 def bulkiness(
     sequence: Union[str, ProFormaAnnotation],
     scale: str = "bulkiness",
-    missing_aa_handling: str = "error",
-    aggregation_method: str = "avg",
+    missing_aa_handling: MISSING_AA_HANDLING = "error",
+    aggregation_method: AGGREGATION_METHODS = "avg",
     normalize: bool = True,
-    weighting_scheme: str = "uniform",
+    weighting_scheme: WEIGHTING_SCHEMES = "uniform",
     precision: Optional[int] = None,
 ) -> float:
 
@@ -214,10 +204,10 @@ def bulkiness(
 def recognition_factors(
     sequence: Union[str, ProFormaAnnotation],
     scale: str = "recognition_factors",
-    missing_aa_handling: str = "error",
-    aggregation_method: str = "sum",
+    missing_aa_handling: MISSING_AA_HANDLING = "error",
+    aggregation_method: AGGREGATION_METHODS = "sum",
     normalize: bool = False,
-    weighting_scheme: str = "uniform",
+    weighting_scheme: WEIGHTING_SCHEMES = "uniform",
     precision: Optional[int] = None,
 ) -> float:
 
@@ -235,10 +225,10 @@ def recognition_factors(
 def transmembrane_tendency(
     sequence: Union[str, ProFormaAnnotation],
     scale: str = "transmembrane_tendency",
-    missing_aa_handling: str = "error",
-    aggregation_method: str = "avg",
+    missing_aa_handling: MISSING_AA_HANDLING = "error",
+    aggregation_method: AGGREGATION_METHODS = "avg",
     normalize: bool = True,
-    weighting_scheme: str = "uniform",
+    weighting_scheme: WEIGHTING_SCHEMES = "uniform",
     precision: Optional[int] = None,
 ) -> float:
 
@@ -256,10 +246,10 @@ def transmembrane_tendency(
 def average_buried_area(
     sequence: Union[str, ProFormaAnnotation],
     scale: str = "average_buried_area",
-    missing_aa_handling: str = "error",
-    aggregation_method: str = "avg",
+    missing_aa_handling: MISSING_AA_HANDLING = "error",
+    aggregation_method: AGGREGATION_METHODS = "avg",
     normalize: bool = True,
-    weighting_scheme: str = "uniform",
+    weighting_scheme: WEIGHTING_SCHEMES = "uniform",
     precision: Optional[int] = None,
 ) -> float:
 
@@ -277,10 +267,10 @@ def average_buried_area(
 def hplc(
     sequence: Union[str, ProFormaAnnotation],
     scale: str = "hplc_meek_2_1",
-    missing_aa_handling: str = "error",
-    aggregation_method: str = "avg",
+    missing_aa_handling: MISSING_AA_HANDLING = "error",
+    aggregation_method: AGGREGATION_METHODS = "avg",
     normalize: bool = True,
-    weighting_scheme: str = "uniform",
+    weighting_scheme: WEIGHTING_SCHEMES = "uniform",
     precision: Optional[int] = None,
 ) -> float:
 
@@ -299,26 +289,13 @@ def calc_window_property(
     sequence: Union[str, ProFormaAnnotation],
     scale: Union[str, Dict[str, float]],
     window_size: int = 9,
-    missing_aa_handling: Literal[
-        "zero", "avg", "min", "max", "median", "error", "skip"
-    ] = "error",
-    aggregation_method: Literal["sum", "avg"] = "avg",
+    missing_aa_handling: MISSING_AA_HANDLING = "error",
+    aggregation_method: AGGREGATION_METHODS = "avg",
     normalize: bool = False,
-    weighting_scheme: Union[
-        list[float],
-        Literal[
-            "uniform",
-            "linear",
-            "exponential",
-            "gaussian",
-            "sigmoid",
-            "cosine",
-            "sinusoidal",
-        ],
-    ] = "uniform",
+    weighting_scheme: WEIGHTING_SCHEMES = "uniform",
     min_weight: float = 0.1,
     max_weight: float = 1.0,
-    precision: Optional[float] = None,
+    precision: Optional[int] = None,
 ) -> List[float]:
 
     annotation = get_annotation_input(sequence=sequence, copy=True)
@@ -338,7 +315,7 @@ def calc_window_property(
 def charge_at_ph(
     sequence: Union[str, ProFormaAnnotation],
     pH: float = 7.0,
-    precision: Optional[float] = None,
+    precision: Optional[int] = None,
 ) -> float:
     """
     Calculate the charge of a protein at given pH using the Henderson-Hasselbalch equation.
@@ -366,7 +343,7 @@ def charge_at_ph(
 
 def pi(
     sequence: Union[str, ProFormaAnnotation],
-    precision: Optional[float] = None,
+    precision: Optional[int] = None,
 ) -> float:
     """
     Calculate the isoelectric point (pI) of a protein sequence.
@@ -390,8 +367,8 @@ def pi(
 def aa_property_percentage(
     sequence: Union[str, ProFormaAnnotation],
     residues: List[str],
-    precision: Optional[float] = None,
-) -> Dict[str, float]:
+    precision: Optional[int] = None,
+) -> float:
 
     # Calculate the percentage of specified amino acid residues in a sequence.
 
@@ -405,7 +382,7 @@ def aa_property_percentage(
 def aromaticity(
     sequence: Union[str, ProFormaAnnotation],
     aromatic_residues: str = "YWF",
-    precision: Optional[float] = None,
+    precision: Optional[int] = None,
 ) -> float:
     annotation = get_annotation_input(sequence=sequence, copy=True)
     return annotation.aromaticity(
@@ -418,7 +395,7 @@ def secondary_structure(
     sequence: Union[str, ProFormaAnnotation],
     scale: Literal["DeleageRoux", "Levitt", "ChouFasman"] = "DeleageRoux",
     precision: Optional[int] = None,
-) -> Dict[str, float]:
+) -> Dict[str, Optional[float]]:
     # Calculate the secondary structure propensity of a peptide sequence.
     annotation = get_annotation_input(sequence=sequence, copy=True)
     return annotation.secondary_structure(

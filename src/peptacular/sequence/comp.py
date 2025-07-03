@@ -1,9 +1,9 @@
-from typing import *
+from typing import Union, Optional, List, Tuple
 
 from .util import get_annotation_input, override_annotation_properties
 
 from ..proforma.annot import ProFormaAnnotation
-from ..proforma_dataclasses import ChemComposition, Mod, ModValue
+from ..proforma_dataclasses import ChemComposition, ModValue
 
 
 def comp(
@@ -12,7 +12,7 @@ def comp(
     estimate_delta: bool = False,
     charge: Optional[int] = None,
     isotope: int = 0,
-    charge_adducts: Optional[List[Mod]] = None,
+    charge_adducts: Optional[List[ModValue]] = None,
     isotope_mods: Optional[List[ModValue]] = None,
     use_isotope_on_mods: bool = False,
 ) -> ChemComposition:
@@ -85,7 +85,7 @@ def comp_mass(
     ion_type: str = "p",
     charge: Optional[int] = None,
     isotope: int = 0,
-    charge_adducts: Optional[List[Mod]] = None,
+    charge_adducts: Optional[List[ModValue]] = None,
     isotope_mods: Optional[List[ModValue]] = None,
     use_isotope_on_mods: bool = False,
 ) -> Tuple[ChemComposition, float]:
@@ -103,7 +103,6 @@ def comp_mass(
         ion_type=ion_type,
         isotope=isotope,
         use_isotope_on_mods=use_isotope_on_mods,
-        precision=None,
     )
 
 

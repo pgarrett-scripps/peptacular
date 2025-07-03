@@ -1,8 +1,7 @@
-from typing import *
+from typing import Union, Optional, List
 import warnings
 
-from ..errors import ProFormaFormatError
-from ..proforma_dataclasses import Mod
+from ..proforma_dataclasses import ModValue
 from ..proforma.annot import (
     ProFormaAnnotation,
 )
@@ -37,7 +36,7 @@ def get_annotation_input(
 ) -> ProFormaAnnotation:
     if isinstance(sequence, str):
         annotation = sequence_to_annotation(sequence)
-    elif isinstance(sequence, ProFormaAnnotation):
+    elif isinstance(sequence, ProFormaAnnotation): # type: ignore
         if copy:
             annotation = sequence.copy()
         else:
@@ -45,14 +44,14 @@ def get_annotation_input(
     else:
         raise TypeError(f"Expected str or ProFormaAnnotation, got {type(sequence)}")
 
-    return annotation
+    return annotation # type: ignore
 
 
 def override_annotation_properties(
     annotation: ProFormaAnnotation,
     charge: Optional[int] = None,
-    charge_adducts: Optional[List[Mod]] = None,
-    isotope_mods: Optional[List[Mod]] = None,
+    charge_adducts: Optional[Union[ModValue, List[ModValue]]] = None,
+    isotope_mods: Optional[Union[ModValue, List[ModValue]]] = None,
 ):
     if annotation.charge is not None and charge is not None:
         # warning
@@ -66,29 +65,23 @@ def override_annotation_properties(
     else:
         pass
 
-    if annotation.charge_adducts is not None and charge_adducts is not None:
+    if annotation.has_charge_adducts() and charge_adducts is not None:
         # warning
         warnings.warn(
             "Both 'annotation.charge_adducts' and 'charge_adducts' are provided. Using user provided 'charge_adducts'.",
             UserWarning,
         )
-        annotation.charge_adducts = charge_adducts
-    elif charge_adducts is not None:
-        annotation.charge_adducts = charge_adducts
-    else:
-        pass
+        annotation.charge_adducts = charge_adducts # type: ignore
 
-    if annotation.isotope_mods is not None and isotope_mods is not None:
+
+    if annotation.has_isotope_mods() and isotope_mods is not None:
         # warning
         warnings.warn(
             "Both 'annotation.isotope_mods' and 'isotope_mods' are provided. Using user provided 'isotope_mods'.",
             UserWarning,
         )
-        annotation.isotope_mods = isotope_mods
-    elif isotope_mods is not None:
-        annotation.isotope_mods = isotope_mods
-    else:
-        pass
+        annotation.isotope_mods = isotope_mods # type: ignore
+
 
 
 def is_sequence_valid(sequence: Union[str, ProFormaAnnotation]) -> bool:
@@ -107,7 +100,5 @@ def is_sequence_valid(sequence: Union[str, ProFormaAnnotation]) -> bool:
         try:
             _ = sequence_to_annotation(sequence)
         except ValueError:
-            return False
-        except ProFormaFormatError:
             return False
     return True

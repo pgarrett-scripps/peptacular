@@ -2,7 +2,7 @@
 This module provides functions to generate permutations, combinations, and products of sequences.
 """
 
-from typing import Generator, List, Optional, Union
+from typing import Generator, Optional, Union
 
 from ..proforma.annot import ProFormaAnnotation
 from .util import get_annotation_input
@@ -10,7 +10,7 @@ from .util import get_annotation_input
 
 def permutations(
     sequence: Union[str, ProFormaAnnotation],
-    size: int = None,
+    size: Optional[int] = None,
     include_plus: bool = False,
     precision: Optional[int] = None,
 ) -> Generator[str, None, None]:

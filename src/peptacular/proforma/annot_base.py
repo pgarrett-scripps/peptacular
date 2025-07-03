@@ -1,7 +1,15 @@
 import copy
-import collections as co
+from collections import Counter
 from copy import deepcopy
-from typing import *
+from typing import (
+    Any,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    Union,
+    Iterable
+)
 import warnings
 import regex as re
 
@@ -733,7 +741,7 @@ class ProFormaAnnotationBase:
         return self
 
     def add_mod_dict(
-        self, mod_dict: Dict, append: bool = False, inplace: bool = True
+        self, mod_dict: Dict[str, Any], append: bool = False, inplace: bool = True
     ) -> "ProFormaAnnotationBase":
         """
         Add mods from a dictionary
@@ -963,7 +971,7 @@ class ProFormaAnnotationBase:
         Returns a dictionary representation of the ProFormaAnnotationBase instance, including only the
         modification-related attributes.
         """
-        result = {
+        result: Dict[str, Any] = {
             "isotope": self.isotope_mods,
             "static": self.static_mods,
             "labile": self.labile_mods,
@@ -980,8 +988,7 @@ class ProFormaAnnotationBase:
         if mods is not None:
             if isinstance(mods, str):
                 mods = [mods]
-            mods = set(mods)
-            result = {k: v for k, v in result.items() if k in mods}
+            result = {k: v for k, v in result.items() if k in set(mods)}
 
         # remove empty lists/dicts/None values if condense is True
         if condense is True:
@@ -1090,17 +1097,17 @@ class ProFormaAnnotationBase:
     Other Methods
     """
 
-    def count_residues(self, include_mods: bool = True) -> Counter:
+    def count_residues(self, include_mods: bool = True) -> Dict[str, int]:
         """
         Count the occurrences of each residue in the sequence.
         """
         if not include_mods:
-            return co.Counter(self.sequence)
+            return dict(Counter(self.sequence))
 
-        return co.Counter([a.serialize() for a in self.split()])
+        return dict(Counter([a.serialize() for a in self.split()]))
 
     def percent_residues(
-        self, include_mods: bool = True, precision: Optional[bool] = None
+        self, include_mods: bool = True, precision: Optional[int] = None
     ) -> Dict[str, float]:
         """
         Calculate the percentage of each residue in the sequence.
@@ -1201,7 +1208,7 @@ class ProFormaAnnotationBase:
         reverse_coverage: List[int],
         mass_shift: Optional[Any] = None,
         inplace: bool = False,
-    ) -> Union["ProFormaAnnotationBase", None]:
+    ) -> "ProFormaAnnotationBase":
         """
         Generates ambiguity intervals based on the coverage of the sequence.
         """

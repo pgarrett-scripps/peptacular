@@ -4,7 +4,6 @@ Refactored modification builder for amino acid sequences.
 
 from typing import Any, Dict, List, Generator, Union, Optional, Literal
 from dataclasses import dataclass
-from abc import ABC, abstractmethod
 
 from .util import get_annotation_input
 from ..proforma.annot import ProFormaAnnotation
@@ -16,7 +15,7 @@ from ..proforma_dataclasses import (
     remove_empty_list_of_list_of_mods,
 )
 
-from ..proforma_dataclasses import ModIndex, ModValue
+from ..proforma_dataclasses import ModValue
 from typing import Dict, List, Generator, Union, Optional, Literal, overload
 
 MOD_MODES = Literal["skip", "append", "overwrite"]
@@ -43,26 +42,10 @@ class ModificationSpec:
     ]
 
 
-class ModificationProcessor(ABC):
-    """Abstract base class for modification processing strategies."""
-
-    @abstractmethod
-    def normalize_mods(
-        self, mods: Union[STATIC_MOD_INPUT, VAR_MOD_INPUT]
-    ) -> Union[List[ModValue], List[List[ModValue]]]:
-        pass
-
-    @abstractmethod
-    def apply_internal_mods(
-        self, annotation: ProFormaAnnotation, mods: Dict[str, Any], mode: MOD_MODES
-    ) -> ProFormaAnnotation:
-        pass
-
-
-class StaticModificationProcessor(ModificationProcessor):
+class StaticModificationProcessor:
     """Handles static modification processing."""
 
-    def normalize_mods(self, mods: STATIC_MOD_INPUT) -> List[ModValue]:
+    def normalize_mods(self, mods: STATIC_MOD_INPUT) -> List[Mod]:
         return fix_list_of_mods(mods)
 
     def apply_internal_mods(
@@ -77,9 +60,9 @@ class StaticModificationProcessor(ModificationProcessor):
             for mod_index in get_regex_match_indices(
                 annotation.sequence, regex_str, offset=-1
             ):
-                self._apply_mod_at_index(new_annotation, mod_index, mod_list, mode)
+                self._apply_mod_at_index(new_annotation, mod_index, mod_list, mode) # type: ignore
 
-        return new_annotation
+        return new_annotation # type: ignore
 
     def _apply_mod_at_index(
         self,
@@ -102,10 +85,10 @@ class StaticModificationProcessor(ModificationProcessor):
             annotation.add_internal_mod(index, mods, True)
 
 
-class VariableModificationProcessor(ModificationProcessor):
+class VariableModificationProcessor:
     """Handles variable modification processing."""
 
-    def normalize_mods(self, mods: VAR_MOD_INPUT) -> List[List[ModValue]]:
+    def normalize_mods(self, mods: VAR_MOD_INPUT) -> Optional[List[List[Mod]]]:
         normalized = fix_list_of_list_of_mods(mods)
         return remove_empty_list_of_list_of_mods(normalized)
 
@@ -188,7 +171,7 @@ class VariableModificationProcessor(ModificationProcessor):
 class TerminalModificationHandler:
     """Handles N-terminal and C-terminal modifications."""
 
-    def __init__(self, processor: ModificationProcessor):
+    def __init__(self, processor: Union[StaticModificationProcessor, VariableModificationProcessor]):
         self.processor = processor
 
     def normalize_terminal_mods(self, mods) -> Dict[str, Any]:

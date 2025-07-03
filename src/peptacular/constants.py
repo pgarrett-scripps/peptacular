@@ -430,7 +430,17 @@ def get_mod_type(mod: Union[str, ModType]) -> ModType:
     raise ValueError(f"Unknown mod type: {mod}")
 
 
-def get_mods(mods: Union[None, str, List[Union[str, ModType]]]) -> List[ModType]:
+def get_mods(mods: Union[None, str, ModType, List[Union[str, ModType]]]) -> List[ModType]:
+    """
+    Get the list of modification types from the input.
+
+    :param mods: Modification types as a string, list of strings, or None.
+    :type mods: Union[None, str, List[Union[str, ModType]]]
+    :return: List of ModType Enum values.
+    :rtype: List[ModType]
+    :raises ValueError: If mods is not None, str, or list of str.
+    """
+
     if mods is None:
         return [mod_type for mod_type in ModType]
     elif isinstance(mods, (str, ModType)):

@@ -350,7 +350,7 @@ class ProFormaAnnotationManipulation(ProFormaAnnotationBase):
     def sort(
         self,
         inplace: bool = False,
-        key: Optional[callable] = None,
+        key: Optional[Callable[[str], Any]] = None,
         reverse: bool = False,
     ) -> "ProFormaAnnotationBase":
         """

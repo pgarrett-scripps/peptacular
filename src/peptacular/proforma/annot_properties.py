@@ -2,7 +2,14 @@
 ProForma Parser Module
 """
 
-from typing import *
+from typing import (
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Union,
+    Literal,
+)
 
 from .annot_digestion import ProFormaAnnotationDigestion
 from .utils import get_aa_value
@@ -14,6 +21,22 @@ from .property_data import (
     pk_sidechain,
     secondary_structure_scales_by_name,
 )
+from ..utils2 import round_to_precision
+
+AGGREGATION_METHODS = Literal["sum", "avg"]
+MISSING_AA_HANDLING = Literal["zero", "avg", "min", "max", "median", "error", "skip"]
+WEIGHTING_SCHEMES = Union[
+    list[float],
+    Literal[
+        "uniform",
+        "linear",
+        "exponential",
+        "gaussian",
+        "sigmoid",
+        "cosine",
+        "sinusoidal",
+    ],
+]
 
 
 class ProFormaAnnotationProperty(ProFormaAnnotationDigestion):
@@ -25,26 +48,13 @@ class ProFormaAnnotationProperty(ProFormaAnnotationDigestion):
     def calc_property(
         self,
         scale: Union[str, Dict[str, float]],
-        missing_aa_handling: Literal[
-            "zero", "avg", "min", "max", "median", "error", "skip"
-        ] = "error",
-        aggregation_method: Literal["sum", "avg"] = "avg",
+        missing_aa_handling: MISSING_AA_HANDLING = "error",
+        aggregation_method: AGGREGATION_METHODS = "avg",
         normalize: bool = False,
-        weighting_scheme: Union[
-            list[float],
-            Literal[
-                "uniform",
-                "linear",
-                "exponential",
-                "gaussian",
-                "sigmoid",
-                "cosine",
-                "sinusoidal",
-            ],
-        ] = "uniform",
+        weighting_scheme: WEIGHTING_SCHEMES = "uniform",
         min_weight: float = 0.1,
         max_weight: float = 1.0,
-        precision: Optional[float] = None,
+        precision: Optional[int] = None,
     ) -> float:
         """
         Generic function to calculate the average property value of a protein sequence.
@@ -75,7 +85,7 @@ class ProFormaAnnotationProperty(ProFormaAnnotationDigestion):
         else:
             aa_data = scale
 
-        values = []
+        values: List[float] = []
         for i, aa in enumerate(self.stripped_sequence):
             val = get_aa_value(
                 aa=aa,
@@ -96,18 +106,15 @@ class ProFormaAnnotationProperty(ProFormaAnnotationDigestion):
                 f"Invalid normalization method: {aggregation_method}. Choose 'sum' or 'avg'."
             )
 
-        if precision is not None:
-            result = round(result, precision)
-
-        return result
+        return round_to_precision(result, precision)
 
     def hydrophobicity(
         self,
         scale: str = "Kyte-Doolittle",
-        missing_aa_handling: str = "error",
-        aggregation_method: str = "avg",
+        missing_aa_handling: MISSING_AA_HANDLING = "error",
+        aggregation_method: AGGREGATION_METHODS = "avg",
         normalize: bool = True,
-        weighting_scheme: str = "uniform",
+        weighting_scheme: WEIGHTING_SCHEMES = "uniform",
         precision: Optional[int] = None,
     ) -> float:
         return self.calc_property(
@@ -121,12 +128,12 @@ class ProFormaAnnotationProperty(ProFormaAnnotationDigestion):
 
     def flexibility(
         self,
-        scale="flexibility_vihinen",
-        missing_aa_handling="error",
-        aggregation_method="avg",
-        normalize=True,
-        weighting_scheme="uniform",
-        precision=None,
+        scale: str = "flexibility_vihinen",
+        missing_aa_handling: MISSING_AA_HANDLING = "error",
+        aggregation_method: AGGREGATION_METHODS = "avg",
+        normalize: bool = True,
+        weighting_scheme: WEIGHTING_SCHEMES = "uniform",
+        precision: Optional[int] = None,
     ) -> float:
         return self.calc_property(
             scale=scale,
@@ -139,12 +146,12 @@ class ProFormaAnnotationProperty(ProFormaAnnotationDigestion):
 
     def hydrophilicity(
         self,
-        scale="hydrophilicity_hop_wood",
-        missing_aa_handling="error",
-        aggregation_method="avg",
-        normalize=True,
-        weighting_scheme="uniform",
-        precision=None,
+        scale: str = "hydrophilicity_hop_wood",
+        missing_aa_handling: MISSING_AA_HANDLING = "error",
+        aggregation_method: AGGREGATION_METHODS = "avg",
+        normalize: bool = True,
+        weighting_scheme: WEIGHTING_SCHEMES = "uniform",
+        precision: Optional[int] = None,
     ) -> float:
         return self.calc_property(
             scale=scale,
@@ -157,12 +164,12 @@ class ProFormaAnnotationProperty(ProFormaAnnotationDigestion):
 
     def surface_accessibility(
         self,
-        scale="surface_accessibility_vergoten",
-        missing_aa_handling="error",
-        aggregation_method="avg",
-        normalize=True,
-        weighting_scheme="uniform",
-        precision=None,
+        scale: str = "surface_accessibility_vergoten",
+        missing_aa_handling: MISSING_AA_HANDLING = "error",
+        aggregation_method: AGGREGATION_METHODS = "avg",
+        normalize: bool = True,
+        weighting_scheme: WEIGHTING_SCHEMES = "uniform",
+        precision: Optional[int] = None,
     ) -> float:
         return self.calc_property(
             scale=scale,
@@ -175,12 +182,12 @@ class ProFormaAnnotationProperty(ProFormaAnnotationDigestion):
 
     def polarity(
         self,
-        scale="polarity_grantham",
-        missing_aa_handling="error",
-        aggregation_method="avg",
-        normalize=True,
-        weighting_scheme="uniform",
-        precision=None,
+        scale: str = "polarity_grantham",
+        missing_aa_handling: MISSING_AA_HANDLING = "error",
+        aggregation_method: AGGREGATION_METHODS = "avg",
+        normalize: bool = True,
+        weighting_scheme: WEIGHTING_SCHEMES = "uniform",
+        precision: Optional[int] = None,
     ) -> float:
         return self.calc_property(
             scale=scale,
@@ -193,12 +200,12 @@ class ProFormaAnnotationProperty(ProFormaAnnotationDigestion):
 
     def mutability(
         self,
-        scale="mutability",
-        missing_aa_handling="error",
-        aggregation_method="avg",
-        normalize=True,
-        weighting_scheme="uniform",
-        precision=None,
+        scale: str = "mutability",
+        missing_aa_handling: MISSING_AA_HANDLING = "error",
+        aggregation_method: AGGREGATION_METHODS = "avg",
+        normalize: bool = True,
+        weighting_scheme: WEIGHTING_SCHEMES = "uniform",
+        precision: Optional[int] = None,
     ) -> float:
         return self.calc_property(
             scale=scale,
@@ -211,12 +218,12 @@ class ProFormaAnnotationProperty(ProFormaAnnotationDigestion):
 
     def codons(
         self,
-        scale="codons",
-        missing_aa_handling="error",
-        aggregation_method="sum",
-        normalize=False,
-        weighting_scheme="uniform",
-        precision=None,
+        scale: str = "codons",
+        missing_aa_handling: MISSING_AA_HANDLING = "error",
+        aggregation_method: AGGREGATION_METHODS = "sum",
+        normalize: bool = False,
+        weighting_scheme: WEIGHTING_SCHEMES = "uniform",
+        precision: Optional[int] = None,
     ) -> float:
         return self.calc_property(
             scale=scale,
@@ -229,12 +236,12 @@ class ProFormaAnnotationProperty(ProFormaAnnotationDigestion):
 
     def bulkiness(
         self,
-        scale="bulkiness",
-        missing_aa_handling="error",
-        aggregation_method="avg",
-        normalize=True,
-        weighting_scheme="uniform",
-        precision=None,
+        scale: str = "bulkiness",
+        missing_aa_handling: MISSING_AA_HANDLING = "error",
+        aggregation_method: AGGREGATION_METHODS = "avg",
+        normalize: bool = True,
+        weighting_scheme: WEIGHTING_SCHEMES = "uniform",
+        precision: Optional[int] = None,
     ) -> float:
         return self.calc_property(
             scale=scale,
@@ -247,12 +254,12 @@ class ProFormaAnnotationProperty(ProFormaAnnotationDigestion):
 
     def recognition_factors(
         self,
-        scale="recognition_factors",
-        missing_aa_handling="error",
-        aggregation_method="sum",
-        normalize=False,
-        weighting_scheme="uniform",
-        precision=None,
+        scale: str = "recognition_factors",
+        missing_aa_handling: MISSING_AA_HANDLING = "error",
+        aggregation_method: AGGREGATION_METHODS = "sum",
+        normalize: bool = False,
+        weighting_scheme: WEIGHTING_SCHEMES = "uniform",
+        precision: Optional[int] = None,
     ) -> float:
         return self.calc_property(
             scale=scale,
@@ -265,12 +272,12 @@ class ProFormaAnnotationProperty(ProFormaAnnotationDigestion):
 
     def transmembrane_tendency(
         self,
-        scale="transmembrane_tendency",
-        missing_aa_handling="error",
-        aggregation_method="avg",
-        normalize=True,
-        weighting_scheme="uniform",
-        precision=None,
+        scale: str = "transmembrane_tendency",
+        missing_aa_handling: MISSING_AA_HANDLING = "error",
+        aggregation_method: AGGREGATION_METHODS = "avg",
+        normalize: bool = True,
+        weighting_scheme: WEIGHTING_SCHEMES = "uniform",
+        precision: Optional[int] = None,
     ) -> float:
         return self.calc_property(
             scale=scale,
@@ -283,12 +290,12 @@ class ProFormaAnnotationProperty(ProFormaAnnotationDigestion):
 
     def average_buried_area(
         self,
-        scale="average_buried_area",
-        missing_aa_handling="error",
-        aggregation_method="avg",
-        normalize=True,
-        weighting_scheme="uniform",
-        precision=None,
+        scale: str = "average_buried_area",
+        missing_aa_handling: MISSING_AA_HANDLING = "error",
+        aggregation_method: AGGREGATION_METHODS = "avg",
+        normalize: bool = True,
+        weighting_scheme: WEIGHTING_SCHEMES = "uniform",
+        precision: Optional[int] = None,
     ) -> float:
         return self.calc_property(
             scale=scale,
@@ -301,12 +308,12 @@ class ProFormaAnnotationProperty(ProFormaAnnotationDigestion):
 
     def hplc(
         self,
-        scale="hplc_meek_2_1",
-        missing_aa_handling="error",
-        aggregation_method="avg",
-        normalize=True,
-        weighting_scheme="uniform",
-        precision=None,
+        scale: str = "hplc_meek_2_1",
+        missing_aa_handling: MISSING_AA_HANDLING = "error",
+        aggregation_method: AGGREGATION_METHODS = "avg",
+        normalize: bool = True,
+        weighting_scheme: WEIGHTING_SCHEMES = "uniform",
+        precision: Optional[int] = None,
     ) -> float:
         return self.calc_property(
             scale=scale,
@@ -319,12 +326,12 @@ class ProFormaAnnotationProperty(ProFormaAnnotationDigestion):
 
     def refractivity(
         self,
-        scale="refractivity",
-        missing_aa_handling="error",
-        aggregation_method="avg",
-        normalize=True,
-        weighting_scheme="uniform",
-        precision=None,
+        scale: str = "refractivity",
+        missing_aa_handling: MISSING_AA_HANDLING = "error",
+        aggregation_method: AGGREGATION_METHODS = "avg",
+        normalize: bool = True,
+        weighting_scheme: WEIGHTING_SCHEMES = "uniform",
+        precision: Optional[int] = None,
     ) -> float:
         return self.calc_property(
             scale=scale,
@@ -339,26 +346,13 @@ class ProFormaAnnotationProperty(ProFormaAnnotationDigestion):
         self,
         scale: Union[str, Dict[str, float]],
         window_size: int = 9,
-        missing_aa_handling: Literal[
-            "zero", "avg", "min", "max", "median", "error", "skip"
-        ] = "error",
-        aggregation_method: Literal["sum", "avg"] = "avg",
+        missing_aa_handling: MISSING_AA_HANDLING = "error",
+        aggregation_method: AGGREGATION_METHODS = "avg",
         normalize: bool = False,
-        weighting_scheme: Union[
-            list[float],
-            Literal[
-                "uniform",
-                "linear",
-                "exponential",
-                "gaussian",
-                "sigmoid",
-                "cosine",
-                "sinusoidal",
-            ],
-        ] = "uniform",
+        weighting_scheme: WEIGHTING_SCHEMES = "uniform",
         min_weight: float = 0.1,
         max_weight: float = 1.0,
-        precision: Optional[float] = None,
+        precision: Optional[int] = None,
     ) -> List[float]:
 
         weighting_scheme = get_weights(
@@ -368,15 +362,15 @@ class ProFormaAnnotationProperty(ProFormaAnnotationDigestion):
             max_weight=max_weight,
         )
 
-        l = []
-        for i, window_sequence in enumerate(self.sliding_windows(window_size)):
+        l: List[float] = []
+        for window_sequence in self.sliding_windows(window_size):
             if len(window_sequence) != window_size:
                 raise ValueError(
                     f"Window size {window_size} does not match sequence length {len(window_sequence)}."
                 )
 
             # Calculate the property average for the current window
-            window_average = window_sequence.calc_property(
+            window_value = window_sequence.calc_property(
                 scale=scale,
                 missing_aa_handling=missing_aa_handling,
                 aggregation_method=aggregation_method,
@@ -386,14 +380,14 @@ class ProFormaAnnotationProperty(ProFormaAnnotationDigestion):
                 max_weight=max_weight,
                 precision=precision,
             )
-            l.append(window_average)
+            l.append(window_value)
 
         return l
 
     def charge_at_ph(
         self,
         pH: float = 7.0,
-        precision: Optional[float] = None,
+        precision: Optional[int] = None,
     ) -> float:
         # Count amino acids
         aa_counts = self.count_residues()
@@ -408,7 +402,11 @@ class ProFormaAnnotationProperty(ProFormaAnnotationDigestion):
         nterm_pK = get_aa_value(
             aa=nterm, aa_data=pk_nterminal, missing_aa_handling="error"
         )
-        partial_charge = 1.0 / (10 ** (pH - nterm_pK) + 1.0)
+
+        if not isinstance(nterm_pK, (int, float)):
+            raise ValueError(f"Invalid pK value for N-terminal amino acid '{nterm}': {nterm_pK}")
+
+        partial_charge: float = 1.0 / (10 ** (pH - nterm_pK) + 1.0)
         positive_charge += partial_charge
 
         # Side chain positive charges
@@ -418,7 +416,14 @@ class ProFormaAnnotationProperty(ProFormaAnnotationDigestion):
                 pK = get_aa_value(
                     aa=aa, aa_data=pk_sidechain, missing_aa_handling="error"
                 )
-                partial_charge = 1.0 / (10 ** (pH - pK) + 1.0)
+
+                if not isinstance(pK, (int, float)) or pK <= 0:
+                    # Skip if pK is not a valid number or is non-positive
+                    raise ValueError(
+                        f"Invalid pK value for side chain amino acid '{aa}': {pK}"
+                    )
+
+                partial_charge: float = 1.0 / (10 ** (pH - pK) + 1.0)
                 positive_charge += count * partial_charge
 
         # Calculate negative charge (acidic groups)
@@ -428,6 +433,10 @@ class ProFormaAnnotationProperty(ProFormaAnnotationDigestion):
         cterm_pK = get_aa_value(
             aa=cterm, aa_data=pk_cterminal, missing_aa_handling="error"
         )
+
+        if not isinstance(cterm_pK, (int, float)):
+            raise ValueError(f"Invalid pK value for C-terminal amino acid '{cterm}': {cterm_pK}")
+        
         partial_charge = 1.0 / (10 ** (cterm_pK - pH) + 1.0)
         negative_charge += partial_charge
 
@@ -438,18 +447,22 @@ class ProFormaAnnotationProperty(ProFormaAnnotationDigestion):
                 pK = get_aa_value(
                     aa=aa, aa_data=pk_sidechain, missing_aa_handling="error"
                 )
+
+                if not isinstance(pK, (int, float)) or pK <= 0:
+                    # Skip if pK is not a valid number or is non-positive
+                    raise ValueError(
+                        f"Invalid pK value for side chain amino acid '{aa}': {pK}"
+                    )
+
                 if pK > 0:  # Only calculate if pK exists (non-zero)
                     partial_charge = 1.0 / (10 ** (pK - pH) + 1.0)
                     negative_charge += count * partial_charge
 
         net_charge = positive_charge - negative_charge
 
-        if precision is not None:
-            net_charge = round(net_charge, precision)
+        return round_to_precision(net_charge, precision)
 
-        return net_charge
-
-    def pi(self, precision: Optional[float] = None) -> float:
+    def pi(self, precision: Optional[int] = None) -> float:
         def _calculate_pi(
             ph: float = 7.775,
             min_: float = 4.05,
@@ -469,35 +482,33 @@ class ProFormaAnnotationProperty(ProFormaAnnotationDigestion):
 
         isoelectric_point = _calculate_pi()
 
-        if precision is not None:
-            isoelectric_point = round(isoelectric_point, precision)
-
-        return isoelectric_point
+        return round_to_precision(isoelectric_point, precision)
 
     def aa_property_percentage(
         self,
         residues: Iterable[str],
-        precision: Optional[float] = None,
-    ) -> Dict[str, float]:
+        precision: Optional[int] = None,
+    ) -> float:
+        """
+        Calculates the percentage of specified amino acids in the sequence.
+        """
+
         residue_perc = self.percent_residues(precision=None)
         val = sum(residue_perc.get(aa, 0) / 100 for aa in residues)
 
-        if precision is not None:
-            val = round(val, precision)
-
-        return val
+        return round_to_precision(val, precision)
 
     def secondary_structure(
         self,
         scale: Literal["DeleageRoux", "Levitt", "ChouFasman"] = "DeleageRoux",
         precision: Optional[int] = None,
-    ) -> Dict[str, float]:
+    ) -> Dict[str, Optional[float]]:
         if scale not in secondary_structure_scales_by_name:
             raise ValueError(
                 f"Scale '{scale}' not found in available secondary structure scales: {secondary_structure_scales_by_name.keys()}"
             )
 
-        d = {}
+        d: Dict[str, float] = {}
         for structure_scale_name, structure_scale in secondary_structure_scales_by_name[
             scale
         ].items():
@@ -516,15 +527,16 @@ class ProFormaAnnotationProperty(ProFormaAnnotationDigestion):
             for key in d:
                 d[key] /= total
 
+    
         if "coil" not in d:
-            d["coil"] = None
+            d["coil"] = None # type: ignore
 
-        return d
+        return d # type: ignore
 
     def aromaticity(
         self,
         aromatic_residues: str = "YWF",
-        precision: Optional[float] = None,
+        precision: Optional[int] = None,
     ) -> float:
         """
         Calculates the aromaticity value of a protein according to Lobry, 1994.

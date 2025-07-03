@@ -2,11 +2,7 @@
 fragmentation.py contains functions for fragmenting peptides
 """
 
-import itertools
-import regex as re
-from dataclasses import dataclass
-from functools import cached_property
-from typing import List, Union, Literal, Optional, Tuple, Set
+from typing import List, Union, Optional, Tuple, Set
 
 from ..proforma.annot_fragmentation import FRAGMENT_RETURN_TYPING, FragmentReturnType
 
@@ -181,12 +177,13 @@ class Fragmenter:
         self, sequence: Union[str, ProFormaAnnotation], monoisotopic: bool = True
     ):
         self.annotation = get_annotation_input(sequence, copy=True)
+        self.annotation.charge = 0
+        
         self.monoisotopic = monoisotopic
 
         self.components = self.annotation.split()
-        self.mass_components = [
+        self.mass_components: List[float] = [
             component.mass(
-                charge=0,
                 ion_type="n",
                 monoisotopic=self.monoisotopic,
             )
@@ -203,7 +200,7 @@ class Fragmenter:
         losses: Optional[Union[List[Tuple[str, float]], Tuple[str, float]]] = None,
         max_losses: int = 1,
         return_type: FragmentReturnType = "fragment",
-        precision: int = None,
+        precision: Optional[int] = None,
     ) -> FRAGMENT_RETURN_TYPING:
         """
         Builds all Fragment objects or a given input 'sequence'.
