@@ -7,22 +7,24 @@ from dataclasses import dataclass
 
 from .util import get_annotation_input
 from ..proforma.annot import ProFormaAnnotation
-from ..proforma_dataclasses import Mod
+from ..dclasses import Mod
 from ..util import get_regex_match_indices
-from ..proforma_dataclasses import (
+from ..dclasses import (
     fix_list_of_list_of_mods,
     fix_list_of_mods,
     remove_empty_list_of_list_of_mods,
 )
 
-from ..proforma_dataclasses import ModValue
+from ..dclasses import ACCEPTED_MOD_TYPES
 from typing import Dict, List, Generator, Union, Optional, Literal, overload
 
 MOD_MODES = Literal["skip", "append", "overwrite"]
 MOD_BUILDER_RETURN_TYPES = Literal["str", "annotation"]
 
-STATIC_MOD_INPUT = Union[List[ModValue], ModValue]
-VAR_MOD_INPUT = Union[List[List[ModValue]], List[ModValue], ModValue]
+STATIC_MOD_INPUT = Union[List[ACCEPTED_MOD_TYPES], ACCEPTED_MOD_TYPES]
+VAR_MOD_INPUT = Union[
+    List[List[ACCEPTED_MOD_TYPES]], List[ACCEPTED_MOD_TYPES], ACCEPTED_MOD_TYPES
+]
 
 
 @dataclass
@@ -51,7 +53,7 @@ class StaticModificationProcessor:
     def apply_internal_mods(
         self,
         annotation: ProFormaAnnotation,
-        mods: Dict[str, List[ModValue]],
+        mods: Dict[str, List[ACCEPTED_MOD_TYPES]],
         mode: MOD_MODES,
     ) -> ProFormaAnnotation:
         new_annotation = annotation.copy()
@@ -60,29 +62,29 @@ class StaticModificationProcessor:
             for mod_index in get_regex_match_indices(
                 annotation.sequence, regex_str, offset=-1
             ):
-                self._apply_mod_at_index(new_annotation, mod_index, mod_list, mode) # type: ignore
+                self._apply_mod_at_index(new_annotation, mod_index, mod_list, mode)  # type: ignore
 
-        return new_annotation # type: ignore
+        return new_annotation  # type: ignore
 
     def _apply_mod_at_index(
         self,
         annotation: ProFormaAnnotation,
         index: int,
-        mods: List[ModValue],
+        mods: List[ACCEPTED_MOD_TYPES],
         mode: MOD_MODES,
     ):
         """Apply modification at specific index based on mode."""
         if annotation.has_internal_mods_at_index(index):
             if mode == "overwrite":
-                annotation.add_internal_mod(index, mods, False)
+                annotation.add_internal_mods_at_index(index, mods, False)
             elif mode == "append":
-                annotation.add_internal_mod(index, mods, True)
+                annotation.add_internal_mods_at_index(index, mods, True)
             elif mode == "skip":
                 return
             else:
                 raise ValueError(f"Invalid mode: {mode}")
         else:
-            annotation.add_internal_mod(index, mods, True)
+            annotation.add_internal_mods_at_index(index, mods, True)
 
 
 class VariableModificationProcessor:
@@ -95,7 +97,7 @@ class VariableModificationProcessor:
     def apply_internal_mods(
         self,
         annotation: ProFormaAnnotation,
-        mods: Dict[str, List[List[ModValue]]],
+        mods: Dict[str, List[List[ACCEPTED_MOD_TYPES]]],
         mode: MOD_MODES,
     ) -> Generator[ProFormaAnnotation, None, None]:
         # Convert regex-based mods to index-based mods
@@ -112,8 +114,10 @@ class VariableModificationProcessor:
         )
 
     def _build_index_mod_map(
-        self, annotation: ProFormaAnnotation, mods: Dict[str, List[List[ModValue]]]
-    ) -> Dict[int, List[List[ModValue]]]:
+        self,
+        annotation: ProFormaAnnotation,
+        mods: Dict[str, List[List[ACCEPTED_MOD_TYPES]]],
+    ) -> Dict[int, List[List[ACCEPTED_MOD_TYPES]]]:
         """Convert regex-based modifications to index-based modifications."""
         index_mods = {}
         for regex_str, list_of_list_of_mods in mods.items():
@@ -126,7 +130,7 @@ class VariableModificationProcessor:
 
     def _apply_variable_mods_recursive(
         self,
-        mods: Dict[int, List[List[ModValue]]],
+        mods: Dict[int, List[List[ACCEPTED_MOD_TYPES]]],
         annotation: ProFormaAnnotation,
         index: int,
         max_mod_count: int,
@@ -151,14 +155,16 @@ class VariableModificationProcessor:
 
                     updated_annotation = annotation.copy()
                     append_mode = mode == "append"
-                    updated_annotation.add_internal_mod(index, mod_list, append_mode)
+                    updated_annotation.add_internal_mods_at_index(
+                        index, mod_list, append_mode
+                    )
 
                     yield from self._apply_variable_mods_recursive(
                         mods, updated_annotation, index + 1, max_mod_count, mode
                     )
                 else:
                     updated_annotation = annotation.copy()
-                    updated_annotation.add_internal_mod(index, mod_list, True)
+                    updated_annotation.add_internal_mods_at_index(index, mod_list, True)
                     yield from self._apply_variable_mods_recursive(
                         mods, updated_annotation, index + 1, max_mod_count, mode
                     )
@@ -171,7 +177,10 @@ class VariableModificationProcessor:
 class TerminalModificationHandler:
     """Handles N-terminal and C-terminal modifications."""
 
-    def __init__(self, processor: Union[StaticModificationProcessor, VariableModificationProcessor]):
+    def __init__(
+        self,
+        processor: Union[StaticModificationProcessor, VariableModificationProcessor],
+    ):
         self.processor = processor
 
     def normalize_terminal_mods(self, mods) -> Dict[str, Any]:

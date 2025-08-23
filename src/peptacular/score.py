@@ -86,6 +86,7 @@ def get_matched_indices(
 
     return indices
 
+
 # TODO: Make this function return list of list always
 def match_spectra(
     fragments: List[float],
@@ -298,7 +299,6 @@ class FragmentMatch:
             return "0"
         return self.fragment.number
 
-
     def to_dict(self) -> Dict[str, Any]:
         """
         Converts the FragmentMatch object to a dictionary.
@@ -362,7 +362,6 @@ def get_fragment_matches(
     # sort fragments by mass
     fragments.sort(key=lambda x: x.mz)
     fragment_spectrum = [f.mz for f in fragments]
-
 
     mz_spectra, intensity_spectra = zip(  # type: ignore
         *sorted(zip(mz_spectra, intensity_spectra), key=lambda x: x[0])
@@ -542,7 +541,7 @@ def binomial_score(
     fragments: Union[List[Fragment], List[float]],
     mz_spectra: List[float],
     tolerance_value: float,
-    tolerance_type: Literal['ppm', 'th'] = "ppm",
+    tolerance_type: Literal["ppm", "th"] = "ppm",
     min_mz: Optional[float] = None,
     max_mz: Optional[float] = None,
 ) -> float:

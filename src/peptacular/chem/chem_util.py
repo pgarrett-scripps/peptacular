@@ -2,8 +2,6 @@
 chem_util.py
 """
 
-from typing import Union, Optional, List
-
 from ..constants import (
     HILL_ORDER,
     ISOTOPIC_ATOMIC_MASSES,
@@ -16,10 +14,10 @@ from ..constants import (
 )
 from ..errors import InvalidChemFormulaError
 from ..utils2 import convert_type
-from ..proforma_dataclasses import ChemComposition
+from ..dclasses import CHEM_COMPOSITION_TYPE
 
 
-def parse_chem_formula(formula: str, sep: str = "") -> ChemComposition:
+def parse_chem_formula(formula: str, sep: str = "") -> CHEM_COMPOSITION_TYPE:
     """
     Parses a chemical formula and returns a dict mapping elements to their counts.
 
@@ -74,7 +72,7 @@ def parse_chem_formula(formula: str, sep: str = "") -> ChemComposition:
     if sep != "":
         return _parse_split_chem_formula(formula, sep)
 
-    comps = []
+    comps: list[CHEM_COMPOSITION_TYPE] = []
     for component in _split_chem_formula(formula):
         if component.startswith("["):  # Isotope notation
             try:
@@ -87,7 +85,7 @@ def parse_chem_formula(formula: str, sep: str = "") -> ChemComposition:
             except InvalidChemFormulaError as err:
                 raise InvalidChemFormulaError(formula, err.msg) from err
 
-    combined_comp = {}
+    combined_comp: CHEM_COMPOSITION_TYPE = {}
     for comp in comps:
         for key, value in comp.items():
             combined_comp[key] = combined_comp.get(key, 0) + value
@@ -96,10 +94,10 @@ def parse_chem_formula(formula: str, sep: str = "") -> ChemComposition:
 
 
 def write_chem_formula(
-    composition: ChemComposition,
+    composition: CHEM_COMPOSITION_TYPE,
     sep: str = "",
     hill_order: bool = False,
-    precision: Optional[float] = None,
+    precision: int | None = None,
 ) -> str:
     """
     Writes a chemical formula from a dict mapping elements to their counts.
@@ -172,9 +170,9 @@ def write_chem_formula(
 
 # Must keep here to avoid circular dep with mod_db (since mod_db uses mass_calc, and mass_calc uses chem_util)
 def chem_mass(
-    formula: Union[ChemComposition, str],
+    formula: CHEM_COMPOSITION_TYPE | str,
     monoisotopic: bool = True,
-    precision: Optional[int] = None,
+    precision: int | None = None,
     sep: str = "",
 ) -> float:
     """
@@ -239,7 +237,9 @@ def chem_mass(
             elif element == "n":
                 m += NEUTRON_MASS * count
             else:
-                raise InvalidChemFormulaError(formula, f'Unknown element: "{element}"!')
+                raise InvalidChemFormulaError(
+                    str(formula), f'Unknown element: "{element}"!'
+                )
 
             continue
 
@@ -259,7 +259,7 @@ def chem_mass(
     return m
 
 
-def _split_chem_formula(formula: str) -> List[str]:
+def _split_chem_formula(formula: str) -> list[str]:
     """
     Splits a chemical formula into its components. The formula is assumed to be proForma2.0 compliant, wherase the
     isotope notation for an element and its count is enclosed in square brackets and the formula contains no
@@ -287,7 +287,7 @@ def _split_chem_formula(formula: str) -> List[str]:
         ['[13C6]', 'C6H12O6', '[13C6]']
 
     """
-    components = []
+    components: list[str] = []
     i = 0
     while i < len(formula):
         if formula[i] == "[":
@@ -303,7 +303,7 @@ def _split_chem_formula(formula: str) -> List[str]:
     return components
 
 
-def _parse_isotope_component(formula: str) -> ChemComposition:
+def _parse_isotope_component(formula: str) -> CHEM_COMPOSITION_TYPE:
     """
     Parses an isotope notation and returns the element and the mass number.
 
@@ -350,7 +350,7 @@ def _parse_isotope_component(formula: str) -> ChemComposition:
         peptacular.errors.InvalidChemFormulaError: Error parsing chem formula: "13C-". Invalid count: "-"!
 
     """
-    counts = {}
+    counts: CHEM_COMPOSITION_TYPE = {}
 
     if formula == "":
         return counts
@@ -378,7 +378,7 @@ def _parse_isotope_component(formula: str) -> ChemComposition:
     return counts
 
 
-def _parse_condensed_chem_formula(formula: str) -> ChemComposition:
+def _parse_condensed_chem_formula(formula: str) -> CHEM_COMPOSITION_TYPE:
     """
     Parses a chemical formula and returns a dict mapping elements to their counts.
 
@@ -432,7 +432,7 @@ def _parse_condensed_chem_formula(formula: str) -> ChemComposition:
 
     """
 
-    element_counts = {}
+    element_counts: CHEM_COMPOSITION_TYPE = {}
 
     if formula == "":
         return element_counts
@@ -462,7 +462,7 @@ def _parse_condensed_chem_formula(formula: str) -> ChemComposition:
     return element_counts
 
 
-def _parse_split_chem_formula(formula: str, sep: str) -> ChemComposition:
+def _parse_split_chem_formula(formula: str, sep: str) -> CHEM_COMPOSITION_TYPE:
     """
     Parses a chemical formula and returns a dict mapping elements to their counts.
 
@@ -496,10 +496,10 @@ def _parse_split_chem_formula(formula: str, sep: str) -> ChemComposition:
 
     """
 
-    element_counts = {}
+    element_counts: CHEM_COMPOSITION_TYPE = {}
     components = formula.split(sep)
 
-    def is_number(s):
+    def is_number(s: str) -> bool:
         try:
             float(s)
             return True
@@ -519,8 +519,8 @@ def _parse_split_chem_formula(formula: str, sep: str) -> ChemComposition:
 
         # Add or update the element count in the dictionary
         if element in element_counts:
-            element_counts[element] += count
+            element_counts[element] += count  # type: ignore
         else:
-            element_counts[element] = count
+            element_counts[element] = count  # type: ignore
 
     return element_counts

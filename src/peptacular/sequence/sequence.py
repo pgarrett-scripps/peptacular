@@ -20,24 +20,20 @@ a result they can be positioned anywhere in the sequence. Maybe add a check to s
 end of the sequence and if not raise an error.
 """
 
-from typing import Any, Union, Optional, List, Dict, Tuple, Callable
+from typing import Any, Callable, Iterable
 
 from .util import get_annotation_input
 
-from ..constants import ORDERED_AMINO_ACIDS
+from ..constants import ORDERED_AMINO_ACIDS, ModType
 
 from ..proforma.annot import (
     ProFormaAnnotation,
 )
 
-from ..spans import Span
-
-from ..proforma_dataclasses import (
-    ModDict,
-)
+from ..dclasses import ModDict, SPAN_TYPE
 
 
-def sequence_length(sequence: Union[str, ProFormaAnnotation]) -> int:
+def sequence_length(sequence: str | ProFormaAnnotation) -> int:
     """
     Compute the length of the peptide sequence based on the unmodified sequence.
 
@@ -69,7 +65,7 @@ def sequence_length(sequence: Union[str, ProFormaAnnotation]) -> int:
     return len(get_annotation_input(sequence, copy=False))
 
 
-def is_ambiguous(sequence: Union[str, ProFormaAnnotation]) -> bool:
+def is_ambiguous(sequence: str | ProFormaAnnotation) -> bool:
     """
     Check if the sequence contains ambiguous amino acids.
 
@@ -104,7 +100,7 @@ def is_ambiguous(sequence: Union[str, ProFormaAnnotation]) -> bool:
     return get_annotation_input(sequence, copy=False).contains_sequence_ambiguity()
 
 
-def is_modified(sequence: Union[str, ProFormaAnnotation]) -> bool:
+def is_modified(sequence: str | ProFormaAnnotation) -> bool:
     """
     Check if the sequence contains any modifications.
 
@@ -129,12 +125,12 @@ def is_modified(sequence: Union[str, ProFormaAnnotation]) -> bool:
 
     """
 
-    return get_annotation_input(sequence, copy=False).has_mods()
+    return get_annotation_input(sequence, copy=False).has_mods
 
 
 def get_mods(
-    sequence: Union[str, ProFormaAnnotation],
-    mods: Optional[Union[str, List[str]]] = None,
+    sequence: str | ProFormaAnnotation,
+    mods: ModType | Iterable[ModType] | None = None,
 ) -> ModDict:
     """
     Parses a sequence with modifications and returns a dictionary where keys represent the position/type of the
@@ -209,12 +205,12 @@ def get_mods(
 
     """
 
-    return get_annotation_input(sequence, copy=True).mod_dict(mods) # type: ignore
+    return get_annotation_input(sequence, copy=True).mod_dict(mods)
 
 
 def add_mods(
-    sequence: Union[str, ProFormaAnnotation],
-    mods: Dict[str, Any],
+    sequence: str | ProFormaAnnotation,
+    mods: dict[str, Any],
     append: bool = True,
     include_plus: bool = False,
 ) -> str:
@@ -291,9 +287,9 @@ def add_mods(
 
 
 def condense_static_mods(
-    sequence: Union[str, ProFormaAnnotation],
+    sequence: str | ProFormaAnnotation,
     include_plus: bool = False,
-    precision: Optional[int] = None,
+    precision: int | None = None,
 ) -> str:
     """
     Condenses static modifications into internal modifications.
@@ -339,11 +335,11 @@ def condense_static_mods(
 
 
 def pop_mods(
-    sequence: Union[str, ProFormaAnnotation],
-    mods: Optional[Union[str, List[str]]] = None,
+    sequence: str | ProFormaAnnotation,
+    mods: ModType | Iterable[ModType] | None = None,
     include_plus: bool = False,
-    precision: Optional[int] = None,
-) -> Tuple[str, Dict[str, Any]]:
+    precision: int | None = None,
+) -> tuple[str, dict[str, Any]]:
     """
     Removes all modifications from the given sequence, returning the unmodified sequence and a dictionary of the
     removed modifications.
@@ -369,9 +365,7 @@ def pop_mods(
 
     """
     annotation = get_annotation_input(sequence=sequence, copy=True)
-    mod_dict = annotation.pop_mods(
-        mods=mods, condense=True
-    )  # only include keys that have mods
+    mod_dict = annotation.pop_mods(mods=mods)  # only include keys that have mods
     return (
         annotation.serialize(include_plus=include_plus, precision=precision),
         mod_dict,
@@ -379,10 +373,10 @@ def pop_mods(
 
 
 def strip_mods(
-    sequence: Union[str, ProFormaAnnotation],
-    mods: Optional[Union[str, List[str]]] = None,
+    sequence: str | ProFormaAnnotation,
+    mods: ModType | Iterable[ModType] | None = None,
     include_plus: bool = False,
-    precision: Optional[int] = None,
+    precision: int | None = None,
 ) -> str:
     """
     Strips all modifications from the given sequence, returning the unmodified sequence.
@@ -435,10 +429,10 @@ def strip_mods(
 
 
 def filter_mods(
-    sequence: Union[str, ProFormaAnnotation],
-    mods: Optional[Union[str, List[str]]] = None,
+    sequence: str | ProFormaAnnotation,
+    mods: ModType | Iterable[ModType] | None = None,
     include_plus: bool = False,
-    precision: Optional[int] = None,
+    precision: int | None = None,
 ) -> str:
     """
     Keeps only the specified modifications in the sequence, removing all others.
@@ -487,10 +481,10 @@ def filter_mods(
 
 
 def remove_mods(
-    sequence: Union[str, ProFormaAnnotation],
-    mods: Optional[Union[str, List[str]]] = None,
+    sequence: str | ProFormaAnnotation,
+    mods: ModType | Iterable[ModType] | None = None,
     include_plus: bool = False,
-    precision: Optional[int] = None,
+    precision: int | None = None,
 ) -> str:
     """
     Removes the specified modifications from the sequence, returning the modified sequence.
@@ -535,10 +529,10 @@ def remove_mods(
 
 
 def reverse(
-    sequence: Union[str, ProFormaAnnotation],
+    sequence: str | ProFormaAnnotation,
     swap_terms: bool = False,
     include_plus: bool = False,
-    precision: Optional[int] = None,
+    precision: int | None = None,
 ) -> str:
     """
     Reverses the sequence, while preserving the position of any modifications.
@@ -580,10 +574,10 @@ def reverse(
 
 
 def shuffle(
-    sequence: Union[str, ProFormaAnnotation],
-    seed: Optional[int] = None,
+    sequence: str | ProFormaAnnotation,
+    seed: int | None = None,
     include_plus: bool = False,
-    precision: Optional[int] = None,
+    precision: int | None = None,
 ) -> str:
     """
     Shuffles the sequence, while preserving the position of any modifications.
@@ -621,7 +615,7 @@ def shuffle(
 
 
 def shift(
-    sequence: Union[str, ProFormaAnnotation], n: int, include_plus: bool = False
+    sequence: str | ProFormaAnnotation, n: int, include_plus: bool = False
 ) -> str:
     """
     Shifts the sequence to the left by a given number of positions, while preserving the position of any modifications.
@@ -667,10 +661,10 @@ def shift(
 
 
 def span_to_sequence(
-    sequence: Union[str, ProFormaAnnotation],
-    span: Span,
+    sequence: str | ProFormaAnnotation,
+    span: SPAN_TYPE,
     include_plus: bool = False,
-    precision: Optional[int] = None,
+    precision: int | None = None,
 ) -> str:
     """
     Extracts a subsequence from the input sequence based on the provided span.
@@ -720,10 +714,10 @@ def span_to_sequence(
 
 
 def split(
-    sequence: Union[str, ProFormaAnnotation],
+    sequence: str | ProFormaAnnotation,
     include_plus: bool = False,
-    precision: Optional[int] = None,
-) -> List[str]:
+    precision: int | None = None,
+) -> list[str]:
     """
     Splits sequence into a list of amino acids, preserving modifications.
 
@@ -754,7 +748,7 @@ def split(
     ]
 
 
-def count_residues(sequence: Union[str, ProFormaAnnotation]) -> Dict[str, int]:
+def count_residues(sequence: str | ProFormaAnnotation) -> dict[str, int]:
     """
     Counts the occurrences of each amino acid in the input sequence.
 
@@ -793,8 +787,8 @@ def count_residues(sequence: Union[str, ProFormaAnnotation]) -> Dict[str, int]:
 
 
 def percent_residues(
-    sequence: Union[str, ProFormaAnnotation], precision: Optional[int] = None
-) -> Dict[str, float]:
+    sequence: str | ProFormaAnnotation, precision: int | None = None
+) -> dict[str, float]:
     """
     Calculates the percentage of each amino acid in the input sequence.
     :param sequence: The sequence or ProFormaAnnotation object.
@@ -817,8 +811,8 @@ def percent_residues(
 
 
 def is_subsequence(
-    subsequence: Union[str, ProFormaAnnotation],
-    sequence: Union[str, ProFormaAnnotation],
+    subsequence: str | ProFormaAnnotation,
+    sequence: str | ProFormaAnnotation,
     order: bool = True,
 ) -> bool:
     """
@@ -870,15 +864,12 @@ def is_subsequence(
     )
 
 
-
-
-
 def sort(
-    sequence: Union[str, ProFormaAnnotation],
-    key: Optional[Callable[[str], Any]] = None,
+    sequence: str | ProFormaAnnotation,
+    key: Callable[[str], Any] | None = None,
     reverse: bool = False,
     include_plus: bool = False,
-    precision: Optional[int] = None,
+    precision: int | None = None,
 ) -> str:
     """
     Sorts the input sequence using the provided sort function. Terminal sequence are kept in place.
@@ -912,10 +903,10 @@ def sort(
 
 
 def find_subsequence_indices(
-    sequence: Union[str, ProFormaAnnotation],
-    subsequence: Union[str, ProFormaAnnotation],
+    sequence: str | ProFormaAnnotation,
+    subsequence: str | ProFormaAnnotation,
     ignore_mods: bool = False,
-) -> List[int]:
+) -> list[int]:
     """
     Retrieves all starting indexes of a given subsequence within a sequence.
 
@@ -971,12 +962,12 @@ def find_subsequence_indices(
 
 
 def coverage(
-    sequence: Union[str, ProFormaAnnotation],
-    subsequences: List[Union[str, ProFormaAnnotation]],
+    sequence: str | ProFormaAnnotation,
+    subsequences: list[str | ProFormaAnnotation],
     accumulate: bool = False,
     ignore_mods: bool = False,
     ignore_ambiguity: bool = False,
-) -> List[int]:
+) -> list[int]:
     """
     Calculate the sequence coverage given a list of subsequecnes.
 
@@ -1054,8 +1045,8 @@ def coverage(
 
 
 def percent_coverage(
-    sequence: Union[str, ProFormaAnnotation],
-    subsequences: List[Union[str, ProFormaAnnotation]],
+    sequence: str | ProFormaAnnotation,
+    subsequences: list[str | ProFormaAnnotation],
     ignore_mods: bool = False,
     accumulate: bool = False,
     ignore_ambiguity: bool = False,
@@ -1108,10 +1099,10 @@ def percent_coverage(
 
 
 def modification_coverage(
-    sequence: Union[str, ProFormaAnnotation],
-    subsequences: List[Union[str, ProFormaAnnotation]],
+    sequence: str | ProFormaAnnotation,
+    subsequences: list[str | ProFormaAnnotation],
     accumulate: bool = False,
-) -> Dict[Union[int, str], int]:
+) -> dict[int | str, int]:
     """
     Calculate the modification coverage given a list of subsequences.
 
@@ -1232,7 +1223,7 @@ def modification_coverage(
     return coverage_dict
 
 
-def count_aa(sequence: Union[str, ProFormaAnnotation]) -> Dict[str, int]:
+def count_aa(sequence: str | ProFormaAnnotation) -> dict[str, int]:
     """
     Converts a sequence to a feature vector.
     """
@@ -1247,12 +1238,12 @@ def count_aa(sequence: Union[str, ProFormaAnnotation]) -> Dict[str, int]:
 
 
 def annotate_ambiguity(
-    sequence: Union[str, ProFormaAnnotation],
-    forward_coverage: List[int],
-    reverse_coverage: List[int],
-    mass_shift: Optional[Any] = None,
+    sequence: str | ProFormaAnnotation,
+    forward_coverage: list[int],
+    reverse_coverage: list[int],
+    mass_shift: Any | None = None,
     include_plus: bool = False,
-    precision: Optional[int] = None,
+    precision: int | None = None,
 ) -> str:
     """
     Given a peptide sequence and coverage information for forward and reverse fragment ions,

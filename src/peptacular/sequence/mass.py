@@ -3,7 +3,7 @@ from typing import *
 from .util import get_annotation_input, override_annotation_properties
 
 from ..proforma.annot import ProFormaAnnotation
-from ..proforma_dataclasses import ChemComposition, Mod, ModValue
+from ..proforma_dataclasses import ChemComposition, Mod, ACCEPTED_MOD_TYPES
 
 
 def mass(
@@ -13,8 +13,10 @@ def mass(
     monoisotopic: bool = True,
     isotope: int = 0,
     loss: float = 0.0,
-    charge_adducts: Optional[Union[ModValue, List[ModValue]]] = None,
-    isotope_mods: Optional[Union[ModValue, List[ModValue]]] = None,
+    charge_adducts: Optional[
+        Union[ACCEPTED_MOD_TYPES, List[ACCEPTED_MOD_TYPES]]
+    ] = None,
+    isotope_mods: Optional[Union[ACCEPTED_MOD_TYPES, List[ACCEPTED_MOD_TYPES]]] = None,
     use_isotope_on_mods: bool = False,
     precision: Optional[int] = None,
 ) -> float:
@@ -156,8 +158,10 @@ def mz(
     monoisotopic: bool = True,
     isotope: int = 0,
     loss: float = 0.0,
-    charge_adducts: Optional[Union[ModValue, List[ModValue]]] = None,
-    isotope_mods: Optional[Union[ModValue, List[ModValue]]] = None,
+    charge_adducts: Optional[
+        Union[ACCEPTED_MOD_TYPES, List[ACCEPTED_MOD_TYPES]]
+    ] = None,
+    isotope_mods: Optional[Union[ACCEPTED_MOD_TYPES, List[ACCEPTED_MOD_TYPES]]] = None,
     precision: Optional[int] = None,
 ) -> float:
     """
@@ -235,8 +239,10 @@ def comp(
     estimate_delta: bool = False,
     charge: Optional[int] = None,
     isotope: int = 0,
-    charge_adducts: Optional[Union[ModValue, List[ModValue]]] = None,
-    isotope_mods: Optional[Union[ModValue, List[ModValue]]] = None,
+    charge_adducts: Optional[
+        Union[ACCEPTED_MOD_TYPES, List[ACCEPTED_MOD_TYPES]]
+    ] = None,
+    isotope_mods: Optional[Union[ACCEPTED_MOD_TYPES, List[ACCEPTED_MOD_TYPES]]] = None,
     use_isotope_on_mods: bool = False,
 ) -> ChemComposition:
     """
@@ -308,8 +314,10 @@ def comp_mass(
     ion_type: str = "p",
     charge: Optional[int] = None,
     isotope: int = 0,
-    charge_adducts: Optional[Union[ModValue, List[ModValue]]] = None,
-    isotope_mods: Optional[Union[ModValue, List[ModValue]]] = None,
+    charge_adducts: Optional[
+        Union[ACCEPTED_MOD_TYPES, List[ACCEPTED_MOD_TYPES]]
+    ] = None,
+    isotope_mods: Optional[Union[ACCEPTED_MOD_TYPES, List[ACCEPTED_MOD_TYPES]]] = None,
     use_isotope_on_mods: bool = False,
 ) -> Tuple[ChemComposition, float]:
 

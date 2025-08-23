@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import *
 
 from .annot import ProFormaAnnotation
 
@@ -10,8 +9,8 @@ class MultiProFormaAnnotation:
     A multi proforma annotation
     """
 
-    annotations: List[ProFormaAnnotation]
-    connections: List[bool]
+    annotations: list[ProFormaAnnotation]
+    connections: list[bool]
 
     def __post_init__(self):
         if len(self.annotations) - 1 != len(self.connections):
@@ -20,7 +19,7 @@ class MultiProFormaAnnotation:
             )
 
     def serialize(
-        self, include_plus: bool = False, precision: Optional[int] = None
+        self, include_plus: bool = False, precision: int | None = None
     ) -> str:
         """
         Convert the multi annotation to a proforma string.

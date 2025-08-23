@@ -6,7 +6,7 @@ from random import randint, choice, sample
 from enum import Enum, auto
 from typing import *
 
-from ..proforma_dataclasses import Mod, Interval
+from ..dclasses import Mod, Interval
 from .annot import ProFormaAnnotation
 
 
@@ -277,7 +277,7 @@ def compliance_randomizer(
     internal_mod_indices = sample(range(len(sequence)), num_internal_mods)
 
     for i, mod in zip(internal_mod_indices, internal_mods):
-        annotation.add_internal_mod(i, mod)
+        annotation.add_internal_mods_at_index(i, mod)
 
     # N-terminal, C-terminal and labile modifications.
     for _ in range(randint(0, 3)):
@@ -312,7 +312,7 @@ def compliance_randomizer(
 
         for i, mod in zip(score_mods_indices, score_mods):
             # annotation.pop_internal_mod(i)
-            annotation.add_internal_mod(i, mod)
+            annotation.add_internal_mods_at_index(i, mod)
 
     return annotation
 
@@ -337,7 +337,7 @@ def top_down_randomizer(annotation: ProFormaAnnotation, mod_prob: float = 0.1):
     internal_mod_indices = sample(range(len(annotation)), num_internal_mods)
 
     for i, mod in zip(internal_mod_indices, internal_mods):
-        annotation.add_internal_mod(i, mod)
+        annotation.add_internal_mods_at_index(i, mod)
 
 
 def cross_linking_randomizer(annotation: ProFormaAnnotation):
@@ -360,7 +360,7 @@ def cross_linking_randomizer(annotation: ProFormaAnnotation):
 
         for i, mod in zip(score_mods_indices, cross_link_mods):
             # annotation.pop_internal_mod(i)
-            annotation.add_internal_mod(i, mod)
+            annotation.add_internal_mods_at_index(i, mod)
 
 
 def glycan_randomizer(annotation: ProFormaAnnotation, mod_prob: float = 0.1):
@@ -384,7 +384,7 @@ def glycan_randomizer(annotation: ProFormaAnnotation, mod_prob: float = 0.1):
     internal_mod_indices = sample(range(len(annotation)), num_internal_mods)
 
     for i, mod in zip(internal_mod_indices, internal_mods):
-        annotation.add_internal_mod(i, mod)
+        annotation.add_internal_mods_at_index(i, mod)
 
 
 def spectrum_randomizer(annotation: ProFormaAnnotation):

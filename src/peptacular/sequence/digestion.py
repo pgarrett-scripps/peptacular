@@ -16,10 +16,15 @@ Valid DigestReturnType's:
 
 from typing import Union, List, Optional, Generator
 
-from ..proforma.annot_digestion import DIGEST_RETURN_TYPING, DigestReturnType, EnzymeConfig
+from ..proforma.annot_digestion import (
+    DIGEST_RETURN_TYPING,
+    DigestReturnType,
+    EnzymeConfig,
+)
 
 from ..proforma.annot import ProFormaAnnotation
 from . import get_annotation_input
+
 
 def get_left_semi_enzymatic_sequences(
     sequence: Union[str, ProFormaAnnotation],
@@ -114,7 +119,9 @@ def get_right_semi_enzymatic_sequences(
         ['<13C>IDE', '<13C>DE', '<13C>E']
 
     """
-    return get_annotation_input(sequence, copy=False).get_right_semi_enzymatic_sequences(
+    return get_annotation_input(
+        sequence, copy=False
+    ).get_right_semi_enzymatic_sequences(
         min_len=min_len,
         max_len=max_len,
         return_type=return_type,
@@ -366,9 +373,6 @@ def digest(
         return_type=return_type,
         sort_output=sort_output,
     )
-
-
-
 
 
 def digest_from_config(

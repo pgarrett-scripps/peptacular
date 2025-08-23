@@ -1,23 +1,25 @@
-
-
-
-
 from dataclasses import dataclass
-from typing import Generator, Iterable, List, Literal, Optional, Tuple, Union
+from typing import Generator, Iterable, Literal
 
 from ..constants import PROTEASES_COMPILED
 from ..util import get_regex_match_indices
 
-from ..spans import build_left_semi_spans, build_non_enzymatic_spans, build_right_semi_spans, build_spans
+from ..spans import (
+    build_left_semi_spans,
+    build_non_enzymatic_spans,
+    build_right_semi_spans,
+    build_spans,
+)
 
-from ..proforma_dataclasses import Span
+from ..dclasses import SPAN_TYPE
 from .annot_fragmentation import ProFormaAnnotationFragmentation
+
 
 @dataclass
 class EnzymeConfig:
     """Configuration for a single enzyme in a digestion process."""
 
-    regex: Union[List[str], str]  # Regular expressions for enzyme cleavage sites
+    regex: Iterable[str] | str  # Regular expressions for enzyme cleavage sites
     missed_cleavages: int = 0  # Allowed missed cleavages
     semi_enzymatic: bool = False  # Whether to include semi-enzymatic peptides
     complete_digestion: bool = True  # Whether to omit original sequence
@@ -27,15 +29,17 @@ class EnzymeConfig:
         if isinstance(self.regex, str):
             self.regex = [self.regex]
 
+
 DigestReturnType = Literal["str", "annotation", "span", "str-span", "annotation-span"]
 
-DIGEST_RETURN_TYPING = Union[
-    Generator[str, None, None],
-    Generator['ProFormaAnnotationDigestion', None, None],
-    Generator[Span, None, None],
-    Generator[Tuple[str, Span], None, None],
-    Generator[Tuple['ProFormaAnnotationDigestion', Span], None, None],
-]
+DIGEST_RETURN_TYPING = (
+    Generator[str, None, None]
+    | Generator["ProFormaAnnotationDigestion", None, None]
+    | Generator[SPAN_TYPE, None, None]
+    | Generator[tuple[str, SPAN_TYPE], None, None]
+    | Generator[tuple["ProFormaAnnotationDigestion", SPAN_TYPE], None, None]
+)
+
 
 class ProFormaAnnotationDigestion(ProFormaAnnotationFragmentation):
     """
@@ -43,7 +47,7 @@ class ProFormaAnnotationDigestion(ProFormaAnnotationFragmentation):
     """
 
     def _return_digested_sequences(
-        self, spans: Iterable[Span], return_type: DigestReturnType
+        self, spans: Iterable[SPAN_TYPE], return_type: DigestReturnType
     ) -> DIGEST_RETURN_TYPING:
         """
         Helper function to return the digested sequences as strings or ProFormaAnnotations.
@@ -76,19 +80,18 @@ class ProFormaAnnotationDigestion(ProFormaAnnotationFragmentation):
 
     def get_left_semi_enzymatic_sequences(
         self,
-        min_len: Optional[int] = None,
-        max_len: Optional[int] = None,
+        min_len: int | None = None,
+        max_len: int | None = None,
         return_type: DigestReturnType = "str",
     ) -> DIGEST_RETURN_TYPING:
         span = (0, len(self), 0)
         spans = build_left_semi_spans(span=span, min_len=min_len, max_len=max_len)
         return self._return_digested_sequences(spans, return_type)
 
-
     def get_right_semi_enzymatic_sequences(
         self,
-        min_len: Optional[int] = None,
-        max_len: Optional[int] = None,
+        min_len: int | None = None,
+        max_len: int | None = None,
         return_type: DigestReturnType = "str",
     ) -> DIGEST_RETURN_TYPING:
         s = (0, len(self), 0)
@@ -96,11 +99,10 @@ class ProFormaAnnotationDigestion(ProFormaAnnotationFragmentation):
 
         return self._return_digested_sequences(spans, return_type)
 
-
     def get_semi_enzymatic_sequences(
         self,
-        min_len: Optional[int] = None,
-        max_len: Optional[int] = None,
+        min_len: int | None = None,
+        max_len: int | None = None,
         return_type: DigestReturnType = "str",
     ) -> DIGEST_RETURN_TYPING:
         yield from self.get_left_semi_enzymatic_sequences(
@@ -110,34 +112,29 @@ class ProFormaAnnotationDigestion(ProFormaAnnotationFragmentation):
             min_len=min_len, max_len=max_len, return_type=return_type
         )
 
-
     def get_non_enzymatic_sequences(
         self,
-        min_len: Optional[int] = None,
-        max_len: Optional[int] = None,
+        min_len: int | None = None,
+        max_len: int | None = None,
         return_type: DigestReturnType = "str",
     ) -> DIGEST_RETURN_TYPING:
         s = (0, len(self), 0)
         spans = build_non_enzymatic_spans(span=s, min_len=min_len, max_len=max_len)
         return self._return_digested_sequences(spans, return_type)
 
-
-    def get_cleavage_sites(
-        self, enzyme_regex: str
-    ) -> Generator[int, None, None]:
+    def get_cleavage_sites(self, enzyme_regex: str) -> Generator[int, None, None]:
         enzyme_regex = PROTEASES_COMPILED.get(enzyme_regex, enzyme_regex)
         return get_regex_match_indices(
             input_str=self.stripped_sequence, regex_str=enzyme_regex
         )
 
-
     def digest(
         self,
-        enzyme_regex: Union[List[str], str],
+        enzyme_regex: Iterable[str] | str,
         missed_cleavages: int = 0,
         semi: bool = False,
-        min_len: Optional[int] = None,
-        max_len: Optional[int] = None,
+        min_len: int | None = None,
+        max_len: int | None = None,
         complete_digestion: bool = True,
         return_type: DigestReturnType = "str",
         sort_output: bool = True,
@@ -146,15 +143,13 @@ class ProFormaAnnotationDigestion(ProFormaAnnotationFragmentation):
         if isinstance(enzyme_regex, str):
             enzyme_regex = [enzyme_regex]
 
-        all_spans = set()
+        all_spans: set[SPAN_TYPE] = set()
         if not complete_digestion:
             all_spans.add((0, len(self), 0))
 
         cleavage_sites = []
         for regex in enzyme_regex:
-            cleavage_sites.extend(
-                list(self.get_cleavage_sites(enzyme_regex=regex))
-            )
+            cleavage_sites.extend(list(self.get_cleavage_sites(enzyme_regex=regex)))
 
         spans = build_spans(
             max_index=len(self),
@@ -170,13 +165,12 @@ class ProFormaAnnotationDigestion(ProFormaAnnotationFragmentation):
             all_spans = sorted(all_spans, key=lambda x: (x[0], x[1], x[2]))
 
         return self._return_digested_sequences(all_spans, return_type)
-    
 
     def sequential_digest(
         self,
-        enzyme_configs: List[EnzymeConfig],
-        min_len: Optional[int] = None,
-        max_len: Optional[int] = None,
+        enzyme_configs: Iterable[EnzymeConfig],
+        min_len: int | None = None,
+        max_len: int | None = None,
         return_type: DigestReturnType = "str",
     ) -> DIGEST_RETURN_TYPING:
 
@@ -245,5 +239,6 @@ class ProFormaAnnotationDigestion(ProFormaAnnotationFragmentation):
             ]
 
         # Format and return the results
-        return self._return_digested_sequences([span for anot, span in digested_anot_spans], return_type
+        return self._return_digested_sequences(
+            [SPAN_TYPE for anot, span in digested_anot_spans], return_type
         )

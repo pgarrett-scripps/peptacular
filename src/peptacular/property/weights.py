@@ -259,7 +259,7 @@ def get_weights(
     ] = "uniform",
     min_weight: float = 0.1,
     max_weight: float = 1.0,
-    **kwargs: Any
+    **kwargs: Any,
 ) -> list[float]:
     """
     Get weights for a sequence based on the specified weighting scheme.
@@ -303,4 +303,3 @@ def get_weights(
             f"Unsupported weights type: {weights}. Supported types are: "
             "'uniform', 'linear', 'exponential', 'gaussian', 'sigmoid', 'cosine', 'sinusoidal'."
         )
-

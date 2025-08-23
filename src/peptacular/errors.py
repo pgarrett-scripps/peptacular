@@ -4,6 +4,7 @@ Errors
 
 from typing import Any
 
+
 class AmbiguousAminoAcidError(ValueError):
     def __init__(self, aa: str, msg: str, *args: Any):
         self.aa = aa

@@ -1,14 +1,19 @@
+from __future__ import annotations
+
 from functools import wraps
-from typing import *
+from typing import (
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Tuple,
+    Union,
+)
 
 import regex as re
 
 from ..constants import ADDUCT_PATTERN, ISOTOPE_NUM_PATTERN
-from ..proforma_dataclasses import ModValue
-from ..proforma_dataclasses import ChemComposition
-from ..proforma_dataclasses import (
-    Mod,
-)
+from ..dclasses import Mod, CHEM_COMPOSITION_TYPE, MOD_VALUE_TYPES
 
 
 def _parse_modifications(
@@ -36,7 +41,7 @@ def _parse_modifications(
         [Mod('Formula:[13C]H23', 1)]
 
     """
-    mods = []
+    mods: List[Mod] = []
     position = 0
     length = len(proforma_sequence)
     while position < length:
@@ -147,7 +152,7 @@ def _parse_integer(proforma_sequence: str) -> Tuple[int, int]:
     return int(proforma_sequence[:i]), i
 
 
-def parse_charge_adducts(mod: ModValue) -> ChemComposition:
+def parse_charge_adducts(mod: MOD_VALUE_TYPES) -> CHEM_COMPOSITION_TYPE:
     """
     Parse charge adducts into a dictionary, mapping the ion to its count
     :param mod: The charge adducts to parse.
@@ -182,14 +187,14 @@ def parse_charge_adducts(mod: ModValue) -> ChemComposition:
     """
 
     if isinstance(mod, Mod):
-        return parse_charge_adducts(mod.val)
+        return parse_charge_adducts(str(mod.val))
 
     if not isinstance(mod, str):
         raise TypeError(
             f"Invalid type for charge adducts: {type(mod)}! Mod or Mod.val must be of type string."
         )
 
-    charge_adducts = {}
+    charge_adducts: CHEM_COMPOSITION_TYPE = {}
 
     mods = mod.split(",")
     for m in mods:
@@ -198,7 +203,7 @@ def parse_charge_adducts(mod: ModValue) -> ChemComposition:
         else:
             mod_str = m
 
-        for sign, count, ion in ADDUCT_PATTERN.findall(mod_str):
+        for sign, count, ion in ADDUCT_PATTERN.findall(mod_str):  # type: ignore
             if count == "":
                 count = 1
             else:
@@ -215,12 +220,12 @@ def parse_charge_adducts(mod: ModValue) -> ChemComposition:
     return charge_adducts
 
 
-def write_charge_adducts(charge_adducts: ChemComposition) -> Mod:
+def write_charge_adducts(charge_adducts: CHEM_COMPOSITION_TYPE) -> Mod:
     """
     Converts the dictionary of charge adducts into a list of Mod instances.
 
     :param charge_adducts: Dictionary of charge adducts.
-    :type: ChemComposition
+    :type: CHEM_COMPOSITION_TYPE
 
     :return: The charge adducts as a Mod instance.
     :rtype: Mod
@@ -244,7 +249,7 @@ def write_charge_adducts(charge_adducts: ChemComposition) -> Mod:
 
     """
 
-    adducts_list = []
+    adducts_list: List[str] = []
     for ion, count in charge_adducts.items():
         sign = "+" if count >= 0 else ""
         sign = "-" if count < 0 else sign
@@ -254,7 +259,7 @@ def write_charge_adducts(charge_adducts: ChemComposition) -> Mod:
     return Mod(",".join(adducts_list), 1)
 
 
-def parse_static_mods(mods: Optional[List[ModValue]]) -> Dict[str, List[Mod]]:
+def parse_static_mods(mods: Iterable[Mod] | Mod | None) -> Dict[str, List[Mod]]:
     """
     Parse static modifications into a dictionary, mapping the location to the modifications.
 
@@ -285,22 +290,25 @@ def parse_static_mods(mods: Optional[List[ModValue]]) -> Dict[str, List[Mod]]:
 
     """
 
-    static_mod_dict = {}
+    static_mod_dict: Dict[str, List[Mod]] = {}
 
     if mods is None:
         return static_mod_dict
+    elif isinstance(mods, Mod):
+        mods = [mods]
+    elif not isinstance(mods, Iterable):  # type: ignore
+        raise TypeError(
+            f"Invalid type for static mods: {type(mods)}! Expected Mod, Iterable[Mod], or None."
+        )
 
     for mod in mods:
 
-        if isinstance(mod, Mod):
-            mod = mod.val
-
-        if not isinstance(mod, str):
+        if not isinstance(mod.val, str):
             raise TypeError(
                 f"Invalid type for static mods: {type(mod)}! Mod or Mod.val must be of type string."
             )
 
-        mod_info, residues = mod.split("@")
+        mod_info, residues = mod.val.split("@")
         residues = residues.split(",")
         static_mods = _parse_modifications(mod_info, "[", "]")
 
@@ -333,13 +341,13 @@ def write_static_mods(mods: Dict[str, List[Mod]]) -> List[Mod]:
 
     """
 
-    reverse_mods = {}
+    reverse_mods: Dict[Tuple[Mod, ...], List[str]] = {}
 
     for residue, mod_list in mods.items():
         mod_tuple = tuple(mod_list)
         reverse_mods.setdefault(mod_tuple, []).append(residue)
 
-    static_mods = []
+    static_mods: List[Mod] = []
     for mod_tuple, residues in reverse_mods.items():
         residue_str = ",".join(residues)
         mod_str = "".join(mod.serialize("[]") for mod in mod_tuple)
@@ -348,12 +356,12 @@ def write_static_mods(mods: Dict[str, List[Mod]]) -> List[Mod]:
     return static_mods
 
 
-def parse_isotope_mods(mods: List[ModValue]) -> Dict[str, str]:
+def parse_isotope_mods(mods: Iterable[Mod] | Mod | None) -> Dict[str, str]:
     """
     Parse isotope modifications into a dictionary, mapping the elemental symbol to its isotope.
 
-    :param mods: List of isotope modifications.
-    :type mods: List[ModValue]
+    :param mods: Isotope modifications.
+    :type mods: Iterable[Mod] | Mod | None
 
     :raises TypeError: If the mod is not a string or Mod instance.
 
@@ -375,21 +383,26 @@ def parse_isotope_mods(mods: List[ModValue]) -> Dict[str, str]:
         {}
 
     """
+    if mods is None:
+        return {}
+    elif isinstance(mods, Mod):
+        mods = [mods]
+    elif not isinstance(mods, Iterable):  # type: ignore
+        raise TypeError(
+            f"Invalid type for isotope mods: {type(mods)}! Expected Mod, Iterable[Mod], or None."
+        )
 
-    isotope_map = {}
+    isotope_map: Dict[str, str] = {}
     for mod in mods:
 
-        if isinstance(mod, Mod):
-            mod = mod.val
-
-        if not isinstance(mod, str):
+        if not isinstance(mod.val, str):
             raise TypeError(
-                f"Invalid type for isotope mods: {type(mod)}! Mod or Mod.val must be of type string."
+                f"Invalid type for isotope mods: {type(mod.val)}! Mod.val must be of type string."
             )
 
         # remove digits
-        base_aa = re.sub(ISOTOPE_NUM_PATTERN, "", mod)
-        isotope_map[base_aa] = mod
+        base_aa = re.sub(ISOTOPE_NUM_PATTERN, "", mod.val)
+        isotope_map[base_aa] = mod.val
 
     # If any keys are D or T, then replace them with H
     if "D" in isotope_map:
@@ -427,7 +440,9 @@ def write_isotope_mods(mods: Dict[str, str]) -> List[Mod]:
     return [Mod(val=v, mult=1) for v in mods.values()]
 
 
-def _validate_single_mod_multiplier(func: Callable) -> Callable:
+def validate_single_mod_multiplier(
+    func: Callable[[Union[Mod, List[Mod]]], None],
+) -> Callable[[Union[Mod, List[Mod]]], None]:
     """
     A decorator that validates the multiplier of a Mod instance (or each Mod in a list of Mods)
     before adding it through the decorated method. It raises a ValueError if any Mod has a multiplier greater than 1.
@@ -440,7 +455,11 @@ def _validate_single_mod_multiplier(func: Callable) -> Callable:
     """
 
     @wraps(func)
-    def wrapper(self, mod: Union[Mod, List[Mod]]):
+    def wrapper(self, mod: Union[Mod, List[Mod]]) -> None:  # type: ignore
+        """
+        Validate the multiplier of a Mod instance (or each Mod in a list of Mods)
+        before adding it through the decorated method.
+        """
         if isinstance(mod, Mod):
             if mod.mult > 1:
                 raise ValueError(
@@ -457,112 +476,6 @@ def _validate_single_mod_multiplier(func: Callable) -> Callable:
                         None,
                     )
 
-        return func(self, mod)
+        return func(self, mod)  # type: ignore
 
-    return wrapper
-
-
-"""
-This section is largely based on the code from the `biopython` library, specifically the `Bio.SeqUtils` module.
-"""
-
-from .property_data import *
-
-
-def get_aa_value(
-    aa: str,
-    aa_data: Dict[str, float],
-    missing_aa_handling: Literal[
-        "zero", "avg", "min", "max", "median", "error", "skip"
-    ],
-    weighting_scheme: float = 1,
-    normalize: bool = False,
-) -> Optional[float]:
-    if missing_aa_handling == "zero":
-        default_value = 0.0
-    elif missing_aa_handling == "avg":
-        default_value = sum(aa_data.values()) / len(aa_data)
-    elif missing_aa_handling == "min":
-        default_value = min(aa_data.values())
-    elif missing_aa_handling == "max":
-        default_value = max(aa_data.values())
-    elif missing_aa_handling == "median":
-        sorted_values = sorted(aa_data.values())
-        mid = len(sorted_values) // 2
-        if len(sorted_values) % 2 == 0:
-            default_value = (sorted_values[mid - 1] + sorted_values[mid]) / 2
-        else:
-            default_value = sorted_values[mid]
-    elif missing_aa_handling == "error":
-        default_value = "error"
-    elif missing_aa_handling == "skip":
-        return "skip"
-    else:
-        raise ValueError(
-            f"Invalid default value: {missing_aa_handling}. Choose from 'zero', 'avg', 'min', 'max', 'median', 'error', or 'skip'."
-        )
-
-    # B -> Aspartic acid or Asparagine
-    # J -> Leucine or Isoleucine
-    # Z -> Glutamic acid or Glutamine
-    # X -> Any amino acid (not a valid single-letter code)
-
-    if aa in aa_data:
-        if normalize:
-            # Normalize the value to a range of 0-1
-            min_value = min(aa_data.values())
-            max_value = max(aa_data.values())
-            return (
-                (aa_data[aa] - min_value) / (max_value - min_value)
-            ) * weighting_scheme
-        else:
-            # Return the raw value multiplied by the weight
-            return aa_data[aa] * weighting_scheme
-    elif aa == "B":
-        # average of Aspartic acid and Asparagine
-        return (
-            (
-                get_aa_value("D", aa_data, missing_aa_handling)
-                + get_aa_value("N", aa_data, missing_aa_handling)
-            )
-            / 2
-        ) * weighting_scheme
-    elif aa == "J":
-        # average of Leucine and Isoleucine
-        return (
-            (
-                get_aa_value("L", aa_data, missing_aa_handling)
-                + get_aa_value("I", aa_data, missing_aa_handling)
-            )
-            / 2
-        ) * weighting_scheme
-    elif aa == "Z":
-        # average of Glutamic acid and Glutamine
-        return (
-            (
-                get_aa_value("E", aa_data, missing_aa_handling)
-                + get_aa_value("Q", aa_data, missing_aa_handling)
-            )
-            / 2
-        ) * weighting_scheme
-    elif aa == "X":
-        # Mean of all
-        if normalize:
-            # Normalize the average value to a range of 0-1
-            min_value = min(aa_data.values())
-            max_value = max(aa_data.values())
-            return (
-                (sum(aa_data.values()) / len(aa_data) - min_value)
-                / (max_value - min_value)
-            ) * weighting_scheme
-        else:
-            # Return the average value multiplied by the weight
-            return (sum(aa_data.values()) / len(aa_data)) * weighting_scheme
-    else:
-        if default_value == "error":
-            raise ValueError(
-                f"Invalid amino acid: {aa}. No hydrophobicity value found."
-            )
-        elif default_value == "skip":
-            return None
-        return default_value * weighting_scheme
+    return wrapper  # type: ignore

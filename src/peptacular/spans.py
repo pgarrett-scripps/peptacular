@@ -8,15 +8,16 @@ Working with spans can be a more efficient way of processing the data, since a p
 3 ints.
 """
 
-from typing import List, Optional, Generator, Iterable
+from collections.abc import Generator
+from typing import Iterable
 from itertools import groupby
 
-from .proforma_dataclasses import Span
+from .dclasses import SPAN_TYPE
 
 
 def build_non_enzymatic_spans(
-    span: Span, min_len: Optional[int] = None, max_len: Optional[int] = None
-) -> Generator[Span, None, None]:
+    span: SPAN_TYPE, min_len: int | None = None, max_len: int | None = None
+) -> Generator[SPAN_TYPE]:
     """
     Generates non-enymatic spans with span lengths <= max_len and >= min_len
 
@@ -69,8 +70,8 @@ def build_non_enzymatic_spans(
 
 
 def build_left_semi_spans(
-    span: Span, min_len: Optional[int] = None, max_len: Optional[int] = None
-) -> Generator[Span, None, None]:
+    span: SPAN_TYPE, min_len: int | None = None, max_len: int | None = None
+) -> Generator[SPAN_TYPE]:
     """
     Generates left-semi spans with span lengths <= max_len and >= min_len. A left-semi span is any span
     which has the same start position as the parent span.
@@ -121,8 +122,8 @@ def build_left_semi_spans(
 
 
 def build_right_semi_spans(
-    span: Span, min_len: Optional[int] = None, max_len: Optional[int] = None
-) -> Generator[Span, None, None]:
+    span: SPAN_TYPE, min_len: int | None = None, max_len: int | None = None
+) -> Generator[SPAN_TYPE]:
     """
     Generates right-semi spans with span lengths <= max_len and >= min_len. A right-semi span is any span
     which has the same end position as the parent span.
@@ -172,11 +173,11 @@ def build_right_semi_spans(
 
 def build_enzymatic_spans(
     max_index: int,
-    enzyme_sites: List[int],
+    enzyme_sites: Iterable[int],
     missed_cleavages: int,
-    min_len: Optional[int] = None,
-    max_len: Optional[int] = None,
-) -> Generator[Span, None, None]:
+    min_len: int | None = None,
+    max_len: int | None = None,
+) -> Generator[SPAN_TYPE]:
     """
     Computes enzymatic spans for the given enzyme sites and missed cleavages.
 
@@ -215,6 +216,7 @@ def build_enzymatic_spans(
     if max_len is None:
         max_len = max_index
 
+    enzyme_sites = list(enzyme_sites)
     enzyme_sites.extend([0, max_index])
     enzyme_sites = sorted(list(set(enzyme_sites)))
 
@@ -225,8 +227,8 @@ def build_enzymatic_spans(
 
 
 def _grouped_left_semi_span_builder(
-    spans: List[Span], min_len: Optional[int] = None, max_len: Optional[int] = None
-) -> Generator[Span, None, None]:
+    spans: Iterable[SPAN_TYPE], min_len: int | None = None, max_len: int | None = None
+) -> Generator[SPAN_TYPE]:
     """
     Efficiently generates all left-semi-spans from the given list of spans that have a length within the specified
     range. The input spans must be enzymatic spans where the values of the span represents the number of missed
@@ -279,8 +281,8 @@ def _grouped_left_semi_span_builder(
 
 
 def _grouped_right_semi_span_builder(
-    spans: List[Span], min_len: Optional[int] = None, max_len: Optional[int] = None
-) -> Generator[Span, None, None]:
+    spans: Iterable[SPAN_TYPE], min_len: int | None = None, max_len: int | None = None
+) -> Generator[SPAN_TYPE, None, None]:
     """
     Efficiently generates all right-semi-spans from the given list of spans that have a length within the specified
     range. The input spans must be enzymatic spans where the values of the span represents the number of missed
@@ -332,8 +334,8 @@ def _grouped_right_semi_span_builder(
 
 
 def build_semi_spans(
-    spans: List[Span], min_len: Optional[int] = None, max_len: Optional[int] = None
-) -> Generator[Span, None, None]:
+    spans: Iterable[SPAN_TYPE], min_len: int | None = None, max_len: int | None = None
+) -> Generator[SPAN_TYPE, None, None]:
     """
     Efficiently generates all semi-spans from the given list of spans that have a length within the specified
     range. The input spans must be enzymatic spans where the values of the span represents the number of missed
@@ -369,10 +371,10 @@ def build_spans(
     max_index: int,
     enzyme_sites: Iterable[int],
     missed_cleavages: int,
-    min_len: Optional[int] = None,
-    max_len: Optional[int] = None,
+    min_len: int | None = None,
+    max_len: int | None = None,
     semi: bool = False,
-) -> Generator[Span, None, None]:
+) -> Generator[SPAN_TYPE]:
     """
     Builds all spans for the given digestion parameters and enzyme sites
 
@@ -426,8 +428,8 @@ def build_spans(
 
 
 def calculate_span_coverage(
-    spans: List[Span], max_index: int, accumulate: bool = False
-) -> List[int]:
+    spans: Iterable[SPAN_TYPE], max_index: int, accumulate: bool = False
+) -> list[int]:
     """
     Calculates the coverage array for a given list of spans.
 

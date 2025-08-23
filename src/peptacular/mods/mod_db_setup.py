@@ -12,6 +12,8 @@ from collections import Counter
 from functools import cached_property
 from typing import List, Dict, IO, Any, Optional, Union, Iterator, Tuple
 
+from ..dclasses import CHEM_COMPOSITION_TYPE
+
 from ..constants import ISOTOPIC_ATOMIC_MASSES
 from ..chem.chem_util import (
     write_chem_formula,
@@ -22,19 +24,18 @@ from ..chem.chem_util import (
 )
 from ..errors import InvalidChemFormulaError, InvalidGlycanFormulaError
 from ..utils2 import convert_type
-from ..proforma_dataclasses import ChemComposition
 
 
 @dataclasses.dataclass
 class ModEntry:
     id: str
     name: str
-    mono_mass: Optional[float] = None
-    avg_mass: Optional[float] = None
-    composition: Optional[str] = None
-    synonyms: Optional[List[str]] = None
-    parents: Optional[List[str]] = None
-    entry_type: Optional[Any] = None
+    mono_mass: float | None = None
+    avg_mass: float | None = None
+    composition: str | None = None
+    synonyms: list[str] | None = None
+    parents: list[str] | None = None
+    entry_type: Any | None = None
 
     @cached_property
     def calc_mono_mass(self):
@@ -48,7 +49,7 @@ class ModEntry:
             return chem_mass(self.composition, monoisotopic=False)
         return None
 
-    def dict(self):
+    def dict(self) -> dict[str, Any]:
         return {
             "id": self.id,
             "name": self.name,
@@ -61,11 +62,11 @@ class ModEntry:
         }
 
 
-def parse_glycan_formula_db(formula: str, sep: str) -> ChemComposition:
+def parse_glycan_formula_db(formula: str, sep: str) -> CHEM_COMPOSITION_TYPE:
     """
     Here to avoid a circular import. Real function is in peptacular.glycan
     """
-    d = {}
+    d: CHEM_COMPOSITION_TYPE = {}
 
     if formula == "":
         return d
@@ -79,30 +80,30 @@ def parse_glycan_formula_db(formula: str, sep: str) -> ChemComposition:
         for glycan_name in MONOSACCHARIDES_DB.names_sorted:
             if formula.startswith(glycan_name):
                 formula = formula[len(glycan_name) :]
-                count = ""
+                count_str = ""
 
                 # get the count (can have +- or digits)
                 for c in formula:
                     if c.isdigit() or c in "+-.":
-                        count += c
+                        count_str += c
                     else:
                         break
 
                 # remove the count from the formula
-                formula = formula[len(count) :]
+                formula = formula[len(count_str) :]
 
                 # add the count to the dictionary
-                if count == "":
-                    count = 1
+                if count_str == "":
+                    count_val = 1
+                else:
+                    count_val = convert_type(count_str)
 
-                count = convert_type(count)
-
-                if isinstance(count, str):
+                if not isinstance(count_val, (int, float)):
                     raise InvalidGlycanFormulaError(
-                        original_formula, f'Invalid count: "{count}"!'
+                        original_formula, f'Invalid count: "{count_str}"!'
                     )
 
-                d[glycan_name] = count
+                d[glycan_name] = count_val
 
                 break
         else:
@@ -113,14 +114,18 @@ def parse_glycan_formula_db(formula: str, sep: str) -> ChemComposition:
     return d
 
 
-def glycan_comp_db(glycan: Union[ChemComposition, str], sep: str = "") -> ChemComposition:
+def glycan_comp_db(
+    glycan: CHEM_COMPOSITION_TYPE | str, sep: str = ""
+) -> CHEM_COMPOSITION_TYPE:
     """
     Here to avoid a circular import. Real function is in peptacular.glycan
     """
     if isinstance(glycan, str):
-        glycan = parse_glycan_formula_db(glycan, sep)  # raises InvalidGlycanFormulaError
+        glycan = parse_glycan_formula_db(
+            glycan, sep
+        )  # raises InvalidGlycanFormulaError
 
-    counts = {}
+    counts: CHEM_COMPOSITION_TYPE = {}
     for component, count in glycan.items():
 
         if MONOSACCHARIDES_DB.contains_name(component):
@@ -128,7 +133,14 @@ def glycan_comp_db(glycan: Union[ChemComposition, str], sep: str = "") -> ChemCo
         elif MONOSACCHARIDES_DB.contains_synonym(component):
             entry = MONOSACCHARIDES_DB.get_entry_by_synonym(component)
         else:
-            raise InvalidGlycanFormulaError(glycan, f'Unknown glycan: "{component}"!')
+            raise InvalidGlycanFormulaError(
+                str(glycan), f'Unknown glycan: "{component}"!'
+            )
+
+        if entry.composition is None:
+            raise InvalidGlycanFormulaError(
+                str(glycan), f'Missing composition for glycan: "{component}"!'
+            )
 
         chem_formula = parse_chem_formula(entry.composition)
         for element, element_count in chem_formula.items():

@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from functools import cached_property
 import itertools
-from typing import List, Literal, Optional, Set, Tuple, Union
+from typing import List, Literal, Optional, Set, Tuple, Union, Self
 
 import regex as re
 
@@ -19,8 +19,9 @@ from ..spans import (
 
 from ..utils2 import get_label, get_number
 from ..mass_calc import adjust_mass, adjust_mz
-from ..proforma_dataclasses import Span
-from .annot_manipulation import ProFormaAnnotationManipulation
+from ..dclasses import SPAN_TYPE as Span
+
+# from .annot_manipulation import ProFormaAnnotationManipulation
 
 
 @dataclass(frozen=True)
@@ -36,7 +37,7 @@ class Fragment:
     monoisotopic: bool
     isotope: int
     loss: float
-    parent_sequence: 'ProFormaAnnotationFragmentation'
+    parent_sequence: "ProFormaAnnotationFragmentation"
     mass: float
     neutral_mass: float
     mz: float
@@ -85,7 +86,6 @@ class Fragment:
         """
 
         return dict(self)
-    
 
 
 FragmentReturnType = Literal[
@@ -94,7 +94,6 @@ FragmentReturnType = Literal[
 FRAGMENT_RETURN_TYPING = Union[
     List[Fragment], List[float], List[str], List[Tuple[float, str]]
 ]
-
 
 
 class ProFormaAnnotationFragmentation(ProFormaAnnotationManipulation):

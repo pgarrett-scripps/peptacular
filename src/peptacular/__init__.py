@@ -13,9 +13,10 @@ from .mass_calc import *
 from .glycan import *
 from .isotope import *
 from .constants import *
-from .score import *
+
+# from .score import *
 from .util import *
 from .spans import *
 from .fasta import *
 from .converters import *
-from .proforma_dataclasses import *
+from .dclasses import *

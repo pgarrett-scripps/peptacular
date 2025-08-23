@@ -12,7 +12,9 @@ from .sequence import get_annotation_input
 
 
 def get_losses(
-    sequence: Union[str, ProFormaAnnotation], losses: List[Tuple[str, float]], max_losses: int
+    sequence: Union[str, ProFormaAnnotation],
+    losses: List[Tuple[str, float]],
+    max_losses: int,
 ) -> Set[float]:
     """
     Returns a set of applicable losses for a given sequence.
@@ -178,7 +180,7 @@ class Fragmenter:
     ):
         self.annotation = get_annotation_input(sequence, copy=True)
         self.annotation.charge = 0
-        
+
         self.monoisotopic = monoisotopic
 
         self.components = self.annotation.split()

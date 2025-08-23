@@ -3,14 +3,13 @@ chem_calc.py contains functions for parsing and writing chemical formulas, and f
 sequence with/and modifications.
 """
 
-from typing import Union, List, Optional
+from typing import Iterable
 
-from ..proforma_dataclasses import Mod
+from ..dclasses import Mod, CHEM_COMPOSITION_TYPE, MOD_VALUE_TYPES
 from ..utils2 import parse_ion_elements
 from ..util import parse_isotope_mods
 
 from .chem_constants import ISOTOPIC_AVERAGINE_MASS
-from ..proforma_dataclasses import ChemComposition, ModValue
 from .chem_util import parse_chem_formula, write_chem_formula
 from ..mods.mod_db_setup import MONOSACCHARIDES_DB
 from ..constants import (
@@ -37,12 +36,12 @@ from ..mods.mod_db import (
 from ..utils2 import convert_type
 
 
-def glycan_to_chem(glycan: Union[ChemComposition, str]) -> str:
+def glycan_to_chem(glycan: CHEM_COMPOSITION_TYPE | str) -> str:
     """
     Converts a glycan composition/formula to a chemical formula.
 
     :param glycan: A dictionary containing the glycan components and their counts, or a glycan formula string.
-    :type glycan: Dict[str, int | float] | str
+    :type glycan: CHEM_COMPOSITION_TYPE | str
 
     :return: A chemical formula string.
     :rtype: str
@@ -60,7 +59,7 @@ def glycan_to_chem(glycan: Union[ChemComposition, str]) -> str:
     return write_chem_formula(glycan_comp(glycan))
 
 
-def mod_comp(mod: ModValue) -> ChemComposition:
+def mod_comp(mod: MOD_VALUE_TYPES) -> CHEM_COMPOSITION_TYPE:
     """
     Parse a modification string.
 
@@ -89,7 +88,7 @@ def mod_comp(mod: ModValue) -> ChemComposition:
         return {k: v * mod.mult for k, v in mod_comp(mod.val).items()}
 
     if isinstance(mod, (float, int)):
-        raise InvalidCompositionError(mod)
+        raise InvalidCompositionError(str(mod))
 
     mods = mod.split("|")
     for m in mods:
@@ -101,8 +100,8 @@ def mod_comp(mod: ModValue) -> ChemComposition:
 
 
 def estimate_comp(
-    neutral_mass: float, isotopic_mods: Optional[List[ModValue]] = None
-) -> ChemComposition:
+    neutral_mass: float, isotopic_mods: Iterable[MOD_VALUE_TYPES] | None = None
+) -> CHEM_COMPOSITION_TYPE:
     """
     Estimate the number of each element in a molecule based on its molecular mass using the averagine model.
 
@@ -136,7 +135,7 @@ def estimate_comp(
     return composition
 
 
-def _parse_glycan_comp(glycan_str: str) -> ChemComposition:
+def _parse_glycan_comp(glycan_str: str) -> CHEM_COMPOSITION_TYPE:
     """
     Parse a glycan string and return its mass.
 
@@ -197,10 +196,16 @@ def _parse_glycan_comp(glycan_str: str) -> ChemComposition:
     else:
         return parse_chem_formula(glycan_to_chem(glycan_str))
 
+    if entry.composition is None:
+        raise InvalidCompositionError(
+            f"Error parsing glycan formula: '{glycan_str}'. "
+            "Glycan does not have a valid composition."
+        )
+
     return parse_chem_formula(entry.composition)
 
 
-def _parse_mod_comp(mod: str) -> Union[ChemComposition, None]:
+def _parse_mod_comp(mod: str) -> CHEM_COMPOSITION_TYPE | None:
     """
     Parses a modification composition and returns a dictionary with the element and their counts.
 
@@ -245,7 +250,7 @@ def _parse_mod_comp(mod: str) -> Union[ChemComposition, None]:
         return None
 
     # localization fix
-    if isinstance(mod, str) and "#" in mod:
+    if isinstance(mod, str) and "#" in mod:  # type: ignore
         if mod.startswith("#"):  # for localized positions, return empty comp
             return {}
         mod = mod.split("#")[0]
@@ -285,7 +290,7 @@ def _parse_mod_comp(mod: str) -> Union[ChemComposition, None]:
     return None
 
 
-def _parse_mod_delta_mass(mod: str) -> Union[float, None]:
+def _parse_mod_delta_mass(mod: str) -> float | None:
     """
     Parse the mod delta mass. If the mod cannot be parsed into a delta mass, it will return None.
 
@@ -359,7 +364,7 @@ def _parse_mod_delta_mass(mod: str) -> Union[float, None]:
     return mass
 
 
-def _parse_mod_delta_mass_only(mod: Union[str, Mod]) -> Union[float, None]:
+def parse_mod_delta_mass_only(mod: str | int | float | Mod) -> float | None:
     """
     Parse a modification string.
 
@@ -373,14 +378,14 @@ def _parse_mod_delta_mass_only(mod: Union[str, Mod]) -> Union[float, None]:
 
     .. code-block:: python
 
-        >>> _parse_mod_delta_mass_only('Acetyl|INFO:newly discovered')
+        >>> parse_mod_delta_mass_only('Acetyl|INFO:newly discovered')
 
-        >>> _parse_mod_delta_mass_only('Acetyl|Obs:+42.010565')
+        >>> parse_mod_delta_mass_only('Acetyl|Obs:+42.010565')
 
-        >>> _parse_mod_delta_mass_only('Obs:+42.010565')
+        >>> parse_mod_delta_mass_only('Obs:+42.010565')
         42.010565
 
-        >>> _parse_mod_delta_mass_only('R:+1|INFO:Fantastic')
+        >>> parse_mod_delta_mass_only('R:+1|INFO:Fantastic')
         1.0
 
     """
@@ -389,7 +394,7 @@ def _parse_mod_delta_mass_only(mod: Union[str, Mod]) -> Union[float, None]:
         return mod
 
     if isinstance(mod, Mod):
-        return _parse_mod_delta_mass_only(mod.val)
+        return parse_mod_delta_mass_only(mod.val)
 
     mods = mod.split("|")
     for m in mods:
@@ -409,13 +414,14 @@ def _parse_mod_delta_mass_only(mod: Union[str, Mod]) -> Union[float, None]:
 
 
 def apply_isotope_mods_to_composition(
-    composition: Union[ChemComposition, str], isotopic_mods: Optional[List[ModValue]]
-) -> ChemComposition:
+    composition: CHEM_COMPOSITION_TYPE | str,
+    isotopic_mods: Iterable[MOD_VALUE_TYPES] | None,
+) -> CHEM_COMPOSITION_TYPE:
     """
     Apply isotopic modifications to a composition.
 
     :param composition: The composition to apply the isotopic modifications to.
-    :type composition: ChemComposition
+    :type composition: CHEM_COMPOSITION_TYPE
     :param isotopic_mods: The isotopic modifications.
     :type isotopic_mods: List[str | Mod] | None
 
@@ -465,7 +471,7 @@ def apply_isotope_mods_to_composition(
     return composition
 
 
-def _parse_adduct_comp(adduct: str) -> ChemComposition:
+def _parse_adduct_comp(adduct: str) -> CHEM_COMPOSITION_TYPE:
     """
     Parse an adduct string and return its mass.
 
@@ -491,7 +497,7 @@ def _parse_adduct_comp(adduct: str) -> ChemComposition:
 
     """
 
-    comp = {}
+    comp: CHEM_COMPOSITION_TYPE = {}
     element_count, element_symbol, element_charge = parse_ion_elements(adduct)
     comp[element_symbol] = element_count
     comp["e"] = -1 * element_charge * element_count
@@ -499,7 +505,7 @@ def _parse_adduct_comp(adduct: str) -> ChemComposition:
     return comp
 
 
-def _parse_charge_adducts_comp(adducts: ModValue) -> ChemComposition:
+def parse_charge_adducts_comp(adducts: MOD_VALUE_TYPES) -> CHEM_COMPOSITION_TYPE:
     """
     Parse the charge adducts and return their mass.
 
@@ -512,28 +518,28 @@ def _parse_charge_adducts_comp(adducts: ModValue) -> ChemComposition:
     .. code-block:: python
 
         # Parse the charge adducts and return their mass.
-        >>> _parse_charge_adducts_comp('+Na+,+H+')
+        >>> parse_charge_adducts_comp('+Na+,+H+')
         {'Na': 1, 'e': -2, 'H': 1}
 
-        >>> _parse_charge_adducts_comp('2H+')
+        >>> parse_charge_adducts_comp('2H+')
         {'H': 2, 'e': -2}
 
     """
 
     if isinstance(adducts, Mod):
-        return _parse_charge_adducts_comp(adducts.val)
+        return parse_charge_adducts_comp(adducts.val)
 
     if not isinstance(adducts, str):
         raise TypeError(f"Invalid type for adducts: {type(adducts)}! Must be a string.")
 
-    adducts = adducts.split(",")
+    adduct_comps: list[str] = adducts.split(",")
 
-    comps = []
-    for adduct in adducts:
-        comps.append(_parse_adduct_comp(adduct))
+    comps: list[CHEM_COMPOSITION_TYPE] = []
+    for adduct_comp in adduct_comps:
+        comps.append(_parse_adduct_comp(adduct_comp))
 
     # Merge the compositions
-    composition = {}
+    composition: CHEM_COMPOSITION_TYPE = {}
     for comp in comps:
         for k, v in comp.items():
             composition[k] = composition.get(k, 0) + v

@@ -7,13 +7,13 @@ from typing import List, Dict, Tuple, Optional
 import warnings
 
 from . import constants
-from .proforma_dataclasses import ChemComposition
+from .dclasses import CHEM_COMPOSITION_TYPE
 from .chem.chem_calc import estimate_comp
 from .mass_calc import chem_mass
 
 
 def isotopic_distribution(
-    chemical_formula: ChemComposition,
+    chemical_formula: CHEM_COMPOSITION_TYPE,
     max_isotopes: Optional[int] = None,
     min_abundance_threshold: Optional[float] = None,
     distribution_resolution: Optional[int] = 5,
@@ -438,8 +438,8 @@ def _calculate_elemental_distribution(
 
 
 def fix_chemical_formula(
-    chemical_formula: ChemComposition, add_hydrogens: bool = True
-) -> ChemComposition:
+    chemical_formula: CHEM_COMPOSITION_TYPE, add_hydrogens: bool = True
+) -> CHEM_COMPOSITION_TYPE:
     """
     Fix a chemical formula, by rounding the atom counts to the nearest integer and adding hydrogen atoms to reach the
     correct molecular mass.
@@ -470,7 +470,9 @@ def fix_chemical_formula(
     starting_mass = chem_mass(chemical_formula)
 
     # get the floor of the total atoms
-    total_atoms: ChemComposition = {k: round(v) for k, v in chemical_formula.items()}
+    total_atoms: CHEM_COMPOSITION_TYPE = {
+        k: round(v) for k, v in chemical_formula.items()
+    }
 
     if add_hydrogens:
         if "H" not in total_atoms:

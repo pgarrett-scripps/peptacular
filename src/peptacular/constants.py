@@ -3,7 +3,7 @@ Constants used throughout the peptacular package.
 """
 
 import os
-from typing import Dict, List, Tuple, Set, Union
+from typing import Dict, Iterable, List, Tuple, Set, Union
 from enum import Enum
 
 import regex as re
@@ -136,7 +136,7 @@ NEUTRAL_FRAGMENT_END_COMPOSITIONS: Dict[str, Dict[str, int]] = {
     "n": {},
 }
 
-NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS: Dict[str, Dict[str, int]] = {
+NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS: dict[str, dict[str, int]] = {
     "p": merge_dicts(
         NEUTRAL_FRAGMENT_START_COMPOSITIONS["p"], NEUTRAL_FRAGMENT_END_COMPOSITIONS["p"]
     ),
@@ -402,7 +402,7 @@ ISOTOPE_NUM_PATTERN = re.compile(r"[0-9]")
 
 
 # str enum
-class ModType(Enum):
+class ModType(str, Enum):
     NTERM = "nterm"
     CTERM = "cterm"
     ISOTOPE = "isotope"
@@ -420,7 +420,7 @@ def get_mod_type(mod: Union[str, ModType]) -> ModType:
     if isinstance(mod, ModType):
         return mod
 
-    if isinstance(mod, str): # type: ignore
+    if isinstance(mod, str):  # type: ignore
         for mod_type in ModType:
             if mod_type.value == mod:
                 return mod_type
@@ -430,15 +430,15 @@ def get_mod_type(mod: Union[str, ModType]) -> ModType:
     raise ValueError(f"Unknown mod type: {mod}")
 
 
-def get_mods(mods: Union[None, str, ModType, List[Union[str, ModType]]]) -> List[ModType]:
+def get_mods(mods: Union[None, ModType, Iterable[ModType]]) -> List[ModType]:
     """
     Get the list of modification types from the input.
 
-    :param mods: Modification types as a string, list of strings, or None.
-    :type mods: Union[None, str, List[Union[str, ModType]]]
+    :param mods: Modification types as a ModType, iterable of ModTypes, or None.
+    :type mods: Union[None, ModType, Iterable[ModType]]
     :return: List of ModType Enum values.
     :rtype: List[ModType]
-    :raises ValueError: If mods is not None, str, or list of str.
+    :raises ValueError: If mods is not None, ModType, or iterable of ModTypes.
     """
 
     if mods is None:
@@ -449,7 +449,7 @@ def get_mods(mods: Union[None, str, ModType, List[Union[str, ModType]]]) -> List
     elif isinstance(mods, list):  # type: ignore
         # List of modification types
         return [get_mod_type(mod) for mod in mods]
-    
+
     raise ValueError(
         f"mods parameter must be str, list of str, or None, got {type(mods)}"
     )

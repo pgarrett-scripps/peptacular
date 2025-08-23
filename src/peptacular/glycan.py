@@ -2,9 +2,8 @@
 Glycan.py
 """
 
-from typing import Union
+from .dclasses import CHEM_COMPOSITION_TYPE
 
-from .proforma_dataclasses import ChemComposition
 from .chem.chem_util import write_chem_formula
 from .errors import InvalidGlycanFormulaError
 from .mods.mod_db_setup import (
@@ -13,7 +12,7 @@ from .mods.mod_db_setup import (
 )
 
 
-def write_glycan_formula(glycan_dict: ChemComposition, sep: str = "") -> str:
+def write_glycan_formula(glycan_dict: CHEM_COMPOSITION_TYPE, sep: str = "") -> str:
     """
     Writes a glycan dictionary to a string.
 
@@ -53,12 +52,12 @@ def write_glycan_formula(glycan_dict: ChemComposition, sep: str = "") -> str:
     )
 
 
-def glycan_comp(glycan: Union[ChemComposition, str]) -> ChemComposition:
+def glycan_comp(glycan: CHEM_COMPOSITION_TYPE | str) -> CHEM_COMPOSITION_TYPE:
     """
     Converts a glycan dictionary to a chemical formula.
 
     :param glycan: A dictionary containing the glycan components and their counts, or a glycan formula string.
-    :type glycan: Union[ChemComposition, str]
+    :type glycan: ChemComposition | str
 
     :raises InvalidGlycanFormulaError: If the glycan formula is invalid.
 
@@ -93,7 +92,7 @@ def glycan_comp(glycan: Union[ChemComposition, str]) -> ChemComposition:
     return glycan_comp_db(glycan)
 
 
-def parse_glycan_formula(formula: str, sep: str = "") -> ChemComposition:
+def parse_glycan_formula(formula: str, sep: str = "") -> CHEM_COMPOSITION_TYPE:
     """
     Parses a glycan sequence into its constituent parts.
 
@@ -147,12 +146,12 @@ def parse_glycan_formula(formula: str, sep: str = "") -> ChemComposition:
         raise InvalidGlycanFormulaError(formula, err.msg) from err
 
 
-def convert_glycan_formula_to_chem_formula(glycan: Union[ChemComposition, str]) -> str:
+def convert_glycan_formula_to_chem_formula(glycan: CHEM_COMPOSITION_TYPE | str) -> str:
     """
     Converts a glycan string or dictionary to a chemical formula.
 
     :param glycan: A dictionary containing the glycan components and their counts, or a glycan formula string.
-    :type glycan: ChemComposition
+    :type glycan: CHEM_COMPOSITION_TYPE | str
 
     :raises InvalidGlycanFormulaError: If the glycan formula is invalid.
 

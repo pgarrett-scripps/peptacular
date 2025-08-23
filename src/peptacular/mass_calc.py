@@ -4,7 +4,7 @@ mass_calc.py is a simple module for computing the m/z and mass of an amino acid 
 
 from typing import Union, Optional, List
 
-from .proforma_dataclasses import Mod
+from .dclasses import Mod, CHEM_COMPOSITION_TYPE, MOD_VALUE_TYPES
 
 from .constants import (
     PROTON_MASS,
@@ -45,8 +45,6 @@ from .mods.mod_db import (
     is_xlmod_str,
     is_resid_str,
 )
-from .proforma_dataclasses import ChemComposition
-from .proforma_dataclasses import ModValue
 
 
 def _convert_adducts_to_str(
@@ -206,7 +204,7 @@ def adjust_mz(
 
 
 def chem_mz(
-    formula: Union[ChemComposition, str],
+    formula: Union[CHEM_COMPOSITION_TYPE, str],
     charge: int = 1,
     monoisotopic: bool = True,
     precision: Optional[int] = None,
@@ -221,14 +219,14 @@ def chem_mz(
 
 
 def glycan_mass(
-    formula: Union[str, ChemComposition],
+    formula: Union[str, CHEM_COMPOSITION_TYPE],
     monoisotopic: bool = True,
     precision: Optional[int] = None,
 ) -> float:
     """
     Calculate the mass of a glycan formula.
 
-    :param formula: A glycan formula or ChemComposition.
+    :param formula: A glycan formula or CHEM_COMPOSITION_TYPE.
     :type formula: str | Dict[str, int | float]
     :param monoisotopic: If True, use monoisotopic mass else use average mass. Default is True.
     :type monoisotopic: bool
@@ -279,12 +277,16 @@ def glycan_mass(
 
         if monoisotopic:
             if entry.mono_mass is None:
-                raise ValueError(f'Cannot determine monoisotopic mass for: "{monosaccharide}"')
+                raise ValueError(
+                    f'Cannot determine monoisotopic mass for: "{monosaccharide}"'
+                )
 
             m += entry.mono_mass * count
         else:
             if entry.avg_mass is None:
-                raise ValueError(f'Cannot determine average mass for: "{monosaccharide}"')
+                raise ValueError(
+                    f'Cannot determine average mass for: "{monosaccharide}"'
+                )
 
             m += entry.avg_mass * count
 
@@ -292,7 +294,7 @@ def glycan_mass(
 
 
 def glycan_mz(
-    formula: Union[str, ChemComposition],
+    formula: Union[str, CHEM_COMPOSITION_TYPE],
     charge: int = 1,
     monoisotopic: bool = True,
     precision: Optional[int] = None,
@@ -418,7 +420,6 @@ def _parse_obs_mass_from_proforma_str(
 
     """
 
-
     if obs_str.lower().startswith("obs:"):
         obs_str = "".join(obs_str.split(":")[1:])
 
@@ -428,7 +429,6 @@ def _parse_obs_mass_from_proforma_str(
         raise InvalidDeltaMassError(obs_str)
 
     return round_to_precision(float(obs_float), precision)
-
 
 
 def _parse_glycan_mass_from_proforma_str(
@@ -509,7 +509,9 @@ def _parse_glycan_mass_from_proforma_str(
         return round_to_precision(entry.avg_mass, precision)
 
     try:
-        return round_to_precision(glycan_mass(glycan_str, monoisotopic, precision), precision)
+        return round_to_precision(
+            glycan_mass(glycan_str, monoisotopic, precision), precision
+        )
     except InvalidGlycanFormulaError as err:
         raise InvalidGlycanFormulaError(glycan_str, err.msg) from err
 
@@ -635,7 +637,7 @@ def _parse_mod_mass(
     """
 
     # localization fix
-    if isinstance(mod, str) and "#" in mod: # type: ignore
+    if isinstance(mod, str) and "#" in mod:  # type: ignore
         if mod.startswith("#"):  # for localized positions, return 0
             return 0.0
 
@@ -645,11 +647,11 @@ def _parse_mod_mass(
     # Proforma2.0 standard requires that delta mass instances are always prefixed with a '+' or '-' but this would
     # require a lot of changes....and make user input more difficult
 
-    mod = convert_type(mod) # type: ignore
+    mod = convert_type(mod)  # type: ignore
 
     if isinstance(mod, int):
         return mod
-    
+
     if isinstance(mod, float):
         return round(mod, precision) if precision is not None else mod
 
@@ -753,7 +755,9 @@ def _parse_adduct_mass(
 
 
 def _parse_charge_adducts_mass(
-    adducts: ModValue, precision: Optional[int] = None, monoisotopic: bool = True
+    adducts: MOD_VALUE_TYPES,
+    precision: Optional[int] = None,
+    monoisotopic: bool = True,
 ) -> float:
     """
     Parse the charge adducts and return their mass.

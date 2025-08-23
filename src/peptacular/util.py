@@ -3,20 +3,17 @@ Utils.py
 """
 
 import warnings
-from typing import Set, Union, List, Tuple, Dict, Generator, Optional
 from functools import wraps
 import regex as re
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Callable, Generator, Iterable
 
 from .constants import ADDUCT_PATTERN, ISOTOPE_NUM_PATTERN
-from .proforma_dataclasses import ChemComposition, ModValue
-from .proforma_dataclasses import (
-    Mod,
-)
+
+from .dclasses import CHEM_COMPOSITION_TYPE, MOD_VALUE_TYPES, Mod
 
 
 def get_regex_match_indices(
-    input_str: str, regex_str: Union[str, re.Pattern[str]], offset: int = 0
+    input_str: str, regex_str: str | re.Pattern[str], offset: int = 0
 ) -> Generator[int, None, None]:
     """
     Identify the starting indexes of occurrences of a given regex pattern within a string.
@@ -75,8 +72,8 @@ def get_regex_match_indices(
 
 
 def get_regex_match_range(
-    input_str: str, regex_str: Union[str, re.Pattern[str]], offset: int = 0
-) -> List[Tuple[int, int]]:
+    input_str: str, regex_str: str | re.Pattern[str], offset: int = 0
+) -> list[tuple[int, int]]:
     """
     Identify the starting indexes of occurrences of a given regex pattern within a string.
 
@@ -119,7 +116,7 @@ def get_regex_match_range(
     ]
 
 
-def validate_span(span: Tuple[int, int, int]) -> None:
+def validate_span(span: tuple[int, int, int]) -> None:
     """
     Validates if a given span is valid.
 
@@ -158,228 +155,9 @@ def validate_span(span: Tuple[int, int, int]) -> None:
         )
 
 
-def _construct_ambiguity_intervals(
-    counts: List[int], reverse: bool
-) -> List[Tuple[int, int]]:
-    """
-    Construct intervals for sequences of zeros in the counts list. When reverse is false, start from the left hand side
-    and move to the right. When reverse is true, start from the right hand side and move to the left. Intervals start
-    at 0 and end on any positive value. Both are inclusive. Returned intervals should be in forwards format, that is
-    have a starting value less than the ending value.
-
-    :param counts: List of integers (typically counts)
-    :param reverse: If True, reverse the list before processing
-    :return: List of intervals [start, end] indicating runs of zeros
-
-    .. code-block:: python
-
-        # [0, 1, 1, 1, 0, 0, 0]
-        # [1, 1, 0, 0, 1, 1, 1] # ambiguity
-        >>> _construct_ambiguity_intervals([0, 1, 1, 1, 0, 0, 0], reverse=False)
-        [(0, 1), (4, 6)]
-
-        # [0, 0, 1, 1, 1, 1, 0]
-        # [1, 1, 0, 0, 0, 1, 1] # ambiguity
-        >>> _construct_ambiguity_intervals([0, 0, 1, 1, 1, 0, 0], reverse=True)
-        [(0, 1), (4, 6)]
-
-        >>> _construct_ambiguity_intervals([0, 1, 1, 1, 0, 0, 1], reverse=False)
-        [(0, 1), (4, 6)]
-    """
-
-    if reverse:
-        ambiguity_intervals = _construct_ambiguity_intervals(
-            counts[::-1], reverse=False
-        )
-        ambiguity_intervals = [
-            (len(counts) - 1 - end, len(counts) - 1 - start)
-            for start, end in ambiguity_intervals
-        ]
-        # sort the intervals
-        ambiguity_intervals.sort(key=lambda x: x[0])
-        return ambiguity_intervals
-
-    ambiguity_intervals: List[Tuple[int, int]] = []
-    current_interval = None
-    for i, cnt in enumerate(counts):
-        if cnt == 0:
-            if current_interval is not None:
-                current_interval = (current_interval[0], i)
-            else:
-                current_interval = (i, i)
-
-        else:
-            if current_interval is not None:
-                current_interval = (current_interval[0], i)
-                ambiguity_intervals.append(current_interval)
-                current_interval = None
-            else:
-                continue
-
-    if current_interval is not None:
-        current_interval = (current_interval[0], len(counts) - 1)
-        ambiguity_intervals.append(current_interval)
-
-    return ambiguity_intervals
-
-
-def combine_ambiguity_intervals(
-    *interval_lists: List[Tuple[int, int]]
-) -> List[Tuple[int, int]]:
-    """
-    Merge multiple lists of ambiguity intervals into a single list of common ambiguity intervals.
-
-    This function identifies positions that are ambiguous across all provided interval lists.
-    For a position to be considered ambiguous in the result, it must be contained in at least
-    one interval from each input list. The function then constructs optimized intervals
-    covering these common ambiguous positions.
-
-    Intervals are represented as tuples (start, end) where:
-    - start is inclusive
-    - end is exclusive
-
-    Intervals with identical start and end values (zero-length intervals) are removed.
-
-    :param interval_lists: Variable number of lists containing ambiguity intervals
-    :type interval_lists: List[Tuple[int, int]]
-
-    :return: A list of merged intervals representing positions that are ambiguous across all input lists
-    :rtype: List[Tuple[int, int]]
-
-    .. code-block:: python
-
-        >>> combine_ambiguity_intervals([(0, 1), (4, 6)], [(0,1)])
-        [(0, 1)]
-
-        >>> combine_ambiguity_intervals([(0, 1), (4, 6)], [(0,1), (4,5)])
-        [(0, 1), (4, 5)]
-
-        >>> combine_ambiguity_intervals([(0, 1), (4, 6)], [(0, 4), (5, 6)])
-        [(0, 1), (5, 6)]
-
-        >>> combine_ambiguity_intervals([(2, 5)], [(3, 6)])
-        [(3, 5)]
-
-        >>> combine_ambiguity_intervals([(0, 1)], [(4, 6)])
-        []
-    """
-
-    # First, collect all unique intervals from input lists
-    all_intervals: Set[Tuple[int, int]] = set()
-    for interval_list in interval_lists:
-        for interval in interval_list:
-            all_intervals.add(interval)
-
-    # Remove intervals where start == end (these are not ambiguous)
-    filtered_intervals = {(start, end) for start, end in all_intervals if start != end}
-
-    # Find all possible indices that are covered by any interval
-    all_indices: Set[int] = set()
-    for start, end in filtered_intervals:
-        for i in range(start, end):
-            all_indices.add(i)
-
-    # For each index, check if it's contained in at least one interval from each input list
-    common_indices: Set[int] = set()
-    for idx in all_indices:
-        is_common = True
-        for interval_list in interval_lists:
-            if not any(start <= idx < end for start, end in interval_list):
-                is_common = False
-                break
-        if is_common:
-            common_indices.add(idx)
-
-    # If no common indices found, return empty list
-    if not common_indices:
-        return []
-
-    # Construct new intervals from the common indices
-    result: List[Tuple[int, int]] = []
-    if common_indices:
-        sorted_indices = sorted(common_indices)
-        start = sorted_indices[0]
-        for i in range(1, len(sorted_indices)):
-            if sorted_indices[i] > sorted_indices[i - 1] + 1:
-                # Gap found, close the current interval and start a new one
-                result.append((start, sorted_indices[i - 1] + 1))
-                start = sorted_indices[i]
-        # Add the last interval
-        result.append((start, sorted_indices[-1] + 1))
-
-    return result
-
-
-def get_mass_shift_interval(
-    forward_coverage: List[int], reverse_coverage: List[int]
-) -> Optional[Tuple[int, int]]:
-    """
-        Determine the interval where a mass shift should be placed based on fragment ion coverage.
-
-    This function examines the forward and reverse ion coverage to identify the region where
-    a mass shift (such as a modification) should be positioned. It returns the start and end
-    indices (inclusive) of this region, or None if no suitable region is found.
-
-    The mass shift interval is determined by:
-    1. Finding the highest position with forward ion coverage
-    2. Finding the lowest position with reverse ion coverage
-    3. The mass shift belongs between these two positions
-
-    :param forward_coverage: Binary list indicating forward ion coverage (1) or no coverage (0)
-    :type forward_coverage: List[int]
-    :param reverse_coverage: Binary list indicating reverse ion coverage (1) or no coverage (0)
-    :type reverse_coverage: List[int]
-
-    :return: A tuple containing the start and end indices (inclusive) for the mass shift,
-             or None if there is no valid interval
-    :rtype: Optional[Tuple[int, int]]
-
-    .. code-block:: python
-
-        >>> get_mass_shift_interval([1,1,1,0,0,0,0], [0,0,0,0,1,1,1])
-        (3, 3)
-
-        >>> get_mass_shift_interval([1,1,1,0,0,0,0], [0,0,0,1,1,1,1])
-        (3, 3)
-
-        >>> get_mass_shift_interval([1,1,0,0,0,0,0], [0,0,0,0,1,1,1])
-        (2, 3)
-
-        >>> get_mass_shift_interval([0,0,0,0,0,0,0], [0,0,0,0,1,1,1])
-        (0, 3)
-
-        >>> get_mass_shift_interval([1,1,1,0,0,0,0], [0,0,0,0,0,0,0])
-        (3, 6)
-
-        >>> get_mass_shift_interval([1,1,1,1,1,0,0], [0,0,0,0,1,1,1]) # None
-
-    """
-
-    highest_forward_fragment = [i for i, cnt in enumerate(forward_coverage) if cnt > 0]
-    if len(highest_forward_fragment) == 0:
-        highest_forward_fragment = -1
-    else:
-        highest_forward_fragment = max(highest_forward_fragment)
-
-    highest_reverse_fragment = [i for i, cnt in enumerate(reverse_coverage) if cnt > 0]
-    if len(highest_reverse_fragment) == 0:
-        highest_reverse_fragment = len(reverse_coverage)
-    else:
-        highest_reverse_fragment = min(highest_reverse_fragment)
-
-    if highest_forward_fragment >= highest_reverse_fragment:
-        return None
-
-    if highest_forward_fragment == highest_reverse_fragment - 1:
-        return (highest_forward_fragment + 1, highest_forward_fragment + 1)
-
-    # if there is a gap between the two, return the gap
-    return (highest_forward_fragment + 1, highest_reverse_fragment - 1)
-
-
 def _parse_modifications(
     proforma_sequence: str, opening_bracket: str = "[", closing_bracket: str = "]"
-) -> List[Mod]:
+) -> list[Mod]:
     """
     Parse modifications from a proforma sequence with support for nested brackets.
 
@@ -402,7 +180,7 @@ def _parse_modifications(
         [Mod('Formula:[13C]H23', 1)]
 
     """
-    mods: List[Mod] = []
+    mods: list[Mod] = []
     position = 0
     length = len(proforma_sequence)
     while position < length:
@@ -419,7 +197,7 @@ def _parse_modifications(
 
 def _parse_modification(
     proforma_sequence: str, opening_bracket: str = "[", closing_bracket: str = "]"
-) -> Tuple[Mod, int]:
+) -> tuple[Mod, int]:
     """
     Parse a single modification from a proforma sequence, handling nested brackets.
     Returns the parsed Mod and the position after the modification.
@@ -474,7 +252,7 @@ def _parse_modification(
     return Mod(mod_str, multiplier), position
 
 
-def _parse_integer(proforma_sequence: str) -> Tuple[int, int]:
+def _parse_integer(proforma_sequence: str) -> tuple[int, int]:
     """
     Parse an integer from the proforma sequence, returning the integer and the number of characters parsed.
 
@@ -513,7 +291,7 @@ def _parse_integer(proforma_sequence: str) -> Tuple[int, int]:
     return int(proforma_sequence[:i]), i
 
 
-def parse_charge_adducts(mod: ModValue) -> ChemComposition:
+def parse_charge_adducts(mod: MOD_VALUE_TYPES) -> CHEM_COMPOSITION_TYPE:
     """
     Parse charge adducts into a dictionary, mapping the ion to its count
     :param mod: The charge adducts to parse.
@@ -522,7 +300,7 @@ def parse_charge_adducts(mod: ModValue) -> ChemComposition:
     :raises TypeError: If the mod is not a string or Mod instance.
 
     :return: Dictionary of charge adducts.
-    :rtype: ChemComposition
+    :rtype: CHEM_COMPOSITION_TYPE
 
     .. code-block:: python
 
@@ -555,9 +333,9 @@ def parse_charge_adducts(mod: ModValue) -> ChemComposition:
             f"Invalid type for charge adducts: {type(mod)}! Mod or Mod.val must be of type string."
         )
 
-    charge_adducts: ChemComposition = {}
+    charge_adducts: CHEM_COMPOSITION_TYPE = {}
 
-    mods: List[str] = mod.split(",")
+    mods: list[str] = mod.split(",")
     for m in mods:
         if isinstance(m, Mod):
             mod_str = str(m.val)
@@ -581,12 +359,12 @@ def parse_charge_adducts(mod: ModValue) -> ChemComposition:
     return charge_adducts
 
 
-def write_charge_adducts(charge_adducts: ChemComposition) -> Mod:
+def write_charge_adducts(charge_adducts: CHEM_COMPOSITION_TYPE) -> Mod:
     """
     Converts the dictionary of charge adducts into a list of Mod instances.
 
     :param charge_adducts: Dictionary of charge adducts.
-    :type: ChemComposition
+    :type: CHEM_COMPOSITION_TYPE
 
     :return: The charge adducts as a Mod instance.
     :rtype: Mod
@@ -610,7 +388,7 @@ def write_charge_adducts(charge_adducts: ChemComposition) -> Mod:
 
     """
 
-    adducts_list: List[str] = []
+    adducts_list: list[str] = []
     for ion, count in charge_adducts.items():
         sign = "+" if count >= 0 else ""
         sign = "-" if count < 0 else sign
@@ -620,7 +398,7 @@ def write_charge_adducts(charge_adducts: ChemComposition) -> Mod:
     return Mod(",".join(adducts_list), 1)
 
 
-def _pop_ion_count(ion: str) -> Tuple[int, str]:
+def _pop_ion_count(ion: str) -> tuple[int, str]:
     """
     Parse the charge of an ion from a string.
 
@@ -669,7 +447,7 @@ def _pop_ion_count(ion: str) -> Tuple[int, str]:
     raise ValueError(f"Bad Ion Count: {ion}")
 
 
-def _pop_ion_symbol(ion: str) -> Tuple[str, str]:
+def _pop_ion_symbol(ion: str) -> tuple[str, str]:
     """
     Parse the symbol of an ion from a string.
 
@@ -709,7 +487,7 @@ def _pop_ion_symbol(ion: str) -> Tuple[str, str]:
     return symbol, ""
 
 
-def _pop_ion_charge(ion: str) -> Tuple[int, str]:
+def _pop_ion_charge(ion: str) -> tuple[int, str]:
     """
     Parse the charge of an ion from a string.
 
@@ -755,7 +533,7 @@ def _pop_ion_charge(ion: str) -> Tuple[int, str]:
     return cnt * sign, ""
 
 
-def parse_ion_elements(ion: str) -> Tuple[int, str, int]:
+def parse_ion_elements(ion: str) -> tuple[int, str, int]:
     """
     Parse the count, element, and charge of an ion from a string.
 
@@ -794,17 +572,17 @@ def parse_ion_elements(ion: str) -> Tuple[int, str, int]:
     return count, symbol, charge
 
 
-def parse_static_mods(mods: Optional[List[ModValue]]) -> Dict[str, List[Mod]]:
+def parse_static_mods(mods: Iterable[MOD_VALUE_TYPES] | None) -> dict[str, list[Mod]]:
     """
     Parse static modifications into a dictionary, mapping the location to the modifications.
 
-    :param mods: List of static modifications, where each modification can be a Mod object or a string representation.
-    :type mods: List[ModValue]
+    :param mods: Iterable of static modifications, where each modification can be a Mod object or a string representation.
+    :type mods: Iterable[MOD_VALUE_TYPES] | None
 
     :raises TypeError: If the mod is not a string or Mod instance.
 
     :return: A dictionary with locations as keys and lists of Mod objects as values.
-    :rtype: Dict[str, List[Mod]]
+    :rtype: dict[str, list[Mod]]
 
     .. code-block:: python
 
@@ -825,7 +603,7 @@ def parse_static_mods(mods: Optional[List[ModValue]]) -> Dict[str, List[Mod]]:
 
     """
 
-    static_mod_dict: Dict[str, List[Mod]] = {}
+    static_mod_dict: dict[str, list[Mod]] = {}
 
     if mods is None:
         return static_mod_dict
@@ -850,12 +628,12 @@ def parse_static_mods(mods: Optional[List[ModValue]]) -> Dict[str, List[Mod]]:
     return static_mod_dict
 
 
-def write_static_mods(mods: Dict[str, List[Mod]]) -> List[Mod]:
+def write_static_mods(mods: dict[str, Iterable[Mod]]) -> list[Mod]:
     """
     Converts the dictionary of static modifications into a list of Mod instances.
 
     :param mods: Dictionary of static modifications.
-    :type: Dict[str, List[Mod]
+    :type: dict[str, Iterable[Mod]]
 
     :return: List of static modifications.
     :rtype: List[Mod]
@@ -873,13 +651,13 @@ def write_static_mods(mods: Dict[str, List[Mod]]) -> List[Mod]:
 
     """
 
-    reverse_mods: Dict[Tuple[Mod, ...], List[str]] = {}
+    reverse_mods: dict[tuple[Mod, ...], list[str]] = {}
 
     for residue, mod_list in mods.items():
         mod_tuple = tuple(mod_list)
         reverse_mods.setdefault(mod_tuple, []).append(residue)
 
-    static_mods: List[Mod] = []
+    static_mods: list[Mod] = []
     for mod_tuple, residues in reverse_mods.items():
         residue_str = ",".join(residues)
         mod_str = "".join(mod.serialize("[]") for mod in mod_tuple)
@@ -888,12 +666,12 @@ def write_static_mods(mods: Dict[str, List[Mod]]) -> List[Mod]:
     return static_mods
 
 
-def parse_isotope_mods(mods: List[ModValue]) -> Dict[str, str]:
+def parse_isotope_mods(mods: Iterable[MOD_VALUE_TYPES]) -> dict[str, str]:
     """
     Parse isotope modifications into a dictionary, mapping the elemental symbol to its isotope.
 
-    :param mods: List of isotope modifications.
-    :type mods: List[ModValue]
+    :param mods: Iterable of isotope modifications.
+    :type mods: Iterable[ModValue]
 
     :raises TypeError: If the mod is not a string or Mod instance.
 
@@ -916,7 +694,7 @@ def parse_isotope_mods(mods: List[ModValue]) -> Dict[str, str]:
 
     """
 
-    isotope_map: Dict[str, str] = {}
+    isotope_map: dict[str, str] = {}
     for mod in mods:
 
         if isinstance(mod, Mod):
@@ -941,15 +719,15 @@ def parse_isotope_mods(mods: List[ModValue]) -> Dict[str, str]:
     return isotope_map
 
 
-def write_isotope_mods(mods: Dict[str, str]) -> List[Mod]:
+def write_isotope_mods(mods: dict[str, str]) -> list[Mod]:
     """
     Converts the dictionary of isotope modifications into a list of Mod instances.
 
     :param mods: Dictionary of isotope modifications.
-    :type: Dict[str, str]
+    :type: dict[str, str]
 
     :return: List of isotope modifications.
-    :rtype: List[Mod]
+    :rtype: list[Mod]
 
     .. code-block:: python
 
@@ -980,7 +758,7 @@ def validate_single_mod_multiplier(func: Callable[..., None]) -> Callable[..., N
     """
 
     @wraps(func)
-    def wrapper(self, mod: Union[Mod, List[Mod]]): # type: ignore
+    def wrapper(self, mod: Mod | Iterable[Mod]) -> None:
         if isinstance(mod, Mod):
             if mod.mult > 1:
                 raise ValueError(
@@ -999,4 +777,4 @@ def validate_single_mod_multiplier(func: Callable[..., None]) -> Callable[..., N
 
         return func(self, mod)
 
-    return wrapper # type: ignore
+    return wrapper  # type: ignore

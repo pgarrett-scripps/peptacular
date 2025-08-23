@@ -13,8 +13,8 @@ from typing import (
 
 from .annot_digestion import ProFormaAnnotationDigestion
 from .utils import get_aa_value
-from ..weights import get_weights
-from .property_data import (
+from ..property.weights import get_weights
+from ..property.data import (
     all_property_scales,
     pk_nterminal,
     pk_cterminal,
@@ -404,7 +404,9 @@ class ProFormaAnnotationProperty(ProFormaAnnotationDigestion):
         )
 
         if not isinstance(nterm_pK, (int, float)):
-            raise ValueError(f"Invalid pK value for N-terminal amino acid '{nterm}': {nterm_pK}")
+            raise ValueError(
+                f"Invalid pK value for N-terminal amino acid '{nterm}': {nterm_pK}"
+            )
 
         partial_charge: float = 1.0 / (10 ** (pH - nterm_pK) + 1.0)
         positive_charge += partial_charge
@@ -435,8 +437,10 @@ class ProFormaAnnotationProperty(ProFormaAnnotationDigestion):
         )
 
         if not isinstance(cterm_pK, (int, float)):
-            raise ValueError(f"Invalid pK value for C-terminal amino acid '{cterm}': {cterm_pK}")
-        
+            raise ValueError(
+                f"Invalid pK value for C-terminal amino acid '{cterm}': {cterm_pK}"
+            )
+
         partial_charge = 1.0 / (10 ** (cterm_pK - pH) + 1.0)
         negative_charge += partial_charge
 
@@ -527,11 +531,10 @@ class ProFormaAnnotationProperty(ProFormaAnnotationDigestion):
             for key in d:
                 d[key] /= total
 
-    
         if "coil" not in d:
-            d["coil"] = None # type: ignore
+            d["coil"] = None  # type: ignore
 
-        return d # type: ignore
+        return d  # type: ignore
 
     def aromaticity(
         self,

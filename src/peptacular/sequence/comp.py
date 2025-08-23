@@ -3,7 +3,7 @@ from typing import Union, Optional, List, Tuple
 from .util import get_annotation_input, override_annotation_properties
 
 from ..proforma.annot import ProFormaAnnotation
-from ..proforma_dataclasses import ChemComposition, ModValue
+from ..dclasses import CHEM_COMPOSITION_TYPE, MOD_VALUE_TYPES
 
 
 def comp(
@@ -12,10 +12,10 @@ def comp(
     estimate_delta: bool = False,
     charge: Optional[int] = None,
     isotope: int = 0,
-    charge_adducts: Optional[List[ModValue]] = None,
-    isotope_mods: Optional[List[ModValue]] = None,
+    charge_adducts: Optional[List[MOD_VALUE_TYPES]] = None,
+    isotope_mods: Optional[List[MOD_VALUE_TYPES]] = None,
     use_isotope_on_mods: bool = False,
-) -> ChemComposition:
+) -> CHEM_COMPOSITION_TYPE:
     """
     Calculates the elemental composition of a peptide sequence, including modifications,
     and optionally estimates the composition based on the delta mass from modifications.
@@ -85,10 +85,10 @@ def comp_mass(
     ion_type: str = "p",
     charge: Optional[int] = None,
     isotope: int = 0,
-    charge_adducts: Optional[List[ModValue]] = None,
-    isotope_mods: Optional[List[ModValue]] = None,
+    charge_adducts: Optional[List[MOD_VALUE_TYPES]] = None,
+    isotope_mods: Optional[List[MOD_VALUE_TYPES]] = None,
     use_isotope_on_mods: bool = False,
-) -> Tuple[ChemComposition, float]:
+) -> Tuple[CHEM_COMPOSITION_TYPE, float]:
 
     annotation = get_annotation_input(sequence, copy=True)
 
