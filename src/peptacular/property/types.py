@@ -1,11 +1,11 @@
 """Type definitions and enums for protein property calculations."""
 
 from __future__ import annotations
-from typing import Protocol, Union, Literal
-from enum import Enum
+from enum import StrEnum
+from typing import Protocol
 
 
-class MissingAAHandling(str, Enum):
+class MissingAAHandling(StrEnum):
     """Strategy for handling missing amino acid values"""
 
     ZERO = "zero"
@@ -17,7 +17,7 @@ class MissingAAHandling(str, Enum):
     SKIP = "skip"
 
 
-class AggregationMethod(str, Enum):
+class AggregationMethod(StrEnum):
     """Strategy for aggregating amino acid values"""
 
     SUM = "sum"
@@ -33,16 +33,13 @@ class SequenceProtocol(Protocol):
         ...
 
 
-# Type aliases
-WEIGHTING_SCHEMES = Union[
-    list[float],
-    Literal[
-        "uniform",
-        "linear",
-        "exponential",
-        "gaussian",
-        "sigmoid",
-        "cosine",
-        "sinusoidal",
-    ],
-]
+class WeightingMethods(StrEnum):
+    """Enumeration of possible weighting methods for amino acid properties"""
+
+    UNIFORM = "uniform"
+    LINEAR = "linear"
+    EXPONENTIAL = "exponential"
+    GAUSSIAN = "gaussian"
+    SIGMOID = "sigmoid"
+    COSINE = "cosine"
+    SINUSOIDAL = "sinusoidal"

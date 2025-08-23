@@ -14,7 +14,7 @@ from ..constants import (
 )
 from ..errors import InvalidChemFormulaError
 from ..utils2 import convert_type
-from ..dclasses import CHEM_COMPOSITION_TYPE
+from ..proforma.dclasses import CHEM_COMPOSITION_TYPE
 
 
 def parse_chem_formula(formula: str, sep: str = "") -> CHEM_COMPOSITION_TYPE:

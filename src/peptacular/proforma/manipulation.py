@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from .utils import parse_static_mods
 
 if TYPE_CHECKING:
-    from .annot_base import ProFormaAnnotation
+    from .annotation import ProFormaAnnotation
 
 
 def condense_static_mods(

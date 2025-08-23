@@ -9,7 +9,7 @@ from typing import Callable, Generator, Iterable
 
 from .constants import ADDUCT_PATTERN, ISOTOPE_NUM_PATTERN
 
-from .dclasses import CHEM_COMPOSITION_TYPE, MOD_VALUE_TYPES, Mod
+from .proforma.dclasses import CHEM_COMPOSITION_TYPE, MOD_VALUE_TYPES, Mod
 
 
 def get_regex_match_indices(

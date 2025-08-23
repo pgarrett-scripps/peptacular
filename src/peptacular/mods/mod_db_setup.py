@@ -12,7 +12,7 @@ from collections import Counter
 from functools import cached_property
 from typing import List, Dict, IO, Any, Optional, Union, Iterator, Tuple
 
-from ..dclasses import CHEM_COMPOSITION_TYPE
+from ..proforma.dclasses import CHEM_COMPOSITION_TYPE
 
 from ..constants import ISOTOPIC_ATOMIC_MASSES
 from ..chem.chem_util import (

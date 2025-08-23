@@ -3,10 +3,10 @@ from collections.abc import Generator
 import random
 from typing import TYPE_CHECKING, Any, Callable
 
-from ..dclasses import ModDict, IntervalList, Interval
+from .dclasses import ModDict, IntervalList, Interval
 
 if TYPE_CHECKING:
-    from .annot_base import ProFormaAnnotation
+    from .annotation import ProFormaAnnotation
 
 
 def slice_annotation(

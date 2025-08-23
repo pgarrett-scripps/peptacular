@@ -2,7 +2,7 @@
 Glycan.py
 """
 
-from .dclasses import CHEM_COMPOSITION_TYPE
+from .proforma.dclasses import CHEM_COMPOSITION_TYPE
 
 from .chem.chem_util import write_chem_formula
 from .errors import InvalidGlycanFormulaError

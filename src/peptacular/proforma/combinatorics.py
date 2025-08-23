@@ -3,7 +3,7 @@ import itertools
 from typing import TYPE_CHECKING, Any, Generator, Optional
 
 if TYPE_CHECKING:
-    from .annot_base import ProFormaAnnotation
+    from .annotation import ProFormaAnnotation
 
 
 def generate_permutations(

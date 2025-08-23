@@ -12,7 +12,7 @@ from collections.abc import Generator
 from typing import Iterable
 from itertools import groupby
 
-from .dclasses import SPAN_TYPE
+from .proforma.dclasses import SPAN_TYPE
 
 
 def build_non_enzymatic_spans(

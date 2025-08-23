@@ -4,10 +4,9 @@ Randomizer for ProForma annotations.
 
 from random import randint, choice, sample
 from enum import Enum, auto
-from typing import *
 
-from ..dclasses import Mod, Interval
-from .annot import ProFormaAnnotation
+from .dclasses import Mod, Interval
+from .annotation import ProFormaAnnotation
 
 
 _UNIMOD_LEVEL_BASE_MOD_VALS = ["Oxidation", "UNIMOD:10"]
@@ -149,7 +148,7 @@ def random_sequence(
     raise ValueError("Invalid level")
 
 
-def _random_mod(mods: List[str], count: int, info: bool) -> Mod:
+def _random_mod(mods: list[str], count: int, info: bool) -> Mod:
     mod = choice(mods)
     if info:
         for _ in range(randint(1, 2)):
@@ -204,11 +203,11 @@ def _random_interval(
 
 def random_intervals(
     level: ProformaComplianceLevel, sequence: str, num_intervals: int
-) -> List[Interval]:
+) -> list[Interval]:
     """
     Generate a list of random intervals within a given sequence.
     """
-    intervals = []
+    intervals: list[Interval] = []
     if num_intervals == 0:
         return intervals
     segment_length = len(sequence) // num_intervals
@@ -223,7 +222,7 @@ def random_intervals(
 
 
 def compliance_randomizer(
-    level: Union[ProformaComplianceLevel],
+    level: ProformaComplianceLevel,
     min_sequence_length: int = 5,
     max_sequence_length: int = 50,
     mod_prob: float = 0.1,
@@ -277,30 +276,30 @@ def compliance_randomizer(
     internal_mod_indices = sample(range(len(sequence)), num_internal_mods)
 
     for i, mod in zip(internal_mod_indices, internal_mods):
-        annotation.add_internal_mods_at_index(i, mod)
+        annotation.append_internal_mod_at_index(i, mod)
 
     # N-terminal, C-terminal and labile modifications.
     for _ in range(randint(0, 3)):
-        annotation.add_nterm_mods(
+        annotation.append_nterm_mod(
             random_mod(level=level, count=1, info=choice([True, False]))
         )
     for _ in range(randint(0, 3)):
-        annotation.add_cterm_mods(
+        annotation.append_cterm_mod(
             random_mod(level=level, count=1, info=choice([True, False]))
         )
     for _ in range(randint(0, 3)):
-        annotation.add_labile_mods(
+        annotation.append_labile_mod(
             random_mod(level=level, count=1, info=choice([True, False]))
         )
     for _ in range(randint(0, 3)):
-        annotation.add_unknown_mods(
+        annotation.append_unknown_mod(
             random_mod(level=level, count=randint(1, 3), info=choice([True, False]))
         )
 
     # Ambiguity in the modification position, including support for localisation scores.
     # Ambiguity in the amino acid sequence.
     intervals = random_intervals(level, sequence, randint(0, 2))
-    annotation.add_intervals(intervals)
+    annotation.extend_intervals(intervals)
 
     # Localization score
     if choice([True, False]):
@@ -312,7 +311,7 @@ def compliance_randomizer(
 
         for i, mod in zip(score_mods_indices, score_mods):
             # annotation.pop_internal_mod(i)
-            annotation.add_internal_mods_at_index(i, mod)
+            annotation.append_internal_mod_at_index(i, mod)
 
     return annotation
 
@@ -337,7 +336,7 @@ def top_down_randomizer(annotation: ProFormaAnnotation, mod_prob: float = 0.1):
     internal_mod_indices = sample(range(len(annotation)), num_internal_mods)
 
     for i, mod in zip(internal_mod_indices, internal_mods):
-        annotation.add_internal_mods_at_index(i, mod)
+        annotation.append_internal_mod_at_index(i, mod)
 
 
 def cross_linking_randomizer(annotation: ProFormaAnnotation):
@@ -360,7 +359,7 @@ def cross_linking_randomizer(annotation: ProFormaAnnotation):
 
         for i, mod in zip(score_mods_indices, cross_link_mods):
             # annotation.pop_internal_mod(i)
-            annotation.add_internal_mods_at_index(i, mod)
+            annotation.append_internal_mod_at_index(i, mod)
 
 
 def glycan_randomizer(annotation: ProFormaAnnotation, mod_prob: float = 0.1):
@@ -384,7 +383,7 @@ def glycan_randomizer(annotation: ProFormaAnnotation, mod_prob: float = 0.1):
     internal_mod_indices = sample(range(len(annotation)), num_internal_mods)
 
     for i, mod in zip(internal_mod_indices, internal_mods):
-        annotation.add_internal_mods_at_index(i, mod)
+        annotation.append_internal_mod_at_index(i, mod)
 
 
 def spectrum_randomizer(annotation: ProFormaAnnotation):
@@ -396,18 +395,18 @@ def spectrum_randomizer(annotation: ProFormaAnnotation):
 
     # Add charge and isotope type
     if choice([True, False]):
-        annotation.add_charge(choice([1, 2, 3]))
+        annotation.set_charge(choice([1, 2, 3]))
 
     for _ in range(randint(0, 3)):
         mod = _random_mod(_ISOTOPE_MOD_VALS, 1, False)
-        annotation.add_isotope_mods(mod)
+        annotation.append_isotope_mod(mod)
 
     for _ in range(randint(0, 3)):
         mod = _random_mod(_STATIC_MOD_VALS, 1, False)
-        annotation.add_static_mods(mod)
+        annotation.append_static_mod(mod)
 
-    if annotation.has_charge():
+    if annotation.has_charge:
 
         # Add adducts
         if choice([True, False]):
-            annotation.add_charge_adducts(Mod(choice(_CHARGE_ADDUCT_VALS), 1))
+            annotation.append_charge_adduct(Mod(choice(_CHARGE_ADDUCT_VALS), 1))

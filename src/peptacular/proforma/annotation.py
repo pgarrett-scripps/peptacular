@@ -3,9 +3,16 @@ import copy
 from copy import deepcopy
 from typing import Any, Iterable, Self, cast
 
-
+#from .serializer import serialize_annotation
+from .parser import ProFormaParser
 from .ambiguity import annotate_ambiguity
-from .annot_manipulation import condense_static_mods, is_subsequence, count_residues, percent_residues, find_indices
+from .manipulation import (
+    condense_static_mods,
+    is_subsequence,
+    count_residues,
+    percent_residues,
+    find_indices,
+)
 from .slicing import (
     generate_sliding_windows,
     reverse_annotation,
@@ -23,7 +30,7 @@ from .combinatorics import (
 )
 
 
-from ..dclasses import (
+from .dclasses import (
     MOD_VALUE_TYPES,
     MODLIST_DATATYPE,
     ACCEPTED_INTERVALLIST_INPUT_TYPES,
@@ -47,8 +54,10 @@ from ..constants import (
     get_mods,
 )
 
+from ..property import SequencePropertyMixin
 
-class ProFormaAnnotation:
+
+class ProFormaAnnotation(SequencePropertyMixin):
 
     def __init__(
         self,
@@ -77,6 +86,40 @@ class ProFormaAnnotation:
         self._interval_list: IntervalList = setup_interval_list(intervals)
         self._charge: int | None = charge
 
+
+    @staticmethod
+    def parse(sequence: str) -> "ProFormaAnnotation":
+        """
+        Parse a ProForma sequence string into a ProFormaAnnotation object.
+
+        :param sequence: The ProForma sequence string to parse.
+        :type sequence: str
+
+        :return: A ProFormaAnnotation object representing the parsed sequence.
+        :rtype: ProFormaAnnotation
+        """
+
+        # Implementation goes here
+        for prof_parser, connection in ProFormaParser(sequence).parse():
+
+            if connection is not None:
+                raise ValueError(f"Unexpected connection value: {connection}")
+            
+            return ProFormaAnnotation(
+                sequence="".join(prof_parser.amino_acids),
+                isotope_mods=prof_parser.isotope_mods.copy(),
+                static_mods=prof_parser.static_mods.copy(),
+                labile_mods=prof_parser.labile_mods.copy(),
+                unknown_mods=prof_parser.unknown_mods.copy(),
+                nterm_mods=prof_parser.nterm_mods.copy(),
+                cterm_mods=prof_parser.cterm_mods.copy(),
+                internal_mods=prof_parser.internal_mods.copy(),
+                intervals=prof_parser.intervals.copy(),
+                charge=prof_parser.charge,
+                charge_adducts=prof_parser.charge_adducts.copy(),
+            )
+        # If no annotations found, raise an error
+        raise ValueError(f"Invalid ProForma sequence: {sequence}")
     """
     Magic Methods
     """
@@ -934,123 +977,19 @@ class ProFormaAnnotation:
             ModType.CHARGE_ADDUCTS: copy.deepcopy(self.charge_adducts),
         }
 
-    def _serialize_start(
-        self,
-        include_plus: bool,
-        precision: int | None = None,
-    ) -> str:
-        comps: list[str] = []
-
-        # add labile mods
-        if self.has_labile_mods:
-            for mod in self._labile_mod_list:  # type: ignore
-                comps.append(mod.serialize("{}", include_plus, precision))
-
-        if self.has_static_mods:
-            for mod in self._static_mod_list:  # type: ignore
-                comps.append(mod.serialize("<>", include_plus, precision))
-
-        # Add global mods
-        if self.has_isotope_mods:
-            for mod in self._isotope_mod_list:  # type: ignore
-                comps.append(mod.serialize("<>", include_plus, precision))
-
-        # Unknown mods
-        if self.has_unknown_mods:
-            for mod in self._unknown_mod_list:  # type: ignore
-                comps.append(mod.serialize("[]", include_plus, precision))
-            comps.append("?")
-
-        # N-term mods
-        if self.has_nterm_mods:
-            for mod in self._nterm_mod_list:  # type: ignore
-                comps.append(mod.serialize("[]", include_plus, precision))
-            comps.append("-")
-
-        return "".join(comps)
-
-    def _serialize_middle(
-        self,
-        include_plus: bool,
-        precision: int | None = None,
-    ) -> str:
-        comps: list[str] = []
-        # Sequence
-        for i, aa in enumerate(self.sequence):
-
-            if self.has_intervals:
-                for interval in self._interval_list:
-                    if interval.start == i:
-                        comps.append("(")
-                        if interval.ambiguous:
-                            comps.append("?")
-                    if interval.end == i:
-                        comps.append(")")
-
-                        if interval.mods:
-                            for mod in interval.mods:
-                                comps.append(
-                                    mod.serialize("[]", include_plus, precision)
-                                )
-
-            comps.append(aa)
-
-            # Inter`nal mods
-            if i in self._internal_mod_dict:
-                for mod in self._internal_mod_dict[i]:
-                    comps.append(mod.serialize("[]", include_plus, precision))
-
-        # add end interval
-        i = len(self.sequence)
-        for interval in self._interval_list:
-            if interval.end == i:
-                comps.append(")")
-                if interval.mods:
-                    for mod in interval.mods:
-                        comps.append(mod.serialize("[]", include_plus, precision))
-
-        return "".join(comps)
-
-    def _serialize_end(
-        self,
-        include_plus: bool,
-        precision: int | None = None,
-    ) -> str:
-        comps: list[str] = []
-        # C-term mods
-        if self.has_cterm_mods:
-            comps.append("-")
-            for mod in self._cterm_mod_list:
-                comps.append(mod.serialize("[]", include_plus, precision))
-
-        # Charge
-        if self.has_charge:
-            comps.append(f"/{self.charge}")
-
-        if self.has_charge_adducts:
-            for mod in self._adduct_mod_list:
-                comps.append(mod.serialize("[]", include_plus, precision))
-
-        return "".join(comps)
 
     def serialize(
         self,
         include_plus: bool = False,
         precision: int | None = None,
     ) -> str:
-        return (
-            self._serialize_start(include_plus, precision)
-            + self._serialize_middle(include_plus, precision)
-            + self._serialize_end(include_plus, precision)
-        )
+        return serialize_annotation(self, include_plus, precision)
 
     def condense_static_mods(self, inplace: bool = True) -> Self:
         """
         Condense static mods into internal mods.
         """
         return cast(Self, condense_static_mods(self, inplace=inplace))
-    
-
 
     def count_residues(self, include_mods: bool = True) -> dict[str, int]:
         """
@@ -1059,9 +998,7 @@ class ProFormaAnnotation:
         return count_residues(self, include_mods=include_mods)
 
     def percent_residues(
-        self, 
-        include_mods: bool = True, 
-        precision: int | None = None
+        self, include_mods: bool = True, precision: int | None = None
     ) -> dict[str, float]:
         """
         Calculate the percentage of each residue in the sequence.
@@ -1077,7 +1014,9 @@ class ProFormaAnnotation:
         """
         Check if the annotation is a subsequence of another annotation.
         """
-        return is_subsequence(self, other, ignore_mods=ignore_mods, ignore_intervals=ignore_intervals)
+        return is_subsequence(
+            self, other, ignore_mods=ignore_mods, ignore_intervals=ignore_intervals
+        )
 
     def find_indices(
         self,
@@ -1088,7 +1027,9 @@ class ProFormaAnnotation:
         """
         Find all occurrences of the annotation in another annotation.
         """
-        return find_indices(self, other, ignore_mods=ignore_mods, ignore_intervals=ignore_intervals)
+        return find_indices(
+            self, other, ignore_mods=ignore_mods, ignore_intervals=ignore_intervals
+        )
 
     # Add slice and split convenience methods delegating to module-level functions
     def slice(

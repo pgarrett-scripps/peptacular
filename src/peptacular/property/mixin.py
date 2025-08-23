@@ -1,24 +1,31 @@
 """Mixin class providing property calculation methods for sequences."""
 
 from __future__ import annotations
-from collections.abc import Iterable
-from typing import Dict, Optional, Literal
+from collections.abc import Iterable, Sequence
 
-from .data import secondary_structure_scales_by_name
+from peptacular.property.data import AROMATIC_AMINO_ACIDS
+
 from .types import (
     MissingAAHandling,
-    AggregationMethod, 
-    WEIGHTING_SCHEMES,
-    SequenceProtocol
+    AggregationMethod,
+    WeightingMethods,
+    SequenceProtocol,
 )
 from .core import (
     calc_property,
     calc_window_property,
     aa_property_percentage,
     charge_at_ph,
+    secondary_structure
 )
+from .properties import (HPLCScale, 
+                         PhysicalPropertyScale, 
+                         PolarityScale, 
+                         SecondaryStructureMethod, 
+                         SecondaryStructureType, 
+                         SurfaceAccessibilityScale, 
+                         HydrophobicityScale)
 from ..utils2 import round_to_precision
-
 
 
 class SequencePropertyMixin:
@@ -27,10 +34,10 @@ class SequencePropertyMixin:
     def calc_property(
         self: SequenceProtocol,
         scale: str | dict[str, float],
-        missing_aa_handling: MissingAAHandling = MissingAAHandling.ERROR,
-        aggregation_method: AggregationMethod = AggregationMethod.AVG,
+        missing_aa_handling: str = MissingAAHandling.ERROR,
+        aggregation_method: str = AggregationMethod.AVG,
         normalize: bool = False,
-        weighting_scheme: WEIGHTING_SCHEMES = "uniform",
+        weighting_scheme: str | Sequence[float] = WeightingMethods.UNIFORM,
         min_weight: float = 0.1,
         max_weight: float = 1.0,
         precision: int | None = None,
@@ -47,256 +54,194 @@ class SequencePropertyMixin:
         )
         return round_to_precision(val, precision)
 
+    @property
     def hydrophobicity(
-        self: SequenceProtocol,
-        scale: str = "Kyte-Doolittle",
-        missing_aa_handling: MissingAAHandling = MissingAAHandling.ERROR,
-        aggregation_method: AggregationMethod = AggregationMethod.AVG,
-        normalize: bool = True,
-        weighting_scheme: WEIGHTING_SCHEMES = "uniform",
-        precision: int | None = None,
+        self: SequenceProtocol
     ) -> float:
+
         val = calc_property(
             sequence=self.stripped_sequence,
-            scale=scale,
-            missing_aa_handling=missing_aa_handling,
-            aggregation_method=aggregation_method,
-            normalize=normalize,
-            weighting_scheme=weighting_scheme,
+            scale=HydrophobicityScale.KYTE_DOOLITTLE,
+            missing_aa_handling=MissingAAHandling.ERROR,
+            aggregation_method=AggregationMethod.AVG,
+            normalize=True,
+            weighting_scheme=WeightingMethods.UNIFORM,
         )
-        return round_to_precision(val, precision)
+        return val
 
+    @property
     def flexibility(
         self: SequenceProtocol,
-        scale: str = "flexibility_vihinen",
-        missing_aa_handling: MissingAAHandling = MissingAAHandling.ERROR,
-        aggregation_method: AggregationMethod = AggregationMethod.AVG,
-        normalize: bool = True,
-        weighting_scheme: WEIGHTING_SCHEMES = "uniform",
-        precision: int | None = None,
     ) -> float:
+        
         val = calc_property(
             sequence=self.stripped_sequence,
-            scale=scale,
-            missing_aa_handling=missing_aa_handling,
-            aggregation_method=aggregation_method,
-            normalize=normalize,
-            weighting_scheme=weighting_scheme,
+            scale=PhysicalPropertyScale.FLEXIBILITY_VIHINEN,
+            missing_aa_handling=MissingAAHandling.ERROR,
+            aggregation_method=AggregationMethod.AVG,
+            normalize=True,
+            weighting_scheme=WeightingMethods.UNIFORM,
         )
-        return round_to_precision(val, precision)
+        return val
 
+    @property
     def hydrophilicity(
         self: SequenceProtocol,
-        scale: str = "hydrophilicity_hop_wood",
-        missing_aa_handling: MissingAAHandling = MissingAAHandling.ERROR,
-        aggregation_method: AggregationMethod = AggregationMethod.AVG,
-        normalize: bool = True,
-        weighting_scheme: WEIGHTING_SCHEMES = "uniform",
-        precision: int | None = None,
     ) -> float:
         val = calc_property(
             sequence=self.stripped_sequence,
-            scale=scale,
-            missing_aa_handling=missing_aa_handling,
-            aggregation_method=aggregation_method,
-            normalize=normalize,
-            weighting_scheme=weighting_scheme,
+            scale=PhysicalPropertyScale.HYDROPHILICITY_HOP_WOOD,
+            missing_aa_handling=MissingAAHandling.ERROR,
+            aggregation_method=AggregationMethod.AVG,
+            normalize=True,
+            weighting_scheme=WeightingMethods.UNIFORM,
         )
-        return round_to_precision(val, precision)
+        return val
 
+    @property
     def surface_accessibility(
         self: SequenceProtocol,
-        scale: str = "surface_accessibility_vergoten",
-        missing_aa_handling: MissingAAHandling = MissingAAHandling.ERROR,
-        aggregation_method: AggregationMethod = AggregationMethod.AVG,
-        normalize: bool = True,
-        weighting_scheme: WEIGHTING_SCHEMES = "uniform",
-        precision: int | None = None,
     ) -> float:
         val = calc_property(
             sequence=self.stripped_sequence,
-            scale=scale,
-            missing_aa_handling=missing_aa_handling,
-            aggregation_method=aggregation_method,
-            normalize=normalize,
-            weighting_scheme=weighting_scheme,
+            scale=SurfaceAccessibilityScale.VERGOTEN,
+            missing_aa_handling=MissingAAHandling.ERROR,
+            aggregation_method=AggregationMethod.AVG,
+            normalize=True,
+            weighting_scheme=WeightingMethods.UNIFORM,
         )
-        return round_to_precision(val, precision)
+        return val
 
+    @property
     def polarity(
         self: SequenceProtocol,
-        scale: str = "polarity_grantham",
-        missing_aa_handling: MissingAAHandling = MissingAAHandling.ERROR,
-        aggregation_method: AggregationMethod = AggregationMethod.AVG,
-        normalize: bool = True,
-        weighting_scheme: WEIGHTING_SCHEMES = "uniform",
-        precision: int | None = None,
     ) -> float:
         val = calc_property(
             sequence=self.stripped_sequence,
-            scale=scale,
-            missing_aa_handling=missing_aa_handling,
-            aggregation_method=aggregation_method,
-            normalize=normalize,
-            weighting_scheme=weighting_scheme,
+            scale=PolarityScale.GRANTHAM,
+            missing_aa_handling=MissingAAHandling.ERROR,
+            aggregation_method=AggregationMethod.AVG,
+            normalize=True,
+            weighting_scheme=WeightingMethods.UNIFORM,
         )
-        return round_to_precision(val, precision)
+        return val
 
+    @property
     def mutability(
         self: SequenceProtocol,
-        scale: str = "mutability",
-        missing_aa_handling: MissingAAHandling = MissingAAHandling.ERROR,
-        aggregation_method: AggregationMethod = AggregationMethod.AVG,
-        normalize: bool = True,
-        weighting_scheme: WEIGHTING_SCHEMES = "uniform",
-        precision: int | None = None,
     ) -> float:
         val = calc_property(
             sequence=self.stripped_sequence,
-            scale=scale,
-            missing_aa_handling=missing_aa_handling,
-            aggregation_method=aggregation_method,
-            normalize=normalize,
-            weighting_scheme=weighting_scheme,
+            scale=PhysicalPropertyScale.MUTABILITY,
+            missing_aa_handling=MissingAAHandling.ERROR,
+            aggregation_method=AggregationMethod.AVG,
+            normalize=True,
+            weighting_scheme=WeightingMethods.UNIFORM,
         )
-        return round_to_precision(val, precision)
+        return val
 
+    @property
     def codons(
         self: SequenceProtocol,
-        scale: str = "codons",
-        missing_aa_handling: MissingAAHandling = MissingAAHandling.ERROR,
-        aggregation_method: AggregationMethod = AggregationMethod.SUM,
-        normalize: bool = False,
-        weighting_scheme: WEIGHTING_SCHEMES = "uniform",
-        precision: int | None = None,
     ) -> float:
         val = calc_property(
             sequence=self.stripped_sequence,
-            scale=scale,
-            missing_aa_handling=missing_aa_handling,
-            aggregation_method=aggregation_method,
-            normalize=normalize,
-            weighting_scheme=weighting_scheme,
+            scale=PhysicalPropertyScale.CODONS,
+            missing_aa_handling=MissingAAHandling.ERROR,
+            aggregation_method=AggregationMethod.AVG,
+            normalize=True,
+            weighting_scheme=WeightingMethods.UNIFORM,
         )
-        return round_to_precision(val, precision)
+        return val
 
+    @property
     def bulkiness(
         self: SequenceProtocol,
-        scale: str = "bulkiness",
-        missing_aa_handling: MissingAAHandling = MissingAAHandling.ERROR,
-        aggregation_method: AggregationMethod = AggregationMethod.AVG,
-        normalize: bool = True,
-        weighting_scheme: WEIGHTING_SCHEMES = "uniform",
-        precision: int | None = None,
     ) -> float:
         val = calc_property(
             sequence=self.stripped_sequence,
-            scale=scale,
-            missing_aa_handling=missing_aa_handling,
-            aggregation_method=aggregation_method,
-            normalize=normalize,
-            weighting_scheme=weighting_scheme,
+            scale=PhysicalPropertyScale.BULKINESS,
+            missing_aa_handling=MissingAAHandling.ERROR,
+            aggregation_method=AggregationMethod.AVG,
+            normalize=True,
+            weighting_scheme=WeightingMethods.UNIFORM,
         )
-        return round_to_precision(val, precision)
+        return val
 
+    @property
     def recognition_factors(
         self: SequenceProtocol,
-        scale: str = "recognition_factors",
-        missing_aa_handling: MissingAAHandling = MissingAAHandling.ERROR,
-        aggregation_method: AggregationMethod = AggregationMethod.SUM,
-        normalize: bool = False,
-        weighting_scheme: WEIGHTING_SCHEMES = "uniform",
-        precision: int | None = None,
     ) -> float:
         val = calc_property(
             sequence=self.stripped_sequence,
-            scale=scale,
-            missing_aa_handling=missing_aa_handling,
-            aggregation_method=aggregation_method,
-            normalize=normalize,
-            weighting_scheme=weighting_scheme,
+            scale=PhysicalPropertyScale.RECOGNITION_FACTORS,
+            missing_aa_handling=MissingAAHandling.ERROR,
+            aggregation_method=AggregationMethod.AVG,
+            normalize=True,
+            weighting_scheme=WeightingMethods.UNIFORM,
         )
-        return round_to_precision(val, precision)
+        return val
 
+    @property
     def transmembrane_tendency(
         self: SequenceProtocol,
-        scale: str = "transmembrane_tendency",
-        missing_aa_handling: MissingAAHandling = MissingAAHandling.ERROR,
-        aggregation_method: AggregationMethod = AggregationMethod.AVG,
-        normalize: bool = True,
-        weighting_scheme: WEIGHTING_SCHEMES = "uniform",
-        precision: int | None = None,
     ) -> float:
         val = calc_property(
             sequence=self.stripped_sequence,
-            scale=scale,
-            missing_aa_handling=missing_aa_handling,
-            aggregation_method=aggregation_method,
-            normalize=normalize,
-            weighting_scheme=weighting_scheme,
+            scale=PhysicalPropertyScale.TRANSMEMBRANE_TENDENCY,
+            missing_aa_handling=MissingAAHandling.ERROR,
+            aggregation_method=AggregationMethod.AVG,
+            normalize=True,
+            weighting_scheme=WeightingMethods.UNIFORM,
         )
-        return round_to_precision(val, precision)
+        return val
 
+    @property
     def average_buried_area(
         self: SequenceProtocol,
-        scale: str = "average_buried_area",
-        missing_aa_handling: MissingAAHandling = MissingAAHandling.ERROR,
-        aggregation_method: AggregationMethod = AggregationMethod.AVG,
-        normalize: bool = True,
-        weighting_scheme: WEIGHTING_SCHEMES = "uniform",
-        precision: int | None = None,
     ) -> float:
         val = calc_property(
             sequence=self.stripped_sequence,
-            scale=scale,
-            missing_aa_handling=missing_aa_handling,
-            aggregation_method=aggregation_method,
-            normalize=normalize,
-            weighting_scheme=weighting_scheme,
+            scale=SurfaceAccessibilityScale.AVERAGE_BURIED_AREA,
+            missing_aa_handling=MissingAAHandling.ERROR,
+            aggregation_method=AggregationMethod.AVG,
+            normalize=True,
+            weighting_scheme=WeightingMethods.UNIFORM,
         )
-        return round_to_precision(val, precision)
+        return val
 
+    @property
     def hplc(
         self: SequenceProtocol,
-        scale: str = "hplc_meek_2_1",
-        missing_aa_handling: MissingAAHandling = MissingAAHandling.ERROR,
-        aggregation_method: AggregationMethod = AggregationMethod.AVG,
-        normalize: bool = True,
-        weighting_scheme: WEIGHTING_SCHEMES = "uniform",
-        precision: int | None = None,
     ) -> float:
         val = calc_property(
             sequence=self.stripped_sequence,
-            scale=scale,
-            missing_aa_handling=missing_aa_handling,
-            aggregation_method=aggregation_method,
-            normalize=normalize,
-            weighting_scheme=weighting_scheme,
+            scale=HPLCScale.MEEK_2_1,
+            missing_aa_handling=MissingAAHandling.ERROR,
+            aggregation_method=AggregationMethod.AVG,
+            normalize=True,
+            weighting_scheme=WeightingMethods.UNIFORM,
         )
-        return round_to_precision(val, precision)
+        return val
 
+    @property
     def refractivity(
         self: SequenceProtocol,
-        scale: str = "refractivity",
-        missing_aa_handling: MissingAAHandling = MissingAAHandling.ERROR,
-        aggregation_method: AggregationMethod = AggregationMethod.AVG,
-        normalize: bool = True,
-        weighting_scheme: WEIGHTING_SCHEMES = "uniform",
-        precision: int | None = None,
     ) -> float:
         val = calc_property(
             sequence=self.stripped_sequence,
-            scale=scale,
-            missing_aa_handling=missing_aa_handling,
-            aggregation_method=aggregation_method,
-            normalize=normalize,
-            weighting_scheme=weighting_scheme,
+            scale=PhysicalPropertyScale.REFRACTIVITY,
+            missing_aa_handling=MissingAAHandling.ERROR,
+            aggregation_method=AggregationMethod.AVG,
+            normalize=True,
+            weighting_scheme=WeightingMethods.UNIFORM,
         )
-        return round_to_precision(val, precision)
+        return val
 
+    @property
     def aromaticity(
         self: SequenceProtocol,
-        aromatic_residues: str = "YWF",
+        aromatic_residues: Iterable[str] = AROMATIC_AMINO_ACIDS,
         precision: int | None = None,
     ) -> float:
         """
@@ -312,10 +257,10 @@ class SequencePropertyMixin:
         self: SequenceProtocol,
         scale: str | dict[str, float],
         window_size: int = 9,
-        missing_aa_handling: MissingAAHandling = MissingAAHandling.ERROR,
-        aggregation_method: AggregationMethod = AggregationMethod.AVG,
+        missing_aa_handling: str = MissingAAHandling.ERROR,
+        aggregation_method: str = AggregationMethod.AVG,
         normalize: bool = False,
-        weighting_scheme: WEIGHTING_SCHEMES = "uniform",
+        weighting_scheme: str | Sequence[float] = WeightingMethods.UNIFORM,
         min_weight: float = 0.1,
         max_weight: float = 1.0,
         precision: int | None = None,
@@ -335,7 +280,6 @@ class SequencePropertyMixin:
         if precision is not None:
             vals = [round_to_precision(v, precision) for v in vals]
         return vals
-
 
     def aa_property_percentage(
         self: SequenceProtocol,
@@ -364,7 +308,8 @@ class SequencePropertyMixin:
         )
         return round_to_precision(val, precision)
 
-    def pi(self: SequenceProtocol, precision: int | None = None) -> float:
+    @property
+    def pi(self: SequenceProtocol) -> float:
         """Calculate isoelectric point using bisection method"""
 
         def _calculate_pi(
@@ -385,40 +330,65 @@ class SequencePropertyMixin:
             return ph
 
         isoelectric_point = _calculate_pi()
-        return round_to_precision(isoelectric_point, precision)
+        return isoelectric_point
 
     def secondary_structure(
         self: SequenceProtocol,
-        scale: Literal["DeleageRoux", "Levitt", "ChouFasman"] = "DeleageRoux",
+        scale: str = SecondaryStructureMethod.DELEAGE_ROUX,
         precision: int | None = None,
-    ) -> Dict[str, Optional[float]]:
+    ) -> dict[str, float]:
         """Calculate secondary structure propensities"""
-        if scale not in secondary_structure_scales_by_name:
-            raise ValueError(
-                f"Scale '{scale}' not found in available secondary structure scales: {list(secondary_structure_scales_by_name.keys())}"
-            )
 
-        d: Dict[str, float] = {}
-        for structure_scale_name, structure_scale in secondary_structure_scales_by_name[
-            scale
-        ].items():
-            val = calc_property(
-                sequence=self.stripped_sequence,
-                scale=structure_scale,
-                missing_aa_handling=MissingAAHandling.ERROR,
-                aggregation_method=AggregationMethod.AVG,
-                normalize=True,
-                weighting_scheme="uniform",
-            )
-            d[structure_scale_name] = round_to_precision(val, precision)
+        d = secondary_structure(
+            sequence=self.stripped_sequence,
+            scale=scale,
+        )
+        if precision is not None:
+            d = {k: round_to_precision(v, precision) for k, v in d.items()}
+        return d
+    
 
-        # Normalize the values to sum to 1
-        total = sum(d.values())
-        if total > 0:
-            for key in d:
-                d[key] /= total
 
-        if "coil" not in d:
-            d["coil"] = None  # type: ignore
+    @property
+    def alpha_helix_percent(self: SequenceProtocol) -> float:
+        """
+        Calculate the propensity for alpha helix formation using the Deleage-Roux scale.
+        """
+        d = secondary_structure(
+            sequence=self.stripped_sequence,
+            scale=SecondaryStructureMethod.DELEAGE_ROUX,
+        )
+        return d[SecondaryStructureType.ALPHA_HELIX]
 
-        return d  # type: ignore
+    @property
+    def beta_sheet_percent(self: SequenceProtocol) -> float:
+        """
+        Calculate the propensity for beta sheet formation using the Deleage-Roux scale.
+        """
+        d = secondary_structure(
+            sequence=self.stripped_sequence,
+            scale=SecondaryStructureMethod.DELEAGE_ROUX,
+        )
+        return d[SecondaryStructureType.BETA_SHEET]
+
+    @property
+    def beta_turn_percent(self: SequenceProtocol) -> float:
+        """
+        Calculate the propensity for beta turn formation using the Deleage-Roux scale.
+        """
+        d = secondary_structure(
+            sequence=self.stripped_sequence,
+            scale=SecondaryStructureMethod.DELEAGE_ROUX,
+        )
+        return d[SecondaryStructureType.BETA_TURN]
+
+    @property
+    def coil_percent(self: SequenceProtocol) -> float:
+        """
+        Calculate the propensity for coil formation using the Deleage-Roux scale.
+        """
+        d = secondary_structure(
+            sequence=self.stripped_sequence,
+            scale=SecondaryStructureMethod.DELEAGE_ROUX,
+        )
+        return d[SecondaryStructureType.COIL]

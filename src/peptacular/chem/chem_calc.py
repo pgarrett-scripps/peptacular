@@ -5,7 +5,7 @@ sequence with/and modifications.
 
 from typing import Iterable
 
-from ..dclasses import Mod, CHEM_COMPOSITION_TYPE, MOD_VALUE_TYPES
+from ..proforma.dclasses import Mod, CHEM_COMPOSITION_TYPE, MOD_VALUE_TYPES
 from ..utils2 import parse_ion_elements
 from ..util import parse_isotope_mods
 

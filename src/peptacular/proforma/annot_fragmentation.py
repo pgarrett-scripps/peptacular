@@ -19,7 +19,7 @@ from ..spans import (
 
 from ..utils2 import get_label, get_number
 from ..mass_calc import adjust_mass, adjust_mz
-from ..dclasses import SPAN_TYPE as Span
+from .dclasses import SPAN_TYPE as Span
 
 # from .annot_manipulation import ProFormaAnnotationManipulation
 

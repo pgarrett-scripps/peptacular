@@ -1,10 +1,10 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
-from ..dclasses import Interval, Mod
+from .dclasses import Interval, Mod
 
 if TYPE_CHECKING:
-    from .annot_base import ProFormaAnnotation
+    from .annotation import ProFormaAnnotation
 
 
 def annotate_ambiguity(

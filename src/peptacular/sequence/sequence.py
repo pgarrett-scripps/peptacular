@@ -26,11 +26,11 @@ from .util import get_annotation_input
 
 from ..constants import ORDERED_AMINO_ACIDS, ModType
 
-from ..proforma.annot import (
+from ..proforma.annotation import (
     ProFormaAnnotation,
 )
 
-from ..dclasses import ModDict, SPAN_TYPE
+from ..proforma.dclasses import ModDict, SPAN_TYPE
 
 
 def sequence_length(sequence: str | ProFormaAnnotation) -> int:

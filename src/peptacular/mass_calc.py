@@ -4,7 +4,7 @@ mass_calc.py is a simple module for computing the m/z and mass of an amino acid 
 
 from typing import Union, Optional, List
 
-from .dclasses import Mod, CHEM_COMPOSITION_TYPE, MOD_VALUE_TYPES
+from .proforma.dclasses import Mod, CHEM_COMPOSITION_TYPE, MOD_VALUE_TYPES
 
 from .constants import (
     PROTON_MASS,

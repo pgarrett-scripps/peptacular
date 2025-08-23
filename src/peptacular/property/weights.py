@@ -1,10 +1,12 @@
 import math
-from typing import Any, Literal, Union, List
+from typing import Any, Sequence
+
+from .types import WeightingMethods
 
 
 def _get_uniform_weights(
     length: int, min_weight: float = 0.1, max_weight: float = 1.0
-) -> List[float]:
+) -> list[float]:
     """
     Generate uniform weights for a sequence of given length.
 
@@ -21,7 +23,7 @@ def _get_uniform_weights(
 
 def _get_linear_weights(
     length: int, min_weight: float = 0.1, max_weight: float = 1.0
-) -> List[float]:
+) -> list[float]:
     """
     Generate linear weights for a sequence of given length. Middle should be peak and left right should be min.
 
@@ -40,7 +42,7 @@ def _get_linear_weights(
     if length == 2:
         return [max_weight, max_weight]
 
-    weights: List[float] = []
+    weights: list[float] = []
     mid = (length - 1) / 2
 
     for i in range(length):
@@ -55,7 +57,7 @@ def _get_linear_weights(
 
 def _get_exponential_weights(
     length: int, min_weight: float = 0.1, max_weight: float = 1.0
-) -> List[float]:
+) -> list[float]:
     """
     Generate exponential weights for a sequence of given length. Middle should be peak and left right should be min.
     Uses exponential decay from center to edges.
@@ -76,7 +78,7 @@ def _get_exponential_weights(
     start = -3.0
     end = 3.0
 
-    weights: List[float] = []
+    weights: list[float] = []
 
     for i in range(length):
         # Map index to fixed range
@@ -94,7 +96,7 @@ def _get_exponential_weights(
 
 def _get_gaussian_weights(
     length: int, min_weight: float = 0.1, max_weight: float = 1.0
-) -> List[float]:
+) -> list[float]:
     """
     Generate Gaussian weights for a sequence of given length.
     Uses fixed Gaussian distribution sampled across predetermined space.
@@ -117,7 +119,7 @@ def _get_gaussian_weights(
     end = 3.0
     sigma = 1.0
 
-    weights: List[float] = []
+    weights: list[float] = []
 
     for i in range(length):
         # Map index to fixed range
@@ -138,7 +140,7 @@ def _get_sigmoid_weights(
     min_weight: float = 0.1,
     max_weight: float = 1.0,
     steepness: float = 2.0,
-) -> List[float]:
+) -> list[float]:
     """
     Generate sigmoid (S-curve) weights for a sequence. Creates smooth transition from min to max.
 
@@ -160,7 +162,7 @@ def _get_sigmoid_weights(
     if length == 1:
         return [max_weight]
 
-    weights: List[float] = []
+    weights: list[float] = []
     for i in range(length):
         # Map to range [-6, 6] for good sigmoid behavior
         x = -6 + 12 * i / (length - 1) if length > 1 else 0
@@ -175,7 +177,7 @@ def _get_sigmoid_weights(
 
 def _get_cosine_weights(
     length: int, min_weight: float = 0.1, max_weight: float = 1.0, cycles: float = 1.0
-) -> List[float]:
+) -> list[float]:
     """
     Generate cosine-based weights for a sequence. Creates periodic patterns.
 
@@ -197,7 +199,7 @@ def _get_cosine_weights(
     if length == 1:
         return [max_weight]
 
-    weights: List[float] = []
+    weights: list[float] = []
     for i in range(length):
         # Cosine wave from 0 to cycles*2π
         angle = 2 * math.pi * cycles * i / (length - 1) if length > 1 else 0
@@ -212,7 +214,7 @@ def _get_cosine_weights(
 
 def _get_sinusoidal_weights(
     length: int, min_weight: float = 0.1, max_weight: float = 1.0, phase: float = 0.0
-) -> List[float]:
+) -> list[float]:
     """
     Generate sinusoidal weights (half sine wave from 0 to π).
 
@@ -228,7 +230,7 @@ def _get_sinusoidal_weights(
     if length == 1:
         return [max_weight]
 
-    weights: List[float] = []
+    weights: list[float] = []
     for i in range(length):
         # Map to range [0, π] for half sine wave
         angle = math.pi * i / (length - 1) + phase if length > 1 else phase
@@ -245,22 +247,11 @@ def _get_sinusoidal_weights(
 
 def get_weights(
     length: int,
-    weights: Union[
-        list[float],
-        Literal[
-            "uniform",
-            "linear",
-            "exponential",
-            "gaussian",
-            "sigmoid",
-            "cosine",
-            "sinusoidal",
-        ],
-    ] = "uniform",
+    weights: Sequence[float] | str = WeightingMethods.UNIFORM,
     min_weight: float = 0.1,
     max_weight: float = 1.0,
     **kwargs: Any,
-) -> list[float]:
+) -> Sequence[float]:
     """
     Get weights for a sequence based on the specified weighting scheme.
 
@@ -271,35 +262,39 @@ def get_weights(
     :param kwargs: Additional parameters for specific weight functions
     :return: List of weights
     """
-    if isinstance(weights, list):
+    if isinstance(weights, str):
+        weights_enum = WeightingMethods(weights)
+
+        match weights_enum:
+            case WeightingMethods.UNIFORM:
+                return _get_uniform_weights(length, min_weight, max_weight)
+            case WeightingMethods.LINEAR:
+                return _get_linear_weights(length, min_weight, max_weight)
+            case WeightingMethods.EXPONENTIAL:
+                return _get_exponential_weights(length, min_weight, max_weight)
+            case WeightingMethods.GAUSSIAN:
+                return _get_gaussian_weights(length, min_weight, max_weight)
+            case WeightingMethods.SIGMOID:
+                return _get_sigmoid_weights(
+                    length, min_weight, max_weight, kwargs.get("steepness", 2.0)
+                )
+            case WeightingMethods.COSINE:
+                return _get_cosine_weights(
+                    length, min_weight, max_weight, kwargs.get("cycles", 1.0)
+                )
+            case WeightingMethods.SINUSOIDAL:
+                return _get_sinusoidal_weights(
+                    length, min_weight, max_weight, kwargs.get("phase", 0.0)
+                )
+            case _:
+                raise ValueError(f"Unsupported weights type: {weights}")
+    else:
+        if not isinstance(weights, Sequence):  # type: ignore
+            raise TypeError(
+                "weights must be a sequence of floats or a valid WeightingMethod enum."
+            )
         if len(weights) != length:
             raise ValueError(
                 f"Length of weights list ({len(weights)}) does not match sequence length ({length})."
             )
         return weights
-
-    if weights == "uniform":
-        return _get_uniform_weights(length, min_weight, max_weight)
-    elif weights == "linear":
-        return _get_linear_weights(length, min_weight, max_weight)
-    elif weights == "exponential":
-        return _get_exponential_weights(length, min_weight, max_weight)
-    elif weights == "gaussian":
-        return _get_gaussian_weights(length, min_weight, max_weight)
-    elif weights == "sigmoid":
-        return _get_sigmoid_weights(
-            length, min_weight, max_weight, kwargs.get("steepness", 2.0)
-        )
-    elif weights == "cosine":
-        return _get_cosine_weights(
-            length, min_weight, max_weight, kwargs.get("cycles", 1.0)
-        )
-    elif weights == "sinusoidal":
-        return _get_sinusoidal_weights(
-            length, min_weight, max_weight, kwargs.get("phase", 0.0)
-        )
-    else:
-        raise ValueError(
-            f"Unsupported weights type: {weights}. Supported types are: "
-            "'uniform', 'linear', 'exponential', 'gaussian', 'sigmoid', 'cosine', 'sinusoidal'."
-        )

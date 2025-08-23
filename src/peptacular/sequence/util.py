@@ -1,13 +1,11 @@
 from typing import Union, Optional, List
 import warnings
 
-from ..dclasses import MOD_VALUE_TYPES
+from ..proforma.dclasses import MOD_VALUE_TYPES
 
-from ..proforma.annot import (
+from ..proforma.annotation import (
     ProFormaAnnotation,
 )
-from ..proforma.multi_annotation import MultiProFormaAnnotation
-from ..proforma.parser import parse
 
 
 def sequence_to_annotation(sequence: str) -> ProFormaAnnotation:
@@ -24,10 +22,7 @@ def sequence_to_annotation(sequence: str) -> ProFormaAnnotation:
     :rtype: ProFormaAnnotation
 
     """
-    annotation = parse(sequence)
-
-    if isinstance(annotation, MultiProFormaAnnotation):
-        raise ValueError(f"Invalid sequence: {sequence}")
+    annotation = ProFormaAnnotation.parse(sequence)
 
     return annotation
 

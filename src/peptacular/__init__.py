@@ -19,4 +19,4 @@ from .util import *
 from .spans import *
 from .fasta import *
 from .converters import *
-from .dclasses import *
+from .proforma.dclasses import *

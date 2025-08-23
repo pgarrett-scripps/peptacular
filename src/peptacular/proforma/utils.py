@@ -13,7 +13,7 @@ from typing import (
 import regex as re
 
 from ..constants import ADDUCT_PATTERN, ISOTOPE_NUM_PATTERN
-from ..dclasses import Mod, CHEM_COMPOSITION_TYPE, MOD_VALUE_TYPES
+from .dclasses import Mod, CHEM_COMPOSITION_TYPE, MOD_VALUE_TYPES
 
 
 def _parse_modifications(

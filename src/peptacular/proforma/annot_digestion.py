@@ -11,7 +11,7 @@ from ..spans import (
     build_spans,
 )
 
-from ..dclasses import SPAN_TYPE
+from .dclasses import SPAN_TYPE
 from .annot_fragmentation import ProFormaAnnotationFragmentation
 
 

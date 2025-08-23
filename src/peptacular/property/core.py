@@ -1,30 +1,41 @@
 """Core property calculation functions."""
 
 from __future__ import annotations
-from collections.abc import Generator, Iterable
-from typing import Dict, List
+from collections.abc import Generator, Iterable, Mapping, Sequence
 
 import statistics
 
+
 from .weights import get_weights
-from .data import (
+from .properties import (
+    ChargeScale,
+    SecondaryStructureMethod,
     all_property_scales,
-    pk_nterminal,
-    pk_cterminal,
-    pk_sidechain,
+    POSITIVE_AMINO_ACIDS,
+    NEGATIVE_AMINO_ACIDS,
+    secondary_structure_scales_by_name
 )
-from .types import MissingAAHandling, AggregationMethod, WEIGHTING_SCHEMES
+from .types import MissingAAHandling, AggregationMethod, WeightingMethods
 
 
-def _calculate_median(values: list[float]) -> float:
+# Handle ambiguous amino acids
+AMIGUOUS_AMINO_ACID_MAP: dict[str, tuple[str, ...]] = {
+    "B": ("D", "N"),  # Aspartic acid or Asparagine
+    "J": ("L", "I"),  # Leucine or Isoleucine
+    "Z": ("E", "Q"),  # Glutamic acid or Glutamine
+}
+
+
+def _calculate_median(values: Sequence[float]) -> float:
     """Calculate median of a list of values"""
     return statistics.median(values)
 
 
 def _get_default_value(
-    handling: MissingAAHandling, aa_data: dict[str, float], aa: str
+    handling: MissingAAHandling, aa_data: Mapping[str, float], aa: str
 ) -> float | None:
     """Calculate default value based on missing AA handling strategy"""
+
     match handling:
         case MissingAAHandling.ZERO:
             return 0.0
@@ -47,7 +58,7 @@ def _get_default_value(
             )
 
 
-def _normalize_value(value: float, aa_data: Dict[str, float]) -> float:
+def _normalize_value(value: float, aa_data: Mapping[str, float]) -> float:
     """Normalize value to 0-1 range based on min/max in aa_data"""
     min_value = min(aa_data.values())
     max_value = max(aa_data.values())
@@ -57,7 +68,7 @@ def _normalize_value(value: float, aa_data: Dict[str, float]) -> float:
 
 
 def _apply_weighting_and_normalization(
-    value: float, aa_data: dict[str, float], weighting_scheme: float, normalize: bool
+    value: float, aa_data: Mapping[str, float], weighting_scheme: float, normalize: bool
 ) -> float:
     """Apply normalization and weighting to a value"""
     if normalize:
@@ -67,8 +78,8 @@ def _apply_weighting_and_normalization(
 
 def _get_ambiguous_aa_value(
     aa: str,
-    constituent_aas: list[str],
-    aa_data: dict[str, float],
+    constituent_aas: Sequence[str],
+    aa_data: Mapping[str, float],
     missing_aa_handling: MissingAAHandling,
     weighting_scheme: float,
     normalize: bool,
@@ -91,8 +102,8 @@ def _get_ambiguous_aa_value(
 
 def _get_aa_value(
     aa: str,
-    aa_data: dict[str, float],
-    missing_aa_handling: MissingAAHandling,
+    aa_data: Mapping[str, float],
+    missing_aa_handling: str,
     weighting_scheme: float = 1.0,
     normalize: bool = False,
 ) -> float | None:
@@ -113,6 +124,8 @@ def _get_aa_value(
         ValueError: If amino acid is invalid and handling is ERROR
     """
 
+    missing_aa_handling = MissingAAHandling(missing_aa_handling)
+
     # Handle standard amino acids
     if aa in aa_data:
         value = aa_data[aa]
@@ -120,17 +133,10 @@ def _get_aa_value(
             value, aa_data, weighting_scheme, normalize
         )
 
-    # Handle ambiguous amino acids
-    ambiguous_mappings = {
-        "B": ["D", "N"],  # Aspartic acid or Asparagine
-        "J": ["L", "I"],  # Leucine or Isoleucine
-        "Z": ["E", "Q"],  # Glutamic acid or Glutamine
-    }
-
-    if aa in ambiguous_mappings:
+    if aa in AMIGUOUS_AMINO_ACID_MAP:
         return _get_ambiguous_aa_value(
             aa,
-            ambiguous_mappings[aa],
+            AMIGUOUS_AMINO_ACID_MAP[aa],
             aa_data,
             missing_aa_handling,
             weighting_scheme,
@@ -161,24 +167,24 @@ def _generate_string_sliding_windows(
 ) -> Generator[str, None, None]:
     """
     Generate sliding windows of a plain amino acid sequence.
-    
+
     Args:
         sequence: The amino acid sequence string
         window_size: Size of each window
         reverse: If True, generate windows from right to left
-        
+
     Yields:
         String subsequences representing each window
-        
+
     Raises:
         ValueError: If window_size is invalid or sequence is empty
     """
     if not sequence:
         raise ValueError("Sequence cannot be empty")
-    
+
     if window_size <= 0:
         raise ValueError("Window size must be positive")
-    
+
     seq_len = len(sequence)
     if window_size > seq_len:
         raise ValueError(
@@ -199,11 +205,11 @@ def _generate_string_sliding_windows(
 
 def calc_property(
     sequence: str,
-    scale: str | dict[str, float],
-    missing_aa_handling: MissingAAHandling = MissingAAHandling.ERROR,
-    aggregation_method: AggregationMethod = AggregationMethod.AVG,
+    scale: str | Mapping[str, float],
+    missing_aa_handling: str = MissingAAHandling.ERROR,
+    aggregation_method: str = AggregationMethod.AVG,
     normalize: bool = False,
-    weighting_scheme: WEIGHTING_SCHEMES = "uniform",
+    weighting_scheme: str | Sequence[float] = WeightingMethods.UNIFORM,
     min_weight: float = 0.1,
     max_weight: float = 1.0,
 ) -> float:
@@ -226,7 +232,7 @@ def calc_property(
     else:
         aa_data = scale
 
-    values: List[float] = []
+    values: list[float] = []
     for i, aa in enumerate(sequence):
         val = _get_aa_value(
             aa=aa,
@@ -252,15 +258,15 @@ def calc_property(
 
 def calc_window_property(
     sequence: str,
-    scale: str | dict[str, float],
+    scale: str | Mapping[str, float],
     window_size: int = 9,
-    missing_aa_handling: MissingAAHandling = MissingAAHandling.ERROR,
-    aggregation_method: AggregationMethod = AggregationMethod.AVG,
+    missing_aa_handling: str = MissingAAHandling.ERROR,
+    aggregation_method: str = AggregationMethod.AVG,
     normalize: bool = False,
-    weighting_scheme: WEIGHTING_SCHEMES = "uniform",
+    weighting_scheme: str | Sequence[float] = WeightingMethods.UNIFORM,
     min_weight: float = 0.1,
     max_weight: float = 1.0,
-) -> List[float]:
+) -> list[float]:
     """Calculate property values over sliding windows"""
     weighting_scheme = get_weights(
         window_size,
@@ -269,7 +275,7 @@ def calc_window_property(
         max_weight=max_weight,
     )
 
-    results: List[float] = []
+    results: list[float] = []
     for window_sequence in _generate_string_sliding_windows(sequence, window_size):
         if len(window_sequence) != window_size:
             raise ValueError(
@@ -307,9 +313,7 @@ def _percent_residues(sequence: str) -> dict[str, float]:
         return {}
 
     counts = _count_residues(sequence)
-    return {
-        aa: count / total for aa, count in counts.items()
-    }
+    return {aa: count / total for aa, count in counts.items()}
 
 
 def aa_property_percentage(
@@ -338,7 +342,9 @@ def charge_at_ph(sequence: str, pH: float = 7.0) -> float:
 
     # N-terminal charge
     nterm_pK = _get_aa_value(
-        aa=nterm, aa_data=pk_nterminal, missing_aa_handling=MissingAAHandling.ERROR
+        aa=nterm,
+        aa_data=all_property_scales[ChargeScale.PK_NTERMINAL],
+        missing_aa_handling=MissingAAHandling.ERROR,
     )
 
     if not isinstance(nterm_pK, (int, float)):
@@ -350,11 +356,13 @@ def charge_at_ph(sequence: str, pH: float = 7.0) -> float:
     positive_charge += partial_charge
 
     # Side chain positive charges
-    for aa in "KRH":
+    for aa in POSITIVE_AMINO_ACIDS:
         count = float(aa_counts.get(aa, 0))
         if count > 0:
             pK = _get_aa_value(
-                aa=aa, aa_data=pk_sidechain, missing_aa_handling=MissingAAHandling.ERROR
+                aa=aa,
+                aa_data=all_property_scales[ChargeScale.PK_SIDECHAIN],
+                missing_aa_handling=MissingAAHandling.ERROR,
             )
 
             if not isinstance(pK, (int, float)) or pK <= 0:
@@ -370,7 +378,9 @@ def charge_at_ph(sequence: str, pH: float = 7.0) -> float:
 
     # C-terminal charge
     cterm_pK = _get_aa_value(
-        aa=cterm, aa_data=pk_cterminal, missing_aa_handling=MissingAAHandling.ERROR
+        aa=cterm,
+        aa_data=all_property_scales[ChargeScale.PK_CTERMINAL],
+        missing_aa_handling=MissingAAHandling.ERROR,
     )
 
     if not isinstance(cterm_pK, (int, float)):
@@ -382,11 +392,13 @@ def charge_at_ph(sequence: str, pH: float = 7.0) -> float:
     negative_charge += partial_charge
 
     # Side chain negative charges
-    for aa in "DECY":
+    for aa in NEGATIVE_AMINO_ACIDS:
         count = float(aa_counts.get(aa, 0))
         if count > 0:
             pK = _get_aa_value(
-                aa=aa, aa_data=pk_sidechain, missing_aa_handling=MissingAAHandling.ERROR
+                aa=aa,
+                aa_data=all_property_scales[ChargeScale.PK_SIDECHAIN],
+                missing_aa_handling=MissingAAHandling.ERROR,
             )
 
             if not isinstance(pK, (int, float)) or pK <= 0:
@@ -400,3 +412,34 @@ def charge_at_ph(sequence: str, pH: float = 7.0) -> float:
 
     net_charge = positive_charge - negative_charge
     return net_charge
+
+
+def secondary_structure(
+    sequence: str,
+    scale: str = SecondaryStructureMethod.DELEAGE_ROUX,
+) -> dict[str, float]:
+    """Calculate secondary structure propensities"""
+
+    scale = SecondaryStructureMethod(scale)
+
+    d: dict[str, float] = {}
+    for structure_scale_name, structure_scale in secondary_structure_scales_by_name[
+        scale
+    ].items():
+        val = calc_property(
+            sequence=sequence,
+            scale=structure_scale,
+            missing_aa_handling=MissingAAHandling.ERROR,
+            aggregation_method=AggregationMethod.AVG,
+            normalize=True,
+            weighting_scheme=WeightingMethods.UNIFORM,
+        )
+        d[structure_scale_name] = val
+
+    # Normalize the values to sum to 1
+    total = sum(d.values())
+    if total > 0:
+        for key in d:
+            d[key] /= total
+
+    return d  # type: ignore
