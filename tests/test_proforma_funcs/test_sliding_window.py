@@ -3,7 +3,6 @@ from types import GeneratorType
 import unittest
 
 import peptacular as pt
-from peptacular.proforma_dataclasses import Interval, Mod
 
 
 class TestSlidingWindow(unittest.TestCase):

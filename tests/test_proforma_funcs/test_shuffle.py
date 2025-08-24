@@ -2,18 +2,16 @@
 import unittest
 
 import peptacular as pt
-from peptacular.proforma_dataclasses import Interval, Mod
-
 
 class TestShuffle(unittest.TestCase):
     
     def test_basic_shuffle(self):
-        annotation = pt.parse("PEPTIDE")
+        annotation = pt.ProFormaAnnotation.parse("PEPTIDE")
         shuffled_annotation = annotation.shuffle(seed=42)
         self.assertEqual(shuffled_annotation.serialize(), "ETIPEPD")
 
     def test_basic_shuffle_inplace(self):
-        annotation = pt.parse("PEPTIDE")
+        annotation = pt.ProFormaAnnotation.parse("PEPTIDE")
         shuffled_annotation = annotation.shuffle(seed=42)
         self.assertEqual(shuffled_annotation.serialize(), "ETIPEPD")
         self.assertEqual(annotation.serialize(), "PEPTIDE")  # Original unchanged
@@ -32,7 +30,7 @@ class TestShuffle(unittest.TestCase):
     TESTS FOR: shuffling with internal modifications
     """
     def test_shuffle_with_internal_mods(self):
-        annotation = pt.parse("PE[Phospho]PTI[Methyl]DE")
+        annotation = pt.ProFormaAnnotation.parse("PE[Phospho]PTI[Methyl]DE")
         shuffled_annotation = annotation.shuffle(seed=42)
         self.assertEqual(shuffled_annotation.serialize(), "E[Phospho]TI[Methyl]PEPD")
 
@@ -41,7 +39,7 @@ class TestShuffle(unittest.TestCase):
     """
 
     def test_shuffle_with_both_term_mods(self):
-        annotation = pt.parse("[Acetyl]-PEPTIDE-[Amide]")
+        annotation = pt.ProFormaAnnotation.parse("[Acetyl]-PEPTIDE-[Amide]")
         shuffled_annotation = annotation.shuffle(seed=42)
         self.assertEqual(shuffled_annotation.serialize(), "[Acetyl]-ETIPEPD-[Amide]")
 
@@ -49,27 +47,27 @@ class TestShuffle(unittest.TestCase):
     TESTS FOR: shuffling with other modification types
     """
     def test_shuffle_with_labile_mods(self):
-        annotation = pt.parse("{Glycan}PEPTIDE")
+        annotation = pt.ProFormaAnnotation.parse("{Glycan}PEPTIDE")
         shuffled_annotation = annotation.shuffle(seed=42)
         self.assertEqual(shuffled_annotation.serialize(), "{Glycan}ETIPEPD")
 
     def test_shuffle_with_static_mods(self):
-        annotation = pt.parse("<57@C>PEPTIDE")
+        annotation = pt.ProFormaAnnotation.parse("<57@C>PEPTIDE")
         shuffled_annotation = annotation.shuffle(seed=42)
         self.assertEqual(shuffled_annotation.serialize(), "<57@C>ETIPEPD")
 
     def test_shuffle_with_charge(self):
-        annotation = pt.parse("PEPTIDE/2")
+        annotation = pt.ProFormaAnnotation.parse("PEPTIDE/2")
         shuffled_annotation = annotation.shuffle(seed=42)
         self.assertEqual(shuffled_annotation.serialize(), "ETIPEPD/2")
 
     def test_shuffle_with_unknown_mod(self):
-        annotation = pt.parse("[Unknown]?PEPTIDE")
+        annotation = pt.ProFormaAnnotation.parse("[Unknown]?PEPTIDE")
         shuffled_annotation = annotation.shuffle(seed=42)
         self.assertEqual(shuffled_annotation.serialize(), "[Unknown]?ETIPEPD")
 
     def test_shuffle_preserves_amino_acid_composition(self):
-        annotation = pt.parse("PEPTIDE")
+        annotation = pt.ProFormaAnnotation.parse("PEPTIDE")
         shuffled_annotation = annotation.shuffle(seed=42)
         # Check that same amino acids are present
         original_sorted = sorted(annotation.sequence)

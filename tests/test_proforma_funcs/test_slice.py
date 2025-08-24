@@ -2,7 +2,6 @@
 import unittest
 
 import peptacular as pt
-from peptacular.proforma_dataclasses import Interval, Mod
 
 
 class TestSlice(unittest.TestCase):
@@ -27,7 +26,7 @@ class TestSlice(unittest.TestCase):
     """
     def test_slice_nterm(self):
         # Test slicing a ProFormaAnnotation with N-terminal modification
-        annotation = pt.ProFormaAnnotation(sequence="PEPTIDE", nterm_mods=Mod("Acetyl"))
+        annotation = pt.ProFormaAnnotation(sequence="PEPTIDE", nterm_mods=pt.Mod("Acetyl"))
         sliced_annotation = annotation.slice(0, 3)
         self.assertEqual(sliced_annotation.sequence, "PEP")
         self.assertEqual(sliced_annotation.serialize(), "[Acetyl]-PEP")
@@ -35,7 +34,7 @@ class TestSlice(unittest.TestCase):
 
     def test_slice_cterm(self):
         # Test slicing a ProFormaAnnotation with C-terminal modification
-        annotation = pt.ProFormaAnnotation(sequence="PEPTIDE", cterm_mods=Mod("Amidated"))
+        annotation = pt.ProFormaAnnotation(sequence="PEPTIDE", cterm_mods=pt.Mod("Amidated"))
         sliced_annotation = annotation.slice(3, 7)
         self.assertEqual(sliced_annotation.sequence, "TIDE")
         self.assertEqual(sliced_annotation.serialize(), "TIDE-[Amidated]")
@@ -44,8 +43,8 @@ class TestSlice(unittest.TestCase):
     def test_terms_middle_slice(self):
         # Test slicing a ProFormaAnnotation with modifications in the middle
         annotation = pt.ProFormaAnnotation(sequence="PEPTIDE", 
-                                           nterm_mods=Mod("Acetyl"), 
-                                           cterm_mods=Mod("Amidated"))
+                                           nterm_mods=pt.Mod("Acetyl"), 
+                                           cterm_mods=pt.Mod("Amidated"))
         sliced_annotation = annotation.slice(1, 5)
         self.assertEqual(sliced_annotation.sequence, "EPTI")
         self.assertEqual(sliced_annotation.serialize(), "EPTI")
@@ -54,8 +53,8 @@ class TestSlice(unittest.TestCase):
     def test_terms_middle_slice_with_keep_terms(self):
         # Test slicing a ProFormaAnnotation with modifications
         annotation = pt.ProFormaAnnotation(sequence="PEPTIDE", 
-                                           nterm_mods=Mod("Acetyl"), 
-                                           cterm_mods=Mod("Amidated"))
+                                           nterm_mods=pt.Mod("Acetyl"), 
+                                           cterm_mods=pt.Mod("Amidated"))
         self.assertEqual(annotation.serialize(), "[Acetyl]-PEPTIDE-[Amidated]")
         sliced_annotation = annotation.slice(1, 5, keep_terms=True)
         self.assertEqual(sliced_annotation.sequence, "EPTI")
@@ -65,10 +64,10 @@ class TestSlice(unittest.TestCase):
     """
     TESTS FOR: slice_intervals=True (default)
     """
-    def test_slice_with_intervals(self):
+    def test_slice_with_intervals2(self):
         # Test slicing a ProFormaAnnotation with intervals
         annotation = pt.ProFormaAnnotation(sequence="PEPTIDE", 
-                                           intervals=Interval(1, 3, False, "Phosphorylated"))
+                                           intervals=pt.Interval(1, 3, False, "Phosphorylated"))
         self.assertEqual(annotation.serialize(), "P(EP)[Phosphorylated]TIDE")
 
         sliced_annotation = annotation.slice(0, 5)
@@ -78,7 +77,7 @@ class TestSlice(unittest.TestCase):
     def test_slice_start_interval(self):
         # Test slicing a ProFormaAnnotation with a cutoff
         annotation = pt.ProFormaAnnotation(sequence="PEPTIDE", 
-                                           intervals=Interval(1, 3, False, "Phosphorylated"))
+                                           intervals=pt.Interval(1, 3, False, "Phosphorylated"))
         self.assertEqual(annotation.serialize(), "P(EP)[Phosphorylated]TIDE")
 
         sliced_annotation = annotation.slice(2, 5)
@@ -88,7 +87,7 @@ class TestSlice(unittest.TestCase):
     def test_slice_end_interval(self):
         # Test slicing a ProFormaAnnotation with a cutoff
         annotation = pt.ProFormaAnnotation(sequence="PEPTIDE", 
-                                           intervals=Interval(1, 3, False, "Phosphorylated"))
+                                           intervals=pt.Interval(1, 3, False, "Phosphorylated"))
         self.assertEqual(annotation.serialize(), "P(EP)[Phosphorylated]TIDE")
 
         sliced_annotation = annotation.slice(0, 2)
@@ -98,7 +97,7 @@ class TestSlice(unittest.TestCase):
     def test_slice_start_and_end_interval(self):
         # Test slicing a ProFormaAnnotation with a cutoff
         annotation = pt.ProFormaAnnotation(sequence="PEPTIDE", 
-                                           intervals=Interval(1, 5, False, "Phosphorylated"))
+                                           intervals=pt.Interval(1, 5, False, "Phosphorylated"))
         self.assertEqual(annotation.serialize(), "P(EPTI)[Phosphorylated]DE")
         sliced_annotation = annotation.slice(2, 4)
         self.assertEqual(sliced_annotation.sequence, "PT")
@@ -107,7 +106,7 @@ class TestSlice(unittest.TestCase):
     def test_slice_start_and_end_interval_ambiguous(self):
         # Test slicing a ProFormaAnnotation with a cutoff
         annotation = pt.ProFormaAnnotation(sequence="PEPTIDE", 
-                                           intervals=Interval(1, 5, True, "Phosphorylated"))
+                                           intervals=pt.Interval(1, 5, True, "Phosphorylated"))
         self.assertEqual(annotation.serialize(), "P(?EPTI)[Phosphorylated]DE")
         sliced_annotation = annotation.slice(2, 4)
         self.assertEqual(sliced_annotation.sequence, "PT")
@@ -120,39 +119,39 @@ class TestSlice(unittest.TestCase):
     def test_slice_with_intervals(self):
         # Test slicing a ProFormaAnnotation with intervals
         annotation = pt.ProFormaAnnotation(sequence="PEPTIDE", 
-                                           intervals=Interval(1, 3, False, "Phosphorylated"))
+                                           intervals=pt.Interval(1, 3, False, "Phosphorylated"))
         self.assertEqual(annotation.serialize(), "P(EP)[Phosphorylated]TIDE")
 
-        sliced_annotation = annotation.slice(0, 5, slice_intervals=False)
+        sliced_annotation = annotation.slice(0, 5)
         self.assertEqual(sliced_annotation.sequence, "PEPTI")
         self.assertEqual(sliced_annotation.serialize(), "P(EP)[Phosphorylated]TI")
 
     def test_slice_start_interval_with_error(self):
         # Test slicing a ProFormaAnnotation with a cutoff
         annotation = pt.ProFormaAnnotation(sequence="PEPTIDE", 
-                                           intervals=Interval(1, 3, False, "Phosphorylated"))
+                                           intervals=pt.Interval(1, 3, False, "Phosphorylated"))
         self.assertEqual(annotation.serialize(), "P(EP)[Phosphorylated]TIDE")
 
         with self.assertRaises(ValueError):
-            annotation.slice(2, 5, slice_intervals=False)
+            annotation.slice(2, 5)
 
     def test_slice_end_interval_with_error(self):
         # Test slicing a ProFormaAnnotation with a cutoff
         annotation = pt.ProFormaAnnotation(sequence="PEPTIDE", 
-                                           intervals=Interval(1, 3, False, "Phosphorylated"))
+                                           intervals=pt.Interval(1, 3, False, "Phosphorylated"))
         self.assertEqual(annotation.serialize(), "P(EP)[Phosphorylated]TIDE")
 
         with self.assertRaises(ValueError):
-            annotation.slice(0, 2, slice_intervals=False)
+            annotation.slice(0, 2)
 
     def test_slice_start_and_end_interval_with_error(self):
         # Test slicing a ProFormaAnnotation with a cutoff
         annotation = pt.ProFormaAnnotation(sequence="PEPTIDE", 
-                                           intervals=Interval(1, 5, False, "Phosphorylated"))
+                                           intervals=pt.Interval(1, 5, False, "Phosphorylated"))
         self.assertEqual(annotation.serialize(), "P(EPTI)[Phosphorylated]DE")
         
         with self.assertRaises(ValueError):
-            annotation.slice(2, 4, slice_intervals=False)
+            annotation.slice(2, 4)
 
     """
     Slicing with labile mods
@@ -160,7 +159,7 @@ class TestSlice(unittest.TestCase):
     def test_slice_with_labile_mods(self):
         # Test slicing a ProFormaAnnotation with labile modifications
         annotation = pt.ProFormaAnnotation(sequence="PEPTIDE", 
-                                           labile_mods=Mod("LabileMod"))
+                                           labile_mods=pt.Mod("LabileMod"))
         sliced_annotation = annotation.slice(0, 3)
         self.assertEqual(sliced_annotation.sequence, "PEP")
         self.assertEqual(sliced_annotation.serialize(), "{LabileMod}PEP")
@@ -169,7 +168,7 @@ class TestSlice(unittest.TestCase):
     def test_slice_with_keep_labile_mods_false(self):
         # Test slicing a ProFormaAnnotation with labile modifications
         annotation = pt.ProFormaAnnotation(sequence="PEPTIDE", 
-                                           labile_mods=Mod("LabileMod"))
+                                           labile_mods=pt.Mod("LabileMod"))
         sliced_annotation = annotation.slice(0, 3, keep_labile=False)
         self.assertEqual(sliced_annotation.sequence, "PEP")
         self.assertEqual(sliced_annotation.serialize(), "PEP")
@@ -180,7 +179,7 @@ class TestSlice(unittest.TestCase):
     def test_slice_with_static_mods(self):
         # Test slicing a ProFormaAnnotation with static modifications
         annotation = pt.ProFormaAnnotation(sequence="PEPTIDE", 
-                                           static_mods=Mod("57@C"))
+                                           static_mods=pt.Mod("57@C"))
         sliced_annotation = annotation.slice(0, 3)
         self.assertEqual(sliced_annotation.sequence, "PEP")
         self.assertEqual(sliced_annotation.serialize(), "<57@C>PEP")
