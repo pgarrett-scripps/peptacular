@@ -1,9 +1,12 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
-from .constants import ProformaChar as PC
+from .characters import ProformaChar as PC
 
 if TYPE_CHECKING:
     from .annotation import ProFormaAnnotation
+
 
 def _serialize_start(
     annotation: ProFormaAnnotation,

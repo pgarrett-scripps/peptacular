@@ -3,8 +3,8 @@ Constants used throughout the peptacular package.
 """
 
 import os
-from typing import Dict, Iterable, List, Tuple, Set, Union
-from enum import Enum
+from typing import Iterable, Literal
+from enum import Enum, StrEnum
 
 import regex as re
 
@@ -19,11 +19,11 @@ from .element_setup import (
 )
 
 
-def merge_dicts(d1: Dict[str, int], d2: Dict[str, int]) -> Dict[str, int]:
+def _merge_dicts(d1: dict[str, int], d2: dict[str, int]) -> dict[str, int]:
     """
     Merge two dictionaries. And remove any keys with value 0.
     """
-    d: Dict[str, int] = {}
+    d: dict[str, int] = {}
     for k, v in d1.items():
         d[k] = v
     for k, v in d2.items():
@@ -36,11 +36,11 @@ def merge_dicts(d1: Dict[str, int], d2: Dict[str, int]) -> Dict[str, int]:
 
 
 # Partical masses
-PROTON_MASS = 1.00727646688
-ELECTRON_MASS = 0.00054857990946
-NEUTRON_MASS = 1.00866491597
-C13_NEUTRON_MASS = 1.003350
-PEPTIDE_AVERAGINE_NEUTRON_MASS = 1.002856
+PROTON_MASS: float = 1.00727646688
+ELECTRON_MASS: float = 0.00054857990946
+NEUTRON_MASS: float = 1.00866491597
+C13_NEUTRON_MASS: float = 1.003350
+PEPTIDE_AVERAGINE_NEUTRON_MASS: float = 1.002856
 
 _dir_name = os.path.dirname(__file__)
 _element_path = os.path.join(_dir_name, "data", "chem.txt")
@@ -49,208 +49,231 @@ _element_path = os.path.join(_dir_name, "data", "chem.txt")
 _infos = get_element_info(_element_path)
 
 # calculate average atomic mass for each element
-AVERAGE_ATOMIC_MASSES: Dict[str, float] = map_atomic_symbol_to_average_mass(_infos)
-ISOTOPIC_ATOMIC_MASSES: Dict[str, float] = get_isotopic_atomic_masses(_infos)
-ATOMIC_NUMBER_TO_SYMBOL: Dict[int, str] = map_atomic_number_to_symbol(_infos)
-ATOMIC_SYMBOL_TO_NUMBER: Dict[str, int] = {
+AVERAGE_ATOMIC_MASSES: dict[str, float] = map_atomic_symbol_to_average_mass(_infos)
+ISOTOPIC_ATOMIC_MASSES: dict[str, float] = get_isotopic_atomic_masses(_infos)
+ATOMIC_NUMBER_TO_SYMBOL: dict[int, str] = map_atomic_number_to_symbol(_infos)
+ATOMIC_SYMBOL_TO_NUMBER: dict[str, int] = {
     v: k for k, v in ATOMIC_NUMBER_TO_SYMBOL.items()
 }
-ATOMIC_SYMBOL_TO_ISOTOPE_NEUTRON_OFFSETS_AND_ABUNDANCES: Dict[
-    str, List[Tuple[int, float]]
+ATOMIC_SYMBOL_TO_ISOTOPE_NEUTRON_OFFSETS_AND_ABUNDANCES: dict[
+    str, list[tuple[int, float]]
 ] = map_atomic_number_to_comp_neutron_offset(_infos)
-ATOMIC_SYMBOL_TO_ISOTOPE_MASSES_AND_ABUNDANCES: Dict[str, List[Tuple[float, float]]] = (
+ATOMIC_SYMBOL_TO_ISOTOPE_MASSES_AND_ABUNDANCES: dict[str, list[tuple[float, float]]] = (
     map_atomic_number_to_comp(_infos)
 )
-HILL_ORDER: Dict[str, int] = map_hill_order(_infos)
+HILL_ORDER: dict[str, int] = map_hill_order(_infos)
 
 # Neutral Mass
 NTERM_COMPOSITION = {"H": 1}
 CTERM_COMPOSITION = {"O": 1, "H": 1}
 
+
+class IonType(StrEnum):
+    PRECURSOR = "p"
+    NEUTRAL = "n"
+    A = "a"
+    B = "b"
+    C = "c"
+    X = "x"
+    Y = "y"
+    Z = "z"
+    AX = "ax"
+    AY = "ay"
+    AZ = "az"
+    BX = "bx"
+    BY = "by"
+    BZ = "bz"
+    CX = "cx"
+    CY = "cy"
+    CZ = "cz"
+    IMMONIUM = "i"
+
+
 # Additions to get the +1 ion
-FRAGMENT_ION_COMPOSITIONS: Dict[str, Dict[str, int]] = {
-    "p": {"H": 1, "e": -1},  # Proton
-    "n": {},  # Nothing
-    "a": {"e": -1},  # -electron
-    "b": {"e": -1},  # -electron
-    "c": {"H": 2, "e": -1},  # Steals proton and hydrogen from neutral fragment
-    "x": {"e": -1},  # -electron
-    "y": {"H": 2, "e": -1},  # Steals proton and hydrogen from neutral fragment
-    "z": {"e": -1},
-    "ax": {"e": -1},
-    "ay": {"H": 1, "e": -1},
-    "az": {"e": -1},
-    "bx": {"e": -1},
-    "by": {"H": 1, "e": -1},
-    "bz": {"e": -1},
-    "cx": {"H": 1, "e": -1},
-    "cy": {"H": 3, "e": -1},
-    "cz": {"H": 1, "e": -1},
-    "i": {"H": 1, "e": -1},
+FRAGMENT_ION_COMPOSITIONS: dict[IonType | str, dict[str, int]] = {
+    IonType.PRECURSOR: {"H": 1, "e": -1},  # Proton
+    IonType.NEUTRAL: {},  # Nothing
+    IonType.A: {"e": -1},  # -electron
+    IonType.B: {"e": -1},  # -electron
+    IonType.C: {"H": 2, "e": -1},  # Steals proton and hydrogen from neutral fragment
+    IonType.X: {"e": -1},  # -electron
+    IonType.Y: {"H": 2, "e": -1},  # Steals proton and hydrogen from neutral fragment
+    IonType.Z: {"e": -1},
+    IonType.AX: {"e": -1},
+    IonType.AY: {"H": 1, "e": -1},
+    IonType.AZ: {"e": -1},
+    IonType.BX: {"e": -1},
+    IonType.BY: {"H": 1, "e": -1},
+    IonType.BZ: {"e": -1},
+    IonType.CX: {"H": 1, "e": -1},
+    IonType.CY: {"H": 3, "e": -1},
+    IonType.CZ: {"H": 1, "e": -1},
+    IonType.IMMONIUM: {"H": 1, "e": -1},
 }
 
-FRAGMENT_ION_BASE_CHARGE_ADDUCTS: Dict[str, str] = {
-    "p": "+H+",
-    "n": "",
-    "a": "-e-",
-    "b": "-e-",
-    "c": "+2H+,+e-",
-    "x": "-e-",
-    "y": "+2H+,+e-",
-    "z": "-e-",
-    "ax": "-e-",
-    "ay": "+H+",
-    "az": "-e-",
-    "bx": "-e-",
-    "by": "+H+",
-    "bz": "-e-",
-    "cx": "+H+",
-    "cy": "+3H+,+e-",
-    "cz": "+H+",
-    "i": "+H+",
-}
-
-# According to the dissociation sites
-NEUTRAL_FRAGMENT_START_COMPOSITIONS: Dict[str, Dict[str, int]] = {
-    "p": NTERM_COMPOSITION,
-    "a": NTERM_COMPOSITION,
-    "b": NTERM_COMPOSITION,
-    "c": NTERM_COMPOSITION,
-    "x": {"O": 1, "C": 1},
-    "y": {},
-    "z": {"N": -1, "H": -1},
-    "i": {},
-    "n": {},
+FRAGMENT_ION_BASE_CHARGE_ADDUCTS: dict[IonType | str, str] = {
+    IonType.PRECURSOR: "+H+",
+    IonType.NEUTRAL: "",
+    IonType.A: "-e-",
+    IonType.B: "-e-",
+    IonType.C: "+2H+,+e-",
+    IonType.X: "-e-",
+    IonType.Y: "+2H+,+e-",
+    IonType.Z: "-e-",
+    IonType.AX: "-e-",
+    IonType.AY: "+H+",
+    IonType.AZ: "-e-",
+    IonType.BX: "-e-",
+    IonType.BY: "+H+",
+    IonType.BZ: "-e-",
+    IonType.CX: "+H+",
+    IonType.CY: "+3H+,+e-",
+    IonType.CZ: "+H+",
+    IonType.IMMONIUM: "+H+",
 }
 
 # According to the dissociation sites
-NEUTRAL_FRAGMENT_END_COMPOSITIONS: Dict[str, Dict[str, int]] = {
-    "p": CTERM_COMPOSITION,
-    "a": {"O": -1, "C": -1},
-    "b": {},
-    "c": {"N": 1, "H": 1},
-    "x": CTERM_COMPOSITION,
-    "y": CTERM_COMPOSITION,
-    "z": CTERM_COMPOSITION,
-    "i": {"O": -1, "C": -1},
-    "n": {},
+NEUTRAL_FRAGMENT_START_COMPOSITIONS: dict[IonType | str, dict[str, int]] = {
+    IonType.PRECURSOR: NTERM_COMPOSITION,
+    IonType.NEUTRAL: NTERM_COMPOSITION,
+    IonType.A: NTERM_COMPOSITION,
+    IonType.B: NTERM_COMPOSITION,
+    IonType.C: NTERM_COMPOSITION,
+    IonType.X: {"O": 1, "C": 1},
+    IonType.Y: {},
+    IonType.Z: {"N": -1, "H": -1},
+    IonType.IMMONIUM: {},
+    IonType.NEUTRAL: {},
 }
 
-NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS: dict[str, dict[str, int]] = {
-    "p": merge_dicts(
-        NEUTRAL_FRAGMENT_START_COMPOSITIONS["p"], NEUTRAL_FRAGMENT_END_COMPOSITIONS["p"]
-    ),
-    "n": merge_dicts(
-        NEUTRAL_FRAGMENT_START_COMPOSITIONS["n"], NEUTRAL_FRAGMENT_END_COMPOSITIONS["n"]
-    ),
-    "a": merge_dicts(
-        NEUTRAL_FRAGMENT_START_COMPOSITIONS["a"], NEUTRAL_FRAGMENT_END_COMPOSITIONS["a"]
-    ),
-    "b": merge_dicts(
-        NEUTRAL_FRAGMENT_START_COMPOSITIONS["b"], NEUTRAL_FRAGMENT_END_COMPOSITIONS["b"]
-    ),
-    "c": merge_dicts(
-        NEUTRAL_FRAGMENT_START_COMPOSITIONS["c"], NEUTRAL_FRAGMENT_END_COMPOSITIONS["c"]
-    ),
-    "x": merge_dicts(
-        NEUTRAL_FRAGMENT_START_COMPOSITIONS["x"], NEUTRAL_FRAGMENT_END_COMPOSITIONS["x"]
-    ),
-    "y": merge_dicts(
-        NEUTRAL_FRAGMENT_START_COMPOSITIONS["y"], NEUTRAL_FRAGMENT_END_COMPOSITIONS["y"]
-    ),
-    "z": merge_dicts(
-        NEUTRAL_FRAGMENT_START_COMPOSITIONS["z"], NEUTRAL_FRAGMENT_END_COMPOSITIONS["z"]
-    ),
-    "ax": merge_dicts(
-        NEUTRAL_FRAGMENT_END_COMPOSITIONS["a"], NEUTRAL_FRAGMENT_START_COMPOSITIONS["x"]
-    ),
-    "ay": merge_dicts(
-        NEUTRAL_FRAGMENT_END_COMPOSITIONS["a"], NEUTRAL_FRAGMENT_START_COMPOSITIONS["y"]
-    ),
-    "az": merge_dicts(
-        NEUTRAL_FRAGMENT_END_COMPOSITIONS["a"], NEUTRAL_FRAGMENT_START_COMPOSITIONS["z"]
-    ),
-    "bx": merge_dicts(
-        NEUTRAL_FRAGMENT_END_COMPOSITIONS["b"], NEUTRAL_FRAGMENT_START_COMPOSITIONS["x"]
-    ),
-    "by": merge_dicts(
-        NEUTRAL_FRAGMENT_END_COMPOSITIONS["b"], NEUTRAL_FRAGMENT_START_COMPOSITIONS["y"]
-    ),
-    "bz": merge_dicts(
-        NEUTRAL_FRAGMENT_END_COMPOSITIONS["b"], NEUTRAL_FRAGMENT_START_COMPOSITIONS["z"]
-    ),
-    "cx": merge_dicts(
-        NEUTRAL_FRAGMENT_END_COMPOSITIONS["c"], NEUTRAL_FRAGMENT_START_COMPOSITIONS["x"]
-    ),
-    "cy": merge_dicts(
-        NEUTRAL_FRAGMENT_END_COMPOSITIONS["c"], NEUTRAL_FRAGMENT_START_COMPOSITIONS["y"]
-    ),
-    "cz": merge_dicts(
-        NEUTRAL_FRAGMENT_END_COMPOSITIONS["c"], NEUTRAL_FRAGMENT_START_COMPOSITIONS["z"]
-    ),
-    "i": merge_dicts(
-        NEUTRAL_FRAGMENT_START_COMPOSITIONS["i"], NEUTRAL_FRAGMENT_END_COMPOSITIONS["i"]
-    ),
+# According to the dissociation sites
+NEUTRAL_FRAGMENT_END_COMPOSITIONS: dict[IonType | str, dict[str, int]] = {
+    IonType.PRECURSOR: CTERM_COMPOSITION,
+    IonType.A: {"O": -1, "C": -1},
+    IonType.B: {},
+    IonType.C: {"N": 1, "H": 1},
+    IonType.X: CTERM_COMPOSITION,
+    IonType.Y: CTERM_COMPOSITION,
+    IonType.Z: CTERM_COMPOSITION,
+    IonType.IMMONIUM: {"O": -1, "C": -1},
+    IonType.NEUTRAL: {},
 }
 
-FRAGMENT_ION_COMPOSITION_ADJUSTMENTS: Dict[str, Dict[str, int]] = {
-    "p": merge_dicts(
-        NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS["p"], FRAGMENT_ION_COMPOSITIONS["p"]
+NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS: dict[str | str, dict[str, int]] = {
+    IonType.PRECURSOR: _merge_dicts(
+        NEUTRAL_FRAGMENT_START_COMPOSITIONS[IonType.PRECURSOR], NEUTRAL_FRAGMENT_END_COMPOSITIONS[IonType.PRECURSOR]
     ),
-    "n": merge_dicts(
-        NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS["n"], FRAGMENT_ION_COMPOSITIONS["n"]
+    IonType.NEUTRAL: _merge_dicts(
+        NEUTRAL_FRAGMENT_START_COMPOSITIONS[IonType.NEUTRAL], NEUTRAL_FRAGMENT_END_COMPOSITIONS[IonType.NEUTRAL]
     ),
-    "a": merge_dicts(
-        NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS["a"], FRAGMENT_ION_COMPOSITIONS["a"]
+    IonType.A: _merge_dicts(
+        NEUTRAL_FRAGMENT_START_COMPOSITIONS[IonType.A], NEUTRAL_FRAGMENT_END_COMPOSITIONS[IonType.A]
     ),
-    "b": merge_dicts(
-        NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS["b"], FRAGMENT_ION_COMPOSITIONS["b"]
+    IonType.B: _merge_dicts(
+        NEUTRAL_FRAGMENT_START_COMPOSITIONS[IonType.B], NEUTRAL_FRAGMENT_END_COMPOSITIONS[IonType.B]
     ),
-    "c": merge_dicts(
-        NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS["c"], FRAGMENT_ION_COMPOSITIONS["c"]
+    IonType.C: _merge_dicts(
+        NEUTRAL_FRAGMENT_START_COMPOSITIONS[IonType.C], NEUTRAL_FRAGMENT_END_COMPOSITIONS[IonType.C]
     ),
-    "x": merge_dicts(
-        NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS["x"], FRAGMENT_ION_COMPOSITIONS["x"]
+    IonType.X: _merge_dicts(
+        NEUTRAL_FRAGMENT_START_COMPOSITIONS[IonType.X], NEUTRAL_FRAGMENT_END_COMPOSITIONS[IonType.X]
     ),
-    "y": merge_dicts(
-        NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS["y"], FRAGMENT_ION_COMPOSITIONS["y"]
+    IonType.Y: _merge_dicts(
+        NEUTRAL_FRAGMENT_START_COMPOSITIONS[IonType.Y], NEUTRAL_FRAGMENT_END_COMPOSITIONS[IonType.Y]
     ),
-    "z": merge_dicts(
-        NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS["z"], FRAGMENT_ION_COMPOSITIONS["z"]
+    IonType.Z: _merge_dicts(
+        NEUTRAL_FRAGMENT_START_COMPOSITIONS[IonType.Z], NEUTRAL_FRAGMENT_END_COMPOSITIONS[IonType.Z]
     ),
-    "ax": merge_dicts(
-        NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS["ax"], FRAGMENT_ION_COMPOSITIONS["ax"]
+    IonType.AX: _merge_dicts(
+        NEUTRAL_FRAGMENT_END_COMPOSITIONS[IonType.A], NEUTRAL_FRAGMENT_START_COMPOSITIONS[IonType.X]
     ),
-    "ay": merge_dicts(
-        NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS["ay"], FRAGMENT_ION_COMPOSITIONS["ay"]
+    IonType.AY: _merge_dicts(
+        NEUTRAL_FRAGMENT_END_COMPOSITIONS[IonType.A], NEUTRAL_FRAGMENT_START_COMPOSITIONS[IonType.Y]
     ),
-    "az": merge_dicts(
-        NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS["az"], FRAGMENT_ION_COMPOSITIONS["az"]
+    IonType.AZ: _merge_dicts(
+        NEUTRAL_FRAGMENT_END_COMPOSITIONS[IonType.A], NEUTRAL_FRAGMENT_START_COMPOSITIONS[IonType.Z]
     ),
-    "bx": merge_dicts(
-        NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS["bx"], FRAGMENT_ION_COMPOSITIONS["bx"]
+    IonType.BX: _merge_dicts(
+        NEUTRAL_FRAGMENT_END_COMPOSITIONS[IonType.B], NEUTRAL_FRAGMENT_START_COMPOSITIONS[IonType.X]
     ),
-    "by": merge_dicts(
-        NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS["by"], FRAGMENT_ION_COMPOSITIONS["by"]
+    IonType.BY: _merge_dicts(
+        NEUTRAL_FRAGMENT_END_COMPOSITIONS[IonType.B], NEUTRAL_FRAGMENT_START_COMPOSITIONS[IonType.Y]
     ),
-    "bz": merge_dicts(
-        NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS["bz"], FRAGMENT_ION_COMPOSITIONS["bz"]
+    IonType.BZ: _merge_dicts(
+        NEUTRAL_FRAGMENT_END_COMPOSITIONS[IonType.B], NEUTRAL_FRAGMENT_START_COMPOSITIONS[IonType.Z]
     ),
-    "cx": merge_dicts(
-        NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS["cx"], FRAGMENT_ION_COMPOSITIONS["cx"]
+    IonType.CX: _merge_dicts(
+        NEUTRAL_FRAGMENT_END_COMPOSITIONS[IonType.C], NEUTRAL_FRAGMENT_START_COMPOSITIONS[IonType.X]
     ),
-    "cy": merge_dicts(
-        NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS["cy"], FRAGMENT_ION_COMPOSITIONS["cy"]
+    IonType.CY: _merge_dicts(
+        NEUTRAL_FRAGMENT_END_COMPOSITIONS[IonType.C], NEUTRAL_FRAGMENT_START_COMPOSITIONS[IonType.Y]
     ),
-    "cz": merge_dicts(
-        NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS["cz"], FRAGMENT_ION_COMPOSITIONS["cz"]
+    IonType.CZ: _merge_dicts(
+        NEUTRAL_FRAGMENT_END_COMPOSITIONS[IonType.C], NEUTRAL_FRAGMENT_START_COMPOSITIONS[IonType.Z]
     ),
-    "i": merge_dicts(
-        NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS["i"], FRAGMENT_ION_COMPOSITIONS["i"]
+    IonType.IMMONIUM: _merge_dicts(
+        NEUTRAL_FRAGMENT_START_COMPOSITIONS[IonType.IMMONIUM], NEUTRAL_FRAGMENT_END_COMPOSITIONS[IonType.IMMONIUM]
     ),
 }
 
-AA_COMPOSITIONS: Dict[str, Dict[str, int]] = {
+FRAGMENT_ION_COMPOSITION_ADJUSTMENTS: dict[IonType | str, dict[str, int]] = {
+    IonType.PRECURSOR: _merge_dicts(
+        NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS[IonType.PRECURSOR], FRAGMENT_ION_COMPOSITIONS[IonType.PRECURSOR]
+    ),
+    IonType.NEUTRAL: _merge_dicts(
+        NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS[IonType.NEUTRAL], FRAGMENT_ION_COMPOSITIONS[IonType.NEUTRAL]
+    ),
+    IonType.A: _merge_dicts(
+        NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS[IonType.A], FRAGMENT_ION_COMPOSITIONS[IonType.A]
+    ),
+    IonType.B: _merge_dicts(
+        NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS[IonType.B], FRAGMENT_ION_COMPOSITIONS[IonType.B]
+    ),
+    IonType.C: _merge_dicts(
+        NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS[IonType.C], FRAGMENT_ION_COMPOSITIONS[IonType.C]
+    ),
+    IonType.X: _merge_dicts(
+        NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS[IonType.X], FRAGMENT_ION_COMPOSITIONS[IonType.X]
+    ),
+    IonType.Y: _merge_dicts(
+        NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS[IonType.Y], FRAGMENT_ION_COMPOSITIONS[IonType.Y]
+    ),
+    IonType.Z: _merge_dicts(
+        NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS[IonType.Z], FRAGMENT_ION_COMPOSITIONS[IonType.Z]
+    ),
+    IonType.AX: _merge_dicts(
+        NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS[IonType.AX], FRAGMENT_ION_COMPOSITIONS[IonType.AX]
+    ),
+    IonType.AY: _merge_dicts(
+        NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS[IonType.AY], FRAGMENT_ION_COMPOSITIONS[IonType.AY]
+    ),
+    IonType.AZ: _merge_dicts(
+        NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS[IonType.AZ], FRAGMENT_ION_COMPOSITIONS[IonType.AZ]
+    ),
+    IonType.BX: _merge_dicts(
+        NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS[IonType.BX], FRAGMENT_ION_COMPOSITIONS[IonType.BX]
+    ),
+    IonType.BY: _merge_dicts(
+        NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS[IonType.BY], FRAGMENT_ION_COMPOSITIONS[IonType.BY]
+    ),
+    IonType.BZ: _merge_dicts(
+        NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS[IonType.BZ], FRAGMENT_ION_COMPOSITIONS[IonType.BZ]
+    ),
+    IonType.CX: _merge_dicts(
+        NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS[IonType.CX], FRAGMENT_ION_COMPOSITIONS[IonType.CX]
+    ),
+    IonType.CY: _merge_dicts(
+        NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS[IonType.CY], FRAGMENT_ION_COMPOSITIONS[IonType.CY]
+    ),
+    IonType.CZ: _merge_dicts(
+        NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS[IonType.CZ], FRAGMENT_ION_COMPOSITIONS[IonType.CZ]
+    ),
+    IonType.IMMONIUM: _merge_dicts(
+        NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS[IonType.IMMONIUM], FRAGMENT_ION_COMPOSITIONS[IonType.IMMONIUM]
+    ),
+}
+
+AA_COMPOSITIONS: dict[str, dict[str, int]] = {
     "G": {"C": 2, "H": 3, "N": 1, "O": 1},  # Glycine
     "A": {"C": 3, "H": 5, "N": 1, "O": 1},  # Alanine
     "S": {"C": 3, "H": 5, "N": 1, "O": 2},  # Serine
@@ -274,16 +297,16 @@ AA_COMPOSITIONS: Dict[str, Dict[str, int]] = {
     "W": {"C": 11, "H": 10, "N": 2, "O": 1},  # Tryptophan
     "U": {"C": 3, "H": 5, "N": 1, "O": 1, "Se": 1},  # Selenocysteine
     "O": {"C": 12, "H": 19, "N": 3, "O": 2},  # Pyrrolysine
-    "X": {},  # Unknown amino acid
+    "X": {},  # Unknown amino acid (treated as 0 mass)
 }
 
-AMINO_ACIDS: Set[str] = set(AA_COMPOSITIONS.keys()) | {"B", "Z"}
+AMINO_ACIDS: set[str] = set(AA_COMPOSITIONS.keys()) | {"B", "Z"}
 ORDERED_AMINO_ACIDS = sorted(list(AMINO_ACIDS))
-AMBIGUOUS_AMINO_ACIDS: Set[str] = {"J", "B", "Z", "X"}
-MASS_AMBIGUOUS_AMINO_ACIDS: Set[str] = {"B", "Z"}
+AMBIGUOUS_AMINO_ACIDS: set[str] = {"J", "B", "Z", "X"}
+MASS_AMBIGUOUS_AMINO_ACIDS: set[str] = {"B", "Z"}
 
 # 3 letter codes
-AA_TO_THREE_LETTER_CODE: Dict[str, str] = {
+AA_TO_THREE_LETTER_CODE: dict[str, str] = {
     "A": "Ala",
     "R": "Arg",
     "N": "Asn",
@@ -313,12 +336,12 @@ AA_TO_THREE_LETTER_CODE: Dict[str, str] = {
 }
 
 # Reverse 3 letter codes
-THREE_LETTER_CODE_TO_AA: Dict[str, str] = {
+THREE_LETTER_CODE_TO_AA: dict[str, str] = {
     v: k for k, v in AA_TO_THREE_LETTER_CODE.items()
 }
 
 # Amino acid to name
-AA_TO_NAME: Dict[str, str] = {
+AA_TO_NAME: dict[str, str] = {
     "A": "Alanine",
     "R": "Arginine",
     "N": "Asparagine",
@@ -348,15 +371,15 @@ AA_TO_NAME: Dict[str, str] = {
 }
 
 # Reverse amino acid to name
-NAME_TO_AA: Dict[str, str] = {v: k for k, v in AA_TO_NAME.items()}
+NAME_TO_AA: dict[str, str] = {v: k for k, v in AA_TO_NAME.items()}
 
-FORWARD_ION_TYPES: Set[str] = {"a", "b", "c"}
-BACKWARD_ION_TYPES: Set[str] = {"x", "y", "z"}
-INTERNAL_ION_TYPES: Set[str] = {"ax", "ay", "az", "bx", "by", "bz", "cx", "cy", "cz"}
-TERMINAL_ION_TYPES: Set[str] = FORWARD_ION_TYPES | BACKWARD_ION_TYPES
-IMMONIUM_ION_TYPES: Set[str] = {"i"}
-VALID_ION_TYPES: Set[str] = TERMINAL_ION_TYPES | INTERNAL_ION_TYPES | IMMONIUM_ION_TYPES
-AVERAGINE_RATIOS: Dict[str, float] = {
+FORWARD_ION_TYPES: set[str] = {"a", "b", "c"}
+BACKWARD_ION_TYPES: set[str] = {"x", "y", "z"}
+INTERNAL_ION_TYPES: set[str] = {"ax", "ay", "az", "bx", "by", "bz", "cx", "cy", "cz"}
+TERMINAL_ION_TYPES: set[str] = FORWARD_ION_TYPES | BACKWARD_ION_TYPES
+IMMONIUM_ION_TYPES: set[str] = {"i"}
+VALID_ION_TYPES: set[str] = TERMINAL_ION_TYPES | INTERNAL_ION_TYPES | IMMONIUM_ION_TYPES
+AVERAGINE_RATIOS: dict[str, float] = {
     "C": 4.9384,
     "H": 7.7583,
     "N": 1.3577,
@@ -364,35 +387,7 @@ AVERAGINE_RATIOS: Dict[str, float] = {
     "S": 0.0417,
 }
 
-PROTEASES: Dict[str, str] = {
-    "arg-c": "(?<=R)",
-    "asp-n": "(?=D)",
-    "chymotrypsin": "(?<=[FWYL])(?!P)",
-    "chymotrypsin/P": "(?<=[FWYL])",
-    "promega-chymotrypsin-high-specificity": "(?<=[YFW])",
-    "promega-chymotrypsin-low-specificity": "(?<=[YFWLM])",
-    "glu-c": "(?<=E)",
-    "lys-c": "(?<=K)",
-    "lys-n": "(?=K)",
-    "proteinase k": "(?<=[AEFILTVWY])",
-    "trypsin": "(?<=[KR])(?=[^P])",
-    "trypsin/P": "(?<=[KR])",
-    "proalanase": "(?<=[PA])",
-    "elastase": r"(?<=[AGSVLI])",
-    "pepsin": r"(?<=[FLWY])",
-    "thermolysin": r"(?<=[LFIAVM])",
-    "proalanase-low-specificity": "(?<=[PASG])",
-    "non-specific": "()",
-    "no-cleave": "_",
-}
 
-PROTEASES_COMPILED = {}
-for key, value in PROTEASES.items():
-    try:
-        PROTEASES_COMPILED[key] = re.compile(value)
-    except Exception as e:
-        print(f"Error compiling regex for {key}: {e}")
-        raise e
 
 # Compiling regex patterns used in your module
 ISOTOPE_COMPONENT_PATTERN = re.compile(r"([0-9]*)([A-Za-z]+)(-?\d*\.?\d*)")
@@ -414,8 +409,21 @@ class ModType(str, Enum):
     CHARGE = "charge"
     CHARGE_ADDUCTS = "charge_adducts"
 
+ModTypeLiteral = Literal[
+    "nterm",
+    "cterm",
+    "isotope",
+    "static",
+    "labile",
+    "unknown",
+    "interval",
+    "internal",
+    "charge",
+    "charge_adducts",
+]
 
-def get_mod_type(mod: Union[str, ModType]) -> ModType:
+
+def get_mod_type(mod: ModTypeLiteral | ModType) -> ModType:
     # return ModType Enum for the given mod string
     if isinstance(mod, ModType):
         return mod
@@ -430,14 +438,14 @@ def get_mod_type(mod: Union[str, ModType]) -> ModType:
     raise ValueError(f"Unknown mod type: {mod}")
 
 
-def get_mods(mods: Union[None, ModType, Iterable[ModType]]) -> List[ModType]:
+def get_mods(mods: None | str | Iterable[str]) -> list[ModType]:
     """
     Get the list of modification types from the input.
 
     :param mods: Modification types as a ModType, iterable of ModTypes, or None.
-    :type mods: Union[None, ModType, Iterable[ModType]]
+    :type mods: None | ModType | Iterable[ModType]
     :return: List of ModType Enum values.
-    :rtype: List[ModType]
+    :rtype: list[ModType]
     :raises ValueError: If mods is not None, ModType, or iterable of ModTypes.
     """
 

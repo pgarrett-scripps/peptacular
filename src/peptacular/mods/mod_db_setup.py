@@ -12,8 +12,6 @@ from collections import Counter
 from functools import cached_property
 from typing import List, Dict, IO, Any, Optional, Union, Iterator, Tuple
 
-from ..proforma.dclasses import CHEM_COMPOSITION_TYPE
-
 from ..constants import ISOTOPIC_ATOMIC_MASSES
 from ..chem.chem_util import (
     write_chem_formula,
@@ -62,11 +60,11 @@ class ModEntry:
         }
 
 
-def parse_glycan_formula_db(formula: str, sep: str) -> CHEM_COMPOSITION_TYPE:
+def parse_glycan_formula_db(formula: str, sep: str) -> dict[str, int | float]:
     """
     Here to avoid a circular import. Real function is in peptacular.glycan
     """
-    d: CHEM_COMPOSITION_TYPE = {}
+    d: dict[str, int | float] = {}
 
     if formula == "":
         return d
@@ -115,8 +113,8 @@ def parse_glycan_formula_db(formula: str, sep: str) -> CHEM_COMPOSITION_TYPE:
 
 
 def glycan_comp_db(
-    glycan: CHEM_COMPOSITION_TYPE | str, sep: str = ""
-) -> CHEM_COMPOSITION_TYPE:
+    glycan: dict[str, int | float] | str, sep: str = ""
+) -> dict[str, int | float]:
     """
     Here to avoid a circular import. Real function is in peptacular.glycan
     """
@@ -125,7 +123,7 @@ def glycan_comp_db(
             glycan, sep
         )  # raises InvalidGlycanFormulaError
 
-    counts: CHEM_COMPOSITION_TYPE = {}
+    counts: dict[str, int | float] = {}
     for component, count in glycan.items():
 
         if MONOSACCHARIDES_DB.contains_name(component):

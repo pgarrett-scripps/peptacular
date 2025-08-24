@@ -3,9 +3,10 @@ chem_calc.py contains functions for parsing and writing chemical formulas, and f
 sequence with/and modifications.
 """
 
-from typing import Iterable
+import copy
+from typing import Counter, Iterable
 
-from ..proforma.dclasses import Mod, CHEM_COMPOSITION_TYPE, MOD_VALUE_TYPES
+from ..mod import Mod, MOD_VALUE_TYPES
 from ..utils2 import parse_ion_elements
 from ..util import parse_isotope_mods
 
@@ -36,12 +37,12 @@ from ..mods.mod_db import (
 from ..utils2 import convert_type
 
 
-def glycan_to_chem(glycan: CHEM_COMPOSITION_TYPE | str) -> str:
+def glycan_to_chem(glycan: dict[str, int | float] | str) -> str:
     """
     Converts a glycan composition/formula to a chemical formula.
 
     :param glycan: A dictionary containing the glycan components and their counts, or a glycan formula string.
-    :type glycan: CHEM_COMPOSITION_TYPE | str
+    :type glycan: dict[str, int | float] | str
 
     :return: A chemical formula string.
     :rtype: str
@@ -59,7 +60,7 @@ def glycan_to_chem(glycan: CHEM_COMPOSITION_TYPE | str) -> str:
     return write_chem_formula(glycan_comp(glycan))
 
 
-def mod_comp(mod: MOD_VALUE_TYPES) -> CHEM_COMPOSITION_TYPE:
+def mod_comp(mod: MOD_VALUE_TYPES | Mod) -> dict[str, int | float]:
     """
     Parse a modification string.
 
@@ -101,7 +102,7 @@ def mod_comp(mod: MOD_VALUE_TYPES) -> CHEM_COMPOSITION_TYPE:
 
 def estimate_comp(
     neutral_mass: float, isotopic_mods: Iterable[MOD_VALUE_TYPES] | None = None
-) -> CHEM_COMPOSITION_TYPE:
+) -> dict[str, int | float]:
     """
     Estimate the number of each element in a molecule based on its molecular mass using the averagine model.
 
@@ -134,8 +135,7 @@ def estimate_comp(
 
     return composition
 
-
-def _parse_glycan_comp(glycan_str: str) -> CHEM_COMPOSITION_TYPE:
+def _parse_glycan_comp(glycan_str: str) -> dict[str, int | float]:
     """
     Parse a glycan string and return its mass.
 
@@ -205,7 +205,7 @@ def _parse_glycan_comp(glycan_str: str) -> CHEM_COMPOSITION_TYPE:
     return parse_chem_formula(entry.composition)
 
 
-def _parse_mod_comp(mod: str) -> CHEM_COMPOSITION_TYPE | None:
+def _parse_mod_comp(mod: str) -> dict[str, int | float] | None:
     """
     Parses a modification composition and returns a dictionary with the element and their counts.
 
@@ -414,50 +414,53 @@ def parse_mod_delta_mass_only(mod: str | int | float | Mod) -> float | None:
 
 
 def apply_isotope_mods_to_composition(
-    composition: CHEM_COMPOSITION_TYPE | str,
+    composition: dict[str, int | float] | str,
     isotopic_mods: Iterable[MOD_VALUE_TYPES] | None,
-) -> CHEM_COMPOSITION_TYPE:
+    inplace: bool = True,
+) -> dict[str, int | float]:
     """
     Apply isotopic modifications to a composition.
-
+    
     :param composition: The composition to apply the isotopic modifications to.
-    :type composition: CHEM_COMPOSITION_TYPE
+    :type composition: MutableMapping[str, int | float] | str
     :param isotopic_mods: The isotopic modifications.
-    :type isotopic_mods: List[str | Mod] | None
-
-    :return: The modified composition.
-    :rtype: Dict[str, int | float]
-
+    :type isotopic_mods: Iterable[MOD_VALUE_TYPES] | None
+    :param inplace: Whether to modify the composition in place. Default is True.
+    :type inplace: bool
+    :return: The modified composition (same type as input, or dict if input was str).
+    :rtype: Same as input type | dict[str, int | float]
+    
     .. code-block:: python
-
+    
         # Apply isotopic modifications to a composition.
         >>> apply_isotope_mods_to_composition({'C': 6, 'H': 12, 'O': 6}, ['13C'])
         {'H': 12, 'O': 6, '13C': 6}
-
+        
         # Apply multiple isotopic modifications to a composition.
         >>> apply_isotope_mods_to_composition({'C': 6, 'H': 12, 'O': 6}, ['13C', '15N'])
         {'H': 12, 'O': 6, '13C': 6}
-
-        # Works with floats
-        >>> apply_isotope_mods_to_composition({'C': 6.6, 'H': 12, 'O': 6}, ['13C', '15N'])
-        {'H': 12, 'O': 6, '13C': 6.6}
-
+        
+        # Works with Counter
+        >>> counter = Counter({'C': 6, 'H': 12, 'O': 6})
+        >>> result = apply_isotope_mods_to_composition(counter, ['13C'])
+        >>> isinstance(result, Counter)  # True
     """
     if isinstance(composition, str):
-        composition = parse_chem_formula(composition)
-    else:
-        composition = composition.copy()
+        return apply_isotope_mods_to_composition(parse_chem_formula(composition), isotopic_mods, inplace=False)
+        
+    if not inplace:
+        composition = copy.deepcopy(composition)
 
     if isotopic_mods is None:
         return composition
-
+        
     isotope_map = parse_isotope_mods(isotopic_mods)
+    
     for element, isotope_label in isotope_map.items():
         if element in composition:
-
             if element == isotope_label:
                 continue
-
+                
             # Check if the isotope label already exists in the composition
             if isotope_label in composition:
                 # Add the count of the original element to the isotope label count
@@ -465,13 +468,41 @@ def apply_isotope_mods_to_composition(
             else:
                 # If the isotope label doesn't exist, create it with the count of the original element
                 composition[isotope_label] = composition[element]
-
             del composition[element]
-
+            
     return composition
 
 
-def _parse_adduct_comp(adduct: str) -> CHEM_COMPOSITION_TYPE:
+
+def get_isotope_composition_change(
+    composition: dict[str, int | float] | str,
+    isotopic_mods: Iterable[MOD_VALUE_TYPES] | None,
+) -> dict[str, int | float]:
+    if isinstance(composition, str):
+        return get_isotope_composition_change(parse_chem_formula(composition), isotopic_mods)
+    
+    if isotopic_mods is None:
+        return {}
+    
+    composition_change: dict[str, int | float] = {}
+    isotope_map = parse_isotope_mods(isotopic_mods)
+    
+    for element, isotope_label in isotope_map.items():
+        if element in composition:
+            if element == isotope_label:
+                continue
+            
+            # Record the removal of the original element
+            composition_change[element] = composition_change.get(element, 0) - composition[element]
+            
+            # Record the addition of the isotope label
+            composition_change[isotope_label] = composition_change.get(isotope_label, 0) + composition[element]
+    
+    return composition_change
+
+
+
+def _parse_adduct_comp(adduct: str) -> dict[str, int | float]:
     """
     Parse an adduct string and return its mass.
 
@@ -497,7 +528,7 @@ def _parse_adduct_comp(adduct: str) -> CHEM_COMPOSITION_TYPE:
 
     """
 
-    comp: CHEM_COMPOSITION_TYPE = {}
+    comp: dict[str, int | float] = {}
     element_count, element_symbol, element_charge = parse_ion_elements(adduct)
     comp[element_symbol] = element_count
     comp["e"] = -1 * element_charge * element_count
@@ -505,12 +536,12 @@ def _parse_adduct_comp(adduct: str) -> CHEM_COMPOSITION_TYPE:
     return comp
 
 
-def parse_charge_adducts_comp(adducts: MOD_VALUE_TYPES) -> CHEM_COMPOSITION_TYPE:
+def parse_charge_adducts_comp(adducts: int | float | str | Mod) -> Counter[str]:
     """
     Parse the charge adducts and return their mass.
 
     :param adducts: The charge adducts to parse.
-    :type adducts: ModValue
+    :type adducts: MOD_VALUE_TYPES | Mod
 
     :return: The composition of the charge adducts.
     :rtype: Dict[str, int | float]
@@ -527,21 +558,20 @@ def parse_charge_adducts_comp(adducts: MOD_VALUE_TYPES) -> CHEM_COMPOSITION_TYPE
     """
 
     if isinstance(adducts, Mod):
-        return parse_charge_adducts_comp(adducts.val)
+        return Counter(parse_charge_adducts_comp(adducts.val))
 
     if not isinstance(adducts, str):
         raise TypeError(f"Invalid type for adducts: {type(adducts)}! Must be a string.")
 
     adduct_comps: list[str] = adducts.split(",")
 
-    comps: list[CHEM_COMPOSITION_TYPE] = []
+    comps: list[dict[str, int | float]] = []
     for adduct_comp in adduct_comps:
         comps.append(_parse_adduct_comp(adduct_comp))
 
     # Merge the compositions
-    composition: CHEM_COMPOSITION_TYPE = {}
+    composition: Counter[str] = Counter()
     for comp in comps:
-        for k, v in comp.items():
-            composition[k] = composition.get(k, 0) + v
+        composition.update(comp)
 
     return composition

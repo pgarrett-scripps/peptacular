@@ -4,7 +4,7 @@ from collections import UserDict
 from collections.abc import Iterable, Mapping
 from typing import Any
 
-from .mod import setup_mod
+from ...mod import setup_mod
 from .modlist import ModList, setup_mod_list, MODLIST_DATATYPE
 
 MODDICT_VALUE_TYPES = ModList | MODLIST_DATATYPE | Iterable[MODLIST_DATATYPE]
@@ -138,6 +138,7 @@ class ModDict(UserDict[int, ModList]):
         default_modlist = (
             self._normalize_value(default) if default is not None else ModList()
         )
+        
         if default_modlist:  # Only set if non-empty
             self.data[key] = default_modlist
             return self.data[key]

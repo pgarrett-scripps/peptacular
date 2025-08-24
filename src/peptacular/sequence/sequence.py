@@ -963,7 +963,7 @@ def find_subsequence_indices(
 
 def coverage(
     sequence: str | ProFormaAnnotation,
-    subsequences: list[str | ProFormaAnnotation],
+    subsequences: Iterable[str | ProFormaAnnotation],
     accumulate: bool = False,
     ignore_mods: bool = False,
     ignore_ambiguity: bool = False,
@@ -1013,36 +1013,14 @@ def coverage(
     """
 
     sequence_annot = get_annotation_input(sequence, copy=False)
+    subsequences_annot = [get_annotation_input(subseq, copy=False) for subseq in subsequences]
 
-    cov_arr = [0] * len(sequence_annot)
-
-    for subsequence in subsequences:
-        subsequencue_annot = get_annotation_input(subsequence, copy=False)
-
-        ambiguity_intervals = subsequencue_annot.pop_intervals()
-        ambiguity_intervals = [i for i in ambiguity_intervals if i.ambiguous]
-
-        subsequence_indicies = subsequencue_annot.find_indices(
-            other=sequence_annot, ignore_mods=ignore_mods
-        )
-
-        peptide_cov = [1] * len(subsequencue_annot)
-        if ignore_ambiguity is False:
-            for interval in ambiguity_intervals:
-                for i in range(interval.start, interval.end):
-                    peptide_cov[i] = 0
-
-        for subsequence_index in subsequence_indicies:
-            start = subsequence_index
-
-            for i, cov in enumerate(peptide_cov):
-                if accumulate:
-                    cov_arr[start + i] += cov
-                else:
-                    cov_arr[start + i] = cov
-
-    return cov_arr
-
+    return sequence_annot.coverage(
+        subsequences_annot,
+        accumulate=accumulate,
+        ignore_mods=ignore_mods,
+        ignore_ambiguity=ignore_ambiguity,
+    )
 
 def percent_coverage(
     sequence: str | ProFormaAnnotation,
@@ -1084,18 +1062,15 @@ def percent_coverage(
 
     """
 
-    cov_arr = coverage(
-        sequence,
-        subsequences,
+    sequence_annot = get_annotation_input(sequence, copy=False)
+    subsequences_annot = [get_annotation_input(subseq, copy=False) for subseq in subsequences]
+
+    return sequence_annot.percent_coverage(
+        subsequences_annot,
         accumulate=accumulate,
         ignore_mods=ignore_mods,
         ignore_ambiguity=ignore_ambiguity,
     )
-
-    if len(cov_arr) == 0:
-        return 0
-
-    return sum(cov_arr) / len(cov_arr)
 
 
 def modification_coverage(

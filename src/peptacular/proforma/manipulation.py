@@ -1,11 +1,69 @@
 from __future__ import annotations
 from collections import Counter
 import regex as re
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Iterable
 from .utils import parse_static_mods
 
 if TYPE_CHECKING:
     from .annotation import ProFormaAnnotation
+
+
+def coverage(
+    annotation: ProFormaAnnotation,
+    annotations: Iterable[ProFormaAnnotation],
+    accumulate: bool = False,
+    ignore_mods: bool = False,
+    ignore_ambiguity: bool = False,
+) -> list[int]:
+
+    cov_arr = [0] * len(annotation)
+
+    for sub_annots in annotations:
+        peptide_cov = [1] * len(sub_annots)
+        if ignore_ambiguity is False:
+            for interval in sub_annots.get_interval_list().get_ambiguous_intervals():
+                for i in range(interval.start, interval.end):
+                    peptide_cov[i] = 0
+
+        for subsequence_index in sub_annots.find_indices(
+            other=annotation, ignore_mods=ignore_mods
+        ):
+            start = subsequence_index
+
+            for i, cov in enumerate(peptide_cov):
+                if accumulate:
+                    cov_arr[start + i] += cov
+                else:
+                    cov_arr[start + i] = cov
+                    
+    # apply to annotation
+    if ignore_ambiguity is False:
+        # Set coverage to 0 for ambiguous positions
+        for interval in annotation.get_interval_list().get_ambiguous_intervals():
+            for i in range(interval.start, interval.end):
+                cov_arr[i] = 0
+
+    return cov_arr
+
+def percent_coverage(
+    annotation: ProFormaAnnotation,
+    annotations: Iterable[ProFormaAnnotation],
+    accumulate: bool = False,
+    ignore_mods: bool = False,
+    ignore_ambiguity: bool = False,
+) -> float:
+
+    cov_arr = coverage(
+        annotation,
+        annotations,
+        accumulate=accumulate,
+        ignore_mods=ignore_mods,
+        ignore_ambiguity=ignore_ambiguity,
+    )
+    if len(cov_arr) == 0:
+        return 0.0
+
+    return sum(cov_arr) / len(cov_arr)
 
 
 def condense_static_mods(

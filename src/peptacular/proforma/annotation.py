@@ -3,7 +3,7 @@ import copy
 from copy import deepcopy
 from typing import Any, Iterable, Self, cast
 
-#from .serializer import serialize_annotation
+from .serializer import serialize_annotation
 from .parser import ProFormaParser
 from .ambiguity import annotate_ambiguity
 from .manipulation import (
@@ -12,6 +12,8 @@ from .manipulation import (
     count_residues,
     percent_residues,
     find_indices,
+    coverage,
+    percent_coverage,
 )
 from .slicing import (
     generate_sliding_windows,
@@ -27,6 +29,16 @@ from .combinatorics import (
     generate_product,
     generate_combinations,
     generate_combinations_with_replacement,
+)
+
+from ..digestion import (
+    DigestionMixin,
+)
+
+from .mass_comp import (
+    comp,
+    mass,
+    mz
 )
 
 
@@ -49,7 +61,9 @@ from .dclasses import (
 from ..constants import (
     AMBIGUOUS_AMINO_ACIDS,
     MASS_AMBIGUOUS_AMINO_ACIDS,
+    IonType,
     ModType,
+    ModTypeLiteral,
     get_mod_type,
     get_mods,
 )
@@ -57,7 +71,7 @@ from ..constants import (
 from ..property import SequencePropertyMixin
 
 
-class ProFormaAnnotation(SequencePropertyMixin):
+class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
 
     def __init__(
         self,
@@ -463,12 +477,12 @@ class ProFormaAnnotation(SequencePropertyMixin):
         self._charge = None
         return value
 
-    def pop_mod_by_type(self, mod_type: ModType) -> Any:
+    def pop_mod_by_type(self, mod_type: ModTypeLiteral) -> Any:
         """
         Get the pop method for a given mod type.
         """
 
-        mod_type_to_pop_method: dict[ModType, Callable[[], Any]] = {
+        mod_type_to_pop_method: dict[str, Callable[[], Any]] = {
             ModType.ISOTOPE: self.pop_isotope_mods,
             ModType.STATIC: self.pop_static_mods,
             ModType.LABILE: self.pop_labile_mods,
@@ -488,7 +502,7 @@ class ProFormaAnnotation(SequencePropertyMixin):
 
     def pop_mods(
         self,
-        mods: ModType | Iterable[ModType] | None = None,
+        mods: ModTypeLiteral | Iterable[ModTypeLiteral] | None = None,
     ) -> dict[str, Any]:
         """
         Pop all mods and return them in a dictionary
@@ -498,7 +512,7 @@ class ProFormaAnnotation(SequencePropertyMixin):
 
         d: dict[str, Any] = {}
         for mod_type in mod_types:
-            d[mod_type.value] = self.pop_mod_by_type(mod_type)
+            d[mod_type.value] = self.pop_mod_by_type(mod_type.value)
 
         return d
 
@@ -604,17 +618,18 @@ class ProFormaAnnotation(SequencePropertyMixin):
         self.charge = charge
         return self
 
+
     def set_mod_by_type(
         self,
         mod: Any,
-        mod_type: ModType,
+        mod_type: ModTypeLiteral,
         inplace: bool = True,
     ) -> Self:
         """Set a modification by type, replacing any existing mods of that type"""
         if not inplace:
             return self.copy().set_mod_by_type(mod, mod_type, inplace=True)
 
-        mod_type = get_mod_type(mod_type)
+        mod_type_enum = get_mod_type(mod_type)
 
         mod_type_methods: dict[ModType, Callable[[], Self]] = {
             ModType.ISOTOPE: lambda: self.set_isotope_mods(mod, inplace=True),
@@ -629,7 +644,7 @@ class ProFormaAnnotation(SequencePropertyMixin):
             ModType.CHARGE_ADDUCTS: lambda: self.set_charge_adducts(mod, inplace=True),
         }
 
-        mod_type_methods[mod_type]()
+        mod_type_methods[mod_type_enum]()
         return self
 
     """
@@ -857,7 +872,7 @@ class ProFormaAnnotation(SequencePropertyMixin):
 
     def remove_mods(
         self,
-        mods: ModType | Iterable[ModType] | None = None,
+        mods: ModTypeLiteral | Iterable[ModTypeLiteral] | None = None,
         inplace: bool = True,
     ) -> Self:
         if inplace is False:
@@ -913,7 +928,7 @@ class ProFormaAnnotation(SequencePropertyMixin):
 
     def filter_mods(
         self,
-        mods: ModType | Iterable[ModType] | None = None,
+        mods: ModTypeLiteral | Iterable[ModTypeLiteral] | None = None,
         inplace: bool = True,
     ) -> Self:
         """
@@ -934,7 +949,7 @@ class ProFormaAnnotation(SequencePropertyMixin):
 
         for mod_type in mod_types_to_remove:
             # Pop the mods of the specified type
-            _ = self.pop_mod_by_type(mod_type)
+            _ = self.pop_mod_by_type(mod_type.value)
 
         return self
 
@@ -1029,6 +1044,36 @@ class ProFormaAnnotation(SequencePropertyMixin):
         """
         return find_indices(
             self, other, ignore_mods=ignore_mods, ignore_intervals=ignore_intervals
+        )
+    
+    def coverage(
+        self,
+        annotations: Iterable[Self],
+        accumulate: bool = False,
+        ignore_mods: bool = False,
+        ignore_ambiguity: bool = False,
+    ) -> list[int]:
+        return coverage(
+            annotation=self,
+            annotations=annotations,
+            accumulate=accumulate,
+            ignore_mods=ignore_mods,
+            ignore_ambiguity=ignore_ambiguity,
+        )
+
+    def percent_coverage(
+        self,
+        annotations: Iterable[Self],
+        accumulate: bool = False,
+        ignore_mods: bool = False,
+        ignore_ambiguity: bool = False,
+    ) -> float:
+        return percent_coverage(
+            annotation=self,
+            annotations=annotations,
+            accumulate=accumulate,
+            ignore_mods=ignore_mods,
+            ignore_ambiguity=ignore_ambiguity,
         )
 
     # Add slice and split convenience methods delegating to module-level functions
@@ -1130,3 +1175,91 @@ class ProFormaAnnotation(SequencePropertyMixin):
             self, window_size, keep_terms, slice_intervals, keep_labile, reverse
         ):
             yield cast(Self, window)
+
+
+    def mass(
+        self,
+        ion_type: str = IonType.PRECURSOR,
+        monoisotopic: bool = True,
+        isotope: int = 0,
+        loss: float = 0.0,
+        use_isotope_on_mods: bool = False,
+        precision: int | None = None,
+        inplace: bool = False,
+    ) -> float:
+        """
+        Calculate the mass of the annotation.
+        
+        :param ion_type: The type of ion (default: "p" for proton)
+        :param monoisotopic: Whether to use monoisotopic masses (default: True)
+        :param isotope: Isotope number (default: 0)
+        :param loss: Mass loss to apply (default: 0.0)
+        :param use_isotope_on_mods: Whether to apply isotopes to modifications (default: False)
+        :param precision: Mass precision (default: None)
+        :param inplace: Whether to modify in place (default: False)
+        :return: The calculated mass
+        """
+        return mass(
+            self,
+            ion_type=ion_type,
+            monoisotopic=monoisotopic,
+            isotope=isotope,
+            loss=loss,
+            use_isotope_on_mods=use_isotope_on_mods,
+            precision=precision,
+            inplace=inplace,
+        )
+
+    def mz(
+        self,
+        ion_type: str = IonType.PRECURSOR,
+        monoisotopic: bool = True,
+        isotope: int = 0,
+        loss: float = 0.0,
+        precision: int | None = None,
+    ) -> float:
+        """
+        Calculate the m/z ratio of the annotation.
+        
+        :param ion_type: The type of ion (default: "p" for proton)
+        :param monoisotopic: Whether to use monoisotopic masses (default: True)
+        :param isotope: Isotope number (default: 0)
+        :param loss: Mass loss to apply (default: 0.0)
+        :param precision: Precision for the result (default: None)
+        :return: The calculated m/z ratio
+        """
+        return mz(
+            self,
+            ion_type=ion_type,
+            monoisotopic=monoisotopic,
+            isotope=isotope,
+            loss=loss,
+            precision=precision,
+        )
+
+    def comp(
+        self,
+        ion_type: str = IonType.PRECURSOR,
+        estimate_delta: bool = False,
+        isotope: int = 0,
+        use_isotope_on_mods: bool = False,
+        inplace: bool = False,
+    ) -> dict[str, int | float]:
+        """
+        Calculate the elemental composition of the annotation.
+        
+        :param ion_type: The type of ion (default: "p" for proton)
+        :param estimate_delta: Whether to estimate delta mass composition (default: False)
+        :param isotope: Isotope number (default: 0)
+        :param use_isotope_on_mods: Whether to apply isotopes to modifications (default: False)
+        :param inplace: Whether to modify in place (default: False)
+        :return: Dictionary representing the elemental composition
+        """
+        return comp(
+            self,
+            ion_type=ion_type,
+            estimate_delta=estimate_delta,
+            isotope=isotope,
+            use_isotope_on_mods=use_isotope_on_mods,
+            inplace=inplace,
+        )

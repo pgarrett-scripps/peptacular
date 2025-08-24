@@ -9,7 +9,7 @@ from typing import Callable, Generator, Iterable
 
 from .constants import ADDUCT_PATTERN, ISOTOPE_NUM_PATTERN
 
-from .proforma.dclasses import CHEM_COMPOSITION_TYPE, MOD_VALUE_TYPES, Mod
+from .mod import MOD_VALUE_TYPES, Mod
 
 
 def get_regex_match_indices(
@@ -291,7 +291,7 @@ def _parse_integer(proforma_sequence: str) -> tuple[int, int]:
     return int(proforma_sequence[:i]), i
 
 
-def parse_charge_adducts(mod: MOD_VALUE_TYPES) -> CHEM_COMPOSITION_TYPE:
+def parse_charge_adducts(mod: MOD_VALUE_TYPES) -> dict[str, int | float]:
     """
     Parse charge adducts into a dictionary, mapping the ion to its count
     :param mod: The charge adducts to parse.
@@ -300,7 +300,7 @@ def parse_charge_adducts(mod: MOD_VALUE_TYPES) -> CHEM_COMPOSITION_TYPE:
     :raises TypeError: If the mod is not a string or Mod instance.
 
     :return: Dictionary of charge adducts.
-    :rtype: CHEM_COMPOSITION_TYPE
+    :rtype: dict[str, int | float]
 
     .. code-block:: python
 
@@ -333,7 +333,7 @@ def parse_charge_adducts(mod: MOD_VALUE_TYPES) -> CHEM_COMPOSITION_TYPE:
             f"Invalid type for charge adducts: {type(mod)}! Mod or Mod.val must be of type string."
         )
 
-    charge_adducts: CHEM_COMPOSITION_TYPE = {}
+    charge_adducts: dict[str, int | float] = {}
 
     mods: list[str] = mod.split(",")
     for m in mods:
@@ -359,12 +359,12 @@ def parse_charge_adducts(mod: MOD_VALUE_TYPES) -> CHEM_COMPOSITION_TYPE:
     return charge_adducts
 
 
-def write_charge_adducts(charge_adducts: CHEM_COMPOSITION_TYPE) -> Mod:
+def write_charge_adducts(charge_adducts: dict[str, int | float]) -> Mod:
     """
     Converts the dictionary of charge adducts into a list of Mod instances.
 
     :param charge_adducts: Dictionary of charge adducts.
-    :type: CHEM_COMPOSITION_TYPE
+    :type: dict[str, int | float]
 
     :return: The charge adducts as a Mod instance.
     :rtype: Mod

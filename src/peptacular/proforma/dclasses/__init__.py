@@ -1,4 +1,4 @@
-from .mod import Mod, MOD_VALUE_TYPES, setup_mod
+from ...mod import Mod, MOD_VALUE_TYPES, setup_mod
 from .interval import Interval, ModInterval, setup_interval, ACCEPTED_INTERVAL_DATATYPE
 from .modlist import (
     ModList,

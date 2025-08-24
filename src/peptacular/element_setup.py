@@ -4,7 +4,7 @@ Element_seup.py
 
 from copy import deepcopy
 from dataclasses import dataclass
-from typing import Union, List, Dict, Tuple, Optional, Callable, TypeVar
+from typing import Callable, TypeVar
 from collections import defaultdict
 
 T = TypeVar("T")
@@ -21,7 +21,7 @@ class ElementInfo:
     mass_number: int
     relative_atomic_mass: float
     isotopic_composition: float
-    standard_atomic_weight: Optional[Union[List[float], float]]
+    standard_atomic_weight: float | list[float] | None
     notes: str
 
     def __str__(self) -> str:
@@ -32,13 +32,13 @@ class ElementInfo:
 
 
 def construct_element_info(
-    atomic_number: Optional[int],
-    atomic_symbol: Optional[str],
-    mass_number: Optional[int],
-    relative_atomic_mass: Optional[float],
-    isotopic_composition: Optional[float],
-    standard_atomic_weight: Optional[Union[List[float], float]],
-    notes: Optional[str],
+    atomic_number: int | None,
+    atomic_symbol: str | None,
+    mass_number: int | None,
+    relative_atomic_mass: float | None,
+    isotopic_composition: float | None,
+    standard_atomic_weight: list[float] | float | None,
+    notes: str | None,
 ) -> ElementInfo:
 
     if atomic_number is None:
@@ -62,11 +62,10 @@ def construct_element_info(
         notes=notes if notes is not None else "",
     )
 
-
-def get_element_info(chem_file_path: str) -> List[ElementInfo]:
+def get_element_info(chem_file_path: str) -> list[ElementInfo]:
     # From https://physics.nist.gov/cgi-bin/Compositions/stand_alone.pl?ele=&all=all&ascii=ascii2
 
-    element_infos: List[ElementInfo] = []
+    element_infos: list[ElementInfo] = []
     with open(chem_file_path, "r") as file:
         # Initialize variables
         atomic_number = None
@@ -152,15 +151,15 @@ def get_element_info(chem_file_path: str) -> List[ElementInfo]:
 
 
 def _map_atomic_number_to_infos(
-    infos: List[ElementInfo],
-) -> Dict[int, List[ElementInfo]]:
-    d: Dict[int, List[ElementInfo]] = defaultdict(list)
+    infos: list[ElementInfo],
+) -> dict[int, list[ElementInfo]]:
+    d: dict[int, list[ElementInfo]] = defaultdict(list)
     for info in infos:
         d[info.atomic_number].append(info)
     return dict(d)
 
 
-def _add_isotope_aliases(d: Dict[str, T]) -> None:
+def _add_isotope_aliases(d: dict[str, T]) -> None:
     """Add common isotope aliases to the dictionary."""
     alias_mappings = [("T", "3T"), ("D", "2D"), ("3H", "3T"), ("2H", "2D")]
 
@@ -170,11 +169,11 @@ def _add_isotope_aliases(d: Dict[str, T]) -> None:
 
 
 def _process_element_infos(
-    elem_infos: List[ElementInfo],
-    atomic_symbol_processor: Callable[[List[ElementInfo]], T],
+    elem_infos: list[ElementInfo],
+    atomic_symbol_processor: Callable[[list[ElementInfo]], T],
     individual_isotope_processor: Callable[[ElementInfo], T],
     add_aliases: bool = True,
-) -> Dict[str, T]:
+) -> dict[str, T]:
     """
     Generic function to process element infos with different processors.
 
@@ -187,7 +186,7 @@ def _process_element_infos(
     # Map atomic number to all element infos
     aa_infos = _map_atomic_number_to_infos(elem_infos)
 
-    d: Dict[str, T] = {}
+    d: dict[str, T] = {}
 
     for _, infos in aa_infos.items():
         infos.sort(key=lambda x: x.isotopic_composition, reverse=True)
@@ -208,11 +207,11 @@ def _process_element_infos(
     return d
 
 
-def map_atomic_number_to_symbol(elem_infos: List[ElementInfo]) -> Dict[int, str]:
+def map_atomic_number_to_symbol(elem_infos: list[ElementInfo]) -> dict[int, str]:
     """Map atomic number to atomic symbol (using monoisotopic info)."""
     aa_infos = _map_atomic_number_to_infos(elem_infos)
 
-    d: Dict[int, str] = {}
+    d: dict[int, str] = {}
     for _, infos in aa_infos.items():
         infos.sort(key=lambda x: x.isotopic_composition, reverse=True)
         monoisotopic_info = infos[0]
@@ -222,11 +221,11 @@ def map_atomic_number_to_symbol(elem_infos: List[ElementInfo]) -> Dict[int, str]
 
 
 def map_atomic_symbol_to_average_mass(
-    elem_infos: List[ElementInfo],
-) -> Dict[str, float]:
+    elem_infos: list[ElementInfo],
+) -> dict[str, float]:
     """Map atomic symbol to average mass."""
 
-    def process_atomic_symbol(infos: List[ElementInfo]) -> float:
+    def process_atomic_symbol(infos: list[ElementInfo]) -> float:
         monoisotopic_info = infos[0]
         ave_mass = sum(info.average_mass_component() for info in infos)
         return monoisotopic_info.relative_atomic_mass if ave_mass == 0 else ave_mass
@@ -239,10 +238,10 @@ def map_atomic_symbol_to_average_mass(
     )
 
 
-def get_isotopic_atomic_compositions(elem_infos: List[ElementInfo]) -> Dict[str, float]:
+def get_isotopic_atomic_compositions(elem_infos: list[ElementInfo]) -> dict[str, float]:
     """Get isotopic atomic compositions."""
 
-    def process_atomic_symbol(infos: List[ElementInfo]) -> float:
+    def process_atomic_symbol(infos: list[ElementInfo]) -> float:
         return infos[0].isotopic_composition  # monoisotopic
 
     def process_individual_isotope(info: ElementInfo) -> float:
@@ -253,10 +252,10 @@ def get_isotopic_atomic_compositions(elem_infos: List[ElementInfo]) -> Dict[str,
     )
 
 
-def get_isotopic_atomic_masses(elem_infos: List[ElementInfo]) -> Dict[str, float]:
+def get_isotopic_atomic_masses(elem_infos: list[ElementInfo]) -> dict[str, float]:
     """Get isotopic atomic masses."""
 
-    def process_atomic_symbol(infos: List[ElementInfo]) -> float:
+    def process_atomic_symbol(infos: list[ElementInfo]) -> float:
         return infos[0].relative_atomic_mass  # monoisotopic
 
     def process_individual_isotope(info: ElementInfo) -> float:
@@ -268,20 +267,20 @@ def get_isotopic_atomic_masses(elem_infos: List[ElementInfo]) -> Dict[str, float
 
 
 def map_atomic_number_to_comp_neutron_offset(
-    elem_infos: List[ElementInfo],
-) -> Dict[str, List[Tuple[int, float]]]:
+    elem_infos: list[ElementInfo],
+) -> dict[str, list[tuple[int, float]]]:
     """Map atomic number to composition with neutron offset."""
 
-    def process_atomic_symbol(infos: List[ElementInfo]) -> List[Tuple[int, float]]:
+    def process_atomic_symbol(infos: list[ElementInfo]) -> list[tuple[int, float]]:
         monoisotopic_info = infos[0]
-        result: List[Tuple[int, float]] = []
+        result: list[tuple[int, float]] = []
         for info in infos:
             if info.isotopic_composition != 0.0:
                 offset = info.mass_number - monoisotopic_info.mass_number
                 result.append((offset, info.isotopic_composition))
         return result
 
-    def process_individual_isotope(info: ElementInfo) -> List[Tuple[int, float]]:
+    def process_individual_isotope(info: ElementInfo) -> list[tuple[int, float]]:
         return [(0, 1.0)]
 
     return _process_element_infos(
@@ -290,32 +289,31 @@ def map_atomic_number_to_comp_neutron_offset(
 
 
 def map_atomic_number_to_comp(
-    elem_infos: List[ElementInfo],
-) -> Dict[str, List[Tuple[float, float]]]:
+    elem_infos: list[ElementInfo],
+) -> dict[str, list[tuple[float, float]]]:
     """Map atomic number to composition (mass, abundance pairs)."""
 
-    def process_atomic_symbol(infos: List[ElementInfo]) -> List[Tuple[float, float]]:
-        result: List[Tuple[float, float]] = []
+    def process_atomic_symbol(infos: list[ElementInfo]) -> list[tuple[float, float]]:
+        result: list[tuple[float, float]] = []
         for info in infos:
             if info.isotopic_composition != 0.0:
                 result.append((info.relative_atomic_mass, info.isotopic_composition))
         return result
 
-    def process_individual_isotope(info: ElementInfo) -> List[Tuple[float, float]]:
+    def process_individual_isotope(info: ElementInfo) -> list[tuple[float, float]]:
         return [(info.relative_atomic_mass, 1.0)]
 
     return _process_element_infos(
         elem_infos, process_atomic_symbol, process_individual_isotope
     )
 
-
-def map_hill_order(elem_infos: List[ElementInfo]) -> Dict[str, int]:
+def map_hill_order(elem_infos: list[ElementInfo]) -> dict[str, int]:
     # map atomic number to all element infos
     aa_infos = _map_atomic_number_to_infos(elem_infos)
 
     aa_infos = deepcopy(aa_infos)
 
-    d: List[str] = []
+    d: list[str] = []
 
     # make carbon first
     carbon_infos = aa_infos.pop(6)

@@ -2,6 +2,7 @@
 chem_util.py
 """
 
+from typing import Mapping
 from ..constants import (
     HILL_ORDER,
     ISOTOPIC_ATOMIC_MASSES,
@@ -14,10 +15,9 @@ from ..constants import (
 )
 from ..errors import InvalidChemFormulaError
 from ..utils2 import convert_type
-from ..proforma.dclasses import CHEM_COMPOSITION_TYPE
+\
 
-
-def parse_chem_formula(formula: str, sep: str = "") -> CHEM_COMPOSITION_TYPE:
+def parse_chem_formula(formula: str, sep: str = "") -> dict[str, int | float]:
     """
     Parses a chemical formula and returns a dict mapping elements to their counts.
 
@@ -72,7 +72,7 @@ def parse_chem_formula(formula: str, sep: str = "") -> CHEM_COMPOSITION_TYPE:
     if sep != "":
         return _parse_split_chem_formula(formula, sep)
 
-    comps: list[CHEM_COMPOSITION_TYPE] = []
+    comps: list[dict[str, int | float]] = []
     for component in _split_chem_formula(formula):
         if component.startswith("["):  # Isotope notation
             try:
@@ -85,7 +85,7 @@ def parse_chem_formula(formula: str, sep: str = "") -> CHEM_COMPOSITION_TYPE:
             except InvalidChemFormulaError as err:
                 raise InvalidChemFormulaError(formula, err.msg) from err
 
-    combined_comp: CHEM_COMPOSITION_TYPE = {}
+    combined_comp: dict[str, int | float] = {}
     for comp in comps:
         for key, value in comp.items():
             combined_comp[key] = combined_comp.get(key, 0) + value
@@ -94,7 +94,7 @@ def parse_chem_formula(formula: str, sep: str = "") -> CHEM_COMPOSITION_TYPE:
 
 
 def write_chem_formula(
-    composition: CHEM_COMPOSITION_TYPE,
+    composition: dict[str, int | float],
     sep: str = "",
     hill_order: bool = False,
     precision: int | None = None,
@@ -170,7 +170,7 @@ def write_chem_formula(
 
 # Must keep here to avoid circular dep with mod_db (since mod_db uses mass_calc, and mass_calc uses chem_util)
 def chem_mass(
-    formula: CHEM_COMPOSITION_TYPE | str,
+    formula: Mapping[str, int | float] | str,
     monoisotopic: bool = True,
     precision: int | None = None,
     sep: str = "",
@@ -179,11 +179,11 @@ def chem_mass(
     Calculate the mass of a chemical formula or composition.
 
     :param formula: The chemical formula or composition.
-    :type formula: Union[ChemComposition, str]
+    :type formula: Mapping[str, int | float] | str
     :param monoisotopic: Whether to use monoisotopic masses. Default is True.
     :type monoisotopic: bool
     :param precision: The number of decimal places to round the mass to. Default is None.
-    :type precision: Optional[int]
+    :type precision: int | None
     :param sep: The separator to use between element and counts. Default is ''.
     :type sep: str
 
@@ -303,7 +303,7 @@ def _split_chem_formula(formula: str) -> list[str]:
     return components
 
 
-def _parse_isotope_component(formula: str) -> CHEM_COMPOSITION_TYPE:
+def _parse_isotope_component(formula: str) -> dict[str, int | float]:
     """
     Parses an isotope notation and returns the element and the mass number.
 
@@ -350,7 +350,7 @@ def _parse_isotope_component(formula: str) -> CHEM_COMPOSITION_TYPE:
         peptacular.errors.InvalidChemFormulaError: Error parsing chem formula: "13C-". Invalid count: "-"!
 
     """
-    counts: CHEM_COMPOSITION_TYPE = {}
+    counts: dict[str, int | float] = {}
 
     if formula == "":
         return counts
@@ -378,7 +378,7 @@ def _parse_isotope_component(formula: str) -> CHEM_COMPOSITION_TYPE:
     return counts
 
 
-def _parse_condensed_chem_formula(formula: str) -> CHEM_COMPOSITION_TYPE:
+def _parse_condensed_chem_formula(formula: str) -> dict[str, int | float]:
     """
     Parses a chemical formula and returns a dict mapping elements to their counts.
 
@@ -432,7 +432,7 @@ def _parse_condensed_chem_formula(formula: str) -> CHEM_COMPOSITION_TYPE:
 
     """
 
-    element_counts: CHEM_COMPOSITION_TYPE = {}
+    element_counts: dict[str, int | float] = {}
 
     if formula == "":
         return element_counts
@@ -462,7 +462,7 @@ def _parse_condensed_chem_formula(formula: str) -> CHEM_COMPOSITION_TYPE:
     return element_counts
 
 
-def _parse_split_chem_formula(formula: str, sep: str) -> CHEM_COMPOSITION_TYPE:
+def _parse_split_chem_formula(formula: str, sep: str) -> dict[str, int | float]:
     """
     Parses a chemical formula and returns a dict mapping elements to their counts.
 
@@ -496,7 +496,7 @@ def _parse_split_chem_formula(formula: str, sep: str) -> CHEM_COMPOSITION_TYPE:
 
     """
 
-    element_counts: CHEM_COMPOSITION_TYPE = {}
+    element_counts: dict[str, int | float] = {}
     components = formula.split(sep)
 
     def is_number(s: str) -> bool:

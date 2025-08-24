@@ -2,9 +2,7 @@
 mass_calc.py is a simple module for computing the m/z and mass of an amino acid sequence.
 """
 
-from typing import Union, Optional, List
-
-from .proforma.dclasses import Mod, CHEM_COMPOSITION_TYPE, MOD_VALUE_TYPES
+from .mod import Mod, MOD_VALUE_TYPES
 
 from .constants import (
     PROTON_MASS,
@@ -12,6 +10,7 @@ from .constants import (
     ELECTRON_MASS,
     ISOTOPIC_ATOMIC_MASSES,
     NEUTRON_MASS,
+    IonType,
 )
 from .chem.chem_calc import (
     parse_chem_formula,
@@ -48,8 +47,8 @@ from .mods.mod_db import (
 
 
 def _convert_adducts_to_str(
-    charge_adducts: Optional[Union[str, List[str], List[Mod]]] = None,
-) -> Optional[str]:
+    charge_adducts: str | list[str] | list[Mod] | None = None,
+) -> str | None:
     """
     Convert charge adducts to a string representation.
 
@@ -101,13 +100,13 @@ def _convert_adducts_to_str(
 
 def adjust_mass(
     base_mass: float,
-    charge: Optional[int],
+    charge: int | None,
     ion_type: str = "p",
     monoisotopic: bool = True,
     isotope: int = 0,
     loss: float = 0.0,
-    charge_adducts: Optional[Union[str, List[str], List[Mod]]] = None,
-    precision: Optional[int] = None,
+    charge_adducts: str | list[str] | list[Mod] | None = None,
+    precision: int | None = None,
 ) -> float:
     """
     Adjust the mass.
@@ -141,7 +140,7 @@ def adjust_mass(
     adduct_str = _convert_adducts_to_str(charge_adducts)
 
     if adduct_str is None or adduct_str == "":
-        if ion_type in ("p", "n"):
+        if ion_type in (IonType.PRECURSOR, IonType.NEUTRAL):
             charge_adduct_mass = PROTON_MASS * charge
         else:
             frag_ion_offset = (
@@ -174,7 +173,7 @@ def adjust_mass(
 
 
 def adjust_mz(
-    base_mass: float, charge: Optional[int], precision: Optional[int] = None
+    base_mass: float, charge: int | None, precision: int | None = None
 ) -> float:
     """
     Adjust the mass to charge ratio (m/z).
@@ -204,10 +203,10 @@ def adjust_mz(
 
 
 def chem_mz(
-    formula: Union[CHEM_COMPOSITION_TYPE, str],
+    formula: dict[str, int | float] | str,
     charge: int = 1,
     monoisotopic: bool = True,
-    precision: Optional[int] = None,
+    precision: int | None = None,
     sep: str = "",
 ) -> float:
     """
@@ -219,14 +218,14 @@ def chem_mz(
 
 
 def glycan_mass(
-    formula: Union[str, CHEM_COMPOSITION_TYPE],
+    formula: str | dict[str, int | float],
     monoisotopic: bool = True,
-    precision: Optional[int] = None,
+    precision: int | None = None,
 ) -> float:
     """
     Calculate the mass of a glycan formula.
 
-    :param formula: A glycan formula or CHEM_COMPOSITION_TYPE.
+    :param formula: A glycan formula or dict[str, int | float].
     :type formula: str | Dict[str, int | float]
     :param monoisotopic: If True, use monoisotopic mass else use average mass. Default is True.
     :type monoisotopic: bool
@@ -294,10 +293,10 @@ def glycan_mass(
 
 
 def glycan_mz(
-    formula: Union[str, CHEM_COMPOSITION_TYPE],
+    formula: str | dict[str, int | float],
     charge: int = 1,
     monoisotopic: bool = True,
-    precision: Optional[int] = None,
+    precision: int | None = None,
 ) -> float:
     """
     Calculate the m/z of a glycan formula.
@@ -308,9 +307,9 @@ def glycan_mz(
 
 
 def mod_mass(
-    mod: Union[str, int, float, Mod, List[Mod]],
+    mod: str | int | float | Mod | list[Mod],
     monoisotopic: bool = True,
-    precision: Optional[int] = None,
+    precision: int | None = None,
 ) -> float:
     """
     Parse a modification string.
@@ -385,7 +384,7 @@ def mod_mass(
 
 
 def _parse_obs_mass_from_proforma_str(
-    obs_str: str, precision: Optional[int] = None
+    obs_str: str, precision: int | None = None
 ) -> float:
     """
     Parse an observed mass string and return its mass.
@@ -432,7 +431,7 @@ def _parse_obs_mass_from_proforma_str(
 
 
 def _parse_glycan_mass_from_proforma_str(
-    glycan_str: str, monoisotopic: bool, precision: Optional[int] = None
+    glycan_str: str, monoisotopic: bool, precision: int | None = None
 ) -> float:
     """
     Parse a glycan string and return its mass.
@@ -517,7 +516,7 @@ def _parse_glycan_mass_from_proforma_str(
 
 
 def _parse_chem_mass_from_proforma_str(
-    chem_str: str, monoisotopic: bool, precision: Optional[int] = None
+    chem_str: str, monoisotopic: bool, precision: int | None = None
 ) -> float:
     """
     Parse a chemical formula string and return its mass.
@@ -562,8 +561,8 @@ def _parse_chem_mass_from_proforma_str(
 
 
 def _parse_mod_mass(
-    mod: str, monoisotopic: bool = True, precision: Optional[int] = None
-) -> Union[float, None]:
+    mod: str, monoisotopic: bool = True, precision: int | None = None
+) -> float | None:
     """
     Parse a modification and return its mass.
 
@@ -696,7 +695,7 @@ def _parse_mod_mass(
 
 
 def _parse_adduct_mass(
-    adduct: str, precision: Optional[int] = None, monoisotopic: bool = True
+    adduct: str, precision: int | None = None, monoisotopic: bool = True
 ) -> float:
     """
     Parse an adduct string and return its mass.
@@ -756,7 +755,7 @@ def _parse_adduct_mass(
 
 def _parse_charge_adducts_mass(
     adducts: MOD_VALUE_TYPES,
-    precision: Optional[int] = None,
+    precision: int | None = None,
     monoisotopic: bool = True,
 ) -> float:
     """
@@ -806,7 +805,7 @@ def _parse_charge_adducts_mass(
     return m
 
 
-def ppm_error(theo: float, expt: float, precision: Optional[int] = None) -> float:
+def ppm_error(theo: float, expt: float, precision: int | None = None) -> float:
     """
     Calculate the parts per million (ppm) error between two values.
 
@@ -836,7 +835,7 @@ def ppm_error(theo: float, expt: float, precision: Optional[int] = None) -> floa
     return ppm_err
 
 
-def dalton_error(theo: float, expt: float, precision: Optional[int] = None) -> float:
+def dalton_error(theo: float, expt: float, precision: int | None = None) -> float:
     """
     Calculate the Dalton error between two values.
 

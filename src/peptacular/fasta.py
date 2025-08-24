@@ -2,14 +2,13 @@
 Fasta.py
 """
 
-from typing import Union, List, Tuple
 import pathlib
 import io
 
 
 def parse_fasta(
-    input_data: Union[str, pathlib.Path, io.IOBase],
-) -> List[Tuple[str, str]]:
+    input_data: str | pathlib.Path | io.IOBase,
+) -> list[tuple[str, str]]:
     """
     Parse FASTA formatted data from various input types.
 
@@ -67,8 +66,7 @@ def parse_fasta(
 
     return parse_fasta_text(text)  # type: ignore
 
-
-def parse_fasta_text(text: str) -> List[Tuple[str, str]]:
+def parse_fasta_text(text: str) -> list[tuple[str, str]]:
     """
     Parse FASTA formatted text.
 
@@ -84,7 +82,7 @@ def parse_fasta_text(text: str) -> List[Tuple[str, str]]:
 
     """
     # Now parse the text using the existing logic
-    sequences: List[Tuple[str, str]] = []
+    sequences: list[tuple[str, str]] = []
     header = None
     seq = ""
     for line in text.splitlines():

@@ -2,29 +2,28 @@
 Isotope.py - A module for calculating isotopic distributions of molecules.
 """
 
+from collections.abc import Mapping
 import sys
-from typing import List, Dict, Tuple, Optional
 import warnings
 
 from . import constants
-from .proforma.dclasses import CHEM_COMPOSITION_TYPE
 from .chem.chem_calc import estimate_comp
 from .mass_calc import chem_mass
 
 
 def isotopic_distribution(
-    chemical_formula: CHEM_COMPOSITION_TYPE,
-    max_isotopes: Optional[int] = None,
-    min_abundance_threshold: Optional[float] = None,
-    distribution_resolution: Optional[int] = 5,
+    chemical_formula: dict[str, int | float],
+    max_isotopes: int | None = None,
+    min_abundance_threshold: float | None = None,
+    distribution_resolution: int | None = 5,
     use_neutron_count: bool = False,
-    conv_min_abundance_threshold: Optional[float] = None,
+    conv_min_abundance_threshold: float | None = None,
     distribution_abundance: float = 1.0,
     is_abundance_sum: bool = False,
     output_masses_for_neutron_offset: bool = False,
     neutron_mass: float = constants.NEUTRON_MASS,
-    precision: Optional[int] = None,
-) -> List[Tuple[float, float]]:
+    precision: int | None = None,
+) -> list[tuple[float, float]]:
     """
     Calculate the isotopic distribution for a given formula.
 
@@ -164,7 +163,7 @@ def isotopic_distribution(
     delta_mass = 0.0
     if not all(isinstance(v, int) for v in chemical_formula.values()):
         prior_mass = chem_mass(chemical_formula)
-        chemical_formula = fix_chemical_formula(chemical_formula, False)
+        chemical_formula = fix_chemical_formula(chemical_formula, False) # type: ignore
         post_mass = chem_mass(chemical_formula)
         delta_mass = prior_mass - post_mass
 
@@ -216,8 +215,8 @@ def isotopic_distribution(
 
 
 def merge_isotopic_distributions(
-    *distributions: List[Tuple[float, float]], merge_precision: Optional[int] = None
-) -> List[Tuple[float, float]]:
+    *distributions: list[tuple[float, float]], merge_precision: int | None = None
+) -> list[tuple[float, float]]:
     """
     Merge multiple isotopic distributions into one.
 
@@ -238,7 +237,7 @@ def merge_isotopic_distributions(
         [(1.0, 1.0), (2.0, 1.0)]
 
     """
-    merged_distribution: Dict[float, float] = {}
+    merged_distribution: dict[float, float] = {}
     for distribution in distributions:
         for mass, abundance in distribution:
             if merge_precision is not None:
@@ -254,17 +253,17 @@ def merge_isotopic_distributions(
 
 def estimate_isotopic_distribution(
     neutral_mass: float,
-    max_isotopes: Optional[int] = None,
-    min_abundance_threshold: Optional[float] = None,
-    distribution_resolution: Optional[int] = 5,
+    max_isotopes: int | None = None,
+    min_abundance_threshold: float | None = None,
+    distribution_resolution: int | None = 5,
     use_neutron_count: bool = False,
-    conv_min_abundance_threshold: Optional[float] = None,
+    conv_min_abundance_threshold: float | None = None,
     distribution_abundance: float = 1.0,
     is_abundance_sum: bool = False,
     output_masses_for_neutron_offset: bool = False,
     neutron_mass: float = constants.NEUTRON_MASS,
-    precision: Optional[int] = None,
-) -> List[Tuple[float, float]]:
+    precision: int | None = None,
+) -> list[tuple[float, float]]:
     """
     Predict the isotopic distribution of a molecule using the averagine model.
 
@@ -327,12 +326,12 @@ def estimate_isotopic_distribution(
 
 
 def _convolve_distributions(
-    dist1: Dict[float, float],
-    dist2: Dict[float, float],
-    max_isotopes: Optional[int],
-    min_abundance_threshold: Optional[float],
-    distribution_resolution: Optional[int],
-) -> Dict[float, float]:
+    dist1: dict[float, float],
+    dist2: dict[float, float],
+    max_isotopes: int | None,
+    min_abundance_threshold: float | None,
+    distribution_resolution: int | None,
+) -> dict[float, float]:
     """
     Convolve two distributions to calculate the distribution of their sum.
 
@@ -366,7 +365,7 @@ def _convolve_distributions(
     if max_isotopes is None:
         max_isotopes = sys.maxsize
 
-    result: Dict[float, float] = {}
+    result: dict[float, float] = {}
     for mass1, abundance1 in dist1.items():
         for mass2, abundance2 in dist2.items():
             new_mass = mass1 + mass2
@@ -393,7 +392,7 @@ def _calculate_elemental_distribution(
     count: int,
     use_neutron_count: bool,
     min_abundance_threshold: float = 10e-9,
-) -> Dict[float, float]:
+) -> dict[float, float]:
     """
     Calculate the isotopic distribution for an element.
 
@@ -438,8 +437,8 @@ def _calculate_elemental_distribution(
 
 
 def fix_chemical_formula(
-    chemical_formula: CHEM_COMPOSITION_TYPE, add_hydrogens: bool = True
-) -> CHEM_COMPOSITION_TYPE:
+    chemical_formula: Mapping[str, int | float], add_hydrogens: bool = True
+) -> dict[str, int]:
     """
     Fix a chemical formula, by rounding the atom counts to the nearest integer and adding hydrogen atoms to reach the
     correct molecular mass.
@@ -470,8 +469,8 @@ def fix_chemical_formula(
     starting_mass = chem_mass(chemical_formula)
 
     # get the floor of the total atoms
-    total_atoms: CHEM_COMPOSITION_TYPE = {
-        k: round(v) for k, v in chemical_formula.items()
+    total_atoms: dict[str, int] = {
+        k: int(round(v)) for k, v in chemical_formula.items()
     }
 
     if add_hydrogens:
@@ -488,11 +487,11 @@ def fix_chemical_formula(
 
 
 def _scale_isotope_abundances(
-    isotopes: List[Tuple[float, float]],
+    isotopes: list[tuple[float, float]],
     distribution_abundance: float,
     is_abundance_sum: bool,
-    precision: Optional[int] = None,
-) -> List[Tuple[float, float]]:
+    precision: int | None = None,
+) -> list[tuple[float, float]]:
     """
     Scale the abundances of the isotopes to the distribution abundance.
     """

@@ -20,3 +20,4 @@ from .spans import *
 from .fasta import *
 from .converters import *
 from .proforma.dclasses import *
+from .errors import *

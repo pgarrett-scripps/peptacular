@@ -87,8 +87,6 @@ class ProFormaParser:
 
     @validate_single_mod_multiplier
     def _add_static_mod(self, mod: Mod | list[Mod]) -> None:
-        if self.static_mods.has_mods:
-            self.static_mods.clear()
         if isinstance(mod, list):
             self.static_mods.extend(mod)
         else:
@@ -96,59 +94,42 @@ class ProFormaParser:
 
     @validate_single_mod_multiplier
     def _add_isotope_mod(self, mod: Mod | list[Mod]) -> None:
-        if self.isotope_mods.has_mods:
-            self.isotope_mods.clear()
         if isinstance(mod, list):
             self.isotope_mods.extend(mod)
         else:
             self.isotope_mods.append(mod)
 
     def _add_labile_mod(self, mod: Mod | list[Mod]) -> None:
-        if self.labile_mods.has_mods:
-            self.labile_mods.clear()
         if isinstance(mod, list):
             self.labile_mods.extend(mod)
         else:
             self.labile_mods.append(mod)
 
     def _add_unknown_mod(self, mod: Mod | list[Mod]) -> None:
-        if not self.unknown_mods.has_mods:
-            self.unknown_mods.clear()
         if isinstance(mod, list):
             self.unknown_mods.extend(mod)
         else:
             self.unknown_mods.append(mod)
 
     def _add_nterm_mod(self, mod: Mod | list[Mod]) -> None:
-        if not self.nterm_mods.has_mods:
-            self.nterm_mods.clear()
         if isinstance(mod, list):
             self.nterm_mods.extend(mod)
         else:
             self.nterm_mods.append(mod)
 
     def _add_cterm_mod(self, mod: Mod | list[Mod]) -> None:
-        if self.cterm_mods.has_mods:
-            self.cterm_mods.clear()
         if isinstance(mod, list):
             self.cterm_mods.extend(mod)
         else:
             self.cterm_mods.append(mod)
 
     def _add_internal_mod(self, mod: Mod | list[Mod]) -> None:
-        if self.internal_mods.has_mods:
-            self.internal_mods.clear()
         position = len(self.amino_acids) - 1
-        if position not in self.internal_mods:
-            self.internal_mods[position] = []
         if isinstance(mod, list):
-            self.internal_mods[position].extend(mod)
-        else:
-            self.internal_mods[position].append(mod)
+            self.internal_mods.setdefault(position, mod)
+            
 
     def _add_interval(self, interval: Interval | list[Interval]) -> None:
-        if self.intervals.has_intervals:
-            self.intervals.clear()
         if isinstance(interval, list):
             self.intervals.extend(interval)
         else:
@@ -156,8 +137,6 @@ class ProFormaParser:
 
     @validate_single_mod_multiplier
     def _add_charge_adducts(self, mod: Mod | list[Mod]) -> None:
-        if self.charge_adducts.has_mods:
-            self.charge_adducts.clear()
         if isinstance(mod, list):
             self.charge_adducts.extend(mod)
         else:

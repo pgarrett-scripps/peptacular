@@ -2,8 +2,6 @@
 Glycan.py
 """
 
-from .proforma.dclasses import CHEM_COMPOSITION_TYPE
-
 from .chem.chem_util import write_chem_formula
 from .errors import InvalidGlycanFormulaError
 from .mods.mod_db_setup import (
@@ -12,7 +10,7 @@ from .mods.mod_db_setup import (
 )
 
 
-def write_glycan_formula(glycan_dict: CHEM_COMPOSITION_TYPE, sep: str = "") -> str:
+def write_glycan_formula(glycan_dict: dict[str, int | float], sep: str = "") -> str:
     """
     Writes a glycan dictionary to a string.
 
@@ -52,7 +50,7 @@ def write_glycan_formula(glycan_dict: CHEM_COMPOSITION_TYPE, sep: str = "") -> s
     )
 
 
-def glycan_comp(glycan: CHEM_COMPOSITION_TYPE | str) -> CHEM_COMPOSITION_TYPE:
+def glycan_comp(glycan: dict[str, int | float] | str) -> dict[str, int | float]:
     """
     Converts a glycan dictionary to a chemical formula.
 
@@ -92,7 +90,7 @@ def glycan_comp(glycan: CHEM_COMPOSITION_TYPE | str) -> CHEM_COMPOSITION_TYPE:
     return glycan_comp_db(glycan)
 
 
-def parse_glycan_formula(formula: str, sep: str = "") -> CHEM_COMPOSITION_TYPE:
+def parse_glycan_formula(formula: str, sep: str = "") -> dict[str, int | float]:
     """
     Parses a glycan sequence into its constituent parts.
 
@@ -146,12 +144,12 @@ def parse_glycan_formula(formula: str, sep: str = "") -> CHEM_COMPOSITION_TYPE:
         raise InvalidGlycanFormulaError(formula, err.msg) from err
 
 
-def convert_glycan_formula_to_chem_formula(glycan: CHEM_COMPOSITION_TYPE | str) -> str:
+def convert_glycan_formula_to_chem_formula(glycan: dict[str, int | float] | str) -> str:
     """
     Converts a glycan string or dictionary to a chemical formula.
 
     :param glycan: A dictionary containing the glycan components and their counts, or a glycan formula string.
-    :type glycan: CHEM_COMPOSITION_TYPE | str
+    :type glycan: dict[str, int | float] | str
 
     :raises InvalidGlycanFormulaError: If the glycan formula is invalid.
 

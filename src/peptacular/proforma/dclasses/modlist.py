@@ -6,7 +6,7 @@ from typing import Any, Self, SupportsIndex
 import warnings
 
 
-from .mod import Mod, MOD_VALUE_TYPES, setup_mod
+from ...mod import Mod, MOD_VALUE_TYPES, setup_mod
 
 # MOD_VALUE_TYPES = str | int | float
 MODLIST_DATATYPE = MOD_VALUE_TYPES | Mod
