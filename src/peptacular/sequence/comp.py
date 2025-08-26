@@ -1,21 +1,17 @@
-from typing import Union, Optional, List, Tuple
-
 from .util import get_annotation_input, override_annotation_properties
 
-from ..proforma.annot import ProFormaAnnotation
-from ..dclasses import CHEM_COMPOSITION_TYPE, MOD_VALUE_TYPES
+from ..proforma import ProFormaAnnotation
+from ..constants import IonType, IonTypeLiteral
 
 
 def comp(
-    sequence: Union[str, ProFormaAnnotation],
-    ion_type: str = "p",
+    sequence: str | ProFormaAnnotation,
+    ion_type: IonTypeLiteral | IonType = IonType.PRECURSOR,
     estimate_delta: bool = False,
-    charge: Optional[int] = None,
+    charge: int | None = None,
     isotope: int = 0,
-    charge_adducts: Optional[List[MOD_VALUE_TYPES]] = None,
-    isotope_mods: Optional[List[MOD_VALUE_TYPES]] = None,
     use_isotope_on_mods: bool = False,
-) -> CHEM_COMPOSITION_TYPE:
+) -> dict[str, int | float]:
     """
     Calculates the elemental composition of a peptide sequence, including modifications,
     and optionally estimates the composition based on the delta mass from modifications.
@@ -67,39 +63,9 @@ def comp(
     override_annotation_properties(
         annotation=annotation,
         charge=charge,
-        charge_adducts=charge_adducts,
-        isotope_mods=isotope_mods,
     )
 
     return annotation.comp(
-        ion_type=ion_type,
-        estimate_delta=estimate_delta,
-        isotope=isotope,
-        use_isotope_on_mods=use_isotope_on_mods,
-        inplace=True,
-    )
-
-
-def comp_mass(
-    sequence: Union[str, ProFormaAnnotation],
-    ion_type: str = "p",
-    charge: Optional[int] = None,
-    isotope: int = 0,
-    charge_adducts: Optional[List[MOD_VALUE_TYPES]] = None,
-    isotope_mods: Optional[List[MOD_VALUE_TYPES]] = None,
-    use_isotope_on_mods: bool = False,
-) -> Tuple[CHEM_COMPOSITION_TYPE, float]:
-
-    annotation = get_annotation_input(sequence, copy=True)
-
-    override_annotation_properties(
-        annotation,
-        charge=charge,
-        charge_adducts=charge_adducts,
-        isotope_mods=isotope_mods,
-    )
-
-    return annotation.comp_mass(
         ion_type=ion_type,
         isotope=isotope,
         use_isotope_on_mods=use_isotope_on_mods,
@@ -107,9 +73,9 @@ def comp_mass(
 
 
 def condense_to_mass_mods(
-    sequence: Union[str, ProFormaAnnotation],
+    sequence: str | ProFormaAnnotation,
     include_plus: bool = False,
-    precision: Optional[int] = None,
+    precision: int | None = None,
 ) -> str:
     """
     Converts all modifications in a sequence to their mass equivalents by calculating
@@ -146,7 +112,7 @@ def condense_to_mass_mods(
     """
     annotation = get_annotation_input(sequence=sequence, copy=True)
 
-    return annotation.condense_to_mass_mods(
+    return annotation.condense_to_delta_mass(
         include_plus=include_plus,
         inplace=True,
     ).serialize(include_plus=include_plus, precision=precision)

@@ -14,13 +14,19 @@ from ..spans import (
 from ..proforma.dclasses import SPAN_TYPE
 
 from .constants import PROTEASES_COMPILED
-from .types import DigestReturnType, EnzymeConfig, DigestGenerator, DigestProtocol, ReturnTypeLiteral
+from .types import (
+    DigestReturnType,
+    EnzymeConfig,
+    DigestGenerator,
+    DigestProtocol,
+    DigestReturnTypeLiterals,
+)
 
 
 def _return_digested_sequences(
     annotation: DigestProtocol,
     spans: Iterable[SPAN_TYPE],
-    return_type: ReturnTypeLiteral,
+    return_type: DigestReturnTypeLiterals | DigestReturnType,
 ) -> DigestGenerator:
     """Helper function to return digested sequences in various formats."""
     return_type_enum = DigestReturnType(return_type)
@@ -42,7 +48,8 @@ def _return_digested_sequences(
             )
         case DigestReturnType.ANNOTATION_SPAN:
             return (
-                (annotation.slice(span[0], span[1], inplace=False), span) for span in spans
+                (annotation.slice(span[0], span[1], inplace=False), span)
+                for span in spans
             )
         case _:
             raise ValueError(f"Unsupported return type: {return_type}")
@@ -52,7 +59,7 @@ def get_left_semi_enzymatic_sequences(
     annotation: DigestProtocol,
     min_len: int | None = None,
     max_len: int | None = None,
-    return_type: ReturnTypeLiteral = 'annotation'
+    return_type: DigestReturnTypeLiterals | DigestReturnType = DigestReturnType.ANNOTATION,
 ) -> DigestGenerator:
     """Get left semi-enzymatic sequences from a ProForma annotation."""
     span = (0, len(annotation), 0)
@@ -60,12 +67,11 @@ def get_left_semi_enzymatic_sequences(
     return _return_digested_sequences(annotation, spans, return_type)
 
 
-
 def get_right_semi_enzymatic_sequences(
     annotation: DigestProtocol,
     min_len: int | None = None,
     max_len: int | None = None,
-    return_type: ReturnTypeLiteral = 'annotation',
+    return_type: DigestReturnTypeLiterals | DigestReturnType = DigestReturnType.ANNOTATION,
 ) -> DigestGenerator:
     """Get right semi-enzymatic sequences from a ProForma annotation."""
     s = (0, len(annotation), 0)
@@ -77,7 +83,7 @@ def get_semi_enzymatic_sequences(
     annotation: DigestProtocol,
     min_len: int | None = None,
     max_len: int | None = None,
-    return_type: ReturnTypeLiteral = 'annotation',
+    return_type: DigestReturnTypeLiterals | DigestReturnType = DigestReturnType.ANNOTATION,
 ) -> DigestGenerator:
     """Get both left and right semi-enzymatic sequences from a ProForma annotation."""
     yield from get_left_semi_enzymatic_sequences(
@@ -92,7 +98,7 @@ def get_non_enzymatic_sequences(
     annotation: DigestProtocol,
     min_len: int | None = None,
     max_len: int | None = None,
-    return_type: ReturnTypeLiteral = 'annotation',
+    return_type: DigestReturnTypeLiterals | DigestReturnType = DigestReturnType.ANNOTATION,
 ) -> DigestGenerator:
     """Get non-enzymatic sequences from a ProForma annotation."""
     s = (0, len(annotation), 0)
@@ -101,11 +107,12 @@ def get_non_enzymatic_sequences(
 
 
 def get_cleavage_sites(
-    annotation: DigestProtocol,
-    enzyme_regex: str
+    annotation: DigestProtocol, enzyme_regex: str
 ) -> Generator[int, None, None]:
     """Get cleavage sites for a given enzyme regex."""
-    enzyme_compiled_regex = PROTEASES_COMPILED.get(enzyme_regex, re.compile(enzyme_regex))
+    enzyme_compiled_regex = PROTEASES_COMPILED.get(
+        enzyme_regex, re.compile(enzyme_regex)
+    )
     return get_regex_match_indices(
         input_str=annotation.stripped_sequence, regex_str=enzyme_compiled_regex
     )
@@ -120,7 +127,7 @@ def digest_annotation(
     max_len: int | None = None,
     complete_digestion: bool = True,
     sort_output: bool = True,
-    return_type: ReturnTypeLiteral = 'annotation',
+    return_type: DigestReturnTypeLiterals | DigestReturnType = DigestReturnType.ANNOTATION,
 ) -> DigestGenerator:
     """Digest a ProForma annotation with specified enzymes and parameters."""
     if isinstance(enzyme_regex, str):
@@ -156,7 +163,7 @@ def sequential_digest_annotation(
     enzyme_configs: Sequence[EnzymeConfig],
     min_len: int | None = None,
     max_len: int | None = None,
-    return_type: ReturnTypeLiteral = 'annotation-span',
+    return_type: DigestReturnTypeLiterals | DigestReturnType = DigestReturnType.ANNOTATION_SPAN,
 ) -> DigestGenerator:
     """Perform sequential digestion with multiple enzymes."""
     digested_anot_spans: list[tuple[DigestProtocol, SPAN_TYPE]] = []
@@ -173,8 +180,8 @@ def sequential_digest_annotation(
                     max_len=None,
                     sort_output=True,
                     complete_digestion=enzyme_config.complete_digestion,
-                    return_type='annotation-span',
-                ) # type: ignore (could add overloads but would really just add bloat)
+                    return_type="annotation-span",
+                )  # type: ignore (could add overloads but would really just add bloat)
             )
         else:
             if len(digested_anot_spans) == 0:
@@ -184,27 +191,27 @@ def sequential_digest_annotation(
 
             for anot, span in digested_anot_spans:
                 _digested_anot_spans = list(
-                digest_annotation(
-                    annotation=anot,
-                    enzyme_regex=enzyme_config.regex,
-                    missed_cleavages=enzyme_config.missed_cleavages,
-                    semi=enzyme_config.semi_enzymatic,
-                    min_len=min_len,
-                    max_len=None,
-                    sort_output=True,
-                    complete_digestion=enzyme_config.complete_digestion,
-                    return_type='annotation-span',
-                )
+                    digest_annotation(
+                        annotation=anot,
+                        enzyme_regex=enzyme_config.regex,
+                        missed_cleavages=enzyme_config.missed_cleavages,
+                        semi=enzyme_config.semi_enzymatic,
+                        min_len=min_len,
+                        max_len=None,
+                        sort_output=True,
+                        complete_digestion=enzyme_config.complete_digestion,
+                        return_type=DigestReturnType.ANNOTATION_SPAN,
+                    )
                 )
 
                 fixed_digested_anot_spans: list[tuple[DigestProtocol, SPAN_TYPE]] = []
-                for digested_anot, digested_span in _digested_anot_spans: # type: ignore
-                    fixed_digested_span = ( # type: ignore
-                        span[0] + digested_span[0],# type: ignore
-                        span[0] + digested_span[1],# type: ignore
-                        span[2], # type: ignore
-                    ) 
-                    fixed_digested_anot_spans.append((digested_anot, fixed_digested_span)) # type: ignore
+                for digested_anot, digested_span in _digested_anot_spans:  # type: ignore
+                    fixed_digested_span = (  # type: ignore
+                        span[0] + digested_span[0],  # type: ignore
+                        span[0] + digested_span[1],  # type: ignore
+                        span[2],  # type: ignore
+                    )
+                    fixed_digested_anot_spans.append((digested_anot, fixed_digested_span))  # type: ignore
 
                 sequential_digested_anot_spans.extend(fixed_digested_anot_spans)
 
@@ -220,4 +227,3 @@ def sequential_digest_annotation(
     return _return_digested_sequences(
         annotation, [span for _, span in digested_anot_spans], return_type
     )
-

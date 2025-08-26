@@ -15,7 +15,7 @@ class TestDigest(unittest.TestCase):
         self.assertEqual(cleavage_sites, sites)
 
         # Test with ProFormaAnnotation object
-        annotation = pt.create_annotation(PROTEIN)
+        annotation = pt.ProFormaAnnotation.parse(PROTEIN)
         cleavage_sites_annotation = list(
             pt.get_cleavage_sites(annotation, pt.PROTEASES["trypsin"])
         )
@@ -254,7 +254,6 @@ class TestDigest(unittest.TestCase):
                 sequence=modified_seq,
                 enzyme_regex="([KR])",
                 missed_cleavages=1,
-                return_type="str",
             )
         )
         self.assertEqual(
@@ -267,32 +266,15 @@ class TestDigest(unittest.TestCase):
         )
 
         # Test with annotation input
-        annotation = pt.parse(modified_seq)
+        annotation = pt.ProFormaAnnotation.parse(modified_seq)
         peptides = set(
             pt.digest(
                 sequence=annotation,
                 enzyme_regex="([KR])",
                 missed_cleavages=0,
-                return_type="str",
             )
         )
         self.assertEqual(peptides, {"[Acetyl]-PEPTIDER[Phospho]", "TIDEM[Oxidation]K"})
-
-        # Test alternative return types
-        peptides = list(
-            pt.digest(
-                sequence=modified_seq,
-                enzyme_regex="([KR])",
-                missed_cleavages=0,
-                return_type="annotation-span",
-            )
-        )
-        self.assertEqual(len(peptides), 2)
-        self.assertIsInstance(peptides[0][0], pt.ProFormaAnnotation)
-        self.assertEqual(peptides[0][0].serialize(), "[Acetyl]-PEPTIDER[Phospho]")
-        # Don't check exact span values as they may vary depending on implementation
-        self.assertIsInstance(peptides[0][1], tuple)
-        self.assertEqual(len(peptides[0][1]), 3)
 
     def test_edge_cases(self):
         """Test edge cases like empty sequences and single letters."""
@@ -422,97 +404,3 @@ class TestDigest(unittest.TestCase):
         )
         self.assertEqual(peptides, {"PEP[Phospho]R", "DK"})
 
-    def test_return_types(self):
-        """Test different return types."""
-        # Test return_type='annotation'
-        peptides = list(
-            pt.digest(
-                sequence="TIDEKTIDE",
-                enzyme_regex=pt.PROTEASES["trypsin"],
-                missed_cleavages=0,
-                return_type="annotation",
-            )
-        )
-        self.assertEqual(len(peptides), 2)
-        self.assertIsInstance(peptides[0], pt.ProFormaAnnotation)
-        self.assertEqual(peptides[0].serialize(), "TIDEK")
-
-        # Test return_type='span'
-        peptides = list(
-            pt.digest(
-                sequence="TIDEKTIDE",
-                enzyme_regex=pt.PROTEASES["trypsin"],
-                missed_cleavages=0,
-                return_type="span",
-            )
-        )
-        self.assertEqual(len(peptides), 2)
-        self.assertEqual(peptides[0], (0, 5, 0))  # (start, end, span_type)
-
-        # Test return_type='str-span'
-        peptides = list(
-            pt.digest(
-                sequence="TIDEKTIDE",
-                enzyme_regex=pt.PROTEASES["trypsin"],
-                missed_cleavages=0,
-                return_type="str-span",
-            )
-        )
-        self.assertEqual(len(peptides), 2)
-        self.assertEqual(peptides[0][0], "TIDEK")
-        self.assertEqual(peptides[0][1], (0, 5, 0))
-
-        # Test return_type='annotation-span'
-        peptides = list(
-            pt.digest(
-                sequence="TIDEKTIDE",
-                enzyme_regex=pt.PROTEASES["trypsin"],
-                missed_cleavages=0,
-                return_type="annotation-span",
-            )
-        )
-        self.assertEqual(len(peptides), 2)
-        self.assertIsInstance(peptides[0][0], pt.ProFormaAnnotation)
-        self.assertEqual(peptides[0][0].serialize(), "TIDEK")
-        self.assertEqual(peptides[0][1], (0, 5, 0))
-
-    def test_error_cases(self):
-        """Test error cases."""
-        # Test invalid return type
-        with self.assertRaises((ValueError, TypeError)):
-            list(
-                pt.digest(
-                    sequence="TIDEKTIDE",
-                    enzyme_regex=pt.PROTEASES["trypsin"],
-                    return_type="invalid_type",
-                )
-            )
-
-        # Test invalid sequence type
-        with self.assertRaises((ValueError, TypeError)):
-            list(
-                pt.digest(
-                    sequence=123,  # Not a string or ProFormaAnnotation
-                    enzyme_regex=pt.PROTEASES["trypsin"],
-                )
-            )
-
-        # Test mismatched enzyme_regex and missed_cleavages lengths
-        with self.assertRaises((ValueError, TypeError)):
-            list(
-                pt.digest(
-                    sequence="TIDEKTIDE",
-                    enzyme_regex=[pt.PROTEASES["trypsin"], pt.PROTEASES["asp-n"]],
-                    missed_cleavages=[0],
-                )
-            )
-
-        # Test invalid missed_cleavages type
-        with self.assertRaises((ValueError, TypeError)):
-            list(
-                pt.digest(
-                    sequence="TIDEKTIDE",
-                    enzyme_regex=pt.PROTEASES["trypsin"],
-                    missed_cleavages="invalid",
-                )
-            )

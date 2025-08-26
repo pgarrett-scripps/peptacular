@@ -66,6 +66,7 @@ def parse_fasta(
 
     return parse_fasta_text(text)  # type: ignore
 
+
 def parse_fasta_text(text: str) -> list[tuple[str, str]]:
     """
     Parse FASTA formatted text.

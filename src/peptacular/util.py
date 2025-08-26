@@ -572,12 +572,12 @@ def parse_ion_elements(ion: str) -> tuple[int, str, int]:
     return count, symbol, charge
 
 
-def parse_static_mods(mods: Iterable[MOD_VALUE_TYPES] | None) -> dict[str, list[Mod]]:
+def parse_static_mods(mods: Iterable[int | float | str | Mod] | None) -> dict[str, list[Mod]]:
     """
     Parse static modifications into a dictionary, mapping the location to the modifications.
 
     :param mods: Iterable of static modifications, where each modification can be a Mod object or a string representation.
-    :type mods: Iterable[MOD_VALUE_TYPES] | None
+    :type mods: Iterable[int | float | str | Mod] | None
 
     :raises TypeError: If the mod is not a string or Mod instance.
 

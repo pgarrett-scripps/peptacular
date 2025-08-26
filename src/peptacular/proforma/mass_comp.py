@@ -3,30 +3,36 @@ from collections import Counter
 from typing import TYPE_CHECKING
 import warnings
 
-from ..dclasses.modlist import ModList
-from ...chem.chem_constants import AVERAGE_AA_MASSES, MONOISOTOPIC_AA_MASSES
-from ...chem.chem_util import chem_mass
-from ...mass_calc import adjust_mass, adjust_mz, mod_mass
-from ...util import parse_static_mods
-from ...chem.chem_calc import mod_comp
-from ...chem.chem_calc import (
+from .dclasses.modlist import ModList
+from ..chem.chem_constants import AVERAGE_AA_MASSES, MONOISOTOPIC_AA_MASSES
+from ..chem.chem_util import chem_mass
+from ..mass_calc import adjust_mass, adjust_mz, mod_mass
+from ..util import parse_static_mods
+from ..chem.chem_calc import (
     parse_charge_adducts_comp,
     parse_mod_delta_mass_only,
     apply_isotope_mods_to_composition,
     estimate_comp,
     mod_comp,
 )
-from ...errors import AmbiguousAminoAcidError, UnknownAminoAcidError
-from ...constants import AA_COMPOSITIONS, FRAGMENT_ION_BASE_CHARGE_ADDUCTS, NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS, IonType
+from ..errors import AmbiguousAminoAcidError, UnknownAminoAcidError
+from ..constants import (
+    AA_COMPOSITIONS,
+    FRAGMENT_ION_BASE_CHARGE_ADDUCTS,
+    NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS,
+    IonType,
+    IonTypeLiteral,
+)
 
 if TYPE_CHECKING:
-    from ..annotation import ProFormaAnnotation
+    from .annotation import ProFormaAnnotation
 
 
-def _pop_delta_mass_mods(annotation: ProFormaAnnotation, inplace: bool = True) -> float:
+def _pop_delta_mass_mods(annotation: ProFormaAnnotation, 
+                         inplace: bool = True) -> float:
     """
-    Pop the delta mass modifications from the modifications' dictionary. This leaves only modifications which
-    can have their elemental composition calculated.
+    Pop the delta mass modifications. This leaves only modifications which
+    can have their composition calculated.
 
     :param annotation: The ProForma annotation.
     :type annotation: ProFormaAnnotationBase
@@ -45,22 +51,21 @@ def _pop_delta_mass_mods(annotation: ProFormaAnnotation, inplace: bool = True) -
     """
     if inplace is False:
         # Create a copy of the annotation to modify
-        return _pop_delta_mass_mods(annotation.copy(), inplace=True)
-    
+        return _pop_delta_mass_mods(annotation=annotation.copy(), inplace=True)
+
     if annotation.has_static_mods:
         raise ValueError(
             "Static mods are present. Cannot pop delta mass mods when static mods exist."
         )
-        
+
     if annotation.has_isotope_mods:
         raise ValueError(
             "Isotope mods are present. Cannot pop delta mass mods when isotope mods exist."
         )
 
-
     def _pop_delta_mass_from_mod_list(mod_list: ModList) -> float:
         delta_mass = 0.0
-        
+
         # Iterate backwards to safely remove items during iteration
         for i in range(len(mod_list) - 1, -1, -1):
             mod = mod_list[i]
@@ -68,31 +73,37 @@ def _pop_delta_mass_mods(annotation: ProFormaAnnotation, inplace: bool = True) -
             if val is not None:
                 delta_mass += val
                 mod_list.remove(mod)
-        
+
         return delta_mass
 
-
     delta_mass = 0.0
-    delta_mass += _pop_delta_mass_from_mod_list(annotation.get_labile_mod_list())
-    delta_mass += _pop_delta_mass_from_mod_list(annotation.get_unknown_mod_list())
-    delta_mass += _pop_delta_mass_from_mod_list(annotation.get_nterm_mod_list())
-    delta_mass += _pop_delta_mass_from_mod_list(annotation.get_cterm_mod_list())
+    delta_mass += _pop_delta_mass_from_mod_list(
+        mod_list=annotation.get_labile_mod_list()
+    )
+    delta_mass += _pop_delta_mass_from_mod_list(
+        mod_list=annotation.get_unknown_mod_list()
+    )
+    delta_mass += _pop_delta_mass_from_mod_list(
+        mod_list=annotation.get_nterm_mod_list()
+    )
+    delta_mass += _pop_delta_mass_from_mod_list(
+        mod_list=annotation.get_cterm_mod_list()
+    )
 
     # Intervals
     for interval in annotation.get_interval_list():
         for i in range(len(interval.mods) - 1, -1, -1):
             mod = interval.mods[i]
-            val = parse_mod_delta_mass_only(mod)
+            val = parse_mod_delta_mass_only(mod=mod)
             if val is not None:
                 delta_mass += val
                 interval.mods.pop(i)
 
     # Internal mods
     for _, mods in annotation.get_internal_mod_dict().items():
-        delta_mass += _pop_delta_mass_from_mod_list(mods)
+        delta_mass += _pop_delta_mass_from_mod_list(mod_list=mods)
 
     return delta_mass
-
 
 
 def _get_sequence_composition(
@@ -110,9 +121,9 @@ def _get_sequence_composition(
     return sequence_composition
 
 
-def sequence_comp(
+def _sequence_comp(
     annotation: ProFormaAnnotation,
-    ion_type: str,
+    ion_type: IonTypeLiteral | IonType = IonType.PRECURSOR,
     isotope: int = 0,
     use_isotope_on_mods: bool = False,
 ) -> dict[str, int | float]:
@@ -152,47 +163,49 @@ def sequence_comp(
             "B/Z",
             "Cannot determine the composition of a sequence with ambiguous amino acids.",
         )
-    
+
     # Get the composition of the base sequence
-    sequence_composition: Counter[str] = _get_sequence_composition(annotation.sequence)
+    sequence_composition: Counter[str] = _get_sequence_composition(
+        sequence=annotation.sequence
+    )
     sequence_composition.update(NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS[ion_type])
-    sequence_composition.update(parse_charge_adducts_comp(charge_adducts))
+    sequence_composition.update(parse_charge_adducts_comp(adducts=charge_adducts))
 
     mod_composition: Counter[str] = Counter()
     for unknown_mod in annotation.get_unknown_mod_list():
-        mod_composition.update(mod_comp(unknown_mod))
+        mod_composition.update(mod_comp(mod=unknown_mod))
 
     for interval in annotation.get_interval_list():
         if interval.has_mods:
             for interval_mod in interval.mods:
-                mod_composition.update(mod_comp(interval_mod))
+                mod_composition.update(mod_comp(mod=interval_mod))
 
     if annotation.has_labile_mods and ion_type == IonType.PRECURSOR:
         for labile_mod in annotation.get_labile_mod_list():
-            mod_composition.update(mod_comp(labile_mod))
+            mod_composition.update(mod_comp(mod=labile_mod))
 
     for nterm_mod in annotation.get_nterm_mod_list():
-        mod_composition.update(mod_comp(nterm_mod))
+        mod_composition.update(mod_comp(mod=nterm_mod))
 
     for cterm_mod in annotation.get_cterm_mod_list():
-        mod_composition.update(mod_comp(cterm_mod))
+        mod_composition.update(mod_comp(mod=cterm_mod))
 
     for _, internal_mods in annotation.get_internal_mod_dict().items():
         for internal_mod in internal_mods:
-            mod_composition.update(mod_comp(internal_mod))
-            
+            mod_composition.update(mod_comp(mod=internal_mod))
+
     if annotation.has_static_mods:
-        static_map = parse_static_mods(annotation.static_mods)
+        static_map = parse_static_mods(mods=annotation.static_mods)
 
         n_term_mod = static_map.get("N-Term")
         if n_term_mod is not None:
             for m in n_term_mod:
-                mod_composition.update(mod_comp(m.val))
+                mod_composition.update(mod_comp(mod=m))
 
         c_term_mod = static_map.get("C-Term")
         if c_term_mod is not None:
             for m in c_term_mod:
-                mod_composition.update(mod_comp(m.val))
+                mod_composition.update(mod_comp(mod=m))
 
         for aa, mod in static_map.items():
             if aa in ["N-Term", "C-Term"]:
@@ -200,7 +213,7 @@ def sequence_comp(
 
             aa_count = annotation.sequence.count(aa)
             for m in mod:
-                comp = mod_comp(m.val)
+                comp = mod_comp(mod=m)
                 mod_composition.update({k: v * aa_count for k, v in comp.items()})
 
     mod_composition["n"] = mod_composition.get("n", 0) + isotope
@@ -210,14 +223,14 @@ def sequence_comp(
         if use_isotope_on_mods:
             sequence_composition = apply_isotope_mods_to_composition(
                 sequence_composition, annotation.isotope_mods  # type: ignore
-            ) # type: ignore
+            )  # type: ignore
             mod_composition = apply_isotope_mods_to_composition(
                 mod_composition, annotation.isotope_mods  # type: ignore
-            ) # type: ignore
+            )  # type: ignore
         else:
             sequence_composition = apply_isotope_mods_to_composition(
                 sequence_composition, annotation.isotope_mods  # type: ignore
-            ) # type: ignore
+            )  # type: ignore
 
     composition: dict[str, int | float] = {}
     for k, v in sequence_composition.items():
@@ -230,15 +243,15 @@ def sequence_comp(
 
     return composition
 
+
 def mass(
     annotation: ProFormaAnnotation,
-    ion_type: str = IonType.PRECURSOR,
+    ion_type: IonTypeLiteral | IonType = IonType.PRECURSOR,
     monoisotopic: bool = True,
     isotope: int = 0,
     loss: float = 0.0,
     use_isotope_on_mods: bool = False,
     precision: int | None = None,
-    inplace: bool = False,
 ) -> float:
 
     if annotation.contains_mass_ambiguity():
@@ -247,34 +260,21 @@ def mass(
             msg="Cannot determine the mass of a sequence with ambiguous amino acids: {annotation.sequence}",
         )
 
-    # inplace should not be true
-    if inplace is False:
-        # Create a copy of the annotation to modify
-        return mass(
-            annotation.copy(),
-            ion_type=ion_type,
-            monoisotopic=monoisotopic,
-            isotope=isotope,
-            loss=loss,
-            use_isotope_on_mods=use_isotope_on_mods,
-            precision=precision,
-            inplace=True,
-        )
-    else:
-        warnings.warn(
-            "Inplace mass calculation is not recommended. It may lead to unexpected behavior.",
-        )
-
+    annotation = annotation.copy()
     annotation.condense_static_mods(inplace=True)
 
     # more complex mass calculation (based on chem composition)
     if annotation.has_isotope_mods:
-        peptide_composition, delta_mass = comp_mass(
-            annotation, ion_type, isotope, use_isotope_on_mods, True
+        peptide_composition, delta_mass = _comp_with_delta_mass(
+            annotation=annotation,
+            ion_type=ion_type,
+            isotope=isotope,
+            use_isotope_on_mods=use_isotope_on_mods,
         )
+
         return (
             chem_mass(
-                peptide_composition, monoisotopic=monoisotopic, precision=precision
+                formula=peptide_composition, monoisotopic=monoisotopic, precision=precision
             )
             + delta_mass
         )
@@ -353,52 +353,43 @@ def mass(
         precision=precision,
     )
 
+
 def mz(
     annotation: ProFormaAnnotation,
-    ion_type: str = IonType.PRECURSOR,
+    ion_type: IonTypeLiteral | IonType = IonType.PRECURSOR,
     monoisotopic: bool = True,
     isotope: int = 0,
     loss: float = 0.0,
     precision: int | None = None,
+    use_isotope_on_mods: bool = False,
 ) -> float:
 
     m = mass(
-        annotation,
+        annotation=annotation,
         ion_type=ion_type,
         monoisotopic=monoisotopic,
         isotope=isotope,
         loss=loss,
+        use_isotope_on_mods=use_isotope_on_mods,
         precision=precision,
     )
 
-    return adjust_mz(m, annotation.charge, precision)
+    return adjust_mz(base_mass=m, charge=annotation.charge, precision=precision)
+
 
 def comp(
     annotation: ProFormaAnnotation,
-    ion_type: str = IonType.PRECURSOR,
+    ion_type: IonTypeLiteral | IonType = IonType.PRECURSOR,
     estimate_delta: bool = False,
     isotope: int = 0,
     use_isotope_on_mods: bool = False,
-    inplace: bool = False,
 ) -> dict[str, int | float]:
 
-    if inplace is False:
-        # Create a copy of the annotation to modify
-        return comp(
-            annotation.copy(),
-            ion_type=ion_type,
-            estimate_delta=estimate_delta,
-            isotope=isotope,
-            use_isotope_on_mods=use_isotope_on_mods,
-            inplace=True,
-        )
-
-    composition, delta_mass = comp_mass(
+    composition, delta_mass = _comp_with_delta_mass(
         annotation,
         ion_type=ion_type,
         isotope=isotope,
         use_isotope_on_mods=use_isotope_on_mods,
-        inplace=False,
     )
 
     if delta_mass != 0:
@@ -409,13 +400,7 @@ def comp(
                 f"sequence '{annotation.serialize(include_plus=True, precision=5)}'."
             )
 
-        if use_isotope_on_mods is True:
-            delta_mass_comp = estimate_comp(delta_mass, annotation.isotope_mods)
-            warnings.warn(
-                "Applying isotopic modifications to the predicted composition. This will not be accurate."
-            )
-        else:
-            delta_mass_comp = estimate_comp(delta_mass, None)
+        delta_mass_comp = estimate_comp(delta_mass, annotation.isotope_mods)
 
         # Combine the compositions of the sequence and the delta mass
         for element in delta_mass_comp:
@@ -424,43 +409,42 @@ def comp(
 
     return composition
 
-def comp_mass(
+
+def _comp_with_delta_mass(
     annotation: ProFormaAnnotation,
-    ion_type: str = IonType.PRECURSOR,
+    ion_type: IonTypeLiteral | IonType = IonType.PRECURSOR,
     isotope: int = 0,
     use_isotope_on_mods: bool = False,
-    inplace: bool = False,
 ) -> tuple[dict[str, int | float], float]:
-    # if inplace is True -> Will condense static mods
+    # returns a tuple containing the composition of the peptide, and the sum of all delta mass modifications, 
+    # which cannot be directly converted to a composition dictionary
 
-    if inplace is False:
-        # Create a copy of the annotation to modify
-        return comp_mass(
-            annotation.copy(),
-            ion_type=ion_type,
-            isotope=isotope,
-            use_isotope_on_mods=use_isotope_on_mods,
-            inplace=True,
-        )
+    annotation = annotation.copy()
 
     # condenses static mods
     annotation.condense_static_mods(inplace=True)
-    delta_mass = (
-        _pop_delta_mass_mods(annotation)
+    delta_mass = _pop_delta_mass_mods(
+        annotation
     )  # sum delta mass mods and remove them from the annotation
-    peptide_composition = sequence_comp(
+    peptide_composition = _sequence_comp(
         annotation, ion_type, isotope, use_isotope_on_mods
     )
 
     if use_isotope_on_mods is True and delta_mass != 0:
+
         warnings.warn(
             "use_isotope_on_mods=True and delta_mass != 0. Cannot apply isotopic modifications to the delta mass."
         )
 
     return peptide_composition, delta_mass
 
+
 def condense_to_mass_mods(
-    annotation: ProFormaAnnotation, include_plus: bool = False, inplace: bool = True
+    annotation: ProFormaAnnotation,
+    include_plus: bool = False,
+    inplace: bool = True,
+    use_isotope_on_mods: bool = False,
+    estimate_delta: bool = False,
 ) -> ProFormaAnnotation:
 
     if inplace is False:
@@ -468,7 +452,9 @@ def condense_to_mass_mods(
         return condense_to_mass_mods(
             annotation.copy(),
             include_plus=include_plus,
-            inplace=True
+            inplace=True,
+            use_isotope_on_mods=use_isotope_on_mods,
+            estimate_delta=estimate_delta,
         )
 
     labile_mods = annotation.pop_labile_mods()
@@ -503,10 +489,8 @@ def condense_to_mass_mods(
     for i, (segment, stripped) in enumerate(zip(segments, stripped_segments)):
         # Calculate mass difference
         mass_diff = mass(segment) - mass(stripped)
-        if abs(mass_diff) > 1e-6:  # Only add if difference is significant
-            annotation.set_internal_mods_at_index(
-                index=i, mods=mass_diff, inplace=True
-            )
+        if abs(mass_diff) > 1e-3:  # Only add if difference is significant
+            annotation.set_internal_mods_at_index(index=i, mods=mass_diff, inplace=True)
 
     if labile_mods:
         labile_mods_mass = sum(mod_mass(mod) for mod in labile_mods)

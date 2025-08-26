@@ -32,7 +32,9 @@ class Interval:
         self.end: int = end
         self.ambiguous: bool = ambiguous
         self.mods: ModList = (
-            setup_mod_list(mods) if not isinstance(mods, ModList) else mods
+            setup_mod_list(mods, allow_dups=True, stackable=False)
+            if not isinstance(mods, ModList)
+            else mods
         )
 
     @property
@@ -40,7 +42,7 @@ class Interval:
         """Check if the interval has modifications"""
         return len(self.mods) > 0
 
-    def dict(self) -> dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert the interval to a dictionary"""
         return {
             "start": self.start,

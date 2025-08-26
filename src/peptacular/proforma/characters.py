@@ -4,8 +4,12 @@ from enum import StrEnum
 class ProformaChar(StrEnum):
     MOD_START = "["
     MOD_END = "]"
+    UNKNOWN_MOD_START = "["
+    UNKNOWN_MOD_END = "]"
     STATIC_MOD_START = "<"
     STATIC_MOD_END = ">"
+    ISOTOPE_MOD_START = "<"
+    ISOTOPE_MOD_END = ">"
     INTERVAL_START = "("
     INTERVAL_END = ")"
     UNKNOWN = "?"
@@ -13,9 +17,9 @@ class ProformaChar(StrEnum):
     LABILE_MOD_START = "{"
     LABILE_MOD_END = "}"
     TERM_MOD = "-"
-    CHIMERIC = '+'
-    CONNECTED = '/'
-    PLUS = '+'
-    MINUS = '-'
-    MULTI = '^'
-    CHARGE_SEP = '/'
+    CHIMERIC = "+"
+    CONNECTED = "/"
+    PLUS = "+"
+    MINUS = "-"
+    MULTI = "^"
+    CHARGE_SEP = "/"

@@ -1,24 +1,18 @@
-from typing import *
-
 from .util import get_annotation_input, override_annotation_properties
 
-from ..proforma.annot import ProFormaAnnotation
-from ..proforma_dataclasses import ChemComposition, Mod, ACCEPTED_MOD_TYPES
+from ..proforma import ProFormaAnnotation
+from ..constants import IonType, IonTypeLiteral
 
 
 def mass(
-    sequence: Union[str, ProFormaAnnotation],
-    charge: Optional[int] = None,
-    ion_type: str = "p",
+    sequence: str | ProFormaAnnotation,
+    charge: int | None = None,
+    ion_type: IonTypeLiteral | IonType = IonType.PRECURSOR,
     monoisotopic: bool = True,
     isotope: int = 0,
     loss: float = 0.0,
-    charge_adducts: Optional[
-        Union[ACCEPTED_MOD_TYPES, List[ACCEPTED_MOD_TYPES]]
-    ] = None,
-    isotope_mods: Optional[Union[ACCEPTED_MOD_TYPES, List[ACCEPTED_MOD_TYPES]]] = None,
+    precision: int | None = None,
     use_isotope_on_mods: bool = False,
-    precision: Optional[int] = None,
 ) -> float:
     """
     Calculate the mass of an amino acid 'sequence'.
@@ -27,8 +21,8 @@ def mass(
     :type sequence: str | ProFormaAnnotation
     :param charge: The charge state, default is None.
     :type charge: int | None
-    :param ion_type: The ion type. Default is 'p'.
-    :type ion_type: str
+    :param ion_type: The ion type. Default is IonType.PRECURSOR.
+    :type ion_type: IonTypeLiteral | IonType
     :param monoisotopic: If True, use monoisotopic mass else use average mass. Default is True.
     :type monoisotopic: bool
     :param isotope: The number of Neutrons to add/subtract from the final mass. Default is 0.
@@ -137,8 +131,6 @@ def mass(
     override_annotation_properties(
         annotation=annotation,
         charge=charge,
-        charge_adducts=charge_adducts,
-        isotope_mods=isotope_mods,
     )
 
     return annotation.mass(
@@ -146,23 +138,20 @@ def mass(
         monoisotopic=monoisotopic,
         isotope=isotope,
         loss=loss,
-        use_isotope_on_mods=use_isotope_on_mods,
         precision=precision,
+        use_isotope_on_mods=use_isotope_on_mods,
     )
 
 
 def mz(
-    sequence: Union[str, ProFormaAnnotation],
-    charge: Optional[int] = None,
-    ion_type: str = "p",
+    sequence: str | ProFormaAnnotation,
+    charge: int | None = None,
+    ion_type: IonTypeLiteral | IonType = IonType.PRECURSOR,
     monoisotopic: bool = True,
     isotope: int = 0,
     loss: float = 0.0,
-    charge_adducts: Optional[
-        Union[ACCEPTED_MOD_TYPES, List[ACCEPTED_MOD_TYPES]]
-    ] = None,
-    isotope_mods: Optional[Union[ACCEPTED_MOD_TYPES, List[ACCEPTED_MOD_TYPES]]] = None,
-    precision: Optional[int] = None,
+    precision: int | None = None,
+    use_isotope_on_mods: bool = False,
 ) -> float:
     """
     Calculate the m/z (mass-to-charge ratio) of an amino acid 'sequence'.
@@ -220,8 +209,6 @@ def mz(
     override_annotation_properties(
         annotation=annotation,
         charge=charge,
-        charge_adducts=charge_adducts,
-        isotope_mods=isotope_mods,
     )
 
     return annotation.mz(
@@ -230,21 +217,18 @@ def mz(
         isotope=isotope,
         loss=loss,
         precision=precision,
+        use_isotope_on_mods=use_isotope_on_mods,
     )
 
 
 def comp(
-    sequence: Union[str, ProFormaAnnotation],
-    ion_type: str = "p",
+    sequence: str | ProFormaAnnotation,
+    ion_type: IonTypeLiteral | IonType = IonType.PRECURSOR,
     estimate_delta: bool = False,
-    charge: Optional[int] = None,
+    charge: int | None = None,
     isotope: int = 0,
-    charge_adducts: Optional[
-        Union[ACCEPTED_MOD_TYPES, List[ACCEPTED_MOD_TYPES]]
-    ] = None,
-    isotope_mods: Optional[Union[ACCEPTED_MOD_TYPES, List[ACCEPTED_MOD_TYPES]]] = None,
     use_isotope_on_mods: bool = False,
-) -> ChemComposition:
+) -> dict[str, int | float]:
     """
     Calculates the elemental composition of a peptide sequence, including modifications,
     and optionally estimates the composition based on the delta mass from modifications.
@@ -296,41 +280,9 @@ def comp(
     override_annotation_properties(
         annotation=annotation,
         charge=charge,
-        charge_adducts=charge_adducts,
-        isotope_mods=isotope_mods,
     )
 
     return annotation.comp(
-        ion_type=ion_type,
-        estimate_delta=estimate_delta,
-        isotope=isotope,
-        use_isotope_on_mods=use_isotope_on_mods,
-        inplace=True,
-    )
-
-
-def comp_mass(
-    sequence: Union[str, ProFormaAnnotation],
-    ion_type: str = "p",
-    charge: Optional[int] = None,
-    isotope: int = 0,
-    charge_adducts: Optional[
-        Union[ACCEPTED_MOD_TYPES, List[ACCEPTED_MOD_TYPES]]
-    ] = None,
-    isotope_mods: Optional[Union[ACCEPTED_MOD_TYPES, List[ACCEPTED_MOD_TYPES]]] = None,
-    use_isotope_on_mods: bool = False,
-) -> Tuple[ChemComposition, float]:
-
-    annotation = get_annotation_input(sequence, copy=True)
-
-    override_annotation_properties(
-        annotation,
-        charge=charge,
-        charge_adducts=charge_adducts,
-        isotope_mods=isotope_mods,
-    )
-
-    return annotation.comp_mass(
         ion_type=ion_type,
         isotope=isotope,
         use_isotope_on_mods=use_isotope_on_mods,
@@ -338,9 +290,10 @@ def comp_mass(
 
 
 def condense_to_mass_mods(
-    sequence: Union[str, ProFormaAnnotation],
+    sequence: str | ProFormaAnnotation,
+    use_isotope_on_mods: bool = False,
     include_plus: bool = False,
-    precision: Optional[int] = None,
+    precision: int | None = None,
 ) -> str:
     """
     Converts all modifications in a sequence to their mass equivalents by calculating
@@ -377,7 +330,8 @@ def condense_to_mass_mods(
     """
     annotation = get_annotation_input(sequence=sequence, copy=True)
 
-    return annotation.condense_to_mass_mods(
+    return annotation.condense_to_delta_mass(
+        use_isotope_on_mods=use_isotope_on_mods,
         include_plus=include_plus,
         inplace=True,
     ).serialize(include_plus=include_plus, precision=precision)

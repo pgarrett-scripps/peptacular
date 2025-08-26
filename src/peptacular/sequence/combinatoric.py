@@ -4,7 +4,7 @@ This module provides functions to generate permutations, combinations, and produ
 
 from typing import Generator, Optional, Union
 
-from ..proforma.annot import ProFormaAnnotation
+from ..proforma.annotation import ProFormaAnnotation
 from .util import get_annotation_input
 
 

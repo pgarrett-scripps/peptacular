@@ -1,4 +1,3 @@
-
 from dataclasses import dataclass
 
 from peptacular.proforma.parser import ProFormaParser
@@ -40,8 +39,6 @@ class MultiProFormaAnnotation:
                     seq += r"+"
 
         return seq
-    
-
 
     @staticmethod
     def parse(sequence: str) -> "MultiProFormaAnnotation":
@@ -56,9 +53,9 @@ class MultiProFormaAnnotation:
         """
         # Implementation goes here
         annots: list[ProFormaAnnotation] = []
-        connections: list[bool | None] = []
+        connections: list[bool] = []
         for prof_parser, connection in ProFormaParser(sequence).parse():
-            
+
             annot = ProFormaAnnotation(
                 sequence="".join(prof_parser.amino_acids),
                 isotope_mods=prof_parser.isotope_mods.copy(),
@@ -73,16 +70,15 @@ class MultiProFormaAnnotation:
                 charge_adducts=prof_parser.charge_adducts.copy(),
             )
             annots.append(annot)
-            connections.append(connection)
+            if connection is not None:
+                connections.append(connection)
 
         if len(annots) <= 1:
             raise ValueError("No connections found in the sequence.")
 
-        # Filter out None values from connections
-        non_none_connections = [conn for conn in connections if conn is not None]
-        if len(non_none_connections) != len(connections):
-            raise ValueError("Some connections are undefined in the sequence.")
-        
-        assert len(non_none_connections) == len(annots) - 1, "Mismatch between annotations and connections."
+        if len(connections) != len(annots) - 1:
+            raise ValueError(
+                f"Number of connections must be one less than the number of annotations, got {len(connections)} connections and {len(annots)} annotations."
+            )
 
-        return MultiProFormaAnnotation(annotations=annots, connections=non_none_connections)
+        return MultiProFormaAnnotation(annotations=annots, connections=connections)

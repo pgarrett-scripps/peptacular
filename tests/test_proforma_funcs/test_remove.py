@@ -3,7 +3,6 @@ import unittest
 
 import peptacular as pt
 
-
 class TestRemoveMods(unittest.TestCase):
     
     """
@@ -247,12 +246,12 @@ class TestRemoveMods(unittest.TestCase):
 
     def test_remove_mods_mod_type_enum(self):
         annotation = pt.ProFormaAnnotation.parse("[Acetyl]-PE[Phospho]PTIDE-[Amide]")
-        removed_annotation = annotation.remove_mods(mods=ModType.INTERNAL, inplace=False)
+        removed_annotation = annotation.remove_mods(mods=pt.ModType.INTERNAL, inplace=False)
         self.assertEqual(removed_annotation.serialize(), "[Acetyl]-PEPTIDE-[Amide]")
 
     def test_remove_mods_mixed_list(self):
         annotation = pt.ProFormaAnnotation.parse("[Acetyl]-PE[Phospho]PTIDE-[Amide]/2")
-        removed_annotation = annotation.remove_mods(mods=['nterm', ModType.CHARGE], inplace=False)
+        removed_annotation = annotation.remove_mods(mods=['nterm', pt.ModType.CHARGE], inplace=False)
         self.assertEqual(removed_annotation.serialize(), "PE[Phospho]PTIDE-[Amide]")
 
     def test_remove_mods_inplace_true(self):
@@ -293,14 +292,14 @@ class TestRemoveMods(unittest.TestCase):
         annotation = pt.ProFormaAnnotation.parse("{Glycan}[Acetyl]-PEPTIDE-[Amide]")
         removed_annotation = annotation.remove_nterm_mods(inplace=False)
         self.assertEqual(removed_annotation.serialize(), "{Glycan}PEPTIDE-[Amide]")
-        self.assertTrue(removed_annotation.has_labile_mods())
+        self.assertTrue(removed_annotation.has_labile_mods)
 
     def test_remove_methods_with_unknown_mods(self):
         # Test that unknown mods are preserved when removing other mod types
         annotation = pt.ProFormaAnnotation.parse("[Unknown]?[Acetyl]-PEPTIDE-[Amide]")
         removed_annotation = annotation.remove_nterm_mods(inplace=False)
         self.assertEqual(removed_annotation.serialize(), "[Unknown]?PEPTIDE-[Amide]")
-        self.assertTrue(removed_annotation.has_unknown_mods())
+        self.assertTrue(removed_annotation.has_unknown_mods)
 
 
 if __name__ == '__main__':

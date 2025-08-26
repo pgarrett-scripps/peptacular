@@ -135,6 +135,7 @@ def estimate_comp(
 
     return composition
 
+
 def _parse_glycan_comp(glycan_str: str) -> dict[str, int | float]:
     """
     Parse a glycan string and return its mass.
@@ -420,7 +421,7 @@ def apply_isotope_mods_to_composition(
 ) -> dict[str, int | float]:
     """
     Apply isotopic modifications to a composition.
-    
+
     :param composition: The composition to apply the isotopic modifications to.
     :type composition: MutableMapping[str, int | float] | str
     :param isotopic_mods: The isotopic modifications.
@@ -429,38 +430,40 @@ def apply_isotope_mods_to_composition(
     :type inplace: bool
     :return: The modified composition (same type as input, or dict if input was str).
     :rtype: Same as input type | dict[str, int | float]
-    
+
     .. code-block:: python
-    
+
         # Apply isotopic modifications to a composition.
         >>> apply_isotope_mods_to_composition({'C': 6, 'H': 12, 'O': 6}, ['13C'])
         {'H': 12, 'O': 6, '13C': 6}
-        
+
         # Apply multiple isotopic modifications to a composition.
         >>> apply_isotope_mods_to_composition({'C': 6, 'H': 12, 'O': 6}, ['13C', '15N'])
         {'H': 12, 'O': 6, '13C': 6}
-        
+
         # Works with Counter
         >>> counter = Counter({'C': 6, 'H': 12, 'O': 6})
         >>> result = apply_isotope_mods_to_composition(counter, ['13C'])
         >>> isinstance(result, Counter)  # True
     """
     if isinstance(composition, str):
-        return apply_isotope_mods_to_composition(parse_chem_formula(composition), isotopic_mods, inplace=False)
-        
+        return apply_isotope_mods_to_composition(
+            parse_chem_formula(composition), isotopic_mods, inplace=False
+        )
+
     if not inplace:
         composition = copy.deepcopy(composition)
 
     if isotopic_mods is None:
         return composition
-        
+
     isotope_map = parse_isotope_mods(isotopic_mods)
-    
+
     for element, isotope_label in isotope_map.items():
         if element in composition:
             if element == isotope_label:
                 continue
-                
+
             # Check if the isotope label already exists in the composition
             if isotope_label in composition:
                 # Add the count of the original element to the isotope label count
@@ -469,9 +472,8 @@ def apply_isotope_mods_to_composition(
                 # If the isotope label doesn't exist, create it with the count of the original element
                 composition[isotope_label] = composition[element]
             del composition[element]
-            
-    return composition
 
+    return composition
 
 
 def get_isotope_composition_change(
@@ -479,27 +481,32 @@ def get_isotope_composition_change(
     isotopic_mods: Iterable[MOD_VALUE_TYPES] | None,
 ) -> dict[str, int | float]:
     if isinstance(composition, str):
-        return get_isotope_composition_change(parse_chem_formula(composition), isotopic_mods)
-    
+        return get_isotope_composition_change(
+            parse_chem_formula(composition), isotopic_mods
+        )
+
     if isotopic_mods is None:
         return {}
-    
+
     composition_change: dict[str, int | float] = {}
     isotope_map = parse_isotope_mods(isotopic_mods)
-    
+
     for element, isotope_label in isotope_map.items():
         if element in composition:
             if element == isotope_label:
                 continue
-            
-            # Record the removal of the original element
-            composition_change[element] = composition_change.get(element, 0) - composition[element]
-            
-            # Record the addition of the isotope label
-            composition_change[isotope_label] = composition_change.get(isotope_label, 0) + composition[element]
-    
-    return composition_change
 
+            # Record the removal of the original element
+            composition_change[element] = (
+                composition_change.get(element, 0) - composition[element]
+            )
+
+            # Record the addition of the isotope label
+            composition_change[isotope_label] = (
+                composition_change.get(isotope_label, 0) + composition[element]
+            )
+
+    return composition_change
 
 
 def _parse_adduct_comp(adduct: str) -> dict[str, int | float]:

@@ -3,6 +3,7 @@ mode_db_setup.py
 """
 
 import dataclasses
+from enum import StrEnum
 import os
 import pickle
 import regex as re
@@ -10,7 +11,7 @@ import tempfile
 import warnings
 from collections import Counter
 from functools import cached_property
-from typing import List, Dict, IO, Any, Optional, Union, Iterator, Tuple
+from typing import IO, Any, Generator, Iterable, Iterator
 
 from ..constants import ISOTOPIC_ATOMIC_MASSES
 from ..chem.chem_util import (
@@ -26,8 +27,8 @@ from ..utils2 import convert_type
 
 @dataclasses.dataclass
 class ModEntry:
-    id: str
-    name: str
+    id: str | None
+    name: str | None
     mono_mass: float | None = None
     avg_mass: float | None = None
     composition: str | None = None
@@ -147,7 +148,7 @@ def glycan_comp_db(
     return counts
 
 
-class DbType:
+class DbType(StrEnum):
     UNIMOD = "unimod"
     PSI_MOD = "psi-mod"
     GNO = "gno"
@@ -156,7 +157,7 @@ class DbType:
     MONOSACCHARIDES = "monosaccharide"
 
 
-_DB_FILE_PATHS = {
+_DB_FILE_PATHS: dict[DbType, str] = {
     DbType.UNIMOD: "unimod",
     DbType.PSI_MOD: "psi-mod",
     DbType.GNO: "gno",
@@ -165,7 +166,7 @@ _DB_FILE_PATHS = {
     DbType.MONOSACCHARIDES: "monosaccharides",
 }
 
-_OBO_FILE_SOURCES = {
+_OBO_FILE_SOURCES: dict[DbType, str] = {
     DbType.UNIMOD: "https://www.unimod.org/obo/unimod.obo",
     DbType.PSI_MOD: "https://raw.githubusercontent.com/HUPO-PSI/psi-mod-CV/master/PSI-MOD.obo",
     DbType.XLMOD: "https://raw.githubusercontent.com/HUPO-PSI/xlmod-CV/main/XLMOD.obo",
@@ -175,10 +176,13 @@ _OBO_FILE_SOURCES = {
 }
 
 
-def _read_obo(file: IO[str]) -> List[Dict[str, Any]]:
+def _read_obo(file: IO[str]) -> list[dict[str, Any]]:
     file.seek(0)
 
-    info, elems, skip, d = {}, [], None, None
+    info: dict[str, str] = {}
+    elems: list[dict[str, Any]] = []
+    skip: bool = False
+    d: dict[str, Any] | None = None
 
     for line in file:
 
@@ -219,7 +223,7 @@ def _read_obo(file: IO[str]) -> List[Dict[str, Any]]:
     return elems
 
 
-def _is_obsolete(term: Dict[str, Any]) -> bool:
+def _is_obsolete(term: dict[str, Any]) -> bool:
     is_obsolete = term.get("is_obsolete", ["false"])[0]
     if is_obsolete in ["true", "false"]:
         is_obsolete = bool(is_obsolete == "true")
@@ -263,7 +267,7 @@ def _fix_entry(entry: ModEntry):
             ) from err
 
 
-def _get_id_and_name(term: Dict[str, Any]) -> Tuple[str, str]:
+def _get_id_and_name(term: dict[str, Any]) -> tuple[str, str]:
     term_id = term.get("id", [])
     term_name = term.get("name", [])
 
@@ -286,16 +290,21 @@ def _get_id_and_name(term: Dict[str, Any]) -> Tuple[str, str]:
     return term_id, term_name
 
 
-def _get_parent_ids(term: Dict[str, Any]) -> List[str]:
+def _get_parent_ids(term: dict[str, Any]) -> list[str]:
     parents = term.get("is_a", [])
-    if not isinstance(parents, List):
+    if not isinstance(parents, Iterable):
         parents = [parents]
 
-    parent_ids = [p.split(" ")[0] for p in parents]
+    parent_ids: list[str] = []
+
+    for p in parents:
+        if not isinstance(p, str):
+            raise ValueError(f"Invalid parent id: {p}")
+        parent_ids.append(p.split(" ")[0])
     return parent_ids
 
 
-def _get_unimod_entries(terms: List[Dict[str, Any]]) -> List[ModEntry]:
+def _get_unimod_entries(terms: list[dict[str, Any]]) -> Generator[ModEntry, None, None]:
     for term in terms:
 
         term_id, term_name = _get_id_and_name(term)
@@ -308,7 +317,7 @@ def _get_unimod_entries(terms: List[Dict[str, Any]]) -> List[ModEntry]:
         if term_name == "unimod root node":
             continue
 
-        property_values = {}
+        property_values: dict[str, list[str]] = {}
         for val in term.get("xref", []):
             elems = val.split('"')
             k = elems[0].rstrip()
@@ -345,8 +354,9 @@ def _get_unimod_entries(terms: List[Dict[str, Any]]) -> List[ModEntry]:
             delta_average_mass = delta_average_mass[0]
 
         synonyms = term.get("synonym", [])
-        if not isinstance(synonyms, List):
+        if not isinstance(synonyms, list):
             synonyms = [synonyms]
+        
         synonyms = [syn.split('"')[1] for syn in synonyms]
 
         delta_formula = None
@@ -355,7 +365,7 @@ def _get_unimod_entries(terms: List[Dict[str, Any]]) -> List[ModEntry]:
             delta_composition = delta_composition.replace("(", " ").replace(")", "")
             delta_composition = parse_chem_formula(delta_composition, sep=" ")
 
-            combined_comp = {}
+            combined_comp: dict[str, int | float] = {}
             for k, v in delta_composition.items():
                 if k == "Me" or k == "Ac" or k not in ISOTOPIC_ATOMIC_MASSES:
                     glycan_composition = glycan_comp_db(k)
@@ -366,11 +376,15 @@ def _get_unimod_entries(terms: List[Dict[str, Any]]) -> List[ModEntry]:
 
             delta_formula = write_chem_formula(combined_comp)
 
-        if delta_monoisotopic_mass is not None:
+        if delta_monoisotopic_mass is not None and isinstance(delta_monoisotopic_mass, str):
             delta_monoisotopic_mass = float(delta_monoisotopic_mass)
+        if delta_monoisotopic_mass is not None and not isinstance(delta_monoisotopic_mass, float):
+            raise ValueError(f"Invalid delta monoisotopic mass: {delta_monoisotopic_mass}")
 
-        if delta_average_mass is not None:
+        if delta_average_mass is not None and isinstance(delta_average_mass, str):
             delta_average_mass = float(delta_average_mass)
+        if delta_average_mass is not None and not isinstance(delta_average_mass, float):
+            raise ValueError(f"Invalid delta average mass: {delta_average_mass}")
 
         try:
             _ = chem_mass(delta_formula)
@@ -380,7 +394,7 @@ def _get_unimod_entries(terms: List[Dict[str, Any]]) -> List[ModEntry]:
                 f"Cannot parse Unimod: {term_id}, {delta_formula}, {orig_comp}. {err}"
             )
 
-        mod = ModEntry(
+        yield ModEntry(
             id=term_id,
             name=term_name,
             mono_mass=delta_monoisotopic_mass,
@@ -391,10 +405,9 @@ def _get_unimod_entries(terms: List[Dict[str, Any]]) -> List[ModEntry]:
             entry_type=DbType.UNIMOD,
         )
 
-        yield mod
 
 
-def _get_psimod_entries(terms: List[Dict[str, Any]]) -> List[ModEntry]:
+def _get_psimod_entries(terms: list[dict[str, Any]]) -> Generator[ModEntry, None, None]:
     for term in terms:
 
         term_id, term_name = _get_id_and_name(term)
@@ -404,7 +417,7 @@ def _get_psimod_entries(terms: List[Dict[str, Any]]) -> List[ModEntry]:
         if _is_obsolete(term):
             continue
 
-        property_values = {}
+        property_values: dict[str, list[str]] = {}
         for val in term.get("xref", []):
             elems = val.split('"')
             if len(elems) < 2:
@@ -454,19 +467,20 @@ def _get_psimod_entries(terms: List[Dict[str, Any]]) -> List[ModEntry]:
             delta_composition = None
 
         synonyms = term.get("synonym", [])
-        if not isinstance(synonyms, List):
+        if not isinstance(synonyms, list):
             synonyms = [synonyms]
+
         synonyms = [syn.split('"')[1] for syn in synonyms]
 
         delta_formula = None
         if isinstance(delta_composition, str):
             delta_composition = delta_composition.split(" ")
 
-            elem_counter = Counter()
+            elem_counter: Counter[str] = Counter()
             for comp, num in zip(delta_composition[::2], delta_composition[1::2]):
                 elem_counter[comp.replace("(", "").replace(")", "")] = int(num)
 
-            delta_formula = write_chem_formula(elem_counter)
+            delta_formula = write_chem_formula(dict(elem_counter))
 
             try:
                 _ = parse_chem_formula(delta_formula)
@@ -476,11 +490,17 @@ def _get_psimod_entries(terms: List[Dict[str, Any]]) -> List[ModEntry]:
                     f'[{DbType.PSI_MOD}] Error parsing {term_id} {term_name} {property_values.get("DiffFormula")}, {e}'
                 )
 
-        if delta_monoisotopic_mass is not None:
+        if delta_monoisotopic_mass is not None and isinstance(delta_monoisotopic_mass, str):
             delta_monoisotopic_mass = float(delta_monoisotopic_mass)
 
-        if delta_average_mass is not None:
+        if delta_monoisotopic_mass is not None and not isinstance(delta_monoisotopic_mass, float):
+            raise ValueError(f"Invalid delta monoisotopic mass: {delta_monoisotopic_mass}")
+
+        if delta_average_mass is not None and isinstance(delta_average_mass, str):
             delta_average_mass = float(delta_average_mass)
+
+        if delta_average_mass is not None and not isinstance(delta_average_mass, float):
+            raise ValueError(f"Invalid delta average mass: {delta_average_mass}")
 
         yield ModEntry(
             id=term_id,
@@ -494,7 +514,7 @@ def _get_psimod_entries(terms: List[Dict[str, Any]]) -> List[ModEntry]:
         )
 
 
-def _get_resid_entries(terms: List[Dict[str, Any]]) -> List[ModEntry]:
+def _get_resid_entries(terms: list[dict[str, Any]]) -> Generator[ModEntry, None, None]:
     for term in terms:
 
         term_id, term_name = _get_id_and_name(term)
@@ -520,7 +540,7 @@ def _get_resid_entries(terms: List[Dict[str, Any]]) -> List[ModEntry]:
         if definition:
             res_ids = re.findall(regex_str, definition)
 
-        property_values = {}
+        property_values: dict[str, list[str]] = {}
         for val in term.get("xref", []):
             elems = val.split('"')
             if len(elems) < 2:
@@ -576,7 +596,7 @@ def _get_resid_entries(terms: List[Dict[str, Any]]) -> List[ModEntry]:
             delta_average_mass = float(delta_average_mass)
 
         synonyms = term.get("synonym", [])
-        if not isinstance(synonyms, List):
+        if not isinstance(synonyms, list):
             synonyms = [synonyms]
         synonyms = [syn.split('"')[1] for syn in synonyms]
 
@@ -617,7 +637,7 @@ def _get_resid_entries(terms: List[Dict[str, Any]]) -> List[ModEntry]:
             )
 
 
-def _get_xlmod_entries(terms: List[Dict[str, Any]]) -> List[ModEntry]:
+def _get_xlmod_entries(terms: list[dict[str, Any]]) -> Generator[ModEntry, None, None]:
     for term in terms:
 
         term_id, term_name = _get_id_and_name(term)
@@ -627,7 +647,7 @@ def _get_xlmod_entries(terms: List[Dict[str, Any]]) -> List[ModEntry]:
         if _is_obsolete(term):
             continue
 
-        property_values = {}
+        property_values: dict[str, list[str]] = {}
         for val in term.get("property_value", []):
             elems = val.split('"')
             if len(elems) < 2:
@@ -661,7 +681,7 @@ def _get_xlmod_entries(terms: List[Dict[str, Any]]) -> List[ModEntry]:
             delta_monoisotopic_mass = delta_monoisotopic_mass[0]
 
         synonyms = term.get("synonym", [])
-        if not isinstance(synonyms, List):
+        if not isinstance(synonyms, list):
             synonyms = [synonyms]
         synonyms = [syn.split('"')[1] for syn in synonyms]
 
@@ -710,7 +730,7 @@ def _get_xlmod_entries(terms: List[Dict[str, Any]]) -> List[ModEntry]:
         )
 
 
-def _get_gno_entries(terms: List[Dict[str, Any]]) -> List[ModEntry]:
+def _get_gno_entries(terms: list[dict[str, Any]]) -> Generator[ModEntry, None, None]:
     for term in terms:
 
         term_id, term_name = _get_id_and_name(term)
@@ -720,7 +740,7 @@ def _get_gno_entries(terms: List[Dict[str, Any]]) -> List[ModEntry]:
         if _is_obsolete(term):
             continue
 
-        property_values = {}
+        property_values: dict[str, list[str]] = {}
         for val in term.get("property_value", []):
             try:
                 elems = val.split('"')
@@ -733,7 +753,7 @@ def _get_gno_entries(terms: List[Dict[str, Any]]) -> List[ModEntry]:
                 continue
 
         synonyms = term.get("synonym", [])
-        if not isinstance(synonyms, List):
+        if not isinstance(synonyms, list):
             synonyms = [synonyms]
         synonyms = [syn.split('"')[1] for syn in synonyms]
 
@@ -753,7 +773,7 @@ def _get_gno_entries(terms: List[Dict[str, Any]]) -> List[ModEntry]:
             val = None
 
         if val:
-            composition = Counter()
+            composition: Counter[str] | None = Counter()
             tokens = re.findall(r"([A-Za-z0-9]+)\((\d+)\)", val)
             for symbol, count in tokens:
                 try:
@@ -802,7 +822,7 @@ def _get_gno_entries(terms: List[Dict[str, Any]]) -> List[ModEntry]:
         )
 
 
-def _get_monosaccharide_entries(terms: List[Dict[str, Any]]) -> List[ModEntry]:
+def _get_monosaccharide_entries(terms: list[dict[str, Any]]) -> Generator[ModEntry, None, None]:
     for term in terms:
 
         term_id, term_name = _get_id_and_name(term)
@@ -812,7 +832,7 @@ def _get_monosaccharide_entries(terms: List[Dict[str, Any]]) -> List[ModEntry]:
         if _is_obsolete(term):
             continue
 
-        property_values: Dict[str, List[str]] = {}
+        property_values: dict[str, list[str]] = {}
         for val in term.get("property_value", []):
             elems = val.split('"')
             k = elems[0].rstrip()
@@ -851,7 +871,7 @@ def _get_monosaccharide_entries(terms: List[Dict[str, Any]]) -> List[ModEntry]:
             delta_average_mass = delta_average_mass[0]
 
         synonyms = term.get("synonym", [])
-        if not isinstance(synonyms, List):
+        if not isinstance(synonyms, list):
             synonyms = [synonyms]
         synonyms = [syn.split('"')[1] for syn in synonyms]
 
@@ -889,7 +909,7 @@ def _get_monosaccharide_entries(terms: List[Dict[str, Any]]) -> List[ModEntry]:
         )
 
 
-def get_entries(db_type: DbType, file_path: str) -> List[ModEntry]:
+def get_entries(db_type: DbType, file_path: str) -> list[ModEntry]:
     """
     Get the entries from a database file.
 
@@ -897,32 +917,33 @@ def get_entries(db_type: DbType, file_path: str) -> List[ModEntry]:
     :type db_type: DbType
 
     :return: The entries from the database file.
-    :rtype: List[ModEntry]
+    :rtype: list[ModEntry]
 
     """
 
     with open(file_path, "r") as f:
         data = _read_obo(f)
 
-    if db_type == DbType.UNIMOD:
-        return list(_get_unimod_entries(data))
+    match db_type:
+        case DbType.UNIMOD:
+            return list(_get_unimod_entries(data))
+        case DbType.PSI_MOD:
+            return list(_get_psimod_entries(data))
 
-    if db_type == DbType.PSI_MOD:
-        return list(_get_psimod_entries(data))
+        case DbType.GNO:
+            return list(_get_gno_entries(data))
 
-    if db_type == DbType.GNO:
-        return list(_get_gno_entries(data))
+        case DbType.RESID:
+            return list(_get_resid_entries(data))
 
-    if db_type == DbType.RESID:
-        return list(_get_resid_entries(data))
+        case DbType.XLMOD:
+            return list(_get_xlmod_entries(data))
 
-    if db_type == DbType.XLMOD:
-        return list(_get_xlmod_entries(data))
-
-    if db_type == DbType.MONOSACCHARIDES:
-        return list(_get_monosaccharide_entries(data))
-
-    raise ValueError(f"Invalid type: {db_type}")
+        case DbType.MONOSACCHARIDES:
+            return list(_get_monosaccharide_entries(data))
+        
+        case _:
+            raise ValueError(f"Invalid type: {db_type}")
 
 
 class EntryDb:
@@ -931,7 +952,7 @@ class EntryDb:
     """
 
     def __init__(
-        self, entry_type: str, entries: List[ModEntry], use_synonyms: bool = False
+        self, entry_type: str, entries: list[ModEntry], use_synonyms: bool = False
     ):
         self.entry_type = entry_type
         self.entries = entries
@@ -974,7 +995,7 @@ class EntryDb:
     def __hash__(self) -> int:
         return hash((self.entry_type, frozenset(self.id_map.items())))
 
-    def setup(self, entries: List[ModEntry], synonyms: bool = False) -> None:
+    def setup(self, entries: list[ModEntry], synonyms: bool = False) -> None:
         self._setup_id_map(entries)
         self._setup_name_map(entries)
         self._setup_synonym_map(entries)
@@ -1006,7 +1027,7 @@ class EntryDb:
             )
         self.id_map[entry.id] = entry
 
-    def _setup_id_map(self, entries: List[ModEntry]) -> None:
+    def _setup_id_map(self, entries: list[ModEntry]) -> None:
         for entry in entries:
             self._add_entry_to_id_map(entry)
 
@@ -1017,7 +1038,7 @@ class EntryDb:
             )
         self.name_map[entry.name] = entry
 
-    def _setup_name_map(self, entries: List[ModEntry]) -> None:
+    def _setup_name_map(self, entries: list[ModEntry]) -> None:
         for entry in entries:
             self._add_entry_to_name_map(entry)
 
@@ -1033,7 +1054,7 @@ class EntryDb:
                 )
             self.synonym_map[syn] = entry
 
-    def _setup_synonym_map(self, entries: List[ModEntry]) -> None:
+    def _setup_synonym_map(self, entries: list[ModEntry]) -> None:
         for entry in entries:
             self._add_entry_to_synonym_map(entry)
 
@@ -1042,7 +1063,7 @@ class EntryDb:
             self.mono_mass_map.append(entry)
             self.mono_mass_map.sort(key=lambda x: x.mono_mass)
 
-    def setup_mono_list(self, entries: List[ModEntry]) -> None:
+    def setup_mono_list(self, entries: list[ModEntry]) -> None:
         valid_mono_entries = [entry for entry in entries if entry.mono_mass is not None]
         self.mono_mass_map = sorted(valid_mono_entries, key=lambda x: x.mono_mass)
 
@@ -1051,7 +1072,7 @@ class EntryDb:
             self.avg_mass_map.append(entry)
             self.avg_mass_map.sort(key=lambda x: x.avg_mass)
 
-    def add_entry(self, entries: Union[ModEntry, List[ModEntry]]) -> None:
+    def add_entry(self, entries: ModEntry | list[ModEntry]) -> None:
         """
         Add an entry or a list of entries to the database.
         """
@@ -1074,7 +1095,7 @@ class EntryDb:
         self.avg_mass_map.sort(key=lambda x: x.avg_mass)
         self.names_sorted = self._get_names_sorted()
 
-    def _setup_avg_list(self, entries: List[ModEntry]) -> None:
+    def _setup_avg_list(self, entries: list[ModEntry]) -> None:
         valid_avg_entries = [entry for entry in entries if entry.avg_mass is not None]
         self.avg_mass_map = sorted(valid_avg_entries, key=lambda x: x.avg_mass)
 
@@ -1087,12 +1108,12 @@ class EntryDb:
     def get_entry_by_synonym(self, synonym: str) -> ModEntry:
         return self.synonym_map.get(synonym)
 
-    def get_entries_by_mono_mass(self, mass: float, tol: float = 0.1) -> List[ModEntry]:
+    def get_entries_by_mono_mass(self, mass: float, tol: float = 0.1) -> list[ModEntry]:
         return [
             entry for entry in self.mono_mass_map if abs(entry.mono_mass - mass) < tol
         ]
 
-    def get_entries_by_avg_mass(self, mass: float, tol: float = 0.1) -> List[ModEntry]:
+    def get_entries_by_avg_mass(self, mass: float, tol: float = 0.1) -> list[ModEntry]:
         return [
             entry for entry in self.avg_mass_map if abs(entry.avg_mass - mass) < tol
         ]
@@ -1189,13 +1210,13 @@ class EntryDb:
         # print(f'Reloaded {self.entry_type} database from {file}')
         # print('Entries:', len(self))
 
-    def _get_names_sorted(self) -> List[str]:
+    def _get_names_sorted(self) -> list[str]:
         synonyms = set(self.synonym_map.keys())
         names = set(self.name_map.keys())
         return sorted(list(synonyms.union(names)), key=lambda x: len(x), reverse=True)
 
 
-def count_invalid_entries(entries: List[ModEntry]) -> Tuple[int, int, int]:
+def count_invalid_entries(entries: list[ModEntry]) -> tuple[int, int, int]:
     """
     Count the number of invalid entries in a list of ModEntry objects.
     """

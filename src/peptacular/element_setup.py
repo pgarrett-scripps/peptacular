@@ -62,6 +62,7 @@ def construct_element_info(
         notes=notes if notes is not None else "",
     )
 
+
 def get_element_info(chem_file_path: str) -> list[ElementInfo]:
     # From https://physics.nist.gov/cgi-bin/Compositions/stand_alone.pl?ele=&all=all&ascii=ascii2
 
@@ -306,6 +307,7 @@ def map_atomic_number_to_comp(
     return _process_element_infos(
         elem_infos, process_atomic_symbol, process_individual_isotope
     )
+
 
 def map_hill_order(elem_infos: list[ElementInfo]) -> dict[str, int]:
     # map atomic number to all element infos

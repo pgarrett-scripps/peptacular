@@ -163,7 +163,7 @@ def isotopic_distribution(
     delta_mass = 0.0
     if not all(isinstance(v, int) for v in chemical_formula.values()):
         prior_mass = chem_mass(chemical_formula)
-        chemical_formula = fix_chemical_formula(chemical_formula, False) # type: ignore
+        chemical_formula = fix_chemical_formula(chemical_formula, False)  # type: ignore
         post_mass = chem_mass(chemical_formula)
         delta_mass = prior_mass - post_mass
 

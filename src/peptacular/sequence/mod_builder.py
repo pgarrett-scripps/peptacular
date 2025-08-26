@@ -6,10 +6,10 @@ from typing import Any, Dict, List, Generator, Union, Optional, Literal
 from dataclasses import dataclass
 
 from .util import get_annotation_input
-from ..proforma.annot import ProFormaAnnotation
-from ..dclasses import Mod
+from ..proforma.annotation import ProFormaAnnotation
+from ..mod import Mod
 from ..util import get_regex_match_indices
-from ..dclasses import (
+from ..proforma import (
     fix_list_of_list_of_mods,
     fix_list_of_mods,
     remove_empty_list_of_list_of_mods,

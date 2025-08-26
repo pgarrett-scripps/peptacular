@@ -3,6 +3,8 @@ from collections.abc import Generator
 import random
 from typing import TYPE_CHECKING, Any, Callable
 
+from .dclasses.modlist import ModList
+
 from .dclasses import ModDict, IntervalList, Interval
 
 if TYPE_CHECKING:
@@ -14,8 +16,6 @@ def slice_annotation(
     start: int | None,
     stop: int | None,
     inplace: bool = False,
-    keep_terms: bool = False,
-    keep_labile: bool = True,
 ) -> ProFormaAnnotation:
     """
     Slice the annotation sequence and return a new annotation with the sliced sequence and modifications.
@@ -25,8 +25,6 @@ def slice_annotation(
         start: Start index (inclusive)
         stop: Stop index (exclusive)
         inplace: Whether to modify the annotation in place
-        keep_terms: Whether to keep terminal modifications when slicing
-        keep_labile: Whether to keep labile modifications
 
     Returns:
         Sliced annotation
@@ -40,19 +38,13 @@ def slice_annotation(
             start=start,
             stop=stop,
             inplace=True,
-            keep_terms=keep_terms,
-            keep_labile=keep_labile,
         )
 
     # Handle default values and negative indices
     seq_len = len(annotation)
     start = _normalize_start_index(start, seq_len)
     stop = _normalize_stop_index(stop, seq_len)
-
     _validate_slice_indices(start, stop, seq_len)
-
-    if not keep_labile:
-        annotation.labile_mods = None
 
     new_sequence = annotation.sequence[start:stop]
 
@@ -70,10 +62,10 @@ def slice_annotation(
     new_intervals = _adjust_intervals(annotation.get_interval_list(), start, stop)
 
     # Handle terminal modifications
-    if start > 0 and not keep_terms:
-        annotation.nterm_mods = None
-    if stop < seq_len and not keep_terms:
-        annotation.cterm_mods = None
+    if start > 0:
+        annotation.clear_nterm_mods()
+    if stop < seq_len:
+        annotation.clear_cterm_mods()
 
     # Update annotation
     annotation.sequence = new_sequence
@@ -83,6 +75,7 @@ def slice_annotation(
     return annotation
 
 
+# TODO: Add split on aa?
 def split_annotation(annotation: ProFormaAnnotation) -> list[ProFormaAnnotation]:
     """
     Split each amino acid in the sequence into a separate ProFormaAnnotation.
@@ -99,14 +92,9 @@ def split_annotation(annotation: ProFormaAnnotation) -> list[ProFormaAnnotation]
     if annotation.has_intervals:
         raise ValueError("Cannot split annotation with intervals.")
 
-    # For labile mods only include on first amino acid
-    labile_mods = annotation.pop_labile_mods()
-
     result: list[ProFormaAnnotation] = []
     for i, _ in enumerate(annotation.sequence):
         sliced = slice_annotation(annotation, i, i + 1, inplace=False)
-        if i == 0 and labile_mods:
-            sliced.extend_labile_mods(labile_mods)
         result.append(sliced)
 
     return result
@@ -116,8 +104,6 @@ def shift_annotation(
     annotation: ProFormaAnnotation,
     n: int,
     inplace: bool = False,
-    shift_intervals: bool = True,
-    slice_intervals: bool = True,
 ) -> ProFormaAnnotation:
     """
     Shift the annotation by n positions in a cyclic manner.
@@ -135,18 +121,20 @@ def shift_annotation(
     Raises:
         ValueError: If intervals would be cut off and slice_intervals=False
     """
+
+    # throw error if interval is split
+
     if not inplace:
         return shift_annotation(
             annotation.copy(),
             n=n,
             inplace=True,
-            shift_intervals=shift_intervals,
-            slice_intervals=slice_intervals,
         )
 
-    seq_len = len(annotation.sequence)
-    if seq_len == 0:
+    if not annotation.has_sequence:
         return annotation
+
+    seq_len = len(annotation.sequence)
 
     effective_shift = n % seq_len
     if effective_shift == 0:
@@ -158,7 +146,7 @@ def shift_annotation(
     )
 
     # Shift internal modifications
-    new_internal_mods = {}
+    new_internal_mods: dict[int, ModList] = {}
     if annotation.has_internal_mods:
         for mod_index, mods in annotation.get_internal_mod_dict().items():
             shifted_index = (mod_index - effective_shift) % seq_len
@@ -166,20 +154,24 @@ def shift_annotation(
 
     # Handle intervals
     new_intervals: list[Interval] = []
-    if annotation.has_intervals and shift_intervals:
-        new_intervals = _shift_intervals(
-            annotation.get_interval_list().data,
-            effective_shift,
-            seq_len,
-            slice_intervals,
-        )
+    for interval in annotation.get_interval_list():
+
+        new_start = (interval.start - effective_shift) % seq_len
+        new_end = (interval.end - effective_shift) % seq_len
+
+        if new_start < new_end:
+            new_intervals.append(
+                Interval(new_start, new_end, interval.ambiguous, interval.mods)
+            )
+        else:
+            raise ValueError(
+                "Shifting intervals that wrap around the sequence end is not supported."
+            )
 
     # Update annotation
     annotation.sequence = shifted_sequence
-    annotation.internal_mods = new_internal_mods if new_internal_mods else None
-    if shift_intervals:
-        annotation.intervals = new_intervals if new_intervals else None
-
+    annotation.get_internal_mod_dict().data = new_internal_mods
+    annotation.get_interval_list().data = new_intervals
     return annotation
 
 
@@ -300,11 +292,24 @@ def sort_annotation(
     if seq_len <= 1:
         return annotation
 
-    # Remove intervals to avoid complications during sorting
-    filtered_annotation = annotation.copy()
-    filtered_annotation.intervals = None
+    n_term_mods = annotation.get_nterm_mod_list().copy()
+    c_term_mods = annotation.get_cterm_mod_list().copy()
+    labile_mods = annotation.get_labile_mod_list().copy()
+    unknown_mods = annotation.get_unknown_mod_list().copy()
+    static_mods = annotation.get_static_mod_list().copy()
+    isotope_mods = annotation.get_isotope_mod_list().copy()
 
-    sorted_components = split_annotation(filtered_annotation)
+    annotation.get_nterm_mod_list().clear()
+    annotation.get_cterm_mod_list().clear()
+    annotation.get_labile_mod_list().clear()
+    annotation.get_unknown_mod_list().clear()
+    annotation.get_static_mod_list().clear()
+    annotation.get_isotope_mod_list().clear()
+
+    intervals = annotation.get_interval_list().copy()
+    annotation.get_interval_list().clear()
+
+    sorted_components = split_annotation(annotation)
 
     # Create list of (component, original_position) tuples
     sequence_positions = list(enumerate(sorted_components))
@@ -334,15 +339,21 @@ def sort_annotation(
             new_internal_mods[new_pos] = mods
         annotation.internal_mods = new_internal_mods if new_internal_mods else None
 
+    # Add back the original modifications and intervals
+    annotation.get_interval_list().data = intervals.data
+    annotation.get_nterm_mod_list().data = n_term_mods.data
+    annotation.get_cterm_mod_list().data = c_term_mods.data
+    annotation.get_labile_mod_list().data = labile_mods.data
+    annotation.get_unknown_mod_list().data = unknown_mods.data
+    annotation.get_static_mod_list().data = static_mods.data
+    annotation.get_isotope_mod_list().data = isotope_mods.data
+
     return annotation
 
 
 def generate_sliding_windows(
     annotation: ProFormaAnnotation,
     window_size: int,
-    keep_terms: bool = False,
-    slice_intervals: bool = True,
-    keep_labile: bool = True,
     reverse: bool = False,
 ) -> Generator[ProFormaAnnotation, None, None]:
     """
@@ -383,8 +394,6 @@ def generate_sliding_windows(
                 start=start,
                 stop=stop,
                 inplace=False,
-                keep_terms=keep_terms,
-                keep_labile=keep_labile,
             )
     else:
         # Generate windows from left to right
@@ -395,13 +404,10 @@ def generate_sliding_windows(
                 start=start,
                 stop=stop,
                 inplace=False,
-                keep_terms=keep_terms,
-                keep_labile=keep_labile,
             )
 
 
 # Helper functions
-
 
 def _shift_intervals(
     intervals: list[Interval], effective_shift: int, seq_len: int, slice_intervals: bool
@@ -522,6 +528,15 @@ def _adjust_intervals(intervals: IntervalList, start: int, stop: int) -> Interva
     for interval in intervals:
         # Check if interval overlaps with the slice
         if interval.start < stop and interval.end > start:
+            # Check if the interval gets cut off by the slice boundaries
+            interval_gets_cut = (interval.start < start) or (interval.end > stop)
+
+            if interval_gets_cut:
+                raise ValueError(
+                    f"Interval [{interval.start}:{interval.end}] would be cut by slice [{start}:{stop}]. "
+                    f"Slicing intervals is not supported."
+                )
+
             # Calculate new positions relative to slice
             new_interval_start = max(0, interval.start - start)
             new_interval_end = min(stop - start, interval.end - start)

@@ -1,6 +1,9 @@
 from __future__ import annotations
+from typing import Literal
 
 import regex as re
+
+
 
 PROTEASES: dict[str, str] = {
     "arg-c": "(?<=R)",
@@ -23,6 +26,28 @@ PROTEASES: dict[str, str] = {
     "non-specific": "()",
     "no-cleave": "_",
 }
+
+ProteaseLiterals = Literal[
+    "arg-c",
+    "asp-n",
+    "chymotrypsin",
+    "chymotrypsin/P",
+    "promega-chymotrypsin-high-specificity",
+    "promega-chymotrypsin-low-specificity",
+    "glu-c",
+    "lys-c",
+    "lys-n",
+    "proteinase k",
+    "trypsin",
+    "trypsin/P",
+    "proalanase",
+    "elastase",
+    "pepsin",
+    "thermolysin",
+    "proalanase-low-specificity",
+    "non-specific",
+    "no-cleave",
+]
 
 PROTEASES_COMPILED: dict[str, re.Pattern[str]] = {}
 for key, value in PROTEASES.items():

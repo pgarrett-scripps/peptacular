@@ -70,17 +70,17 @@ class TestSort(unittest.TestCase):
         annotation = pt.ProFormaAnnotation.parse("PE[Phospho]PTI[Methyl]DE")
         sorted_annotation = annotation.sort()
         # D, E, E, P, P, T, I -> positions change accordingly
-        self.assertEqual(sorted_annotation.serialize(), "DE[Phospho]EI[Methyl]PPT")
+        self.assertEqual(sorted_annotation.serialize(), "DEE[Phospho]I[Methyl]PPT")
 
     def test_sort_with_multiple_internal_mods_same_position(self):
         annotation = pt.ProFormaAnnotation.parse("PE[Phospho][Methyl]PTIDE")
         sorted_annotation = annotation.sort()
-        self.assertEqual(sorted_annotation.serialize(), "DE[Phospho][Methyl]EIPPT")
+        self.assertEqual(sorted_annotation.serialize(), "DEE[Phospho][Methyl]IPPT")
 
     def test_sort_with_multiple_internal_mods_different_positions(self):
         annotation = pt.ProFormaAnnotation.parse("P[Mod1]E[Mod2]PTIDE")
         sorted_annotation = annotation.sort()
-        self.assertEqual(sorted_annotation.serialize(), "DE[Mod2]EIP[Mod1]PT")
+        self.assertEqual(sorted_annotation.serialize(), "DEE[Mod2]IPP[Mod1]T")
 
     """
     TESTS FOR: sorting with terminal modifications

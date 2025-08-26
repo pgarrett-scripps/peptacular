@@ -15,7 +15,7 @@ from ..constants import (
 )
 from ..errors import InvalidChemFormulaError
 from ..utils2 import convert_type
-\
+
 
 def parse_chem_formula(formula: str, sep: str = "") -> dict[str, int | float]:
     """

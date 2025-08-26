@@ -6,25 +6,30 @@ from collections.abc import Iterable, Sequence
 from peptacular.property.data import AROMATIC_AMINO_ACIDS
 
 from .types import (
+    AggregationMethodLiteral,
     MissingAAHandling,
     AggregationMethod,
+    MissingAAHandlingLiteral,
     WeightingMethods,
     SequenceProtocol,
+    WeightingMethodsLiteral,
 )
 from .core import (
     calc_property,
     calc_window_property,
     aa_property_percentage,
     charge_at_ph,
-    secondary_structure
+    secondary_structure,
 )
-from .properties import (HPLCScale, 
-                         PhysicalPropertyScale, 
-                         PolarityScale, 
-                         SecondaryStructureMethod, 
-                         SecondaryStructureType, 
-                         SurfaceAccessibilityScale, 
-                         HydrophobicityScale)
+from .properties import (
+    HPLCScale,
+    PhysicalPropertyScale,
+    PolarityScale,
+    SecondaryStructureMethod,
+    SecondaryStructureType,
+    SurfaceAccessibilityScale,
+    HydrophobicityScale,
+)
 from ..utils2 import round_to_precision
 
 
@@ -34,10 +39,10 @@ class SequencePropertyMixin:
     def calc_property(
         self: SequenceProtocol,
         scale: str | dict[str, float],
-        missing_aa_handling: str = MissingAAHandling.ERROR,
-        aggregation_method: str = AggregationMethod.AVG,
+        missing_aa_handling: MissingAAHandlingLiteral | MissingAAHandling = MissingAAHandling.ERROR,
+        aggregation_method: AggregationMethodLiteral | AggregationMethod = AggregationMethod.AVG,
         normalize: bool = False,
-        weighting_scheme: str | Sequence[float] = WeightingMethods.UNIFORM,
+        weighting_scheme: WeightingMethodsLiteral | WeightingMethods | Sequence[float] = WeightingMethods.UNIFORM,
         min_weight: float = 0.1,
         max_weight: float = 1.0,
         precision: int | None = None,
@@ -55,9 +60,7 @@ class SequencePropertyMixin:
         return round_to_precision(val, precision)
 
     @property
-    def hydrophobicity(
-        self: SequenceProtocol
-    ) -> float:
+    def hydrophobicity(self: SequenceProtocol) -> float:
 
         val = calc_property(
             sequence=self.stripped_sequence,
@@ -73,7 +76,7 @@ class SequencePropertyMixin:
     def flexibility(
         self: SequenceProtocol,
     ) -> float:
-        
+
         val = calc_property(
             sequence=self.stripped_sequence,
             scale=PhysicalPropertyScale.FLEXIBILITY_VIHINEN,
@@ -257,10 +260,10 @@ class SequencePropertyMixin:
         self: SequenceProtocol,
         scale: str | dict[str, float],
         window_size: int = 9,
-        missing_aa_handling: str = MissingAAHandling.ERROR,
-        aggregation_method: str = AggregationMethod.AVG,
+        missing_aa_handling: MissingAAHandlingLiteral | MissingAAHandling = MissingAAHandling.ERROR,
+        aggregation_method: AggregationMethodLiteral | AggregationMethod = AggregationMethod.AVG,
         normalize: bool = False,
-        weighting_scheme: str | Sequence[float] = WeightingMethods.UNIFORM,
+        weighting_scheme: WeightingMethodsLiteral | WeightingMethods | Sequence[float] = WeightingMethods.UNIFORM,
         min_weight: float = 0.1,
         max_weight: float = 1.0,
         precision: int | None = None,
@@ -346,8 +349,6 @@ class SequencePropertyMixin:
         if precision is not None:
             d = {k: round_to_precision(v, precision) for k, v in d.items()}
         return d
-    
-
 
     @property
     def alpha_helix_percent(self: SequenceProtocol) -> float:

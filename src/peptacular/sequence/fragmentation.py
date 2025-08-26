@@ -2,20 +2,20 @@
 fragmentation.py contains functions for fragmenting peptides
 """
 
-from typing import List, Union, Optional, Tuple, Set
 
-from ..proforma.annot_fragmentation import FRAGMENT_RETURN_TYPING, FragmentReturnType
+from collections.abc import Sequence
+from typing import Any, Generator, Literal, Mapping, cast, overload
 
-from ..proforma.annot import ProFormaAnnotation
-
+from peptacular.constants import IonTypeLiteral
+from ..proforma.annotation import ProFormaAnnotation
 from .sequence import get_annotation_input
 
 
 def get_losses(
-    sequence: Union[str, ProFormaAnnotation],
-    losses: List[Tuple[str, float]],
+    sequence: str | ProFormaAnnotation,
+    losses: Mapping[str, Sequence[float]],
     max_losses: int,
-) -> Set[float]:
+) -> set[float]:
     """
     Returns a set of applicable losses for a given sequence.
 
@@ -44,21 +44,71 @@ def get_losses(
     annotation = get_annotation_input(sequence, copy=False)
     return annotation.get_losses(losses=losses, max_losses=max_losses)
 
-
+@overload
 def fragment(
-    sequence: Union[str, ProFormaAnnotation],
-    ion_types: Union[List[str], str],
-    charges: Union[List[int], int],
+    sequence: str | ProFormaAnnotation,
+    ion_types: Sequence[IonTypeLiteral] | IonTypeLiteral,
+    charges: Sequence[int] | int,
     monoisotopic: bool = True,
-    isotopes: Union[List[int], int] = 0,
+    *,
+    isotopes: Sequence[int] | int = 0,
     water_loss: bool = False,
     ammonia_loss: bool = False,
-    losses: Optional[Union[List[Tuple[str, float]], Tuple[str, float]]] = None,
+    losses: Mapping[str, float] | None = None,
     max_losses: int = 1,
-    return_type: FragmentReturnType = "fragment",
-    precision: Optional[int] = None,
-    _mass_components: Optional[List[float]] = None,
-) -> FRAGMENT_RETURN_TYPING:
+    precision: int | None = None,
+    return_type: Literal['mz'],
+    _mass_components: Sequence[float] | None = None,
+) -> Generator[float, None, None]: ...
+    
+@overload
+def fragment(
+    sequence: str | ProFormaAnnotation,
+    ion_types: Sequence[IonTypeLiteral] | IonTypeLiteral,
+    charges: Sequence[int] | int,
+    monoisotopic: bool = True,
+    *,
+    isotopes: Sequence[int] | int = 0,
+    water_loss: bool = False,
+    ammonia_loss: bool = False,
+    losses: Mapping[str, float] | None = None,
+    max_losses: int = 1,
+    precision: int | None = None,
+    return_type: Literal['mz-label'],
+    _mass_components: Sequence[float] | None = None,
+) -> Generator[float, None, None]: ...
+
+@overload
+def fragment(
+    sequence: str | ProFormaAnnotation,
+    ion_types: Sequence[IonTypeLiteral] | IonTypeLiteral,
+    charges: Sequence[int] | int,
+    monoisotopic: bool = True,
+    *,
+    isotopes: Sequence[int] | int = 0,
+    water_loss: bool = False,
+    ammonia_loss: bool = False,
+    losses: Mapping[str, float] | None = None,
+    max_losses: int = 1,
+    precision: int | None = None,
+    return_type: Literal['mz','mz-label'] = 'mz'
+) -> Generator[float, None, None]: ...
+
+def fragment(
+    sequence: str | ProFormaAnnotation,
+    ion_types: Sequence[IonTypeLiteral] | IonTypeLiteral,
+    charges: Sequence[int] | int,
+    monoisotopic: bool = True,
+    *,
+    isotopes: Sequence[int] | int = 0,
+    water_loss: bool = False,
+    ammonia_loss: bool = False,
+    losses: Mapping[str, float] | None = None,
+    max_losses: int = 1,
+    precision: int | None = None,
+    return_type: Literal['mz','mz-label'] = 'mz',
+    _mass_components: Sequence[float] | None = None,
+) -> Generator[float | tuple[float, str], None, None]:
     """
     Builds all Fragment objects or a given input 'sequence'.
 
@@ -155,7 +205,7 @@ def fragment(
 
     """
 
-    return get_annotation_input(sequence=sequence, copy=False).fragment(
+    return cast(Generator[Any, None, None], get_annotation_input(sequence=sequence, copy=False).fragment(
         ion_types=ion_types,
         charges=charges,
         monoisotopic=monoisotopic,
@@ -167,57 +217,5 @@ def fragment(
         return_type=return_type,
         precision=precision,
         _mass_components=_mass_components,
+    )   
     )
-
-
-class Fragmenter:
-    """
-    A class for building peptide fragments. Stores annotation and mass components for more efficient fragmenting.
-    """
-
-    def __init__(
-        self, sequence: Union[str, ProFormaAnnotation], monoisotopic: bool = True
-    ):
-        self.annotation = get_annotation_input(sequence, copy=True)
-        self.annotation.charge = 0
-
-        self.monoisotopic = monoisotopic
-
-        self.components = self.annotation.split()
-        self.mass_components: List[float] = [
-            component.mass(
-                ion_type="n",
-                monoisotopic=self.monoisotopic,
-            )
-            for component in self.components
-        ]
-
-    def fragment(
-        self,
-        ion_types: Union[List[str], str],
-        charges: Union[List[int], int],
-        isotopes: Union[List[int], int] = 0,
-        water_loss: bool = False,
-        ammonia_loss: bool = False,
-        losses: Optional[Union[List[Tuple[str, float]], Tuple[str, float]]] = None,
-        max_losses: int = 1,
-        return_type: FragmentReturnType = "fragment",
-        precision: Optional[int] = None,
-    ) -> FRAGMENT_RETURN_TYPING:
-        """
-        Builds all Fragment objects or a given input 'sequence'.
-        """
-        return fragment(
-            sequence=self.annotation,
-            ion_types=ion_types,
-            charges=charges,
-            monoisotopic=self.monoisotopic,
-            isotopes=isotopes,
-            water_loss=water_loss,
-            ammonia_loss=ammonia_loss,
-            losses=losses,
-            max_losses=max_losses,
-            return_type=return_type,
-            precision=precision,
-            _mass_components=self.mass_components,
-        )

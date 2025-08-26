@@ -3,6 +3,10 @@ import copy
 from copy import deepcopy
 from typing import Any, Iterable, Self, cast
 
+from ..fragment import FragmenterMixin
+
+from ..util import parse_static_mods
+
 from .serializer import serialize_annotation
 from .parser import ProFormaParser
 from .ambiguity import annotate_ambiguity
@@ -38,7 +42,8 @@ from ..digestion import (
 from .mass_comp import (
     comp,
     mass,
-    mz
+    mz,
+    condense_to_mass_mods,
 )
 
 
@@ -62,6 +67,7 @@ from ..constants import (
     AMBIGUOUS_AMINO_ACIDS,
     MASS_AMBIGUOUS_AMINO_ACIDS,
     IonType,
+    IonTypeLiteral,
     ModType,
     ModTypeLiteral,
     get_mod_type,
@@ -71,7 +77,7 @@ from ..constants import (
 from ..property import SequencePropertyMixin
 
 
-class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
+class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin):
 
     def __init__(
         self,
@@ -89,17 +95,30 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
     ) -> None:
 
         self._sequence: str = sequence if sequence is not None else ""
-        self._isotope_mod_list: ModList = setup_mod_list(isotope_mods)
-        self._static_mod_list: ModList = setup_mod_list(static_mods)
-        self._labile_mod_list: ModList = setup_mod_list(labile_mods)
-        self._unknown_mod_list: ModList = setup_mod_list(unknown_mods)
-        self._nterm_mod_list: ModList = setup_mod_list(nterm_mods)
-        self._cterm_mod_list: ModList = setup_mod_list(cterm_mods)
-        self._adduct_mod_list: ModList = setup_mod_list(charge_adducts)
+        self._isotope_mod_list: ModList = setup_mod_list(
+            isotope_mods, allow_dups=False, stackable=False
+        )
+        self._static_mod_list: ModList = setup_mod_list(
+            static_mods, allow_dups=True, stackable=True
+        )
+        self._labile_mod_list: ModList = setup_mod_list(
+            labile_mods, allow_dups=True, stackable=True
+        )
+        self._unknown_mod_list: ModList = setup_mod_list(
+            unknown_mods, allow_dups=True, stackable=True
+        )
+        self._nterm_mod_list: ModList = setup_mod_list(
+            nterm_mods, allow_dups=True, stackable=True
+        )
+        self._cterm_mod_list: ModList = setup_mod_list(
+            cterm_mods, allow_dups=True, stackable=False
+        )
+        self._adduct_mod_list: ModList = setup_mod_list(
+            charge_adducts, allow_dups=True, stackable=False
+        )
         self._internal_mod_dict: ModDict = setup_mod_dict(internal_mods)
         self._interval_list: IntervalList = setup_interval_list(intervals)
         self._charge: int | None = charge
-
 
     @staticmethod
     def parse(sequence: str) -> "ProFormaAnnotation":
@@ -114,12 +133,14 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
         """
 
         # Implementation goes here
+        annots: list[ProFormaAnnotation] = []
+        connections: list[bool | None] = []
         for prof_parser, connection in ProFormaParser(sequence).parse():
 
-            if connection is not None:
+            if connection is True:
                 raise ValueError(f"Unexpected connection value: {connection}")
-            
-            return ProFormaAnnotation(
+
+            annot = ProFormaAnnotation(
                 sequence="".join(prof_parser.amino_acids),
                 isotope_mods=prof_parser.isotope_mods.copy(),
                 static_mods=prof_parser.static_mods.copy(),
@@ -132,8 +153,17 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
                 charge=prof_parser.charge,
                 charge_adducts=prof_parser.charge_adducts.copy(),
             )
-        # If no annotations found, raise an error
-        raise ValueError(f"Invalid ProForma sequence: {sequence}")
+            annots.append(annot)
+            connections.append(connection)
+
+        if len(annots) > 1:
+            raise ValueError(f"Multiple annotations found: {len(annots)}")
+        if len(annots) == 0:
+            raise ValueError(f"Invalid ProForma sequence: {sequence}")
+
+        # If all checks pass, return the single annotation
+        return annots[0]
+
     """
     Magic Methods
     """
@@ -477,7 +507,7 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
         self._charge = None
         return value
 
-    def pop_mod_by_type(self, mod_type: ModTypeLiteral) -> Any:
+    def pop_mod_by_type(self, mod_type: ModTypeLiteral | ModType) -> Any:
         """
         Get the pop method for a given mod type.
         """
@@ -502,8 +532,10 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
 
     def pop_mods(
         self,
-        mods: ModTypeLiteral | Iterable[ModTypeLiteral] | None = None,
-    ) -> dict[str, Any]:
+        mods: (
+            ModTypeLiteral | Iterable[ModTypeLiteral | ModType] | ModType | None
+        ) = None,
+    ) -> dict[str, Any] | None:
         """
         Pop all mods and return them in a dictionary
         """
@@ -513,6 +545,10 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
         d: dict[str, Any] = {}
         for mod_type in mod_types:
             d[mod_type.value] = self.pop_mod_by_type(mod_type.value)
+
+        # If all popped values are None, return None
+        if all(value is None for value in d.values()):
+            return None
 
         return d
 
@@ -618,11 +654,10 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
         self.charge = charge
         return self
 
-
     def set_mod_by_type(
         self,
         mod: Any,
-        mod_type: ModTypeLiteral,
+        mod_type: ModTypeLiteral | ModType,
         inplace: bool = True,
     ) -> Self:
         """Set a modification by type, replacing any existing mods of that type"""
@@ -872,12 +907,63 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
 
     def remove_mods(
         self,
-        mods: ModTypeLiteral | Iterable[ModTypeLiteral] | None = None,
+        mods: (
+            ModTypeLiteral | ModType | Iterable[ModTypeLiteral | ModType] | None
+        ) = None,
         inplace: bool = True,
     ) -> Self:
         if inplace is False:
             return self.copy().remove_mods(mods=mods, inplace=True)
         _ = self.pop_mods(mods=mods)
+        return self
+
+    """
+    Clear methods
+    """
+
+    def clear_isotope_mods(self) -> Self:
+        self._isotope_mod_list.clear()
+        return self
+
+    def clear_static_mods(self) -> Self:
+        self._static_mod_list.clear()
+        return self
+
+    def clear_labile_mods(self) -> Self:
+        self._labile_mod_list.clear()
+        return self
+
+    def clear_unknown_mods(self) -> Self:
+        self._unknown_mod_list.clear()
+        return self
+
+    def clear_nterm_mods(self) -> Self:
+        self._nterm_mod_list.clear()
+        return self
+
+    def clear_cterm_mods(self) -> Self:
+        self._cterm_mod_list.clear()
+        return self
+
+    def clear_internal_mods(self) -> Self:
+        self._internal_mod_dict.clear()
+        return self
+
+    def clear_internal_mods_at_index(self, index: int) -> Self:
+        if index in self._internal_mod_dict:
+            self._internal_mod_dict[index].clear()
+        return self
+
+    def clear_intervals(self) -> Self:
+        self._interval_list.clear()
+        return self
+
+    def clear_charge(self) -> Self:
+        self._charge = None
+        return self
+
+    def clear_charge_adducts(self) -> Self:
+        self._adduct_mod_list.clear()
         return self
 
     def strip(self, inplace: bool = False) -> Self:
@@ -928,7 +1014,9 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
 
     def filter_mods(
         self,
-        mods: ModTypeLiteral | Iterable[ModTypeLiteral] | None = None,
+        mods: (
+            ModTypeLiteral | ModType | Iterable[ModTypeLiteral | ModType] | None
+        ) = None,
         inplace: bool = True,
     ) -> Self:
         """
@@ -992,7 +1080,6 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
             ModType.CHARGE_ADDUCTS: copy.deepcopy(self.charge_adducts),
         }
 
-
     def serialize(
         self,
         include_plus: bool = False,
@@ -1005,6 +1092,14 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
         Condense static mods into internal mods.
         """
         return cast(Self, condense_static_mods(self, inplace=inplace))
+    
+    def get_static_mod_dict(self) -> ModDict:
+        static_mod_dict: ModDict = ModDict()
+        for static_aa, mods in parse_static_mods(self.get_static_mod_list().data).items():
+            for i, aa in enumerate(self.sequence):
+                if aa == static_aa:
+                    static_mod_dict[i].extend(mods)
+        return static_mod_dict
 
     def count_residues(self, include_mods: bool = True) -> dict[str, int]:
         """
@@ -1045,7 +1140,7 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
         return find_indices(
             self, other, ignore_mods=ignore_mods, ignore_intervals=ignore_intervals
         )
-    
+
     def coverage(
         self,
         annotations: Iterable[Self],
@@ -1082,8 +1177,6 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
         start: int | None,
         stop: int | None,
         inplace: bool = False,
-        keep_terms: bool = False,
-        keep_labile: bool = True,
     ) -> Self:
         """
         Return a sliced annotation (delegates to slice_annotation).
@@ -1095,8 +1188,6 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
                 start=start,
                 stop=stop,
                 inplace=inplace,
-                keep_terms=keep_terms,
-                keep_labile=keep_labile,
             ),
         )
 
@@ -1142,12 +1233,8 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
         self,
         n: int,
         inplace: bool = False,
-        shift_intervals: bool = True,
-        slice_intervals: bool = True,
     ) -> Self:
-        return cast(
-            Self, shift_annotation(self, n, inplace, shift_intervals, slice_intervals)
-        )
+        return cast(Self, shift_annotation(self, n, inplace))
 
     def shuffle(self, seed: Any = None, inplace: bool = False) -> Self:
         return cast(Self, shuffle_annotation(self, seed, inplace))
@@ -1166,30 +1253,23 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
     def sliding_windows(
         self,
         window_size: int,
-        keep_terms: bool = False,
-        slice_intervals: bool = True,
-        keep_labile: bool = True,
         reverse: bool = False,
     ) -> Generator[Self, None, None]:
-        for window in generate_sliding_windows(
-            self, window_size, keep_terms, slice_intervals, keep_labile, reverse
-        ):
+        for window in generate_sliding_windows(self, window_size, reverse):
             yield cast(Self, window)
-
 
     def mass(
         self,
-        ion_type: str = IonType.PRECURSOR,
+        ion_type: IonTypeLiteral | IonType = IonType.PRECURSOR,
         monoisotopic: bool = True,
         isotope: int = 0,
         loss: float = 0.0,
         use_isotope_on_mods: bool = False,
         precision: int | None = None,
-        inplace: bool = False,
     ) -> float:
         """
         Calculate the mass of the annotation.
-        
+
         :param ion_type: The type of ion (default: "p" for proton)
         :param monoisotopic: Whether to use monoisotopic masses (default: True)
         :param isotope: Isotope number (default: 0)
@@ -1207,21 +1287,27 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
             loss=loss,
             use_isotope_on_mods=use_isotope_on_mods,
             precision=precision,
-            inplace=inplace,
         )
 
     def mz(
         self,
-        ion_type: str = IonType.PRECURSOR,
+        ion_type: IonTypeLiteral | IonType = IonType.PRECURSOR,
         monoisotopic: bool = True,
         isotope: int = 0,
         loss: float = 0.0,
         precision: int | None = None,
+        use_isotope_on_mods: bool = False,
     ) -> float:
         """
         Calculate the m/z ratio of the annotation.
-        
-        :param ion_type: The type of ion (default: "p" for proton)
+
+        :param ion_type: The type of ion (default: "p" for precursor)
+        :param monoisotopic: Whether to use monoisotopic masses (default: True)
+        :param isotope: Isotope number (default: 0)
+        :param loss: Mass loss to apply (default: 0.0)
+        :param precision: Precision for the result (default: None)
+        :param use_isotope_on_mods: Whether to apply isotopes to modifications (default: False)
+        :param estimate_delta: Whether to estimate delta mass composition (default: False)
         :param monoisotopic: Whether to use monoisotopic masses (default: True)
         :param isotope: Isotope number (default: 0)
         :param loss: Mass loss to apply (default: 0.0)
@@ -1235,20 +1321,19 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
             isotope=isotope,
             loss=loss,
             precision=precision,
+            use_isotope_on_mods=use_isotope_on_mods,
         )
 
     def comp(
         self,
-        ion_type: str = IonType.PRECURSOR,
-        estimate_delta: bool = False,
+        ion_type: IonTypeLiteral | IonType = IonType.PRECURSOR,
         isotope: int = 0,
         use_isotope_on_mods: bool = False,
-        inplace: bool = False,
     ) -> dict[str, int | float]:
         """
         Calculate the elemental composition of the annotation.
-        
-        :param ion_type: The type of ion (default: "p" for proton)
+
+        :param ion_type: The type of ion (default: "p" for precursor)
         :param estimate_delta: Whether to estimate delta mass composition (default: False)
         :param isotope: Isotope number (default: 0)
         :param use_isotope_on_mods: Whether to apply isotopes to modifications (default: False)
@@ -1258,8 +1343,34 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
         return comp(
             self,
             ion_type=ion_type,
-            estimate_delta=estimate_delta,
             isotope=isotope,
             use_isotope_on_mods=use_isotope_on_mods,
-            inplace=inplace,
         )
+
+    def condense_to_delta_mass(
+        self,
+        include_plus: bool = False,
+        inplace: bool = True,
+        use_isotope_on_mods: bool = False,
+    ) -> Self:
+        """
+        Condense all modifications to their mass equivalents.
+
+        :param use_isotope_on_mods: Whether to apply isotopes to modifications (default: False)
+        :param inplace: Whether to modify the annotation in place (default: False)
+        :param include_plus: Whether to include a plus sign in the mass string (default: False)
+        :return: The total delta mass of the condensed modifications
+        """
+        return cast(
+            Self,
+            condense_to_mass_mods(
+                self,
+                include_plus=include_plus,
+                inplace=inplace,
+                use_isotope_on_mods=use_isotope_on_mods,
+            ),
+        )
+    
+
+    
+    

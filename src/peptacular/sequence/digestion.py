@@ -14,24 +14,22 @@ Valid DigestReturnType's:
 
 """
 
-from typing import Union, List, Optional, Generator
+from typing import Generator, Iterable
 
-from ..proforma.annot_digestion import (
-    DIGEST_RETURN_TYPING,
-    DigestReturnType,
+from ..digestion import (
     EnzymeConfig,
+    DigestReturnType
 )
 
-from ..proforma.annot import ProFormaAnnotation
+from ..proforma.annotation import ProFormaAnnotation
 from . import get_annotation_input
 
 
 def get_left_semi_enzymatic_sequences(
-    sequence: Union[str, ProFormaAnnotation],
-    min_len: Optional[int] = None,
-    max_len: Optional[int] = None,
-    return_type: DigestReturnType = "str",
-) -> DIGEST_RETURN_TYPING:
+    sequence: str | ProFormaAnnotation,
+    min_len: int | None = None,
+    max_len: int | None = None,
+) -> Generator[str, None, None]:
     """
     Builds all left-hand semi-enzymatic subsequences derived from the input `sequence`.
 
@@ -72,16 +70,15 @@ def get_left_semi_enzymatic_sequences(
     return get_annotation_input(sequence, copy=False).get_left_semi_enzymatic_sequences(
         min_len=min_len,
         max_len=max_len,
-        return_type=return_type,
+        return_type=DigestReturnType.STR,
     )
 
 
 def get_right_semi_enzymatic_sequences(
-    sequence: Union[str, ProFormaAnnotation],
-    min_len: Optional[int] = None,
-    max_len: Optional[int] = None,
-    return_type: DigestReturnType = "str",
-) -> DIGEST_RETURN_TYPING:
+    sequence: str | ProFormaAnnotation,
+    min_len: int | None = None,
+    max_len: int | None = None,
+) -> Generator[str, None, None]:
     """
     Builds all right-hand semi-enzymatic subsequences derived from the input `sequence`.
 
@@ -124,16 +121,15 @@ def get_right_semi_enzymatic_sequences(
     ).get_right_semi_enzymatic_sequences(
         min_len=min_len,
         max_len=max_len,
-        return_type=return_type,
+        return_type=DigestReturnType.STR,
     )
 
 
 def get_semi_enzymatic_sequences(
-    sequence: Union[str, ProFormaAnnotation],
-    min_len: Optional[int] = None,
-    max_len: Optional[int] = None,
-    return_type: DigestReturnType = "str",
-) -> DIGEST_RETURN_TYPING:
+    sequence: str | ProFormaAnnotation,
+    min_len: int | None = None,
+    max_len: int | None = None,
+) -> Generator[str, None, None]:
     """
     Builds allsemi-enzymatic sequences from the given input `sequence`.
 
@@ -164,16 +160,15 @@ def get_semi_enzymatic_sequences(
     return get_annotation_input(sequence, copy=False).get_semi_enzymatic_sequences(
         min_len=min_len,
         max_len=max_len,
-        return_type=return_type,
+        return_type=DigestReturnType.STR,
     )
 
 
 def get_non_enzymatic_sequences(
-    sequence: Union[str, ProFormaAnnotation],
-    min_len: Optional[int] = None,
-    max_len: Optional[int] = None,
-    return_type: DigestReturnType = "str",
-) -> DIGEST_RETURN_TYPING:
+    sequence: str | ProFormaAnnotation,
+    min_len: int | None = None,
+    max_len: int | None = None,
+) -> Generator[str, None, None]:
     """
     Builds all non-enzymatic sequences from the given input `sequence`.
 
@@ -214,12 +209,12 @@ def get_non_enzymatic_sequences(
     return get_annotation_input(sequence, copy=False).get_non_enzymatic_sequences(
         min_len=min_len,
         max_len=max_len,
-        return_type=return_type,
+        return_type=DigestReturnType.STR,
     )
 
 
 def get_cleavage_sites(
-    sequence: Union[str, ProFormaAnnotation], enzyme_regex: str
+    sequence: str | ProFormaAnnotation, enzyme_regex: str
 ) -> Generator[int, None, None]:
     """
     Return a list of positions where cleavage occurs in input `sequence` based on the provided enzyme regex.
@@ -271,16 +266,15 @@ def get_cleavage_sites(
 
 
 def digest(
-    sequence: Union[str, ProFormaAnnotation],
-    enzyme_regex: Union[List[str], str],
+    sequence: str | ProFormaAnnotation,
+    enzyme_regex: Iterable[str] | str,
     missed_cleavages: int = 0,
     semi: bool = False,
-    min_len: Optional[int] = None,
-    max_len: Optional[int] = None,
+    min_len: int | None = None,
+    max_len: int | None = None,
     complete_digestion: bool = True,
-    return_type: DigestReturnType = "str",
     sort_output: bool = True,
-) -> DIGEST_RETURN_TYPING:
+) -> Generator[str, None, None]:
     """
     Returns a list of digested sequences derived from the input `sequence`.
 
@@ -370,19 +364,18 @@ def digest(
         min_len=min_len,
         max_len=max_len,
         complete_digestion=complete_digestion,
-        return_type=return_type,
+        return_type=DigestReturnType.STR,
         sort_output=sort_output,
     )
 
 
 def digest_from_config(
-    sequence: Union[str, ProFormaAnnotation],
+    sequence: str | ProFormaAnnotation,
     config: EnzymeConfig,
-    min_len: Optional[int] = None,
-    max_len: Optional[int] = None,
-    return_type: DigestReturnType = "str",
+    min_len: int | None = None,
+    max_len: int | None = None,
     sort_output: bool = True,
-) -> DIGEST_RETURN_TYPING:
+) -> Generator[str, None, None]:
     """
     Same as digest() but with a simplified configuration object for a single enzyme.
     """
@@ -395,18 +388,16 @@ def digest_from_config(
         min_len=min_len,
         max_len=max_len,
         complete_digestion=config.complete_digestion,
-        return_type=return_type,
         sort_output=sort_output,
     )
 
 
 def sequential_digest(
-    sequence: Union[str, "ProFormaAnnotation"],
-    enzyme_configs: List[EnzymeConfig],
-    min_len: Optional[int] = None,
-    max_len: Optional[int] = None,
-    return_type: DigestReturnType = "str",
-) -> DIGEST_RETURN_TYPING:
+    sequence: str | ProFormaAnnotation,
+    enzyme_configs: list[EnzymeConfig],
+    min_len: int | None = None,
+    max_len: int | None = None,
+) -> Generator[str, None, None]:
     """
     Returns a list of digested sequences derived from the input `sequence` using sequential digestion
     with multiple enzymes.
@@ -435,5 +426,5 @@ def sequential_digest(
         enzyme_configs=enzyme_configs,
         min_len=min_len,
         max_len=max_len,
-        return_type=return_type,
+        return_type=DigestReturnType.STR,
     )

@@ -2,13 +2,29 @@
 This module provides the main interface for the ProForma package.
 """
 
+from typing import Literal, overload
 from .dclasses import *
 from .annotation import ProFormaAnnotation
 from .multi_annotation import MultiProFormaAnnotation
 
 
+@overload
+def parse(sequence: str, sequence_type: Literal['single']) -> ProFormaAnnotation:
+    ...
 
-def parse(sequence: str) -> ProFormaAnnotation | MultiProFormaAnnotation:
+@overload
+def parse(sequence: str, sequence_type: Literal['multi']) -> MultiProFormaAnnotation:
+    ...
+
+@overload
+def parse(sequence: str, sequence_type: Literal['both']) -> ProFormaAnnotation | MultiProFormaAnnotation:
+    ...
+
+@overload
+def parse(sequence: str, sequence_type: Literal['single', 'multi', 'both'] = 'single') -> ProFormaAnnotation:
+    ...
+
+def parse(sequence: str, sequence_type: Literal['single', 'multi', 'both'] = 'single') -> ProFormaAnnotation | MultiProFormaAnnotation:
     """
     Parses a ProForma sequence string and returns its corresponding annotation object.
 
@@ -36,10 +52,19 @@ def parse(sequence: str) -> ProFormaAnnotation | MultiProFormaAnnotation:
 
 
     """
-    try:
-        return ProFormaAnnotation.parse(sequence)
-    except ValueError:
-        return MultiProFormaAnnotation.parse(sequence)
+
+    match sequence_type:
+        case 'single':
+            return ProFormaAnnotation.parse(sequence)
+        case 'multi':
+            return MultiProFormaAnnotation.parse(sequence)
+        case 'both':
+            try:
+                return ProFormaAnnotation.parse(sequence)
+            except ValueError:
+                return MultiProFormaAnnotation.parse(sequence)
+        case _:
+            raise ValueError(f"Unknown sequence type: {sequence_type}")
 
 
 def serialize(
@@ -75,6 +100,6 @@ def serialize(
         >>> p == r'PEPTIDE\\\PEPTIDE'
         True
 
-    """
+    """ 
 
     return annotation.serialize(include_plus)

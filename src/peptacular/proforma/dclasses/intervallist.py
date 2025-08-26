@@ -254,9 +254,7 @@ ACCEPTED_INTERVALLIST_INPUT_TYPES = (
 )
 
 
-def setup_interval_list(
-    data: ACCEPTED_INTERVALLIST_INPUT_TYPES,
-) -> IntervalList:
+def setup_interval_list(data: ACCEPTED_INTERVALLIST_INPUT_TYPES) -> IntervalList:
     """Helper function to set up an IntervalList from various input types"""
 
     if isinstance(data, IntervalList):

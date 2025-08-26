@@ -20,9 +20,24 @@ class ModList(UserList[Mod]):
     Internally stores everything as Mod instances with no duplicate values.
     """
 
-    def __init__(self, data: Iterable[MODLIST_DATATYPE] | None = None) -> None:
+    def __init__(
+        self,
+        data: Iterable[MODLIST_DATATYPE] | None = None,
+        allow_dups: bool = True,
+        stackable: bool = True,
+    ) -> None:
         # Initialize empty UserList
         super().__init__()
+
+        self.allow_dups = allow_dups
+        self.stackable = stackable
+
+        if allow_dups is False and stackable is True:
+            warnings.warn(
+                "ModList is non-duplicable but stackable. Think long and hard about this one...",
+                UserWarning,
+                stacklevel=2,
+            )
 
         if data is not None:
             self.extend(data)
@@ -42,6 +57,12 @@ class ModList(UserList[Mod]):
         """Merge with existing mod or append new one"""
         idx = self._find_same_mod_index(item)
         if idx is not None:
+
+            if not self.allow_dups and item.mult > 0:
+                raise ValueError(
+                    f"Cannot add modification {item} to non-stackable ModList"
+                )
+
             self.data[idx].mult += item.mult
             # Remove if multiplier becomes zero
             if self.data[idx].mult == 0:
@@ -55,7 +76,6 @@ class ModList(UserList[Mod]):
                 self.data.append(item)
 
     # Override UserList methods to handle type conversion and merging
-
     def append(self, item: MODLIST_DATATYPE) -> None:
         """Add a modification, merging with existing mod if same value"""
         mod = self._normalize_input(item)
@@ -194,6 +214,7 @@ class ModList(UserList[Mod]):
 
         Args:
             sort: Whether to sort the resulting values
+            stack: Whether to stack identical modifications together
 
         Returns:
             Tuple of mod values with multipliers expanded
@@ -206,6 +227,45 @@ class ModList(UserList[Mod]):
             values.sort(key=str)
 
         return tuple(values)
+
+    def serialize(
+        self,
+        brackets: str,
+        sort: bool = False,
+        include_plus: bool = False,
+        precision: int | None = None,
+    ) -> str:
+        """
+        Serialize the ModList into a string representation.
+
+        Args:
+            sort: Whether to sort the modifications before serialization.
+            include_plus: Whether to include a plus sign for positive modifications.
+            precision: Number of decimal places for floating-point values.
+
+        Returns:
+            A string representation of the ModList.
+        """
+        elems: list[str] = []
+        for mod in self.data:
+            if self.stackable:
+                elems.append(
+                    mod.serialize(
+                        brackets, include_plus=include_plus, precision=precision
+                    )
+                )
+            else:
+                for _ in range(mod.mult):
+                    elems.append(
+                        Mod(mod.val, 1).serialize(
+                            brackets, include_plus=include_plus, precision=precision
+                        )
+                    )
+
+        if sort:
+            elems.sort()
+
+        return "".join(elems)
 
     @property
     def has_mods(self) -> bool:
@@ -228,6 +288,8 @@ ACCEPTED_MODLIST_INPUT_TYPES = (
 
 def setup_mod_list(
     mods: ACCEPTED_MODLIST_INPUT_TYPES,
+    allow_dups: bool = False,
+    stackable: bool = False,
 ) -> ModList:
     """
     Helper function to set up a ModList from various input types.
@@ -236,7 +298,7 @@ def setup_mod_list(
     if isinstance(mods, ModList):
         return mods
 
-    mod_list: ModList = ModList()
+    mod_list: ModList = ModList(allow_dups=allow_dups, stackable=stackable)
 
     if mods is None:
         pass

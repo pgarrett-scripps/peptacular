@@ -35,7 +35,7 @@ def coverage(
                     cov_arr[start + i] += cov
                 else:
                     cov_arr[start + i] = cov
-                    
+
     # apply to annotation
     if ignore_ambiguity is False:
         # Set coverage to 0 for ambiguous positions
@@ -44,6 +44,7 @@ def coverage(
                 cov_arr[i] = 0
 
     return cov_arr
+
 
 def percent_coverage(
     annotation: ProFormaAnnotation,

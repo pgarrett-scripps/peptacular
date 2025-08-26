@@ -47,7 +47,7 @@ class ModDict(UserDict[int, ModList]):
         """Convert value to ModList instance"""
         if isinstance(value, ModList):
             return value
-        return setup_mod_list(value)
+        return setup_mod_list(value, allow_dups=True, stackable=False)
 
     def _cleanup_empty(self) -> None:
         """Remove any keys with empty ModLists"""
@@ -138,7 +138,7 @@ class ModDict(UserDict[int, ModList]):
         default_modlist = (
             self._normalize_value(default) if default is not None else ModList()
         )
-        
+
         if default_modlist:  # Only set if non-empty
             self.data[key] = default_modlist
             return self.data[key]
@@ -225,7 +225,10 @@ class ModDict(UserDict[int, ModList]):
             items = other.items()
         elif isinstance(other, Mapping):  # type: ignore
             # Mapping-like object
-            items = [(k, setup_mod_list(v)) for k, v in other.items()]
+            items = [
+                (k, setup_mod_list(v, allow_dups=True, stackable=False))
+                for k, v in other.items()
+            ]
         else:
             raise TypeError(f"Cannot merge ModDict with {type(other)}")
 

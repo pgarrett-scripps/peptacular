@@ -98,7 +98,7 @@ class TestProForma(unittest.TestCase):
 
     def test_cterm_double_multi_mod(self):
         # Test the case where there is a single C-Term mod
-        proforma = "PEPTIDE-[Hello]^2[World]^3"
+        proforma = "PEPTIDE-[Hello][Hello][World][World][World]"
         expected_output = pt.ProFormaAnnotation(
             sequence="PEPTIDE", cterm_mods=[pt.Mod("Hello", 2), pt.Mod("World", 3)]
         )
@@ -343,7 +343,7 @@ class TestProForma(unittest.TestCase):
 
     def test_full_complex_sequence(self):
         # Test a complex _sequence with various modifications and features
-        proforma = "{Oxidation}{Oxidation}<13C>[Acetyl]^2[ABC]-PEP[Phospho]T[Oxidation]^2IDE-[Amide]/3+PEPTIDE"
+        proforma = "{Oxidation}^2<13C>[Acetyl]^2[ABC]-PEP[Phospho]T[Oxidation]^2IDE-[Amide]/3+PEPTIDE"
         expected_nterm_mod1 = pt.Mod("Acetyl", 2)
         expected_nterm_mod2 = pt.Mod("ABC", 1)
         expected_isotope_mod = pt.Mod("13C", 1)
@@ -368,7 +368,7 @@ class TestProForma(unittest.TestCase):
             ],
             connections=[False],
         )
-        self.assertEqual(pt.ProFormaAnnotation.parse(proforma), expected_output)
+        self.assertEqual(pt.parse(proforma), expected_output)
         self.assertEqual(pt.serialize(expected_output), proforma)
 
     def test_multi_annotation_crosslink(self):
@@ -395,7 +395,7 @@ class TestProForma(unittest.TestCase):
             sequence="ANOTHER", nterm_mods=[pt.Mod("Acetyl", 1)]
         )
         multi = pt.MultiProFormaAnnotation([pfa1, pfa2], [False])
-        self.assertEqual(pt.ProFormaAnnotation.parse(pt.serialize(multi)), multi)
+        self.assertEqual(pt.MultiProFormaAnnotation.parse(pt.serialize(multi)), multi)
 
     def test_slice_annotation(self):
         # Test slicing a ProForma annotation
@@ -403,7 +403,7 @@ class TestProForma(unittest.TestCase):
         annotation = pt.ProFormaAnnotation.parse(proforma)
         sliced = annotation.slice(0, 4, inplace=False)
         self.assertEqual(sliced.sequence, "PEPT")
-        self.assertEqual(sliced.internal_mods, {0: [pt.Mod("Phospho", 1)]})
+        self.assertEqual(sliced.internal_mods, {0: ("Phospho",)})
 
     def test_reverse_annotation(self):
         # Test reversing a ProForma annotation

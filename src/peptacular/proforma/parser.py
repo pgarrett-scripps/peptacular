@@ -57,7 +57,6 @@ class ProFormaParser:
             yield (self, None)
             return
 
-
         while not self._end_of_sequence():
             self._parse_sequence_start()
             self._parse_sequence_middle()
@@ -67,6 +66,7 @@ class ProFormaParser:
 
             if not self._end_of_sequence():
                 self._reset_sequence()
+                self.current_connection = None
 
     @property
     def _unmod_sequence(self) -> str:
@@ -127,7 +127,6 @@ class ProFormaParser:
         position = len(self.amino_acids) - 1
         if isinstance(mod, list):
             self.internal_mods.setdefault(position, mod)
-            
 
     def _add_interval(self, interval: Interval | list[Interval]) -> None:
         if isinstance(interval, list):
@@ -166,7 +165,9 @@ class ProFormaParser:
                         self.sequence,
                     )
             elif cur == PC.STATIC_MOD_START:  # Global mods
-                for mod in self._parse_modifications(PC.STATIC_MOD_START, PC.STATIC_MOD_END):
+                for mod in self._parse_modifications(
+                    PC.STATIC_MOD_START, PC.STATIC_MOD_END
+                ):
                     if PC.STATIC_SEP in mod.val:  # type: ignore (val will always be str)
                         try:
                             self._add_static_mod(mod)
@@ -186,7 +187,9 @@ class ProFormaParser:
                                 str(err), self.position, self.sequence
                             ) from err
             elif cur == PC.LABILE_MOD_START:  # Labile mods
-                self._add_labile_mod(self._parse_modification(PC.LABILE_MOD_START, PC.LABILE_MOD_END))
+                self._add_labile_mod(
+                    self._parse_modification(PC.LABILE_MOD_START, PC.LABILE_MOD_END)
+                )
             else:
                 raise ProFormaFormatError(
                     f"Expected amino acid, '{PC.MOD_START}', '{PC.LABILE_MOD_START}', or '{PC.STATIC_MOD_START}' but got '{cur}'",
@@ -204,7 +207,9 @@ class ProFormaParser:
             if cur in AMINO_ACIDS:  # Amino acid
                 self.amino_acids.append(self._parse_char())
             elif cur == PC.MOD_START:  # mods for the previous amino acid
-                self._add_internal_mod(self._parse_modifications(PC.MOD_START, PC.MOD_END))
+                self._add_internal_mod(
+                    self._parse_modifications(PC.MOD_START, PC.MOD_END)
+                )
             elif cur == PC.TERM_MOD:  # cterm mods (end of sequence)
                 self._skip(1)
                 self._add_cterm_mod(self._parse_modifications(PC.MOD_START, PC.MOD_END))
@@ -220,7 +225,7 @@ class ProFormaParser:
                     start=len(self.amino_acids),
                     end=len(self.amino_acids),
                     ambiguous=False,
-                    mods=None
+                    mods=None,
                 )
                 self._skip(1)
             elif cur == ")":  # Interval end
@@ -229,15 +234,14 @@ class ProFormaParser:
                         "Interval ended without starting!", self.position, self.sequence
                     )
                 dummy_interval.end = len(self.amino_acids)  # type: ignore (dummy_interval will never be None here)
-                
 
                 self._skip(1)
                 if not self._end_of_sequence() and self._current() == PC.MOD_START:
-                    dummy_interval.mods += self._parse_modifications(PC.MOD_START, PC.MOD_END)
+                    dummy_interval.mods += self._parse_modifications(
+                        PC.MOD_START, PC.MOD_END
+                    )
 
-                self._add_interval(
-                    dummy_interval
-                )
+                self._add_interval(dummy_interval)
                 dummy_interval = None
 
             elif cur == PC.UNKNOWN:  # unknown mods
@@ -275,7 +279,9 @@ class ProFormaParser:
 
                 # check for charge adducts
                 if not self._end_of_sequence() and self._current() == PC.MOD_START:
-                    self._add_charge_adducts(self._parse_modifications(PC.MOD_START, PC.MOD_END))
+                    self._add_charge_adducts(
+                        self._parse_modifications(PC.MOD_START, PC.MOD_END)
+                    )
 
             elif cur == PC.CHIMERIC:  # next sequence
                 self._skip(1)
@@ -347,7 +353,7 @@ class ProFormaParser:
         start = self.position
         digit_count = 0
         while not self._end_of_sequence():
-            if self._peek().isdigit(): # type: ignore (Will always be valid)
+            if self._peek().isdigit():  # type: ignore (Will always be valid)
                 digit_count += 1
                 self.position += 1
             elif digit_count == 0 and self._peek() in [PC.PLUS, PC.MINUS]:
@@ -367,4 +373,3 @@ class ProFormaParser:
 
     def _end_of_sequence(self) -> bool:
         return self.position >= self.length
-

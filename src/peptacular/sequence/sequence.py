@@ -1013,7 +1013,9 @@ def coverage(
     """
 
     sequence_annot = get_annotation_input(sequence, copy=False)
-    subsequences_annot = [get_annotation_input(subseq, copy=False) for subseq in subsequences]
+    subsequences_annot = [
+        get_annotation_input(subseq, copy=False) for subseq in subsequences
+    ]
 
     return sequence_annot.coverage(
         subsequences_annot,
@@ -1021,6 +1023,7 @@ def coverage(
         ignore_mods=ignore_mods,
         ignore_ambiguity=ignore_ambiguity,
     )
+
 
 def percent_coverage(
     sequence: str | ProFormaAnnotation,
@@ -1063,7 +1066,9 @@ def percent_coverage(
     """
 
     sequence_annot = get_annotation_input(sequence, copy=False)
-    subsequences_annot = [get_annotation_input(subseq, copy=False) for subseq in subsequences]
+    subsequences_annot = [
+        get_annotation_input(subseq, copy=False) for subseq in subsequences
+    ]
 
     return sequence_annot.percent_coverage(
         subsequences_annot,

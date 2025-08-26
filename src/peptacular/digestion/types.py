@@ -8,7 +8,7 @@ from typing import Generator, Iterable, Literal, Protocol, Self, TypeAlias, Unio
 @dataclass
 class EnzymeConfig:
     """Configuration for a single enzyme in a digestion process."""
-    
+
     regex: Iterable[str] | str
     missed_cleavages: int = 0
     semi_enzymatic: bool = False
@@ -23,7 +23,6 @@ class DigestReturnType(StrEnum):
     ANNOTATION_SPAN = "annotation-span"
 
 
-
 class DigestProtocol(Protocol):
     """Protocol defining the interface for objects that can be digested."""
 
@@ -33,12 +32,10 @@ class DigestProtocol(Protocol):
         ...
 
     def slice(
-        self, 
-        start: int | None, 
-        stop: int | None, 
-        inplace: bool = False, 
-        keep_terms: bool = False, 
-        keep_labile: bool = True
+        self,
+        start: int | None,
+        stop: int | None,
+        inplace: bool = False,
     ) -> Self: ...
 
     def serialize(self) -> str:
@@ -55,11 +52,14 @@ DigestResult: TypeAlias = Union[
     DigestProtocol,
     tuple[int, int, int],
     tuple[str, tuple[int, int, int]],
-    tuple[DigestProtocol, tuple[int, int, int]]
+    tuple[DigestProtocol, tuple[int, int, int]],
 ]
 
 DigestGenerator: TypeAlias = Generator[DigestResult, None, None]
 
-ReturnTypeLiteral = Literal[
-   "str", "span", "annotation", "str-span", "annotation-span"
-]
+DigestReturnTypeLiterals = Literal["str", "span", "annotation", "str-span", "annotation-span"]
+DigestReturnTypeStrLiteral = Literal["str"]
+DigestReturnTypeSpanLiteral = Literal["span"]
+DigestReturnTypeAnnotationLiteral = Literal["annotation"]
+DigestReturnTypeStrSpanLiteral = Literal["str-span"]
+DigestReturnTypeAnnotationSpanLiteral = Literal["annotation-span"]
