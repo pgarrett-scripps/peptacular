@@ -4,7 +4,6 @@ from typing import Literal
 import regex as re
 
 
-
 PROTEASES: dict[str, str] = {
     "arg-c": "(?<=R)",
     "asp-n": "(?=D)",

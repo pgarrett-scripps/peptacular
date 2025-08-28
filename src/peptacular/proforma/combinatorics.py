@@ -1,13 +1,13 @@
 from __future__ import annotations
 import itertools
-from typing import TYPE_CHECKING, Any, Generator, Optional
+from typing import TYPE_CHECKING, Any, Generator
 
 if TYPE_CHECKING:
     from .annotation import ProFormaAnnotation
 
 
 def generate_permutations(
-    annotation: ProFormaAnnotation, size: Optional[int] = None
+    annotation: ProFormaAnnotation, size: int | None = None
 ) -> Generator[ProFormaAnnotation, None, None]:
     """
     Generate all permutations of the annotation sequence.
@@ -42,7 +42,7 @@ def generate_permutations(
 
 
 def generate_product(
-    annotation: ProFormaAnnotation, repeat: Optional[int] = None
+    annotation: ProFormaAnnotation, repeat: int | None = None
 ) -> Generator[ProFormaAnnotation, None, None]:
     """
     Generate the Cartesian product of the annotation sequence with itself.
@@ -73,7 +73,7 @@ def generate_product(
 
 
 def generate_combinations(
-    annotation: ProFormaAnnotation, r: Optional[int] = None
+    annotation: ProFormaAnnotation, r: int | None = None
 ) -> Generator[ProFormaAnnotation, None, None]:
     """
     Generate all combinations of the annotation sequence.
@@ -104,7 +104,7 @@ def generate_combinations(
 
 
 def generate_combinations_with_replacement(
-    annotation: ProFormaAnnotation, r: Optional[int] = None
+    annotation: ProFormaAnnotation, r: int | None = None
 ) -> Generator[ProFormaAnnotation, None, None]:
     """
     Generate all combinations of the annotation sequence with replacement.
@@ -152,7 +152,7 @@ def _extract_non_internal_mods(annotation: ProFormaAnnotation) -> dict[str, Any]
         ModType.CHARGE_ADDUCTS,
     ]
 
-    return annotation.pop_mods(mods=non_internal_mod_types)
+    return annotation.pop_mods(mod_types=non_internal_mod_types)
 
 
 def _apply_extracted_mods(
@@ -165,4 +165,4 @@ def _apply_extracted_mods(
             from ..constants import ModType
 
             mod_type = ModType(mod_type_str)
-            annotation.set_mod_by_type(mod_value, mod_type, inplace=True)
+            annotation._set_mod_by_type(mod_value, mod_type, inplace=True)

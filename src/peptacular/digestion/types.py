@@ -2,14 +2,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Generator, Iterable, Literal, Protocol, Self, TypeAlias, Union
+from typing import Generator, Literal, Protocol, Self, TypeAlias, Union
 
 
 @dataclass
 class EnzymeConfig:
     """Configuration for a single enzyme in a digestion process."""
 
-    regex: Iterable[str] | str
+    enzyme_regex: str
     missed_cleavages: int = 0
     semi_enzymatic: bool = False
     complete_digestion: bool = True
@@ -57,7 +57,9 @@ DigestResult: TypeAlias = Union[
 
 DigestGenerator: TypeAlias = Generator[DigestResult, None, None]
 
-DigestReturnTypeLiterals = Literal["str", "span", "annotation", "str-span", "annotation-span"]
+DigestReturnTypeLiterals = Literal[
+    "str", "span", "annotation", "str-span", "annotation-span"
+]
 DigestReturnTypeStrLiteral = Literal["str"]
 DigestReturnTypeSpanLiteral = Literal["span"]
 DigestReturnTypeAnnotationLiteral = Literal["annotation"]

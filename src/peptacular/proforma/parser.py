@@ -214,7 +214,11 @@ class ProFormaParser:
                 self._skip(1)
                 self._add_cterm_mod(self._parse_modifications(PC.MOD_START, PC.MOD_END))
                 return
-            elif cur in (PC.CHIMERIC, PC.CONNECTED):  # charge ( end of sequence)
+            elif cur in (
+                PC.CHIMERIC,
+                PC.CONNECTED,
+                PC.CHARGE_SEP,
+            ):  # charge ( end of sequence)
                 return
             elif cur == PC.INTERVAL_START:  # Interval start
                 if dummy_interval is not None:
@@ -228,7 +232,7 @@ class ProFormaParser:
                     mods=None,
                 )
                 self._skip(1)
-            elif cur == ")":  # Interval end
+            elif cur == PC.INTERVAL_END:  # Interval end
                 if dummy_interval is None:
                     raise ProFormaFormatError(
                         "Interval ended without starting!", self.position, self.sequence
@@ -255,7 +259,7 @@ class ProFormaParser:
                 self._skip(1)
             else:
                 raise ProFormaFormatError(
-                    f"Expected either '{PC.MOD_START}', '{PC.INTERVAL_START}', '{PC.UNKNOWN}', '{PC.TERM_MOD}', or '{PC.CONNECTED}' but got: {cur}",
+                    f"Expected either '{PC.MOD_START}', '{PC.INTERVAL_START}', '{PC.UNKNOWN}', '{PC.TERM_MOD}', '{PC.CONNECTED}', '{PC.CHARGE_SEP}' or '{PC.CHIMERIC}' but got: {cur}",
                     self.position,
                     self.sequence,
                 )
@@ -266,7 +270,7 @@ class ProFormaParser:
         """
         while not self._end_of_sequence():
             cur = self._current()
-            if cur == "/":  # charge
+            if cur == PC.CHARGE_SEP:  # charge
                 self._skip(1)
 
                 # check for // (crosslink)

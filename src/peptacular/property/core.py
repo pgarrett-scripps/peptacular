@@ -15,7 +15,14 @@ from .properties import (
     NEGATIVE_AMINO_ACIDS,
     secondary_structure_scales_by_name,
 )
-from .types import AggregationMethodLiteral, MissingAAHandling, AggregationMethod, MissingAAHandlingLiteral, WeightingMethods, WeightingMethodsLiteral
+from .types import (
+    AggregationMethodLiteral,
+    MissingAAHandling,
+    AggregationMethod,
+    MissingAAHandlingLiteral,
+    WeightingMethods,
+    WeightingMethodsLiteral,
+)
 
 
 # Handle ambiguous amino acids
@@ -206,10 +213,16 @@ def _generate_string_sliding_windows(
 def calc_property(
     sequence: str,
     scale: str | Mapping[str, float],
-    missing_aa_handling: MissingAAHandlingLiteral | MissingAAHandling = MissingAAHandling.ERROR,
-    aggregation_method: AggregationMethodLiteral | AggregationMethod = AggregationMethod.AVG,
+    missing_aa_handling: (
+        MissingAAHandlingLiteral | MissingAAHandling
+    ) = MissingAAHandling.ERROR,
+    aggregation_method: (
+        AggregationMethodLiteral | AggregationMethod
+    ) = AggregationMethod.AVG,
     normalize: bool = False,
-    weighting_scheme: WeightingMethodsLiteral | WeightingMethods | Sequence[float] = WeightingMethods.UNIFORM,
+    weighting_scheme: (
+        WeightingMethodsLiteral | WeightingMethods | Sequence[float]
+    ) = WeightingMethods.UNIFORM,
     min_weight: float = 0.1,
     max_weight: float = 1.0,
 ) -> float:
@@ -260,10 +273,16 @@ def calc_window_property(
     sequence: str,
     scale: str | Mapping[str, float],
     window_size: int = 9,
-    missing_aa_handling: MissingAAHandlingLiteral | MissingAAHandling = MissingAAHandling.ERROR,
-    aggregation_method: AggregationMethodLiteral | AggregationMethod = AggregationMethod.AVG,
+    missing_aa_handling: (
+        MissingAAHandlingLiteral | MissingAAHandling
+    ) = MissingAAHandling.ERROR,
+    aggregation_method: (
+        AggregationMethodLiteral | AggregationMethod
+    ) = AggregationMethod.AVG,
     normalize: bool = False,
-    weighting_scheme: WeightingMethodsLiteral | WeightingMethods | Sequence[float] = WeightingMethods.UNIFORM,
+    weighting_scheme: (
+        WeightingMethodsLiteral | WeightingMethods | Sequence[float]
+    ) = WeightingMethods.UNIFORM,
     min_weight: float = 0.1,
     max_weight: float = 1.0,
 ) -> list[float]:

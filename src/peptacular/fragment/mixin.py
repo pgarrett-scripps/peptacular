@@ -1,17 +1,29 @@
 from typing import Generator, Literal, Mapping, Sequence, overload
 
-from .types import FRAGMENT_RETURN_TYPING, FragmentLiteral, FragmentReturnLiteral, FragmentReturnType, FragmentableAnnotation, Fragment, LabelLiteral, MassLabelLiteral, MassLiteral, MzLabelLiteral, MzLiteral
-from .core import fragment, get_losses
+from .types import (
+    FRAGMENT_RETURN_TYPING,
+    FragmentLiteral,
+    FragmentReturnLiteral,
+    FragmentReturnType,
+    FragmentableAnnotation,
+    Fragment,
+    LabelLiteral,
+    MassLabelLiteral,
+    MassLiteral,
+    MzLabelLiteral,
+    MzLiteral,
+)
+from .core import get_losses, fragment
 from ..constants import IonType, IonTypeLiteral
 
 
 class FragmenterMixin(FragmentableAnnotation):
     """Mixin class providing fragmentation functionality."""
-    
+
     @overload
     def fragment(
         self: FragmentableAnnotation,
-        ion_types: Sequence[IonTypeLiteral | IonType] | IonTypeLiteral | IonType,
+        ion_types: Sequence[IonTypeLiteral | IonType],
         charges: Sequence[int] | int,
         monoisotopic: bool = True,
         *,
@@ -22,13 +34,13 @@ class FragmenterMixin(FragmentableAnnotation):
         max_losses: int = 1,
         precision: None | int = None,
         _mass_components: None | Sequence[float] = None,
-        return_type: FragmentLiteral | Literal[FragmentReturnType.FRAGMENT]
+        return_type: FragmentLiteral | Literal[FragmentReturnType.FRAGMENT],
     ) -> Generator[Fragment, None, None]: ...
 
     @overload
     def fragment(
         self: FragmentableAnnotation,
-        ion_types: Sequence[IonTypeLiteral | IonType] | IonTypeLiteral | IonType,
+        ion_types: Sequence[IonTypeLiteral | IonType],
         charges: Sequence[int] | int,
         monoisotopic: bool = True,
         *,
@@ -39,13 +51,13 @@ class FragmenterMixin(FragmentableAnnotation):
         max_losses: int = 1,
         precision: None | int = None,
         _mass_components: None | Sequence[float] = None,
-        return_type: MassLiteral | Literal[FragmentReturnType.MASS]
+        return_type: MassLiteral | Literal[FragmentReturnType.MASS],
     ) -> Generator[float, None, None]: ...
 
     @overload
     def fragment(
         self: FragmentableAnnotation,
-        ion_types: Sequence[IonTypeLiteral | IonType] | IonTypeLiteral | IonType,
+        ion_types: Sequence[IonTypeLiteral | IonType],
         charges: Sequence[int] | int,
         monoisotopic: bool = True,
         *,
@@ -56,13 +68,13 @@ class FragmenterMixin(FragmentableAnnotation):
         max_losses: int = 1,
         precision: None | int = None,
         _mass_components: None | Sequence[float] = None,
-        return_type: MzLiteral | Literal[FragmentReturnType.MZ]
+        return_type: MzLiteral | Literal[FragmentReturnType.MZ],
     ) -> Generator[float, None, None]: ...
 
     @overload
     def fragment(
         self: FragmentableAnnotation,
-        ion_types: Sequence[IonTypeLiteral | IonType] | IonTypeLiteral | IonType,
+        ion_types: Sequence[IonTypeLiteral | IonType],
         charges: Sequence[int] | int,
         monoisotopic: bool = True,
         *,
@@ -73,13 +85,13 @@ class FragmenterMixin(FragmentableAnnotation):
         max_losses: int = 1,
         precision: None | int = None,
         _mass_components: None | Sequence[float] = None,
-        return_type: LabelLiteral | Literal[FragmentReturnType.LABEL]
+        return_type: LabelLiteral | Literal[FragmentReturnType.LABEL],
     ) -> Generator[str, None, None]: ...
 
     @overload
     def fragment(
         self: FragmentableAnnotation,
-        ion_types: Sequence[IonTypeLiteral | IonType] | IonTypeLiteral | IonType,
+        ion_types: Sequence[IonTypeLiteral | IonType],
         charges: Sequence[int] | int,
         monoisotopic: bool = True,
         *,
@@ -90,13 +102,13 @@ class FragmenterMixin(FragmentableAnnotation):
         max_losses: int = 1,
         precision: None | int = None,
         _mass_components: None | Sequence[float] = None,
-        return_type: MassLabelLiteral | Literal[FragmentReturnType.MASS_LABEL]
+        return_type: MassLabelLiteral | Literal[FragmentReturnType.MASS_LABEL],
     ) -> Generator[tuple[float, str], None, None]: ...
 
     @overload
     def fragment(
         self: FragmentableAnnotation,
-        ion_types: Sequence[IonTypeLiteral | IonType] | IonTypeLiteral | IonType,
+        ion_types: Sequence[IonTypeLiteral | IonType],
         charges: Sequence[int] | int,
         monoisotopic: bool = True,
         *,
@@ -107,13 +119,13 @@ class FragmenterMixin(FragmentableAnnotation):
         max_losses: int = 1,
         precision: None | int = None,
         _mass_components: None | Sequence[float] = None,
-        return_type: MzLabelLiteral | Literal[FragmentReturnType.MZ_LABEL]
+        return_type: MzLabelLiteral | Literal[FragmentReturnType.MZ_LABEL],
     ) -> Generator[tuple[float, str], None, None]: ...
 
     @overload
     def fragment(
         self: FragmentableAnnotation,
-        ion_types: Sequence[IonTypeLiteral | IonType] | IonTypeLiteral | IonType,
+        ion_types: Sequence[IonTypeLiteral | IonType],
         charges: Sequence[int] | int,
         monoisotopic: bool = True,
         *,
@@ -124,12 +136,14 @@ class FragmenterMixin(FragmentableAnnotation):
         max_losses: int = 1,
         precision: None | int = None,
         _mass_components: None | Sequence[float] = None,
-        return_type: FragmentReturnLiteral | FragmentReturnType = FragmentReturnType.FRAGMENT
+        return_type: (
+            FragmentReturnLiteral | FragmentReturnType
+        ) = FragmentReturnType.FRAGMENT,
     ) -> Generator[FRAGMENT_RETURN_TYPING, None, None]: ...
 
     def fragment(
         self: FragmentableAnnotation,
-        ion_types: Sequence[IonTypeLiteral | IonType] | IonTypeLiteral | IonType,
+        ion_types: Sequence[IonTypeLiteral | IonType],
         charges: Sequence[int] | int,
         monoisotopic: bool = True,
         *,
@@ -140,7 +154,9 @@ class FragmenterMixin(FragmentableAnnotation):
         max_losses: int = 1,
         precision: None | int = None,
         _mass_components: None | Sequence[float] = None,
-        return_type: FragmentReturnLiteral | FragmentReturnType = FragmentReturnType.FRAGMENT,
+        return_type: (
+            FragmentReturnLiteral | FragmentReturnType
+        ) = FragmentReturnType.FRAGMENT,
     ) -> Generator[FRAGMENT_RETURN_TYPING, None, None]:
         return fragment(
             annotation=self,
@@ -156,11 +172,10 @@ class FragmenterMixin(FragmentableAnnotation):
             _mass_components=_mass_components,
             return_type=return_type,
         )
-    
-    
+
     def get_losses(
         self: FragmentableAnnotation,
         losses: Mapping[str, Sequence[float]],
-        max_losses: int
+        max_losses: int,
     ) -> set[float]:
         return get_losses(annotation=self, losses=losses, max_losses=max_losses)

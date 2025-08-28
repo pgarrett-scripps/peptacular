@@ -14,12 +14,9 @@ Valid DigestReturnType's:
 
 """
 
-from typing import Generator, Iterable
+from typing import Generator
 
-from ..digestion import (
-    EnzymeConfig,
-    DigestReturnType
-)
+from ..digestion import EnzymeConfig, DigestReturnType
 
 from ..proforma.annotation import ProFormaAnnotation
 from . import get_annotation_input
@@ -34,38 +31,15 @@ def get_left_semi_enzymatic_sequences(
     Builds all left-hand semi-enzymatic subsequences derived from the input `sequence`.
 
     :param sequence: A sequence or ProFormaAnnotation.
-    :type sequence: Union[str, ProFormaAnnotation]
-    :param min_len: Minimum length for the subsequences (inclusive), defaults to [None]. If None, min_len will be
-                    equal to 1.
-    :type min_len: Optional[int]
-    :param max_len: Maximum length for the subsequences (inclusive). If None, the subsequences will go up to
-                    1 - length of the `sequence`, defaults to [None].
-    :type max_len: Optional[int]
-    :param return_type: The type of the returned values.
-    :type return_type: DigestReturnType
+    :param min_len: Minimum length for the subsequences (inclusive). If None, defaults to 1.
+    :param max_len: Maximum length for the subsequences (inclusive). If None, goes up to len(sequence) - 1.
 
-    :return: The left-hand semi-enzymatic subsequences. Return type is determined by the `return_type` parameter.
-    :rtype: List[str] | List[ProFormaAnnotation] | List[Span] |List[(str, Span)] | List[(ProFormaAnnotation, Span)]
+    :return: The left-hand semi-enzymatic subsequences as strings.
 
     .. code-block:: python
 
-        # Generates all left-hand semi enzymatic sequences (Returned values does not include input sequence)
         >>> list(get_left_semi_enzymatic_sequences('PEPTIDE'))
         ['PEPTID', 'PEPTI', 'PEPT', 'PEP', 'PE', 'P']
-
-        # For single-letter or empty sequences, the function returns an empty list:
-        >>> list(get_left_semi_enzymatic_sequences('P'))
-        []
-        >>> list(get_left_semi_enzymatic_sequences(''))
-        []
-
-        # Modifications are preserved:
-        >>> list(get_left_semi_enzymatic_sequences('[1]-P[2]EPTIDE'))
-        ['[1]-P[2]EPTID', '[1]-P[2]EPTI', '[1]-P[2]EPT', '[1]-P[2]EP', '[1]-P[2]E', '[1]-P[2]']
-
-        >>> list(get_left_semi_enzymatic_sequences('<13C>TIDE'))
-        ['<13C>TID', '<13C>TI', '<13C>T']
-
     """
     return get_annotation_input(sequence, copy=False).get_left_semi_enzymatic_sequences(
         min_len=min_len,
@@ -83,39 +57,17 @@ def get_right_semi_enzymatic_sequences(
     Builds all right-hand semi-enzymatic subsequences derived from the input `sequence`.
 
     :param sequence: A sequence or ProFormaAnnotation.
-    :type sequence: Union[str, ProFormaAnnotation]
-    :param min_len: Minimum length for the subsequences (inclusive), default is [None]. If None, min_len will be
-                    equal to 1.
-    :type min_len: Optional[int]
-    :param max_len: Maximum length for the subsequences (inclusive). If None, the subsequences will go up to
-                    1 - length of the `sequence`, defaults to [None].
-    :type max_len: Optional[int]
-    :param return_type: The type of the returned values.
-    :type return_type: DigestReturnType
+    :param min_len: Minimum length for the subsequences (inclusive). If None, defaults to 1.
+    :param max_len: Maximum length for the subsequences (inclusive). If None, goes up to len(sequence) - 1.
 
-    :return: The right-hand semi-enzymatic subsequences. Return type is determined by the `return_type` parameter.
-    :rtype: List[str] | List[ProFormaAnnotation] | List[Span] |List[(str, Span)] | List[(ProFormaAnnotation, Span)]
+    :return: The right-hand semi-enzymatic subsequences as strings.
 
     .. code-block:: python
 
-        # Generates all right-hand semi enzymatic sequences (Returned values does not include input sequence)
         >>> list(get_right_semi_enzymatic_sequences('PEPTIDE'))
         ['EPTIDE', 'PTIDE', 'TIDE', 'IDE', 'DE', 'E']
-
-        # For single-letter or empty sequences, the function returns an empty list:
-        >>> list(get_right_semi_enzymatic_sequences('P'))
-        []
-        >>> list(get_right_semi_enzymatic_sequences(''))
-        []
-
-        # Modifications are preserved:
-        >>> list(get_right_semi_enzymatic_sequences('PEPTIDE[1]-[2]'))
-        ['EPTIDE[1]-[2]', 'PTIDE[1]-[2]', 'TIDE[1]-[2]', 'IDE[1]-[2]', 'DE[1]-[2]', 'E[1]-[2]']
-
-        >>> list(get_right_semi_enzymatic_sequences('<13C>TIDE'))
-        ['<13C>IDE', '<13C>DE', '<13C>E']
-
     """
+
     return get_annotation_input(
         sequence, copy=False
     ).get_right_semi_enzymatic_sequences(
@@ -131,30 +83,14 @@ def get_semi_enzymatic_sequences(
     max_len: int | None = None,
 ) -> Generator[str, None, None]:
     """
-    Builds allsemi-enzymatic sequences from the given input `sequence`.
+    Builds all semi-enzymatic sequences from the given input `sequence`.
+    Equivalent to combining left and right semi-enzymatic sequences.
 
     :param sequence: A sequence or ProFormaAnnotation.
-    :type sequence: Union[str, ProFormaAnnotation]
-    :param min_len: Minimum length for the subsequences (inclusive), default is [None]. If None, min_len will be
-                    equal to 1.
-    :type min_len: Optional[int]
-    :param max_len: Maximum length for the subsequences (inclusive). If None, the subsequences will go up  to
-                    1 - length of the `sequence`, defaults to [None].
-    :type max_len: Optional[int]
-    :param return_type: The type of the returned values.
-    :type return_type: DigestReturnType
+    :param min_len: Minimum length for the subsequences (inclusive). If None, defaults to 1.
+    :param max_len: Maximum length for the subsequences (inclusive). If None, goes up to len(sequence) - 1.
 
-    :return: Semi-enzymatic subsequences. Return type is determined by the `return_type` parameter.
-    :rtype: List[str] | List[ProFormaAnnotation] | List[Span] |List[(str, Span)] | List[(ProFormaAnnotation, Span)]
-
-    .. code-block:: python
-
-        # Equivalent to build_left_semi_sequences + build_right_semi_sequences
-        >>> res = list(get_left_semi_enzymatic_sequences('PEPTIDE'))
-        >>> res += list(get_right_semi_enzymatic_sequences('PEPTIDE'))
-        >>> list(get_semi_enzymatic_sequences('PEPTIDE')) == list(res)
-        True
-
+    :return: Semi-enzymatic subsequences as strings.
     """
 
     return get_annotation_input(sequence, copy=False).get_semi_enzymatic_sequences(
@@ -173,38 +109,15 @@ def get_non_enzymatic_sequences(
     Builds all non-enzymatic sequences from the given input `sequence`.
 
     :param sequence: A sequence or ProFormaAnnotation.
-    :type sequence: Union[str, ProFormaAnnotation]
-    :param min_len: Minimum length for the subsequences (inclusive), default is [None]. If None, min_len will be
-                    equal to 1.
-    :type min_len: Optional[int]
-    :param max_len: Maximum length for the subsequences (inclusive). If None, the subsequences will go up  to
-                    1 - length of the `sequence`, defaults to [None].
-    :type max_len: Optional[int]
-    :param return_type: The type of the returned values.
-    :type return_type: DigestReturnType
+    :param min_len: Minimum length for the subsequences (inclusive). If None, defaults to 1.
+    :param max_len: Maximum length for the subsequences (inclusive). If None, goes up to len(sequence) - 1.
 
-    :return: Non-enzymatic subsequences. Return type is determined by the `return_type` parameter.
-    :rtype: List[str] | List[ProFormaAnnotation] | List[Span] |List[(str, Span)] | List[(ProFormaAnnotation, Span)]
+    :return: Non-enzymatic subsequences as strings.
 
     .. code-block:: python
 
-        # Generates non-enzymatic sequences (Returned values does not include input sequence):
         >>> list(get_non_enzymatic_sequences('PEP'))
         ['P', 'PE', 'E', 'EP', 'P']
-
-        # For single-letter or empty sequences, the function returns an empty list:
-        >>> list(get_non_enzymatic_sequences('P'))
-        []
-        >>> list(get_non_enzymatic_sequences(''))
-        []
-
-         # Sequences with modifications are processed preserving those modifications:
-        >>> list(get_non_enzymatic_sequences('[Acetyl]-P[1.0]EP[1.0]-[Amide]'))
-        ['[Acetyl]-P[1.0]', '[Acetyl]-P[1.0]E', 'E', 'EP[1.0]-[Amide]', 'P[1.0]-[Amide]']
-
-        >>> list(get_non_enzymatic_sequences('<13C>PEP'))
-        ['<13C>P', '<13C>PE', '<13C>E', '<13C>EP', '<13C>P']
-
     """
     return get_annotation_input(sequence, copy=False).get_non_enzymatic_sequences(
         min_len=min_len,
@@ -217,155 +130,119 @@ def get_cleavage_sites(
     sequence: str | ProFormaAnnotation, enzyme_regex: str
 ) -> Generator[int, None, None]:
     """
-    Return a list of positions where cleavage occurs in input `sequence` based on the provided enzyme regex.
+    Return positions where cleavage occurs in input `sequence` based on the provided enzyme regex.
 
     :param sequence: A sequence or ProFormaAnnotation.
-    :type sequence: Union[str, ProFormaAnnotation]
-    :param enzyme_regex: Regular expression or key in PROTEASES dictionary defining enzyme's cleavage rule.
-    :type enzyme_regex: str
+    :param enzyme_regex: Regular expression defining enzyme's cleavage rule.
 
-    :return: List of positions where cleavage occurs in the sequence.
-    :rtype: List[int]
+    :return: List of positions where cleavage occurs.
 
     .. code-block:: python
 
-        # Can use a key in PROTEASES to specify the enzyme_regex:
-        >>> list(get_cleavage_sites(sequence='TIDERTIDEKTIDE', enzyme_regex='trypsin/P'))
+        >>> list(get_cleavage_sites('TIDERTIDEKTIDE', 'trypsin'))
         [5, 10]
-
-        # No cleavage sites are identified if the enzyme_regex does not match the sequence:
-        >>> list(get_cleavage_sites(sequence='TIDEPTIDEPTIDE', enzyme_regex='trypsin/P'))
-        []
-
-        # If the protease cleaves at the N-terminus, the first position is included:
-        >>> list(get_cleavage_sites(sequence='KPEPTIDEK', enzyme_regex='lys-n'))
-        [0, 8]
-
-        # Similarly, if the protease cleaves at the C-terminus, the last position is included:
-        >>> list(get_cleavage_sites(sequence='KPEPTIDEK', enzyme_regex='lys-c'))
-        [1, 9]
-
-        # Will also work with modified sequences
-        >>> list(get_cleavage_sites(sequence='[Acetyl]-TIDERT[1.0]IDEKTIDE-[Amide]', enzyme_regex='trypsin/P'))
-        [5, 10]
-
-        # Non-specific cleavage sites are also identified
-        >>> list(get_cleavage_sites(sequence='PEPTIDE', enzyme_regex='non-specific'))
-        [0, 1, 2, 3, 4, 5, 6, 7]
-
-        >>> list(get_cleavage_sites(sequence='PPPP', enzyme_regex='PP'))
-        [1, 2, 3]
-
-        >>> list(get_cleavage_sites(sequence='PEPCTIDE', enzyme_regex='(?=C)'))
-        [3]
-
     """
     return get_annotation_input(sequence, copy=False).get_cleavage_sites(
         enzyme_regex=enzyme_regex
     )
 
 
-def digest(
+def digest_by_regex(
     sequence: str | ProFormaAnnotation,
-    enzyme_regex: Iterable[str] | str,
+    enzyme_regex: str,
     missed_cleavages: int = 0,
     semi: bool = False,
     min_len: int | None = None,
     max_len: int | None = None,
+    *,
     complete_digestion: bool = True,
     sort_output: bool = True,
 ) -> Generator[str, None, None]:
     """
-    Returns a list of digested sequences derived from the input `sequence`.
+    Returns digested sequences using a regular expression to define cleavage sites.
 
     :param sequence: A sequence or ProFormaAnnotation.
-    :type sequence: Union[str, ProFormaAnnotation]
-    :param enzyme_regex: Regular expression or list of regular expressions representing enzyme's cleavage rules.
-    :type enzyme_regex: Union[List[str], str]
-    :param missed_cleavages: Maximum number of missed cleavages, defaults to [0].
-    :type missed_cleavages: int
-    :param semi: Whether to include semi-enzymatic peptides, defaults to [False].
-    :type semi: bool
-    :param min_len: Minimum length for the subsequences (inclusive), default is [None]. If None, min_len will be
-                    equal to 1.
-    :type min_len: Optional[int]
-    :param max_len: Maximum length for the subsequences (inclusive). If None, the subsequences will go up  to
-                    1 - length of the `sequence`, defaults to [None].
-    :type max_len: Optional[int]
-    :param complete_digestion: Whether digestion is fully complete? If True (default), the function will return all
-    possible digested sequences, excluding the original sequence. If False, the function will return all possible
-    digested sequences, including the original sequence.
-    :type complete_digestion: bool
-    :param return_type: Whether to return the digested sequences as strings, ProFormaAnnotations, or Spans,
-    defaults to ['str'].
-    :type return_type: DigestReturnType
-    :param sort_output: Whether to sort the output sequences. Defaults to [True].
-    :type sort_output: bool
+    :param enzyme_regex: Regular expression defining enzyme's cleavage rules.
+    :param missed_cleavages: Maximum number of missed cleavages, defaults to 0.
+    :param semi: Whether to include semi-enzymatic peptides, defaults to False.
+    :param min_len: Minimum length for the subsequences. If None, defaults to 1.
+    :param max_len: Maximum length for the subsequences. If None, no upper limit.
+    :param complete_digestion: If True, excludes original sequence. If False, includes it.
+    :param sort_output: Whether to sort the output sequences, defaults to True.
 
-    :return: List of digested peptides. Return type is determined by the `return_type` parameter.
-    :rtype: List[str] | List[ProFormaAnnotation] | List[Span] |List[(str, Span)] | List[(ProFormaAnnotation, Span)]
+    :return: List of digested peptides as strings.
 
     .. code-block:: python
 
-        # Can use a key in PROTEASES to specify the enzyme_regex:
-        >>> list(digest(sequence='TIDERTIDEKTIDE', enzyme_regex='trypsin/P', missed_cleavages=2))
-        ['TIDER', 'TIDERTIDEK', 'TIDERTIDEKTIDE', 'TIDEK', 'TIDEKTIDE', 'TIDE']
+        >>> list(digest_by_regex('TIDERTIDEKTIDE', '([KR])', missed_cleavages=1))
+        ['TIDER', 'TIDERTIDEK', 'TIDEK', 'TIDEKTIDE', 'TIDE']
 
-        # Inlcude spans in the returned values:
-        >>> list(digest(sequence='TIDERTIDEKTIDE', enzyme_regex='trypsin/P', return_type='str-span'))
-        [('TIDER', (0, 5, 0)), ('TIDEK', (5, 10, 0)), ('TIDE', (10, 14, 0))]
-
-        # Or specify a regular expression:
-        >>> list(digest(sequence='TIDERTIDEKTIDE', enzyme_regex='([KR])', missed_cleavages=2))
-        ['TIDER', 'TIDERTIDEK', 'TIDERTIDEKTIDE', 'TIDEK', 'TIDEKTIDE', 'TIDE']
-
-        # Filter sequecnes by max length:
-        >>> list(digest(sequence='TIDERTIDEKTIDE', enzyme_regex='([KR])', missed_cleavages=2, max_len=5))
-        ['TIDER', 'TIDEK', 'TIDE']
-
-        # Filter sequecnes by min length:
-        >>> list(digest(sequence='TIDERTIDEKTIDE', enzyme_regex='([KR])', missed_cleavages=2, min_len=6))
-        ['TIDERTIDEK', 'TIDERTIDEKTIDE', 'TIDEKTIDE']
-
-        # Generate semi-enzymatic sequences:
-        >>> seq = 'TIDERTIDEK[1]TIDE-[2]'
-        >>> list(digest(sequence=seq, enzyme_regex='([KR])', missed_cleavages=1, min_len=9, semi=True))
-        ['TIDERTIDE', 'TIDERTIDEK[1]', 'IDERTIDEK[1]', 'TIDEK[1]TIDE-[2]']
-
-        # Generate sequences with a non-specific enzyme
-        >>> list(digest(sequence='PEPT', enzyme_regex='non-specific'))
-        ['P', 'PE', 'PEP', 'E', 'EP', 'EPT', 'P', 'PT', 'T']
-
-        # Modifications are preserved:
-        >>> list(digest(sequence='<13C>T[1][2]IDERTIDEKTIDE', enzyme_regex='([KR])', missed_cleavages=2, min_len=6))
-        ['<13C>T[1][2]IDERTIDEK', '<13C>T[1][2]IDERTIDEKTIDE', '<13C>TIDEKTIDE']
-
-        # Can specify multiple enzyme_regex and singlular missed_cleavages:
-        >>> list(digest(sequence='TIDERTIDEKTIDE', enzyme_regex=['([KR])', '([D])'], missed_cleavages=0))
-        ['TID', 'ER', 'TID', 'EK', 'TID', 'E']
-
-        # With complete_digestion=False, the function will return all possible digested sequences
-        >>> seq = 'TIDERTIDEKTIDE'
-        >>> list(digest(sequence=seq, enzyme_regex='([KR])', missed_cleavages=2, max_len=5, complete_digestion=False))
-        ['TIDER', 'TIDERTIDEKTIDE', 'TIDEK', 'TIDE']
-
-        >>> list(digest(sequence='K', enzyme_regex='([KR])', missed_cleavages=0, complete_digestion=True))
-        ['K']
-
-        >>> list(digest(sequence='PEPCTIDE', enzyme_regex='(?=C)', missed_cleavages=0, complete_digestion=True))
+        >>> list(digest_by_regex('PEPCTIDE', '(?=C)', missed_cleavages=0))
         ['PEP', 'CTIDE']
-
-
     """
-    return get_annotation_input(sequence, copy=False).digest(
+    return get_annotation_input(sequence, copy=False).regex_digest(
         enzyme_regex=enzyme_regex,
         missed_cleavages=missed_cleavages,
         semi=semi,
         min_len=min_len,
         max_len=max_len,
         complete_digestion=complete_digestion,
-        return_type=DigestReturnType.STR,
         sort_output=sort_output,
+        return_type=DigestReturnType.STR,
+    )
+
+
+def digest(
+    sequence: str | ProFormaAnnotation,
+    cleave_on: str,
+    restrict_before: str = "",
+    restrict_after: str = "",
+    cterminal: bool = True,
+    missed_cleavages: int = 0,
+    semi: bool = False,
+    min_len: int | None = None,
+    max_len: int | None = None,
+    *,
+    complete_digestion: bool = True,
+    sort_output: bool = True,
+) -> Generator[str, None, None]:
+    """
+    Returns digested sequences using amino acid specifications with optional restrictions.
+
+    :param sequence: A sequence or ProFormaAnnotation.
+    :param cleave_on: Amino acids to cleave on (e.g., 'KR' for trypsin-like).
+    :param restrict_before: Amino acids that prevent cleavage when preceding cleavage site.
+    :param restrict_after: Amino acids that prevent cleavage when following cleavage site.
+    :param cterminal: If True, cleave after the residue. If False, cleave before.
+    :param missed_cleavages: Maximum number of missed cleavages, defaults to 0.
+    :param semi: Whether to include semi-enzymatic peptides, defaults to False.
+    :param min_len: Minimum length for the subsequences. If None, defaults to 1.
+    :param max_len: Maximum length for the subsequences. If None, no upper limit.
+    :param complete_digestion: If True, excludes original sequence. If False, includes it.
+    :param sort_output: Whether to sort the output sequences, defaults to True.
+
+    :return: List of digested peptides as strings.
+
+    .. code-block:: python
+
+        >>> list(digest('TIDERTIDEKTIDE', 'KR', cterminal=True))
+        ['TIDER', 'TIDEK', 'TIDE']
+
+        >>> list(digest('KPKRKP', 'K', restrict_after='P', cterminal=True))
+        ['KPK', 'RKP']
+    """
+    return get_annotation_input(sequence, copy=False).digest(
+        cleave_on=cleave_on,
+        restrict_before=restrict_before,
+        restrict_after=restrict_after,
+        cterminal=cterminal,
+        missed_cleavages=missed_cleavages,
+        semi=semi,
+        min_len=min_len,
+        max_len=max_len,
+        complete_digestion=complete_digestion,
+        sort_output=sort_output,
+        return_type=DigestReturnType.STR,
     )
 
 
@@ -380,9 +257,9 @@ def digest_from_config(
     Same as digest() but with a simplified configuration object for a single enzyme.
     """
 
-    return digest(
+    return digest_by_regex(
         sequence=sequence,
-        enzyme_regex=config.regex,
+        enzyme_regex=config.enzyme_regex,
         missed_cleavages=config.missed_cleavages,
         semi=config.semi_enzymatic,
         min_len=min_len,
@@ -399,28 +276,14 @@ def sequential_digest(
     max_len: int | None = None,
 ) -> Generator[str, None, None]:
     """
-    Returns a list of digested sequences derived from the input `sequence` using sequential digestion
-    with multiple enzymes.
+    Returns digested sequences using sequential digestion with multiple enzymes.
 
     :param sequence: A sequence or ProFormaAnnotation
-    :param enzyme_configs: List of EnzymeConfig objects, each representing an enzyme to apply sequentially
-    :param min_len: Minimum length for peptides (inclusive), defaults to 1 if None
-    :param max_len: Maximum length for peptides (inclusive), defaults to sequence length if None
-    :param return_type: Format to return results ('str', 'annotation', 'span', 'str-span', 'annotation-span')
-    :return: List of digested peptides in the format specified by return_type
+    :param enzyme_configs: List of EnzymeConfig objects to apply sequentially
+    :param min_len: Minimum length for peptides. If None, defaults to 1.
+    :param max_len: Maximum length for peptides. If None, no upper limit.
 
-    Examples:
-        >>> trypsin = EnzymeConfig(regex=['([KR])'], missed_cleavages=0, semi_enzymatic=False, complete_digestion=True)
-        >>> asp_n = EnzymeConfig(regex=['([D])'], missed_cleavages=0, semi_enzymatic=False, complete_digestion=True)
-        >>> list(sequential_digest(sequence='XXXKXXXDXXX', enzyme_configs=[trypsin, asp_n], return_type='str'))
-        ['XXXK', 'XXXD', 'XXX']
-
-        >>> partial_digest = [
-        ...     EnzymeConfig(regex=['([KR])'], missed_cleavages=0, semi_enzymatic=False, complete_digestion=False),
-        ...     EnzymeConfig(regex=['([D])'], missed_cleavages=0, semi_enzymatic=False, complete_digestion=False)
-        ... ]
-        >>> list(sequential_digest(sequence='XXXKXXXDXXX', enzyme_configs=partial_digest, return_type='str'))
-        ['XXXK', 'XXXKXXXD', 'XXXKXXXDXXX', 'XXX', 'XXXD', 'XXXDXXX', 'XXX']
+    :return: List of digested peptides as strings.
     """
     return get_annotation_input(sequence, copy=False).sequential_digest(
         enzyme_configs=enzyme_configs,

@@ -3,16 +3,16 @@ import peptacular as pt
 
 
 class TestSlice(unittest.TestCase):
-    
+
     def test_basic_slice(self):
         """Test basic slicing functionality"""
         annotation = pt.ProFormaAnnotation.parse("PEPTIDE")
-        
+
         # Test normal slicing
         sliced = annotation.slice(0, 3)
         self.assertEqual(sliced.sequence, "PEP")
         self.assertEqual(annotation.sequence, "PEPTIDE")  # Original unchanged
-        
+
         # Test in-place slicing
         annotation.slice(0, 3, inplace=True)
         self.assertEqual(annotation.sequence, "PEP")
@@ -39,35 +39,35 @@ class TestSlice(unittest.TestCase):
         """Test slicing preserves interval when completely within slice"""
         annotation = pt.ProFormaAnnotation.parse("P(EP)[Phosphorylated]TIDE")
         self.assertEqual(annotation.serialize(), "P(EP)[Phosphorylated]TIDE")
-        
+
         sliced = annotation.slice(0, 5)
         self.assertEqual(sliced.serialize(), "P(EP)[Phosphorylated]TI")
 
     def test_slice_preserves_complete_interval_full_sequence(self):
         """Test slicing preserves interval when taking full sequence"""
         annotation = pt.ProFormaAnnotation.parse("P(EP)[Phosphorylated]TIDE")
-        
+
         sliced = annotation.slice(0, 7)
         self.assertEqual(sliced.serialize(), "P(EP)[Phosphorylated]TIDE")
 
     def test_slice_raises_error_when_cutting_interval_start(self):
         """Test slicing raises ValueError when interval start gets cut"""
         annotation = pt.ProFormaAnnotation.parse("P(EP)[Phosphorylated]TIDE")
-        
+
         with self.assertRaises(ValueError):
             annotation.slice(2, 5)
 
     def test_slice_raises_error_when_cutting_interval_end(self):
         """Test slicing raises ValueError when interval end gets cut"""
         annotation = pt.ProFormaAnnotation.parse("P(EP)[Phosphorylated]TIDE")
-        
+
         with self.assertRaises(ValueError):
             annotation.slice(0, 2)
 
     def test_slice_raises_error_when_cutting_both_interval_ends(self):
         """Test slicing raises ValueError when both interval ends get cut"""
         annotation = pt.ProFormaAnnotation.parse("P(EP)[Phosphorylated]TIDE")
-        
+
         with self.assertRaises(ValueError):
             annotation.slice(2, 4)
 
@@ -75,14 +75,14 @@ class TestSlice(unittest.TestCase):
         """Test slicing preserves ambiguous interval when completely within slice"""
         annotation = pt.ProFormaAnnotation.parse("P(?EPTI)[Phosphorylated]DE")
         self.assertEqual(annotation.serialize(), "P(?EPTI)[Phosphorylated]DE")
-        
+
         sliced = annotation.slice(0, 7)
         self.assertEqual(sliced.serialize(), "P(?EPTI)[Phosphorylated]DE")
 
     def test_slice_raises_error_when_cutting_ambiguous_interval(self):
         """Test slicing raises ValueError when ambiguous interval gets cut"""
         annotation = pt.ProFormaAnnotation.parse("P(?EPTI)[Phosphorylated]DE")
-        
+
         with self.assertRaises(ValueError):
             annotation.slice(2, 4)
 
@@ -94,7 +94,9 @@ class TestSlice(unittest.TestCase):
 
     def test_slice_preserves_static_modifications(self):
         """Test slicing preserves static modifications"""
-        annotation = pt.ProFormaAnnotation(sequence="PEPTIDE", static_mods=pt.Mod("57@C"))
+        annotation = pt.ProFormaAnnotation(
+            sequence="PEPTIDE", static_mods=pt.Mod("57@C")
+        )
         sliced = annotation.slice(0, 3)
         self.assertEqual(sliced.serialize(), "<57@C>PEP")
 
@@ -105,5 +107,5 @@ class TestSlice(unittest.TestCase):
         self.assertEqual(sliced.serialize(), "PEP/2")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

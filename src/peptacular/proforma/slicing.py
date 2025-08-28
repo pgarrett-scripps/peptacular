@@ -7,6 +7,8 @@ from .dclasses.modlist import ModList
 
 from .dclasses import ModDict, IntervalList, Interval
 
+from .parser import ProFormaParser
+
 if TYPE_CHECKING:
     from .annotation import ProFormaAnnotation
 
@@ -49,7 +51,7 @@ def slice_annotation(
     new_sequence = annotation.sequence[start:stop]
 
     # Early return if no modifications exist
-    if not annotation.has_mods:
+    if not annotation.has_mods():
         annotation.sequence = new_sequence
         return annotation
 
@@ -63,9 +65,9 @@ def slice_annotation(
 
     # Handle terminal modifications
     if start > 0:
-        annotation.clear_nterm_mods()
+        annotation.remove_nterm_mods(inplace=True)
     if stop < seq_len:
-        annotation.clear_cterm_mods()
+        annotation.remove_cterm_mods(inplace=True)
 
     # Update annotation
     annotation.sequence = new_sequence
@@ -75,7 +77,6 @@ def slice_annotation(
     return annotation
 
 
-# TODO: Add split on aa?
 def split_annotation(annotation: ProFormaAnnotation) -> list[ProFormaAnnotation]:
     """
     Split each amino acid in the sequence into a separate ProFormaAnnotation.
@@ -89,12 +90,27 @@ def split_annotation(annotation: ProFormaAnnotation) -> list[ProFormaAnnotation]
     Raises:
         ValueError: If annotation contains intervals
     """
-    if annotation.has_intervals:
-        raise ValueError("Cannot split annotation with intervals.")
+
+    annot_slices: list[tuple[int, int]] = []
+    for i, _ in enumerate(annotation.sequence):
+        annot_slices.append((i, i + 1))
+
+    interval_slices: list[tuple[int, int]] = []
+    for interval in annotation.get_interval_list():
+        start: int = interval.start
+        end: int = interval.end
+        interval_slices.append((start, end))
+
+    for start, stop in interval_slices:
+        annot_slices = [(s, e) for s, e in annot_slices if s < start or s >= stop]
+
+    annot_slices += interval_slices
+
+    annot_slices.sort(key=lambda x: x[0])
 
     result: list[ProFormaAnnotation] = []
-    for i, _ in enumerate(annotation.sequence):
-        sliced = slice_annotation(annotation, i, i + 1, inplace=False)
+    for s, e in annot_slices:
+        sliced = slice_annotation(annotation, s, e, inplace=False)
         result.append(sliced)
 
     return result
@@ -249,11 +265,21 @@ def reverse_annotation(
 
     # Reverse internal modifications
     if annotation.has_internal_mods:
-        new_internal_mods = {}
+        new_internal_mods: ModDict = ModDict()
         for pos, mods in annotation.get_internal_mod_dict().items():
             new_pos = len(annotation.sequence) - 1 - pos
             new_internal_mods[new_pos] = mods
-        annotation.internal_mods = new_internal_mods
+        annotation._internal_mod_dict = new_internal_mods  # type: ignore
+
+    # reverse the intervals too
+    if annotation.has_intervals:
+        for interval in annotation.get_interval_list():
+            start: int = interval.start
+            end: int = interval.end
+            new_start = len(annotation.sequence) - end
+            new_end = len(annotation.sequence) - start
+            interval.start = new_start
+            interval.end = new_end
 
     # Swap terminal modifications if requested
     if swap_terms:
@@ -305,48 +331,37 @@ def sort_annotation(
     annotation.get_unknown_mod_list().clear()
     annotation.get_static_mod_list().clear()
     annotation.get_isotope_mod_list().clear()
+    charge = annotation.pop_charge()
 
-    intervals = annotation.get_interval_list().copy()
-    annotation.get_interval_list().clear()
+    # intervals = annotation.get_interval_list().copy()
+    # annotation.get_interval_list().clear()
 
     sorted_components = split_annotation(annotation)
 
     # Create list of (component, original_position) tuples
-    sequence_positions = list(enumerate(sorted_components))
+    sequence_elems = list(enumerate(comp.serialize() for comp in sorted_components))
 
     # Sort based on key function or alphabetically
     if key is None:
-        sequence_positions.sort(key=lambda x: x[1].serialize(), reverse=reverse)
+        sequence_elems.sort(key=lambda x: x[1], reverse=reverse)
     else:
-        sequence_positions.sort(key=lambda x: key(x[1].serialize()), reverse=reverse)
+        sequence_elems.sort(key=lambda x: key(x[1]), reverse=reverse)
 
-    # Extract sorted sequence and create position mapping
-    sorted_sequence: list[str] = []
-    position_mapping: dict[int, int] = {}
+    new_sequence = "".join(comp for _, comp in sequence_elems)
 
-    for new_pos, (original_pos, comp) in enumerate(sequence_positions):
-        sorted_sequence.append(comp.sequence)
-        position_mapping[original_pos] = new_pos
+    first: ProFormaParser = ProFormaParser(new_sequence).parse().__next__()[0]
 
-    # Update sequence
-    annotation.sequence = "".join(sorted_sequence)
+    annotation.sequence = "".join(first.amino_acids)
+    annotation._internal_mod_dict = first.internal_mods  # type: ignore
+    annotation._interval_list = first.intervals  # type: ignore
 
-    # Update internal modifications with new positions
-    if annotation.has_internal_mods:
-        new_internal_mods = {}
-        for original_pos, mods in annotation.get_internal_mod_dict().items():
-            new_pos = position_mapping[original_pos]
-            new_internal_mods[new_pos] = mods
-        annotation.internal_mods = new_internal_mods if new_internal_mods else None
-
-    # Add back the original modifications and intervals
-    annotation.get_interval_list().data = intervals.data
     annotation.get_nterm_mod_list().data = n_term_mods.data
     annotation.get_cterm_mod_list().data = c_term_mods.data
     annotation.get_labile_mod_list().data = labile_mods.data
     annotation.get_unknown_mod_list().data = unknown_mods.data
     annotation.get_static_mod_list().data = static_mods.data
     annotation.get_isotope_mod_list().data = isotope_mods.data
+    annotation.set_charge(charge)
 
     return annotation
 
@@ -405,70 +420,6 @@ def generate_sliding_windows(
                 stop=stop,
                 inplace=False,
             )
-
-
-# Helper functions
-
-def _shift_intervals(
-    intervals: list[Interval], effective_shift: int, seq_len: int, slice_intervals: bool
-) -> list[Interval]:
-    """Helper function to shift intervals during cyclic shift"""
-    new_intervals: list[Interval] = []
-
-    for interval in intervals:
-        # Shift intervals with the sequence
-        new_start = (interval.start - effective_shift) % seq_len
-        new_end = (interval.end - effective_shift) % seq_len
-
-        if new_end == 0:
-            new_end = seq_len
-
-        # Check if interval wraps around (gets cut off by the shift)
-        if new_start >= new_end:
-            if slice_intervals:
-                # Split the interval that wraps around
-                # First part: from new_start to end of sequence
-                new_intervals.append(
-                    Interval(
-                        start=new_start,
-                        end=seq_len,
-                        ambiguous=interval.ambiguous,
-                        mods=interval.mods,
-                    )
-                )
-                # Second part: from start of sequence to new_end
-                if new_end > 0:
-                    # Create modification copies for the second part
-                    new_interval_mods = []
-                    if interval.has_mods:
-                        # Simple copy without complex labeling logic
-                        new_interval_mods = [mod.copy() for mod in interval.mods]
-
-                    new_intervals.append(
-                        Interval(
-                            start=0,
-                            end=new_end,
-                            ambiguous=interval.ambiguous,
-                            mods=new_interval_mods,
-                        )
-                    )
-            else:
-                raise ValueError(
-                    f"Interval [{interval.start}:{interval.end}] would be cut off by shift. "
-                    f"Set slice_intervals=True to allow interval slicing."
-                )
-        else:
-            # Normal case - interval doesn't wrap around
-            new_intervals.append(
-                Interval(
-                    start=new_start,
-                    end=new_end,
-                    ambiguous=interval.ambiguous,
-                    mods=interval.mods,
-                )
-            )
-
-    return new_intervals
 
 
 def _normalize_start_index(start: int | None, seq_len: int) -> int:

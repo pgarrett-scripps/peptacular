@@ -5,7 +5,7 @@ import peptacular as pt
 
 
 class TestSort(unittest.TestCase):
-    
+
     def test_basic_sort(self):
         annotation = pt.ProFormaAnnotation.parse("PEPTIDE")
         sorted_annotation = annotation.sort()
@@ -57,7 +57,7 @@ class TestSort(unittest.TestCase):
                 return (0, aa)  # Vowels get priority 0
             else:
                 return (1, aa)  # Consonants get priority 1
-        
+
         annotation = pt.ProFormaAnnotation.parse("PEPTIDE")
         sorted_annotation = annotation.sort(key=vowel_first_key)
         # Should have E, E, I first (vowels), then D, P, P, T (consonants)
@@ -66,6 +66,7 @@ class TestSort(unittest.TestCase):
     """
     TESTS FOR: sorting with internal modifications
     """
+
     def test_sort_with_internal_mods(self):
         annotation = pt.ProFormaAnnotation.parse("PE[Phospho]PTI[Methyl]DE")
         sorted_annotation = annotation.sort()
@@ -85,6 +86,7 @@ class TestSort(unittest.TestCase):
     """
     TESTS FOR: sorting with terminal modifications
     """
+
     def test_sort_with_nterm_mods(self):
         annotation = pt.ProFormaAnnotation.parse("[Acetyl]-PEPTIDE")
         sorted_annotation = annotation.sort()
@@ -110,6 +112,7 @@ class TestSort(unittest.TestCase):
     """
     TESTS FOR: sorting with other modification types
     """
+
     def test_sort_with_labile_mods(self):
         annotation = pt.ProFormaAnnotation.parse("{Glycan}PEPTIDE")
         sorted_annotation = annotation.sort()
@@ -141,6 +144,7 @@ class TestSort(unittest.TestCase):
     """
     TESTS FOR: edge cases and validation
     """
+
     def test_sort_preserves_amino_acid_composition(self):
         annotation = pt.ProFormaAnnotation.parse("PEPTIDE")
         sorted_annotation = annotation.sort()
@@ -159,6 +163,13 @@ class TestSort(unittest.TestCase):
         sorted_annotation = annotation.sort(key=None)
         self.assertEqual(sorted_annotation.sequence, "DEEIPPT")
 
+    def test_sort_with_intervals_reverse(self):
+        """Test sorting intervals in reverse order"""
+        annotation = pt.ProFormaAnnotation.parse("A(BC)[Mod]D")
+        sorted_annotation = annotation.sort(reverse=True)
+        # Reverse sort: D, (BC)[Mod], A
+        self.assertEqual(sorted_annotation.serialize(), "DA(BC)[Mod]")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

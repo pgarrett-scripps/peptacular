@@ -572,7 +572,9 @@ def parse_ion_elements(ion: str) -> tuple[int, str, int]:
     return count, symbol, charge
 
 
-def parse_static_mods(mods: Iterable[int | float | str | Mod] | None) -> dict[str, list[Mod]]:
+def parse_static_mods(
+    mods: Iterable[int | float | str | Mod] | None,
+) -> dict[str, list[Mod]]:
     """
     Parse static modifications into a dictionary, mapping the location to the modifications.
 

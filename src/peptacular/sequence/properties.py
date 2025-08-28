@@ -1,4 +1,3 @@
-
 from .util import get_annotation_input
 from ..property.types import (
     AggregationMethodLiteral,
@@ -31,10 +30,16 @@ from ..proforma.annotation import ProFormaAnnotation
 def calc_property(
     sequence: str | ProFormaAnnotation,
     scale: str | dict[str, float],
-    missing_aa_handling: MissingAAHandlingLiteral | MissingAAHandling = MissingAAHandling.ERROR,
-    aggregation_method: AggregationMethodLiteral | AggregationMethod = AggregationMethod.AVG,
+    missing_aa_handling: (
+        MissingAAHandlingLiteral | MissingAAHandling
+    ) = MissingAAHandling.ERROR,
+    aggregation_method: (
+        AggregationMethodLiteral | AggregationMethod
+    ) = AggregationMethod.AVG,
     normalize: bool = False,
-    weighting_scheme: WeightingMethodsLiteral | WeightingMethods = WeightingMethods.UNIFORM,
+    weighting_scheme: (
+        WeightingMethodsLiteral | WeightingMethods
+    ) = WeightingMethods.UNIFORM,
     min_weight: float = 0.1,
     max_weight: float = 1.0,
     precision: int | None = None,
@@ -265,10 +270,16 @@ def calc_window_property(
     sequence: str | ProFormaAnnotation,
     scale: str | dict[str, float],
     window_size: int = 9,
-    missing_aa_handling: MissingAAHandlingLiteral | MissingAAHandling = MissingAAHandling.ERROR,
-    aggregation_method: AggregationMethodLiteral | AggregationMethod = AggregationMethod.AVG,
+    missing_aa_handling: (
+        MissingAAHandlingLiteral | MissingAAHandling
+    ) = MissingAAHandling.ERROR,
+    aggregation_method: (
+        AggregationMethodLiteral | AggregationMethod
+    ) = AggregationMethod.AVG,
     normalize: bool = False,
-    weighting_scheme: WeightingMethodsLiteral | WeightingMethods = WeightingMethods.UNIFORM,
+    weighting_scheme: (
+        WeightingMethodsLiteral | WeightingMethods
+    ) = WeightingMethods.UNIFORM,
     min_weight: float = 0.1,
     max_weight: float = 1.0,
     precision: int | None = None,
@@ -338,7 +349,7 @@ def pi(
     :rtype: float
     """
     annotation = get_annotation_input(sequence=sequence, copy=False)
-    
+
     def _calculate_pi(
         ph: float = 7.775,
         min_: float = 4.05,
@@ -415,7 +426,9 @@ def alpha_helix_percent(
     """
     Calculate the propensity for alpha helix formation using the Deleage-Roux scale.
     """
-    d = secondary_structure(sequence, scale=SecondaryStructureMethod.DELEAGE_ROUX, precision=precision)
+    d = secondary_structure(
+        sequence, scale=SecondaryStructureMethod.DELEAGE_ROUX, precision=precision
+    )
     return d[SecondaryStructureType.ALPHA_HELIX]
 
 
@@ -426,7 +439,9 @@ def beta_sheet_percent(
     """
     Calculate the propensity for beta sheet formation using the Deleage-Roux scale.
     """
-    d = secondary_structure(sequence, scale=SecondaryStructureMethod.DELEAGE_ROUX, precision=precision)
+    d = secondary_structure(
+        sequence, scale=SecondaryStructureMethod.DELEAGE_ROUX, precision=precision
+    )
     return d[SecondaryStructureType.BETA_SHEET]
 
 
@@ -437,7 +452,9 @@ def beta_turn_percent(
     """
     Calculate the propensity for beta turn formation using the Deleage-Roux scale.
     """
-    d = secondary_structure(sequence, scale=SecondaryStructureMethod.DELEAGE_ROUX, precision=precision)
+    d = secondary_structure(
+        sequence, scale=SecondaryStructureMethod.DELEAGE_ROUX, precision=precision
+    )
     return d[SecondaryStructureType.BETA_TURN]
 
 
@@ -448,5 +465,7 @@ def coil_percent(
     """
     Calculate the propensity for coil formation using the Deleage-Roux scale.
     """
-    d = secondary_structure(sequence, scale=SecondaryStructureMethod.DELEAGE_ROUX, precision=precision)
+    d = secondary_structure(
+        sequence, scale=SecondaryStructureMethod.DELEAGE_ROUX, precision=precision
+    )
     return d[SecondaryStructureType.COIL]

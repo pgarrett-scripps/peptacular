@@ -356,7 +356,7 @@ def _get_unimod_entries(terms: list[dict[str, Any]]) -> Generator[ModEntry, None
         synonyms = term.get("synonym", [])
         if not isinstance(synonyms, list):
             synonyms = [synonyms]
-        
+
         synonyms = [syn.split('"')[1] for syn in synonyms]
 
         delta_formula = None
@@ -376,10 +376,16 @@ def _get_unimod_entries(terms: list[dict[str, Any]]) -> Generator[ModEntry, None
 
             delta_formula = write_chem_formula(combined_comp)
 
-        if delta_monoisotopic_mass is not None and isinstance(delta_monoisotopic_mass, str):
+        if delta_monoisotopic_mass is not None and isinstance(
+            delta_monoisotopic_mass, str
+        ):
             delta_monoisotopic_mass = float(delta_monoisotopic_mass)
-        if delta_monoisotopic_mass is not None and not isinstance(delta_monoisotopic_mass, float):
-            raise ValueError(f"Invalid delta monoisotopic mass: {delta_monoisotopic_mass}")
+        if delta_monoisotopic_mass is not None and not isinstance(
+            delta_monoisotopic_mass, float
+        ):
+            raise ValueError(
+                f"Invalid delta monoisotopic mass: {delta_monoisotopic_mass}"
+            )
 
         if delta_average_mass is not None and isinstance(delta_average_mass, str):
             delta_average_mass = float(delta_average_mass)
@@ -404,7 +410,6 @@ def _get_unimod_entries(terms: list[dict[str, Any]]) -> Generator[ModEntry, None
             parents=parent_ids,
             entry_type=DbType.UNIMOD,
         )
-
 
 
 def _get_psimod_entries(terms: list[dict[str, Any]]) -> Generator[ModEntry, None, None]:
@@ -490,11 +495,17 @@ def _get_psimod_entries(terms: list[dict[str, Any]]) -> Generator[ModEntry, None
                     f'[{DbType.PSI_MOD}] Error parsing {term_id} {term_name} {property_values.get("DiffFormula")}, {e}'
                 )
 
-        if delta_monoisotopic_mass is not None and isinstance(delta_monoisotopic_mass, str):
+        if delta_monoisotopic_mass is not None and isinstance(
+            delta_monoisotopic_mass, str
+        ):
             delta_monoisotopic_mass = float(delta_monoisotopic_mass)
 
-        if delta_monoisotopic_mass is not None and not isinstance(delta_monoisotopic_mass, float):
-            raise ValueError(f"Invalid delta monoisotopic mass: {delta_monoisotopic_mass}")
+        if delta_monoisotopic_mass is not None and not isinstance(
+            delta_monoisotopic_mass, float
+        ):
+            raise ValueError(
+                f"Invalid delta monoisotopic mass: {delta_monoisotopic_mass}"
+            )
 
         if delta_average_mass is not None and isinstance(delta_average_mass, str):
             delta_average_mass = float(delta_average_mass)
@@ -822,7 +833,9 @@ def _get_gno_entries(terms: list[dict[str, Any]]) -> Generator[ModEntry, None, N
         )
 
 
-def _get_monosaccharide_entries(terms: list[dict[str, Any]]) -> Generator[ModEntry, None, None]:
+def _get_monosaccharide_entries(
+    terms: list[dict[str, Any]],
+) -> Generator[ModEntry, None, None]:
     for term in terms:
 
         term_id, term_name = _get_id_and_name(term)
@@ -941,7 +954,7 @@ def get_entries(db_type: DbType, file_path: str) -> list[ModEntry]:
 
         case DbType.MONOSACCHARIDES:
             return list(_get_monosaccharide_entries(data))
-        
+
         case _:
             raise ValueError(f"Invalid type: {db_type}")
 

@@ -368,7 +368,7 @@ class TestProForma(unittest.TestCase):
             ],
             connections=[False],
         )
-        self.assertEqual(pt.parse(proforma), expected_output)
+        self.assertEqual(pt.parse(proforma, "multi"), expected_output)
         self.assertEqual(pt.serialize(expected_output), proforma)
 
     def test_multi_annotation_crosslink(self):
@@ -459,4 +459,3 @@ class TestProForma(unittest.TestCase):
         self.assertEqual(counts["T"], 1)
         self.assertEqual(counts["I"], 1)
         self.assertEqual(counts["D"], 1)
-        

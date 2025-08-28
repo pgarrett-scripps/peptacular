@@ -16,7 +16,11 @@ class MissingAAHandling(StrEnum):
     ERROR = "error"
     SKIP = "skip"
 
-MissingAAHandlingLiteral = Literal['zero', 'avg', 'min', 'max', 'median', 'error', 'skip']
+
+MissingAAHandlingLiteral = Literal[
+    "zero", "avg", "min", "max", "median", "error", "skip"
+]
+
 
 class AggregationMethod(StrEnum):
     """Strategy for aggregating amino acid values"""
@@ -24,7 +28,9 @@ class AggregationMethod(StrEnum):
     SUM = "sum"
     AVG = "avg"
 
-AggregationMethodLiteral = Literal['sum', 'avg']
+
+AggregationMethodLiteral = Literal["sum", "avg"]
+
 
 class SequenceProtocol(Protocol):
     """Protocol defining the interface for objects with sequences"""
@@ -46,4 +52,7 @@ class WeightingMethods(StrEnum):
     COSINE = "cosine"
     SINUSOIDAL = "sinusoidal"
 
-WeightingMethodsLiteral = Literal['uniform', 'linear', 'exponential', 'gaussian', 'sigmoid', 'cosine', 'sinusoidal']
+
+WeightingMethodsLiteral = Literal[
+    "uniform", "linear", "exponential", "gaussian", "sigmoid", "cosine", "sinusoidal"
+]

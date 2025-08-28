@@ -365,7 +365,7 @@ def pop_mods(
 
     """
     annotation = get_annotation_input(sequence=sequence, copy=True)
-    mod_dict = annotation.pop_mods(mods=mods)  # only include keys that have mods
+    mod_dict = annotation.pop_mods(mod_types=mods)  # only include keys that have mods
     return (
         annotation.serialize(include_plus=include_plus, precision=precision),
         mod_dict,
@@ -1132,7 +1132,7 @@ def modification_coverage(
     )
 
     # Get the unmodified sequence
-    unmodified_sequence = sequence_annot.strip(inplace=False)
+    unmodified_sequence = sequence_annot.strip_mods(inplace=False)
 
     # Process each subsequence
     for subsequence in subsequences:
@@ -1140,7 +1140,7 @@ def modification_coverage(
         subsequence_anot = get_annotation_input(subsequence, copy=False)
 
         # Get the unmodified subsequence
-        unmodified_subsequence = subsequence_anot.strip(inplace=False)
+        unmodified_subsequence = subsequence_anot.strip_mods(inplace=False)
 
         start_indices = subsequence_anot.find_indices(
             other=sequence_annot, ignore_mods=True

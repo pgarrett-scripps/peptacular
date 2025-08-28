@@ -46,6 +46,13 @@ class ModDict(UserDict[int, ModList]):
     def _normalize_value(self, value: MODDICT_VALUE_TYPES) -> ModList:
         """Convert value to ModList instance"""
         if isinstance(value, ModList):
+
+            # ensure that modlsit has same attributes
+            if not value.allow_dups or value.stackable:
+                return setup_mod_list(
+                    list(value), allow_dups=True, stackable=False
+                )
+
             return value
         return setup_mod_list(value, allow_dups=True, stackable=False)
 

@@ -21,46 +21,55 @@ from ..spans import (
 )
 from ..utils2 import get_label, get_number
 from ..mass_calc import adjust_mass, adjust_mz
-from .types import FragmentableAnnotation, FragmentReturnLiteral, FragmentReturnType, Fragment, FRAGMENT_RETURN_TYPING
+from .types import (
+    FragmentableAnnotation,
+    FragmentReturnLiteral,
+    FragmentReturnType,
+    Fragment,
+    FRAGMENT_RETURN_TYPING,
+)
+
 
 def get_losses(
     annotation: FragmentableAnnotation,
     losses: Mapping[str, Sequence[float]],
-    max_losses: int
+    max_losses: int,
 ) -> set[float]:
     """
     Calculate applicable losses for a given annotation.
     Returns a list to allow multiple losses of the same type.
     """
     applicable_losses: Counter[float] = Counter()
-    
+
     for restr, loss_list in losses.items():
         # Count how many times each pattern matches
         matches = re.findall(restr, annotation.stripped_sequence)
         match_count = len(matches)
-        
+
         # Add each loss value multiplied by the number of matches
         for loss_value in loss_list:
             applicable_losses[loss_value] += match_count
-    
+
     # Convert Counter to list of individual losses
     individual_losses: list[float] = []
     for loss_value, count in applicable_losses.items():
         individual_losses.extend([loss_value] * count)
-    
+
     # Generate combinations if max_losses > 1
     all_losses: set[float] = set()
     if max_losses > 1 and individual_losses:
         for loss_count in range(1, min(max_losses + 1, len(individual_losses) + 1)):
-            for loss_combination in itertools.combinations(individual_losses, loss_count):
+            for loss_combination in itertools.combinations(
+                individual_losses, loss_count
+            ):
                 all_losses.add(sum(loss_combination))
     else:
         # If max_losses == 1, just add individual losses
         all_losses.update(individual_losses)
-    
+
     # Always include 0.0 (no loss)
     all_losses.add(0.0)
-    
+
     return all_losses
 
 
@@ -80,7 +89,12 @@ def _build_fragments(
     """
     Builds fragments for a given sequence.
     """
+
+    if len(annotation.stripped_sequence) == 0:
+        return 
+
     annot_sequence = annotation.serialize()
+
     for span in spans:
         base_mass = adjust_mass(
             sum(mass_components[span[0] : span[1]]),
@@ -123,21 +137,21 @@ def _build_fragments(
 
                         if return_type == FragmentReturnType.FRAGMENT:
                             yield Fragment(
-                                    charge=c,
-                                    ion_type=ion_type,
-                                    start=span[0],
-                                    end=span[1],
-                                    monoisotopic=monoisotopic,
-                                    isotope=iso,
-                                    loss=loss,
-                                    parent_sequence=annot_sequence,
-                                    mass=fragment_mass,
-                                    neutral_mass=fragment_neutral_mass,
-                                    mz=fragment_mz,
-                                    sequence=base_sequence,
-                                    unmod_sequence=base_unmod_sequence,
-                                    internal=span[0] != 0 and span[1] != len(annotation),
-                                )
+                                charge=c,
+                                ion_type=ion_type,
+                                start=span[0],
+                                end=span[1],
+                                monoisotopic=monoisotopic,
+                                isotope=iso,
+                                loss=loss,
+                                parent_sequence=annot_sequence,
+                                mass=fragment_mass,
+                                neutral_mass=fragment_neutral_mass,
+                                mz=fragment_mz,
+                                sequence=base_sequence,
+                                unmod_sequence=base_unmod_sequence,
+                                internal=span[0] != 0 and span[1] != len(annotation),
+                            )
 
                         elif return_type == FragmentReturnType.LABEL:
                             number = get_number(
@@ -190,19 +204,18 @@ def _get_internal_fragments(
         span for span in spans if span[0] != 0 and span[1] != len(annotation)
     ]
     yield from _build_fragments(
-            annotation=annotation,
-            spans=internal_spans,
-            ion_types=ion_types,
-            charges=charges,
-            losses=losses,
-            isotopes=isotopes,
-            monoisotopic=monoisotopic,
-            return_type=return_type,
-            mass_components=mass_components,
-            max_losses=max_losses,
-            precision=precision,
-        )
-    
+        annotation=annotation,
+        spans=internal_spans,
+        ion_types=ion_types,
+        charges=charges,
+        losses=losses,
+        isotopes=isotopes,
+        monoisotopic=monoisotopic,
+        return_type=return_type,
+        mass_components=mass_components,
+        max_losses=max_losses,
+        precision=precision,
+    )
 
 
 def _get_immonium_fragments(
@@ -221,18 +234,18 @@ def _get_immonium_fragments(
     """
     spans = [(i, i + 1, 0) for i in range(len(annotation))]
     yield from _build_fragments(
-            annotation=annotation,
-            spans=spans,
-            ion_types=[IonType.IMMONIUM],
-            charges=charges,
-            losses=losses,
-            isotopes=isotopes,
-            monoisotopic=monoisotopic,
-            return_type=return_type,
-            mass_components=mass_components,
-            max_losses=max_losses,
-            precision=precision,
-        )
+        annotation=annotation,
+        spans=spans,
+        ion_types=[IonType.IMMONIUM],
+        charges=charges,
+        losses=losses,
+        isotopes=isotopes,
+        monoisotopic=monoisotopic,
+        return_type=return_type,
+        mass_components=mass_components,
+        max_losses=max_losses,
+        precision=precision,
+    )
 
 
 def _get_forward_fragments(
@@ -253,18 +266,18 @@ def _get_forward_fragments(
     start_span = (0, len(annotation), 0)
     spans = [start_span] + list(build_left_semi_spans(start_span))
     yield from _build_fragments(
-            annotation=annotation,
-            spans=spans,
-            ion_types=ion_types,
-            charges=charges,
-            losses=losses,
-            isotopes=isotopes,
-            monoisotopic=monoisotopic,
-            return_type=return_type,
-            mass_components=mass_components,
-            max_losses=max_losses,
-            precision=precision,
-        )
+        annotation=annotation,
+        spans=spans,
+        ion_types=ion_types,
+        charges=charges,
+        losses=losses,
+        isotopes=isotopes,
+        monoisotopic=monoisotopic,
+        return_type=return_type,
+        mass_components=mass_components,
+        max_losses=max_losses,
+        precision=precision,
+    )
 
 
 def _get_backward_fragments(
@@ -285,18 +298,18 @@ def _get_backward_fragments(
     start_span = (0, len(annotation), 0)
     spans = [start_span] + list(build_right_semi_spans(start_span))
     yield from _build_fragments(
-            annotation=annotation,
-            spans=spans,
-            ion_types=ion_types,
-            charges=charges,
-            losses=losses,
-            isotopes=isotopes,
-            monoisotopic=monoisotopic,
-            return_type=return_type,
-            mass_components=mass_components,
-            max_losses=max_losses,
-            precision=precision,
-        )
+        annotation=annotation,
+        spans=spans,
+        ion_types=ion_types,
+        charges=charges,
+        losses=losses,
+        isotopes=isotopes,
+        monoisotopic=monoisotopic,
+        return_type=return_type,
+        mass_components=mass_components,
+        max_losses=max_losses,
+        precision=precision,
+    )
 
 
 def _get_terminal_fragments(
@@ -322,32 +335,31 @@ def _get_terminal_fragments(
         ion_types=forward_ions,
         charges=charges,
         monoisotopic=monoisotopic,
-            isotopes=isotopes,
-            losses=losses,
-            return_type=return_type,
-            mass_components=mass_components,
-            precision=precision,
-            max_losses=max_losses,
-        )
-    
+        isotopes=isotopes,
+        losses=losses,
+        return_type=return_type,
+        mass_components=mass_components,
+        precision=precision,
+        max_losses=max_losses,
+    )
+
     yield from _get_backward_fragments(
         annotation=annotation,
         ion_types=backward_ions,
         charges=charges,
-            monoisotopic=monoisotopic,
-            isotopes=isotopes,
-            losses=losses,
-            return_type=return_type,
-            mass_components=mass_components,
-            precision=precision,
-            max_losses=max_losses,
-        )
-    
+        monoisotopic=monoisotopic,
+        isotopes=isotopes,
+        losses=losses,
+        return_type=return_type,
+        mass_components=mass_components,
+        precision=precision,
+        max_losses=max_losses,
+    )
 
 
 def fragment(
     annotation: FragmentableAnnotation,
-    ion_types: Sequence[IonTypeLiteral | IonType] | IonTypeLiteral | IonType,
+    ion_types: Sequence[IonTypeLiteral | IonType],
     charges: Sequence[int] | int,
     monoisotopic: bool = True,
     *,
@@ -358,31 +370,33 @@ def fragment(
     max_losses: int = 1,
     precision: None | int = None,
     _mass_components: None | Sequence[float] = None,
-    return_type: FragmentReturnLiteral | FragmentReturnType = FragmentReturnType.FRAGMENT,
+    return_type: (
+        FragmentReturnLiteral | FragmentReturnType
+    ) = FragmentReturnType.FRAGMENT,
 ) -> Generator[FRAGMENT_RETURN_TYPING, None, None]:
 
     ion_type_list: list[IonType] = []
-    if isinstance(ion_types, IonType):
-        ion_type_list = [ion_types]
-    elif isinstance(ion_types, str):
-        ion_type_list = [IonType(ion_types)]
-    elif not isinstance(ion_types, Sequence): # type: ignore
-        ion_type_list = list(ion_types)
+    if isinstance(ion_types, Sequence):  # type: ignore
+        ion_type_list = [IonType(it) for it in ion_types]
     else:
         raise TypeError("Invalid ion_types format")
 
     charge_list: list[int] = []
     if not isinstance(charges, Sequence):
         charge_list = [charges]
+    else:
+        charge_list = list(charges)
 
     isotope_list: list[int] = []
     if not isinstance(isotopes, Sequence):
         isotope_list = [isotopes]
+    else:
+        isotope_list = list(isotopes)
 
     loss_dict: dict[str, list[float]] = defaultdict(list)
 
     if losses is not None:
-        if isinstance(losses, Mapping): # type: ignore
+        if isinstance(losses, Mapping):  # type: ignore
             for k, v in losses.items():
                 loss_dict[k].extend(v)
         else:
@@ -418,15 +432,14 @@ def fragment(
             annotation=annotation,
             ion_types=terminal_fragment_types,
             charges=charge_list,
-                monoisotopic=monoisotopic,
-                isotopes=isotope_list,
-                losses=loss_dict,
-                return_type=return_type_enum,
-                mass_components=_mass_components,
-                precision=precision,
-                max_losses=max_losses,
-            )
-        
+            monoisotopic=monoisotopic,
+            isotopes=isotope_list,
+            losses=loss_dict,
+            return_type=return_type_enum,
+            mass_components=_mass_components,
+            precision=precision,
+            max_losses=max_losses,
+        )
 
     if internal_fragment_types:
         yield from _get_internal_fragments(
@@ -440,8 +453,7 @@ def fragment(
             mass_components=_mass_components,
             precision=precision,
             max_losses=max_losses,
-            )
-        
+        )
 
     if immonium:
         yield from _get_immonium_fragments(
@@ -454,7 +466,4 @@ def fragment(
             mass_components=_mass_components,
             precision=precision,
             max_losses=max_losses,
-            )
-        
-
-
+        )

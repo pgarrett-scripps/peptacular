@@ -28,8 +28,7 @@ if TYPE_CHECKING:
     from .annotation import ProFormaAnnotation
 
 
-def _pop_delta_mass_mods(annotation: ProFormaAnnotation, 
-                         inplace: bool = True) -> float:
+def _pop_delta_mass_mods(annotation: ProFormaAnnotation, inplace: bool = True) -> float:
     """
     Pop the delta mass modifications. This leaves only modifications which
     can have their composition calculated.
@@ -274,7 +273,9 @@ def mass(
 
         return (
             chem_mass(
-                formula=peptide_composition, monoisotopic=monoisotopic, precision=precision
+                formula=peptide_composition,
+                monoisotopic=monoisotopic,
+                precision=precision,
             )
             + delta_mass
         )
@@ -416,7 +417,7 @@ def _comp_with_delta_mass(
     isotope: int = 0,
     use_isotope_on_mods: bool = False,
 ) -> tuple[dict[str, int | float], float]:
-    # returns a tuple containing the composition of the peptide, and the sum of all delta mass modifications, 
+    # returns a tuple containing the composition of the peptide, and the sum of all delta mass modifications,
     # which cannot be directly converted to a composition dictionary
 
     annotation = annotation.copy()
@@ -483,7 +484,7 @@ def condense_to_mass_mods(
 
     # Split into segments and process each one
     segments = list(annotation.split())
-    stripped_segments = [seg.strip(inplace=False) for seg in segments]
+    stripped_segments = [seg.strip_mods(inplace=False) for seg in segments]
 
     # Calculate mass differences
     for i, (segment, stripped) in enumerate(zip(segments, stripped_segments)):

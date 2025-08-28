@@ -556,10 +556,10 @@ def parse_charge_adducts_comp(adducts: int | float | str | Mod) -> Counter[str]:
     .. code-block:: python
 
         # Parse the charge adducts and return their mass.
-        >>> parse_charge_adducts_comp('+Na+,+H+')
+        >>> dict(parse_charge_adducts_comp('+Na+,+H+'))
         {'Na': 1, 'e': -2, 'H': 1}
 
-        >>> parse_charge_adducts_comp('2H+')
+        >>> dict(parse_charge_adducts_comp('2H+'))
         {'H': 2, 'e': -2}
 
     """

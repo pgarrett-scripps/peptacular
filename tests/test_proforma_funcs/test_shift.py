@@ -3,16 +3,16 @@ import peptacular as pt
 
 
 class TestShift(unittest.TestCase):
-    
+
     def test_basic_shift(self):
         """Test basic shifting functionality"""
         annotation = pt.ProFormaAnnotation.parse("PEPTIDE")
-        
+
         # Test positive shift
         shifted = annotation.shift(2)
         self.assertEqual(shifted.sequence, "PTIDEPE")
         self.assertEqual(annotation.sequence, "PEPTIDE")  # Original unchanged
-        
+
         # Test in-place modification
         annotation.shift(2, inplace=True)
         self.assertEqual(annotation.sequence, "PTIDEPE")
@@ -138,5 +138,5 @@ class TestShift(unittest.TestCase):
         self.assertEqual(result.serialize(), "(EP)[Phospho]TIDEP")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

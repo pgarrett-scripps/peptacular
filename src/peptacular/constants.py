@@ -433,7 +433,17 @@ NAME_TO_AA: dict[str, str] = {v: k for k, v in AA_TO_NAME.items()}
 
 FORWARD_ION_TYPES: set[str] = {IonType.A, IonType.B, IonType.C}
 BACKWARD_ION_TYPES: set[str] = {IonType.X, IonType.Y, IonType.Z}
-INTERNAL_ION_TYPES: set[str] = {IonType.AX, IonType.AY, IonType.AZ, IonType.BX, IonType.BY, IonType.BZ, IonType.CX, IonType.CY, IonType.CZ}
+INTERNAL_ION_TYPES: set[str] = {
+    IonType.AX,
+    IonType.AY,
+    IonType.AZ,
+    IonType.BX,
+    IonType.BY,
+    IonType.BZ,
+    IonType.CX,
+    IonType.CY,
+    IonType.CZ,
+}
 TERMINAL_ION_TYPES: set[str] = FORWARD_ION_TYPES | BACKWARD_ION_TYPES
 IMMONIUM_ION_TYPES: set[str] = {IonType.IMMONIUM}
 VALID_ION_TYPES: set[str] = TERMINAL_ION_TYPES | INTERNAL_ION_TYPES | IMMONIUM_ION_TYPES
@@ -496,7 +506,9 @@ def get_mod_type(mod: ModTypeLiteral | ModType) -> ModType:
     raise ValueError(f"Unknown mod type: {mod}")
 
 
-def get_mods(mods: None | str | Iterable[str]) -> list[ModType]:
+def get_mods(
+    mods: Iterable[ModTypeLiteral | ModType] | ModType | ModTypeLiteral | None,
+) -> list[ModType]:
     """
     Get the list of modification types from the input.
 
@@ -512,7 +524,7 @@ def get_mods(mods: None | str | Iterable[str]) -> list[ModType]:
     elif isinstance(mods, (str, ModType)):
         # Single modification type
         return [get_mod_type(mods)]
-    elif isinstance(mods, list):  # type: ignore
+    elif isinstance(mods, Iterable):  # type: ignore
         # List of modification types
         return [get_mod_type(mod) for mod in mods]
 

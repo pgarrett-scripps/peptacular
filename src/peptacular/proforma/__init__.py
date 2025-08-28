@@ -9,22 +9,30 @@ from .multi_annotation import MultiProFormaAnnotation
 
 
 @overload
-def parse(sequence: str, sequence_type: Literal['single']) -> ProFormaAnnotation:
-    ...
+def parse(sequence: str, sequence_type: Literal["single"]) -> ProFormaAnnotation: ...
+
 
 @overload
-def parse(sequence: str, sequence_type: Literal['multi']) -> MultiProFormaAnnotation:
-    ...
+def parse(
+    sequence: str, sequence_type: Literal["multi"]
+) -> MultiProFormaAnnotation: ...
+
 
 @overload
-def parse(sequence: str, sequence_type: Literal['both']) -> ProFormaAnnotation | MultiProFormaAnnotation:
-    ...
+def parse(
+    sequence: str, sequence_type: Literal["both"]
+) -> ProFormaAnnotation | MultiProFormaAnnotation: ...
+
 
 @overload
-def parse(sequence: str, sequence_type: Literal['single', 'multi', 'both'] = 'single') -> ProFormaAnnotation:
-    ...
+def parse(
+    sequence: str, sequence_type: Literal["single", "multi", "both"] = "single"
+) -> ProFormaAnnotation: ...
 
-def parse(sequence: str, sequence_type: Literal['single', 'multi', 'both'] = 'single') -> ProFormaAnnotation | MultiProFormaAnnotation:
+
+def parse(
+    sequence: str, sequence_type: Literal["single", "multi", "both"] = "single"
+) -> ProFormaAnnotation | MultiProFormaAnnotation:
     """
     Parses a ProForma sequence string and returns its corresponding annotation object.
 
@@ -54,11 +62,11 @@ def parse(sequence: str, sequence_type: Literal['single', 'multi', 'both'] = 'si
     """
 
     match sequence_type:
-        case 'single':
+        case "single":
             return ProFormaAnnotation.parse(sequence)
-        case 'multi':
+        case "multi":
             return MultiProFormaAnnotation.parse(sequence)
-        case 'both':
+        case "both":
             try:
                 return ProFormaAnnotation.parse(sequence)
             except ValueError:
@@ -100,6 +108,6 @@ def serialize(
         >>> p == r'PEPTIDE\\\PEPTIDE'
         True
 
-    """ 
+    """
 
     return annotation.serialize(include_plus)

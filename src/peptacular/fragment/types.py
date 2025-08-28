@@ -1,5 +1,3 @@
-    
-
 from dataclasses import dataclass
 from enum import StrEnum
 from functools import cached_property
@@ -13,14 +11,11 @@ class FragmentableAnnotation(Protocol):
     """Protocol defining the interface required for fragmentation."""
 
     @property
-    def stripped_sequence(self) -> str:
-        ...
+    def stripped_sequence(self) -> str: ...
 
-    def contains_sequence_ambiguity(self) -> bool:
-        ...
-    
-    def split(self) -> list[Self]:
-        ...
+    def contains_sequence_ambiguity(self) -> bool: ...
+
+    def split(self) -> list[Self]: ...
 
     def slice(
         self,
@@ -28,21 +23,16 @@ class FragmentableAnnotation(Protocol):
         stop: int | None,
         inplace: bool = False,
     ) -> Self: ...
-    
-    
-    def __len__(self) -> int:
-        ...
 
-    
+    def __len__(self) -> int: ...
+
     def serialize(
         self,
         include_plus: bool = False,
         precision: int | None = None,
     ) -> str: ...
 
-    
     def set_charge(self, charge: int) -> Self: ...
-
 
     def mass(
         self,
@@ -54,6 +44,7 @@ class FragmentableAnnotation(Protocol):
         precision: int | None = None,
     ) -> float: ...
 
+
 class FragmentReturnType(StrEnum):
     FRAGMENT = "fragment"
     MASS = "mass"
@@ -61,6 +52,7 @@ class FragmentReturnType(StrEnum):
     LABEL = "label"
     MASS_LABEL = "mass-label"
     MZ_LABEL = "mz-label"
+
 
 FragmentReturnLiteral = Literal[
     "fragment", "mass", "mz", "label", "mass-label", "mz-label"
@@ -71,6 +63,7 @@ MzLiteral = Literal["mz"]
 LabelLiteral = Literal["label"]
 MassLabelLiteral = Literal["mass-label"]
 MzLabelLiteral = Literal["mz-label"]
+
 
 @dataclass(frozen=True)
 class Fragment:
@@ -132,5 +125,5 @@ class Fragment:
         """
         return dict(self)
 
-FRAGMENT_RETURN_TYPING = Fragment | float | str | tuple[float, str]
 
+FRAGMENT_RETURN_TYPING = Fragment | float | str | tuple[float, str]

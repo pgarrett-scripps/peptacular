@@ -1,7 +1,7 @@
 from collections.abc import Callable, Generator
 import copy
 from copy import deepcopy
-from typing import Any, Iterable, Self, cast
+from typing import Any, Iterable, Mapping, Self, cast
 
 from ..fragment import FragmenterMixin
 
@@ -75,6 +75,8 @@ from ..constants import (
 )
 
 from ..property import SequencePropertyMixin
+
+from .mod_builder import build_mods
 
 
 class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin):
@@ -281,6 +283,10 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         return self._interval_list.has_intervals
 
     @property
+    def has_interval_mods(self) -> bool:
+        return any(interval.has_mods for interval in self._interval_list)
+
+    @property
     def has_unambiguous_intervals(self) -> bool:
         return self._interval_list.has_unambiguous_intervals
 
@@ -292,22 +298,39 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
     def has_charge(self) -> bool:
         return self._charge is not None
 
-    @property
-    def has_mods(self) -> bool:
-        return any(
-            [
-                self.has_isotope_mods,
-                self.has_static_mods,
-                self.has_labile_mods,
-                self.has_unknown_mods,
-                self.has_nterm_mods,
-                self.has_cterm_mods,
-                self.has_internal_mods,
-                self.has_intervals,
-                self.has_charge,
-                self.has_charge_adducts,
-            ]
-        )
+    def _has_mods_by_type(self, mod_type: ModType) -> bool:
+        match mod_type:
+            case ModType.ISOTOPE:
+                return self.has_isotope_mods
+            case ModType.STATIC:
+                return self.has_static_mods
+            case ModType.LABILE:
+                return self.has_labile_mods
+            case ModType.UNKNOWN:
+                return self.has_unknown_mods
+            case ModType.NTERM:
+                return self.has_nterm_mods
+            case ModType.CTERM:
+                return self.has_cterm_mods
+            case ModType.INTERNAL:
+                return self.has_internal_mods
+            case ModType.INTERVAL:
+                return self.has_intervals
+            case ModType.CHARGE:
+                return self.has_charge
+            case ModType.CHARGE_ADDUCTS:
+                return self.has_charge_adducts
+            case _:
+                raise TypeError(f"Unknown mod type: {mod_type}")
+
+    def has_mods(
+        self,
+        mod_types: (
+            Iterable[ModTypeLiteral | ModType] | ModType | ModTypeLiteral | None
+        ) = None,
+    ) -> bool:
+        mod_enums = get_mods(mod_types)
+        return any(self._has_mods_by_type(mod_enum) for mod_enum in mod_enums)
 
     """
     Properties
@@ -391,6 +414,38 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
     def charge(self) -> int | None:
         return self._charge
 
+    def _get_mod_by_type(self, mod_type: ModType) -> Any:
+        match mod_type:
+            case ModType.NTERM:
+                return self.nterm_mods
+            case ModType.CTERM:
+                return self.cterm_mods
+            case ModType.ISOTOPE:
+                return self.isotope_mods
+            case ModType.STATIC:
+                return self.static_mods
+            case ModType.LABILE:
+                return self.labile_mods
+            case ModType.UNKNOWN:
+                return self.unknown_mods
+            case ModType.INTERVAL:
+                return self.intervals
+            case ModType.INTERNAL:
+                return self.internal_mods
+            case ModType.CHARGE:
+                return self.charge
+            case ModType.CHARGE_ADDUCTS:
+                return self.charge_adducts
+            case _:
+                raise TypeError(f"Unknown mod type: {mod_type}")
+
+    @property
+    def mods(self) -> dict[str, Any]:
+        mod_enums = get_mods(None)
+        return {
+            mod_enum.value: self._get_mod_by_type(mod_enum) for mod_enum in mod_enums
+        }
+
     """
     Property Setters
     """
@@ -441,122 +496,183 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
     def charge(self, value: int | None):
         self._charge = value
 
+    @mods.setter
+    def mods(self, value: Mapping[ModType | ModTypeLiteral, Any] | None) -> None:
+        if value is None:
+            mod_enums = get_mods(None)
+            for mod_enum in mod_enums:
+                self._set_mod_by_type(None, mod_enum)
+        else:
+            for mod_type, mods in value.items():
+                mod_enum = get_mod_type(mod_type)
+                self._set_mod_by_type(mods, mod_enum)
+
     """
     Pop Methods
     """
 
-    def pop_isotope_mods(self) -> tuple[MOD_VALUE_TYPES, ...] | None:
+    def pop_isotope_mods(
+        self, inplace: bool = True
+    ) -> tuple[MOD_VALUE_TYPES, ...] | None:
+        if inplace is False:
+            return self.copy().pop_isotope_mods(inplace=True)
+
         value = self.isotope_mods
         self.isotope_mods = None
         return value
 
-    def pop_static_mods(self) -> tuple[MOD_VALUE_TYPES, ...] | None:
+    def pop_static_mods(
+        self, inplace: bool = True
+    ) -> tuple[MOD_VALUE_TYPES, ...] | None:
+        if inplace is False:
+            return self.copy().pop_static_mods(inplace=True)
+
         value = self.static_mods
         self.static_mods = None
         return value
 
-    def pop_labile_mods(self) -> tuple[MOD_VALUE_TYPES, ...] | None:
+    def pop_labile_mods(
+        self, inplace: bool = True
+    ) -> tuple[MOD_VALUE_TYPES, ...] | None:
+        if inplace is False:
+            return self.copy().pop_labile_mods(inplace=True)
+
         value = self.labile_mods
         self.labile_mods = None
         return value
 
-    def pop_unknown_mods(self) -> tuple[MOD_VALUE_TYPES, ...] | None:
+    def pop_unknown_mods(
+        self, inplace: bool = True
+    ) -> tuple[MOD_VALUE_TYPES, ...] | None:
+        if inplace is False:
+            return self.copy().pop_unknown_mods(inplace=True)
+
         value = self.unknown_mods
         self.unknown_mods = None
         return value
 
-    def pop_nterm_mods(self) -> tuple[MOD_VALUE_TYPES, ...] | None:
+    def pop_nterm_mods(
+        self, inplace: bool = True
+    ) -> tuple[MOD_VALUE_TYPES, ...] | None:
+        if inplace is False:
+            return self.copy().pop_nterm_mods(inplace=True)
+
         value = self.nterm_mods
         self.nterm_mods = None
         return value
 
-    def pop_cterm_mods(self) -> tuple[MOD_VALUE_TYPES, ...] | None:
+    def pop_cterm_mods(
+        self, inplace: bool = True
+    ) -> tuple[MOD_VALUE_TYPES, ...] | None:
+        if inplace is False:
+            return self.copy().pop_cterm_mods(inplace=True)
+
         value = self.cterm_mods
         self.cterm_mods = None
         return value
 
-    def pop_charge_adducts(self) -> tuple[MOD_VALUE_TYPES, ...] | None:
+    def pop_charge_adducts(
+        self, inplace: bool = True
+    ) -> tuple[MOD_VALUE_TYPES, ...] | None:
+        if inplace is False:
+            return self.copy().pop_charge_adducts(inplace=True)
+
         value = self.charge_adducts
         self.charge_adducts = None
         return value
 
-    def pop_internal_mods(self) -> dict[int, tuple[MOD_VALUE_TYPES, ...]] | None:
+    def pop_internal_mods(
+        self, inplace: bool = True
+    ) -> dict[int, tuple[MOD_VALUE_TYPES, ...]] | None:
+        if inplace is False:
+            return self.copy().pop_internal_mods(inplace=True)
+
         value = self.internal_mods
         self.internal_mods = None
         return value
 
-    def pop_intervals(self) -> tuple[ModInterval, ...] | None:
+    def pop_intervals(self, inplace: bool = True) -> tuple[ModInterval, ...] | None:
+        if inplace is False:
+            return self.copy().pop_intervals(inplace=True)
+
         value = self.intervals
         self.intervals = None
         return value
 
-    def pop_ambiguous_intervals(self) -> tuple[ModInterval, ...] | None:
+    def pop_ambiguous_intervals(
+        self, inplace: bool = True
+    ) -> tuple[ModInterval, ...] | None:
+        if inplace is False:
+            return self.copy().pop_ambiguous_intervals(inplace=True)
+
         intervals = self._interval_list.pop_ambiguous_intervals()
         if len(intervals) == 0:
             return None
         return intervals.get_mod_intervals()
 
-    def pop_unambiguous_intervals(self) -> tuple[ModInterval, ...] | None:
+    def pop_unambiguous_intervals(
+        self, inplace: bool = True
+    ) -> tuple[ModInterval, ...] | None:
+        if inplace is False:
+            return self.copy().pop_unambiguous_intervals(inplace=True)
+
         intervals = self._interval_list.pop_unambiguous_intervals()
         if len(intervals) == 0:
             return None
         return intervals.get_mod_intervals()
 
-    def pop_charge(self) -> int | None:
+    def pop_charge(self, inplace: bool = True) -> int | None:
+        if inplace is False:
+            return self.copy().pop_charge(inplace=True)
+
         value = self._charge
         self._charge = None
         return value
 
-    def pop_mod_by_type(self, mod_type: ModTypeLiteral | ModType) -> Any:
-        """
-        Get the pop method for a given mod type.
-        """
-
-        mod_type_to_pop_method: dict[str, Callable[[], Any]] = {
-            ModType.ISOTOPE: self.pop_isotope_mods,
-            ModType.STATIC: self.pop_static_mods,
-            ModType.LABILE: self.pop_labile_mods,
-            ModType.UNKNOWN: self.pop_unknown_mods,
-            ModType.NTERM: self.pop_nterm_mods,
-            ModType.CTERM: self.pop_cterm_mods,
-            ModType.INTERNAL: self.pop_internal_mods,
-            ModType.INTERVAL: self.pop_intervals,
-            ModType.CHARGE_ADDUCTS: self.pop_charge_adducts,
-            ModType.CHARGE: self.pop_charge,
-        }
-
-        if mod_type not in mod_type_to_pop_method:
-            raise ValueError(f"Invalid mod type: {mod_type}")
-
-        return mod_type_to_pop_method[mod_type]()
+    def _pop_mod_by_type(self, mod_type: ModType) -> Any:
+        match mod_type:
+            case ModType.ISOTOPE:
+                return self.pop_isotope_mods(inplace=True)
+            case ModType.STATIC:
+                return self.pop_static_mods(inplace=True)
+            case ModType.LABILE:
+                return self.pop_labile_mods(inplace=True)
+            case ModType.UNKNOWN:
+                return self.pop_unknown_mods(inplace=True)
+            case ModType.NTERM:
+                return self.pop_nterm_mods(inplace=True)
+            case ModType.CTERM:
+                return self.pop_cterm_mods(inplace=True)
+            case ModType.INTERNAL:
+                return self.pop_internal_mods(inplace=True)
+            case ModType.INTERVAL:
+                return self.pop_intervals(inplace=True)
+            case ModType.CHARGE_ADDUCTS:
+                return self.pop_charge_adducts(inplace=True)
+            case ModType.CHARGE:
+                return self.pop_charge(inplace=True)
+            case _:
+                raise TypeError(f"Unknown mod type: {mod_type}")
 
     def pop_mods(
         self,
-        mods: (
+        mod_types: (
             ModTypeLiteral | Iterable[ModTypeLiteral | ModType] | ModType | None
         ) = None,
-    ) -> dict[str, Any] | None:
-        """
-        Pop all mods and return them in a dictionary
-        """
+        inplace: bool = True,
+    ) -> dict[str, Any]:
+        if inplace is False:
+            return self.copy().pop_mods(mod_types=mod_types, inplace=True)
 
-        mod_types: list[ModType] = get_mods(mods)
+        mod_enums: list[ModType] = get_mods(mod_types)
 
         d: dict[str, Any] = {}
-        for mod_type in mod_types:
-            d[mod_type.value] = self.pop_mod_by_type(mod_type.value)
-
-        # If all popped values are None, return None
-        if all(value is None for value in d.values()):
-            return None
+        for mod_enum in mod_enums:
+            d[mod_enum.value] = self._pop_mod_by_type(mod_enum)
 
         return d
 
-    def pop_internal_mod(self, index: int) -> tuple[Mod, ...] | None:
-        """
-        Pop internal mods at a specific index
-        """
-
+    def pop_internal_mod_at_index(self, index: int) -> tuple[Mod, ...] | None:
         if index not in self._internal_mod_dict:
             return None
 
@@ -654,32 +770,54 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         self.charge = charge
         return self
 
-    def set_mod_by_type(
+    def _set_mod_by_type(
         self,
         mod: Any,
-        mod_type: ModTypeLiteral | ModType,
+        mod_type: ModType,
+    ) -> Self:
+
+        match mod_type:
+            case ModType.ISOTOPE:
+                self.isotope_mods = mod
+            case ModType.STATIC:
+                self.static_mods = mod
+            case ModType.LABILE:
+                self.labile_mods = mod
+            case ModType.UNKNOWN:
+                self.unknown_mods = mod
+            case ModType.NTERM:
+                self.nterm_mods = mod
+            case ModType.CTERM:
+                self.cterm_mods = mod
+            case ModType.INTERNAL:
+                self.internal_mods = mod
+            case ModType.INTERVAL:
+                self.intervals = mod
+            case ModType.CHARGE:
+                self.charge = mod
+            case ModType.CHARGE_ADDUCTS:
+                self.charge_adducts = mod
+            case _:
+                raise TypeError(f"Unknown mod type: {mod_type}")
+
+        return self
+
+    def set_mods(
+        self,
+        mods: Mapping[ModType | ModTypeLiteral, Any] | None,
+        mod_type: ModType,
         inplace: bool = True,
     ) -> Self:
         """Set a modification by type, replacing any existing mods of that type"""
+
         if not inplace:
-            return self.copy().set_mod_by_type(mod, mod_type, inplace=True)
+            return self.copy().set_mods(mods=mods, mod_type=mod_type, inplace=True)
 
-        mod_type_enum = get_mod_type(mod_type)
+        mod_types: list[ModType] = get_mods(mods)
 
-        mod_type_methods: dict[ModType, Callable[[], Self]] = {
-            ModType.ISOTOPE: lambda: self.set_isotope_mods(mod, inplace=True),
-            ModType.STATIC: lambda: self.set_static_mods(mod, inplace=True),
-            ModType.LABILE: lambda: self.set_labile_mods(mod, inplace=True),
-            ModType.UNKNOWN: lambda: self.set_unknown_mods(mod, inplace=True),
-            ModType.NTERM: lambda: self.set_nterm_mods(mod, inplace=True),
-            ModType.CTERM: lambda: self.set_cterm_mods(mod, inplace=True),
-            ModType.INTERNAL: lambda: self.set_internal_mods(mod, inplace=True),
-            ModType.INTERVAL: lambda: self.set_intervals(mod, inplace=True),
-            ModType.CHARGE: lambda: self.set_charge(mod, inplace=True),
-            ModType.CHARGE_ADDUCTS: lambda: self.set_charge_adducts(mod, inplace=True),
-        }
+        for mod_enum in mod_types:
+            self._set_mod_by_type(None, mod_enum)
 
-        mod_type_methods[mod_type_enum]()
         return self
 
     """
@@ -857,7 +995,7 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
     Remove Methods
     """
 
-    def remove_isotope_mods(self, inplace: bool = True) -> Self:
+    def remove_isotope_mods(self, inplace: bool = False) -> Self:
         if inplace is False:
             return self.copy().remove_isotope_mods(True)
         _ = self.pop_isotope_mods()
@@ -879,6 +1017,18 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         if inplace is False:
             return self.copy().remove_cterm_mods(True)
         _ = self.pop_cterm_mods()
+        return self
+
+    def remove_labile_mods(self, inplace: bool = True) -> Self:
+        if inplace is False:
+            return self.copy().remove_labile_mods(True)
+        _ = self.pop_labile_mods()
+        return self
+
+    def remove_unknown_mods(self, inplace: bool = True) -> Self:
+        if inplace is False:
+            return self.copy().remove_unknown_mods(True)
+        _ = self.pop_unknown_mods()
         return self
 
     def remove_internal_mods(self, inplace: bool = True) -> Self:
@@ -905,6 +1055,31 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         _ = self.pop_charge_adducts()
         return self
 
+    def _remove_mod_by_type(self, mod_type: ModType) -> None:
+        match mod_type:
+            case ModType.ISOTOPE:
+                self.remove_isotope_mods(inplace=True)
+            case ModType.STATIC:
+                self.remove_static_mods(inplace=True)
+            case ModType.LABILE:
+                self.remove_labile_mods(inplace=True)
+            case ModType.UNKNOWN:
+                self.remove_unknown_mods(inplace=True)
+            case ModType.NTERM:
+                self.remove_nterm_mods(inplace=True)
+            case ModType.CTERM:
+                self.remove_cterm_mods(inplace=True)
+            case ModType.INTERNAL:
+                self.remove_internal_mods(inplace=True)
+            case ModType.INTERVAL:
+                self.remove_intervals(inplace=True)
+            case ModType.CHARGE:
+                self.remove_charge(inplace=True)
+            case ModType.CHARGE_ADDUCTS:
+                self.remove_charge_adducts(inplace=True)
+            case _:
+                raise TypeError(f"Unknown mod type: {mod_type}")
+
     def remove_mods(
         self,
         mods: (
@@ -914,59 +1089,12 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
     ) -> Self:
         if inplace is False:
             return self.copy().remove_mods(mods=mods, inplace=True)
-        _ = self.pop_mods(mods=mods)
+        mod_enums = get_mods(mods)
+        for mod_enum in mod_enums:
+            self._remove_mod_by_type(mod_enum)
         return self
 
-    """
-    Clear methods
-    """
-
-    def clear_isotope_mods(self) -> Self:
-        self._isotope_mod_list.clear()
-        return self
-
-    def clear_static_mods(self) -> Self:
-        self._static_mod_list.clear()
-        return self
-
-    def clear_labile_mods(self) -> Self:
-        self._labile_mod_list.clear()
-        return self
-
-    def clear_unknown_mods(self) -> Self:
-        self._unknown_mod_list.clear()
-        return self
-
-    def clear_nterm_mods(self) -> Self:
-        self._nterm_mod_list.clear()
-        return self
-
-    def clear_cterm_mods(self) -> Self:
-        self._cterm_mod_list.clear()
-        return self
-
-    def clear_internal_mods(self) -> Self:
-        self._internal_mod_dict.clear()
-        return self
-
-    def clear_internal_mods_at_index(self, index: int) -> Self:
-        if index in self._internal_mod_dict:
-            self._internal_mod_dict[index].clear()
-        return self
-
-    def clear_intervals(self) -> Self:
-        self._interval_list.clear()
-        return self
-
-    def clear_charge(self) -> Self:
-        self._charge = None
-        return self
-
-    def clear_charge_adducts(self) -> Self:
-        self._adduct_mod_list.clear()
-        return self
-
-    def strip(self, inplace: bool = False) -> Self:
+    def strip_mods(self, inplace: bool = False) -> Self:
         return self.remove_mods(None, inplace=inplace)
 
     def get_isotope_mod_list(self) -> ModList:
@@ -997,6 +1125,75 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
     def get_interval_list(self) -> IntervalList:
         return self._interval_list
 
+    """
+    Contains
+    """
+
+    def contains_isotope_mod(self, mod: MODLIST_DATATYPE) -> bool:
+        return mod in self._isotope_mod_list
+
+    def contains_static_mod(self, mod: MODLIST_DATATYPE) -> bool:
+        return mod in self._static_mod_list
+
+    def contains_labile_mod(self, mod: MODLIST_DATATYPE) -> bool:
+        return mod in self._labile_mod_list
+
+    def contains_unknown_mod(self, mod: MODLIST_DATATYPE) -> bool:
+        return mod in self._unknown_mod_list
+
+    def contains_nterm_mod(self, mod: MODLIST_DATATYPE) -> bool:
+        return mod in self._nterm_mod_list
+
+    def contains_cterm_mod(self, mod: MODLIST_DATATYPE) -> bool:
+        return mod in self._cterm_mod_list
+
+    def contains_internal_mod(self, mod: MODLIST_DATATYPE) -> bool:
+        return any(mod in mod_list for mod_list in self._internal_mod_dict.values())
+
+    def contains_interval_mod(self, mod: MODLIST_DATATYPE) -> bool:
+        return any(mod in interval.mods for interval in self._interval_list)
+
+    def contains_mod_at_index(self, mod: MODLIST_DATATYPE, index: int) -> bool:
+        return mod in self._internal_mod_dict.get(index, ModList())
+
+    def _contains_mod_by_type(self, mod: MODLIST_DATATYPE, mod_type: ModType) -> bool:
+        match mod_type:
+            case ModType.ISOTOPE:
+                return self.contains_isotope_mod(mod)
+            case ModType.STATIC:
+                return self.contains_static_mod(mod)
+            case ModType.LABILE:
+                return self.contains_labile_mod(mod)
+            case ModType.UNKNOWN:
+                return self.contains_unknown_mod(mod)
+            case ModType.NTERM:
+                return self.contains_nterm_mod(mod)
+            case ModType.CTERM:
+                return self.contains_cterm_mod(mod)
+            case ModType.INTERNAL:
+                return self.contains_internal_mod(mod)
+            case ModType.INTERVAL:
+                return self.contains_interval_mod(mod)
+            case ModType.CHARGE:
+                return False
+            case _:
+                raise TypeError(f"Unknown mod type: {mod_type}")
+
+    def contains_mod(
+        self,
+        mod: MODLIST_DATATYPE,
+        mods: (
+            ModTypeLiteral | ModType | Iterable[ModTypeLiteral | ModType] | None
+        ) = None,
+    ) -> bool:
+
+        mod_types: list[ModType] = get_mods(mods)
+        return any(self._contains_mod_by_type(mod, mod_type) for mod_type in mod_types)
+
+    """
+    Other
+    """
+
     def contains_sequence_ambiguity(self) -> bool:
         return self.has_intervals or self.has_unknown_mods
 
@@ -1019,14 +1216,7 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         ) = None,
         inplace: bool = True,
     ) -> Self:
-        """
-        Filter the modifications in the annotation based on the provided mod types.
-        If inplace is False, a new ProFormaAnnotationBase object is returned with the filtered mods.
-        If inplace is True, the current object is modified.
-        """
-
         if inplace is False:
-            # Create a copy of the annotation to modify
             return self.copy().filter_mods(mods=mods, inplace=True)
 
         mod_types_to_remove = {mod_type for mod_type in ModType} - set(get_mods(mods))
@@ -1035,17 +1225,10 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
             # If no mods to remove, return the annotation as is
             return self
 
-        for mod_type in mod_types_to_remove:
-            # Pop the mods of the specified type
-            _ = self.pop_mod_by_type(mod_type.value)
-
+        self.pop_mods(mod_types_to_remove)
         return self
 
     def copy(self, deep: bool = True) -> Self:
-        """
-        Returns a deep copy of the ProFormaAnnotationBase instance.
-        """
-
         if not deep:
             return self.__class__(
                 sequence=self._sequence,
@@ -1063,9 +1246,6 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         return deepcopy(self)
 
     def to_dict(self) -> dict[str, Any]:
-        """
-        Returns a dictionary representation of the ProFormaAnnotationBase instance.
-        """
         return {
             "sequence": self.sequence,
             ModType.ISOTOPE: copy.deepcopy(self.isotope_mods),
@@ -1088,31 +1268,24 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         return serialize_annotation(self, include_plus, precision)
 
     def condense_static_mods(self, inplace: bool = True) -> Self:
-        """
-        Condense static mods into internal mods.
-        """
         return cast(Self, condense_static_mods(self, inplace=inplace))
-    
+
     def get_static_mod_dict(self) -> ModDict:
         static_mod_dict: ModDict = ModDict()
-        for static_aa, mods in parse_static_mods(self.get_static_mod_list().data).items():
+        for static_aa, mods in parse_static_mods(
+            self.get_static_mod_list().data
+        ).items():
             for i, aa in enumerate(self.sequence):
                 if aa == static_aa:
                     static_mod_dict[i].extend(mods)
         return static_mod_dict
 
     def count_residues(self, include_mods: bool = True) -> dict[str, int]:
-        """
-        Count the occurrences of each residue in the sequence.
-        """
         return count_residues(self, include_mods=include_mods)
 
     def percent_residues(
         self, include_mods: bool = True, precision: int | None = None
     ) -> dict[str, float]:
-        """
-        Calculate the percentage of each residue in the sequence.
-        """
         return percent_residues(self, include_mods=include_mods, precision=precision)
 
     def is_subsequence(
@@ -1121,9 +1294,6 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         ignore_mods: bool = False,
         ignore_intervals: bool = True,
     ) -> bool:
-        """
-        Check if the annotation is a subsequence of another annotation.
-        """
         return is_subsequence(
             self, other, ignore_mods=ignore_mods, ignore_intervals=ignore_intervals
         )
@@ -1134,9 +1304,6 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         ignore_mods: bool = False,
         ignore_intervals: bool = True,
     ) -> list[int]:
-        """
-        Find all occurrences of the annotation in another annotation.
-        """
         return find_indices(
             self, other, ignore_mods=ignore_mods, ignore_intervals=ignore_intervals
         )
@@ -1171,16 +1338,12 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
             ignore_ambiguity=ignore_ambiguity,
         )
 
-    # Add slice and split convenience methods delegating to module-level functions
     def slice(
         self,
         start: int | None,
         stop: int | None,
         inplace: bool = False,
     ) -> Self:
-        """
-        Return a sliced annotation (delegates to slice_annotation).
-        """
         return cast(
             Self,
             slice_annotation(
@@ -1192,9 +1355,6 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         )
 
     def split(self) -> list[Self]:
-        """
-        Split the annotation into single-residue annotations (delegates to split_annotation).
-        """
         return [cast(Self, a) for a in split_annotation(self)]
 
     def annotate_ambiguity(
@@ -1267,18 +1427,6 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         use_isotope_on_mods: bool = False,
         precision: int | None = None,
     ) -> float:
-        """
-        Calculate the mass of the annotation.
-
-        :param ion_type: The type of ion (default: "p" for proton)
-        :param monoisotopic: Whether to use monoisotopic masses (default: True)
-        :param isotope: Isotope number (default: 0)
-        :param loss: Mass loss to apply (default: 0.0)
-        :param use_isotope_on_mods: Whether to apply isotopes to modifications (default: False)
-        :param precision: Mass precision (default: None)
-        :param inplace: Whether to modify in place (default: False)
-        :return: The calculated mass
-        """
         return mass(
             self,
             ion_type=ion_type,
@@ -1298,22 +1446,6 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         precision: int | None = None,
         use_isotope_on_mods: bool = False,
     ) -> float:
-        """
-        Calculate the m/z ratio of the annotation.
-
-        :param ion_type: The type of ion (default: "p" for precursor)
-        :param monoisotopic: Whether to use monoisotopic masses (default: True)
-        :param isotope: Isotope number (default: 0)
-        :param loss: Mass loss to apply (default: 0.0)
-        :param precision: Precision for the result (default: None)
-        :param use_isotope_on_mods: Whether to apply isotopes to modifications (default: False)
-        :param estimate_delta: Whether to estimate delta mass composition (default: False)
-        :param monoisotopic: Whether to use monoisotopic masses (default: True)
-        :param isotope: Isotope number (default: 0)
-        :param loss: Mass loss to apply (default: 0.0)
-        :param precision: Precision for the result (default: None)
-        :return: The calculated m/z ratio
-        """
         return mz(
             self,
             ion_type=ion_type,
@@ -1330,16 +1462,6 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         isotope: int = 0,
         use_isotope_on_mods: bool = False,
     ) -> dict[str, int | float]:
-        """
-        Calculate the elemental composition of the annotation.
-
-        :param ion_type: The type of ion (default: "p" for precursor)
-        :param estimate_delta: Whether to estimate delta mass composition (default: False)
-        :param isotope: Isotope number (default: 0)
-        :param use_isotope_on_mods: Whether to apply isotopes to modifications (default: False)
-        :param inplace: Whether to modify in place (default: False)
-        :return: Dictionary representing the elemental composition
-        """
         return comp(
             self,
             ion_type=ion_type,
@@ -1355,11 +1477,6 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
     ) -> Self:
         """
         Condense all modifications to their mass equivalents.
-
-        :param use_isotope_on_mods: Whether to apply isotopes to modifications (default: False)
-        :param inplace: Whether to modify the annotation in place (default: False)
-        :param include_plus: Whether to include a plus sign in the mass string (default: False)
-        :return: The total delta mass of the condensed modifications
         """
         return cast(
             Self,
@@ -1371,6 +1488,33 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
             ),
         )
     
-
-    
-    
+    def build_mods(
+        self,
+        nterm_static: Mapping[str, Iterable[str | float | int | Mod]] | None = None,
+        cterm_static: Mapping[str, Iterable[str | float | int | Mod]] | None = None,
+        internal_static: Mapping[str, Iterable[str | float | int | Mod]] | None = None,
+        labile_static: Mapping[str, Iterable[str | float | int | Mod]] | None = None,
+        nterm_variable: Mapping[str, Iterable[str | float | int | Mod]] | None = None,
+        cterm_variable: Mapping[str, Iterable[str | float | int | Mod]] | None = None,
+        internal_variable: Mapping[str, Iterable[str | float | int | Mod]] | None = None,
+        labile_variable: Mapping[str, Iterable[str | float | int | Mod]] | None = None,
+        max_variable_mods: int = 2,
+        use_regex: bool = False,
+    ) -> Generator[Self, None, None]:
+        """
+        Build all modifications from intervals and mass shifts.
+        """
+        for annot in build_mods(
+            self,
+            nterm_static=nterm_static,
+            cterm_static=cterm_static,
+            internal_static=internal_static,
+            labile_static=labile_static,
+            nterm_variable=nterm_variable,
+            cterm_variable=cterm_variable,
+            internal_variable=internal_variable,
+            labile_variable=labile_variable,
+            max_variable_mods=max_variable_mods,
+            use_regex=use_regex,
+        ):
+            yield cast(Self, annot)

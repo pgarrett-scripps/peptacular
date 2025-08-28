@@ -3,8 +3,9 @@ import unittest
 
 import peptacular as pt
 
+
 class TestShuffle(unittest.TestCase):
-    
+
     def test_basic_shuffle(self):
         annotation = pt.ProFormaAnnotation.parse("PEPTIDE")
         shuffled_annotation = annotation.shuffle(seed=42)
@@ -29,6 +30,7 @@ class TestShuffle(unittest.TestCase):
     """
     TESTS FOR: shuffling with internal modifications
     """
+
     def test_shuffle_with_internal_mods(self):
         annotation = pt.ProFormaAnnotation.parse("PE[Phospho]PTI[Methyl]DE")
         shuffled_annotation = annotation.shuffle(seed=42)
@@ -46,6 +48,7 @@ class TestShuffle(unittest.TestCase):
     """
     TESTS FOR: shuffling with other modification types
     """
+
     def test_shuffle_with_labile_mods(self):
         annotation = pt.ProFormaAnnotation.parse("{Glycan}PEPTIDE")
         shuffled_annotation = annotation.shuffle(seed=42)
@@ -75,5 +78,5 @@ class TestShuffle(unittest.TestCase):
         self.assertEqual(original_sorted, shuffled_sorted)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
