@@ -1,7 +1,9 @@
 from collections.abc import Callable, Generator
 import copy
 from copy import deepcopy
-from typing import Any, Iterable, Mapping, Self, cast
+from typing import Any, Iterable, Mapping, Self, Sequence, cast
+
+from peptacular.proforma.dclasses.interval import Interval
 
 from ..fragment import FragmenterMixin
 
@@ -9,11 +11,13 @@ from ..util import parse_static_mods
 
 from .serializer import serialize_annotation
 from .parser import ProFormaParser
-from .ambiguity import annotate_ambiguity
+from .ambiguity import annotate_ambiguity, condense_ambiguity_to_xnotation
 from .manipulation import (
+    condense_mods_to_intervals,
     condense_static_mods,
     is_subsequence,
     count_residues,
+    modification_coverage,
     percent_residues,
     find_indices,
     coverage,
@@ -21,6 +25,7 @@ from .manipulation import (
 )
 from .slicing import (
     generate_sliding_windows,
+    join_annotations,
     reverse_annotation,
     shift_annotation,
     shuffle_annotation,
@@ -77,6 +82,12 @@ from ..constants import (
 from ..property import SequencePropertyMixin
 
 from .mod_builder import build_mods
+
+
+def _correct_mods(
+    mod: MODLIST_DATATYPE | Iterable[MODLIST_DATATYPE],
+) -> Iterable[MODLIST_DATATYPE]:
+    return mod if isinstance(mod, Iterable) and not isinstance(mod, str) else [mod]
 
 
 class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin):
@@ -446,6 +457,18 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
             mod_enum.value: self._get_mod_by_type(mod_enum) for mod_enum in mod_enums
         }
 
+    def get_mods(
+        self,
+        mod_types: (
+            Iterable[ModType | ModTypeLiteral] | ModType | ModTypeLiteral | None
+        ) = None,
+    ) -> dict[str, Any]:
+        mod_types = get_mods(mod_types)
+
+        return {
+            mod_type.value: self._get_mod_by_type(mod_type) for mod_type in mod_types
+        }
+
     """
     Property Setters
     """
@@ -772,31 +795,31 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
 
     def _set_mod_by_type(
         self,
-        mod: Any,
+        value: Any,
         mod_type: ModType,
     ) -> Self:
 
         match mod_type:
             case ModType.ISOTOPE:
-                self.isotope_mods = mod
+                self.isotope_mods = value
             case ModType.STATIC:
-                self.static_mods = mod
+                self.static_mods = value
             case ModType.LABILE:
-                self.labile_mods = mod
+                self.labile_mods = value
             case ModType.UNKNOWN:
-                self.unknown_mods = mod
+                self.unknown_mods = value
             case ModType.NTERM:
-                self.nterm_mods = mod
+                self.nterm_mods = value
             case ModType.CTERM:
-                self.cterm_mods = mod
+                self.cterm_mods = value
             case ModType.INTERNAL:
-                self.internal_mods = mod
+                self.internal_mods = value
             case ModType.INTERVAL:
-                self.intervals = mod
+                self.intervals = value
             case ModType.CHARGE:
-                self.charge = mod
+                self.charge = value
             case ModType.CHARGE_ADDUCTS:
-                self.charge_adducts = mod
+                self.charge_adducts = value
             case _:
                 raise TypeError(f"Unknown mod type: {mod_type}")
 
@@ -804,24 +827,244 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
 
     def set_mods(
         self,
-        mods: Mapping[ModType | ModTypeLiteral, Any] | None,
-        mod_type: ModType,
+        mods: Mapping[ModType | ModTypeLiteral | int, Any] | None,
         inplace: bool = True,
     ) -> Self:
         """Set a modification by type, replacing any existing mods of that type"""
 
         if not inplace:
-            return self.copy().set_mods(mods=mods, mod_type=mod_type, inplace=True)
+            return self.copy().set_mods(mods=mods, inplace=True)
 
-        mod_types: list[ModType] = get_mods(mods)
+        if mods is None:
+            self.remove_mods(inplace=True)
+            return self
 
-        for mod_enum in mod_types:
-            self._set_mod_by_type(None, mod_enum)
+        for mod_type, mod_value in mods.items():
+
+            if isinstance(mod_type, int):
+                if mod_type < 0 or mod_type >= len(self.sequence):
+                    raise IndexError(
+                        f"Internal modification index out of range: {mod_type}"
+                    )
+                self.set_internal_mods_at_index(mod_type, mod_value, inplace=True)
+                continue
+
+            self._set_mod_by_type(mod_value, ModType(mod_type))
 
         return self
 
     """
-    Append Methods - Add single modifications
+    Add Methods (For old compatibility)
+    """
+
+    def add_isotope_mods(
+        self,
+        mods: MODLIST_DATATYPE | Iterable[MODLIST_DATATYPE],
+        inplace: bool = True,
+        append: bool = True,
+    ) -> Self:
+        if not inplace:
+            return self.copy().add_isotope_mods(mods, inplace=True, append=append)
+        if append:
+            self.extend_isotope_mods(_correct_mods(mods))
+        else:
+            self.set_isotope_mods(_correct_mods(mods))
+        return self
+
+    def add_static_mods(
+        self,
+        mods: MODLIST_DATATYPE | Iterable[MODLIST_DATATYPE],
+        inplace: bool = True,
+        append: bool = True,
+    ) -> Self:
+        if not inplace:
+            return self.copy().add_static_mods(mods, inplace=True, append=append)
+        if append:
+            self.extend_static_mods(_correct_mods(mods))
+        else:
+            self.set_static_mods(_correct_mods(mods))
+        return self
+
+    def add_labile_mods(
+        self,
+        mods: MODLIST_DATATYPE | Iterable[MODLIST_DATATYPE],
+        inplace: bool = True,
+        append: bool = True,
+    ) -> Self:
+        if not inplace:
+            return self.copy().add_labile_mods(mods, inplace=True, append=append)
+        if append:
+            self.extend_labile_mods(_correct_mods(mods))
+        else:
+            self.set_labile_mods(_correct_mods(mods))
+        return self
+
+    def add_unknown_mods(
+        self,
+        mods: MODLIST_DATATYPE | Iterable[MODLIST_DATATYPE],
+        inplace: bool = True,
+        append: bool = True,
+    ) -> Self:
+        if not inplace:
+            return self.copy().add_unknown_mods(mods, inplace=True, append=append)
+        if append:
+            self.extend_unknown_mods(_correct_mods(mods))
+        else:
+            self.set_unknown_mods(_correct_mods(mods))
+        return self
+
+    def add_nterm_mods(
+        self,
+        mods: MODLIST_DATATYPE | Iterable[MODLIST_DATATYPE],
+        inplace: bool = True,
+        append: bool = True,
+    ) -> Self:
+        if not inplace:
+            return self.copy().add_nterm_mods(mods, inplace=True, append=append)
+        if append:
+            self.extend_nterm_mods(_correct_mods(mods))
+        else:
+            self.set_nterm_mods(_correct_mods(mods))
+        return self
+
+    def add_cterm_mods(
+        self,
+        mods: MODLIST_DATATYPE | Iterable[MODLIST_DATATYPE],
+        inplace: bool = True,
+        append: bool = True,
+    ) -> Self:
+        if not inplace:
+            return self.copy().add_cterm_mods(mods, inplace=True, append=append)
+        if append:
+            self.extend_cterm_mods(_correct_mods(mods))
+        else:
+            self.set_cterm_mods(_correct_mods(mods))
+        return self
+
+    def add_charge_adducts(
+        self,
+        mods: MODLIST_DATATYPE | Iterable[MODLIST_DATATYPE],
+        inplace: bool = True,
+        append: bool = True,
+    ) -> Self:
+        if not inplace:
+            return self.copy().add_charge_adducts(mods, inplace=True, append=append)
+        if append:
+            self.extend_charge_adducts(_correct_mods(mods))
+        else:
+            self.set_charge_adducts(_correct_mods(mods))
+        return self
+
+    def add_internal_mods_at_index(
+        self,
+        index: int,
+        mods: MODLIST_DATATYPE | Iterable[MODLIST_DATATYPE],
+        inplace: bool = True,
+        append: bool = True,
+    ) -> Self:
+        if not inplace:
+            return self.copy().add_internal_mods_at_index(
+                index, mods, inplace=True, append=append
+            )
+        if append:
+            self.extend_internal_mods_at_index(index, _correct_mods(mods))
+        else:
+            self.set_internal_mods_at_index(index, _correct_mods(mods))
+        return self
+
+    def add_intervals(
+        self,
+        intervals: ACCEPTED_INTERVAL_DATATYPE | Iterable[ACCEPTED_INTERVAL_DATATYPE],
+        inplace: bool = True,
+        append: bool = True,
+    ) -> Self:
+        if not inplace:
+            return self.copy().add_intervals(intervals, inplace=True, append=append)
+
+        # Handle single interval vs iterable of intervals
+        if isinstance(intervals, (ModInterval, Interval)) or (
+            isinstance(intervals, tuple) and len(intervals) == 4
+        ):
+            if append:
+                self.append_interval(intervals)  # type: ignore
+            else:
+                self.set_intervals([intervals])  # type: ignore
+        else:
+            if append:
+                self.extend_intervals(intervals)
+            else:
+                self.set_intervals(intervals)
+        return self
+
+    def add_internal_mods(
+        self,
+        mods: Mapping[int, MODLIST_DATATYPE | Iterable[MODLIST_DATATYPE]],
+        inplace: bool = True,
+        append: bool = True,
+    ) -> Self:
+        if not inplace:
+            return self.copy().add_internal_mods(mods, inplace=True, append=append)
+        for index, mod in mods.items():
+            self.add_internal_mods_at_index(index, mod, append=append)
+        return self
+
+    def _add_mods_by_type(
+        self, value: Any, mod_type: ModType, inplace: bool = True, append: bool = True
+    ) -> Self:
+        if not inplace:
+            return self.copy()._add_mods_by_type(value, mod_type, inplace=True)
+
+        match mod_type:
+            case ModType.ISOTOPE:
+                self.add_isotope_mods(value, inplace=inplace, append=append)
+            case ModType.STATIC:
+                self.add_static_mods(value, inplace=inplace, append=append)
+            case ModType.LABILE:
+                self.add_labile_mods(value, inplace=inplace, append=append)
+            case ModType.UNKNOWN:
+                self.add_unknown_mods(value, inplace=inplace, append=append)
+            case ModType.NTERM:
+                self.add_nterm_mods(value, inplace=inplace, append=append)
+            case ModType.CTERM:
+                self.add_cterm_mods(value, inplace=inplace, append=append)
+            case ModType.INTERNAL:
+                self.add_internal_mods(value, inplace=inplace, append=append)
+            case ModType.INTERVAL:
+                self.add_intervals(value, inplace=inplace, append=append)
+            case ModType.CHARGE:
+                self.set_charge(value)
+            case ModType.CHARGE_ADDUCTS:
+                self.add_charge_adducts(value, inplace=inplace, append=append)
+            case _:
+                raise ValueError(f"Unknown modification type: {mod_type}")
+
+        return self
+
+    def add_mods(
+        self,
+        mods: Mapping[ModType | ModTypeLiteral | int, Any],
+        inplace: bool = True,
+        append: bool = True,
+    ) -> Self:
+        if not inplace:
+            return self.copy().add_mods(mods, inplace=True)
+
+        for mod_type, value in mods.items():
+
+            if isinstance(mod_type, int):
+                self.add_internal_mods_at_index(
+                    mod_type, value, inplace=inplace, append=append
+                )
+                continue
+
+            self._add_mods_by_type(
+                value, ModType(mod_type), inplace=inplace, append=append
+            )
+
+        return self
+
+    """
+    Append Methods
     """
 
     def append_isotope_mod(self, mod: MODLIST_DATATYPE, inplace: bool = True) -> Self:
@@ -880,6 +1123,59 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         if not inplace:
             return self.copy().append_interval(interval, inplace=True)
         self._interval_list.append(interval)
+        return self
+
+    def _append_by_type(
+        self, value: Any, mod_type: ModType, inplace: bool = True
+    ) -> Self:
+        if not inplace:
+            return self.copy()._append_by_type(value, mod_type, inplace=True)
+
+        match mod_type:
+            case ModType.ISOTOPE:
+                self.append_isotope_mod(value)
+            case ModType.STATIC:
+                self.append_static_mod(value)
+            case ModType.LABILE:
+                self.append_labile_mod(value)
+            case ModType.UNKNOWN:
+                self.append_unknown_mod(value)
+            case ModType.NTERM:
+                self.append_nterm_mod(value)
+            case ModType.CTERM:
+                self.append_cterm_mod(value)
+            case ModType.INTERNAL:
+                for key, val in value.items():
+                    self.append_internal_mod_at_index(key, val)
+            case ModType.INTERVAL:
+                self.append_interval(value)
+            case ModType.CHARGE:
+                self.set_charge(value)
+            case ModType.CHARGE_ADDUCTS:
+                self.extend_charge_adducts(value)
+            case _:
+                raise TypeError(f"Unknown mod type: {mod_type}")
+
+        return self
+
+    def append_mods(
+        self, mods: Mapping[ModType | ModTypeLiteral | int, Any], inplace: bool = True
+    ) -> Self:
+        if not inplace:
+            return self.copy().append_mods(mods, inplace=True)
+
+        for mod_type, value in mods.items():
+
+            if isinstance(mod_type, int):
+                if mod_type < 0 or mod_type >= len(self.sequence):
+                    raise IndexError(
+                        f"Internal modification index out of range: {mod_type}"
+                    )
+                self.append_internal_mod_at_index(mod_type, value, inplace=True)
+                continue
+
+            self._append_by_type(value, ModType(mod_type))
+
         return self
 
     """
@@ -967,6 +1263,52 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
             self._interval_list.extend(setup_interval_list(intervals))
         return self
 
+    def _extend_by_type(self, value: Any, mod_type: ModType) -> Self:
+        match mod_type:
+            case ModType.ISOTOPE:
+                self.extend_isotope_mods(value)
+            case ModType.STATIC:
+                self.extend_static_mods(value)
+            case ModType.LABILE:
+                self.extend_labile_mods(value)
+            case ModType.UNKNOWN:
+                self.extend_unknown_mods(value)
+            case ModType.NTERM:
+                self.extend_nterm_mods(value)
+            case ModType.CTERM:
+                self.extend_cterm_mods(value)
+            case ModType.INTERNAL:
+                for index, mod in value.items():
+                    self.extend_internal_mods_at_index(index, mod)
+            case ModType.INTERVAL:
+                self.extend_intervals(value)
+            case ModType.CHARGE_ADDUCTS:
+                self.extend_charge_adducts(value)
+            case ModType.CHARGE:
+                raise NotImplementedError("Extending charge not supported.")
+            case _:
+                raise NotImplementedError(f"Appending {mod_type} not supported.")
+
+        return self
+
+    def extend_mods(
+        self, mods: Mapping[ModType | ModTypeLiteral | int, Any], inplace: bool = True
+    ) -> Self:
+        if not inplace:
+            return self.copy().extend_mods(mods, inplace=True)
+
+        for mod_type, value in mods.items():
+            if isinstance(mod_type, int):
+                if mod_type < 0 or mod_type >= len(self.sequence):
+                    raise IndexError(
+                        f"Internal modification index out of range: {mod_type}"
+                    )
+                self.extend_internal_mods_at_index(mod_type, value, inplace=True)
+                continue
+            self._extend_by_type(value, ModType(mod_type))
+
+        return self
+
     """
     Update/Merge Methods - Combine with existing modifications
     """
@@ -998,61 +1340,61 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
     def remove_isotope_mods(self, inplace: bool = False) -> Self:
         if inplace is False:
             return self.copy().remove_isotope_mods(True)
-        _ = self.pop_isotope_mods()
+        self.isotope_mods = None
         return self
 
     def remove_static_mods(self, inplace: bool = True) -> Self:
         if inplace is False:
             return self.copy().remove_static_mods(True)
-        _ = self.pop_static_mods()
+        self.static_mods = None
         return self
 
     def remove_nterm_mods(self, inplace: bool = True) -> Self:
         if inplace is False:
             return self.copy().remove_nterm_mods(True)
-        _ = self.pop_nterm_mods()
+        self.nterm_mods = None
         return self
 
     def remove_cterm_mods(self, inplace: bool = True) -> Self:
         if inplace is False:
             return self.copy().remove_cterm_mods(True)
-        _ = self.pop_cterm_mods()
+        self.cterm_mods = None
         return self
 
     def remove_labile_mods(self, inplace: bool = True) -> Self:
         if inplace is False:
             return self.copy().remove_labile_mods(True)
-        _ = self.pop_labile_mods()
+        self.labile_mods = None
         return self
 
     def remove_unknown_mods(self, inplace: bool = True) -> Self:
         if inplace is False:
             return self.copy().remove_unknown_mods(True)
-        _ = self.pop_unknown_mods()
+        self.unknown_mods = None
         return self
 
     def remove_internal_mods(self, inplace: bool = True) -> Self:
         if inplace is False:
             return self.copy().remove_internal_mods(True)
-        _ = self.pop_internal_mods()
+        self.internal_mods = None
         return self
 
     def remove_intervals(self, inplace: bool = True) -> Self:
         if inplace is False:
             return self.copy().remove_intervals(True)
-        _ = self.pop_intervals()
+        self.intervals = None
         return self
 
     def remove_charge(self, inplace: bool = True) -> Self:
         if inplace is False:
             return self.copy().remove_charge(True)
-        _ = self.pop_charge()
+        self.charge = None
         return self
 
     def remove_charge_adducts(self, inplace: bool = True) -> Self:
         if inplace is False:
             return self.copy().remove_charge_adducts(True)
-        _ = self.pop_charge_adducts()
+        self.charge_adducts = None
         return self
 
     def _remove_mod_by_type(self, mod_type: ModType) -> None:
@@ -1124,6 +1466,120 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
 
     def get_interval_list(self) -> IntervalList:
         return self._interval_list
+
+    """
+    Sort mods
+    """
+
+    def sort_isotope_mods(
+        self, key: Callable[[Mod], Any] | None = None, reverse: bool = False
+    ) -> Self:
+        self._isotope_mod_list.sort(key=key, reverse=reverse)
+        return self
+
+    def sort_static_mods(
+        self, key: Callable[[Mod], Any] | None = None, reverse: bool = False
+    ) -> Self:
+        self._static_mod_list.sort(key=key, reverse=reverse)
+        return self
+
+    def sort_labile_mods(
+        self, key: Callable[[Mod], Any] | None = None, reverse: bool = False
+    ) -> Self:
+        self._labile_mod_list.sort(key=key, reverse=reverse)
+        return self
+
+    def sort_unknown_mods(
+        self, key: Callable[[Mod], Any] | None = None, reverse: bool = False
+    ) -> Self:
+        self._unknown_mod_list.sort(key=key, reverse=reverse)
+        return self
+
+    def sort_nterm_mods(
+        self, key: Callable[[Mod], Any] | None = None, reverse: bool = False
+    ) -> Self:
+        self._nterm_mod_list.sort(key=key, reverse=reverse)
+        return self
+
+    def sort_cterm_mods(
+        self, key: Callable[[Mod], Any] | None = None, reverse: bool = False
+    ) -> Self:
+        self._cterm_mod_list.sort(key=key, reverse=reverse)
+        return self
+
+    def sort_internal_mods(
+        self, key: Callable[[Mod], Any] | None = None, reverse: bool = False
+    ) -> Self:
+        for mod_list in self._internal_mod_dict.values():
+            mod_list.sort(key=key, reverse=reverse)
+        return self
+
+    def sort_interval_mods(
+        self, key: Callable[[Mod], Any] | None = None, reverse: bool = False
+    ) -> Self:
+        for interval in self._interval_list:
+            interval.mods.sort(key=key, reverse=reverse)
+        return self
+
+    def sort_charge_adducts(
+        self, key: Callable[[Mod], Any] | None = None, reverse: bool = False
+    ) -> Self:
+        self._adduct_mod_list.sort(key=key, reverse=reverse)
+        return self
+
+    def _sort_mods_by_type(
+        self,
+        mod_type: ModType,
+        key: Callable[[Mod], Any] | None = None,
+        reverse: bool = False,
+    ) -> Self:
+        for mod_type in ModType:
+            match mod_type:
+                case ModType.ISOTOPE:
+                    self.sort_isotope_mods(key=key, reverse=reverse)
+                case ModType.STATIC:
+                    self.sort_static_mods(key=key, reverse=reverse)
+                case ModType.LABILE:
+                    self.sort_labile_mods(key=key, reverse=reverse)
+                case ModType.UNKNOWN:
+                    self.sort_unknown_mods(key=key, reverse=reverse)
+                case ModType.NTERM:
+                    self.sort_nterm_mods(key=key, reverse=reverse)
+                case ModType.CTERM:
+                    self.sort_cterm_mods(key=key, reverse=reverse)
+                case ModType.INTERNAL:
+                    self.sort_internal_mods(key=key, reverse=reverse)
+                case ModType.INTERVAL:
+                    self.sort_interval_mods(key=key, reverse=reverse)
+                case ModType.CHARGE_ADDUCTS:
+                    self.sort_charge_adducts(key=key, reverse=reverse)
+                case ModType.CHARGE:
+                    pass
+                case _:
+                    raise TypeError(f"Unknown mod type: {mod_type}")
+        return self
+
+    def sort_mods(
+        self,
+        mods: (
+            ModTypeLiteral | ModType | Iterable[ModTypeLiteral | ModType] | None
+        ) = None,
+        key: Callable[[Mod], Any] | None = None,
+        reverse: bool = False,
+        inplace: bool = True,
+    ) -> Self:
+
+        if not inplace:
+            return self.sort_mods(mods=mods, key=key, reverse=reverse, inplace=True)
+
+        mod_types: list[ModType] = get_mods(mods)
+        for mod_type in mod_types:
+            self._sort_mods_by_type(mod_type, key=key, reverse=reverse)
+        return self
+
+    """
+    add (Depriciated)
+    """
 
     """
     Contains
@@ -1245,20 +1701,49 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
             )
         return deepcopy(self)
 
+    def copy_from(self, other: Self, deep: bool = True) -> None:
+        self._sequence = other._sequence
+        self._isotope_mod_list = other._isotope_mod_list.copy(deep=deep)
+        self._static_mod_list = other._static_mod_list.copy(deep=deep)
+        self._labile_mod_list = other._labile_mod_list.copy(deep=deep)
+        self._unknown_mod_list = other._unknown_mod_list.copy(deep=deep)
+        self._nterm_mod_list = other._nterm_mod_list.copy(deep=deep)
+        self._cterm_mod_list = other._cterm_mod_list.copy(deep=deep)
+        self._internal_mod_dict = other._internal_mod_dict.copy(deep=deep)
+        self._interval_list = other._interval_list.copy(deep=deep)
+        self._charge = other._charge
+        self._adduct_mod_list = other._adduct_mod_list.copy(deep=deep)
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "sequence": self.sequence,
-            ModType.ISOTOPE: copy.deepcopy(self.isotope_mods),
-            ModType.STATIC: copy.deepcopy(self.static_mods),
-            ModType.LABILE: copy.deepcopy(self.labile_mods),
-            ModType.UNKNOWN: copy.deepcopy(self.unknown_mods),
-            ModType.NTERM: copy.deepcopy(self.nterm_mods),
-            ModType.CTERM: copy.deepcopy(self.cterm_mods),
-            ModType.INTERVAL: copy.deepcopy(self.intervals),
-            ModType.INTERNAL: copy.deepcopy(self.internal_mods),
-            ModType.CHARGE: copy.deepcopy(self.charge),
-            ModType.CHARGE_ADDUCTS: copy.deepcopy(self.charge_adducts),
+            ModType.ISOTOPE.value: copy.deepcopy(self.isotope_mods),
+            ModType.STATIC.value: copy.deepcopy(self.static_mods),
+            ModType.LABILE.value: copy.deepcopy(self.labile_mods),
+            ModType.UNKNOWN.value: copy.deepcopy(self.unknown_mods),
+            ModType.NTERM.value: copy.deepcopy(self.nterm_mods),
+            ModType.CTERM.value: copy.deepcopy(self.cterm_mods),
+            ModType.INTERVAL.value: copy.deepcopy(self.intervals),
+            ModType.INTERNAL.value: copy.deepcopy(self.internal_mods),
+            ModType.CHARGE.value: copy.deepcopy(self.charge),
+            ModType.CHARGE_ADDUCTS.value: copy.deepcopy(self.charge_adducts),
         }
+
+    @staticmethod
+    def from_dict(data: dict[str, Any]) -> "ProFormaAnnotation":
+        return ProFormaAnnotation(
+            sequence=data.get("sequence"),
+            isotope_mods=data.get(ModType.ISOTOPE.value),
+            static_mods=data.get(ModType.STATIC.value),
+            labile_mods=data.get(ModType.LABILE.value),
+            unknown_mods=data.get(ModType.UNKNOWN.value),
+            nterm_mods=data.get(ModType.NTERM.value),
+            cterm_mods=data.get(ModType.CTERM.value),
+            internal_mods=data.get(ModType.INTERNAL.value),
+            intervals=data.get(ModType.INTERVAL.value),
+            charge=data.get(ModType.CHARGE.value),
+            charge_adducts=data.get(ModType.CHARGE_ADDUCTS.value),
+        )
 
     def serialize(
         self,
@@ -1308,6 +1793,9 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
             self, other, ignore_mods=ignore_mods, ignore_intervals=ignore_intervals
         )
 
+    def condense_mods_to_intervals(self, inplace: bool = True) -> Self:
+        return cast(Self, condense_mods_to_intervals(self, inplace=inplace))
+
     def coverage(
         self,
         annotations: Iterable[Self],
@@ -1338,6 +1826,19 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
             ignore_ambiguity=ignore_ambiguity,
         )
 
+    def modification_coverage(
+        self,
+        annotations: Iterable[Self],
+        ignore_ambiguity: bool = False,
+        accumulate: bool = False,
+    ) -> dict[int, int]:
+        return modification_coverage(
+            annotation=self,
+            annotations=annotations,
+            ignore_ambiguity=ignore_ambiguity,
+            accumulate=accumulate,
+        )
+
     def slice(
         self,
         start: int | None,
@@ -1357,19 +1858,34 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
     def split(self) -> list[Self]:
         return [cast(Self, a) for a in split_annotation(self)]
 
+    @staticmethod
+    def join(annotations: Sequence["ProFormaAnnotation"]) -> "ProFormaAnnotation":
+        return join_annotations(annotations)
+
     def annotate_ambiguity(
         self,
         forward_coverage: list[int],
         reverse_coverage: list[int],
         mass_shift: Any | None = None,
+        add_mods_to_intervals: bool = False,
+        sort_mods: bool = True,
         inplace: bool = False,
     ) -> Self:
         return cast(
             Self,
             annotate_ambiguity(
-                self, forward_coverage, reverse_coverage, mass_shift, inplace
+                self,
+                forward_coverage=forward_coverage,
+                reverse_coverage=reverse_coverage,
+                mass_shift=mass_shift,
+                add_mods_to_intervals=add_mods_to_intervals,
+                sort_mods=sort_mods,
+                inplace=inplace,
             ),
         )
+
+    def condense_ambiguity_to_xnotation(self, inplace: bool = True) -> Self:
+        return cast(Self, condense_ambiguity_to_xnotation(self, inplace=inplace))
 
     def permutations(self, size: int | None = None) -> Generator[Self, None, None]:
         for item in generate_permutations(self, size):
@@ -1487,7 +2003,7 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
                 use_isotope_on_mods=use_isotope_on_mods,
             ),
         )
-    
+
     def build_mods(
         self,
         nterm_static: Mapping[str, Iterable[str | float | int | Mod]] | None = None,
@@ -1496,7 +2012,9 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         labile_static: Mapping[str, Iterable[str | float | int | Mod]] | None = None,
         nterm_variable: Mapping[str, Iterable[str | float | int | Mod]] | None = None,
         cterm_variable: Mapping[str, Iterable[str | float | int | Mod]] | None = None,
-        internal_variable: Mapping[str, Iterable[str | float | int | Mod]] | None = None,
+        internal_variable: (
+            Mapping[str, Iterable[str | float | int | Mod]] | None
+        ) = None,
         labile_variable: Mapping[str, Iterable[str | float | int | Mod]] | None = None,
         max_variable_mods: int = 2,
         use_regex: bool = False,

@@ -49,9 +49,7 @@ class ModDict(UserDict[int, ModList]):
 
             # ensure that modlsit has same attributes
             if not value.allow_dups or value.stackable:
-                return setup_mod_list(
-                    list(value), allow_dups=True, stackable=False
-                )
+                return setup_mod_list(list(value), allow_dups=True, stackable=False)
 
             return value
         return setup_mod_list(value, allow_dups=True, stackable=False)
@@ -310,6 +308,11 @@ class ModDict(UserDict[int, ModList]):
     def has_mods(self) -> bool:
         """Check if ModDict has any modifications"""
         return len(self.data) > 0
+
+    def clean_empty_lists(self):
+        for key in list(self.data.keys()):
+            if not self.data[key]:
+                del self.data[key]
 
 
 ACCEPTED_MODDICT_INPUT_TYPES = Mapping[int, MODDICT_VALUE_TYPES] | ModDict | None

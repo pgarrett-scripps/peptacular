@@ -1,18 +1,51 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
+from peptacular.constants import IonType, ModType
+
 from .dclasses import Interval, Mod
 
 if TYPE_CHECKING:
     from .annotation import ProFormaAnnotation
 
 
+def condense_ambiguity_to_xnotation(
+    annotation: ProFormaAnnotation, inplace: bool = False
+) -> ProFormaAnnotation:
+    """
+    Condense ambiguity intervals in the annotation to X[+Mod]
+    """
+    if not inplace:
+        return condense_ambiguity_to_xnotation(annotation.copy(), inplace=True)
+
+    elems = annotation.split()
+    for elem in elems:
+        if elem.has_intervals:
+            # drop unknown and labile and charge / adducts
+            elem_annot = elem.filter_mods(
+                [ModType.INTERNAL, ModType.STATIC, ModType.ISOTOPE, ModType.INTERVAL]
+            )
+            mass = elem_annot.mass(ion_type=IonType.NEUTRAL)
+
+            elem.sequence = "X"
+            elem.remove_internal_mods()
+            elem.remove_intervals()
+            elem.set_internal_mods_at_index(0, mass)
+
+    new_annot = annotation.__class__.join(elems)
+    annotation.copy_from(new_annot)
+    return annotation
+
+
 def annotate_ambiguity(
     annotation: ProFormaAnnotation,
     forward_coverage: list[int],
     reverse_coverage: list[int],
-    mass_shift: Any | None = None,
-    inplace: bool = False,
+    mass_shift: Any | None,
+    *,
+    add_mods_to_intervals: bool,
+    sort_mods: bool,
+    inplace: bool,
 ) -> ProFormaAnnotation:
     """
     Generate ambiguity intervals based on the coverage of the sequence.
@@ -36,6 +69,8 @@ def annotate_ambiguity(
             forward_coverage,
             reverse_coverage,
             mass_shift,
+            add_mods_to_intervals=add_mods_to_intervals,
+            sort_mods=sort_mods,
             inplace=True,
         )
 
@@ -58,6 +93,13 @@ def annotate_ambiguity(
 
     if mass_shift is not None:
         _apply_mass_shift(annotation, forward_coverage, reverse_coverage, mass_shift)
+
+    # add_mods_to_intervals
+    if add_mods_to_intervals:
+        annotation.condense_mods_to_intervals(inplace=True)
+
+    if sort_mods:
+        annotation.sort_mods(inplace=True)
 
     return annotation
 

@@ -444,7 +444,8 @@ def apply_isotope_mods_to_composition(
         # Works with Counter
         >>> counter = Counter({'C': 6, 'H': 12, 'O': 6})
         >>> result = apply_isotope_mods_to_composition(counter, ['13C'])
-        >>> isinstance(result, Counter)  # True
+        >>> isinstance(result, Counter)
+        True
     """
     if isinstance(composition, str):
         return apply_isotope_mods_to_composition(

@@ -1,6 +1,8 @@
 from collections.abc import Generator
 from typing import Self
 
+from ..utils2 import convert_type
+
 from .dclasses import Mod, Interval, IntervalList, ModList, ModDict
 from ..constants import AMINO_ACIDS
 from ..errors import ProFormaFormatError
@@ -351,7 +353,7 @@ class ProFormaParser:
                 self.position += 1
             multiplier = int(self.sequence[multiplier_start : self.position])
 
-        return Mod(mod, multiplier)
+        return Mod(convert_type(mod), multiplier)
 
     def _parse_integer(self) -> int:
         start = self.position

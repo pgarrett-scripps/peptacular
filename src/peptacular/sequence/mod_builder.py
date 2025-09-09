@@ -5,6 +5,7 @@ from ..mod import Mod
 
 MOD_BUILDER_INPUT_TYPE = Mapping[str, Iterable[str | float | int | Mod]]
 
+
 def build_mods(
     sequence: ProFormaAnnotation | str,
     nterm_static: MOD_BUILDER_INPUT_TYPE | None = None,
@@ -33,5 +34,5 @@ def build_mods(
         labile_variable=labile_variable,
         max_variable_mods=max_variable_mods,
         use_regex=use_regex,
-        ):
+    ):
         yield annot.serialize(precision=precision, include_plus=include_plus)

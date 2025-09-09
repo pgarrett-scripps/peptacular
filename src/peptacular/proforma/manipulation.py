@@ -8,6 +8,29 @@ if TYPE_CHECKING:
     from .annotation import ProFormaAnnotation
 
 
+def condense_mods_to_intervals(
+    annotation: ProFormaAnnotation, inplace: bool = True
+) -> ProFormaAnnotation:
+    """
+    Condense modifications into intervals
+    """
+    if inplace is False:
+        return condense_mods_to_intervals(annotation.copy(), inplace=True)
+
+    if not annotation.has_intervals or not annotation.has_internal_mods:
+        return annotation
+
+    for index, mod_list in annotation.get_internal_mod_dict().items():
+        for interval in annotation.get_interval_list():
+            if interval.start <= index < interval.end:
+                interval.mods.extend(mod_list)
+                mod_list.clear()
+
+    annotation.get_internal_mod_dict().clean_empty_lists()
+
+    return annotation
+
+
 def coverage(
     annotation: ProFormaAnnotation,
     annotations: Iterable[ProFormaAnnotation],
@@ -67,6 +90,27 @@ def percent_coverage(
     return sum(cov_arr) / len(cov_arr)
 
 
+def modification_coverage(
+    annotation: ProFormaAnnotation,
+    annotations: Iterable[ProFormaAnnotation],
+    ignore_ambiguity: bool = False,
+    accumulate: bool = False,
+) -> dict[int, int]:
+
+    cov_dict = coverage(
+        annotation,
+        annotations,
+        accumulate=accumulate,
+        ignore_mods=False,
+        ignore_ambiguity=ignore_ambiguity,
+    )
+    mod_cov: dict[int, int] = {}
+    for pos, _ in annotation.get_internal_mod_dict().items():
+        mod_cov[pos] = cov_dict[pos]
+
+    return mod_cov
+
+
 def condense_static_mods(
     annotation: ProFormaAnnotation, inplace: bool = True
 ) -> ProFormaAnnotation:
@@ -88,12 +132,12 @@ def condense_static_mods(
 
     if cterm_mod is not None:
         annotation.extend_cterm_mods(cterm_mod)
-        # Handle amino acid specific mods
 
-    for aa, mods in static_mod_dict.items():
-        indexes = [m.start() for m in re.finditer(aa, annotation.sequence)]
-        for index in indexes:
+    for mod_aa, mods in static_mod_dict.items():
+        for index in [i for i, aa in enumerate(annotation.sequence) if aa == mod_aa]:
             annotation.extend_internal_mods_at_index(index, mods)
+
+    annotation.remove_static_mods()
 
     return annotation
 

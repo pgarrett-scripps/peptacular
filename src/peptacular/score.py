@@ -1,24 +1,36 @@
+from collections.abc import Iterable, Sequence
 import math
-from dataclasses import dataclass
-from typing import Any, List, Literal, Tuple, Union, Dict, Optional
+from enum import StrEnum
+from typing import Any, NamedTuple
 
-from .proforma.annot_fragmentation import Fragment
+from .fragment import Fragment
 from .sequence.sequence import strip_mods
 
 
+class ToleranceType(StrEnum):
+    PPM = "ppm"
+    TH = "th"
+
+
+class MatchMode(StrEnum):
+    CLOSEST = "closest"
+    LARGEST = "largest"
+    ALL = "all"
+
+
 def get_matched_indices(
-    mz_spectrum1: List[float],
-    mz_spectrum2: List[float],
+    mz_spectrum1: Sequence[float],
+    mz_spectrum2: Sequence[float],
     tolerance_value: float = 0.1,
-    tolerance_type: str = "ppm",
-) -> List[Optional[Tuple[int, int]]]:
+    tolerance_type: ToleranceType = ToleranceType.PPM,
+) -> list[tuple[int, int] | None]:
     """
     Matches two m/z spectra based on a specified tolerance value and type.
 
-    :param mz_spectrum1: List of m/z values for the first spectrum.
-    :type mz_spectrum1: List[float]
-    :param mz_spectrum2: List of m/z values for the second spectrum.
-    :type mz_spectrum2: List[float]
+    :param mz_spectrum1: list of m/z values for the first spectrum.
+    :type mz_spectrum1: list[float]
+    :param mz_spectrum2: list of m/z values for the second spectrum.
+    :type mz_spectrum2: list[float]
     :param tolerance_value: Tolerance value for matching. Default is 0.1.
     :type tolerance_value: float
     :param tolerance_type: Type of tolerance ('ppm' or 'th'). Default is 'ppm'.
@@ -26,8 +38,8 @@ def get_matched_indices(
 
     :raises ValueError: If the provided tolerance type is not 'ppm' or 'th'.
 
-    :return: List of index pairs representing matched peaks between the two spectra.
-    :rtype: List[Tuple[int, int]]
+    :return: list of index pairs representing matched peaks between the two spectra.
+    :rtype: list[tuple[int, int]]
 
     .. code-block:: python
 
@@ -42,72 +54,87 @@ def get_matched_indices(
 
     """
 
-    if tolerance_type not in ["ppm", "th"]:
-        raise ValueError('Invalid tolerance type. Must be "ppm" or "th"')
+    if tolerance_value <= 0:
+        raise ValueError("Tolerance value must be positive")
 
-    indices: List[Optional[Tuple[int, int]]] = []
-    mz2_start_index = 0
+    if not mz_spectrum1 or not mz_spectrum2:
+        return [None] * len(mz_spectrum1)
+
+    # Convert to list for faster indexing if needed
+    mz2_list = (
+        list(mz_spectrum2) if not isinstance(mz_spectrum2, list) else mz_spectrum2
+    )
+
+    def _binary_search_left(arr: list[float], target: float) -> int:
+        """Find leftmost position where target could be inserted to keep array sorted."""
+        left, right = 0, len(arr)
+        while left < right:
+            mid = (left + right) // 2
+            if arr[mid] < target:
+                left = mid + 1
+            else:
+                right = mid
+        return left
+
+    def _binary_search_right(arr: list[float], target: float) -> int:
+        """Find rightmost position where target could be inserted to keep array sorted."""
+        left, right = 0, len(arr)
+        while left < right:
+            mid = (left + right) // 2
+            if arr[mid] <= target:
+                left = mid + 1
+            else:
+                right = mid
+        return left
+
+    def _calculate_tolerance_offset(mz_value: float) -> float:
+        """Calculate tolerance offset based on type."""
+        match tolerance_type:
+            case ToleranceType.TH:
+                return tolerance_value
+            case ToleranceType.PPM:
+                return mz_value * tolerance_value / 1e6
+
+    indices: list[tuple[int, int] | None] = []
+
     for mz1 in mz_spectrum1:
-
-        if mz2_start_index >= len(mz_spectrum2):  # if we've exhausted mz_spectrum2
-            indices.append(None)
-            continue
-
-        tolerance_offset = (
-            tolerance_value if tolerance_type == "th" else mz1 * tolerance_value / 1e6
-        )
+        tolerance_offset = _calculate_tolerance_offset(mz1)
         mz1_start = mz1 - tolerance_offset
         mz1_end = mz1 + tolerance_offset
 
-        # Find the first mz2 that is greater than or equal to mz1_start
-        while (
-            mz2_start_index < len(mz_spectrum2)
-            and mz_spectrum2[mz2_start_index] < mz1_start
-        ):
-            mz2_start_index += 1
+        # Use binary search for efficient range finding
+        start_idx = _binary_search_left(mz2_list, mz1_start)
+        end_idx = _binary_search_right(mz2_list, mz1_end)
 
-        # If we've reached the end of mz_spectrum2, break
-        if mz2_start_index >= len(mz_spectrum2):
-            indices.append(None)
-            continue
-
-        # Find the last mz2 that is less than or equal to mz1_end
-        mz2_end_index = mz2_start_index
-        while (
-            mz2_end_index < len(mz_spectrum2) and mz_spectrum2[mz2_end_index] <= mz1_end
-        ):
-            mz2_end_index += 1
-
-        # Decrement to get the actual last index (because while loop exits when condition is no longer met)
-        if mz2_end_index - 1 < mz2_start_index:
+        # Check if we found any matches
+        if start_idx >= len(mz2_list) or start_idx >= end_idx:
             indices.append(None)
         else:
-            indices.append((mz2_start_index, mz2_end_index))
+            indices.append((start_idx, end_idx))
 
     return indices
 
 
-# TODO: Make this function return list of list always
 def match_spectra(
-    fragments: List[float],
-    mz_spectra: List[float],
+    fragments: Sequence[float],
+    mz_spectra: Sequence[float],
     tolerance_value: float,
-    tolerance_type: str = "ppm",
-    mode: str = "closest",
-    intensity_spectra: Optional[List[float]] = None,
-) -> List[Optional[Union[int, List[int]]]]:
+    tolerance_type: ToleranceType = ToleranceType.PPM,
+    mode: MatchMode = MatchMode.CLOSEST,
+    intensity_spectra: Sequence[float] | None = None,
+) -> list[list[int]]:
     """
     Matches two m/z spectra based on a specified tolerance value and type.
 
-    :param fragments: List of m/z values for the first spectrum.
-    :type fragments: List[float]
-    :param mz_spectra: List of m/z values for the second spectrum.
-    :type mz_spectra: List[float]
-    :param intensity_spectra: List of intensity values for the second spectrum. Required if mode is 'largest'.
-    :type intensity_spectra: Union[List[float], None]
+    :param fragments: list of m/z values for the first spectrum.
+    :type fragments: list[float]
+    :param mz_spectra: list of m/z values for the second spectrum.
+    :type mz_spectra: list[float]
+    :param intensity_spectra: list of intensity values for the second spectrum. Required if mode is 'largest'.
+    :type intensity_spectra: Union[list[float], None]
     :param tolerance_value: Tolerance value for matching. Default is 0.1.
     :type tolerance_value: float
-    :param tolerance_type: Type of tolerance ('ppm' or 'th'). Default is 'ppm'.
+    :param tolerance_type: Type of tolerance ('ppm' or 'th'). Default is 'pmp'.
     :type tolerance_type: str
     :param mode: Mode of matching ('closest' or 'largest' or 'all'). Default is 'closest'.
     :type mode: str
@@ -115,72 +142,68 @@ def match_spectra(
     :raises ValueError: If the provided tolerance type is not 'ppm' or 'th', or if the provided mode is
     not 'closest' or 'largest'.
 
-    :return: List of index pairs representing matched peaks between the two spectra.
-    :rtype: List[int]
+    :return: list of lists containing matched indices. Empty list for no matches.
+    :rtype: list[list[int]]
 
     .. code-block:: python
 
-            >>> match_spectra([100, 200, 300], [100, 200, 300], 1, 'th')
-            [0, 1, 2]
+        >>> match_spectra([100, 200, 300], [100, 200, 300], 1, 'th')
+        [[0], [1], [2]]
 
-            >>> match_spectra([100.1, 250, 300, 400], [100, 200, 300], 1, 'th')
-            [0, None, 2, None]
+        >>> match_spectra([100.1, 250, 300, 400], [100, 200, 300], 1, 'th')
+        [[0], [], [2], []]
 
-            >>> f = [100.1, 250, 300, 400]
-            >>> s = [100, 100.1, 200, 300]
-            >>> match_spectra(f, s, 1, 'th')
-            [1, None, 3, None]
+        >>> f = [100.1, 250, 300, 400]
+        >>> s = [100, 100.1, 200, 300]
+        >>> match_spectra(f, s, 1, 'th')
+        [[1], [], [3], []]
 
-            >>> match_spectra(f, s, 1, 'th', mode='all')
-            [[0, 1], None, [3], None]
+        >>> match_spectra(f, s, 1, 'th', mode='all')
+        [[0, 1], [], [3], []]
 
-            >>> match_spectra(f, s, 1, 'th', mode='largest', intensity_spectra=[10, 2, 3, 4])
-            [0, None, 3, None]
+        >>> match_spectra(f, s, 1, 'th', mode='largest', intensity_spectra=[10, 2, 3, 4])
+        [[0], [], [3], []]
 
     """
 
-    if tolerance_type not in ["ppm", "th"]:
+    if tolerance_type not in [ToleranceType.PPM, ToleranceType.TH]:
         raise ValueError('Invalid tolerance type. Must be "ppm" or "th"')
 
-    if mode not in ["closest", "largest", "all"]:
+    if mode not in [MatchMode.CLOSEST, MatchMode.LARGEST, MatchMode.ALL]:
         raise ValueError('Invalid mode. Must be "closest" or "largest" or "all"')
 
-    results: List[Optional[Union[int, List[int]]]] = []
+    results: list[list[int]] = []
     for i, indexes in enumerate(
         get_matched_indices(fragments, mz_spectra, tolerance_value, tolerance_type)
     ):
         if indexes is None:
-            results.append(None)
+            results.append([])
         else:
+            match mode:
+                case MatchMode.ALL:
+                    results.append(list(range(indexes[0], indexes[1])))
 
-            if mode == "all":
-                results.append(list(range(indexes[0], indexes[1])))
+                case MatchMode.CLOSEST:
+                    mz_diffs = [
+                        abs(fragments[i] - mz_spectra[idx])
+                        for idx in range(indexes[0], indexes[1])
+                    ]
+                    min_index = mz_diffs.index(min(mz_diffs))
+                    results.append([indexes[0] + min_index])
 
-            if mode == "closest":
-                mz_diffs = [
-                    abs(fragments[i] - mz_spectra[idx])
-                    for idx in range(indexes[0], indexes[1])
-                ]
-                min_index = mz_diffs.index(min(mz_diffs))
-
-                results.append(indexes[0] + min_index)
-
-            if mode == "largest":
-                if intensity_spectra is None:
-                    raise ValueError(
-                        'Intensity spectra must be provided when mode is "largest"'
-                    )
-
-                intensities = intensity_spectra[indexes[0] : indexes[1]]
-                largest_index = intensities.index(max(intensities))
-
-                results.append(indexes[0] + largest_index)
+                case MatchMode.LARGEST:
+                    if intensity_spectra is None:
+                        raise ValueError(
+                            'Intensity spectra must be provided when mode is "largest"'
+                        )
+                    intensities = intensity_spectra[indexes[0] : indexes[1]]
+                    largest_index = intensities.index(max(intensities))
+                    results.append([indexes[0] + largest_index])
 
     return results
 
 
-@dataclass(frozen=True)
-class FragmentMatch:
+class FragmentMatch(NamedTuple):
     """
     Represents a match between a theoretical fragment and an experimental spectrum.
 
@@ -189,7 +212,7 @@ class FragmentMatch:
     :ivar intensity: Intensity of the experimental m/z value.
     """
 
-    fragment: Optional[Fragment]
+    fragment: Fragment | None
     mz: float
     intensity: float
 
@@ -291,7 +314,7 @@ class FragmentMatch:
     def parent_sequence(self) -> str:
         if self.fragment is None:
             return ""
-        return self.fragment.parent_sequence.serialize()
+        return self.fragment.parent_sequence
 
     @property
     def number(self) -> str:
@@ -299,7 +322,7 @@ class FragmentMatch:
             return "0"
         return self.fragment.number
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Converts the FragmentMatch object to a dictionary.
 
@@ -328,22 +351,22 @@ class FragmentMatch:
 
 
 def get_fragment_matches(
-    fragments: List[Fragment],
-    mz_spectra: List[float],
-    intensity_spectra: List[float],
+    fragments: Sequence[Fragment],
+    mz_spectra: Sequence[float],
+    intensity_spectra: Sequence[float],
     tolerance_value: float,
-    tolerance_type: str = "ppm",
-    mode: str = "all",
-) -> List[FragmentMatch]:
+    tolerance_type: ToleranceType = ToleranceType.PPM,
+    mode: MatchMode = MatchMode.ALL,
+) -> list[FragmentMatch]:
     """
     Computes the fragment matches for a given set of fragments and an experimental spectrum.
 
-    :param fragments: List of theoretical fragments.
-    :type fragments: List[Fragment]
-    :param mz_spectra: List of m/z values for the experimental spectrum.
-    :type mz_spectra: List[float]
-    :param intensity_spectra: List of intensity values for the experimental spectrum.
-    :type intensity_spectra: List[float]
+    :param fragments: list of theoretical fragments.
+    :type fragments: list[Fragment]
+    :param mz_spectra: list of m/z values for the experimental spectrum.
+    :type mz_spectra: list[float]
+    :param intensity_spectra: list of intensity values for the experimental spectrum.
+    :type intensity_spectra: list[float]
     :param tolerance_value: Tolerance value for matching. Default is 0.1.
     :type tolerance_value: float
     :param tolerance_type: Type of tolerance ('ppm' or 'th'). Default is 'ppm'.
@@ -352,15 +375,15 @@ def get_fragment_matches(
     :param mode: Mode of matching ('all', 'closest' or 'largest'). Default is 'all'.
     :type mode: str
 
-    :return: List of fragment matches.
-    :rtype: List[FragmentMatch]
+    :return: list of fragment matches.
+    :rtype: list[FragmentMatch]
     """
 
-    if mode not in ["all", "closest", "largest"]:
+    if mode not in [MatchMode.ALL, MatchMode.CLOSEST, MatchMode.LARGEST]:
         raise ValueError('Invalid mode. Must be "all", "closest" or "largest"')
 
     # sort fragments by mass
-    fragments.sort(key=lambda x: x.mz)
+    fragments = sorted(fragments, key=lambda x: x.mz)
     fragment_spectrum = [f.mz for f in fragments]
 
     mz_spectra, intensity_spectra = zip(  # type: ignore
@@ -376,34 +399,32 @@ def get_fragment_matches(
         intensity_spectra,
     )
 
-    fragment_matches: List[FragmentMatch] = []
-    for i, index in enumerate(indices):
-        if index is None:
+    fragment_matches: list[FragmentMatch] = []
+    for i, index_list in enumerate(indices):
+        if not index_list:  # Empty list means no matches
             continue
-        if isinstance(index, int):
+
+        for j in index_list:
             fragment_matches.append(
-                FragmentMatch(fragments[i], mz_spectra[index], intensity_spectra[index])
+                FragmentMatch(fragments[i], mz_spectra[j], intensity_spectra[j])
             )
-        else:
-            for j in index:
-                fragment_matches.append(
-                    FragmentMatch(fragments[i], mz_spectra[j], intensity_spectra[j])
-                )
 
     return fragment_matches
 
 
-def get_match_coverage(fragment_matches: List[FragmentMatch]) -> Dict[str, List[int]]:
+def get_match_coverage(
+    fragment_matches: Sequence[FragmentMatch],
+) -> dict[str, list[int]]:
     """
     Returns a dictionary of fragment coverage for each fragment type / charge.
 
-    :param fragment_matches: List of fragments.
-    :type fragment_matches: List[Fragment]
+    :param fragment_matches: list of fragments.
+    :type fragment_matches: list[Fragment]
 
     :return: Dictionary of fragment coverage.
-    :rtype: Dict[str, List[int]]
+    :rtype: dict[str, list[int]]
     """
-    cov: Dict[str, List[int]] = {}
+    cov: dict[str, list[int]] = {}
 
     if not fragment_matches:
         return cov
@@ -435,16 +456,16 @@ def _add_isotope_to_label(label: str) -> str:
 
 
 def filter_missing_mono_isotope(
-    fragment_matches: List[FragmentMatch],
-) -> List[FragmentMatch]:
+    fragment_matches: list[FragmentMatch],
+) -> list[FragmentMatch]:
     """
     Filters out fragment matches that do not have a monoisotopic peak.
 
-    :param fragment_matches: List of fragment matches.
-    :type fragment_matches: List[FragmentMatch]
+    :param fragment_matches: list of fragment matches.
+    :type fragment_matches: list[FragmentMatch]
 
-    :return: List of fragment matches with monoisotopic peaks.
-    :rtype: List[FragmentMatch]
+    :return: list of fragment matches with monoisotopic peaks.
+    :rtype: list[FragmentMatch]
     """
 
     mono_labels = set(f.label for f in fragment_matches if f.isotope == 0)
@@ -454,16 +475,16 @@ def filter_missing_mono_isotope(
 
 
 def filter_skipped_isotopes(
-    fragment_matches: List[FragmentMatch],
-) -> List[FragmentMatch]:
+    fragment_matches: list[FragmentMatch],
+) -> list[FragmentMatch]:
     """
     Filters out fragment matches that have skipped isotopes.
 
-    :param fragment_matches: List of fragment matches.
-    :type fragment_matches: List[FragmentMatch]
+    :param fragment_matches: list of fragment matches.
+    :type fragment_matches: list[FragmentMatch]
 
-    :return: List of fragment matches with monoisotopic peaks.
-    :rtype: List[FragmentMatch]
+    :return: list of fragment matches with monoisotopic peaks.
+    :rtype: list[FragmentMatch]
     """
 
     # remove peaks any peaks after a missing isotope
@@ -496,18 +517,18 @@ def _binomial_probability(n: int, k: int, p: float) -> float:
 
 def _estimate_probability_of_random_match(
     error_tolerance: float,
-    mz_spectrum: List[float],
-    tolerance_type: str = "ppm",
-    min_mz: Optional[float] = None,
-    max_mz: Optional[float] = None,
+    mz_spectrum: Sequence[float],
+    tolerance_type: ToleranceType,
+    min_mz: float | None = None,
+    max_mz: float | None = None,
 ) -> float:
     """
     Estimate the probability of a random match between two peaks based on error tolerance and the experimental spectrum.
 
     :param error_tolerance: Tolerance value for matching peaks.
     :type error_tolerance: float
-    :param mz_spectrum: List of m/z values from the experimental spectrum.
-    :type mz_spectrum: List[float]
+    :param mz_spectrum: list of m/z values from the experimental spectrum.
+    :type mz_spectrum: list[float]
     :param tolerance_type: Type of tolerance ('ppm' or 'th').
     :type tolerance_type: str
 
@@ -525,11 +546,13 @@ def _estimate_probability_of_random_match(
     spectrum_range = max_mz - min_mz
 
     # Calculate the error tolerance range
-    if tolerance_type == "ppm":
+    if tolerance_type == ToleranceType.PPM:
         average_mz = sum(mz_spectrum) / len(mz_spectrum)
         error_tolerance_range = average_mz * error_tolerance / 1e6
-    else:  # 'th'
+    elif tolerance_type == ToleranceType.TH:
         error_tolerance_range = error_tolerance
+    else:
+        raise ValueError("Invalid tolerance type")
 
     # Estimate the probability
     num_bins = spectrum_range / error_tolerance_range
@@ -538,21 +561,21 @@ def _estimate_probability_of_random_match(
 
 
 def binomial_score(
-    fragments: Union[List[Fragment], List[float]],
-    mz_spectra: List[float],
+    fragments: Sequence[Fragment | float],
+    mz_spectra: Sequence[float],
     tolerance_value: float,
-    tolerance_type: Literal["ppm", "th"] = "ppm",
-    min_mz: Optional[float] = None,
-    max_mz: Optional[float] = None,
+    tolerance_type: ToleranceType,
+    min_mz: float | None = None,
+    max_mz: float | None = None,
 ) -> float:
     """
     Computes a score based on binomial probability for a given set of fragments and an experimental spectrum.
 
     :param min_mz:
-    :param fragments: List of theoretical fragments.
-    :type fragments: Union[List[Fragment], List[float]]
-    :param mz_spectra: List of m/z values from the experimental spectrum.
-    :type mz_spectra: List[float]
+    :param fragments: list of theoretical fragments.
+    :type fragments: Union[list[Fragment], list[float]]
+    :param mz_spectra: list of m/z values from the experimental spectrum.
+    :type mz_spectra: list[float]
     :param tolerance_value: Tolerance value for matching fragments to the spectrum.
     :type tolerance_value: float
     :param tolerance_type: Type of tolerance ('ppm' or 'th').
@@ -575,7 +598,7 @@ def binomial_score(
 
     """
 
-    fragments_mzs: List[float] = []
+    fragments_mzs: list[float] = []
     for fragment in fragments:
         if isinstance(fragment, Fragment):
             fragments_mzs.append(fragment.mz)
@@ -605,23 +628,73 @@ def binomial_score(
     return score
 
 
+def bimodal_score_from_matches(
+    fragment_matches: Sequence[FragmentMatch],
+    fragments: Sequence[Fragment | float],
+    mz_spectra: Sequence[float],
+    tolerance_value: float,
+    tolerance_type: ToleranceType,
+    min_mz: float | None = None,
+    max_mz: float | None = None,
+) -> float:
+    """
+    Compute the binomial (bimodal) score using an existing set of FragmentMatch objects.
+
+    Parameters:
+    - fragment_matches: sequence of FragmentMatch (matches already found).
+    - fragments: full list of theoretical fragments used as the trials (order/identity expected to be the same objects).
+    - mz_spectra: experimental m/z values (used to estimate random-match probability).
+    - tolerance_value, tolerance_type: used for estimating random-match probability.
+    - min_mz, max_mz: optional m/z range for probability estimation.
+
+    Returns:
+    - binomial probability P(X = k) where k is the number of unique matched theoretical fragments
+      and n is the total number of theoretical fragments.
+    """
+
+    n = len(fragments)
+    if n == 0:
+        return 0.0
+
+    # Map theoretical fragments by identity for fast lookup
+    frag_id_map = {id(f): idx for idx, f in enumerate(fragments)}
+
+    matched_indices: set[int] = set()
+    for fm in fragment_matches:
+        if fm.fragment is None:
+            continue
+        idx = frag_id_map.get(id(fm.fragment))
+        if idx is not None:
+            matched_indices.add(idx)
+
+    k = len(matched_indices)
+
+    # Estimate probability of a random match given the experimental spectrum and tolerance
+    p_success = _estimate_probability_of_random_match(
+        tolerance_value, mz_spectra, tolerance_type, min_mz, max_mz
+    )
+
+    # Compute and return binomial probability P(X = k)
+    return _binomial_probability(n, k, p_success)
+
+
 def get_matched_intensity_percentage(
-    fragment_matches: List[FragmentMatch], intensities: List[float]
+    fragment_matches: Sequence[FragmentMatch], intensities: Sequence[float]
 ) -> float:
     """
     Calculates the proportion of matched intensity to total intensity.
 
-    :param fragment_matches: List of fragment matches.
-    :type fragment_matches: List[FragmentMatch]
-    :param intensities: List of intensities from the experimental spectrum.
-    :type intensities: List[float]
+    :param fragment_matches: list of fragment matches.
+    :type fragment_matches: list[FragmentMatch]
+    :param intensities: list of intensities from the experimental spectrum.
+    :type intensities: list[float]
 
     :return: Proportion of matched intensity to total intensity.
     :rtype: float
     """
 
     # group matches by mz
-    matches: Dict[float, FragmentMatch] = {f.mz: f for f in fragment_matches}
+    matches: dict[float, FragmentMatch] = {f.mz: f for f in fragment_matches}
     matched_intensity = sum(f.intensity for f in matches.values())
     total_intensity = sum(intensities)
 
@@ -629,3 +702,151 @@ def get_matched_intensity_percentage(
         return 0
 
     return matched_intensity / total_intensity
+
+
+class Scorer:
+
+    def __init__(
+        self,
+        experimental_spectra: tuple[Sequence[float], Sequence[float]],
+        fragments: Sequence[Fragment],
+        tolerance_type: ToleranceType,
+        tolerance: float,
+        match_mode: MatchMode,
+        filter_fragments_with_iso_gap: bool = False,
+        filter_fragments_without_mono: bool = False,
+    ) -> None:
+
+        self.mz_spectra = experimental_spectra[0]
+        self.intensities = experimental_spectra[1]
+        self.fragments = fragments
+        self.tolerance_type = tolerance_type
+        self.tolerance = tolerance
+        self.match_mode = match_mode
+        self.filter_fragments_with_iso_gap = filter_fragments_with_iso_gap
+        self.filter_fragments_without_mono = filter_fragments_without_mono
+
+        self.fragment_matches = get_fragment_matches(
+            self.fragments,
+            self.mz_spectra,
+            self.intensities,
+            self.tolerance,
+            self.tolerance_type,
+            self.match_mode,
+        )
+
+        if self.filter_fragments_with_iso_gap:
+            self.fragment_matches = filter_skipped_isotopes(self.fragment_matches)
+
+        if self.filter_fragments_without_mono:
+            self.fragment_matches = filter_missing_mono_isotope(self.fragment_matches)
+
+    def _get_fragment_matches_by_direction(
+        self, forward: bool, include_losses: bool, include_isotopes: bool
+    ) -> list[FragmentMatch]:
+        return self._get_fragment_matches_by_ion_type(
+            ["a", "b", "c"] if forward else ["x", "y", "z"],
+            include_losses,
+            include_isotopes,
+        )
+
+    def _get_fragment_matches_by_ion_type(
+        self,
+        ion_types: str | Iterable[str] | None,
+        include_losses: bool,
+        include_isotopes: bool,
+    ) -> list[FragmentMatch]:
+        if ion_types is None:
+            return [
+                f
+                for f in self.fragment_matches
+                if (include_losses or f.loss == 0.0)
+                and (include_isotopes or not f.isotope == 0)
+            ]
+        if isinstance(ion_types, str):
+            ion_types = [ion_types]
+        return [
+            f
+            for f in self.fragment_matches
+            if f.ion_type in ion_types
+            and (include_losses or f.loss == 0.0)
+            and (include_isotopes or not f.isotope == 0)
+        ]
+
+    def _get_fragments_by_direction(
+        self,
+        forward: bool = True,
+        include_losses: bool = True,
+        include_isotopes: bool = True,
+    ) -> Sequence[Fragment]:
+        return self._get_fragments_by_ion_type(
+            ["a", "b", "c"] if forward else ["x", "y", "z"],
+            include_losses,
+            include_isotopes,
+        )
+
+    def _get_fragments_by_ion_type(
+        self,
+        ion_types: str | Iterable[str] | None,
+        include_losses: bool = True,
+        include_isotopes: bool = True,
+    ) -> Sequence[Fragment]:
+        if ion_types is None:
+            return [
+                f
+                for f in self.fragments
+                if (include_losses or f.loss == 0.0)
+                and (include_isotopes or not f.isotope == 0)
+            ]
+        if isinstance(ion_types, str):
+            ion_types = [ion_types]
+        return [
+            f
+            for f in self.fragments
+            if f.ion_type in ion_types
+            and (include_losses or f.loss == 0.0)
+            and (include_isotopes or not f.isotope == 0)
+        ]
+
+    def get_match_coverage(
+        self,
+        ion_types: str | Iterable[str] | None = None,
+        include_losses: bool = True,
+        include_isotopes: bool = True,
+    ) -> dict[str, list[int]]:
+        return get_match_coverage(
+            self._get_fragment_matches_by_ion_type(
+                ion_types, include_losses, include_isotopes
+            )
+        )
+
+    def matched_intensity(
+        self,
+        ion_types: str | Iterable[str] | None = None,
+        include_losses: bool = True,
+        include_isotopes: bool = True,
+    ) -> float:
+        return get_matched_intensity_percentage(
+            self._get_fragment_matches_by_ion_type(
+                ion_types, include_losses, include_isotopes
+            ),
+            self.intensities,
+        )
+
+    def bimodal_score(
+        self,
+        ion_types: str | Iterable[str] | None,
+        include_losses: bool = True,
+        include_isotopes: bool = True,
+    ) -> float:
+        return bimodal_score_from_matches(
+            self._get_fragment_matches_by_ion_type(
+                ion_types, include_losses, include_isotopes
+            ),
+            self._get_fragments_by_ion_type(
+                ion_types, include_losses, include_isotopes
+            ),
+            self.mz_spectra,
+            self.tolerance,
+            self.tolerance_type,
+        )

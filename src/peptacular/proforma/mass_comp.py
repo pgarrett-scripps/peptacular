@@ -52,6 +52,7 @@ def _pop_delta_mass_mods(annotation: ProFormaAnnotation, inplace: bool = True) -
         # Create a copy of the annotation to modify
         return _pop_delta_mass_mods(annotation=annotation.copy(), inplace=True)
 
+    """
     if annotation.has_static_mods:
         raise ValueError(
             "Static mods are present. Cannot pop delta mass mods when static mods exist."
@@ -61,6 +62,7 @@ def _pop_delta_mass_mods(annotation: ProFormaAnnotation, inplace: bool = True) -
         raise ValueError(
             "Isotope mods are present. Cannot pop delta mass mods when isotope mods exist."
         )
+    """
 
     def _pop_delta_mass_from_mod_list(mod_list: ModList) -> float:
         delta_mass = 0.0

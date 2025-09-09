@@ -5,10 +5,18 @@ from collections.abc import Iterable
 from typing import Any, Self, SupportsIndex
 import warnings
 
+from ..dclasses.modlist import MODLIST_DATATYPE, ModList
+
 from .interval import Interval, setup_interval, ModInterval
 
 
-INTERVALLIST_DATATYPE = Interval | ModInterval
+INTERVALLIST_DATATYPE = (
+    Interval
+    | ModInterval
+    | tuple[
+        int, int, bool, ModList | Iterable[MODLIST_DATATYPE] | MODLIST_DATATYPE | None
+    ]
+)
 
 
 class IntervalList(UserList[Interval]):
@@ -265,6 +273,9 @@ def setup_interval_list(data: ACCEPTED_INTERVALLIST_INPUT_TYPES) -> IntervalList
 
     # Single interval
     if isinstance(data, (Interval, ModInterval)):
+        return IntervalList([data])
+
+    if isinstance(data, tuple) and len(data) == 4 and isinstance(data[0], int):
         return IntervalList([data])
 
     # Iterable of intervals

@@ -1,6 +1,6 @@
 from __future__ import annotations
 import itertools
-from typing import TYPE_CHECKING, Any, Generator, Iterable, Literal, Mapping, Optional
+from typing import TYPE_CHECKING, Generator, Iterable, Literal, Mapping
 import warnings
 import regex as re
 
@@ -28,9 +28,7 @@ def get_mod_index_from_regex(peptide: str, mod: str) -> set[int]:
     if match:
         sites.add(match.start())
         if match.end() - match.start() != 0:
-            warnings.warn(
-                "Using start of regex", UserWarning
-            )
+            warnings.warn("Using start of regex", UserWarning)
     return sites
 
 
@@ -62,6 +60,7 @@ def ensure_single_static_mod(mods: dict[int, list[str | float | int | Mod]]) -> 
                 UserWarning,
             )
 
+
 def update_mod_list(
     mod_list: ModList,
     merge_strat: Literal["update", "merge", "error"],
@@ -81,8 +80,9 @@ def update_mod_list(
             mod_list.extend(mods)
         case _:
             raise ValueError(f"Unknown merge strategy: {merge_strat}")
-        
+
     return mod_list
+
 
 def apply_mods(
     annotation: ProFormaAnnotation,
@@ -124,13 +124,16 @@ def apply_mods(
     update_mod_list(
         annotation.get_cterm_mod_list(),
         merge_strat=merge_strat,
-        mods=cterm_sites.get(len(annotation.sequence)-1, []),
+        mods=cterm_sites.get(len(annotation.sequence) - 1, []),
     )
     for site, mods in internal_sites.items():
         mod_dict = annotation.get_internal_mod_dict()
-        mod_dict[site] = update_mod_list(mod_dict.get(site, ModList()), merge_strat=merge_strat, mods=mods)
+        mod_dict[site] = update_mod_list(
+            mod_dict.get(site, ModList()), merge_strat=merge_strat, mods=mods
+        )
 
     return annotation
+
 
 def build_mods(
     annotation: ProFormaAnnotation,
@@ -147,11 +150,11 @@ def build_mods(
 ) -> Generator[ProFormaAnnotation, None, None]:
     """
     Generate all possible combinations of modifications for a peptide.
-    
+
     Args:
         annotation: The base ProFormaAnnotation to modify
         nterm_static: Static modifications for N-terminus
-        cterm_static: Static modifications for C-terminus  
+        cterm_static: Static modifications for C-terminus
         internal_static: Static modifications for internal residues
         labile_static: Static labile modifications
         nterm_variable: Variable modifications for N-terminus
@@ -160,7 +163,7 @@ def build_mods(
         labile_variable: Variable labile modifications
         max_variable_mods: Maximum number of variable modifications to apply
         use_regex: Whether to use regex for modification site matching
-        
+
     Yields:
         ProFormaAnnotation: Each possible modification combination
     """
@@ -190,77 +193,84 @@ def build_mods(
 
     # Create list of all possible variable modification sites with their mods
     variable_site_mod_pairs: list[tuple[str, int, str | float | int | Mod]] = []
-    
+
     # Add N-term variable mods
     for mod in nterm_variable_mods:
-        variable_site_mod_pairs.append(('nterm', 0, mod))
-    
-    # Add C-term variable mods  
+        variable_site_mod_pairs.append(("nterm", 0, mod))
+
+    # Add C-term variable mods
     for mod in cterm_variable_mods:
-        variable_site_mod_pairs.append(('cterm', len(annotation.sequence) - 1, mod))
-    
+        variable_site_mod_pairs.append(("cterm", len(annotation.sequence) - 1, mod))
+
     # Add internal variable mods (including terminal positions since they're treated separately)
     for site, mods in internal_variable_sites.items():
         for mod in mods:
-            variable_site_mod_pairs.append(('internal', site, mod))
-    
+            variable_site_mod_pairs.append(("internal", site, mod))
+
     # Add labile variable mods
     if labile_variable:
-        labile_variable_sites = get_sites(annotation.sequence, labile_variable, use_regex)
+        labile_variable_sites = get_sites(
+            annotation.sequence, labile_variable, use_regex
+        )
         for site, mods in labile_variable_sites.items():
             for mod in mods:
-                variable_site_mod_pairs.append(('labile', site, mod))
-
+                variable_site_mod_pairs.append(("labile", site, mod))
 
     static_modified_annotation = apply_mods(
         annotation,
         nterm=nterm_static,
-        cterm=cterm_static, 
+        cterm=cterm_static,
         internal=internal_static,
         inplace=False,
         merge_strat="merge",
-        is_regex=use_regex
+        is_regex=use_regex,
     )
 
     # Generate all combinations of variable modifications up to max_variable_mods
     for num_var_mods in range(max_variable_mods + 1):
-        for var_mod_combination in itertools.combinations(variable_site_mod_pairs, num_var_mods):
+        for var_mod_combination in itertools.combinations(
+            variable_site_mod_pairs, num_var_mods
+        ):
             # Check for site conflicts (only one mod per site per type)
             site_conflicts = {}
             has_conflict = False
-            
+
             for mod_type, site, mod in var_mod_combination:
                 key = (mod_type, site)
                 if key in site_conflicts:
                     has_conflict = True
                     break
                 site_conflicts[key] = True
-            
+
             if has_conflict:
                 continue
-                
+
             # Start with base annotation and apply static mods
             modified_annotation = static_modified_annotation.copy()
-            
+
             # Apply static labile modifications if any
             if labile_static:
-                labile_static_sites = get_sites(annotation.sequence, labile_static, use_regex)
+                labile_static_sites = get_sites(
+                    annotation.sequence, labile_static, use_regex
+                )
                 for site, mods in labile_static_sites.items():
                     for mod in mods:
                         modified_annotation.append_labile_mod(mod)
-            
+
             # Apply variable modifications directly by site
             for mod_type, site, mod in var_mod_combination:
-                if mod_type == 'nterm':
+                if mod_type == "nterm":
                     mod_list = modified_annotation.get_nterm_mod_list()
                     mod_list.append(mod)
-                elif mod_type == 'cterm':
+                elif mod_type == "cterm":
                     mod_list = modified_annotation.get_cterm_mod_list()
                     mod_list.append(mod)
-                elif mod_type == 'internal':      
+                elif mod_type == "internal":
                     mod_dict = modified_annotation.get_internal_mod_dict()
-                    mod_dict[site] = update_mod_list(mod_dict.get(site, ModList()), merge_strat='merge', mods=[mod])
-                elif mod_type == 'labile':
+                    mod_dict[site] = update_mod_list(
+                        mod_dict.get(site, ModList()), merge_strat="merge", mods=[mod]
+                    )
+                elif mod_type == "labile":
                     modified_annotation.append_labile_mod(mod)
 
             yield modified_annotation

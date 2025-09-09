@@ -13,7 +13,7 @@ def parse(sequence: str, sequence_type: Literal["single"]) -> ProFormaAnnotation
 
 
 @overload
-def parse(
+def parse(  # type: ignore[override]
     sequence: str, sequence_type: Literal["multi"]
 ) -> MultiProFormaAnnotation: ...
 

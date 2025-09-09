@@ -20,17 +20,13 @@ a result they can be positioned anywhere in the sequence. Maybe add a check to s
 end of the sequence and if not raise an error.
 """
 
-from typing import Any, Callable, Iterable
+from typing import Any, Callable, Iterable, Mapping, Sequence
 
 from .util import get_annotation_input
-
-from ..constants import ORDERED_AMINO_ACIDS, ModType
-
+from ..constants import ORDERED_AMINO_ACIDS, ModType, ModTypeLiteral
 from ..proforma.annotation import (
     ProFormaAnnotation,
 )
-
-from ..proforma.dclasses import ModDict, SPAN_TYPE
 
 
 def sequence_length(sequence: str | ProFormaAnnotation) -> int:
@@ -125,13 +121,13 @@ def is_modified(sequence: str | ProFormaAnnotation) -> bool:
 
     """
 
-    return get_annotation_input(sequence, copy=False).has_mods
+    return get_annotation_input(sequence, copy=False).has_mods()
 
 
 def get_mods(
     sequence: str | ProFormaAnnotation,
-    mods: ModType | Iterable[ModType] | None = None,
-) -> ModDict:
+    mods: ModType | Iterable[ModType] | ModTypeLiteral | None = None,
+) -> dict[str, Any]:
     """
     Parses a sequence with modifications and returns a dictionary where keys represent the position/type of the
     modifications.
@@ -161,58 +157,59 @@ def get_mods(
     .. code-block:: python
 
         # All modifications will be returned as Mod objects which contain the modification value and multiplier
-        >>> get_mods('PEP[Phospho]T[1]IDE[-3.14]')
-        {'internal': {2: [Mod('Phospho', 1)], 3: [Mod(1, 1)], 6: [Mod(-3.14, 1)]}}
+        >>> get_mods('PEP[Phospho]T[1]IDE[-3.14]')['internal']
+        {2: ('Phospho',), 3: (1,), 6: (-3.14,)}
 
-        >>> get_mods('PEP[Phospho][1.0]TIDE')
-        {'internal': {2: [Mod('Phospho', 1), Mod(1.0, 1)]}}
+        >>> get_mods('PEP[Phospho][1.0]TIDE')['internal']
+        {2: ('Phospho', 1.0)}
 
         # N-terminal modifications are mapped to the index 'nterm'
-        >>> get_mods('[Acetyl]-PEPTIDE')
-        {'nterm': [Mod('Acetyl', 1)]}
+        >>> get_mods('[Acetyl]-PEPTIDE')['nterm']
+        ('Acetyl',)
 
         # C-terminal modifications are mapped to the index 'cterm'
-        >>> get_mods('PEPTIDE-[Amide]')
-        {'cterm': [Mod('Amide', 1)]}
+        >>> get_mods('PEPTIDE-[Amide]')['cterm']
+        ('Amide',)
 
         # Isotopic modifications are mapped to the index 'isotope'
-        >>> get_mods('<13C>PEPTIDE')
-        {'isotope': [Mod('13C', 1)]}
+        >>> get_mods('<13C>PEPTIDE')['isotope']
+        ('13C',)
 
         # Static modifications are mapped to the index 'static'
-        >>> get_mods('<[+1.234]@P>PEPTIDE')
-        {'static': [Mod('[+1.234]@P', 1)]}
+        >>> get_mods('<[+1.234]@P>PEPTIDE')['static']
+        ('[+1.234]@P',)
 
         # Labile modifications are mapped to the index 'labile'
-        >>> get_mods('{Glycan:Hex}PEPTIDE')
-        {'labile': [Mod('Glycan:Hex', 1)]}
+        >>> get_mods('{Glycan:Hex}PEPTIDE')['labile']
+        ('Glycan:Hex',)
 
         # Unknown modifications are mapped to the index 'unknown'
-        >>> get_mods('[Phospho]^3?PEPTIDE')
-        {'unknown': [Mod('Phospho', 3)]}
+        >>> get_mods('[Phospho]^3?PEPTIDE')['unknown']
+        ('Phospho', 'Phospho', 'Phospho')
 
         # Intervals are mapped to the index 'interval'
-        >>> get_mods('PEP(TI)[Phospho]DE')
-        {'intervals': [Interval(3, 5, False, [Mod('Phospho', 1)])]}
+        >>> get_mods('PEP(TI)[Phospho]DE')['interval']
+        (ModInterval(start=3, end=5, ambiguous=False, mods=('Phospho',)),)
 
         # Charge state is mapped to the index 'charge'
-        >>> get_mods('PEPTIDE/+2')
-        {'charge': 2}
+        >>> get_mods('PEPTIDE/+2')['charge']
+        2
 
         # Charge adducts are mapped to the index 'charge_adducts'
-        >>> get_mods('PEPTIDE/+2[+2Na+,-H+]')
-        {'charge': 2, 'charge_adducts': [Mod('+2Na+,-H+', 1)]}
+        >>> get_mods('PEPTIDE/+2[+2Na+,-H+]')['charge_adducts']
+        ('+2Na+,-H+',)
 
     """
 
-    return get_annotation_input(sequence, copy=True).mod_dict(mods)
+    return get_annotation_input(sequence, copy=True).get_mods(mods)
 
 
 def add_mods(
     sequence: str | ProFormaAnnotation,
-    mods: dict[str, Any],
+    mods: Mapping[ModType | ModTypeLiteral | int, Any],
     append: bool = True,
     include_plus: bool = False,
+    precision: int | None = None,
 ) -> str:
     """
     Adds modifications to the given sequence. The modifications can be of type Mod, str, int, or float, and can be
@@ -279,10 +276,50 @@ def add_mods(
 
     """
 
+    annotation = get_annotation_input(sequence, copy=True)
+    annotation.add_mods(mods, inplace=True, append=append)
+    return annotation.serialize(include_plus=include_plus, precision=precision)
+
+
+def set_mods(
+    sequence: str | ProFormaAnnotation,
+    mods: Mapping[ModType | ModTypeLiteral | int, Any] | None,
+    include_plus: bool = False,
+    precision: int | None = None,
+) -> str:
+
     return (
         get_annotation_input(sequence, copy=True)
-        .add_mod_dict(mods, append=append)
-        .serialize(include_plus=include_plus)
+        .set_mods(mods, inplace=True)
+        .serialize(include_plus=include_plus, precision=precision)
+    )
+
+
+def append_mods(
+    sequence: str | ProFormaAnnotation,
+    mods: Mapping[ModType | ModTypeLiteral | int, Any],
+    include_plus: bool = False,
+    precision: int | None = None,
+) -> str:
+
+    return (
+        get_annotation_input(sequence, copy=True)
+        .append_mods(mods, inplace=True)
+        .serialize(include_plus=include_plus, precision=precision)
+    )
+
+
+def extend_mods(
+    sequence: str | ProFormaAnnotation,
+    mods: Mapping[ModType | ModTypeLiteral | int, Any],
+    include_plus: bool = False,
+    precision: int | None = None,
+) -> str:
+
+    return (
+        get_annotation_input(sequence, copy=True)
+        .extend_mods(mods, inplace=True)
+        .serialize(include_plus=include_plus, precision=precision)
     )
 
 
@@ -356,12 +393,14 @@ def pop_mods(
     .. code-block:: python
 
         # Simply combines the functionality of strip_modifications and get_modifications
-        >>> pop_mods('PEP[phospho]TIDE')
-        ('PEPTIDE', {'internal': {2: [Mod('phospho', 1)]}})
+        >>> pop_mods('PEP[phospho]TIDE')[0]
+        'PEPTIDE'
+        >>> pop_mods('PEP[phospho]TIDE')[1]['internal']
+        {2: ('phospho',)}
 
         # can specify which modifications to pop
         >>> pop_mods('PEP[phospho]TIDE-[+100]', mods=['internal'])
-        ('PEPTIDE-[100]', {'internal': {2: [Mod('phospho', 1)]}})
+        ('PEPTIDE-[100]', {'internal': {2: ('phospho',)}})
 
     """
     annotation = get_annotation_input(sequence=sequence, copy=True)
@@ -423,9 +462,9 @@ def strip_mods(
 
     """
 
-    return pop_mods(
+    return remove_mods(
         sequence=sequence, mods=mods, include_plus=include_plus, precision=precision
-    )[0]
+    )
 
 
 def filter_mods(
@@ -662,7 +701,7 @@ def shift(
 
 def span_to_sequence(
     sequence: str | ProFormaAnnotation,
-    span: SPAN_TYPE,
+    span: tuple[int, int, int],
     include_plus: bool = False,
     precision: int | None = None,
 ) -> str:
@@ -702,10 +741,8 @@ def span_to_sequence(
         >>> span_to_sequence('<13C>PEPTIDE[1.0]-[Amide]', (1, 6, 0))
         '<13C>EPTID'
 
-        >>> span_to_sequence('(PEPT)IDE', (1, 6, 0))
-        '(EPT)ID'
-
     """
+
     return (
         get_annotation_input(sequence=sequence, copy=True)
         .slice(span[0], span[1], inplace=True)
@@ -1082,7 +1119,7 @@ def modification_coverage(
     sequence: str | ProFormaAnnotation,
     subsequences: list[str | ProFormaAnnotation],
     accumulate: bool = False,
-) -> dict[int | str, int]:
+) -> dict[int, int]:
     """
     Calculate the modification coverage given a list of subsequences.
 
@@ -1121,9 +1158,16 @@ def modification_coverage(
 
     """
     sequence_annot = get_annotation_input(sequence, copy=False)
+    subsequence_annots = [
+        get_annotation_input(subseq, copy=False) for subseq in subsequences
+    ]
+
+    return sequence_annot.modification_coverage(
+        annotations=subsequence_annots, accumulate=accumulate
+    )
 
     # Get all modifications from the main sequence
-    sequence_mods = sequence_annot.mod_dict(mods=["internal", "nterm", "cterm"])
+    sequence_mods = sequence_annot.get_mods(mod_types=["internal", "nterm", "cterm"])
 
     # Initialize coverage dictionary with zeroes for all modification sites
     coverage_dict = {pos: 0 for pos in sequence_mods.get("internal", {})}
@@ -1147,8 +1191,8 @@ def modification_coverage(
         )
 
         # Get the modifications of the subsequence
-        subsequence_mods = subsequence_anot.mod_dict(
-            mods=["internal", "nterm", "cterm"]
+        subsequence_mods = subsequence_anot.get_mods(
+            mod_types=["internal", "nterm", "cterm"]
         )
 
         # For each occurrence, check if the subsequence contains modifications at the same positions
@@ -1222,7 +1266,10 @@ def annotate_ambiguity(
     forward_coverage: list[int],
     reverse_coverage: list[int],
     mass_shift: Any | None = None,
+    add_mods_to_intervals: bool = False,
+    sort_mods: bool = True,
     include_plus: bool = False,
+    condense_to_xnotation: bool = False,
     precision: int | None = None,
 ) -> str:
     """
@@ -1278,13 +1325,41 @@ def annotate_ambiguity(
         >>> annotate_ambiguity('SSGSIASSYVQWYQQRPGSAPTTVIYEDDERPSGVPDR', for_ions, rev_iosn, 120)
         '(?SSGS)IA(?SS)(?YVQ)W[120](?YQQRPGSA)(?PT)TVIYEDDER(?PS)(?GV)(?PDR)'
     """
-    return (
-        get_annotation_input(sequence=sequence, copy=True)
-        .annotate_ambiguity(
-            forward_coverage=forward_coverage,
-            reverse_coverage=reverse_coverage,
-            mass_shift=mass_shift,
-            inplace=True,
-        )
-        .serialize(include_plus=include_plus, precision=precision)
+    annot = get_annotation_input(sequence=sequence, copy=True).annotate_ambiguity(
+        forward_coverage=forward_coverage,
+        reverse_coverage=reverse_coverage,
+        mass_shift=mass_shift,
+        add_mods_to_intervals=add_mods_to_intervals,
+        sort_mods=sort_mods,
+        inplace=True,
+    )
+
+    if condense_to_xnotation:
+        annot.condense_ambiguity_to_xnotation(inplace=True)
+
+    return annot.serialize(include_plus=include_plus, precision=precision)
+
+
+def join(
+    annotations: Sequence[ProFormaAnnotation | str],
+    include_plus: bool = False,
+    precision: int | None = None,
+) -> str:
+    """
+    Join a list of ProFormaAnnotation objects into a single annotation.
+
+    :param annotations: The list of ProFormaAnnotation objects to join.
+    :type annotations: List[ProFormaAnnotation]
+
+    :raises ValueError: If the list is empty.
+
+    :return: The joined ProFormaAnnotation object.
+    :rtype: ProFormaAnnotation
+    """
+    if not annotations:
+        raise ValueError("Cannot join an empty list of annotations.")
+
+    annotations = [get_annotation_input(a, copy=False) for a in annotations]
+    return ProFormaAnnotation.join(annotations).serialize(
+        include_plus=include_plus, precision=precision
     )

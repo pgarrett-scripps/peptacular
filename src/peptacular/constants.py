@@ -4,7 +4,7 @@ Constants used throughout the peptacular package.
 
 import os
 from typing import Iterable, Literal
-from enum import Enum, StrEnum
+from enum import StrEnum
 
 import regex as re
 

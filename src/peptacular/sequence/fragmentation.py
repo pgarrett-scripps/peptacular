@@ -46,7 +46,7 @@ def get_losses(
 
 
 @overload
-def fragment( # type: ignore
+def fragment(  # type: ignore
     sequence: str | ProFormaAnnotation,
     ion_types: Sequence[IonTypeLiteral],
     charges: Sequence[int] | int,
@@ -142,7 +142,7 @@ def fragment(
 
         >>> list(fragment('TIDE', 'b', 1, return_type='mz', precision=3))
         [459.209, 330.166, 215.139, 102.055]
-        
+
         >>> list(fragment('TIDE', 'b', 1, return_type='mz-label', precision=3))
         [(459.209, '+b4'), (330.166, '+b3'), (215.139, '+b2'), (102.055, '+b1')]
     """

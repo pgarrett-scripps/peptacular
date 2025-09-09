@@ -117,7 +117,13 @@ class Interval:
         )
 
 
-ACCEPTED_INTERVAL_DATATYPE = Interval | ModInterval
+ACCEPTED_INTERVAL_DATATYPE = (
+    Interval
+    | ModInterval
+    | tuple[
+        int, int, bool, ModList | Iterable[MODLIST_DATATYPE] | MODLIST_DATATYPE | None
+    ]
+)
 
 
 # Type definitions for input handling
@@ -132,5 +138,24 @@ def setup_interval(interval: ACCEPTED_INTERVAL_DATATYPE) -> Interval:
             ambiguous=interval.ambiguous,
             mods=interval.mods,
         )
+    elif isinstance(interval, tuple):  # type: ignore
+        if len(interval) == 4:
+            try:
+                start = int(interval[0])
+                end = int(interval[1])
+                ambiguous = bool(interval[2])
+                mods = setup_mod_list(interval[3])
+            except (ValueError, TypeError) as e:
+                raise ValueError(f"Invalid tuple values for Interval: {e}")
+
+            return Interval(
+                start=start,
+                end=end,
+                ambiguous=ambiguous,
+                mods=mods,
+            )
+        else:
+            raise ValueError(f"Invalid tuple length for Interval: {len(interval)}")
+
     else:
         raise TypeError(f"Cannot convert {type(interval).__name__} to Interval")

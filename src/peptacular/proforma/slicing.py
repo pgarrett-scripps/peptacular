@@ -1,7 +1,7 @@
 from __future__ import annotations
 from collections.abc import Generator
 import random
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING, Any, Callable, Sequence
 
 from .dclasses.modlist import ModList
 
@@ -112,6 +112,71 @@ def split_annotation(annotation: ProFormaAnnotation) -> list[ProFormaAnnotation]
     for s, e in annot_slices:
         sliced = slice_annotation(annotation, s, e, inplace=False)
         result.append(sliced)
+
+    return result
+
+
+def join_annotations(annotations: Sequence[ProFormaAnnotation]) -> ProFormaAnnotation:
+    """
+    Join multiple ProFormaAnnotations into a single annotation (most likely from a split operation).
+
+    Args:
+        annotations: List of ProFormaAnnotations to join
+
+    Returns:
+        The joined ProFormaAnnotation
+    """
+    if not annotations:
+        raise ValueError("No annotations to join")
+
+    if len(annotations) == 1:
+        return annotations[0].copy()
+
+    # Start with a copy of the first annotation
+    result = annotations[0].copy()
+
+    # Concatenate sequences
+    full_sequence = "".join(ann.sequence for ann in annotations)
+    result.sequence = full_sequence
+
+    # Merge internal modifications, adjusting positions
+    new_internal_mods = ModDict()
+    current_pos = 0
+
+    for ann in annotations:
+        if ann.has_internal_mods:
+            for pos, mods in ann.get_internal_mod_dict().items():
+                new_internal_mods[current_pos + pos] = mods
+        current_pos += len(ann.sequence)
+
+    result.internal_mods = (
+        new_internal_mods if new_internal_mods.has_mods else ModDict()
+    )
+
+    # Merge intervals, adjusting positions
+    new_intervals = IntervalList()
+    current_pos = 0
+
+    for ann in annotations:
+        if ann.has_intervals:
+            for interval in ann.get_interval_list():
+                new_intervals.append(
+                    Interval(
+                        start=current_pos + interval.start,
+                        end=current_pos + interval.end,
+                        ambiguous=interval.ambiguous,
+                        mods=interval.mods,
+                    )
+                )
+        current_pos += len(ann.sequence)
+
+    result.intervals = new_intervals if new_intervals.has_intervals else IntervalList()
+
+    # Handle terminal modifications - only keep from first (N-term) and last (C-term)
+    if len(annotations) > 1:
+        last_ann = annotations[-1]
+        if last_ann.has_cterm_mods:
+            result.cterm_mods = last_ann.cterm_mods
 
     return result
 

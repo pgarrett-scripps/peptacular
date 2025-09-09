@@ -91,7 +91,7 @@ def _build_fragments(
     """
 
     if len(annotation.stripped_sequence) == 0:
-        return 
+        return
 
     annot_sequence = annotation.serialize()
 

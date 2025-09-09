@@ -15,7 +15,7 @@ from peptacular.proforma.mod_builder import (
 
 
 class TestGetModIndexFromAA(unittest.TestCase):
-    
+
     def test_single_match_beginning(self):
         """Test single match at beginning of peptide."""
         result = get_mod_index_from_aa("PEPTIDE", "P")
@@ -63,7 +63,7 @@ class TestGetModIndexFromAA(unittest.TestCase):
 
 
 class TestGetModIndexFromRegexImplemented(unittest.TestCase):
-    
+
     def test_single_character_regex_match(self):
         """Test regex matching single character."""
         result = get_mod_index_from_regex("PEPTIDE", r"P")
@@ -127,7 +127,7 @@ class TestGetModIndexFromRegexImplemented(unittest.TestCase):
 
 
 class TestGetSites(unittest.TestCase):
-    
+
     def setUp(self):
         self.phospho_mod = pt.Mod("Phospho", 1)
         self.oxidation_mod = pt.Mod("Oxidation", 1)
@@ -148,14 +148,22 @@ class TestGetSites(unittest.TestCase):
         """Test single modification on multiple amino acids."""
         mods = {"PE": [self.oxidation_mod]}
         result = get_sites("PEPTIDE", mods, is_regex=False)
-        expected = {0: [self.oxidation_mod], 1: [self.oxidation_mod], 2: [self.oxidation_mod], 6: [self.oxidation_mod]}
+        expected = {
+            0: [self.oxidation_mod],
+            1: [self.oxidation_mod],
+            2: [self.oxidation_mod],
+            6: [self.oxidation_mod],
+        }
         self.assertEqual(result, expected)
 
     def test_multiple_mods_same_aa(self):
         """Test multiple modifications on same amino acid."""
         mods = {"P": [self.phospho_mod, self.oxidation_mod]}
         result = get_sites("PEPTIDE", mods, is_regex=False)
-        expected = {0: [self.phospho_mod, self.oxidation_mod], 2: [self.phospho_mod, self.oxidation_mod]}
+        expected = {
+            0: [self.phospho_mod, self.oxidation_mod],
+            2: [self.phospho_mod, self.oxidation_mod],
+        }
         self.assertEqual(result, expected)
 
     def test_multiple_mod_types(self):
@@ -163,10 +171,10 @@ class TestGetSites(unittest.TestCase):
         mods = {"P": [self.phospho_mod], "E": [self.oxidation_mod]}
         result = get_sites("PEPTIDE", mods, is_regex=False)
         expected = {
-            0: [self.phospho_mod], 
-            1: [self.oxidation_mod], 
-            2: [self.phospho_mod], 
-            6: [self.oxidation_mod]
+            0: [self.phospho_mod],
+            1: [self.oxidation_mod],
+            2: [self.phospho_mod],
+            6: [self.oxidation_mod],
         }
         self.assertEqual(result, expected)
 
@@ -188,7 +196,10 @@ class TestGetSites(unittest.TestCase):
         """Test with mixed modification value types."""
         mods = {"P": [self.phospho_mod, 123.456, "StringMod"]}
         result = get_sites("PEPTIDE", mods, is_regex=False)
-        expected = {0: [self.phospho_mod, 123.456, "StringMod"], 2: [self.phospho_mod, 123.456, "StringMod"]}
+        expected = {
+            0: [self.phospho_mod, 123.456, "StringMod"],
+            2: [self.phospho_mod, 123.456, "StringMod"],
+        }
         self.assertEqual(result, expected)
 
     def test_no_matching_sites(self):
@@ -196,7 +207,6 @@ class TestGetSites(unittest.TestCase):
         mods = {"X": [self.phospho_mod]}
         result = get_sites("PEPTIDE", mods, is_regex=False)
         self.assertEqual(result, {})
-
 
     def test_empty_mod_list(self):
         """Test with empty modification list."""
@@ -206,9 +216,9 @@ class TestGetSites(unittest.TestCase):
 
 
 class TestEnsureSingleStaticMod(unittest.TestCase):
-    
+
     def setUp(self):
-        self.phospho_mod = pt.Mod("Phospho",1)
+        self.phospho_mod = pt.Mod("Phospho", 1)
         self.oxidation_mod = pt.Mod("Oxidation", 1)
 
     def test_single_mod_per_site_no_warning(self):
@@ -238,7 +248,7 @@ class TestEnsureSingleStaticMod(unittest.TestCase):
 
 
 class TestUpdateModList(unittest.TestCase):
-    
+
     def setUp(self):
         self.phospho_mod = pt.Mod("Phospho", 1)
         self.oxidation_mod = pt.Mod("Oxidation", 1)
@@ -275,7 +285,7 @@ class TestUpdateModList(unittest.TestCase):
 
 
 class TestApplyMods(unittest.TestCase):
-    
+
     def setUp(self):
         self.annotation = pt.ProFormaAnnotation(sequence="PEPTIDE")
         self.phospho_mod = pt.Mod("Phospho", 1)
@@ -305,13 +315,13 @@ class TestApplyMods(unittest.TestCase):
         nterm_mods = {"P": [self.acetyl_mod]}
         cterm_mods = {"E": [self.oxidation_mod]}
         internal_mods = {"T": [self.phospho_mod]}
-        
+
         result = apply_mods(
             self.annotation,
             nterm=nterm_mods,
             cterm=cterm_mods,
             internal=internal_mods,
-            inplace=False
+            inplace=False,
         )
         self.assertEqual(result.serialize(), "[Acetyl]-PEPT[Phospho]IDE-[Oxidation]")
 
@@ -332,10 +342,12 @@ class TestApplyMods(unittest.TestCase):
         """Test merge strategy 'update' clears existing mods."""
         # Pre-populate annotation with modifications
         self.annotation.get_internal_mod_dict()[0] = pt.ModList([self.oxidation_mod])
-        
+
         internal_mods = {"P": [self.phospho_mod]}
-        result = apply_mods(self.annotation, internal=internal_mods, inplace=True, merge_strat="update")
-        
+        result = apply_mods(
+            self.annotation, internal=internal_mods, inplace=True, merge_strat="update"
+        )
+
         # Should only have phospho mod, oxidation should be cleared
         self.assertEqual(result.serialize(), "P[Phospho]EP[Phospho]TIDE")
 
@@ -343,10 +355,12 @@ class TestApplyMods(unittest.TestCase):
         """Test merge strategy 'merge' combines with existing mods."""
         # Pre-populate annotation with modifications
         self.annotation.get_internal_mod_dict()[0] = pt.ModList([self.oxidation_mod])
-        
+
         internal_mods = {"P": [self.phospho_mod]}
-        result = apply_mods(self.annotation, internal=internal_mods, inplace=True, merge_strat="merge")
-        
+        result = apply_mods(
+            self.annotation, internal=internal_mods, inplace=True, merge_strat="merge"
+        )
+
         # Should have both oxidation and phospho mods
         mod_list = result.get_internal_mod_dict()[0]
         self.assertIn(self.oxidation_mod, mod_list)
@@ -354,17 +368,21 @@ class TestApplyMods(unittest.TestCase):
 
     def test_none_modifications(self):
         """Test with None modification parameters."""
-        result = apply_mods(self.annotation, nterm=None, cterm=None, internal=None, inplace=False)
+        result = apply_mods(
+            self.annotation, nterm=None, cterm=None, internal=None, inplace=False
+        )
         self.assertEqual(result.serialize(), "PEPTIDE")
 
     def test_empty_modification_dicts(self):
         """Test with empty modification dictionaries."""
-        result = apply_mods(self.annotation, nterm={}, cterm={}, internal={}, inplace=False)
+        result = apply_mods(
+            self.annotation, nterm={}, cterm={}, internal={}, inplace=False
+        )
         self.assertEqual(result.serialize(), "PEPTIDE")
 
 
 class TestBuildMods(unittest.TestCase):
-    
+
     def setUp(self):
         self.annotation = pt.ProFormaAnnotation(sequence="PEPTIDE")
         self.phospho_mod = pt.Mod("Phospho", 1)
@@ -379,21 +397,25 @@ class TestBuildMods(unittest.TestCase):
 
     def test_static_modifications_only(self):
         """Test build_mods with only static modifications."""
-        results = list(build_mods(
-            self.annotation, 
-            internal_static={"P": [self.phospho_mod]},
-            max_variable_mods=0
-        ))
+        results = list(
+            build_mods(
+                self.annotation,
+                internal_static={"P": [self.phospho_mod]},
+                max_variable_mods=0,
+            )
+        )
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0].serialize(), "P[Phospho]EP[Phospho]TIDE")
 
     def test_variable_modifications_only(self):
         """Test build_mods with only variable modifications."""
-        results = list(build_mods(
-            self.annotation,
-            internal_variable={"P": [self.phospho_mod]},
-            max_variable_mods=1
-        ))
+        results = list(
+            build_mods(
+                self.annotation,
+                internal_variable={"P": [self.phospho_mod]},
+                max_variable_mods=1,
+            )
+        )
         # Should generate: no mods, P@0, P@2
         self.assertEqual(len(results), 3)
         serialized = [r.serialize() for r in results]
@@ -403,12 +425,14 @@ class TestBuildMods(unittest.TestCase):
 
     def test_static_and_variable_modifications(self):
         """Test build_mods with both static and variable modifications."""
-        results = list(build_mods(
-            self.annotation,
-            internal_static={"T": [self.phospho_mod]},
-            internal_variable={"P": [self.oxidation_mod]},
-            max_variable_mods=1
-        ))
+        results = list(
+            build_mods(
+                self.annotation,
+                internal_static={"T": [self.phospho_mod]},
+                internal_variable={"P": [self.oxidation_mod]},
+                max_variable_mods=1,
+            )
+        )
         # Should generate: static only, static + P@0, static + P@2
         self.assertEqual(len(results), 3)
         serialized = [r.serialize() for r in results]
@@ -418,31 +442,37 @@ class TestBuildMods(unittest.TestCase):
 
     def test_nterm_static_modifications(self):
         """Test N-terminal static modifications."""
-        results = list(build_mods(
-            self.annotation,
-            nterm_static={"P": [self.acetyl_mod]},
-            max_variable_mods=0
-        ))
+        results = list(
+            build_mods(
+                self.annotation,
+                nterm_static={"P": [self.acetyl_mod]},
+                max_variable_mods=0,
+            )
+        )
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0].serialize(), "[Acetyl]-PEPTIDE")
 
     def test_cterm_static_modifications(self):
         """Test C-terminal static modifications."""
-        results = list(build_mods(
-            self.annotation,
-            cterm_static={"E": [self.oxidation_mod]},
-            max_variable_mods=0
-        ))
+        results = list(
+            build_mods(
+                self.annotation,
+                cterm_static={"E": [self.oxidation_mod]},
+                max_variable_mods=0,
+            )
+        )
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0].serialize(), "PEPTIDE-[Oxidation]")
 
     def test_nterm_variable_modifications(self):
         """Test N-terminal variable modifications."""
-        results = list(build_mods(
-            self.annotation,
-            nterm_variable={"P": [self.acetyl_mod]},
-            max_variable_mods=1
-        ))
+        results = list(
+            build_mods(
+                self.annotation,
+                nterm_variable={"P": [self.acetyl_mod]},
+                max_variable_mods=1,
+            )
+        )
         self.assertEqual(len(results), 2)
         serialized = [r.serialize() for r in results]
         self.assertIn("PEPTIDE", serialized)
@@ -450,11 +480,13 @@ class TestBuildMods(unittest.TestCase):
 
     def test_cterm_variable_modifications(self):
         """Test C-terminal variable modifications."""
-        results = list(build_mods(
-            self.annotation,
-            cterm_variable={"E": [self.oxidation_mod]},
-            max_variable_mods=1
-        ))
+        results = list(
+            build_mods(
+                self.annotation,
+                cterm_variable={"E": [self.oxidation_mod]},
+                max_variable_mods=1,
+            )
+        )
         self.assertEqual(len(results), 2)
         serialized = [r.serialize() for r in results]
         self.assertIn("PEPTIDE", serialized)
@@ -462,11 +494,13 @@ class TestBuildMods(unittest.TestCase):
 
     def test_labile_static_modifications(self):
         """Test labile static modifications."""
-        results = list(build_mods(
-            self.annotation,
-            labile_static={"P": [self.phospho_mod]},
-            max_variable_mods=0
-        ))
+        results = list(
+            build_mods(
+                self.annotation,
+                labile_static={"P": [self.phospho_mod]},
+                max_variable_mods=0,
+            )
+        )
         self.assertEqual(len(results), 1)
         # Labile mods should appear in serialization
         serialized = results[0].serialize()
@@ -474,11 +508,13 @@ class TestBuildMods(unittest.TestCase):
 
     def test_labile_variable_modifications(self):
         """Test labile variable modifications."""
-        results = list(build_mods(
-            self.annotation,
-            labile_variable={"P": [self.phospho_mod]},
-            max_variable_mods=1
-        ))
+        results = list(
+            build_mods(
+                self.annotation,
+                labile_variable={"P": [self.phospho_mod]},
+                max_variable_mods=1,
+            )
+        )
         # Should generate combinations with labile mods
         self.assertEqual(len(results), 3)
         serialized = [r.serialize() for r in results]
@@ -490,35 +526,41 @@ class TestBuildMods(unittest.TestCase):
     def test_max_variable_mods_limit(self):
         """Test max_variable_mods parameter limits combinations."""
         # With max_variable_mods=1, should get 3 results for 2 possible sites
-        results_1 = list(build_mods(
-            self.annotation,
-            internal_variable={"P": [self.phospho_mod]},
-            max_variable_mods=1
-        ))
+        results_1 = list(
+            build_mods(
+                self.annotation,
+                internal_variable={"P": [self.phospho_mod]},
+                max_variable_mods=1,
+            )
+        )
         self.assertEqual(len(results_1), 3)  # no mods, P@0, P@2
-        
+
         # With max_variable_mods=2, should get 4 results
-        results_2 = list(build_mods(
-            self.annotation,
-            internal_variable={"P": [self.phospho_mod]},
-            max_variable_mods=2
-        ))
+        results_2 = list(
+            build_mods(
+                self.annotation,
+                internal_variable={"P": [self.phospho_mod]},
+                max_variable_mods=2,
+            )
+        )
         serialized = [r.serialize() for r in results_2]
         self.assertEqual(len(results_2), 4)  # no mods, P@0, P@2, P@0+P@2
-        self.assertTrue('PEPTIDE' in serialized)
-        self.assertTrue('P[Phospho]EPTIDE' in serialized)
-        self.assertTrue('PEP[Phospho]TIDE' in serialized)
-        self.assertTrue('P[Phospho]EP[Phospho]TIDE' in serialized)
+        self.assertTrue("PEPTIDE" in serialized)
+        self.assertTrue("P[Phospho]EPTIDE" in serialized)
+        self.assertTrue("PEP[Phospho]TIDE" in serialized)
+        self.assertTrue("P[Phospho]EP[Phospho]TIDE" in serialized)
 
     def test_site_conflict_prevention(self):
         """Test that site conflicts are prevented."""
         # Two different mods for the same amino acid should not conflict
         # since they're applied to the same sites
-        results = list(build_mods(
-            self.annotation,
-            internal_variable={"P": [self.phospho_mod, self.oxidation_mod]},
-            max_variable_mods=1
-        ))
+        results = list(
+            build_mods(
+                self.annotation,
+                internal_variable={"P": [self.phospho_mod, self.oxidation_mod]},
+                max_variable_mods=1,
+            )
+        )
         # Should generate: no mods, phospho@0, phospho@2, oxidation@0, oxidation@2
         self.assertEqual(len(results), 5)
         serializxed = [r.serialize() for r in results]
@@ -530,13 +572,15 @@ class TestBuildMods(unittest.TestCase):
 
     def test_multiple_variable_mod_types(self):
         """Test with multiple types of variable modifications."""
-        results = list(build_mods(
-            self.annotation,
-            nterm_variable={"P": [self.acetyl_mod]},
-            internal_variable={"T": [self.phospho_mod]},
-            cterm_variable={"E": [self.oxidation_mod]},
-            max_variable_mods=2
-        ))
+        results = list(
+            build_mods(
+                self.annotation,
+                nterm_variable={"P": [self.acetyl_mod]},
+                internal_variable={"T": [self.phospho_mod]},
+                cterm_variable={"E": [self.oxidation_mod]},
+                max_variable_mods=2,
+            )
+        )
         # Should generate many combinations
         self.assertEqual(len(results), 7)
         serialized = [r.serialize() for r in results]
@@ -551,12 +595,14 @@ class TestBuildMods(unittest.TestCase):
     def test_use_regex_parameter(self):
         """Test use_regex parameter is passed through."""
         # This mainly tests that the parameter doesn't cause errors
-        results = list(build_mods(
-            self.annotation,
-            internal_static={"P": [self.phospho_mod]},
-            max_variable_mods=0,
-            use_regex=False
-        ))
+        results = list(
+            build_mods(
+                self.annotation,
+                internal_static={"P": [self.phospho_mod]},
+                max_variable_mods=0,
+                use_regex=False,
+            )
+        )
         self.assertEqual(len(results), 1)
 
     def test_empty_sequence_annotation(self):
@@ -569,11 +615,13 @@ class TestBuildMods(unittest.TestCase):
     def test_single_amino_acid_sequence(self):
         """Test with single amino acid sequence."""
         single_aa = pt.ProFormaAnnotation(sequence="P")
-        results = list(build_mods(
-            single_aa,
-            internal_variable={"P": [self.phospho_mod]},
-            max_variable_mods=1
-        ))
+        results = list(
+            build_mods(
+                single_aa,
+                internal_variable={"P": [self.phospho_mod]},
+                max_variable_mods=1,
+            )
+        )
         self.assertEqual(len(results), 2)
         serialized = [r.serialize() for r in results]
         self.assertIn("P", serialized)

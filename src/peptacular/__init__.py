@@ -14,7 +14,7 @@ from .glycan import *
 from .isotope import *
 from .constants import *
 
-# from .score import *
+from .score import *
 from .util import *
 from .spans import *
 from .fasta import *
