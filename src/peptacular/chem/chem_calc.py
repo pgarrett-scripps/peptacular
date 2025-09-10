@@ -322,7 +322,6 @@ def _parse_mod_delta_mass(mod: str) -> float | None:
 
     mass = None
     for mod_str in mod.split("|"):
-
         # check if the mod contains a localization score
         if "#" in mod_str:
             mod_str = mod_str.split("#")[0]
@@ -347,7 +346,6 @@ def _parse_mod_delta_mass(mod: str) -> float | None:
             or mod_lower.startswith("gno:")
             or mod_lower.startswith("g:")
         ):
-
             mod_str = mod_str.split(":")[1]
 
             if mod_str.startswith("+") or mod_str.startswith("-"):

@@ -611,7 +611,6 @@ def parse_static_mods(
         return static_mod_dict
 
     for mod in mods:
-
         if isinstance(mod, Mod):
             mod = mod.val
 
@@ -698,7 +697,6 @@ def parse_isotope_mods(mods: Iterable[MOD_VALUE_TYPES]) -> dict[str, str]:
 
     isotope_map: dict[str, str] = {}
     for mod in mods:
-
         if isinstance(mod, Mod):
             mod = mod.val
 

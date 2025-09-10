@@ -6,31 +6,31 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = 'peptacular'
-copyright = '2025, Patrick Garrett'
-author = 'Patrick Garrett'
-release = '2.2.0'
+project = "peptacular"
+copyright = "2025, Patrick Garrett"
+author = "Patrick Garrett"
+release = "2.2.0"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.viewcode',
-    'sphinx.ext.napoleon',
-    'sphinx.ext.intersphinx',
+    "sphinx.ext.autodoc",
+    "sphinx.ext.viewcode",
+    "sphinx.ext.napoleon",
+    "sphinx.ext.intersphinx",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 exclude_patterns = []
 
 # Configure autodoc
 autodoc_default_options = {
-    'members': True,
-    'member-order': 'bysource',
-    'undoc-members': True,
-    'show-inheritance': True,
+    "members": True,
+    "member-order": "bysource",
+    "undoc-members": True,
+    "show-inheritance": True,
 }
 
 # Napoleon settings for better docstring handling
@@ -52,18 +52,19 @@ napoleon_attr_annotations = True
 # -- Add path to package ---------------------------------------------------
 import os
 import sys
+
 # Add the src directory to the path so that imports work properly
-sys.path.insert(0, os.path.abspath('../..'))
+sys.path.insert(0, os.path.abspath("../.."))
 # This makes autodoc find packages inside src directory without including src in the module path
-sys.path.insert(0, os.path.abspath('../../src'))
+sys.path.insert(0, os.path.abspath("../../src"))
 
 # -- Configuration for better module names in documentation --
 # This helps display the project name correctly without the "src." prefix
-modindex_common_prefix = ['peptacular.']
+modindex_common_prefix = ["peptacular."]
 add_module_names = False  # Don't add module names to objects
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = 'sphinx_rtd_theme'
-html_static_path = ['_static']
+html_theme = "sphinx_rtd_theme"
+html_static_path = ["_static"]

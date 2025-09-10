@@ -127,7 +127,6 @@ def get_cleavage_sites(
 
 
 def _convert_to_aa_set(aa_keys: str | None) -> set[str]:
-
     X = set("GASPVTCILJNDQKEMHFRYWUO")
     B = set("DN")
     J = set("IL")
@@ -240,7 +239,6 @@ def digest_annotation_by_aa(
         DigestReturnTypeLiterals | DigestReturnType
     ) = DigestReturnType.ANNOTATION,
 ) -> DigestGenerator:
-
     return digest_annotation_by_regex(
         annotation=annotation,
         enzyme_regex=generate_regex(
@@ -273,7 +271,6 @@ def digest_annotation_by_regex(
         DigestReturnTypeLiterals | DigestReturnType
     ) = DigestReturnType.ANNOTATION,
 ) -> DigestGenerator:
-
     all_spans: set[SPAN_TYPE] = set()
     if not complete_digestion:
         all_spans.add((0, len(annotation), 0))
@@ -355,7 +352,9 @@ def sequential_digest_annotation(
                         span[0] + digested_span[1],  # type: ignore
                         span[2],  # type: ignore
                     )
-                    fixed_digested_anot_spans.append((digested_anot, fixed_digested_span))  # type: ignore
+                    fixed_digested_anot_spans.append(
+                        (digested_anot, fixed_digested_span)
+                    )  # type: ignore
 
                 sequential_digested_anot_spans.extend(fixed_digested_anot_spans)
 

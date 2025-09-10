@@ -3,7 +3,6 @@ import peptacular as pt
 
 
 class TestJoin(unittest.TestCase):
-
     def test_join_basic_sequence(self):
         """Test joining basic split sequence back together"""
         annotation = pt.ProFormaAnnotation.parse("PEPTIDE")

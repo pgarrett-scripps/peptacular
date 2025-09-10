@@ -67,7 +67,6 @@ class SequencePropertyMixin:
 
     @property
     def hydrophobicity(self: SequenceProtocol) -> float:
-
         val = calc_property(
             sequence=self.stripped_sequence,
             scale=HydrophobicityScale.KYTE_DOOLITTLE,
@@ -82,7 +81,6 @@ class SequencePropertyMixin:
     def flexibility(
         self: SequenceProtocol,
     ) -> float:
-
         val = calc_property(
             sequence=self.stripped_sequence,
             scale=PhysicalPropertyScale.FLEXIBILITY_VIHINEN,

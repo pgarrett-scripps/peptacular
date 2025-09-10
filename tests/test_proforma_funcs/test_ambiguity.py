@@ -4,7 +4,6 @@ from peptacular import ModType, IonType
 
 
 class TestCondenseAmbiguityToXNotation(unittest.TestCase):
-
     def test_basic_ambiguous_interval(self):
         """Test condensing basic ambiguous interval to X notation"""
         annotation = pt.ProFormaAnnotation.parse("PEP(?TIDE)[Phospho]")
@@ -48,7 +47,6 @@ class TestCondenseAmbiguityToXNotation(unittest.TestCase):
 
 
 class TestCondenseModsToIntervals(unittest.TestCase):
-
     def test_basic_modification_condensation(self):
         """Test condensing internal modification into existing interval"""
         annotation = pt.ProFormaAnnotation.parse("[2]-PEPT(I[Phospho]D)E-[1]")

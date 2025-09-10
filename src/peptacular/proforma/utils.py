@@ -302,7 +302,6 @@ def parse_static_mods(mods: Iterable[Mod] | Mod | None) -> Dict[str, List[Mod]]:
         )
 
     for mod in mods:
-
         if not isinstance(mod.val, str):
             raise TypeError(
                 f"Invalid type for static mods: {type(mod)}! Mod or Mod.val must be of type string."
@@ -394,7 +393,6 @@ def parse_isotope_mods(mods: Iterable[Mod] | Mod | None) -> Dict[str, str]:
 
     isotope_map: Dict[str, str] = {}
     for mod in mods:
-
         if not isinstance(mod.val, str):
             raise TypeError(
                 f"Invalid type for isotope mods: {type(mod.val)}! Mod.val must be of type string."

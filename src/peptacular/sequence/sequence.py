@@ -287,7 +287,6 @@ def set_mods(
     include_plus: bool = False,
     precision: int | None = None,
 ) -> str:
-
     return (
         get_annotation_input(sequence, copy=True)
         .set_mods(mods, inplace=True)
@@ -301,7 +300,6 @@ def append_mods(
     include_plus: bool = False,
     precision: int | None = None,
 ) -> str:
-
     return (
         get_annotation_input(sequence, copy=True)
         .append_mods(mods, inplace=True)
@@ -315,7 +313,6 @@ def extend_mods(
     include_plus: bool = False,
     precision: int | None = None,
 ) -> str:
-
     return (
         get_annotation_input(sequence, copy=True)
         .extend_mods(mods, inplace=True)
@@ -1180,7 +1177,6 @@ def modification_coverage(
 
     # Process each subsequence
     for subsequence in subsequences:
-
         subsequence_anot = get_annotation_input(subsequence, copy=False)
 
         # Get the unmodified subsequence
@@ -1205,7 +1201,6 @@ def modification_coverage(
                 if 0 <= relative_pos < len(unmodified_subsequence):
                     # Check if the subsequence has a modification at this relative position
                     if relative_pos in subsequence_mods.get("internal", {}):
-
                         # For each modification in the main sequence at this position
                         for mod_value in mod_values:
                             # Check if any modification in the subsequence matches

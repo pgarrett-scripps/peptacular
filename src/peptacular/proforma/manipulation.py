@@ -38,7 +38,6 @@ def coverage(
     ignore_mods: bool = False,
     ignore_ambiguity: bool = False,
 ) -> list[int]:
-
     cov_arr = [0] * len(annotation)
 
     for sub_annots in annotations:
@@ -76,7 +75,6 @@ def percent_coverage(
     ignore_mods: bool = False,
     ignore_ambiguity: bool = False,
 ) -> float:
-
     cov_arr = coverage(
         annotation,
         annotations,
@@ -96,7 +94,6 @@ def modification_coverage(
     ignore_ambiguity: bool = False,
     accumulate: bool = False,
 ) -> dict[int, int]:
-
     cov_dict = coverage(
         annotation,
         annotations,

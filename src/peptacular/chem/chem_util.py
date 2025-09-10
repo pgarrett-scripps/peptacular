@@ -228,7 +228,6 @@ def chem_mass(
 
     m = 0.0
     for element, count in formula.items():
-
         if element not in ISOTOPIC_ATOMIC_MASSES:
             if element == "e":
                 m += ELECTRON_MASS * count

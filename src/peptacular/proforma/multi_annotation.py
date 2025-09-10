@@ -55,7 +55,6 @@ class MultiProFormaAnnotation:
         annots: list[ProFormaAnnotation] = []
         connections: list[bool] = []
         for prof_parser, connection in ProFormaParser(sequence).parse():
-
             annot = ProFormaAnnotation(
                 sequence="".join(prof_parser.amino_acids),
                 isotope_mods=prof_parser.isotope_mods.copy(),

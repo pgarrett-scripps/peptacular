@@ -21,6 +21,11 @@ from ..mods.mod_db_setup import (
     GNO_DB,
 )
 
+def _round_mass(mass: float, precision: Optional[int]) -> float:
+    if precision is not None:
+        return round(mass, precision)
+    return mass
+
 
 def _get_mass(
     db: EntryDb,
@@ -32,11 +37,10 @@ def _get_mass(
     """
     Helper function for getting the mass of a modification from a db.
     """
-    round_func = lambda x: round(x, precision) if precision is not None else x
 
     if mod_str.startswith("+") or mod_str.startswith("-"):
         try:
-            return round_func(float(mod_str))
+            return _round_mass(float(mod_str), precision)
         except ValueError as err:
             raise InvalidDeltaMassError(orig_str) from err
 
@@ -62,7 +66,7 @@ def _get_mass(
     if m is None:
         raise UnknownModificationMassError(orig_str)
 
-    return round_func(m)
+    return _round_mass(m, precision)
 
 
 def _get_comp(db: EntryDb, mod_str: str, orig_str: str) -> str:

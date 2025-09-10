@@ -21,7 +21,6 @@ def build_mods(
     precision: int | None = None,
     include_plus: bool = False,
 ) -> Generator[str, None, None]:
-
     annotation = get_annotation_input(sequence, copy=False)
     for annot in annotation.build_mods(
         nterm_static=nterm_static,

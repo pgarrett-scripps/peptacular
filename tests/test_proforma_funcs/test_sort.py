@@ -5,7 +5,6 @@ import peptacular as pt
 
 
 class TestSort(unittest.TestCase):
-
     def test_basic_sort(self):
         annotation = pt.ProFormaAnnotation.parse("PEPTIDE")
         sorted_annotation = annotation.sort()

@@ -41,13 +41,15 @@ def gen_chem_db():
         for line in file:
             line = line.strip()  # Remove leading and trailing whitespace
             if line == "":  # New block starts after an empty line
-                e = ElementInfo(atomic_number,
-                                atomic_symbol,
-                                mass_number,
-                                relative_atomic_mass,
-                                isotopic_composition,
-                                standard_atomic_weight,
-                                notes)
+                e = ElementInfo(
+                    atomic_number,
+                    atomic_symbol,
+                    mass_number,
+                    relative_atomic_mass,
+                    isotopic_composition,
+                    standard_atomic_weight,
+                    notes,
+                )
                 element_infos.append(e)
 
                 # Reset variables
@@ -60,8 +62,7 @@ def gen_chem_db():
                 notes = None
 
             else:  # Extract key and value from the current line
-
-                elems = line.split('=')
+                elems = line.split("=")
                 key = elems[0].rstrip()
                 value = elems[1].lstrip()
 
@@ -72,19 +73,21 @@ def gen_chem_db():
                 elif key == "Mass Number":
                     mass_number = int(value)
                 elif key == "Relative Atomic Mass":
-                    relative_atomic_mass = float(value.split('(')[0])
+                    relative_atomic_mass = float(value.split("(")[0])
                 elif key == "Isotopic Composition":
-                    if value == '':
+                    if value == "":
                         isotopic_composition = 0.0
                     else:
-                        isotopic_composition = float(value.split('(')[0])
+                        isotopic_composition = float(value.split("(")[0])
                 elif key == "Standard Atomic Weight":
-                    if value == '':  # Can be empty
+                    if value == "":  # Can be empty
                         standard_atomic_weight = None
-                    elif value.startswith('[') and value.endswith(']'):
-                        standard_atomic_weight = list(map(float, value[1:-1].split(',')))
+                    elif value.startswith("[") and value.endswith("]"):
+                        standard_atomic_weight = list(
+                            map(float, value[1:-1].split(","))
+                        )
                     else:
-                        standard_atomic_weight = float(value.split('(')[0])
+                        standard_atomic_weight = float(value.split("(")[0])
                 elif key == "Notes":
                     notes = value
                 else:
@@ -92,16 +95,20 @@ def gen_chem_db():
 
         # Don't forget to add the last entry after exiting the loop
         if atomic_number is not None:
-            e = ElementInfo(atomic_number,
-                            atomic_symbol,
-                            mass_number,
-                            relative_atomic_mass,
-                            isotopic_composition,
-                            standard_atomic_weight,
-                            notes)
+            e = ElementInfo(
+                atomic_number,
+                atomic_symbol,
+                mass_number,
+                relative_atomic_mass,
+                isotopic_composition,
+                standard_atomic_weight,
+                notes,
+            )
             element_infos.append(e)
 
-    def map_atomic_number_to_infos(infos: List[ElementInfo]) -> Dict[int, List[ElementInfo]]:
+    def map_atomic_number_to_infos(
+        infos: List[ElementInfo],
+    ) -> Dict[int, List[ElementInfo]]:
         d = {}
         for info in infos:
             if info.atomic_number not in d:
@@ -113,7 +120,9 @@ def gen_chem_db():
     # map atomic number to all element infos
     atomic_number_to_infos = map_atomic_number_to_infos(element_infos)
 
-    def map_atomic_number_to_symbol(aa_infos: Dict[int, List[ElementInfo]]) -> Dict[int, str]:
+    def map_atomic_number_to_symbol(
+        aa_infos: Dict[int, List[ElementInfo]],
+    ) -> Dict[int, str]:
         d = {}
         for _, infos in aa_infos.items():
             infos.sort(key=lambda x: x.isotopic_composition, reverse=True)
@@ -126,21 +135,27 @@ def gen_chem_db():
     # map atomic number to symbol
     atomic_number_to_symbol = map_atomic_number_to_symbol(atomic_number_to_infos)
 
-    def map_atomic_symbol_to_average_mass(aa_infos: Dict[int, List[ElementInfo]]) -> Dict[str, float]:
+    def map_atomic_symbol_to_average_mass(
+        aa_infos: Dict[int, List[ElementInfo]],
+    ) -> Dict[str, float]:
         d = {}
         for _, infos in aa_infos.items():
             infos.sort(key=lambda x: x.isotopic_composition, reverse=True)
 
             # first elem is monoisotopic
             monoisotopic_info = infos[0]
-            d[monoisotopic_info.atomic_symbol] = sum([info.average_mass_component() for info in infos])
+            d[monoisotopic_info.atomic_symbol] = sum(
+                [info.average_mass_component() for info in infos]
+            )
 
         return d
 
     # calculate average atomic mass for each element
     average_atomic_masses = map_atomic_symbol_to_average_mass(atomic_number_to_infos)
 
-    def get_isotopic_atomic_compositions(aa_infos: Dict[int, List[ElementInfo]]) -> Dict[str, float]:
+    def get_isotopic_atomic_compositions(
+        aa_infos: Dict[int, List[ElementInfo]],
+    ) -> Dict[str, float]:
         d = {}
         for _, infos in aa_infos.items():
             infos.sort(key=lambda x: x.isotopic_composition, reverse=True)
@@ -152,14 +167,16 @@ def gen_chem_db():
             for info in infos:
                 d[str(info)] = info.isotopic_composition
 
-        d['T'] = d['3T']
-        d['D'] = d['2D']
-        d['3H'] = d['3T']
-        d['2H'] = d['2D']
+        d["T"] = d["3T"]
+        d["D"] = d["2D"]
+        d["3H"] = d["3T"]
+        d["2H"] = d["2D"]
 
         return d
 
-    def get_isotopic_atomic_masses(aa_infos: Dict[int, List[ElementInfo]]) -> Dict[str, float]:
+    def get_isotopic_atomic_masses(
+        aa_infos: Dict[int, List[ElementInfo]],
+    ) -> Dict[str, float]:
         d = {}
         for _, infos in aa_infos.items():
             infos.sort(key=lambda x: x.isotopic_composition, reverse=True)
@@ -171,14 +188,16 @@ def gen_chem_db():
             for info in infos:
                 d[str(info)] = info.relative_atomic_mass
 
-        d['T'] = d['3T']
-        d['D'] = d['2D']
-        d['3H'] = d['3T']
-        d['2H'] = d['2D']
+        d["T"] = d["3T"]
+        d["D"] = d["2D"]
+        d["3H"] = d["3T"]
+        d["2H"] = d["2D"]
 
         return d
 
-    def map_atomic_number_to_comp_neutron_offset(aa_infos: Dict[int, List[ElementInfo]]) -> Dict[str, float]:
+    def map_atomic_number_to_comp_neutron_offset(
+        aa_infos: Dict[int, List[ElementInfo]],
+    ) -> Dict[str, float]:
         d = {}
         for _, infos in aa_infos.items():
             infos.sort(key=lambda x: x.isotopic_composition, reverse=True)
@@ -187,22 +206,29 @@ def gen_chem_db():
             monoisotopic_info = infos[0]
             d[monoisotopic_info.atomic_symbol] = []
 
-            for info in infos: # Add all isotopes for each atomic symbol
+            for info in infos:  # Add all isotopes for each atomic symbol
                 if info.isotopic_composition == 0.0:
                     continue
-                d[monoisotopic_info.atomic_symbol].append(((info.mass_number - monoisotopic_info.mass_number), info.isotopic_composition))
+                d[monoisotopic_info.atomic_symbol].append(
+                    (
+                        (info.mass_number - monoisotopic_info.mass_number),
+                        info.isotopic_composition,
+                    )
+                )
 
-            for info in infos: # Add each isotopic composition for each isotope
+            for info in infos:  # Add each isotopic composition for each isotope
                 d[str(info)] = [(0.0, 1.0)]
 
-            d['T'] = d['3T']
-            d['D'] = d['2D']
-            d['3H'] = d['3T']
-            d['2H'] = d['2D']
+            d["T"] = d["3T"]
+            d["D"] = d["2D"]
+            d["3H"] = d["3T"]
+            d["2H"] = d["2D"]
 
         return d
 
-    def map_atomic_number_to_comp(aa_infos: Dict[int, List[ElementInfo]]) -> Dict[str, float]:
+    def map_atomic_number_to_comp(
+        aa_infos: Dict[int, List[ElementInfo]],
+    ) -> Dict[str, float]:
         d = {}
         for _, infos in aa_infos.items():
             infos.sort(key=lambda x: x.isotopic_composition, reverse=True)
@@ -211,23 +237,24 @@ def gen_chem_db():
             monoisotopic_info = infos[0]
             d[monoisotopic_info.atomic_symbol] = []
 
-            for info in infos: # Add all isotopes for each atomic symbol
+            for info in infos:  # Add all isotopes for each atomic symbol
                 if info.isotopic_composition == 0.0:
                     continue
-                d[monoisotopic_info.atomic_symbol].append((info.relative_atomic_mass, info.isotopic_composition))
+                d[monoisotopic_info.atomic_symbol].append(
+                    (info.relative_atomic_mass, info.isotopic_composition)
+                )
 
-            for info in infos: # Add each isotopic composition for each isotope
+            for info in infos:  # Add each isotopic composition for each isotope
                 d[str(info)] = [(info.relative_atomic_mass, 1.0)]
 
-            d['T'] = d['3T']
-            d['D'] = d['2D']
-            d['3H'] = d['3T']
-            d['2H'] = d['2D']
+            d["T"] = d["3T"]
+            d["D"] = d["2D"]
+            d["3H"] = d["3T"]
+            d["2H"] = d["2D"]
 
         return d
 
     def map_hill_order(aa_infos: Dict[int, List[ElementInfo]]) -> Dict[str, int]:
-
         aa_infos = deepcopy(aa_infos)
 
         d = []
@@ -247,13 +274,15 @@ def gen_chem_db():
         d.append(monoisotopic_hydrogen.atomic_symbol)
         d.extend([str(info) for info in hydrogen_infos])
 
-        d.append('T')
-        d.append('D')
-        d.append('3H')
-        d.append('2H')
+        d.append("T")
+        d.append("D")
+        d.append("3H")
+        d.append("2H")
 
         # add the rest alphabetically
-        for atomic_number, infos in sorted(aa_infos.items(), key=lambda x: x[1][0].atomic_symbol):
+        for atomic_number, infos in sorted(
+            aa_infos.items(), key=lambda x: x[1][0].atomic_symbol
+        ):
             infos.sort(key=lambda x: x.isotopic_composition, reverse=True)
             d.append(infos[0].atomic_symbol)
             for info in infos:
@@ -264,8 +293,9 @@ def gen_chem_db():
 
         return d
 
-
-    atomic_number_to_comp_neutron_offset = map_atomic_number_to_comp_neutron_offset(atomic_number_to_infos)
+    atomic_number_to_comp_neutron_offset = map_atomic_number_to_comp_neutron_offset(
+        atomic_number_to_infos
+    )
     atomic_symbol_to_compositions = map_atomic_number_to_comp(atomic_number_to_infos)
     isotopic_atomic_masses = get_isotopic_atomic_masses(atomic_number_to_infos)
 
@@ -278,29 +308,48 @@ def gen_chem_db():
     print(atomic_number_to_symbol)
     print(average_atomic_masses)
 
-    if not all([atomic_number_to_comp_neutron_offset, atomic_symbol_to_compositions, isotopic_atomic_masses, atomic_number_to_symbol, average_atomic_masses]):
-        raise ValueError('Error parsing atomic data. Check the source file.')
-
+    if not all(
+        [
+            atomic_number_to_comp_neutron_offset,
+            atomic_symbol_to_compositions,
+            isotopic_atomic_masses,
+            atomic_number_to_symbol,
+            average_atomic_masses,
+        ]
+    ):
+        raise ValueError("Error parsing atomic data. Check the source file.")
 
     # save to json files
-    with open('../src/peptacular/data/element/atomic_symbol_to_average_mass.json', 'w') as f:
+    with open(
+        "../src/peptacular/data/element/atomic_symbol_to_average_mass.json", "w"
+    ) as f:
         json.dump(average_atomic_masses, f)
 
-    with open('../src/peptacular/data/element/atomic_symbol_to_isotopic_mass.json', 'w') as f:
+    with open(
+        "../src/peptacular/data/element/atomic_symbol_to_isotopic_mass.json", "w"
+    ) as f:
         json.dump(isotopic_atomic_masses, f)
 
-    with open('../src/peptacular/data/element/atomic_number_to_symbol.json', 'w') as f:
+    with open("../src/peptacular/data/element/atomic_number_to_symbol.json", "w") as f:
         json.dump(atomic_number_to_symbol, f)
 
-    with open('../src/peptacular/data/element/atomic_symbol_to_isotope_mass_and_abundance.json', 'w') as f:
+    with open(
+        "../src/peptacular/data/element/atomic_symbol_to_isotope_mass_and_abundance.json",
+        "w",
+    ) as f:
         json.dump(atomic_symbol_to_compositions, f)
 
-    with open('../src/peptacular/data/element/atomic_symbol_to_isotope_neutron_offset_and_abundance.json', 'w') as f:
+    with open(
+        "../src/peptacular/data/element/atomic_symbol_to_isotope_neutron_offset_and_abundance.json",
+        "w",
+    ) as f:
         json.dump(atomic_number_to_comp_neutron_offset, f)
 
-    with open('../src/peptacular/data/element/atomic_symbol_to_hill_order_index.json', 'w') as f:
+    with open(
+        "../src/peptacular/data/element/atomic_symbol_to_hill_order_index.json", "w"
+    ) as f:
         json.dump(hill_ordering, f)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     gen_chem_db()

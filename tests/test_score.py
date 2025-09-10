@@ -4,7 +4,6 @@ import peptacular as pt
 
 
 class TestScore(unittest.TestCase):
-
     def test_match_spectra(self):
         # Test basic functionality with 'th' tolerance
         mz_spectrum1 = [100, 200, 300]

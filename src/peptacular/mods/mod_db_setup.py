@@ -126,7 +126,6 @@ def glycan_comp_db(
 
     counts: dict[str, int | float] = {}
     for component, count in glycan.items():
-
         if MONOSACCHARIDES_DB.contains_name(component):
             entry = MONOSACCHARIDES_DB.get_entry_by_name(component)
         elif MONOSACCHARIDES_DB.contains_synonym(component):
@@ -185,7 +184,6 @@ def _read_obo(file: IO[str]) -> list[dict[str, Any]]:
     d: dict[str, Any] | None = None
 
     for line in file:
-
         line = line.rstrip()
         if line == "":
             continue
@@ -306,7 +304,6 @@ def _get_parent_ids(term: dict[str, Any]) -> list[str]:
 
 def _get_unimod_entries(terms: list[dict[str, Any]]) -> Generator[ModEntry, None, None]:
     for term in terms:
-
         term_id, term_name = _get_id_and_name(term)
         term_id = term_id.replace("UNIMOD:", "")
         parent_ids = [pid.replace("UNIMOD:", "") for pid in _get_parent_ids(term)]
@@ -361,7 +358,6 @@ def _get_unimod_entries(terms: list[dict[str, Any]]) -> Generator[ModEntry, None
 
         delta_formula = None
         if delta_composition is not None and isinstance(delta_composition, str):
-
             delta_composition = delta_composition.replace("(", " ").replace(")", "")
             delta_composition = parse_chem_formula(delta_composition, sep=" ")
 
@@ -414,7 +410,6 @@ def _get_unimod_entries(terms: list[dict[str, Any]]) -> Generator[ModEntry, None
 
 def _get_psimod_entries(terms: list[dict[str, Any]]) -> Generator[ModEntry, None, None]:
     for term in terms:
-
         term_id, term_name = _get_id_and_name(term)
         term_id = term_id.replace("MOD:", "")
         parent_ids = [pid.replace("MOD:", "") for pid in _get_parent_ids(term)]
@@ -492,7 +487,7 @@ def _get_psimod_entries(terms: list[dict[str, Any]]) -> Generator[ModEntry, None
             except InvalidChemFormulaError as e:  # could be a glycan composition
                 delta_formula = None
                 warnings.warn(
-                    f'[{DbType.PSI_MOD}] Error parsing {term_id} {term_name} {property_values.get("DiffFormula")}, {e}'
+                    f"[{DbType.PSI_MOD}] Error parsing {term_id} {term_name} {property_values.get('DiffFormula')}, {e}"
                 )
 
         if delta_monoisotopic_mass is not None and isinstance(
@@ -527,7 +522,6 @@ def _get_psimod_entries(terms: list[dict[str, Any]]) -> Generator[ModEntry, None
 
 def _get_resid_entries(terms: list[dict[str, Any]]) -> Generator[ModEntry, None, None]:
     for term in terms:
-
         term_id, term_name = _get_id_and_name(term)
         term_id = term_id.replace("RESID:", "")
         parent_ids = [pid.replace("RESID:", "") for pid in _get_parent_ids(term)]
@@ -626,7 +620,7 @@ def _get_resid_entries(terms: list[dict[str, Any]]) -> Generator[ModEntry, None,
             except InvalidChemFormulaError as e:  # could be a glycan composition
                 delta_formula = None
                 warnings.warn(
-                    f'[{DbType.RESID}] Error parsing {term_id} {term_name} {property_values.get("DiffFormula")}, {e}'
+                    f"[{DbType.RESID}] Error parsing {term_id} {term_name} {property_values.get('DiffFormula')}, {e}"
                 )
 
         if delta_monoisotopic_mass is not None:
@@ -650,7 +644,6 @@ def _get_resid_entries(terms: list[dict[str, Any]]) -> Generator[ModEntry, None,
 
 def _get_xlmod_entries(terms: list[dict[str, Any]]) -> Generator[ModEntry, None, None]:
     for term in terms:
-
         term_id, term_name = _get_id_and_name(term)
         term_id = term_id.replace("XLMOD:", "")
         parent_ids = [pid.replace("XLMOD:", "") for pid in _get_parent_ids(term)]
@@ -743,7 +736,6 @@ def _get_xlmod_entries(terms: list[dict[str, Any]]) -> Generator[ModEntry, None,
 
 def _get_gno_entries(terms: list[dict[str, Any]]) -> Generator[ModEntry, None, None]:
     for term in terms:
-
         term_id, term_name = _get_id_and_name(term)
         term_id = term_id.replace("GNO:", "")
         parent_ids = [pid.replace("GNO:", "") for pid in _get_parent_ids(term)]
@@ -803,10 +795,10 @@ def _get_gno_entries(terms: list[dict[str, Any]]) -> Generator[ModEntry, None, N
                 delta_formula = write_chem_formula(composition)
 
                 try:
-                    delta_monoisotopic_mass_recalc = chem_mass(
+                    _ = chem_mass(
                         delta_formula, monoisotopic=True
                     )
-                    delta_average_mass_recalc = chem_mass(
+                    _ = chem_mass(
                         delta_formula, monoisotopic=False
                     )
                 except InvalidChemFormulaError as err:
@@ -837,7 +829,6 @@ def _get_monosaccharide_entries(
     terms: list[dict[str, Any]],
 ) -> Generator[ModEntry, None, None]:
     for term in terms:
-
         term_id, term_name = _get_id_and_name(term)
         term_id = term_id.replace("MONO:", "")
         parent_ids = [pid.replace("MONO:", "") for pid in _get_parent_ids(term)]
@@ -1056,7 +1047,6 @@ class EntryDb:
             self._add_entry_to_name_map(entry)
 
     def _add_entry_to_synonym_map(self, entry: ModEntry) -> None:
-
         if self.use_synonyms is False:
             return
 

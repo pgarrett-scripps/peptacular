@@ -128,7 +128,6 @@ def _sequence_comp(
     isotope: int = 0,
     use_isotope_on_mods: bool = False,
 ) -> dict[str, int | float]:
-
     # If charge is not provided, set it to 0
     charge = 0
     if annotation.has_charge:
@@ -149,7 +148,7 @@ def _sequence_comp(
             charge_adducts = f"{charge}H+"
         else:
             charge_adducts = (
-                f"{charge-1}H+,{FRAGMENT_ION_BASE_CHARGE_ADDUCTS[ion_type]}"
+                f"{charge - 1}H+,{FRAGMENT_ION_BASE_CHARGE_ADDUCTS[ion_type]}"
             )
 
     if ion_type not in (IonType.PRECURSOR, IonType.NEUTRAL):
@@ -223,14 +222,17 @@ def _sequence_comp(
     if annotation.has_isotope_mods:
         if use_isotope_on_mods:
             sequence_composition = apply_isotope_mods_to_composition(
-                sequence_composition, annotation.isotope_mods  # type: ignore
+                sequence_composition,
+                annotation.isotope_mods,  # type: ignore
             )  # type: ignore
             mod_composition = apply_isotope_mods_to_composition(
-                mod_composition, annotation.isotope_mods  # type: ignore
+                mod_composition,
+                annotation.isotope_mods,  # type: ignore
             )  # type: ignore
         else:
             sequence_composition = apply_isotope_mods_to_composition(
-                sequence_composition, annotation.isotope_mods  # type: ignore
+                sequence_composition,
+                annotation.isotope_mods,  # type: ignore
             )  # type: ignore
 
     composition: dict[str, int | float] = {}
@@ -254,7 +256,6 @@ def mass(
     use_isotope_on_mods: bool = False,
     precision: int | None = None,
 ) -> float:
-
     if annotation.contains_mass_ambiguity():
         raise AmbiguousAminoAcidError(
             aa=",".join(annotation.get_residue_ambiguity_residues()),
@@ -366,7 +367,6 @@ def mz(
     precision: int | None = None,
     use_isotope_on_mods: bool = False,
 ) -> float:
-
     m = mass(
         annotation=annotation,
         ion_type=ion_type,
@@ -387,7 +387,6 @@ def comp(
     isotope: int = 0,
     use_isotope_on_mods: bool = False,
 ) -> dict[str, int | float]:
-
     composition, delta_mass = _comp_with_delta_mass(
         annotation,
         ion_type=ion_type,
@@ -396,7 +395,6 @@ def comp(
     )
 
     if delta_mass != 0:
-
         if estimate_delta is False:
             raise ValueError(
                 f"Non-zero delta mass ({delta_mass}) encountered without estimation enabled for "
@@ -434,7 +432,6 @@ def _comp_with_delta_mass(
     )
 
     if use_isotope_on_mods is True and delta_mass != 0:
-
         warnings.warn(
             "use_isotope_on_mods=True and delta_mass != 0. Cannot apply isotopic modifications to the delta mass."
         )
@@ -449,7 +446,6 @@ def condense_to_mass_mods(
     use_isotope_on_mods: bool = False,
     estimate_delta: bool = False,
 ) -> ProFormaAnnotation:
-
     if inplace is False:
         # Create a copy of the annotation to modify
         return condense_to_mass_mods(

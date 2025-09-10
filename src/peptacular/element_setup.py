@@ -40,7 +40,6 @@ def construct_element_info(
     standard_atomic_weight: list[float] | float | None,
     notes: str | None,
 ) -> ElementInfo:
-
     if atomic_number is None:
         raise ValueError("Atomic number must be provided")
     if atomic_symbol is None:
@@ -81,7 +80,6 @@ def get_element_info(chem_file_path: str) -> list[ElementInfo]:
         for line in file:
             line = line.strip()  # Remove leading and trailing whitespace
             if line == "":  # New block starts after an empty line
-
                 e = construct_element_info(
                     atomic_number,
                     atomic_symbol,
@@ -103,7 +101,6 @@ def get_element_info(chem_file_path: str) -> list[ElementInfo]:
                 notes = None
 
             else:  # Extract key and value from the current line
-
                 elems = line.split("=")
                 key = elems[0].rstrip()
                 value = elems[1].lstrip()

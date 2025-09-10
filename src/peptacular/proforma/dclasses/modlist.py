@@ -57,7 +57,6 @@ class ModList(UserList[Mod]):
         """Merge with existing mod or append new one"""
         idx = self._find_same_mod_index(item)
         if idx is not None:
-
             if not self.allow_dups and item.mult > 0:
                 raise ValueError(
                     f"Cannot add modification {item} to non-stackable ModList"

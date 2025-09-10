@@ -15,7 +15,6 @@ from peptacular.proforma.mod_builder import (
 
 
 class TestGetModIndexFromAA(unittest.TestCase):
-
     def test_single_match_beginning(self):
         """Test single match at beginning of peptide."""
         result = get_mod_index_from_aa("PEPTIDE", "P")
@@ -63,7 +62,6 @@ class TestGetModIndexFromAA(unittest.TestCase):
 
 
 class TestGetModIndexFromRegexImplemented(unittest.TestCase):
-
     def test_single_character_regex_match(self):
         """Test regex matching single character."""
         result = get_mod_index_from_regex("PEPTIDE", r"P")
@@ -127,7 +125,6 @@ class TestGetModIndexFromRegexImplemented(unittest.TestCase):
 
 
 class TestGetSites(unittest.TestCase):
-
     def setUp(self):
         self.phospho_mod = pt.Mod("Phospho", 1)
         self.oxidation_mod = pt.Mod("Oxidation", 1)
@@ -216,7 +213,6 @@ class TestGetSites(unittest.TestCase):
 
 
 class TestEnsureSingleStaticMod(unittest.TestCase):
-
     def setUp(self):
         self.phospho_mod = pt.Mod("Phospho", 1)
         self.oxidation_mod = pt.Mod("Oxidation", 1)
@@ -248,7 +244,6 @@ class TestEnsureSingleStaticMod(unittest.TestCase):
 
 
 class TestUpdateModList(unittest.TestCase):
-
     def setUp(self):
         self.phospho_mod = pt.Mod("Phospho", 1)
         self.oxidation_mod = pt.Mod("Oxidation", 1)
@@ -285,7 +280,6 @@ class TestUpdateModList(unittest.TestCase):
 
 
 class TestApplyMods(unittest.TestCase):
-
     def setUp(self):
         self.annotation = pt.ProFormaAnnotation(sequence="PEPTIDE")
         self.phospho_mod = pt.Mod("Phospho", 1)
@@ -382,7 +376,6 @@ class TestApplyMods(unittest.TestCase):
 
 
 class TestBuildMods(unittest.TestCase):
-
     def setUp(self):
         self.annotation = pt.ProFormaAnnotation(sequence="PEPTIDE")
         self.phospho_mod = pt.Mod("Phospho", 1)

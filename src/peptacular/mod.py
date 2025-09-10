@@ -64,7 +64,6 @@ class Mod:
         return f"Mod({self.val}, {self.mult})"
 
     def __eq__(self, other: Any) -> bool:
-
         if isinstance(other, (str, float, int)):
             other = Mod(other, 1)
 

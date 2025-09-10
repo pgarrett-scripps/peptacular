@@ -3,7 +3,6 @@ import peptacular as pt
 
 
 class TestSplit(unittest.TestCase):
-
     def test_split_basic_sequence(self):
         """Test splitting a basic sequence without modifications"""
         annotation = pt.ProFormaAnnotation.parse("PEPTIDE")

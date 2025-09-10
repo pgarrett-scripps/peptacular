@@ -7,7 +7,6 @@ PROTEIN = "MVIMSEFSADPAGQGQGQQKPLRVGFYDIERTLGKGNFAVVKLARHRVTKTQVAIKIIDKTRLDSSNLE
 
 
 class TestDigest(unittest.TestCase):
-
     def test_trypsin_cleavage_sites(self):
         """Test getting cleavage sites for trypsin."""
         annotation = pt.ProFormaAnnotation.parse(PROTEIN)

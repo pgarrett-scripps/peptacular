@@ -705,7 +705,6 @@ def get_matched_intensity_percentage(
 
 
 class Scorer:
-
     def __init__(
         self,
         experimental_spectra: tuple[Sequence[float], Sequence[float]],
@@ -716,7 +715,6 @@ class Scorer:
         filter_fragments_with_iso_gap: bool = False,
         filter_fragments_without_mono: bool = False,
     ) -> None:
-
         self.mz_spectra = experimental_spectra[0]
         self.intensities = experimental_spectra[1]
         self.fragments = fragments

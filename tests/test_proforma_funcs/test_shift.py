@@ -3,7 +3,6 @@ import peptacular as pt
 
 
 class TestShift(unittest.TestCase):
-
     def test_basic_shift(self):
         """Test basic shifting functionality"""
         annotation = pt.ProFormaAnnotation.parse("PEPTIDE")

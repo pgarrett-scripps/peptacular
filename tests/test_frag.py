@@ -4,7 +4,6 @@ import peptacular as pt
 
 
 class TestFragment(unittest.TestCase):
-
     def test_get_losses_single_match_max_losses_1(self):
         """Test get_losses with single amino acid and max_losses=1."""
         result = pt.get_losses("AA", {"A": [-10, -5]}, 1)

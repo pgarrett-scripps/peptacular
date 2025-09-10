@@ -1,37 +1,45 @@
 import json
 
-from peptacular.mods.obo_parser import get_entries, DbType, count_invalid_entries, EntryDb, MONOSACCHARIDES_DB
+from peptacular.mods.obo_parser import (
+    get_entries,
+    DbType,
+    count_invalid_entries,
+    EntryDb,
+    MONOSACCHARIDES_DB,
+)
 
 # Load mono first and reset MONOSACCHARIDES_DB with the new entries
-monosaccharide_entries = get_entries(DbType.MONOSACCHARIDES, 'data/monosaccharides_updated.obo')
+monosaccharide_entries = get_entries(
+    DbType.MONOSACCHARIDES, "data/monosaccharides_updated.obo"
+)
 
 MONOSACCHARIDES_DB.reset()
 MONOSACCHARIDES_DB.setup(monosaccharide_entries)
 
 
-unimod_entries = get_entries(DbType.UNIMOD, 'data/unimod.obo')
-psi_mod_entries = get_entries(DbType.PSI_MOD, 'data/psi-mod.obo')
-resid_entries = get_entries(DbType.RESID, 'data/psi-mod.obo')
-xlmod_entries = get_entries(DbType.XLMOD, 'data/xlmod.obo')
-gno_entries = get_entries(DbType.GNO, 'data/gno.obo')
+unimod_entries = get_entries(DbType.UNIMOD, "data/unimod.obo")
+psi_mod_entries = get_entries(DbType.PSI_MOD, "data/psi-mod.obo")
+resid_entries = get_entries(DbType.RESID, "data/psi-mod.obo")
+xlmod_entries = get_entries(DbType.XLMOD, "data/xlmod.obo")
+gno_entries = get_entries(DbType.GNO, "data/gno.obo")
 
 # save entries as a json file
-with open('data/entries/monosaccharide_entries.json', 'w') as f:
+with open("data/entries/monosaccharide_entries.json", "w") as f:
     json.dump([e.dict() for e in monosaccharide_entries], f)
 
-with open('data/entries/unimod_entries.json', 'w') as f:
+with open("data/entries/unimod_entries.json", "w") as f:
     json.dump([e.dict() for e in unimod_entries], f)
 
-with open('data/entries/psi_mod_entries.json', 'w') as f:
+with open("data/entries/psi_mod_entries.json", "w") as f:
     json.dump([e.dict() for e in psi_mod_entries], f)
 
-with open('data/entries/resid_entries.json', 'w') as f:
+with open("data/entries/resid_entries.json", "w") as f:
     json.dump([e.dict() for e in resid_entries], f)
 
-with open('data/entries/xlmod_entries.json', 'w') as f:
+with open("data/entries/xlmod_entries.json", "w") as f:
     json.dump([e.dict() for e in xlmod_entries], f)
 
-with open('data/entries/gno_entries.json', 'w') as f:
+with open("data/entries/gno_entries.json", "w") as f:
     json.dump([e.dict() for e in gno_entries], f)
 
 """

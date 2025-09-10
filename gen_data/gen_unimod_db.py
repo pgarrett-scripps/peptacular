@@ -6,8 +6,8 @@ from peptacular import chem
 
 
 def generate_psi_mod_db():
-    UNIMOD_OBO = 'data/unimod.obo'
-    with open(UNIMOD_OBO, 'r') as file:
+    UNIMOD_OBO = "data/unimod.obo"
+    with open(UNIMOD_OBO, "r") as file:
         terms = read_obo(file)
 
     name_to_id = {}
@@ -16,37 +16,36 @@ def generate_psi_mod_db():
     id_to_average_mass = {}
 
     for term in terms:
+        term_id = term.get("id")[0].split(":")[1]  # remove UNIMOD:
+        term_name = term.get("name")[0]
 
-        term_id = term.get('id')[0].split(':')[1]  # remove UNIMOD:
-        term_name = term.get('name')[0]
-
-        if term_name == 'unimod root node':
+        if term_name == "unimod root node":
             continue
 
         property_values = {}
-        for val in term.get('xref', []):
+        for val in term.get("xref", []):
             elems = val.split('"')
             k = elems[0].rstrip()
             v = elems[1].strip()
             property_values[k] = v
 
-        delta_composition = property_values.get('delta_composition')
-        mono = property_values.get('delta_mono_mass')
-        ave = property_values.get('delta_avge_mass')
+        delta_composition = property_values.get("delta_composition")
+        mono = property_values.get("delta_mono_mass")
+        ave = property_values.get("delta_avge_mass")
 
-        synonyms = term.get('synonym', [])
+        synonyms = term.get("synonym", [])
         if not isinstance(synonyms, List):
             synonyms = [synonyms]
         synonyms = [syn.split('"')[1] for syn in synonyms]
 
         formula = None
         if delta_composition:
-            delta_composition = delta_composition.split(' ')
+            delta_composition = delta_composition.split(" ")
             elem_counter = Counter()
             for comp in delta_composition:
-                if '(' in comp:  # get number between ()
-                    num = comp.split('(')[1].split(')')[0]
-                    comp = comp.split('(')[0]
+                if "(" in comp:  # get number between ()
+                    num = comp.split("(")[1].split(")")[0]
+                    comp = comp.split("(")[0]
                     elem_counter[comp] += int(num)
                 else:
                     elem_counter[comp] += 1
@@ -67,11 +66,11 @@ def generate_psi_mod_db():
         """
 
         if term_name in name_to_id:
-            print(f'Warning: {term_name} already exists in id_to_composition')
+            print(f"Warning: {term_name} already exists in id_to_composition")
             continue
 
         if term_id in id_to_composition:
-            print(f'Warning: {term_id} already exists in id_to_composition')
+            print(f"Warning: {term_id} already exists in id_to_composition")
             continue
 
         name_to_id[term_name] = term_id
@@ -115,25 +114,27 @@ def generate_psi_mod_db():
         if not v:
             bad_ave += 1
 
-    print(f'Number of bad composition entries: {bad_comps}')
-    print(f'Number of bad isotopic mass entries: {bad_mono}')
-    print(f'Number of bad average mass entries: {bad_ave}')
+    print(f"Number of bad composition entries: {bad_comps}")
+    print(f"Number of bad isotopic mass entries: {bad_mono}")
+    print(f"Number of bad average mass entries: {bad_ave}")
 
-    if not all([name_to_id, id_to_composition, id_to_isotopic_mass, id_to_average_mass]):
-        raise ValueError('Error parsing UNIMOD OBO file. Check the file format.')
+    if not all(
+        [name_to_id, id_to_composition, id_to_isotopic_mass, id_to_average_mass]
+    ):
+        raise ValueError("Error parsing UNIMOD OBO file. Check the file format.")
 
-    with open('../src/peptacular/data/unimod/id_to_chem_formula.json', 'w') as f:
+    with open("../src/peptacular/data/unimod/id_to_chem_formula.json", "w") as f:
         json.dump(id_to_composition, f)
 
-    with open('../src/peptacular/data/unimod/id_to_isotopic_mass.json', 'w') as f:
+    with open("../src/peptacular/data/unimod/id_to_isotopic_mass.json", "w") as f:
         json.dump(id_to_isotopic_mass, f)
 
-    with open('../src/peptacular/data/unimod/id_to_average_mass.json', 'w') as f:
+    with open("../src/peptacular/data/unimod/id_to_average_mass.json", "w") as f:
         json.dump(id_to_average_mass, f)
 
-    with open('../src/peptacular/data/unimod/name_to_id.json', 'w') as f:
+    with open("../src/peptacular/data/unimod/name_to_id.json", "w") as f:
         json.dump(name_to_id, f)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     generate_psi_mod_db()

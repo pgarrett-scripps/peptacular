@@ -5,7 +5,6 @@ import peptacular as pt
 
 
 class TestShuffle(unittest.TestCase):
-
     def test_basic_shuffle(self):
         annotation = pt.ProFormaAnnotation.parse("PEPTIDE")
         shuffled_annotation = annotation.shuffle(seed=42)

@@ -3,7 +3,6 @@ import peptacular as pt
 
 
 class TestPopMods(unittest.TestCase):
-
     def test_pop_labile_mods_with_mods(self):
         annotation = pt.ProFormaAnnotation.parse("{Glycan}PEPTIDE")
         popped_mods = annotation.pop_labile_mods()

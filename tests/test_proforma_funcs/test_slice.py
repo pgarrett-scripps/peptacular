@@ -3,7 +3,6 @@ import peptacular as pt
 
 
 class TestSlice(unittest.TestCase):
-
     def test_basic_slice(self):
         """Test basic slicing functionality"""
         annotation = pt.ProFormaAnnotation.parse("PEPTIDE")

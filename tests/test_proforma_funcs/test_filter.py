@@ -5,7 +5,6 @@ import peptacular as pt
 
 
 class TestFilterMods(unittest.TestCase):
-
     def test_filter_mods_basic_inplace_true(self):
         annotation = pt.ProFormaAnnotation.parse("[Acetyl]-PEPTIDE-[Amide]")
         filtered_annotation = annotation.filter_mods(mods=["nterm"], inplace=True)

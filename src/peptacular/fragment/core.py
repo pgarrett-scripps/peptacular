@@ -374,7 +374,6 @@ def fragment(
         FragmentReturnLiteral | FragmentReturnType
     ) = FragmentReturnType.FRAGMENT,
 ) -> Generator[FRAGMENT_RETURN_TYPING, None, None]:
-
     ion_type_list: list[IonType] = []
     if isinstance(ion_types, Sequence):  # type: ignore
         ion_type_list = [IonType(it) for it in ion_types]

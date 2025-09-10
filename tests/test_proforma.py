@@ -4,7 +4,6 @@ import peptacular as pt
 
 
 class TestProForma(unittest.TestCase):
-
     def setUp(self):
         self.basic_mod = pt.Mod("HelloWorld", 1)
 

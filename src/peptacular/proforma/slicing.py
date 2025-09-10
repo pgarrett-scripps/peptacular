@@ -236,7 +236,6 @@ def shift_annotation(
     # Handle intervals
     new_intervals: list[Interval] = []
     for interval in annotation.get_interval_list():
-
         new_start = (interval.start - effective_shift) % seq_len
         new_end = (interval.end - effective_shift) % seq_len
 

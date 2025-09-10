@@ -170,7 +170,7 @@ def _construct_ambiguity_intervals(
 
 
 def _combine_ambiguity_intervals(
-    *interval_lists: list[tuple[int, int]]
+    *interval_lists: list[tuple[int, int]],
 ) -> list[tuple[int, int]]:
     """
     Merge multiple lists of ambiguity intervals into a single list of common ambiguity intervals.

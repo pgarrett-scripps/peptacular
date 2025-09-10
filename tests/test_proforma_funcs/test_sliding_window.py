@@ -5,7 +5,6 @@ import peptacular as pt
 
 
 class TestSlidingWindow(unittest.TestCase):
-
     def test_basic_sliding_window(self):
         # Test slicing a ProFormaAnnotation
         annotation = pt.ProFormaAnnotation(sequence="PEPTIDE")

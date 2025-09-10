@@ -93,7 +93,6 @@ def apply_mods(
     merge_strat: Literal["update", "merge", "error"] = "error",
     is_regex: bool = False,
 ) -> ProFormaAnnotation:
-
     if inplace is False:
         return apply_mods(
             annotation.copy(),

@@ -3,7 +3,6 @@ import peptacular as pt
 
 
 class TestReverse(unittest.TestCase):
-
     def test_basic_reverse(self):
         """Test basic sequence reversal"""
         annotation = pt.ProFormaAnnotation.parse("PEPTIDE")

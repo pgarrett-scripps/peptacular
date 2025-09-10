@@ -12,7 +12,6 @@ from peptacular import span_to_sequence
 
 
 class TestSpans(unittest.TestCase):
-
     def test_get_non_enzymatic_spans(self):
         span = (0, 4, 1)
         expected_output = [

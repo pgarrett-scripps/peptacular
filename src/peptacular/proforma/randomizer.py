@@ -406,7 +406,6 @@ def spectrum_randomizer(annotation: ProFormaAnnotation):
         annotation.append_static_mod(mod)
 
     if annotation.has_charge:
-
         # Add adducts
         if choice([True, False]):
             annotation.append_charge_adduct(Mod(choice(_CHARGE_ADDUCT_VALS), 1))

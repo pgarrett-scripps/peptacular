@@ -264,7 +264,6 @@ def glycan_mass(
 
     m = 0.0
     for monosaccharide, count in formula.items():
-
         if MONOSACCHARIDES_DB.contains_name(monosaccharide):
             entry = MONOSACCHARIDES_DB.get_entry_by_name(monosaccharide)
         elif MONOSACCHARIDES_DB.contains_synonym(monosaccharide):
@@ -739,7 +738,6 @@ def _parse_adduct_mass(
         m += element_count * ELECTRON_MASS
 
     else:
-
         if monoisotopic is True:
             m += element_count * ISOTOPIC_ATOMIC_MASSES[element_symbol]
             m -= element_charge * ELECTRON_MASS

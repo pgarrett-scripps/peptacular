@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Generator, Iterable, Self, Sequence, overload, Literal
+from typing import Generator, Self, Sequence, overload, Literal
 
 from ..proforma.dclasses import SPAN_TYPE
 from .types import (

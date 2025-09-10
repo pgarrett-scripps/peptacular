@@ -4,7 +4,6 @@ import peptacular as pt
 
 
 class TestCoverage(unittest.TestCase):
-
     def test_coverage_basic_exact_match(self):
         target = pt.ProFormaAnnotation.parse("PEPTIDE")
         annotations = [pt.ProFormaAnnotation.parse("PEPTIDE")]

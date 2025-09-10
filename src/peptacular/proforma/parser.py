@@ -149,7 +149,6 @@ class ProFormaParser:
         """
 
         while not self._end_of_sequence():
-
             cur = self._current()
             if cur in AMINO_ACIDS or cur == PC.INTERVAL_START:  # End of start sequence
                 return

@@ -91,7 +91,6 @@ def _correct_mods(
 
 
 class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin):
-
     def __init__(
         self,
         sequence: str | None = None,
@@ -106,7 +105,6 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         intervals: ACCEPTED_INTERVALLIST_INPUT_TYPES = None,
         charge: int | None = None,
     ) -> None:
-
         self._sequence: str = sequence if sequence is not None else ""
         self._isotope_mod_list: ModList = setup_mod_list(
             isotope_mods, allow_dups=False, stackable=False
@@ -149,7 +147,6 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         annots: list[ProFormaAnnotation] = []
         connections: list[bool | None] = []
         for prof_parser, connection in ProFormaParser(sequence).parse():
-
             if connection is True:
                 raise ValueError(f"Unexpected connection value: {connection}")
 
@@ -798,7 +795,6 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         value: Any,
         mod_type: ModType,
     ) -> Self:
-
         match mod_type:
             case ModType.ISOTOPE:
                 self.isotope_mods = value
@@ -840,7 +836,6 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
             return self
 
         for mod_type, mod_value in mods.items():
-
             if isinstance(mod_type, int):
                 if mod_type < 0 or mod_type >= len(self.sequence):
                     raise IndexError(
@@ -1050,7 +1045,6 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
             return self.copy().add_mods(mods, inplace=True)
 
         for mod_type, value in mods.items():
-
             if isinstance(mod_type, int):
                 self.add_internal_mods_at_index(
                     mod_type, value, inplace=inplace, append=append
@@ -1165,7 +1159,6 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
             return self.copy().append_mods(mods, inplace=True)
 
         for mod_type, value in mods.items():
-
             if isinstance(mod_type, int):
                 if mod_type < 0 or mod_type >= len(self.sequence):
                     raise IndexError(
@@ -1455,7 +1448,6 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         return self._nterm_mod_list
 
     def get_cterm_mod_list(self) -> ModList:
-
         return self._cterm_mod_list
 
     def get_charge_adduct_list(self) -> ModList:
@@ -1568,7 +1560,6 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         reverse: bool = False,
         inplace: bool = True,
     ) -> Self:
-
         if not inplace:
             return self.sort_mods(mods=mods, key=key, reverse=reverse, inplace=True)
 
@@ -1642,7 +1633,6 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
             ModTypeLiteral | ModType | Iterable[ModTypeLiteral | ModType] | None
         ) = None,
     ) -> bool:
-
         mod_types: list[ModType] = get_mods(mods)
         return any(self._contains_mod_by_type(mod, mod_type) for mod_type in mod_types)
 
