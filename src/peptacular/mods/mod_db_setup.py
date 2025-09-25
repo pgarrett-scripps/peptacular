@@ -795,12 +795,8 @@ def _get_gno_entries(terms: list[dict[str, Any]]) -> Generator[ModEntry, None, N
                 delta_formula = write_chem_formula(composition)
 
                 try:
-                    _ = chem_mass(
-                        delta_formula, monoisotopic=True
-                    )
-                    _ = chem_mass(
-                        delta_formula, monoisotopic=False
-                    )
+                    _ = chem_mass(delta_formula, monoisotopic=True)
+                    _ = chem_mass(delta_formula, monoisotopic=False)
                 except InvalidChemFormulaError as err:
                     warnings.warn(
                         f"[{DbType.GNO}] Error parsing {term_id} {term_name} {delta_formula}, {err}"

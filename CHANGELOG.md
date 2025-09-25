@@ -12,21 +12,17 @@ All notable changes to this project will be documented in this file.
 - Have Mod objects work for fragment loss?
 - Improve fragment loss handling based on ion type and sequence
 - Can improve the performance of mass calculations with isotopes and use_isotope_on_mods, by not calculating the composition of mods
-- Add MultiProformaAnnot support to mass/chem/fragment/isotope....
-
+- update scorign functions
 
 ## [3.0.0]
-- added `remove mod` functions
-- added `filter mods` function
-- More inplace options available
-- Proforma objects now return proforma objects such that methods can be chained
-- Some inplace options have changed
-- Optional mods arg added to applicable functions to only remove/pop specific mods
-- Switched ProformaAnnotation to normal python class (was dataclass)
-- ProformaAnnotation mods objects dont return None anymorem, rather now return empty list/dict
-- Added sequence property functions
-- Moved mass/mz and composition logic to proforma class (mz/mass/comp function are available from annotations now)
+- Added a ton of new functionality (filter, annotate ambiguity, sequence properties)
+- Proforma annotation methods now return proforma objects such that methods can be chained (factory pattern)
+- Most functionality is now accessible through annotations
+- multiprocess/threading fasta reader
+- split now splits unambiguous segemnts of the annotation (intervals are not split)
 - Extensive tests
+- uv backend
+- ms2pip optional dep
 
 ## [2.5.1]
 - added ambiguity support to coverage funcs

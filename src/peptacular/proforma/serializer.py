@@ -185,6 +185,22 @@ def _serialize_middle(
     return "".join(comps)
 
 
+def serialize_charge(
+    annotation: ProFormaAnnotation,
+    include_plus: bool = False,
+    precision: int | None = None,
+) -> str:
+    comps: list[str] = []
+
+    if annotation.has_charge:
+        comps.append(f"{PC.CHARGE_SEP}{annotation.charge}")
+
+    for mod in annotation.get_charge_adduct_list():
+        comps.append(mod.serialize(PC.MOD_START + PC.MOD_END, include_plus, precision))
+
+    return "".join(comps)
+
+
 def _serialize_end(
     annotation: ProFormaAnnotation,
     include_plus: bool,
@@ -197,14 +213,7 @@ def _serialize_end(
     comps.append(
         _serialize_cterm(annotation.get_cterm_mod_list(), include_plus, precision)
     )
-
-    # Charge
-    if annotation.has_charge:
-        comps.append(f"{PC.CHARGE_SEP}{annotation.charge}")
-
-    for mod in annotation.get_charge_adduct_list():
-        comps.append(mod.serialize(PC.MOD_START + PC.MOD_END, include_plus, precision))
-
+    comps.append(serialize_charge(annotation, include_plus, precision))
     return "".join(comps)
 
 

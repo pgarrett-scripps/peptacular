@@ -7,29 +7,29 @@ class TestFragment(unittest.TestCase):
     def test_get_losses_single_match_max_losses_1(self):
         """Test get_losses with single amino acid and max_losses=1."""
         result = pt.get_losses("AA", {"A": [-10, -5]}, 1)
-        expected = {0.0, -5, -10}
+        expected: set[float] = {0.0, -5, -10}
         self.assertEqual(result, expected)
 
     def test_get_losses_single_match_max_losses_2(self):
         """Test get_losses with single amino acid and max_losses=2."""
         result = pt.get_losses("AA", {"A": [-10, -5]}, 2)
-        expected = {0.0, -15, -10, -5, -20}
+        expected: set[float] = {0.0, -15, -10, -5, -20}
         self.assertEqual(result, expected)
 
     def test_get_losses_single_match_max_losses_3(self):
         """Test get_losses with single amino acid and max_losses=3."""
         result = pt.get_losses("AA", {"A": [-10, -5]}, 3)
-        expected = {0.0, -15, -10, -25, -5, -20}
+        expected: set[float] = {0.0, -15, -10, -25, -5, -20}
         self.assertEqual(result, expected)
 
     def test_fragment_modified_sequence_count(self):
         """Test fragment count with modified sequence."""
-        result = list(pt.fragment("[1.0]-P[2.0]E[3.0]-[4.0]", "y", 1))
+        result: list[float] = list(pt.fragment("[1.0]-P[2.0]E[3.0]-[4.0]", "y", 1))
         self.assertEqual(len(result), 2)
 
     def test_fragment_b_ions_mz_charge_1(self):
         """Test B-ion m/z values with charge 1."""
-        result = list(
+        result: list[float] = list(
             pt.fragment(
                 sequence="TIDE",
                 ion_types=["b"],
@@ -206,10 +206,10 @@ class TestFragment(unittest.TestCase):
         labels = [label for _, label in result]
         expected = [
             "+b3",
-            "+b3(-18.01056)",
-            "+b3(-17.02655)",
+            "+b3(-18.011)",
+            "+b3(-17.027)",
             "+b2",
-            "+b2(-17.02655)",
+            "+b2(-17.027)",
             "+b1",
         ]
         self.assertEqual(labels, expected)

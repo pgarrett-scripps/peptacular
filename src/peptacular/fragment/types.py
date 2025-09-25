@@ -1,9 +1,9 @@
 from dataclasses import dataclass
 from enum import StrEnum
 from functools import cached_property
-from typing import Literal, Protocol, Self
+from typing import Literal, NamedTuple, Protocol, Self
 
-from ..constants import IonType, IonTypeLiteral
+from ..constants import PROTON_MASS, IonType, IonTypeLiteral
 from ..utils2 import get_label, get_number
 
 
@@ -65,8 +65,7 @@ MassLabelLiteral = Literal["mass-label"]
 MzLabelLiteral = Literal["mz-label"]
 
 
-@dataclass(frozen=True)
-class Fragment:
+class Fragment(NamedTuple):
     """
     A dataclass for representing a peptide fragment ion.
     """
@@ -78,15 +77,35 @@ class Fragment:
     monoisotopic: bool
     isotope: int
     loss: float
-    parent_sequence: str
-    mass: float
-    neutral_mass: float
     mz: float
     sequence: str
-    unmod_sequence: str
+    parent_sequence: str
+    parent_length: int
     internal: bool
 
-    @cached_property
+    @property
+    def priority(self) -> int:
+        """
+        Returns the priority of the fragment based on its position and type.
+        Higher values indicate higher priority for display/analysis.
+        """
+        priority = 10  # Base priority
+
+        # Penalize internal fragments (less common/useful)
+        if self.internal:
+            priority -= 50
+
+        # Penalize neutral losses (less abundant)
+        if self.loss != 0.0:
+            priority -= 15
+
+        # Penalize isotope peaks (less abundant than monoisotopic)
+        if self.isotope != 0:
+            priority -= 35
+
+        return priority
+
+    @property
     def number(self) -> str:
         """
         Returns the number of the fragment, e.g., 2 for b2, 3 for y3, etc.
@@ -94,11 +113,9 @@ class Fragment:
         :return: Number of the fragment.
         :rtype: str
         """
-        return get_number(
-            self.ion_type, len(self.parent_sequence), self.start, self.end
-        )
+        return get_number(self.ion_type, self.parent_length, self.start, self.end)
 
-    @cached_property
+    @property
     def label(self) -> str:
         """
         Returns the label of the fragment, e.g., b2, y3i, etc.
@@ -110,20 +127,13 @@ class Fragment:
             self.ion_type, self.charge, self.number, self.loss, self.isotope
         )
 
-    def __iter__(self):
-        # Include regular attributes
-        for key, value in self.__dict__.items():
-            yield key, value
+    @property
+    def mass(self) -> float:
+        return self.mz * self.charge
 
-        # Explicitly include cached properties
-        yield "label", self.label
-        yield "number", self.number
-
-    def to_dict(self):
-        """
-        Convert the Fragment object to a dictionary, including cached properties.
-        """
-        return dict(self)
+    @property
+    def neutral_mass(self) -> float:
+        return self.mz * self.charge - (self.charge * PROTON_MASS)
 
 
 FRAGMENT_RETURN_TYPING = Fragment | float | str | tuple[float, str]

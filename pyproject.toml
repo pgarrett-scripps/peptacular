@@ -18,8 +18,10 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-"regex",
+    "regex",
 ]
+
+
 
 [tool.setuptools]
 package-dir = {"" = "src"}
@@ -57,7 +59,34 @@ filterwarnings = [
 ]
 
 [dependency-groups]
-dev = [
-    "pytest>=8.3.5",
-    "ruff>=0.12.12",
+plotting = [
+    "plotly",
+    "pandas"
 ]
+streamlit = [
+    "plotly",
+    "pandas",
+    "streamlit"
+]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "ruff"
+]
+
+ms2pip = [
+    "ms2pip"
+]
+
+all = [
+    {include-group = "plotting"},
+    {include-group = "streamlit"},
+    {include-group = "ms2pip"},
+    "brotli"
+]
+
+all-dev = [
+    {include-group = "all"},
+    {include-group = "dev"}
+]
+

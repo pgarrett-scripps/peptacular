@@ -1,0 +1,1011 @@
+import struct
+import json
+import gzip
+import zlib
+import base64
+from typing import Generator, Sequence
+from .core import compress_with_method, decompress_with_method
+
+
+def _float_to_hex(f: float) -> str:
+    return format(struct.unpack("!I", struct.pack("!f", f))[0], "08x")
+
+
+def _hex_to_float(s: str) -> float:
+    return struct.unpack("!f", struct.pack("!I", int(s, 16)))[0]
+
+
+def _encode_leading_zero(lz: int) -> str:
+    if 0 <= lz < 16:
+        return hex(lz)[-1]
+    raise ValueError(f"Leading zero count {lz} out of range [0-15]")
+
+
+def _decode_leading_zero(lz: str) -> int:
+    return int(lz, 16)
+
+
+def _hex_delta(a: str, b: str) -> str:
+    diff = int(a, 16) - int(b, 16)
+    return format(diff & 0xFFFFFFFF, "08x")
+
+
+def _hex_delta_rev(a: str, b: str) -> str:
+    diff = int(a, 16) + int(b, 16)
+    return format(diff & 0xFFFFFFFF, "08x")
+
+
+def _count_leading_zeros(s: str) -> int:
+    return len(s) - len(s.lstrip("0"))
+
+
+def _delta_encode_single_string(vals: Sequence[float]) -> str:
+    if not vals:
+        return ""
+
+    mzs_hex = [_float_to_hex(mz) for mz in vals]
+    initial_hex_value = mzs_hex[0]
+    initial_hex_value_zeros = _count_leading_zeros(initial_hex_value)
+
+    mzs_hex_deltas: list[str] = []
+    leading_zeros: list[int] = []
+
+    for i in range(1, len(mzs_hex)):
+        delta = _hex_delta(mzs_hex[i], mzs_hex[i - 1])
+        mzs_hex_deltas.append(delta)
+        leading_zeros.append(_count_leading_zeros(delta))
+
+    hex_delta_str = initial_hex_value.lstrip("0") + "".join(
+        delta.lstrip("0") for delta in mzs_hex_deltas
+    )
+    leading_zero_str = _encode_leading_zero(initial_hex_value_zeros) + "".join(
+        _encode_leading_zero(lz) for lz in leading_zeros
+    )
+
+    return hex_delta_str + leading_zero_str[::-1]
+
+
+def _delta_decode_single_string(s: str) -> Generator[float, None, None]:
+    if not s:
+        return
+
+    initial_lz = _decode_leading_zero(s[-1])
+    initial_hex = "0" * initial_lz + s[: 8 - initial_lz]
+    s = s[8 - initial_lz : -1]
+    yield _hex_to_float(initial_hex)
+
+    curr_value = initial_hex
+    while s:
+        lz = _decode_leading_zero(s[-1])
+        hex_diff = "0" * lz + s[: 8 - lz]
+        hex_val = _hex_delta_rev(curr_value, hex_diff)
+        curr_value = hex_val
+        s = s[8 - lz : -1]
+        yield _hex_to_float(hex_val)
+
+
+def _hex_encode(intensities: Sequence[float]) -> str:
+    return "".join(_float_to_hex(intensity) for intensity in intensities)
+
+
+def _hex_decode(s: str) -> Generator[float, None, None]:
+    for i in range(0, len(s), 8):
+        yield _hex_to_float(s[i : i + 8])
+
+
+def _validate_inputs(
+    spectra: tuple[Sequence[float], Sequence[float]],
+    mz_precision: int | None = None,
+    intensity_precision: int | None = None,
+) -> None:
+    if not isinstance(spectra, tuple) or len(spectra) != 2:  # type: ignore
+        raise ValueError("spectra must be (mz_values, intensity_values) tuple")
+
+    mzs, intensities = spectra
+
+    if not isinstance(mzs, list) or not isinstance(intensities, list):
+        raise ValueError("mz_values and intensity_values must be lists")
+
+    if len(mzs) != len(intensities):
+        raise ValueError(
+            f"Length mismatch: {len(mzs)} m/z values vs {len(intensities)} intensities"
+        )
+
+    if mz_precision is not None and (not isinstance(mz_precision, int) or mz_precision < 0):  # type: ignore
+        raise ValueError("mz_precision must be non-negative integer or None")
+
+    if intensity_precision is not None and (not isinstance(intensity_precision, int) or intensity_precision < 0):  # type: ignore
+        raise ValueError("intensity_precision must be non-negative integer or None")
+
+
+def _encode_binary_payload(mz_str: str, intensity_str: str) -> bytes:
+    mz_bytes = mz_str.encode("ascii")
+    intensity_bytes = intensity_str.encode("ascii")
+    return struct.pack("!I", len(mz_bytes)) + mz_bytes + intensity_bytes
+
+
+def _decode_binary_payload(payload: bytes) -> tuple[str, str]:
+    if len(payload) < 4:
+        raise ValueError("Invalid binary payload: too short")
+
+    mz_length = struct.unpack("!I", payload[:4])[0]
+    if len(payload) < 4 + mz_length:
+        raise ValueError("Invalid binary payload: truncated m/z data")
+
+    mz_str = payload[4 : 4 + mz_length].decode("ascii")
+    intensity_str = payload[4 + mz_length :].decode("ascii")
+
+    return mz_str, intensity_str
+
+
+def compress_spectra(
+    spectra: tuple[Sequence[float], Sequence[float]],
+    url_safe: bool = False,
+    mz_precision: int | None = None,
+    intensity_precision: int | None = None,
+    compression: str = "gzip",
+) -> str:
+    """Compress spectra data with configurable precision and compression."""
+    _validate_inputs(spectra, mz_precision, intensity_precision)
+
+    if compression not in ["gzip", "zlib", "brotli"]:
+        raise ValueError("compression must be 'gzip', 'zlib', or 'brotli'")
+
+    mzs, intensities = spectra
+
+    if mz_precision is not None:
+        mzs = [round(mz, mz_precision) for mz in mzs]
+
+    if intensity_precision is not None:
+        intensities = [
+            round(intensity, intensity_precision) for intensity in intensities
+        ]
+
+    mz_str = _delta_encode_single_string(mzs) if mzs else ""
+    intensity_str = _hex_encode(intensities) if intensities else ""
+
+    binary_payload = _encode_binary_payload(mz_str, intensity_str)
+    compressed_bytes = compress_with_method(binary_payload, compression)
+
+    compression_flag = {"gzip": "G", "zlib": "Z", "brotli": "R"}[compression]
+
+    if url_safe:
+        encoded = base64.urlsafe_b64encode(compressed_bytes).decode("ascii")
+        return "U" + compression_flag + encoded
+    else:
+        encoded = base64.b85encode(compressed_bytes).decode("ascii")
+        return "B" + compression_flag + encoded
+
+
+def decompress_spectra(compressed_str: str) -> tuple[list[float], list[float]]:
+    """Decompress spectra data with automatic compression detection."""
+    if not compressed_str:
+        return [], []
+
+    if not isinstance(compressed_str, str):  # type: ignore
+        raise ValueError("compressed_str must be a string")
+
+    if len(compressed_str) < 3:
+        raise ValueError("Invalid compressed string format")
+
+    encoding_flag = compressed_str[0]
+    compression_flag = compressed_str[1]
+    encoded_data = compressed_str[2:]
+
+    if encoding_flag not in ["U", "B"]:
+        raise ValueError(f"Unknown encoding method: {encoding_flag}")
+
+    if compression_flag not in ["G", "Z", "R"]:
+        raise ValueError(f"Unknown compression method: {compression_flag}")
+
+    compression_scheme = {"G": "gzip", "Z": "zlib", "R": "brotli"}[compression_flag]
+
+    if encoding_flag == "U":
+        compressed_bytes = base64.urlsafe_b64decode(encoded_data)
+    else:
+        compressed_bytes = base64.b85decode(encoded_data)
+
+    binary_payload = decompress_with_method(compressed_bytes, compression_scheme)
+    mz_str, intensity_str = _decode_binary_payload(binary_payload)
+
+    mzs = list(_delta_decode_single_string(mz_str)) if mz_str else []
+    intensities = list(_hex_decode(intensity_str)) if intensity_str else []
+
+    return mzs, intensities
+
+
+# Example usage and testing
+if __name__ == "__main__":
+
+    spectra = """
+    283.75153 6.49
+    287.60138 11.1
+    295.0311 2.8
+    305.47214 2.63
+    307.40408 3.93
+    308.36032 9.89
+    310.22513 3.96
+    311.70392 3.87
+    313.03281 3.67
+    316.05463 5.16
+    320.38055 5.13
+    321.29855 13.93
+    326.09396 7.29
+    332.24829 13.15
+    333.49542 4.66
+    335.06805 18.96
+    336.14792 7.26
+    337.64163 13.16
+    338.383 9.42
+    341.45782 10.96
+    343.54358 1.64
+    350.10721 14.77
+    353.22101 13.14
+    355.7041 12.64
+    358.25204 52.69
+    359.49048 14.44
+    362.99783 23.14
+    364.9798 1.64
+    365.83032 4.41
+    368.13989 1.79
+    371.22955 7.81
+    372.36768 3.64
+    377.15701 1.65
+    378.19153 3.82
+    380.20142 25.57
+    381.21338 9.73
+    383.43701 9.78
+    385.54831 6.96
+    389.26953 17.55
+    390.04282 13.94
+    391.47116 3.11
+    394.52689 5.13
+    395.2998 3.57
+    398.15482 27.13
+    399.3858 2.95
+    404.27002 13.6
+    407.01947 8.62
+    408.28107 18.15
+    409.77405 1.36
+    413.20572 11.55
+    415.21231 73.43
+    415.83994 0.89
+    417.28079 11.98
+    418.89011 8.43
+    421.29828 10.87
+    422.46274 7.69
+    426.24384 31.43
+    427.22467 2.51
+    429.38458 9.42
+    430.64838 4.45
+    432.22162 1.79
+    433.86615 30.99
+    434.59625 1.65
+    440.45386 4.5
+    441.35394 2.22
+    444.43524 3.82
+    450.20071 18.51
+    450.99176 4.52
+    452.1723 22.26
+    453.22678 11.09
+    455.14795 6.71
+    457.20721 1.5
+    458.41055 15.48
+    463.06171 2.22
+    466.99265 4.99
+    467.63931 4.07
+    469.34808 9.05
+    470.39349 6.46
+    473.18338 5.89
+    474.3374 16.06
+    476.35095 5.3
+    477.38562 2.65
+    478.32089 7.15
+    479.26437 14.37
+    480.10449 7.3
+    485.13062 52.43
+    486.4155 10.45
+    487.19794 1.93
+    490.43127 5.39
+    495.33173 35.88
+    497.4325 9.17
+    498.24078 205.15
+    499.36877 32.14
+    502.20587 43.88
+    503.75104 16.8
+    504.37283 1.22
+    508.10019 14.08
+    509.43488 8.07
+    513.24487 57.38
+    513.89252 4.78
+    517.09583 10.31
+    518.39136 7.69
+    519.08118 4.02
+    520.5271 9.81
+    521.99182 26.95
+    523.37097 12.16
+    524.27844 3.38
+    525.19873 3.85
+    526.0708 3.82
+    527.14783 25.48
+    528.34277 11.37
+    529.23291 8.34
+    530.08099 7.82
+    532.80994 6.28
+    534.07117 8.15
+    535.13672 8.52
+    536.17969 19.45
+    537.12817 10.51
+    538.41345 18.02
+    544.33398 9.91
+    545.27313 11.14
+    551.3291 8.6
+    552.42004 22.85
+    553.28186 9.0
+    555.26074 16.0
+    559.41772 4.44
+    562.40405 405.05
+    563.49884 48.1
+    565.60095 3.39
+    566.73792 5.85
+    569.47388 12.52
+    570.58905 20.03
+    571.23083 6.78
+    572.27875 19.1
+    573.14929 17.41
+    576.46143 14.95
+    579.10999 10.36
+    581.51404 14.56
+    584.20691 30.96
+    585.47827 3.96
+    588.27997 2.95
+    589.51111 10.56
+    590.38831 26.15
+    591.33704 14.9
+    592.10754 4.11
+    593.38672 3.81
+    594.61487 11.58
+    596.23676 25.0
+    597.31726 22.97
+    597.94324 9.28
+    599.34985 14.81
+    603.3772 5.38
+    605.45496 9.48
+    606.88367 21.29
+    608.13422 24.02
+    609.30292 3.11
+    611.35968 70.05
+    612.35083 18.33
+    613.03571 5.5
+    613.79645 26.04
+    614.52808 9.6
+    615.39319 5.7
+    617.26624 25.98
+    619.47095 5.93
+    620.35132 7.74
+    621.09943 17.34
+    623.36993 4.08
+    624.48932 28.25
+    630.05121 5.98
+    631.41858 6.18
+    632.36688 59.35
+    633.24976 6.18
+    634.55292 47.27
+    635.3573 9.26
+    636.32043 4.39
+    637.271 18.59
+    638.20142 17.33
+    642.30157 63.44
+    643.33411 6.16
+    645.32935 2.26
+    647.86493 11.7
+    648.75989 17.95
+    651.32275 21.49
+    652.22339 7.21
+    653.37415 3.93
+    654.22479 18.87
+    655.32611 2.23
+    657.75708 19.25
+    658.4151 12.59
+    660.13403 101.69
+    661.19312 10.69
+    661.90405 6.58
+    662.5166 4.28
+    664.24207 18.31
+    665.15717 20.83
+    666.21167 2.08
+    667.01953 4.25
+    668.47327 3.96
+    669.41382 28.25
+    670.33545 2.22
+    671.22565 19.44
+    672.29761 10.94
+    675.31104 367.11
+    676.39008 56.04
+    677.2749 2.78
+    678.24109 3.06
+    679.29303 16.92
+    681.38513 22.11
+    682.57666 71.93
+    683.33704 75.87
+    684.42224 9.4
+    685.71509 11.33
+    686.3764 8.98
+    687.37018 12.65
+    690.40833 3.99
+    694.33008 22.52
+    695.349 6.94
+    698.13733 3.67
+    699.33325 27.35
+    700.45337 12.76
+    704.29712 13.7
+    704.98633 11.43
+    707.71069 1.8
+    709.25977 8.88
+    710.17859 33.54
+    711.19073 62.97
+    712.22754 16.64
+    713.22839 22.97
+    714.11591 11.9
+    714.96838 2.66
+    716.74219 20.26
+    717.349 39.5
+    720.38245 3.78
+    721.31769 20.17
+    722.50696 9.23
+    723.29999 6.96
+    724.24817 6.85
+    725.51123 7.9
+    728.15503 16.63
+    729.4267 10.21
+    731.3175 3.37
+    732.25562 3.24
+    734.28467 24.26
+    735.5874 5.17
+    737.01318 6.72
+    738.2749 7.32
+    740.27661 8.15
+    741.14856 13.38
+    743.35217 3.29
+    745.01019 15.72
+    746.42737 449.83
+    747.41559 71.98
+    749.64301 15.06
+    751.23303 27.11
+    752.30963 7.46
+    754.59186 23.38
+    755.77185 18.92
+    756.64075 24.99
+    757.36707 3.33
+    758.2854 12.64
+    762.49304 9.3
+    764.34424 20.9
+    765.1825 36.11
+    766.04736 44.04
+    767.35175 93.45
+    768.64746 45.06
+    769.49225 49.0
+    770.46619 22.71
+    773.34991 20.47
+    775.87286 24.17
+    776.57117 12.9
+    779.92603 71.07
+    781.22754 20.88
+    782.13782 24.39
+    782.91211 15.16
+    784.05103 18.37
+    785.1012 12.6
+    786.14758 18.53
+    787.14941 6.84
+    788.43787 21.63
+    790.20227 54.21
+    791.04553 30.32
+    792.77551 7.95
+    794.20764 32.39
+    794.88562 12.55
+    796.42114 76.46
+    798.04993 75.99
+    798.66321 71.78
+    799.44336 209.21
+    800.31995 38.71
+    801.89368 1.5
+    803.32202 6.02
+    804.70935 38.21
+    805.43359 2.28
+    806.28699 2.34
+    808.16504 11.22
+    809.3606 2.34
+    810.09827 1.21
+    811.54663 2.51
+    812.39514 12.4
+    813.17163 6.36
+    813.88159 113.04
+    814.63403 90.34
+    815.36523 66.92
+    816.08813 4.92
+    817.22754 16.97
+    820.22986 13.63
+    821.31873 13.97
+    821.97583 3.96
+    822.61133 25.31
+    824.21387 11.72
+    825.1178 54.7
+    830.10596 17.46
+    830.85059 18.92
+    832.38501 311.0
+    833.42798 979.65
+    834.43665 215.64
+    835.07568 16.18
+    836.55627 19.47
+    837.76562 19.23
+    839.37329 46.03
+    840.37854 108.0
+    841.54712 24.81
+    844.39673 15.09
+    845.27686 3.94
+    848.45691 94.46
+    850.60864 7.26
+    852.14099 23.43
+    854.62524 34.73
+    855.42395 27.21
+    856.72864 183.6
+    857.67896 48.74
+    858.50769 20.54
+    859.48401 21.63
+    862.40186 44.79
+    864.67664 3.57
+    865.39966 7.49
+    866.20142 14.76
+    867.35645 25.95
+    869.3114 21.27
+    870.99097 3.86
+    872.29077 4.37
+    875.43262 4.98
+    878.19983 1.65
+    879.99231 11.02
+    880.59619 30.9
+    882.349 20.76
+    883.34338 29.16
+    884.62756 19.48
+    886.76428 34.86
+    887.6803 16.32
+    888.41907 28.84
+    889.87292 25.79
+    890.49744 4.76
+    891.74927 5.01
+    892.38818 16.04
+    893.14014 12.28
+    894.22058 7.4
+    895.65967 5.93
+    897.41162 11.25
+    898.47717 8.56
+    899.30603 36.85
+    900.27393 24.53
+    901.12366 31.04
+    902.44275 29.49
+    904.41638 497.8
+    905.35266 107.72
+    906.46326 31.14
+    909.06104 64.8
+    910.1825 14.58
+    911.03943 12.18
+    915.36877 12.32
+    917.31616 55.86
+    919.44873 4.8
+    920.20874 16.43
+    921.36169 21.96
+    921.97961 9.06
+    923.25476 11.03
+    924.68274 8.3
+    925.58679 7.69
+    927.18774 304.72
+    927.88257 40.64
+    928.50195 76.82
+    929.34924 14.87
+    930.16772 30.87
+    931.14648 13.43
+    932.04456 3.53
+    933.2406 6.82
+    936.33691 42.25
+    937.20227 6.54
+    938.2179 7.4
+    939.46008 16.36
+    940.87964 13.61
+    941.55115 7.55
+    943.10498 5.38
+    944.3573 26.0
+    945.33606 514.11
+    946.36426 158.64
+    947.34119 58.29
+    948.35034 52.27
+    949.20239 9.98
+    950.45435 18.26
+    953.53906 36.8
+    954.29871 3.93
+    954.98486 7.85
+    955.80115 6.42
+    956.73804 29.66
+    958.59851 30.17
+    960.61792 13.46
+    961.95496 26.8
+    964.68579 9.57
+    966.09229 13.46
+    967.56287 18.17
+    968.4408 7.56
+    969.72961 58.98
+    970.73059 172.43
+    971.61328 27.08
+    972.427 7.57
+    973.34509 25.06
+    974.24536 17.89
+    974.9292 5.12
+    978.76331 174.03
+    979.4928 621.79
+    980.22998 821.25
+    981.64551 63.35
+    982.49304 6.78
+    983.34314 4.11
+    984.82227 53.71
+    985.69165 31.98
+    987.47791 52.89
+    988.31262 17.46
+    989.40259 16.74
+    991.42737 1042.7
+    992.47681 298.72
+    994.17944 396.87
+    994.85388 30.69
+    996.37744 59.74
+    997.65027 18.69
+    998.58618 2.23
+    1025.49768 29.49
+    1028.45605 6.75
+    1030.47925 2.23
+    1032.45984 2.48
+    1033.50366 18.23
+    1036.30347 12.16
+    1038.20166 16.17
+    1039.30762 7.98
+    1040.37915 5.44
+    1040.97949 7.19
+    1042.29968 69.59
+    1043.4519 27.66
+    1044.54846 1.93
+    1049.28381 5.82
+    1053.76587 7.85
+    1054.45447 3.04
+    1055.35986 9.16
+    1057.41479 47.25
+    1059.06348 11.75
+    1060.46436 110.33
+    1061.24097 19.88
+    1061.8501 48.17
+    1062.45911 2.02
+    1065.43701 12.42
+    1066.32495 5.46
+    1067.5498 23.09
+    1068.59778 5.41
+    1071.79956 3.67
+    1076.60608 10.76
+    1077.90259 113.07
+    1078.50952 1543.97
+    1079.52991 403.85
+    1082.73901 11.44
+    1083.6521 60.68
+    1084.35791 39.33
+    1085.07947 32.41
+    1086.1499 20.95
+    1086.8064 9.53
+    1090.30566 11.42
+    1092.48657 3.69
+    1096.87305 9.81
+    1101.33997 126.46
+    1102.52026 36.29
+    1103.61621 12.25
+    1107.62842 6.09
+    1110.90576 5.36
+    1115.56006 6.11
+    1119.31702 121.8
+    1120.50928 69.35
+    1122.30737 2.66
+    1123.61584 6.96
+    1124.32617 2.97
+    1125.46704 6.55
+    1126.70447 22.16
+    1127.61157 61.04
+    1128.63135 17.25
+    1129.5199 15.74
+    1133.68408 3.93
+    1136.3374 9.02
+    1137.69653 13.11
+    1138.65967 12.34
+    1139.56213 6.18
+    1144.09827 22.03
+    1146.54431 11.87
+    1149.28174 19.25
+    1151.32629 31.88
+    1152.23462 5.22
+    1154.26636 102.96
+    1155.71252 51.56
+    1156.60681 33.26
+    1158.21655 7.03
+    1162.5199 6.38
+    1164.56311 1.09
+    1165.36304 3.94
+    1166.62988 29.61
+    1167.3783 35.45
+    1169.2207 41.22
+    1170.32568 22.42
+    1172.39954 293.54
+    1173.38013 101.49
+    1174.27905 9.93
+    1178.69629 8.72
+    1181.42102 4.24
+    1190.36804 301.99
+    1191.47351 757.85
+    1192.45459 274.65
+    1193.15527 14.67
+    1198.36438 1.94
+    1199.14966 5.02
+    1200.96558 1.78
+    1205.64319 52.08
+    1208.91809 18.26
+    1213.76196 4.25
+    1214.57251 16.78
+    1215.40271 3.86
+    1217.23853 12.34
+    1223.81201 3.24
+    1224.73608 4.45
+    1226.61621 19.38
+    1228.29468 3.08
+    1229.13513 5.37
+    1230.74475 5.92
+    1231.45044 6.11
+    1233.54187 3.93
+    1237.1427 3.7
+    1239.77832 15.21
+    1241.42859 51.33
+    1242.60339 20.56
+    1243.82617 5.75
+    1249.72095 5.95
+    1250.68091 4.95
+    1253.56189 3.41
+    1256.64954 1.98
+    1259.19727 145.34
+    1260.03113 17.1
+    1260.65063 11.35
+    1262.69238 10.6
+    1263.81836 9.96
+    1267.71729 2.07
+    1269.40771 2.66
+    1270.40625 6.26
+    1277.25366 166.01
+    1278.53687 88.38
+    1279.56909 4.18
+    1280.63989 12.69
+    1281.75708 32.08
+    1285.23962 18.67
+    1285.85315 1.17
+    1287.9939 15.72
+    1288.88452 7.22
+    1289.64221 19.49
+    1291.82227 5.87
+    1294.78137 33.28
+    1295.75732 6.55
+    1296.59277 10.69
+    1298.49109 45.54
+    1299.35376 29.73
+    1300.37195 12.32
+    1302.93652 15.35
+    1303.93896 9.68
+    1306.55457 161.44
+    1307.52173 122.92
+    1308.18091 2.35
+    1311.20911 2.92
+    1312.29773 54.1
+    1313.38855 65.65
+    1315.64111 8.84
+    1316.68835 6.26
+    1318.84351 17.98
+    1323.37244 5.24
+    1327.70898 29.74
+    1328.39465 3.26
+    1330.32678 82.03
+    1331.36511 45.54
+    1340.04993 5.81
+    1340.80798 8.93
+    1342.39172 3.41
+    1345.63269 55.69
+    1346.71545 39.69
+    1348.31934 73.65
+    1349.06885 43.87
+    1349.80322 20.08
+    1351.74707 6.19
+    1354.34094 6.57
+    1355.22278 11.55
+    1356.46204 18.91
+    1361.67822 7.81
+    1363.54175 952.61
+    1364.67834 377.92
+    1370.73657 11.53
+    1371.58777 15.25
+    1372.7157 2.22
+    1373.70251 18.25
+    1376.03137 14.3
+    1381.61511 4.66
+    1382.98682 2.69
+    1390.83777 15.51
+    1391.54114 9.29
+    1395.14587 10.97
+    1408.5271 23.74
+    1409.43445 12.05
+    1416.42188 9.01
+    1421.58655 8.95
+    1425.59888 61.59
+    1426.54919 27.89
+    1428.40186 6.39
+    1429.90173 3.32
+    1433.12842 30.68
+    1433.89197 9.28
+    1437.50964 14.37
+    1439.89868 7.31
+    1443.46057 150.66
+    1444.64465 44.6
+    1448.41003 3.88
+    1450.8219 2.4
+    1452.29309 8.43
+    1455.71655 5.4
+    1461.47998 224.14
+    1462.35217 103.05
+    1463.46094 7.0
+    1468.60632 5.68
+    1469.33667 37.9
+    1470.62634 10.85
+    1474.40247 3.41
+    1477.38953 3.73
+    1478.07385 8.8
+    1484.71143 17.29
+    1485.75232 14.53
+    1486.89819 16.33
+    1492.26038 7.28
+    1492.93286 5.52
+    1494.06555 4.4
+    1495.2655 16.45
+    1503.87231 2.79
+    1508.82581 2.23
+    1510.61414 240.09
+    1511.69312 79.99
+    1516.63879 9.63
+    1526.60193 12.61
+    1527.40454 7.29
+    1533.96423 7.97
+    1536.18884 6.26
+    1540.24316 3.73
+    1541.49768 4.75
+    1544.04688 18.57
+    1544.94189 2.34
+    1545.76868 6.55
+    1547.14099 13.86
+    1559.41589 18.76
+    1568.26379 7.28
+    1569.48389 5.99
+    1571.59961 9.17
+    1572.61658 49.79
+    1573.6333 6.7
+    1577.10388 7.86
+    1579.65466 15.05
+    1586.62732 4.79
+    1590.526 65.34
+    1591.48596 44.24
+    1597.72937 81.96
+    1598.8241 69.96
+    1608.53809 184.27
+    1609.46216 41.35
+    1610.10583 34.69
+    1613.63892 11.63
+    1616.56506 2.13
+    1620.35547 10.17
+    1625.92639 8.42
+    1628.51306 10.67
+    1630.95764 10.74
+    1633.54761 4.76
+    1634.6261 2.37
+    1646.98267 21.27
+    1648.97986 26.82
+    1661.57141 3.04
+    1665.68542 52.01
+    1666.73792 30.76
+    1667.64075 14.58
+    1680.84009 11.93
+    1683.04163 7.55
+    1683.70044 8.73
+    1690.70923 10.3
+    1692.55286 7.31
+    1704.97717 1.49
+    1712.177 9.99
+    1712.84241 44.95
+    1713.65588 31.2
+    1714.96228 5.67
+    1715.93567 34.67
+    1725.40051 3.32
+    1726.81567 3.15
+    1735.1073 5.83
+    1743.90942 61.08
+    1744.90002 32.71
+    1745.69299 4.82
+    1760.94409 19.82
+    1761.64246 143.82
+    1762.60364 95.88
+    1763.62573 31.15
+    1779.66333 366.64
+    1780.67908 305.05
+    1798.63843 7.0
+    1804.00122 26.2
+    1810.88538 3.27
+    1812.40125 3.99
+    1813.83386 5.7
+    1823.73267 11.29
+    1829.0437 8.7
+    1842.47144 10.69
+    1858.75159 2.8
+    1870.9115 1.79
+    1875.026 10.04
+    1875.76831 1.79
+    1895.84924 7.42
+    """
+
+    mz_spectra: list[float] = []
+    intensity_spectra: list[float] = []
+
+    for line in spectra.strip().split("\n"):
+        mz, intensity = map(float, line.split())
+        mz_spectra.append(mz)
+        intensity_spectra.append(intensity)
+    print(intensity_spectra)
+    sample_mzs = mz_spectra
+    sample_intensities = intensity_spectra
+    print("Original data:")
+    mz_str = ",".join(map(str, sample_mzs))
+    intensity_str = ",".join(map(str, sample_intensities))
+    print(f"MZ values: {len(mz_str)}")
+    print(f"Intensities: {len(intensity_str)}")
+    print(f"Total length: {len(mz_str) + len(intensity_str)}")
+    # combined simple compress whole strong
+    # Fair comparison - use same JSON format as your algorithm
+    json_data = json.dumps((mz_str, intensity_str), separators=(",", ":"))
+    json_bytes = json_data.encode("utf-8")
+    print(f"JSON format length: {len(json_bytes)}")
+
+    # Compress the JSON data (same as your algorithm) - returns bytes
+    combined_zlib = zlib.compress(json_bytes, level=zlib.Z_BEST_COMPRESSION)
+    print(f"JSON + zlib compressed (bytes): {len(combined_zlib)}")
+
+    combined_gzip = gzip.compress(json_bytes, compresslevel=9)
+    print(f"JSON + gzip compressed (bytes): {len(combined_gzip)}")
+
+    # Convert to base85 for fair string comparison with your algorithm
+    zlib_b85 = "Z" + base64.b85encode(combined_zlib).decode("ascii")
+    gzip_b85 = "G" + base64.b85encode(combined_gzip).decode("ascii")
+    print(f"JSON + zlib + base85 (string): {len(zlib_b85)}")
+    print(f"JSON + gzip + base85 (string): {len(gzip_b85)}")
+
+    # Test lossless compression with base85
+    compressed_b85 = compress_spectra((sample_mzs, sample_intensities), url_safe=False)
+    print(f"Compressed (Base85): {len(compressed_b85)}")
+
+    # Test lossless compression with URL-safe base64
+    compressed_url = compress_spectra((sample_mzs, sample_intensities), url_safe=True)
+    print(f"Compressed (URL-safe): {len(compressed_url)}")
+    print()
+
+    # Test lossy compression with precision=1 (only affects intensities)
+    compressed_lossy = compress_spectra(
+        (sample_mzs, sample_intensities), mz_precision=5, intensity_precision=2
+    )
+    print(f"Compressed (Lossy intensities, precision=1): {len(compressed_lossy)}")
+    print()
+
+    # print compressed_lossy decoded
+    decoded_lossy = decompress_spectra(compressed_lossy)
+    for mz, intensity in zip(*decoded_lossy):
+        # print(f"MZ: {mz}, Intensity: {intensity}")
+        continue

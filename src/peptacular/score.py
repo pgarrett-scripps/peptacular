@@ -445,16 +445,6 @@ def _get_monoisotopic_label(label: str) -> str:
     return label.replace("*", "")
 
 
-def _remove_isotope_from_label(label: str) -> str:
-    if label.endswith("*"):
-        return label[:-1]
-    return ""
-
-
-def _add_isotope_to_label(label: str) -> str:
-    return label + "*"
-
-
 def filter_missing_mono_isotope(
     fragment_matches: list[FragmentMatch],
 ) -> list[FragmentMatch]:
@@ -478,23 +468,95 @@ def filter_skipped_isotopes(
     fragment_matches: list[FragmentMatch],
 ) -> list[FragmentMatch]:
     """
-    Filters out fragment matches that have skipped isotopes.
+    Filters out fragment matches that have skipped isotopes - removes isotopes after a gap.
 
     :param fragment_matches: list of fragment matches.
     :type fragment_matches: list[FragmentMatch]
 
-    :return: list of fragment matches with monoisotopic peaks.
+    :return: list of fragment matches without isotopes after gaps.
     :rtype: list[FragmentMatch]
     """
 
-    # remove peaks any peaks after a missing isotope
-    labels = set([f.label for f in fragment_matches])
-    return [
-        f
-        for f in fragment_matches
-        if _remove_isotope_from_label(f.label) in labels
-        or _add_isotope_to_label(f.label) in labels
-    ]
+    # Group fragments by their base identity (same fragment, different isotopes)
+    fragment_groups: dict[str, list[FragmentMatch]] = {}
+
+    for match in fragment_matches:
+        if match.fragment is None:
+            continue
+
+        # Create a key that identifies the same fragment regardless of isotope
+        # Remove isotope markers from label to group isotopes of same fragment
+        base_label = match.fragment.label.replace("*", "")  # Remove isotope markers
+        key = f"{base_label}_{match.fragment.charge}_{match.fragment.start}_{match.fragment.end}_{match.fragment.loss}"
+
+        if key not in fragment_groups:
+            fragment_groups[key] = []
+        fragment_groups[key].append(match)
+
+    filtered_matches: list[FragmentMatch] = []
+
+    for group in fragment_groups.values():
+        if len(group) == 1:
+            # Only one isotope, keep it
+            filtered_matches.extend(group)
+            continue
+
+        # Sort by isotope number
+        group.sort(key=lambda x: x.fragment.isotope if x.fragment else 0)
+
+        # Find the first gap and remove everything after it
+        keep_matches: list[FragmentMatch] = []
+        expected_isotope = 0
+
+        for match in group:
+            if match.fragment is None:
+                continue
+
+            current_isotope = match.fragment.isotope
+
+            if current_isotope == expected_isotope:
+                # No gap, keep this match
+                keep_matches.append(match)
+                expected_isotope += 1
+            else:
+                # Gap found - don't keep this or any subsequent isotopes
+                break
+
+        filtered_matches.extend(keep_matches)
+
+    return filtered_matches
+
+
+def filter_losses(
+    fragment_matches: list[FragmentMatch],
+) -> list[FragmentMatch]:
+    """
+    Filters out fragment matches that do not have a base peak.
+
+    :param fragment_matches: list of fragment matches.
+    :type fragment_matches: list[FragmentMatch]
+
+    :return: list of fragment matches with base peaks.
+    :rtype: list[FragmentMatch]
+    """
+
+    new_matches: list[FragmentMatch] = []
+    for fragment_match in fragment_matches:
+        if fragment_match.loss != 0.0:
+            for other in fragment_matches:
+                if (
+                    other.ion_type == fragment_match.ion_type
+                    and other.start == fragment_match.start
+                    and other.end == fragment_match.end
+                    and other.charge == fragment_match.charge
+                    and other.loss == 0.0
+                ):
+                    new_matches.append(fragment_match)
+                    break
+        else:
+            new_matches.append(fragment_match)
+
+    return new_matches
 
 
 def _binomial_probability(n: int, k: int, p: float) -> float:
@@ -714,6 +776,8 @@ class Scorer:
         match_mode: MatchMode,
         filter_fragments_with_iso_gap: bool = False,
         filter_fragments_without_mono: bool = False,
+        remove_duplicate_matches: bool = True,
+        filter_losses_without_base: bool = False,
     ) -> None:
         self.mz_spectra = experimental_spectra[0]
         self.intensities = experimental_spectra[1]
@@ -723,6 +787,8 @@ class Scorer:
         self.match_mode = match_mode
         self.filter_fragments_with_iso_gap = filter_fragments_with_iso_gap
         self.filter_fragments_without_mono = filter_fragments_without_mono
+        self.remove_duplicate_matches = remove_duplicate_matches
+        self.filter_losses_without_base = filter_losses_without_base
 
         self.fragment_matches = get_fragment_matches(
             self.fragments,
@@ -733,11 +799,27 @@ class Scorer:
             self.match_mode,
         )
 
+        if self.remove_duplicate_matches:
+            seen_mzs: set[float] = set()
+            new_fragment_matches: list[FragmentMatch] = []
+            # sort fragments by priority
+            self.fragment_matches.sort(key=lambda x: x.fragment.priority if x.fragment else 0, reverse=True)
+            for fm in self.fragment_matches:
+                if fm.mz in seen_mzs:
+                    continue
+                seen_mzs.add(fm.mz)
+                new_fragment_matches.append(fm)
+
+            self.fragment_matches = new_fragment_matches
+
         if self.filter_fragments_with_iso_gap:
             self.fragment_matches = filter_skipped_isotopes(self.fragment_matches)
 
         if self.filter_fragments_without_mono:
             self.fragment_matches = filter_missing_mono_isotope(self.fragment_matches)
+
+        if self.filter_losses_without_base:
+            self.fragment_matches = filter_losses(self.fragment_matches)
 
     def _get_fragment_matches_by_direction(
         self, forward: bool, include_losses: bool, include_isotopes: bool

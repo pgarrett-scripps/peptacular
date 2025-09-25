@@ -23,3 +23,9 @@ from .proforma.dclasses import *
 from .errors import *
 
 from .digestion import *
+
+from .compression import *
+
+from .streamlit_ui import *
+from .plotting import *
+from .prediction import *

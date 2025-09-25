@@ -23,7 +23,7 @@ class FragmenterMixin(FragmentableAnnotation):
     @overload
     def fragment(
         self: FragmentableAnnotation,
-        ion_types: Sequence[IonTypeLiteral | IonType],
+        ion_types: Sequence[IonTypeLiteral | IonType] | IonTypeLiteral | IonType,
         charges: Sequence[int] | int,
         monoisotopic: bool = True,
         *,
@@ -40,7 +40,7 @@ class FragmenterMixin(FragmentableAnnotation):
     @overload
     def fragment(
         self: FragmentableAnnotation,
-        ion_types: Sequence[IonTypeLiteral | IonType],
+        ion_types: Sequence[IonTypeLiteral | IonType] | IonTypeLiteral | IonType,
         charges: Sequence[int] | int,
         monoisotopic: bool = True,
         *,
@@ -57,7 +57,7 @@ class FragmenterMixin(FragmentableAnnotation):
     @overload
     def fragment(
         self: FragmentableAnnotation,
-        ion_types: Sequence[IonTypeLiteral | IonType],
+        ion_types: Sequence[IonTypeLiteral | IonType] | IonTypeLiteral | IonType,
         charges: Sequence[int] | int,
         monoisotopic: bool = True,
         *,
@@ -74,7 +74,7 @@ class FragmenterMixin(FragmentableAnnotation):
     @overload
     def fragment(
         self: FragmentableAnnotation,
-        ion_types: Sequence[IonTypeLiteral | IonType],
+        ion_types: Sequence[IonTypeLiteral | IonType] | IonTypeLiteral | IonType,
         charges: Sequence[int] | int,
         monoisotopic: bool = True,
         *,
@@ -91,7 +91,7 @@ class FragmenterMixin(FragmentableAnnotation):
     @overload
     def fragment(
         self: FragmentableAnnotation,
-        ion_types: Sequence[IonTypeLiteral | IonType],
+        ion_types: Sequence[IonTypeLiteral | IonType] | IonTypeLiteral | IonType,
         charges: Sequence[int] | int,
         monoisotopic: bool = True,
         *,
@@ -108,7 +108,7 @@ class FragmenterMixin(FragmentableAnnotation):
     @overload
     def fragment(
         self: FragmentableAnnotation,
-        ion_types: Sequence[IonTypeLiteral | IonType],
+        ion_types: Sequence[IonTypeLiteral | IonType] | IonTypeLiteral | IonType,
         charges: Sequence[int] | int,
         monoisotopic: bool = True,
         *,
@@ -125,7 +125,7 @@ class FragmenterMixin(FragmentableAnnotation):
     @overload
     def fragment(
         self: FragmentableAnnotation,
-        ion_types: Sequence[IonTypeLiteral | IonType],
+        ion_types: Sequence[IonTypeLiteral | IonType] | IonTypeLiteral | IonType,
         charges: Sequence[int] | int,
         monoisotopic: bool = True,
         *,
@@ -143,7 +143,7 @@ class FragmenterMixin(FragmentableAnnotation):
 
     def fragment(
         self: FragmentableAnnotation,
-        ion_types: Sequence[IonTypeLiteral | IonType],
+        ion_types: Sequence[IonTypeLiteral | IonType] | IonTypeLiteral | IonType,
         charges: Sequence[int] | int,
         monoisotopic: bool = True,
         *,

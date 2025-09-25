@@ -48,7 +48,7 @@ def get_losses(
 @overload
 def fragment(  # type: ignore
     sequence: str | ProFormaAnnotation,
-    ion_types: Sequence[IonTypeLiteral],
+    ion_types: Sequence[IonTypeLiteral] | IonTypeLiteral,
     charges: Sequence[int] | int,
     monoisotopic: bool = True,
     *,
@@ -66,7 +66,7 @@ def fragment(  # type: ignore
 @overload
 def fragment(
     sequence: str | ProFormaAnnotation,
-    ion_types: Sequence[IonTypeLiteral],
+    ion_types: Sequence[IonTypeLiteral] | IonTypeLiteral,
     charges: Sequence[int] | int,
     monoisotopic: bool = True,
     *,
@@ -86,7 +86,7 @@ def fragment(
 @overload
 def fragment(
     sequence: str | ProFormaAnnotation,
-    ion_types: Sequence[IonTypeLiteral],
+    ion_types: Sequence[IonTypeLiteral] | IonTypeLiteral,
     charges: Sequence[int] | int,
     monoisotopic: bool = True,
     *,
@@ -105,7 +105,7 @@ def fragment(
 
 def fragment(
     sequence: str | ProFormaAnnotation,
-    ion_types: Sequence[IonTypeLiteral],
+    ion_types: Sequence[IonTypeLiteral] | IonTypeLiteral,
     charges: Sequence[int] | int,
     monoisotopic: bool = True,
     *,

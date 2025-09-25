@@ -3,15 +3,20 @@ import copy
 from copy import deepcopy
 from typing import Any, Iterable, Mapping, Self, Sequence, cast
 
-from peptacular.proforma.dclasses.interval import Interval
+from .dclasses.interval import Interval
 
 from ..fragment import FragmenterMixin
 
 from ..util import parse_static_mods
 
-from .serializer import serialize_annotation
+from .serializer import serialize_annotation, serialize_charge
 from .parser import ProFormaParser
-from .ambiguity import annotate_ambiguity, condense_ambiguity_to_xnotation
+from .ambiguity import (
+    annotate_ambiguity,
+    condense_ambiguity_to_xnotation,
+    group_by_ambiguity,
+    unique_fragments,
+)
 from .manipulation import (
     condense_mods_to_intervals,
     condense_static_mods,
@@ -1742,6 +1747,11 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
     ) -> str:
         return serialize_annotation(self, include_plus, precision)
 
+    def serialize_charge(
+        self, include_plus: bool = False, precision: int | None = None
+    ) -> str:
+        return serialize_charge(self, include_plus, precision)
+
     def condense_static_mods(self, inplace: bool = True) -> Self:
         return cast(Self, condense_static_mods(self, inplace=inplace))
 
@@ -1876,6 +1886,18 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
 
     def condense_ambiguity_to_xnotation(self, inplace: bool = True) -> Self:
         return cast(Self, condense_ambiguity_to_xnotation(self, inplace=inplace))
+
+    @staticmethod
+    def group_by_ambiguity(
+        annotations: Iterable["ProFormaAnnotation"], precision: int = 5
+    ) -> list[tuple["ProFormaAnnotation", ...]]:
+        return group_by_ambiguity(annotations, precision=precision)
+
+    @staticmethod
+    def unique_fragments(
+        annotations: Iterable["ProFormaAnnotation"], precision: int = 4
+    ) -> list[int]:
+        return unique_fragments(annotations, precision=precision)
 
     def permutations(self, size: int | None = None) -> Generator[Self, None, None]:
         for item in generate_permutations(self, size):

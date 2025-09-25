@@ -459,8 +459,10 @@ def strip_mods(
 
     """
 
-    return remove_mods(
-        sequence=sequence, mods=mods, include_plus=include_plus, precision=precision
+    annotation = get_annotation_input(sequence=sequence, copy=True)
+
+    return annotation.remove_mods(mods=mods, inplace=True).serialize(
+        include_plus=include_plus, precision=precision
     )
 
 
@@ -512,54 +514,6 @@ def filter_mods(
     return (
         get_annotation_input(sequence=sequence, copy=True)
         .filter_mods(mods=mods, inplace=True)
-        .serialize(include_plus=include_plus, precision=precision)
-    )
-
-
-def remove_mods(
-    sequence: str | ProFormaAnnotation,
-    mods: ModType | Iterable[ModType] | None = None,
-    include_plus: bool = False,
-    precision: int | None = None,
-) -> str:
-    """
-    Removes the specified modifications from the sequence, returning the modified sequence.
-
-    :param sequence: The sequence or ProFormaAnnotation object.
-    :type sequence: Union[str, ProFormaAnnotation]
-    :param mods: The modifications to remove. If None, all modifications will be removed.
-    :type mods: Optional[Union[str, List[str]]]
-    :param include_plus: If True, the modifications will be serialized with a '+' sign for positive values.
-    :type include_plus: bool
-
-    :raises ValueError: If the input sequence contains multiple sequences.
-    :raises ProFormaFormatError: if the proforma sequence is not valid
-
-    :return: The sequence with the specified modifications removed.
-    :rtype: str
-
-    .. code-block:: python
-
-        # Removes internal modifications:
-        >>> remove_mods('PEP[phospho]TIDE', mods='internal')
-        'PEPTIDE'
-
-        # Removes N and C terminal modifications:
-        >>> remove_mods('[Acetyl]-PEPTIDE[1.234]-[Amide]', mods=['nterm', 'cterm'])
-        'PEPTIDE[1.234]'
-
-        # Removes labile modifications:
-        >>> remove_mods('{1.0}[Acetyl]-PEPTIDE[1.234]-[Amide]', mods='labile')
-        '[Acetyl]-PEPTIDE[1.234]-[Amide]'
-
-        # Removes isotope notations:
-        >>> remove_mods('{1.0}<C13>[Acetyl]-PEPTIDE[1.234]-[Amide]', mods='isotope')
-        '{1.0}[Acetyl]-PEPTIDE[1.234]-[Amide]'
-
-    """
-    return (
-        get_annotation_input(sequence=sequence, copy=True)
-        .remove_mods(mods=mods, inplace=True)
         .serialize(include_plus=include_plus, precision=precision)
     )
 
@@ -1162,84 +1116,6 @@ def modification_coverage(
     return sequence_annot.modification_coverage(
         annotations=subsequence_annots, accumulate=accumulate
     )
-
-    # Get all modifications from the main sequence
-    sequence_mods = sequence_annot.get_mods(mod_types=["internal", "nterm", "cterm"])
-
-    # Initialize coverage dictionary with zeroes for all modification sites
-    coverage_dict = {pos: 0 for pos in sequence_mods.get("internal", {})}
-    coverage_dict.update(
-        {mod_type: 0 for mod_type in ["nterm", "cterm"] if mod_type in sequence_mods}
-    )
-
-    # Get the unmodified sequence
-    unmodified_sequence = sequence_annot.strip_mods(inplace=False)
-
-    # Process each subsequence
-    for subsequence in subsequences:
-        subsequence_anot = get_annotation_input(subsequence, copy=False)
-
-        # Get the unmodified subsequence
-        unmodified_subsequence = subsequence_anot.strip_mods(inplace=False)
-
-        start_indices = subsequence_anot.find_indices(
-            other=sequence_annot, ignore_mods=True
-        )
-
-        # Get the modifications of the subsequence
-        subsequence_mods = subsequence_anot.get_mods(
-            mod_types=["internal", "nterm", "cterm"]
-        )
-
-        # For each occurrence, check if the subsequence contains modifications at the same positions
-        for start_idx in start_indices:
-            for mod_pos, mod_values in sequence_mods.get("internal", {}).items():
-                # Calculate the relative position in the subsequence
-                relative_pos = mod_pos - start_idx
-
-                # Check if this position is within the subsequence
-                if 0 <= relative_pos < len(unmodified_subsequence):
-                    # Check if the subsequence has a modification at this relative position
-                    if relative_pos in subsequence_mods.get("internal", {}):
-                        # For each modification in the main sequence at this position
-                        for mod_value in mod_values:
-                            # Check if any modification in the subsequence matches
-                            if any(
-                                str(mod_value) == str(subseq_mod)
-                                for subseq_mod in subsequence_mods.get("internal", {})[
-                                    relative_pos
-                                ]
-                            ):
-                                if accumulate:
-                                    coverage_dict[mod_pos] += 1
-                                else:
-                                    coverage_dict[mod_pos] = 1
-                                break
-
-            # Handle terminal modifications
-            for mod_type in ["nterm", "cterm"]:
-                if mod_type in sequence_mods and mod_type in subsequence_mods:
-                    # For terminal mods, check if start or end of subsequence aligns with terminal
-                    terminal_match = (mod_type == "nterm" and start_idx == 0) or (
-                        mod_type == "cterm"
-                        and start_idx + len(unmodified_subsequence)
-                        == len(unmodified_sequence)
-                    )
-
-                    if terminal_match:
-                        # Check if any terminal mod in the subsequence matches
-                        for mod_value in sequence_mods[mod_type]:
-                            if any(
-                                str(mod_value) == str(subseq_mod)
-                                for subseq_mod in subsequence_mods[mod_type]
-                            ):
-                                if accumulate:
-                                    coverage_dict[mod_type] += 1
-                                else:
-                                    coverage_dict[mod_type] = 1
-                                break
-
-    return coverage_dict
 
 
 def count_aa(sequence: str | ProFormaAnnotation) -> dict[str, int]:

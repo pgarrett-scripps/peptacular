@@ -287,7 +287,7 @@ class ModLabler:
 
 
 def get_label(
-    ion_type: str, charge: int, number: str, loss: float, isotope: int
+    ion_type: str, charge: int, number: str, loss: float, isotope: int, precision: int | None = None
 ) -> str:
     """
     Returns the label of the fragment, e.g., b2, y3i, etc.
@@ -296,11 +296,13 @@ def get_label(
     :rtype: str
     """
 
+    loss_rounded = loss if precision is None else round(loss, precision)
+
     return (
         f"{'+' * charge}"
         f"{ion_type}"
         f"{number}"
-        f"{'(' + str(loss) + ')' if loss != 0.0 else ''}"
+        f"{'(' + str(loss_rounded) + ')' if loss != 0.0 else ''}"
         f"{'*' * isotope if isotope > 0 else ''}"
     )
 

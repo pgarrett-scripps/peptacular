@@ -1,4 +1,6 @@
 from __future__ import annotations
+from collections.abc import Iterable, Sequence
+import itertools
 from typing import TYPE_CHECKING, Any
 
 from peptacular.constants import IonType, ModType
@@ -358,3 +360,102 @@ def _apply_mass_shift(
             [Mod(mass_shift, 1)],
         )
         annotation.extend_intervals([mod_interval])
+
+
+def group_by_ambiguity(
+    annotations: Iterable[ProFormaAnnotation], precision: int = 4
+) -> list[tuple[ProFormaAnnotation, ...]]:
+    annotation_masses: list[tuple[ProFormaAnnotation, set[int]]] = []
+
+    if precision < 0 or precision > 10:
+        raise ValueError("Precision must be a non-negative integer between 0 and 10.")
+
+    mult = 10**precision
+
+    for annotation in annotations:
+        elements = annotation.split()
+        masses = [
+            int(round(element.mass(ion_type=IonType.NEUTRAL), precision)) * mult
+            for element in elements
+        ]
+        forward_masses = [mass for mass in itertools.accumulate(masses)]
+        reverse_masses = [mass for mass in itertools.accumulate(reversed(masses))]
+        unique_masses = set(forward_masses) | set(reverse_masses)
+        # print(annotation.serialize(), sorted(list(map(int, unique_masses))))
+        annotation_masses.append((annotation, unique_masses))
+
+    # sort annotations by length of unique masses (descending)
+    annotation_masses.sort(key=lambda x: len(x[1]), reverse=True)
+
+    groups: list[list[ProFormaAnnotation]] = []
+    added_indexes: set[int] = set()
+
+    for i, (annotation, unique_masses) in enumerate(annotation_masses):
+        if i not in added_indexes:
+            # Check if this annotation is a subset of any already processed annotation
+            # If so, skip it (it can't start its own group)
+            is_subset_of_earlier = False
+            for j in range(i):
+                if j not in added_indexes:  # Only check group leaders
+                    _, earlier_masses = annotation_masses[j]
+                    if unique_masses.issubset(earlier_masses):
+                        is_subset_of_earlier = True
+                        break
+
+            if not is_subset_of_earlier:
+                # Create new group with current annotation
+                current_group = [annotation]
+                added_indexes.add(i)
+
+                # Check all remaining annotations for subsets
+                for j, (other_annotation, other_unique_masses) in enumerate(
+                    annotation_masses[i + 1 :], start=i + 1
+                ):
+                    if j not in added_indexes and other_unique_masses.issubset(
+                        unique_masses
+                    ):
+                        current_group.append(other_annotation)
+                        added_indexes.add(j)
+
+                groups.append(current_group)
+
+    return [tuple(group) for group in groups]
+
+
+def unique_fragments(
+    annotations: Iterable[ProFormaAnnotation], precision: int = 4
+) -> list[int]:
+    annotation_masses: list[tuple[ProFormaAnnotation, set[int]]] = []
+
+    if precision < 0 or precision > 10:
+        raise ValueError("Precision must be a non-negative integer between 0 and 10.")
+
+    mult = 10**precision
+
+    for annotation in annotations:
+        elements = annotation.split()
+        masses = [
+            int(round(element.mass(ion_type=IonType.NEUTRAL), precision)) * mult
+            for element in elements
+        ]
+        forward_masses = [mass for mass in itertools.accumulate(masses)]
+        reverse_masses = [mass for mass in itertools.accumulate(reversed(masses))]
+        unique_masses = set(forward_masses) | set(reverse_masses)
+        # print(annotation.serialize(), sorted(list(map(int, unique_masses))))
+        annotation_masses.append((annotation, unique_masses))
+
+    # Second pass: find globally unique masses for each annotation
+    results: list[tuple[ProFormaAnnotation, int]] = []
+
+    for i, (annotation, masses) in enumerate(annotation_masses):
+        # Get all other masses from other annotations
+        all_other_masses = set()
+        for j, (_, other_masses) in enumerate(annotation_masses):
+            if i != j:
+                all_other_masses.update(other_masses)
+
+        # Find masses that are unique to this annotation (not in any other)
+        globally_unique_masses = masses - all_other_masses
+        results.append((annotation, len(globally_unique_masses)))
+
+    return results

@@ -21,6 +21,7 @@ from ..mods.mod_db_setup import (
     GNO_DB,
 )
 
+
 def _round_mass(mass: float, precision: Optional[int]) -> float:
     if precision is not None:
         return round(mass, precision)

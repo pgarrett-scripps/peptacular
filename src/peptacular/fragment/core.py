@@ -114,14 +114,7 @@ def _build_fragments(
             for iso in isotopes:
                 for loss in applicable_losses:
                     for c in charges:
-                        fragment_neutral_mass = adjust_mass(
-                            base_mass=base_mass,
-                            charge=0,
-                            ion_type=ion_type,
-                            monoisotopic=monoisotopic,
-                            isotope=iso,
-                            loss=loss,
-                        )
+
                         fragment_mass = adjust_mass(
                             base_mass=base_mass,
                             charge=c,
@@ -145,11 +138,9 @@ def _build_fragments(
                                 isotope=iso,
                                 loss=loss,
                                 parent_sequence=annot_sequence,
-                                mass=fragment_mass,
-                                neutral_mass=fragment_neutral_mass,
                                 mz=fragment_mz,
                                 sequence=base_sequence,
-                                unmod_sequence=base_unmod_sequence,
+                                parent_length=len(annotation),
                                 internal=span[0] != 0 and span[1] != len(annotation),
                             )
 
@@ -157,7 +148,7 @@ def _build_fragments(
                             number = get_number(
                                 ion_type, len(base_unmod_sequence), span[0], span[1]
                             )
-                            yield get_label(ion_type, c, number, loss, iso)
+                            yield get_label(ion_type, c, number, loss, iso, precision=precision)
 
                         elif return_type == FragmentReturnType.MASS:
                             yield fragment_mass
@@ -171,7 +162,7 @@ def _build_fragments(
                             )
                             yield (
                                 fragment_mass,
-                                get_label(ion_type, c, number, loss, iso),
+                                get_label(ion_type, c, number, loss, iso, precision=precision),
                             )
 
                         elif return_type == FragmentReturnType.MZ_LABEL:
@@ -180,7 +171,7 @@ def _build_fragments(
                             )
                             yield (
                                 fragment_mz,
-                                get_label(ion_type, c, number, loss, iso),
+                                get_label(ion_type, c, number, loss, iso, precision=precision),
                             )
 
 
@@ -359,7 +350,7 @@ def _get_terminal_fragments(
 
 def fragment(
     annotation: FragmentableAnnotation,
-    ion_types: Sequence[IonTypeLiteral | IonType],
+    ion_types: Sequence[IonTypeLiteral | IonType] | IonTypeLiteral | IonType,
     charges: Sequence[int] | int,
     monoisotopic: bool = True,
     *,
@@ -375,7 +366,12 @@ def fragment(
     ) = FragmentReturnType.FRAGMENT,
 ) -> Generator[FRAGMENT_RETURN_TYPING, None, None]:
     ion_type_list: list[IonType] = []
-    if isinstance(ion_types, Sequence):  # type: ignore
+
+    if isinstance(ion_types, IonType):
+        ion_type_list = [ion_types]
+    elif isinstance(ion_types, str):
+        ion_type_list = [IonType(ion_types)]
+    elif isinstance(ion_types, Sequence):  # type: ignore
         ion_type_list = [IonType(it) for it in ion_types]
     else:
         raise TypeError("Invalid ion_types format")
