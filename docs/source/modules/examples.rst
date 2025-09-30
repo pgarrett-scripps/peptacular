@@ -12,7 +12,7 @@ Example 1: Digestion
 Example 2: Fragmentation
 --------------------------
 
-.. literalinclude:: ../../../examples/fragmentation_example.py
+.. literalinclude:: ../../../examples/fragmentat_example.py
    :language: python
 
 

@@ -1,5 +1,4 @@
 from .util import get_annotation_input, override_annotation_properties
-
 from ..proforma import ProFormaAnnotation
 from ..constants import IonType, IonTypeLiteral
 

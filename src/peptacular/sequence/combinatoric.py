@@ -2,17 +2,17 @@
 This module provides functions to generate permutations, combinations, and products of sequences.
 """
 
-from typing import Generator, Optional, Union
+from typing import Generator
 
 from ..proforma.annotation import ProFormaAnnotation
 from .util import get_annotation_input
 
 
 def permutations(
-    sequence: Union[str, ProFormaAnnotation],
-    size: Optional[int] = None,
+    sequence: str | ProFormaAnnotation,
+    size: int | None = None,
     include_plus: bool = False,
-    precision: Optional[int] = None,
+    precision: int | None = None,
 ) -> Generator[str, None, None]:
     """
     Generates all permutations of the input sequence. Terminal sequence are kept in place.
@@ -48,10 +48,10 @@ def permutations(
 
 
 def product(
-    sequence: Union[str, ProFormaAnnotation],
-    repeat: Union[int, None],
+    sequence: str | ProFormaAnnotation,
+    repeat: int | None,
     include_plus: bool = False,
-    precision: Optional[int] = None,
+    precision: int | None = None,
 ) -> Generator[str, None, None]:
     """
     Generates all sartesian products of the input sequence of a given size. Terminal sequence are kept in place.
@@ -88,10 +88,10 @@ def product(
 
 
 def combinations(
-    sequence: Union[str, ProFormaAnnotation],
-    size: Union[int, None],
+    sequence: str | ProFormaAnnotation,
+    size: int | None,
     include_plus: bool = False,
-    precision: Optional[int] = None,
+    precision: int | None = None,
 ) -> Generator[str, None, None]:
     """
     Generates all combinations of the input sequence of a given size. Terminal sequence are kept in place.
@@ -128,10 +128,10 @@ def combinations(
 
 
 def combinations_with_replacement(
-    sequence: Union[str, ProFormaAnnotation],
-    size: Union[int, None],
+    sequence: str | ProFormaAnnotation,
+    size: int | None,
     include_plus: bool = False,
-    precision: Optional[int] = None,
+    precision: int | None = None,
 ) -> Generator[str, None, None]:
     """
     Generates all combinations with replacement of the input sequence of a given size. Terminal sequence are kept

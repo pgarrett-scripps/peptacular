@@ -22,6 +22,20 @@ It contains functions for parsing and working with Proforma2.0 compliant peptide
    modules/getting_started
    modules/examples
 
+API Reference
+=============
+
+Core Classes
+------------
+
+.. toctree::
+   :maxdepth: 3
+   :caption: Core API:
+
+   api/annotation
+   api/functions
+
+
 Module Reference
 =================
 

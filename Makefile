@@ -14,6 +14,7 @@ help:
 	@echo "  clean        - Clean cache and build files"
 	@echo "  build        - Build package"
 	@echo "  docs         - Build documentation"
+	@echo "  serve-docs  - Serve documentation with live reload"
 	@echo "  run-gen      - Run generate_mod_dbs.py"
 
 # Dependency management
@@ -63,7 +64,12 @@ build:
 
 # Documentation (if using sphinx)
 docs:
-	uv run sphinx-build -b html docs/ docs/_build/
+	uv run sphinx-build -b html docs/source/ docs/_build/
+
+serve-docs: docs
+	@echo "Serving documentation at http://localhost:8000"
+	@echo "Press Ctrl+C to stop the server"
+	cd docs/_build && uv run python -m http.server 8000
 
 # Project-specific commands
 run-gen:

@@ -47,15 +47,19 @@ such as when calculating mass or composition.
 Key Features
 ------------
 
-**peptacular** is fully compliant with **ProForma 2.0** and includes functions for:
-
 - **Digestion:** Perform single, multi, or sequential digestion.
 - **Fragmentation:** Generate internal, terminal, immonium, and neutral loss fragments.
-- **Mass and Composition:** Calculate mass, m/z, or elemental composition of peptides.
-- **Modifications:** Apply or remove static and variable modifications.
-- **Parsing and Serializing:** Handle ProForma 2.0-compliant sequence parsing and serialization.
-- **Isotopic Distributions:** Simulate isotopic patterns.
-- **Scoring:** Compare theoretical fragments against experimental spectra.
+- **Mass and Composition:** Calculate mass, m/z, & composition.
+- **Modifications:** Modify peptide sequences with various modifications.
+- **Parsing and Serializing:** read/write ProForma 2.0 sequences.
+- **Isotopic Distributions:** calculate isotopic patterns.
+- **Scoring:** Score theoretical fragments against experimental spectra.
+- **Compression:** Spectra and peptide compression.
+- **Properties:** Analyze peptide properties such as hydrophobicity and charge.
+- **Ambiguity Handling:** Annotate ambiguity in peptide sequences, from missing fragment ions.
+- **Plotting:** [Optional] Generate plots and figures.
+- **Streamlit:** [Optional] Create interactive web apps.
+- **MSMS Prediction:** [Optional] Predict MS/MS spectra with ms2pip.
 
 See the **Examples** section for more detailed use cases.
 
@@ -92,6 +96,8 @@ sequence to a **ProformaAnnotation** and use its methods directly.
 ``MultiProformaAnnotation`` contains a list of individual ``ProformaAnnotation`` objects along with their
 connection type.
 
+Note: MultiProformaAnnotation intengration is still in progress and not fully supported in all functions.
+
 
 ProForma Notation
 ----------------------
@@ -113,28 +119,7 @@ ProForma Notation
 
 Global, isotope, and labile mods are specified before N-terminal modification, or first residue if no terminal mod is present.
 
-**Combined Example:**
-
-.. code-block:: python
-
-    pt.parse('<[+20]@C><13C>{+75}[-40]-PEPT[+50]IDE-[+200]')
-
-    # Returns
-    ProFormaAnnotation(
-        sequence='PEPTIDE',
-        isotope_mods=[Mod('13C', 1)],
-        static_mods=[Mod('[+20]@C', 1)],
-        labile_mods=[Mod(75, 1)],
-        nterm_mods=[Mod(-40, 1)],
-        cterm_mods=[Mod(200, 1)],
-        internal_mods={3: [Mod(50, 1)]}
-    )
-
 **Specifying Proforma Modifications**
-
-The ``Mod`` object contains:
-- The **modification string**
-- The **number of times** it is applied
 
 You can apply **multiple modifications** at the same position by adding them sequentially:
 - ``[+100][+30]`` → Two separate modifications

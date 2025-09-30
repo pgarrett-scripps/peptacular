@@ -71,7 +71,9 @@ streamlit = [
 dev = [
     "pytest",
     "pytest-cov",
-    "ruff"
+    "ruff",
+    "sphinx",
+    "sphinx-rtd-theme",
 ]
 
 ms2pip = [
