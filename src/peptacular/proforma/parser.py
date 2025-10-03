@@ -10,6 +10,8 @@ from ..util import validate_single_mod_multiplier
 
 from .characters import ProformaChar as PC
 
+end_chars = {PC.CHIMERIC, PC.CONNECTED, PC.CHARGE_SEP}
+
 
 def _is_unmodified(proforma_sequence: str) -> bool:
     """
@@ -21,7 +23,7 @@ def _is_unmodified(proforma_sequence: str) -> bool:
     :return: True if the sequence is unmodified
     :rtype: bool
     """
-    return all(c in AMINO_ACIDS for c in proforma_sequence)
+    return not any(c not in AMINO_ACIDS for c in proforma_sequence)
 
 
 class ProFormaParser:
@@ -76,83 +78,62 @@ class ProFormaParser:
 
     def _reset_sequence(self) -> None:
         self.amino_acids = []
-        self.isotope_mods.clear()
-        self.static_mods.clear()
-        self.labile_mods.clear()
-        self.unknown_mods.clear()
-        self.nterm_mods.clear()
-        self.cterm_mods.clear()
-        self.internal_mods.clear()
+        self.isotope_mods = ModList()
+        self.static_mods = ModList()
+        self.labile_mods = ModList()
+        self.unknown_mods = ModList()
+        self.nterm_mods = ModList()
+        self.cterm_mods = ModList()
+        self.internal_mods = ModDict()
         self.charge = None
-        self.charge_adducts.clear()
-        self.intervals.clear()
+        self.charge_adducts = ModList()
+        self.intervals = IntervalList()
 
     @validate_single_mod_multiplier
-    def _add_static_mod(self, mod: Mod | list[Mod]) -> None:
-        if isinstance(mod, list):
-            self.static_mods.extend(mod)
-        else:
-            self.static_mods.append(mod)
+    # Change all _add_* methods to expect lists only
+    def _add_static_mod(self, mod: Mod) -> None:
+        self.static_mods.append(mod)
 
     @validate_single_mod_multiplier
-    def _add_isotope_mod(self, mod: Mod | list[Mod]) -> None:
-        if isinstance(mod, list):
-            self.isotope_mods.extend(mod)
-        else:
-            self.isotope_mods.append(mod)
+    def _add_isotope_mod(self, mod: Mod) -> None:
+        self.isotope_mods.append(mod)
 
-    def _add_labile_mod(self, mod: Mod | list[Mod]) -> None:
-        if isinstance(mod, list):
-            self.labile_mods.extend(mod)
-        else:
-            self.labile_mods.append(mod)
+    def _add_labile_mod(self, mods: list[Mod]) -> None:
+        self.labile_mods.extend(mods)
 
-    def _add_unknown_mod(self, mod: Mod | list[Mod]) -> None:
-        if isinstance(mod, list):
-            self.unknown_mods.extend(mod)
-        else:
-            self.unknown_mods.append(mod)
+    def _add_unknown_mod(self, mods: list[Mod]) -> None:
+        self.unknown_mods.extend(mods)
 
-    def _add_nterm_mod(self, mod: Mod | list[Mod]) -> None:
-        if isinstance(mod, list):
-            self.nterm_mods.extend(mod)
-        else:
-            self.nterm_mods.append(mod)
+    def _add_nterm_mod(self, mods: list[Mod]) -> None:
+        self.nterm_mods.extend(mods)
 
-    def _add_cterm_mod(self, mod: Mod | list[Mod]) -> None:
-        if isinstance(mod, list):
-            self.cterm_mods.extend(mod)
-        else:
-            self.cterm_mods.append(mod)
+    def _add_cterm_mod(self, mods: list[Mod]) -> None:
+        self.cterm_mods.extend(mods)
 
-    def _add_internal_mod(self, mod: Mod | list[Mod]) -> None:
+    def _add_internal_mod(self, mods: list[Mod]) -> None:
         position = len(self.amino_acids) - 1
-        if isinstance(mod, list):
-            self.internal_mods.setdefault(position, mod)
-
-    def _add_interval(self, interval: Interval | list[Interval]) -> None:
-        if isinstance(interval, list):
-            self.intervals.extend(interval)
-        else:
-            self.intervals.append(interval)
+        self.internal_mods.setdefault(position, mods)
 
     @validate_single_mod_multiplier
-    def _add_charge_adducts(self, mod: Mod | list[Mod]) -> None:
-        if isinstance(mod, list):
-            self.charge_adducts.extend(mod)
-        else:
-            self.charge_adducts.append(mod)
+    def _add_charge_adducts(self, mods: list[Mod]) -> None:
+        self.charge_adducts.extend(mods)
+
+    def _add_interval(self, interval: Interval) -> None:  # Single interval
+        self.intervals.append(interval)
 
     def _parse_sequence_start(self) -> None:
-        """
-        Parse the start of the sequence, up until the first amino acid or interval
-        """
-
-        while not self._end_of_sequence():
-            cur = self._current()
-            if cur in AMINO_ACIDS or cur == PC.INTERVAL_START:  # End of start sequence
+        """Parse the start of the sequence, up until the first amino acid or interval."""
+        seq = self.sequence
+        seq_len = len(seq)
+        
+        while self.position < seq_len:
+            cur = seq[self.position]
+            
+            # End of start sequence
+            if cur in AMINO_ACIDS or cur == PC.INTERVAL_START:
                 return
-            if cur == PC.MOD_START:  # N-term or unknown mods
+            
+            if cur == PC.MOD_START:
                 mods = self._parse_modifications(PC.MOD_START, PC.MOD_END)
                 next_char = self._parse_char()
                 if next_char == PC.TERM_MOD:
@@ -165,32 +146,25 @@ class ProFormaParser:
                         self.position,
                         self.sequence,
                     )
-            elif cur == PC.STATIC_MOD_START:  # Global mods
-                for mod in self._parse_modifications(
-                    PC.STATIC_MOD_START, PC.STATIC_MOD_END
-                ):
-                    if PC.STATIC_SEP in mod.val:  # type: ignore (val will always be str)
+                    
+            elif cur == PC.STATIC_MOD_START:
+                for mod in self._parse_modifications(PC.STATIC_MOD_START, PC.STATIC_MOD_END):
+                    if PC.STATIC_SEP in mod.val:  # type: ignore
                         try:
                             self._add_static_mod(mod)
-                        except (
-                            ValueError
-                        ) as err:  # re-raise error with position, and sequence
-                            raise ProFormaFormatError(
-                                str(err), self.position, self.sequence
-                            ) from err
-                    else:  # Isotope mod
+                        except ValueError as err:
+                            raise ProFormaFormatError(str(err), self.position, self.sequence) from err
+                    else:
                         try:
                             self._add_isotope_mod(mod)
-                        except (
-                            ValueError
-                        ) as err:  # re-raise error with position, and sequence
-                            raise ProFormaFormatError(
-                                str(err), self.position, self.sequence
-                            ) from err
-            elif cur == PC.LABILE_MOD_START:  # Labile mods
+                        except ValueError as err:
+                            raise ProFormaFormatError(str(err), self.position, self.sequence) from err
+                            
+            elif cur == PC.LABILE_MOD_START:
                 self._add_labile_mod(
-                    self._parse_modification(PC.LABILE_MOD_START, PC.LABILE_MOD_END)
+                    self._parse_modifications(PC.LABILE_MOD_START, PC.LABILE_MOD_END)
                 )
+                
             else:
                 raise ProFormaFormatError(
                     f"Expected amino acid, '{PC.MOD_START}', '{PC.LABILE_MOD_START}', or '{PC.STATIC_MOD_START}' but got '{cur}'",
@@ -199,29 +173,32 @@ class ProFormaParser:
                 )
 
     def _parse_sequence_middle(self) -> None:
-        """
-        Parse the middle of the sequence, up until the end of the sequence defined by '/' or '+'
-        """
+        """Parse the middle of the sequence."""
         dummy_interval = None
-        while not self._end_of_sequence():
-            cur = self._current()
-            if cur in AMINO_ACIDS:  # Amino acid
+        seq = self.sequence
+        seq_len = len(seq)
+                
+        while self.position < seq_len:
+            cur = seq[self.position]
+            
+            # Early termination check
+            if cur in end_chars:
+                return
+            
+            if cur in AMINO_ACIDS:
                 self.amino_acids.append(self._parse_char())
-            elif cur == PC.MOD_START:  # mods for the previous amino acid
+                
+            elif cur == PC.MOD_START:
                 self._add_internal_mod(
                     self._parse_modifications(PC.MOD_START, PC.MOD_END)
                 )
-            elif cur == PC.TERM_MOD:  # cterm mods (end of sequence)
+                
+            elif cur == PC.TERM_MOD:
                 self._skip(1)
                 self._add_cterm_mod(self._parse_modifications(PC.MOD_START, PC.MOD_END))
                 return
-            elif cur in (
-                PC.CHIMERIC,
-                PC.CONNECTED,
-                PC.CHARGE_SEP,
-            ):  # charge ( end of sequence)
-                return
-            elif cur == PC.INTERVAL_START:  # Interval start
+                
+            elif cur == PC.INTERVAL_START:
                 if dummy_interval is not None:
                     raise ProFormaFormatError(
                         "Overlapping intervals!", self.position, self.sequence
@@ -233,31 +210,27 @@ class ProFormaParser:
                     mods=None,
                 )
                 self._skip(1)
-            elif cur == PC.INTERVAL_END:  # Interval end
+                
+            elif cur == PC.INTERVAL_END:
                 if dummy_interval is None:
                     raise ProFormaFormatError(
                         "Interval ended without starting!", self.position, self.sequence
                     )
-                dummy_interval.end = len(self.amino_acids)  # type: ignore (dummy_interval will never be None here)
-
+                dummy_interval.end = len(self.amino_acids)
                 self._skip(1)
-                if not self._end_of_sequence() and self._current() == PC.MOD_START:
-                    dummy_interval.mods += self._parse_modifications(
-                        PC.MOD_START, PC.MOD_END
-                    )
-
+                if self.position < seq_len and seq[self.position] == PC.MOD_START:
+                    dummy_interval.mods += self._parse_modifications(PC.MOD_START, PC.MOD_END)
                 self._add_interval(dummy_interval)
                 dummy_interval = None
-
-            elif cur == PC.UNKNOWN:  # unknown mods
+                
+            elif cur == PC.UNKNOWN:
                 if dummy_interval is None:
                     raise ProFormaFormatError(
                         "Unknown mod outside of interval", self.position, self.sequence
                     )
-
-                # interval is ambiguous
                 dummy_interval.ambiguous = True
                 self._skip(1)
+                
             else:
                 raise ProFormaFormatError(
                     f"Expected either '{PC.MOD_START}', '{PC.INTERVAL_START}', '{PC.UNKNOWN}', '{PC.TERM_MOD}', '{PC.CONNECTED}', '{PC.CHARGE_SEP}' or '{PC.CHIMERIC}' but got: {cur}",
@@ -266,107 +239,116 @@ class ProFormaParser:
                 )
 
     def _parse_sequence_end(self) -> None:
-        """
-        Parse the end of the sequence, up until the end of the sequence or start of the next sequence
-        """
-        while not self._end_of_sequence():
-            cur = self._current()
-            if cur == PC.CHARGE_SEP:  # charge
+        """Parse the end of the sequence."""
+        seq = self.sequence
+        seq_len = len(seq)
+        
+        while self.position < seq_len:
+            cur = seq[self.position]
+            
+            if cur == PC.CHARGE_SEP:
                 self._skip(1)
-
-                # check for // (crosslink)
-                if not self._end_of_sequence() and self._current() == PC.CONNECTED:
+                # Check for // (crosslink)
+                if self.position < seq_len and seq[self.position] == PC.CONNECTED:
                     self._skip(1)
                     self.current_connection = True
                     return
-
                 self.charge = self._parse_integer()
-
-                # check for charge adducts
-                if not self._end_of_sequence() and self._current() == PC.MOD_START:
+                # Check for charge adducts
+                if self.position < seq_len and seq[self.position] == PC.MOD_START:
                     self._add_charge_adducts(
                         self._parse_modifications(PC.MOD_START, PC.MOD_END)
                     )
-
-            elif cur == PC.CHIMERIC:  # next sequence
+                    
+            elif cur == PC.CHIMERIC:
                 self._skip(1)
                 self.current_connection = False
                 return
+                
             else:
                 raise ProFormaFormatError(
                     f"Invalid sequence: expected '{PC.CONNECTED}' or '{PC.CHIMERIC}' but got {cur}",
                     self.position,
                     self.sequence,
                 )
-
     def _parse_char(self) -> str:
-        # Assuming any character not a '[' or ']' is an amino acid for simplicity
-        aa = self._current()
+        """Parse single character and advance position."""
+        aa = self.sequence[self.position]
         self.position += 1
         return aa
 
     def _parse_modifications(
         self, opening_bracket: str = PC.MOD_START, closing_bracket: str = PC.MOD_END
     ) -> list[Mod]:
-        """
-        Parses modifications from the sequence starting with the current position. The function will continue parsing
-        until it reaches the end of the sequence or the there are no more sequential modifications.
-        """
+        """Parse modifications from sequence."""
         mods: list[Mod] = []
-        while not self._end_of_sequence():
-            if self._current() == opening_bracket:
-                mod = self._parse_modification(opening_bracket, closing_bracket)
-                mods.append(mod)
+        seq = self.sequence
+        seq_len = len(seq)
+        
+        while self.position < seq_len:
+            if seq[self.position] == opening_bracket:
+                mods.append(self._parse_modification(opening_bracket, closing_bracket))
             else:
                 break
-
         return mods
 
     def _parse_modification(
         self, opening_bracket: str = PC.MOD_START, closing_bracket: str = PC.MOD_END
     ) -> Mod:
-        """
-        Parses a single modification from the sequence starting with the current position.
-        """
+        """Parse a single modification."""
+        seq = self.sequence
+        seq_len = len(seq)
+        
         self.position += 1
         start = self.position
         bracket_depth = 1
-        while not self._end_of_sequence() and bracket_depth > 0:
-            if self.sequence[self.position] == opening_bracket:
+        
+        # Fast bracket matching
+        while self.position < seq_len and bracket_depth > 0:
+            char = seq[self.position]
+            if char == opening_bracket:
                 bracket_depth += 1
-            elif self.sequence[self.position] == closing_bracket:
+            elif char == closing_bracket:
                 bracket_depth -= 1
             self.position += 1
-
+        
         if bracket_depth != 0:
-            msg = f"Unmatched {opening_bracket} at position {self.position}"
-            raise ProFormaFormatError(msg, self.position, self.sequence)
-
-        mod = self.sequence[start : self.position - 1]
-
+            raise ProFormaFormatError(
+                f"Unmatched {opening_bracket} at position {self.position}",
+                self.position, self.sequence
+            )
+        
+        mod = seq[start : self.position - 1]
         multiplier = 1
-        if not self._end_of_sequence() and self._peek() == PC.MULTI:
+        
+        # Check for multiplier
+        if self.position < seq_len and seq[self.position] == PC.MULTI:
             self.position += 1
             multiplier_start = self.position
-            while not self._end_of_sequence() and self._peek().isdigit():  # type: ignore (Will always be valid)
+            while self.position < seq_len and seq[self.position].isdigit():
                 self.position += 1
-            multiplier = int(self.sequence[multiplier_start : self.position])
-
+            multiplier = int(seq[multiplier_start : self.position])
+        
         return Mod(convert_type(mod), multiplier)
 
     def _parse_integer(self) -> int:
+        """Parse integer from sequence."""
+        seq = self.sequence
+        seq_len = len(seq)
         start = self.position
         digit_count = 0
-        while not self._end_of_sequence():
-            if self._peek().isdigit():  # type: ignore (Will always be valid)
+        
+        while self.position < seq_len:
+            char = seq[self.position]
+            if char.isdigit():
                 digit_count += 1
                 self.position += 1
-            elif digit_count == 0 and self._peek() in [PC.PLUS, PC.MINUS]:
+            elif digit_count == 0 and char in (PC.PLUS, PC.MINUS):
                 self.position += 1
             else:
                 break
-        return int(self.sequence[start : self.position])
-
+        
+        return int(seq[start : self.position])
     def _current(self) -> str:
         return self.sequence[self.position]
 

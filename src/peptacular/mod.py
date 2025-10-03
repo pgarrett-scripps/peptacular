@@ -10,6 +10,8 @@ class Mod:
     A modification with optional multiplier
     """
 
+    __slots__ = ("val", "mult")
+
     def __init__(self, val: MOD_VALUE_TYPES, mult: int = 1):
         self.val = val
         self.mult = mult

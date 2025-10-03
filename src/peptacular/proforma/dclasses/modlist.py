@@ -5,19 +5,14 @@ from collections.abc import Iterable
 from typing import Any, Self, SupportsIndex
 import warnings
 
-
 from ...mod import Mod, MOD_VALUE_TYPES, setup_mod
 
-# MOD_VALUE_TYPES = str | int | float
 MODLIST_DATATYPE = MOD_VALUE_TYPES | Mod
 
 
 class ModList(UserList[Mod]):
     """
     A list of modifications that automatically merges duplicates by aggregating multipliers.
-
-    Accepts str, int, float, Mod instances, or iterables thereof.
-    Internally stores everything as Mod instances with no duplicate values.
     """
 
     def __init__(
@@ -26,9 +21,7 @@ class ModList(UserList[Mod]):
         allow_dups: bool = True,
         stackable: bool = True,
     ) -> None:
-        # Initialize empty UserList
         super().__init__()
-
         self.allow_dups = allow_dups
         self.stackable = stackable
 
@@ -43,13 +36,16 @@ class ModList(UserList[Mod]):
             self.extend(data)
 
     def _normalize_input(self, item: MODLIST_DATATYPE) -> Mod:
-        """Convert input to Mod instance"""
+        """Convert input to Mod instance - optimized to check Mod first"""
+        if isinstance(item, Mod):
+            return item
         return setup_mod(item)
 
     def _find_same_mod_index(self, mod: Mod) -> int | None:
         """Find index of existing mod with same value"""
+        mod_val = mod.val
         for i, m in enumerate(self.data):
-            if m.val == mod.val:
+            if m.val == mod_val:
                 return i
         return None
 
@@ -63,7 +59,6 @@ class ModList(UserList[Mod]):
                 )
 
             self.data[idx].mult += item.mult
-            # Remove if multiplier becomes zero
             if self.data[idx].mult == 0:
                 del self.data[idx]
             elif self.data[idx].mult < 0:
@@ -71,18 +66,25 @@ class ModList(UserList[Mod]):
                     f"Modification multiplier cannot be negative: {self.data[idx].mult}"
                 )
         else:
-            if item.mult != 0:  # Only append if multiplier is non-zero
+            if item.mult != 0:
                 self.data.append(item)
 
-    # Override UserList methods to handle type conversion and merging
     def append(self, item: MODLIST_DATATYPE) -> None:
         """Add a modification, merging with existing mod if same value"""
-        mod = self._normalize_input(item)
-        self._merge_or_append(mod)
+        # Fast path: if already a Mod, skip normalization
+        if isinstance(item, Mod):
+            self._merge_or_append(item)
+        else:
+            mod = setup_mod(item)
+            self._merge_or_append(mod)
 
     def extend(self, other: Iterable[MODLIST_DATATYPE]) -> None:
         """Extend with modifications, merging duplicates"""
-        if isinstance(other, Iterable):  # type: ignore
+        # Fast path for ModList
+        if isinstance(other, ModList):
+            for item in other.data:
+                self._merge_or_append(item)
+        elif isinstance(other, Iterable):
             for item in other:
                 self.append(item)
         else:
@@ -156,28 +158,27 @@ class ModList(UserList[Mod]):
 
     def __add__(self, other: Iterable[MODLIST_DATATYPE] | Self) -> ModList:
         """Return new ModList combining both lists"""
-        if isinstance(other, Iterable):  # type: ignore
-            other_modlist: Self = self.__class__(other)
-        elif isinstance(other, ModList):  # type: ignore
-            other_modlist: Self = other
-        else:
-            raise TypeError(f"Cannot add ModList with {type(other)}")
-
         result = ModList()
         result.extend(self.data)
-        result.extend(other_modlist.data)
+        
+        if isinstance(other, ModList):
+            result.extend(other.data)
+        elif isinstance(other, Iterable):
+            result.extend(other)
+        else:
+            raise TypeError(f"Cannot add ModList with {type(other)}")
+        
         return result
 
     def __iadd__(self, other: Iterable[MODLIST_DATATYPE] | Self) -> ModList:
         """In-place addition"""
-        if isinstance(other, Iterable):  # type: ignore
-            other_modlist: Self = self.__class__(other)
-        elif isinstance(other, ModList):  # type: ignore
-            other_modlist: Self = other
+        if isinstance(other, ModList):
+            self.extend(other.data)
+        elif isinstance(other, Iterable):
+            self.extend(other)
         else:
             raise TypeError(f"Cannot add ModList with {type(other)}")
-
-        self.extend(other_modlist.data)
+        
         return self
 
     def __eq__(self, other: Any) -> bool:
@@ -191,7 +192,6 @@ class ModList(UserList[Mod]):
         if len(self.data) != len(other.data):
             return False
 
-        # Check each mod exists in other with same multiplier
         for mod in self.data:
             other_idx = other._find_same_mod_index(mod)
             if other_idx is None or other.data[other_idx].mult != mod.mult:
@@ -208,16 +208,7 @@ class ModList(UserList[Mod]):
             return result
 
     def flatten(self, sort: bool = False) -> tuple[MOD_VALUE_TYPES, ...]:
-        """
-        Return tuple of all mod values, expanding multipliers
-
-        Args:
-            sort: Whether to sort the resulting values
-            stack: Whether to stack identical modifications together
-
-        Returns:
-            Tuple of mod values with multipliers expanded
-        """
+        """Return tuple of all mod values, expanding multipliers"""
         values: list[MOD_VALUE_TYPES] = []
         for mod in self.data:
             values.extend([mod.val] * mod.mult)
@@ -234,17 +225,7 @@ class ModList(UserList[Mod]):
         include_plus: bool = False,
         precision: int | None = None,
     ) -> str:
-        """
-        Serialize the ModList into a string representation.
-
-        Args:
-            sort: Whether to sort the modifications before serialization.
-            include_plus: Whether to include a plus sign for positive modifications.
-            precision: Number of decimal places for floating-point values.
-
-        Returns:
-            A string representation of the ModList.
-        """
+        """Serialize the ModList into a string representation."""
         elems: list[str] = []
         for mod in self.data:
             if self.stackable:
@@ -268,32 +249,26 @@ class ModList(UserList[Mod]):
 
     @property
     def has_mods(self) -> bool:
-        """Check if list has any modifications"""
         return len(self.data) > 0
 
     @property
     def is_empty(self) -> bool:
-        """Check if list is empty"""
         return len(self.data) == 0
 
     def __repr__(self) -> str:
         return f"ModList({self.data})"
-
-
+    
 ACCEPTED_MODLIST_INPUT_TYPES = (
     MODLIST_DATATYPE | Iterable[MODLIST_DATATYPE] | ModList | None
 )
 
 
 def setup_mod_list(
-    mods: ACCEPTED_MODLIST_INPUT_TYPES,
+    mods: MOD_VALUE_TYPES | Iterable[MODLIST_DATATYPE] | ModList | None,
     allow_dups: bool = False,
     stackable: bool = False,
 ) -> ModList:
-    """
-    Helper function to set up a ModList from various input types.
-    """
-
+    """Helper function to set up a ModList from various input types."""
     if isinstance(mods, ModList):
         return mods
 
@@ -303,11 +278,11 @@ def setup_mod_list(
         pass
     elif isinstance(mods, (str, int, float, Mod)):
         mod_list.append(setup_mod(mods))
-    elif isinstance(mods, Iterable):  # type: ignore
+    elif isinstance(mods, Iterable):
         for mod in mods:
             mod_list.append(setup_mod(mod))
     else:
         raise TypeError(
-            f"Invalid type for isotope_mods: {type(mods)}. Must be a string, int, float, Mod, a (value,int) tuple, or iterable of these."
+            f"Invalid type for isotope_mods: {type(mods)}"
         )
     return mod_list

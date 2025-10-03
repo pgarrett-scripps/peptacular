@@ -138,46 +138,40 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
 
     @staticmethod
     def parse(sequence: str) -> "ProFormaAnnotation":
-        """
-        Parse a ProForma sequence string into a ProFormaAnnotation object.
-
-        :param sequence: The ProForma sequence string to parse.
-        :type sequence: str
-
-        :return: A ProFormaAnnotation object representing the parsed sequence.
-        :rtype: ProFormaAnnotation
-        """
-
-        # Implementation goes here
-        annots: list[ProFormaAnnotation] = []
-        connections: list[bool | None] = []
-        for prof_parser, connection in ProFormaParser(sequence).parse():
-            if connection is True:
-                raise ValueError(f"Unexpected connection value: {connection}")
-
-            annot = ProFormaAnnotation(
-                sequence="".join(prof_parser.amino_acids),
-                isotope_mods=prof_parser.isotope_mods.copy(),
-                static_mods=prof_parser.static_mods.copy(),
-                labile_mods=prof_parser.labile_mods.copy(),
-                unknown_mods=prof_parser.unknown_mods.copy(),
-                nterm_mods=prof_parser.nterm_mods.copy(),
-                cterm_mods=prof_parser.cterm_mods.copy(),
-                internal_mods=prof_parser.internal_mods.copy(),
-                intervals=prof_parser.intervals.copy(),
-                charge=prof_parser.charge,
-                charge_adducts=prof_parser.charge_adducts.copy(),
-            )
-            annots.append(annot)
-            connections.append(connection)
-
-        if len(annots) > 1:
-            raise ValueError(f"Multiple annotations found: {len(annots)}")
-        if len(annots) == 0:
+        """Parse a ProForma sequence string into a ProFormaAnnotation object."""
+        parser_gen = ProFormaParser(sequence).parse()
+        
+        # Get first annotation
+        try:
+            prof_parser, connection = next(parser_gen)
+        except StopIteration:
             raise ValueError(f"Invalid ProForma sequence: {sequence}")
-
-        # If all checks pass, return the single annotation
-        return annots[0]
+        
+        if connection is True:
+            raise ValueError(f"Unexpected connection value: {connection}")
+        
+        annot = ProFormaAnnotation(
+            sequence="".join(prof_parser.amino_acids),
+            isotope_mods=prof_parser.isotope_mods,
+            static_mods=prof_parser.static_mods,
+            labile_mods=prof_parser.labile_mods,
+            unknown_mods=prof_parser.unknown_mods,
+            nterm_mods=prof_parser.nterm_mods,
+            cterm_mods=prof_parser.cterm_mods,
+            internal_mods=prof_parser.internal_mods,
+            intervals=prof_parser.intervals,
+            charge=prof_parser.charge,
+            charge_adducts=prof_parser.charge_adducts,
+        )
+        
+        # Check if there's a second annotation (error case)
+        try:
+            next(parser_gen)
+            raise ValueError(f"Multiple annotations found in sequence: {sequence}")
+        except StopIteration:
+            pass  # Expected - only one annotation
+        
+        return annot
 
     """
     Magic Methods
