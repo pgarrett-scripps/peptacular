@@ -46,6 +46,10 @@ class DigestProtocol(Protocol):
         """Return the length of the sequence."""
         ...
 
+    def has_mods(self) -> bool:
+        """Return True if the sequence has modifications."""
+        ...
+
 
 DigestResult: TypeAlias = Union[
     str,

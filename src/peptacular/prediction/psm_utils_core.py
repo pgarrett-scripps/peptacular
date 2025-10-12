@@ -8,13 +8,14 @@ import numpy as np
 from ..sequence.util import get_annotation_input
 from ..proforma.annotation import ProFormaAnnotation
 
+
 class PredictedSpectrum(NamedTuple):
     theoretical_mz: dict[str, dict[str, np.ndarray]]
     predicted_intensity: dict[str, dict[str, np.ndarray]]
 
 
 def predict_msms_spectra(
-    peptides: Sequence[str | ProFormaAnnotation | str | ProFormaAnnotation],
+    peptides: Sequence[str | ProFormaAnnotation],
     model: str | None = "HCD",
     processes: int | None = None,
 ) -> dict[str, PredictedSpectrum]:
@@ -49,15 +50,12 @@ def predict_msms_spectra(
 
     psm_lookup: dict[str, PredictedSpectrum] = {}
     for res in predictions:
-
         if not res.theoretical_mz or not res.predicted_intensity:
             continue
 
         intensities: dict[str, dict[str, np.ndarray]] = {}
         for ion_type in res.predicted_intensity:
-            intensities[ion_type] = (
-                2 ** res.predicted_intensity[ion_type]
-            ) - 0.001  #  type: ignore
+            intensities[ion_type] = (2 ** res.predicted_intensity[ion_type]) - 0.001  #  type: ignore
 
         sequence: str = res.psm.peptidoform.proforma  # type: ignore
 

@@ -58,7 +58,7 @@ class ModList(UserList[Mod]):
                     f"Cannot add modification {item} to non-stackable ModList"
                 )
 
-            self.data[idx].mult += item.mult
+            self.data[idx] = Mod(self.data[idx].val, self.data[idx].mult + item.mult)
             if self.data[idx].mult == 0:
                 del self.data[idx]
             elif self.data[idx].mult < 0:
@@ -84,7 +84,7 @@ class ModList(UserList[Mod]):
         if isinstance(other, ModList):
             for item in other.data:
                 self._merge_or_append(item)
-        elif isinstance(other, Iterable):
+        elif isinstance(other, Iterable):  # type: ignore
             for item in other:
                 self.append(item)
         else:
@@ -107,7 +107,9 @@ class ModList(UserList[Mod]):
         if idx is None:
             raise ValueError(f"{item} is not in list")
 
-        self.data[idx].mult -= mod.mult
+        # self.data[idx].mult -= mod.mult (now frozen)
+        self.data[idx] = Mod(self.data[idx].val, self.data[idx].mult - mod.mult)
+
         if self.data[idx].mult == 0:
             del self.data[idx]
         elif self.data[idx].mult < 0:
@@ -160,25 +162,25 @@ class ModList(UserList[Mod]):
         """Return new ModList combining both lists"""
         result = ModList()
         result.extend(self.data)
-        
+
         if isinstance(other, ModList):
             result.extend(other.data)
-        elif isinstance(other, Iterable):
+        elif isinstance(other, Iterable):  # type: ignore
             result.extend(other)
         else:
             raise TypeError(f"Cannot add ModList with {type(other)}")
-        
+
         return result
 
     def __iadd__(self, other: Iterable[MODLIST_DATATYPE] | Self) -> ModList:
         """In-place addition"""
         if isinstance(other, ModList):
             self.extend(other.data)
-        elif isinstance(other, Iterable):
+        elif isinstance(other, Iterable):  # type: ignore
             self.extend(other)
         else:
             raise TypeError(f"Cannot add ModList with {type(other)}")
-        
+
         return self
 
     def __eq__(self, other: Any) -> bool:
@@ -198,14 +200,13 @@ class ModList(UserList[Mod]):
                 return False
         return True
 
+    # ModList - optimized shallow copy
     def copy(self, deep: bool = True) -> ModList:
         """Create a copy of the ModList"""
-        if deep:
-            return copy.deepcopy(self)
-        else:
-            result = ModList()
-            result.data = self.data.copy()
-            return result
+        result = ModList(allow_dups=self.allow_dups, stackable=self.stackable)
+        # Mod objects are immutable - safe to share! Just copy the list
+        result.data = self.data.copy()
+        return result
 
     def flatten(self, sort: bool = False) -> tuple[MOD_VALUE_TYPES, ...]:
         """Return tuple of all mod values, expanding multipliers"""
@@ -257,14 +258,15 @@ class ModList(UserList[Mod]):
 
     def __repr__(self) -> str:
         return f"ModList({self.data})"
-    
+
+
 ACCEPTED_MODLIST_INPUT_TYPES = (
     MODLIST_DATATYPE | Iterable[MODLIST_DATATYPE] | ModList | None
 )
 
 
 def setup_mod_list(
-    mods: MOD_VALUE_TYPES | Iterable[MODLIST_DATATYPE] | ModList | None,
+    mods: MODLIST_DATATYPE | Iterable[MODLIST_DATATYPE] | ModList | None,
     allow_dups: bool = False,
     stackable: bool = False,
 ) -> ModList:
@@ -278,11 +280,29 @@ def setup_mod_list(
         pass
     elif isinstance(mods, (str, int, float, Mod)):
         mod_list.append(setup_mod(mods))
-    elif isinstance(mods, Iterable):
+    elif isinstance(mods, Iterable):  # type: ignore
         for mod in mods:
             mod_list.append(setup_mod(mod))
     else:
-        raise TypeError(
-            f"Invalid type for isotope_mods: {type(mods)}"
-        )
+        raise TypeError(f"Invalid type for isotope_mods: {type(mods)}")
     return mod_list
+
+
+def populate_mod_list(
+    modlist: ModList,
+    mods: MODLIST_DATATYPE | Iterable[MODLIST_DATATYPE] | ModList | None,
+) -> None:
+    """Helper function to populate an existing ModList from various input types."""
+
+    if mods is None:
+        return
+
+    if isinstance(mods, ModList):
+        modlist.extend(mods.data)
+    elif isinstance(mods, (str, int, float, Mod)):
+        modlist.append(setup_mod(mods))
+    elif isinstance(mods, Iterable):  # type: ignore
+        for mod in mods:
+            modlist.append(setup_mod(mod))
+    else:
+        raise TypeError(f"Invalid type for isotope_mods: {type(mods)}")

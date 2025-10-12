@@ -168,13 +168,11 @@ class IntervalList(UserList[Interval]):
         return set(self.data) == set(other.data)
 
     def copy(self, deep: bool = True) -> IntervalList:
-        """Create a copy of the IntervalList"""
-        if deep:
-            return copy.deepcopy(self)
-        else:
-            result = IntervalList()
-            result.data = self.data.copy()
-            return result
+        result = IntervalList()
+        # Need to copy each Interval (which contains ModLists)
+        # Assuming Interval has a copy(deep=False) method
+        result.data = [interval.copy(deep=False) for interval in self.data]
+        return result
 
     @property
     def has_ambiguous_intervals(self) -> bool:
@@ -276,11 +274,11 @@ def setup_interval_list(data: ACCEPTED_INTERVALLIST_INPUT_TYPES) -> IntervalList
         return IntervalList([data])
 
     if isinstance(data, tuple) and len(data) == 4 and isinstance(data[0], int):
-        return IntervalList([data])
+        return IntervalList([data])  # type: ignore
 
     # Iterable of intervals
     if isinstance(data, Iterable):  # type: ignore
-        return IntervalList(data)
+        return IntervalList(data)  # type: ignore
 
     raise TypeError(
         f"Invalid type for interval data: {type(data)}. "

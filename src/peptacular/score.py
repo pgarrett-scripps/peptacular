@@ -4,7 +4,7 @@ from enum import StrEnum
 from typing import Any, NamedTuple
 
 from .fragment import Fragment
-from .sequence.sequence import strip_mods
+from .sequence import strip_mods
 
 
 class ToleranceType(StrEnum):
@@ -803,7 +803,9 @@ class Scorer:
             seen_mzs: set[float] = set()
             new_fragment_matches: list[FragmentMatch] = []
             # sort fragments by priority
-            self.fragment_matches.sort(key=lambda x: x.fragment.priority if x.fragment else 0, reverse=True)
+            self.fragment_matches.sort(
+                key=lambda x: x.fragment.priority if x.fragment else 0, reverse=True
+            )
             for fm in self.fragment_matches:
                 if fm.mz in seen_mzs:
                     continue

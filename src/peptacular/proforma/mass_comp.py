@@ -222,16 +222,16 @@ def _sequence_comp(
     if annotation.has_isotope_mods:
         if use_isotope_on_mods:
             sequence_composition = apply_isotope_mods_to_composition(
-                sequence_composition,
+                dict(sequence_composition),
                 annotation.isotope_mods,  # type: ignore
             )  # type: ignore
             mod_composition = apply_isotope_mods_to_composition(
-                mod_composition,
+                dict(mod_composition),
                 annotation.isotope_mods,  # type: ignore
             )  # type: ignore
         else:
             sequence_composition = apply_isotope_mods_to_composition(
-                sequence_composition,
+                dict(sequence_composition),
                 annotation.isotope_mods,  # type: ignore
             )  # type: ignore
 
@@ -250,6 +250,7 @@ def _sequence_comp(
 def mass(
     annotation: ProFormaAnnotation,
     ion_type: IonTypeLiteral | IonType = IonType.PRECURSOR,
+    charge: int | None = None,
     monoisotopic: bool = True,
     isotope: int = 0,
     loss: float = 0.0,
@@ -262,8 +263,13 @@ def mass(
             msg="Cannot determine the mass of a sequence with ambiguous amino acids: {annotation.sequence}",
         )
 
-    annotation = annotation.copy()
-    annotation.condense_static_mods(inplace=True)
+    if charge is None:
+        # No charge provided, use annotation's charge (or 0 if annotation has no charge)
+        charge = annotation.charge if annotation.has_charge else 0
+
+    if annotation.has_static_mods or annotation.has_isotope_mods:
+        annotation = annotation.copy(deep=True)
+        annotation.condense_static_mods(inplace=True)
 
     # more complex mass calculation (based on chem composition)
     if annotation.has_isotope_mods:
@@ -314,7 +320,7 @@ def mass(
     try:
         m += sum(
             MONOISOTOPIC_AA_MASSES[aa] if monoisotopic else AVERAGE_AA_MASSES[aa]
-            for aa in annotation.sequence
+            for aa in annotation.stripped_sequence
         )
     except KeyError as err:
         raise UnknownAminoAcidError(str(err)) from err
@@ -348,7 +354,7 @@ def mass(
 
     return adjust_mass(
         base_mass=m,
-        charge=annotation.charge,
+        charge=charge,
         ion_type=ion_type,
         monoisotopic=monoisotopic,
         isotope=isotope,
@@ -361,15 +367,21 @@ def mass(
 def mz(
     annotation: ProFormaAnnotation,
     ion_type: IonTypeLiteral | IonType = IonType.PRECURSOR,
+    charge: int | None = None,
     monoisotopic: bool = True,
     isotope: int = 0,
     loss: float = 0.0,
     precision: int | None = None,
     use_isotope_on_mods: bool = False,
 ) -> float:
+    if charge is None:
+        # No charge provided, use annotation's charge (or 0 if annotation has no charge)
+        charge = annotation.charge if annotation.has_charge else 0
+
     m = mass(
         annotation=annotation,
         ion_type=ion_type,
+        charge=charge,
         monoisotopic=monoisotopic,
         isotope=isotope,
         loss=loss,
@@ -377,7 +389,7 @@ def mz(
         precision=precision,
     )
 
-    return adjust_mz(base_mass=m, charge=annotation.charge, precision=precision)
+    return adjust_mz(base_mass=m, charge=charge, precision=precision)
 
 
 def comp(

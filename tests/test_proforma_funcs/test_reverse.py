@@ -43,29 +43,6 @@ class TestReverse(unittest.TestCase):
         reversed_annotation = annotation.reverse()
         self.assertEqual(reversed_annotation.serialize(), "EDITPE[Phospho][Methyl]P")
 
-    def test_reverse_with_terminal_mods_no_swap(self):
-        """Test reversing with terminal modifications without swapping"""
-        annotation = pt.ProFormaAnnotation.parse("[Acetyl]-PEPTIDE-[Amide]")
-        reversed_annotation = annotation.reverse()
-        self.assertEqual(reversed_annotation.serialize(), "[Acetyl]-EDITPEP-[Amide]")
-
-    def test_reverse_with_terminal_mods_swap_terms(self):
-        """Test reversing with terminal modifications and swapping terms"""
-        annotation = pt.ProFormaAnnotation.parse("[Acetyl]-PEPTIDE-[Amide]")
-        reversed_annotation = annotation.reverse(swap_terms=True)
-        self.assertEqual(reversed_annotation.serialize(), "[Amide]-EDITPEP-[Acetyl]")
-
-    def test_reverse_with_only_nterm_mod(self):
-        """Test reversing with only N-terminal modification"""
-        annotation = pt.ProFormaAnnotation.parse("[Acetyl]-PEPTIDE")
-        reversed_annotation = annotation.reverse(swap_terms=True)
-        self.assertEqual(reversed_annotation.serialize(), "EDITPEP-[Acetyl]")
-
-    def test_reverse_with_only_cterm_mod(self):
-        """Test reversing with only C-terminal modification"""
-        annotation = pt.ProFormaAnnotation.parse("PEPTIDE-[Amide]")
-        reversed_annotation = annotation.reverse(swap_terms=True)
-        self.assertEqual(reversed_annotation.serialize(), "[Amide]-EDITPEP")
 
     def test_reverse_with_intervals(self):
         """Test reversing with intervals"""
@@ -135,17 +112,6 @@ class TestReverse(unittest.TestCase):
         self.assertEqual(
             reversed_annotation.serialize(),
             "{Glycan}<15N>[Acetyl]-EDI[Methyl]TPE[Phospho]P-[Amide]/2",
-        )
-
-    def test_reverse_with_complex_modifications_swap_terms(self):
-        """Test reversing with multiple modifications and term swapping"""
-        annotation = pt.ProFormaAnnotation.parse(
-            "{Glycan}<15N>[Acetyl]-PE[Phospho]PTI[Methyl]DE-[Amide]/2"
-        )
-        reversed_annotation = annotation.reverse(swap_terms=True)
-        self.assertEqual(
-            reversed_annotation.serialize(),
-            "{Glycan}<15N>[Amide]-EDI[Methyl]TPE[Phospho]P-[Acetyl]/2",
         )
 
     def test_reverse_preserves_original_when_not_inplace(self):

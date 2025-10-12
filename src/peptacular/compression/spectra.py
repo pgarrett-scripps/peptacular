@@ -111,10 +111,14 @@ def _validate_inputs(
             f"Length mismatch: {len(mzs)} m/z values vs {len(intensities)} intensities"
         )
 
-    if mz_precision is not None and (not isinstance(mz_precision, int) or mz_precision < 0):  # type: ignore
+    if mz_precision is not None and (
+        not isinstance(mz_precision, int) or mz_precision < 0
+    ):  # type: ignore
         raise ValueError("mz_precision must be non-negative integer or None")
 
-    if intensity_precision is not None and (not isinstance(intensity_precision, int) or intensity_precision < 0):  # type: ignore
+    if intensity_precision is not None and (
+        not isinstance(intensity_precision, int) or intensity_precision < 0
+    ):  # type: ignore
         raise ValueError("intensity_precision must be non-negative integer or None")
 
 
@@ -216,7 +220,6 @@ def decompress_spectra(compressed_str: str) -> tuple[list[float], list[float]]:
 
 # Example usage and testing
 if __name__ == "__main__":
-
     spectra = """
     283.75153 6.49
     287.60138 11.1

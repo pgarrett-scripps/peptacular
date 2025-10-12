@@ -413,11 +413,11 @@ def build_spans(
             enzyme_sites,
             missed_cleavages,
             min_len,
-            None if semi else max_len,
+            max_len,  # ← ALWAYS use max_len, don't set to None
         )
     )
 
-    if semi:
+    if semi is True:
         semi_spans = build_semi_spans(spans, min_len, max_len)
         for span in spans:
             if max_len >= span[1] - span[0] >= min_len:

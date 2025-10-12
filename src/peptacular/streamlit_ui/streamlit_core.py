@@ -21,7 +21,6 @@ def annotated_spectrum_plot(
     max_charge: int = 5,
     default_charge: tuple[int, int] = (1, 2),
 ):
-
     input_container = st.container()
     chart_container = st.container()
 

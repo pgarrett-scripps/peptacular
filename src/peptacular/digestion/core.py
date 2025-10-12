@@ -31,17 +31,28 @@ def _return_digested_sequences(
     """Helper function to return digested sequences in various formats."""
     return_type_enum = DigestReturnType(return_type)
 
+    # Check if we can use fast path (no modifications)
+    has_mods = annotation.has_mods() if hasattr(annotation, "has_mods") else True
+
     match return_type_enum:
         case DigestReturnType.SPAN:
             return (span for span in spans)
         case DigestReturnType.ANNOTATION:
             return (annotation.slice(span[0], span[1], inplace=False) for span in spans)
         case DigestReturnType.STR:
+            if not has_mods:
+                # Fast path: no mods, just slice the string directly
+                seq = annotation.stripped_sequence
+                return (seq[span[0] : span[1]] for span in spans)
             return (
                 annotation.slice(span[0], span[1], inplace=False).serialize()
                 for span in spans
             )
         case DigestReturnType.STR_SPAN:
+            if not has_mods:
+                # Fast path: no mods, just slice the string directly
+                seq = annotation.stripped_sequence
+                return ((seq[span[0] : span[1]], span) for span in spans)
             return (
                 (annotation.slice(span[0], span[1], inplace=False).serialize(), span)
                 for span in spans

@@ -10,11 +10,17 @@ class Mod:
     A modification with optional multiplier
     """
 
-    __slots__ = ("val", "mult")
-
     def __init__(self, val: MOD_VALUE_TYPES, mult: int = 1):
-        self.val = val
-        self.mult = mult
+        self.__val = val
+        self.__mult = mult
+
+    @property
+    def val(self) -> MOD_VALUE_TYPES:
+        return self.__val
+
+    @property
+    def mult(self) -> int:
+        return self.__mult
 
     def _serialize_val(self, precision: int | None = None) -> str:
         s = ""
@@ -94,9 +100,7 @@ class Mod:
         Create a copy of the mod
         """
 
-        if deep:
-            return copy.deepcopy(self)
-        return copy.copy(self)
+        return self
 
     def to_dict(self) -> dict[str, str | float | int]:
         """

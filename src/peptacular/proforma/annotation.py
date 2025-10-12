@@ -1,7 +1,8 @@
 from collections.abc import Callable, Generator
 import copy
-from copy import deepcopy
 from typing import Any, Iterable, Mapping, Self, Sequence, cast
+
+from .dclasses.modlist import populate_mod_list
 
 from .dclasses.interval import Interval
 
@@ -111,45 +112,89 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         charge: int | None = None,
     ) -> None:
         self._sequence: str = sequence if sequence is not None else ""
-        self._isotope_mod_list: ModList = setup_mod_list(
-            isotope_mods, allow_dups=False, stackable=False
-        )
-        self._static_mod_list: ModList = setup_mod_list(
-            static_mods, allow_dups=True, stackable=True
-        )
-        self._labile_mod_list: ModList = setup_mod_list(
-            labile_mods, allow_dups=True, stackable=True
-        )
-        self._unknown_mod_list: ModList = setup_mod_list(
-            unknown_mods, allow_dups=True, stackable=True
-        )
-        self._nterm_mod_list: ModList = setup_mod_list(
-            nterm_mods, allow_dups=True, stackable=True
-        )
-        self._cterm_mod_list: ModList = setup_mod_list(
-            cterm_mods, allow_dups=True, stackable=False
-        )
-        self._adduct_mod_list: ModList = setup_mod_list(
-            charge_adducts, allow_dups=True, stackable=False
-        )
-        self._internal_mod_dict: ModDict = setup_mod_dict(internal_mods)
-        self._interval_list: IntervalList = setup_interval_list(intervals)
+
+        # Initialize to None first
+        self._isotope_mod_list: ModList | None = None
+        self._static_mod_list: ModList | None = None
+        self._labile_mod_list: ModList | None = None
+        self._unknown_mod_list: ModList | None = None
+        self._nterm_mod_list: ModList | None = None
+        self._cterm_mod_list: ModList | None = None
+        self._adduct_mod_list: ModList | None = None
+        self._internal_mod_dict: ModDict | None = None
+        self._interval_list: IntervalList | None = None
         self._charge: int | None = charge
+
+        # Then use setters to populate if not None
+        if isotope_mods is not None:
+            self.isotope_mods = isotope_mods
+        if static_mods is not None:
+            self.static_mods = static_mods
+        if labile_mods is not None:
+            self.labile_mods = labile_mods
+        if unknown_mods is not None:
+            self.unknown_mods = unknown_mods
+        if nterm_mods is not None:
+            self.nterm_mods = nterm_mods
+        if cterm_mods is not None:
+            self.cterm_mods = cterm_mods
+        if charge_adducts is not None:
+            self.charge_adducts = charge_adducts
+        if internal_mods is not None:
+            self.internal_mods = internal_mods
+        if intervals is not None:
+            self.intervals = intervals
+
+    @staticmethod
+    def create_isotope_mod_list() -> ModList:
+        return ModList(allow_dups=False, stackable=False)
+
+    @staticmethod
+    def create_static_mod_list() -> ModList:
+        return ModList(allow_dups=True, stackable=True)
+
+    @staticmethod
+    def create_labile_mod_list() -> ModList:
+        return ModList(allow_dups=True, stackable=True)
+
+    @staticmethod
+    def create_unknown_mod_list() -> ModList:
+        return ModList(allow_dups=True, stackable=True)
+
+    @staticmethod
+    def create_nterm_mod_list() -> ModList:
+        return ModList(allow_dups=True, stackable=True)
+
+    @staticmethod
+    def create_cterm_mod_list() -> ModList:
+        return ModList(allow_dups=True, stackable=False)
+
+    @staticmethod
+    def create_charge_adducts_mod_list() -> ModList:
+        return ModList(allow_dups=True, stackable=False)
+
+    @staticmethod
+    def create_internal_mod_dict() -> ModDict:
+        return ModDict()
+
+    @staticmethod
+    def create_interval_list() -> IntervalList:
+        return IntervalList()
 
     @staticmethod
     def parse(sequence: str) -> "ProFormaAnnotation":
         """Parse a ProForma sequence string into a ProFormaAnnotation object."""
         parser_gen = ProFormaParser(sequence).parse()
-        
+
         # Get first annotation
         try:
             prof_parser, connection = next(parser_gen)
         except StopIteration:
             raise ValueError(f"Invalid ProForma sequence: {sequence}")
-        
+
         if connection is True:
             raise ValueError(f"Unexpected connection value: {connection}")
-        
+
         annot = ProFormaAnnotation(
             sequence="".join(prof_parser.amino_acids),
             isotope_mods=prof_parser.isotope_mods,
@@ -163,14 +208,14 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
             charge=prof_parser.charge,
             charge_adducts=prof_parser.charge_adducts,
         )
-        
+
         # Check if there's a second annotation (error case)
         try:
             next(parser_gen)
             raise ValueError(f"Multiple annotations found in sequence: {sequence}")
         except StopIteration:
             pass  # Expected - only one annotation
-        
+
         return annot
 
     """
@@ -232,16 +277,16 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         return hash(
             (
                 self.sequence,
-                tuple(self._isotope_mod_list),
-                tuple(self._static_mod_list),
-                tuple(self._labile_mod_list),
-                tuple(self._unknown_mod_list),
-                tuple(self._nterm_mod_list),
-                tuple(self._cterm_mod_list),
-                frozenset((k, tuple(v)) for k, v in self._internal_mod_dict.items()),
-                tuple(self._interval_list),
-                self._charge,
-                tuple(self._adduct_mod_list),
+                self.isotope_mods,
+                self.static_mods,
+                self.labile_mods,
+                self.unknown_mods,
+                self.nterm_mods,
+                self.cterm_mods,
+                tuple(self.internal_mods.items()) if self.internal_mods else None,
+                tuple(self.intervals) if self.intervals else None,
+                self.charge,
+                self.charge_adducts,
             )
         )
 
@@ -255,51 +300,95 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
 
     @property
     def has_isotope_mods(self) -> bool:
-        return self._isotope_mod_list.has_mods
+        return (
+            self._isotope_mod_list.has_mods
+            if self._isotope_mod_list is not None
+            else False
+        )
 
     @property
     def has_static_mods(self) -> bool:
-        return self._static_mod_list.has_mods
+        return (
+            self._static_mod_list.has_mods
+            if self._static_mod_list is not None
+            else False
+        )
 
     @property
     def has_labile_mods(self) -> bool:
-        return self._labile_mod_list.has_mods
+        return (
+            self._labile_mod_list.has_mods
+            if self._labile_mod_list is not None
+            else False
+        )
 
     @property
     def has_unknown_mods(self) -> bool:
-        return self._unknown_mod_list.has_mods
+        return (
+            self._unknown_mod_list.has_mods
+            if self._unknown_mod_list is not None
+            else False
+        )
 
     @property
     def has_nterm_mods(self) -> bool:
-        return self._nterm_mod_list.has_mods
+        return (
+            self._nterm_mod_list.has_mods if self._nterm_mod_list is not None else False
+        )
 
     @property
     def has_cterm_mods(self) -> bool:
-        return self._cterm_mod_list.has_mods
+        return (
+            self._cterm_mod_list.has_mods if self._cterm_mod_list is not None else False
+        )
 
     @property
     def has_charge_adducts(self) -> bool:
-        return self._adduct_mod_list.has_mods
+        return (
+            self._adduct_mod_list.has_mods
+            if self._adduct_mod_list is not None
+            else False
+        )
 
     @property
     def has_internal_mods(self) -> bool:
-        return self._internal_mod_dict.has_mods
+        return (
+            self._internal_mod_dict.has_mods
+            if self._internal_mod_dict is not None
+            else False
+        )
 
     @property
     def has_intervals(self) -> bool:
-        return self._interval_list.has_intervals
+        return (
+            self._interval_list.has_intervals
+            if self._interval_list is not None
+            else False
+        )
 
     @property
     def has_interval_mods(self) -> bool:
-        return any(interval.has_mods for interval in self._interval_list)
+        return (
+            any(interval.has_mods for interval in self._interval_list)
+            if self._interval_list is not None
+            else False
+        )
 
     @property
     def has_unambiguous_intervals(self) -> bool:
-        return self._interval_list.has_unambiguous_intervals
+        return (
+            self._interval_list.has_unambiguous_intervals
+            if self._interval_list is not None
+            else False
+        )
 
     @property
     def has_ambiguous_intervals(self) -> bool:
-        return self._interval_list.has_ambiguous_intervals
+        return (
+            self._interval_list.has_ambiguous_intervals
+            if self._interval_list is not None
+            else False
+        )
 
     @property
     def has_charge(self) -> bool:
@@ -355,67 +444,71 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
     def isotope_mods(self) -> tuple[MOD_VALUE_TYPES, ...] | None:
         if not self.has_isotope_mods:
             return None
-        return self._isotope_mod_list.flatten()
+        return self.get_isotope_mod_list().flatten()
 
     @property
     def static_mods(self) -> tuple[MOD_VALUE_TYPES, ...] | None:
         if not self.has_static_mods:
             return None
-        return self._static_mod_list.flatten()
+        return self.get_static_mod_list().flatten()
 
     @property
     def labile_mods(self) -> tuple[MOD_VALUE_TYPES, ...] | None:
         if not self.has_labile_mods:
             return None
-        return self._labile_mod_list.flatten()
+        return self.get_labile_mod_list().flatten()
 
     @property
     def unknown_mods(self) -> tuple[MOD_VALUE_TYPES, ...] | None:
         if not self.has_unknown_mods:
             return None
-        return self._unknown_mod_list.flatten()
+        return self.get_unknown_mod_list().flatten()
 
     @property
     def nterm_mods(self) -> tuple[MOD_VALUE_TYPES, ...] | None:
         if not self.has_nterm_mods:
             return None
-        return self._nterm_mod_list.flatten()
+        return self.get_nterm_mod_list().flatten()
 
     @property
     def cterm_mods(self) -> tuple[MOD_VALUE_TYPES, ...] | None:
         if not self.has_cterm_mods:
             return None
-        return self._cterm_mod_list.flatten()
+        return self.get_cterm_mod_list().flatten()
 
     @property
     def charge_adducts(self) -> tuple[MOD_VALUE_TYPES, ...] | None:
         if not self.has_charge_adducts:
             return None
-        return self._adduct_mod_list.flatten()
+        return self.get_charge_adduct_list().flatten()
 
     @property
     def internal_mods(self) -> dict[int, tuple[MOD_VALUE_TYPES, ...]] | None:
         if not self.has_internal_mods:
             return None
-        return {k: v.flatten() for k, v in self._internal_mod_dict.items()}
+        return {k: v.flatten() for k, v in self.get_internal_mod_dict().items()}
 
     @property
     def intervals(self) -> tuple[ModInterval, ...] | None:
         if self.has_intervals is False:
             return None
-        return self._interval_list.get_mod_intervals()
+        return self.get_interval_list().get_mod_intervals()
 
     @property
     def ambiguous_intervals(self) -> tuple[ModInterval, ...] | None:
-        if self._interval_list.has_ambiguous_intervals is False:
+        if self.has_intervals is False:
             return None
-        return self._interval_list.get_ambiguous_intervals().get_mod_intervals()
+        if self.get_interval_list().has_ambiguous_intervals is False:
+            return None
+        return self.get_interval_list().get_ambiguous_intervals().get_mod_intervals()
 
     @property
     def unambiguous_intervals(self) -> tuple[ModInterval, ...] | None:
-        if self._interval_list.has_unambiguous_intervals is False:
+        if self.has_intervals is False:
             return None
-        return self._interval_list.get_unambiguous_intervals().get_mod_intervals()
+        if self.get_interval_list().has_unambiguous_intervals is False:
+            return None
+        return self.get_interval_list().get_unambiguous_intervals().get_mod_intervals()
 
     @property
     def charge(self) -> int | None:
@@ -477,39 +570,121 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
 
     @isotope_mods.setter
     def isotope_mods(self, value: ACCEPTED_MODLIST_INPUT_TYPES) -> None:
-        self._isotope_mod_list = setup_mod_list(value)
+        if value is None:
+            self._isotope_mod_list = None
+            return
+
+        if self._isotope_mod_list is None:
+            self._isotope_mod_list = ProFormaAnnotation.create_isotope_mod_list()
+        else:
+            self._isotope_mod_list.clear()
+
+        populate_mod_list(self._isotope_mod_list, value)
 
     @static_mods.setter
     def static_mods(self, value: ACCEPTED_MODLIST_INPUT_TYPES) -> None:
-        self._static_mod_list = setup_mod_list(value)
+        if value is None:
+            self._static_mod_list = None
+            return
+
+        if self._static_mod_list is None:
+            self._static_mod_list = ProFormaAnnotation.create_static_mod_list()
+        else:
+            self._static_mod_list.clear()
+
+        populate_mod_list(self._static_mod_list, value)
 
     @labile_mods.setter
     def labile_mods(self, value: ACCEPTED_MODLIST_INPUT_TYPES) -> None:
-        self._labile_mod_list = setup_mod_list(value)
+        if value is None:
+            self._labile_mod_list = None
+            return
+
+        if self._labile_mod_list is None:
+            self._labile_mod_list = ProFormaAnnotation.create_labile_mod_list()
+        else:
+            self._labile_mod_list.clear()
+
+        populate_mod_list(self._labile_mod_list, value)
 
     @unknown_mods.setter
     def unknown_mods(self, value: ACCEPTED_MODLIST_INPUT_TYPES) -> None:
-        self._unknown_mod_list = setup_mod_list(value)
+        if value is None:
+            self._unknown_mod_list = None
+            return
+
+        if self._unknown_mod_list is None:
+            self._unknown_mod_list = ProFormaAnnotation.create_unknown_mod_list()
+        else:
+            self._unknown_mod_list.clear()
+
+        populate_mod_list(self._unknown_mod_list, value)
 
     @nterm_mods.setter
     def nterm_mods(self, value: ACCEPTED_MODLIST_INPUT_TYPES) -> None:
-        self._nterm_mod_list = setup_mod_list(value)
+        if value is None:
+            self._nterm_mod_list = None
+            return
+
+        if self._nterm_mod_list is None:
+            self._nterm_mod_list = ProFormaAnnotation.create_nterm_mod_list()
+        else:
+            self._nterm_mod_list.clear()
+
+        populate_mod_list(self._nterm_mod_list, value)
 
     @cterm_mods.setter
     def cterm_mods(self, value: ACCEPTED_MODLIST_INPUT_TYPES) -> None:
-        self._cterm_mod_list = setup_mod_list(value)
+        if value is None:
+            self._cterm_mod_list = None
+            return
+
+        if self._cterm_mod_list is None:
+            self._cterm_mod_list = ProFormaAnnotation.create_cterm_mod_list()
+        else:
+            self._cterm_mod_list.clear()
+
+        populate_mod_list(self._cterm_mod_list, value)
 
     @charge_adducts.setter
     def charge_adducts(self, value: ACCEPTED_MODLIST_INPUT_TYPES) -> None:
-        self._adduct_mod_list = setup_mod_list(value)
+        if value is None:
+            self._adduct_mod_list = None
+            return
+
+        if self._adduct_mod_list is None:
+            self._adduct_mod_list = ProFormaAnnotation.create_charge_adducts_mod_list()
+        else:
+            self._adduct_mod_list.clear()
+
+        populate_mod_list(self._adduct_mod_list, value)
 
     @internal_mods.setter
     def internal_mods(self, value: ACCEPTED_MODDICT_INPUT_TYPES) -> None:
-        self._internal_mod_dict = setup_mod_dict(value)
+        if value is None:
+            self._internal_mod_dict = None
+            return
+
+        if self._internal_mod_dict is None:
+            self._internal_mod_dict = ProFormaAnnotation.create_internal_mod_dict()
+        else:
+            self._internal_mod_dict.clear()
+
+        for key, mod_value in setup_mod_dict(value).items():
+            self._internal_mod_dict[key] = mod_value
 
     @intervals.setter
     def intervals(self, value: ACCEPTED_INTERVALLIST_INPUT_TYPES) -> None:
-        self._interval_list = setup_interval_list(value)
+        if value is None:
+            self._interval_list = None
+            return
+
+        if self._interval_list is None:
+            self._interval_list = ProFormaAnnotation.create_interval_list()
+        else:
+            self._interval_list.clear()
+
+        self._interval_list.extend(setup_interval_list(value))
 
     @charge.setter
     def charge(self, value: int | None):
@@ -533,6 +708,9 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
     def pop_isotope_mods(
         self, inplace: bool = True
     ) -> tuple[MOD_VALUE_TYPES, ...] | None:
+        if not self.has_isotope_mods:
+            return None
+
         if inplace is False:
             return self.copy().pop_isotope_mods(inplace=True)
 
@@ -543,6 +721,9 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
     def pop_static_mods(
         self, inplace: bool = True
     ) -> tuple[MOD_VALUE_TYPES, ...] | None:
+        if not self.has_static_mods:
+            return None
+
         if inplace is False:
             return self.copy().pop_static_mods(inplace=True)
 
@@ -553,6 +734,9 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
     def pop_labile_mods(
         self, inplace: bool = True
     ) -> tuple[MOD_VALUE_TYPES, ...] | None:
+        if not self.has_labile_mods:
+            return None
+
         if inplace is False:
             return self.copy().pop_labile_mods(inplace=True)
 
@@ -563,6 +747,9 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
     def pop_unknown_mods(
         self, inplace: bool = True
     ) -> tuple[MOD_VALUE_TYPES, ...] | None:
+        if not self.has_unknown_mods:
+            return None
+
         if inplace is False:
             return self.copy().pop_unknown_mods(inplace=True)
 
@@ -573,6 +760,9 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
     def pop_nterm_mods(
         self, inplace: bool = True
     ) -> tuple[MOD_VALUE_TYPES, ...] | None:
+        if not self.has_nterm_mods:
+            return None
+
         if inplace is False:
             return self.copy().pop_nterm_mods(inplace=True)
 
@@ -583,6 +773,9 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
     def pop_cterm_mods(
         self, inplace: bool = True
     ) -> tuple[MOD_VALUE_TYPES, ...] | None:
+        if not self.has_cterm_mods:
+            return None
+
         if inplace is False:
             return self.copy().pop_cterm_mods(inplace=True)
 
@@ -593,6 +786,9 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
     def pop_charge_adducts(
         self, inplace: bool = True
     ) -> tuple[MOD_VALUE_TYPES, ...] | None:
+        if not self.has_charge_adducts:
+            return None
+
         if inplace is False:
             return self.copy().pop_charge_adducts(inplace=True)
 
@@ -603,6 +799,9 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
     def pop_internal_mods(
         self, inplace: bool = True
     ) -> dict[int, tuple[MOD_VALUE_TYPES, ...]] | None:
+        if not self.has_internal_mods:
+            return None
+
         if inplace is False:
             return self.copy().pop_internal_mods(inplace=True)
 
@@ -611,6 +810,9 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         return value
 
     def pop_intervals(self, inplace: bool = True) -> tuple[ModInterval, ...] | None:
+        if not self.has_intervals:
+            return None
+
         if inplace is False:
             return self.copy().pop_intervals(inplace=True)
 
@@ -621,6 +823,9 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
     def pop_ambiguous_intervals(
         self, inplace: bool = True
     ) -> tuple[ModInterval, ...] | None:
+        if self._interval_list is None:
+            return None
+
         if inplace is False:
             return self.copy().pop_ambiguous_intervals(inplace=True)
 
@@ -632,6 +837,9 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
     def pop_unambiguous_intervals(
         self, inplace: bool = True
     ) -> tuple[ModInterval, ...] | None:
+        if self._interval_list is None:
+            return None
+
         if inplace is False:
             return self.copy().pop_unambiguous_intervals(inplace=True)
 
@@ -641,6 +849,9 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         return intervals.get_mod_intervals()
 
     def pop_charge(self, inplace: bool = True) -> int | None:
+        if not self.has_charge:
+            return None
+
         if inplace is False:
             return self.copy().pop_charge(inplace=True)
 
@@ -692,10 +903,13 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         return d
 
     def pop_internal_mod_at_index(self, index: int) -> tuple[Mod, ...] | None:
-        if index not in self._internal_mod_dict:
+        if not self.has_internal_mods:
             return None
 
-        mod_list = self._internal_mod_dict.pop(index)
+        if index not in self.get_internal_mod_dict():
+            return None
+
+        mod_list = self.get_internal_mod_dict().pop(index)
 
         return mod_list.flatten()
 
@@ -708,6 +922,7 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
     ) -> Self:
         if not inplace:
             return self.copy().set_isotope_mods(mods, inplace=True)
+
         self.isotope_mods = mods
         return self
 
@@ -772,7 +987,7 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
     ) -> Self:
         if not inplace:
             return self.copy().set_internal_mods_at_index(index, mods, inplace=True)
-        self._internal_mod_dict[index] = mods
+        self.get_internal_mod_dict()[index] = mods
         return self
 
     def set_intervals(
@@ -1063,43 +1278,43 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
     def append_isotope_mod(self, mod: MODLIST_DATATYPE, inplace: bool = True) -> Self:
         if not inplace:
             return self.copy().append_isotope_mod(mod, inplace=True)
-        self._isotope_mod_list.append(mod)
+        self.get_isotope_mod_list().append(mod)
         return self
 
     def append_static_mod(self, mod: MODLIST_DATATYPE, inplace: bool = True) -> Self:
         if not inplace:
             return self.copy().append_static_mod(mod, inplace=True)
-        self._static_mod_list.append(mod)
+        self.get_static_mod_list().append(mod)
         return self
 
     def append_labile_mod(self, mod: MODLIST_DATATYPE, inplace: bool = True) -> Self:
         if not inplace:
             return self.copy().append_labile_mod(mod, inplace=True)
-        self._labile_mod_list.append(mod)
+        self.get_labile_mod_list().append(mod)
         return self
 
     def append_unknown_mod(self, mod: MODLIST_DATATYPE, inplace: bool = True) -> Self:
         if not inplace:
             return self.copy().append_unknown_mod(mod, inplace=True)
-        self._unknown_mod_list.append(mod)
+        self.get_unknown_mod_list().append(mod)
         return self
 
     def append_nterm_mod(self, mod: MODLIST_DATATYPE, inplace: bool = True) -> Self:
         if not inplace:
             return self.copy().append_nterm_mod(mod, inplace=True)
-        self._nterm_mod_list.append(mod)
+        self.get_nterm_mod_list().append(mod)
         return self
 
     def append_cterm_mod(self, mod: MODLIST_DATATYPE, inplace: bool = True) -> Self:
         if not inplace:
             return self.copy().append_cterm_mod(mod, inplace=True)
-        self._cterm_mod_list.append(mod)
+        self.get_cterm_mod_list().append(mod)
         return self
 
     def append_charge_adduct(self, mod: MODLIST_DATATYPE, inplace: bool = True) -> Self:
         if not inplace:
             return self.copy().append_charge_adduct(mod, inplace=True)
-        self._adduct_mod_list.append(mod)
+        self.get_charge_adduct_list().append(mod)
         return self
 
     def append_internal_mod_at_index(
@@ -1107,7 +1322,7 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
     ) -> Self:
         if not inplace:
             return self.copy().append_internal_mod_at_index(index, mod, inplace=True)
-        self._internal_mod_dict.append_at_key(index, mod)
+        self.get_internal_mod_dict().append_at_key(index, mod)
         return self
 
     def append_interval(
@@ -1115,7 +1330,7 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
     ) -> Self:
         if not inplace:
             return self.copy().append_interval(interval, inplace=True)
-        self._interval_list.append(interval)
+        self.get_interval_list().append(interval)
         return self
 
     def _append_by_type(
@@ -1180,7 +1395,7 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         if not inplace:
             return self.copy().extend_isotope_mods(mods, inplace=True)
         if mods is not None:
-            self._isotope_mod_list.extend(setup_mod_list(mods))
+            self.get_isotope_mod_list().extend(setup_mod_list(mods))
         return self
 
     def extend_static_mods(
@@ -1189,7 +1404,7 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         if not inplace:
             return self.copy().extend_static_mods(mods, inplace=True)
         if mods is not None:
-            self._static_mod_list.extend(setup_mod_list(mods))
+            self.get_static_mod_list().extend(setup_mod_list(mods))
         return self
 
     def extend_labile_mods(
@@ -1198,7 +1413,7 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         if not inplace:
             return self.copy().extend_labile_mods(mods, inplace=True)
         if mods is not None:
-            self._labile_mod_list.extend(setup_mod_list(mods))
+            self.get_labile_mod_list().extend(setup_mod_list(mods))
         return self
 
     def extend_unknown_mods(
@@ -1207,7 +1422,7 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         if not inplace:
             return self.copy().extend_unknown_mods(mods, inplace=True)
         if mods is not None:
-            self._unknown_mod_list.extend(setup_mod_list(mods))
+            self.get_unknown_mod_list().extend(setup_mod_list(mods))
         return self
 
     def extend_nterm_mods(
@@ -1216,7 +1431,7 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         if not inplace:
             return self.copy().extend_nterm_mods(mods, inplace=True)
         if mods is not None:
-            self._nterm_mod_list.extend(setup_mod_list(mods))
+            self.get_nterm_mod_list().extend(setup_mod_list(mods))
         return self
 
     def extend_cterm_mods(
@@ -1225,7 +1440,7 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         if not inplace:
             return self.copy().extend_cterm_mods(mods, inplace=True)
         if mods is not None:
-            self._cterm_mod_list.extend(setup_mod_list(mods))
+            self.get_cterm_mod_list().extend(setup_mod_list(mods))
         return self
 
     def extend_charge_adducts(
@@ -1234,7 +1449,7 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         if not inplace:
             return self.copy().extend_charge_adducts(charge_adducts, inplace=True)
         if charge_adducts is not None:
-            self._adduct_mod_list.extend(setup_mod_list(charge_adducts))
+            self.get_charge_adduct_list().extend(setup_mod_list(charge_adducts))
         return self
 
     def extend_internal_mods_at_index(
@@ -1243,7 +1458,7 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         if not inplace:
             return self.copy().extend_internal_mods_at_index(index, mods, inplace=True)
         if mods is not None:
-            self._internal_mod_dict.extend_at_key(index, mods)
+            self.get_internal_mod_dict().extend_at_key(index, mods)
         return self
 
     def extend_intervals(
@@ -1252,7 +1467,7 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         if not inplace:
             return self.copy().extend_intervals(intervals, inplace=True)
         if intervals is not None:
-            self._interval_list.extend(setup_interval_list(intervals))
+            self.get_interval_list().extend(setup_interval_list(intervals))
         return self
 
     def _extend_by_type(self, value: Any, mod_type: ModType) -> Self:
@@ -1312,7 +1527,7 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         if not inplace:
             return self.copy().update_internal_mods(mods, inplace=True)
         if mods is not None:
-            self._internal_mod_dict.update(mods)
+            self.get_internal_mod_dict().update(mods)
         return self
 
     def merge_internal_mods(
@@ -1322,7 +1537,7 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         if not inplace:
             return self.copy().merge_internal_mods(mods, inplace=True)
         if mods is not None:
-            self._internal_mod_dict.merge(mods)
+            self.get_internal_mod_dict().merge(mods)
         return self
 
     """
@@ -1432,30 +1647,62 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         return self.remove_mods(None, inplace=inplace)
 
     def get_isotope_mod_list(self) -> ModList:
+        if self._isotope_mod_list is None:
+            self._isotope_mod_list = setup_mod_list(
+                None, allow_dups=False, stackable=False
+            )
         return self._isotope_mod_list
 
     def get_static_mod_list(self) -> ModList:
+        if self._static_mod_list is None:
+            self._static_mod_list = setup_mod_list(
+                None, allow_dups=False, stackable=False
+            )
         return self._static_mod_list
 
     def get_labile_mod_list(self) -> ModList:
+        if self._labile_mod_list is None:
+            self._labile_mod_list = setup_mod_list(
+                None, allow_dups=False, stackable=False
+            )
         return self._labile_mod_list
 
     def get_unknown_mod_list(self) -> ModList:
+        if self._unknown_mod_list is None:
+            self._unknown_mod_list = setup_mod_list(
+                None, allow_dups=False, stackable=False
+            )
         return self._unknown_mod_list
 
     def get_nterm_mod_list(self) -> ModList:
+        if self._nterm_mod_list is None:
+            self._nterm_mod_list = setup_mod_list(
+                None, allow_dups=False, stackable=False
+            )
         return self._nterm_mod_list
 
     def get_cterm_mod_list(self) -> ModList:
+        if self._cterm_mod_list is None:
+            self._cterm_mod_list = setup_mod_list(
+                None, allow_dups=False, stackable=False
+            )
         return self._cterm_mod_list
 
     def get_charge_adduct_list(self) -> ModList:
+        if self._adduct_mod_list is None:
+            self._adduct_mod_list = setup_mod_list(
+                None, allow_dups=False, stackable=False
+            )
         return self._adduct_mod_list
 
     def get_internal_mod_dict(self) -> ModDict:
+        if self._internal_mod_dict is None:
+            self._internal_mod_dict = ModDict()
         return self._internal_mod_dict
 
     def get_interval_list(self) -> IntervalList:
+        if self._interval_list is None:
+            self._interval_list = setup_interval_list(None)
         return self._interval_list
 
     """
@@ -1465,57 +1712,75 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
     def sort_isotope_mods(
         self, key: Callable[[Mod], Any] | None = None, reverse: bool = False
     ) -> Self:
-        self._isotope_mod_list.sort(key=key, reverse=reverse)
+        if not self.has_isotope_mods:
+            return self
+        self.get_isotope_mod_list().sort(key=key, reverse=reverse)
         return self
 
     def sort_static_mods(
         self, key: Callable[[Mod], Any] | None = None, reverse: bool = False
     ) -> Self:
-        self._static_mod_list.sort(key=key, reverse=reverse)
+        if not self.has_static_mods:
+            return self
+        self.get_static_mod_list().sort(key=key, reverse=reverse)
         return self
 
     def sort_labile_mods(
         self, key: Callable[[Mod], Any] | None = None, reverse: bool = False
     ) -> Self:
-        self._labile_mod_list.sort(key=key, reverse=reverse)
+        if not self.has_labile_mods:
+            return self
+        self.get_labile_mod_list().sort(key=key, reverse=reverse)
         return self
 
     def sort_unknown_mods(
         self, key: Callable[[Mod], Any] | None = None, reverse: bool = False
     ) -> Self:
-        self._unknown_mod_list.sort(key=key, reverse=reverse)
+        if not self.has_unknown_mods:
+            return self
+        self.get_unknown_mod_list().sort(key=key, reverse=reverse)
         return self
 
     def sort_nterm_mods(
         self, key: Callable[[Mod], Any] | None = None, reverse: bool = False
     ) -> Self:
-        self._nterm_mod_list.sort(key=key, reverse=reverse)
+        if not self.has_nterm_mods:
+            return self
+        self.get_nterm_mod_list().sort(key=key, reverse=reverse)
         return self
 
     def sort_cterm_mods(
         self, key: Callable[[Mod], Any] | None = None, reverse: bool = False
     ) -> Self:
-        self._cterm_mod_list.sort(key=key, reverse=reverse)
+        if not self.has_cterm_mods:
+            return self
+        self.get_cterm_mod_list().sort(key=key, reverse=reverse)
         return self
 
     def sort_internal_mods(
         self, key: Callable[[Mod], Any] | None = None, reverse: bool = False
     ) -> Self:
-        for mod_list in self._internal_mod_dict.values():
+        if not self.has_internal_mods:
+            return self
+        for mod_list in self.get_internal_mod_dict().values():
             mod_list.sort(key=key, reverse=reverse)
         return self
 
     def sort_interval_mods(
         self, key: Callable[[Mod], Any] | None = None, reverse: bool = False
     ) -> Self:
-        for interval in self._interval_list:
+        if not self.has_intervals:
+            return self
+        for interval in self.get_interval_list():
             interval.mods.sort(key=key, reverse=reverse)
         return self
 
     def sort_charge_adducts(
         self, key: Callable[[Mod], Any] | None = None, reverse: bool = False
     ) -> Self:
-        self._adduct_mod_list.sort(key=key, reverse=reverse)
+        if not self.has_charge_adducts:
+            return self
+        self.get_charge_adduct_list().sort(key=key, reverse=reverse)
         return self
 
     def _sort_mods_by_type(
@@ -1576,31 +1841,53 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
     """
 
     def contains_isotope_mod(self, mod: MODLIST_DATATYPE) -> bool:
-        return mod in self._isotope_mod_list
+        if self.has_isotope_mods:
+            return mod in self.get_isotope_mod_list()
+        return False
 
     def contains_static_mod(self, mod: MODLIST_DATATYPE) -> bool:
-        return mod in self._static_mod_list
+        if self.has_static_mods:
+            return mod in self.get_static_mod_list()
+        return False
 
     def contains_labile_mod(self, mod: MODLIST_DATATYPE) -> bool:
-        return mod in self._labile_mod_list
+        if self.has_labile_mods:
+            return mod in self.get_labile_mod_list()
+        return False
 
     def contains_unknown_mod(self, mod: MODLIST_DATATYPE) -> bool:
-        return mod in self._unknown_mod_list
+        if self.has_unknown_mods:
+            return mod in self.get_unknown_mod_list()
+        return False
 
     def contains_nterm_mod(self, mod: MODLIST_DATATYPE) -> bool:
-        return mod in self._nterm_mod_list
+        if self.has_nterm_mods:
+            return mod in self.get_nterm_mod_list()
+        return False
 
     def contains_cterm_mod(self, mod: MODLIST_DATATYPE) -> bool:
-        return mod in self._cterm_mod_list
+        if self.has_cterm_mods:
+            return mod in self.get_cterm_mod_list()
+        return False
 
     def contains_internal_mod(self, mod: MODLIST_DATATYPE) -> bool:
-        return any(mod in mod_list for mod_list in self._internal_mod_dict.values())
+        if not self.has_internal_mods:
+            return False
+        return any(
+            mod in mod_list for mod_list in self.get_internal_mod_dict().values()
+        )
 
     def contains_interval_mod(self, mod: MODLIST_DATATYPE) -> bool:
-        return any(mod in interval.mods for interval in self._interval_list)
+        if not self.has_intervals:
+            return False
+        return any(mod in interval.mods for interval in self.get_interval_list())
 
     def contains_mod_at_index(self, mod: MODLIST_DATATYPE, index: int) -> bool:
-        return mod in self._internal_mod_dict.get(index, ModList())
+        if not self.has_internal_mods:
+            return False
+        if index < 0 or index >= len(self.sequence):
+            raise IndexError(f"Internal modification index out of range: {index}")
+        return mod in self.get_internal_mod_dict().get(index, ModList())
 
     def _contains_mod_by_type(self, mod: MODLIST_DATATYPE, mod_type: ModType) -> bool:
         match mod_type:
@@ -1674,34 +1961,80 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         return self
 
     def copy(self, deep: bool = True) -> Self:
-        if not deep:
-            return self.__class__(
-                sequence=self._sequence,
-                isotope_mods=self._isotope_mod_list,
-                static_mods=self._static_mod_list,
-                labile_mods=self._labile_mod_list,
-                unknown_mods=self._unknown_mod_list,
-                nterm_mods=self._nterm_mod_list,
-                cterm_mods=self._cterm_mod_list,
-                internal_mods=self._internal_mod_dict,
-                intervals=self._interval_list,
-                charge=self._charge,
-                charge_adducts=self._adduct_mod_list,
-            )
-        return deepcopy(self)
+        return self.__class__(
+            sequence=self._sequence,
+            isotope_mods=self._isotope_mod_list.copy()
+            if self._isotope_mod_list is not None
+            else None,
+            static_mods=self._static_mod_list.copy()
+            if self._static_mod_list is not None
+            else None,
+            labile_mods=self._labile_mod_list.copy()
+            if self._labile_mod_list is not None
+            else None,
+            unknown_mods=self._unknown_mod_list.copy()
+            if self._unknown_mod_list is not None
+            else None,
+            nterm_mods=self._nterm_mod_list.copy()
+            if self._nterm_mod_list is not None
+            else None,
+            cterm_mods=self._cterm_mod_list.copy()
+            if self._cterm_mod_list is not None
+            else None,
+            internal_mods=self._internal_mod_dict.copy()
+            if self._internal_mod_dict is not None
+            else None,
+            intervals=self._interval_list.copy()
+            if self._interval_list is not None
+            else None,
+            charge=self._charge,
+            charge_adducts=self._adduct_mod_list.copy()
+            if self._adduct_mod_list is not None
+            else None,
+        )
 
     def copy_from(self, other: Self, deep: bool = True) -> None:
         self._sequence = other._sequence
-        self._isotope_mod_list = other._isotope_mod_list.copy(deep=deep)
-        self._static_mod_list = other._static_mod_list.copy(deep=deep)
-        self._labile_mod_list = other._labile_mod_list.copy(deep=deep)
-        self._unknown_mod_list = other._unknown_mod_list.copy(deep=deep)
-        self._nterm_mod_list = other._nterm_mod_list.copy(deep=deep)
-        self._cterm_mod_list = other._cterm_mod_list.copy(deep=deep)
-        self._internal_mod_dict = other._internal_mod_dict.copy(deep=deep)
-        self._interval_list = other._interval_list.copy(deep=deep)
+        self._isotope_mod_list = (
+            other._isotope_mod_list.copy()
+            if other._isotope_mod_list is not None
+            else None
+        )
+        self._static_mod_list = (
+            other._static_mod_list.copy()
+            if other._static_mod_list is not None
+            else None
+        )
+        self._labile_mod_list = (
+            other._labile_mod_list.copy()
+            if other._labile_mod_list is not None
+            else None
+        )
+        self._unknown_mod_list = (
+            other._unknown_mod_list.copy()
+            if other._unknown_mod_list is not None
+            else None
+        )
+        self._nterm_mod_list = (
+            other._nterm_mod_list.copy() if other._nterm_mod_list is not None else None
+        )
+        self._cterm_mod_list = (
+            other._cterm_mod_list.copy() if other._cterm_mod_list is not None else None
+        )
+        self._internal_mod_dict = (
+            other._internal_mod_dict.copy()
+            if other._internal_mod_dict is not None
+            else None
+        )
+        self._interval_list = (
+            other._interval_list.copy() if other._interval_list is not None else None
+        )
         self._charge = other._charge
-        self._adduct_mod_list = other._adduct_mod_list.copy(deep=deep)
+        self._adduct_mod_list = (
+            other._adduct_mod_list.copy()
+            if other._adduct_mod_list is not None
+            else None
+        )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -1914,15 +2247,30 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
     def shift(
         self,
         n: int,
+        keep_nterm: int = 0,
+        keep_cterm: int = 0,
         inplace: bool = False,
     ) -> Self:
-        return cast(Self, shift_annotation(self, n, inplace))
+        return cast(Self, shift_annotation(self, n, keep_nterm, keep_cterm, inplace))
 
-    def shuffle(self, seed: Any = None, inplace: bool = False) -> Self:
-        return cast(Self, shuffle_annotation(self, seed, inplace))
+    def shuffle(
+        self,
+        seed: Any = None,
+        keep_nterm: int = 0,
+        keep_cterm: int = 0,
+        inplace: bool = False,
+    ) -> Self:
+        return cast(
+            Self, shuffle_annotation(self, seed, keep_nterm, keep_cterm, inplace)
+        )
 
-    def reverse(self, inplace: bool = False, swap_terms: bool = False) -> Self:
-        return cast(Self, reverse_annotation(self, inplace, swap_terms))
+    def reverse(
+        self,
+        keep_nterm: int = 0,
+        keep_cterm: int = 0,
+        inplace: bool = False,
+    ) -> Self:
+        return cast(Self, reverse_annotation(self, keep_nterm, keep_cterm, inplace))
 
     def sort(
         self,
@@ -1943,6 +2291,7 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
     def mass(
         self,
         ion_type: IonTypeLiteral | IonType = IonType.PRECURSOR,
+        charge: int | None = None,
         monoisotopic: bool = True,
         isotope: int = 0,
         loss: float = 0.0,
@@ -1952,6 +2301,7 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         return mass(
             self,
             ion_type=ion_type,
+            charge=charge,
             monoisotopic=monoisotopic,
             isotope=isotope,
             loss=loss,
@@ -1962,6 +2312,7 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
     def mz(
         self,
         ion_type: IonTypeLiteral | IonType = IonType.PRECURSOR,
+        charge: int | None = None,
         monoisotopic: bool = True,
         isotope: int = 0,
         loss: float = 0.0,
@@ -1971,6 +2322,7 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         return mz(
             self,
             ion_type=ion_type,
+            charge=charge,
             monoisotopic=monoisotopic,
             isotope=isotope,
             loss=loss,
@@ -2024,6 +2376,7 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         labile_variable: Mapping[str, Iterable[str | float | int | Mod]] | None = None,
         max_variable_mods: int = 2,
         use_regex: bool = False,
+        inplace: bool = False,
     ) -> Generator[Self, None, None]:
         """
         Build all modifications from intervals and mass shifts.
@@ -2040,5 +2393,6 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
             labile_variable=labile_variable,
             max_variable_mods=max_variable_mods,
             use_regex=use_regex,
+            inplace=inplace,
         ):
             yield cast(Self, annot)

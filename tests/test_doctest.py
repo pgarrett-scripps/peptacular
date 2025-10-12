@@ -6,7 +6,7 @@ modules = [
     pt.chem_calc,
     pt.chem_util,
     pt.combinatoric,
-    pt.sequence,
+    pt.basic,
     pt.properties,
     # pt.mod_builder,
     pt.annotation,

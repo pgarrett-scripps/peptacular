@@ -13,7 +13,9 @@ MODDICT_VALUE_TYPES = ModList | MODLIST_DATATYPE | Iterable[MODLIST_DATATYPE]
 class ModDict(UserDict[int, ModList]):
     """Dictionary mapping positions to ModList instances."""
 
-    def __init__(self, initial: Mapping[int, MODDICT_VALUE_TYPES] | None = None) -> None:
+    def __init__(
+        self, initial: Mapping[int, MODDICT_VALUE_TYPES] | None = None
+    ) -> None:
         super().__init__()
         if initial is not None:
             self.update(initial)
@@ -33,7 +35,7 @@ class ModDict(UserDict[int, ModList]):
                 return value
             # Need to convert
             return setup_mod_list(list(value), allow_dups=True, stackable=False)
-        
+
         # Convert other types
         return setup_mod_list(value, allow_dups=True, stackable=False)
 
@@ -96,14 +98,18 @@ class ModDict(UserDict[int, ModList]):
                 raise
             return self._normalize_value(default)
 
-    def setdefault(self, key: int, default: MODDICT_VALUE_TYPES | None = None) -> ModList:
+    def setdefault(
+        self, key: int, default: MODDICT_VALUE_TYPES | None = None
+    ) -> ModList:
         """Get ModList for key, setting default if key doesn't exist"""
         self._validate_key(key)
 
         if key in self.data:
             return self.data[key]
 
-        default_modlist = self._normalize_value(default) if default is not None else ModList()
+        default_modlist = (
+            self._normalize_value(default) if default is not None else ModList()
+        )
 
         if default_modlist:
             self.data[key] = default_modlist
@@ -111,21 +117,25 @@ class ModDict(UserDict[int, ModList]):
         else:
             return default_modlist
 
-    def update(self, other: object | None = None, **kwargs: MODDICT_VALUE_TYPES) -> None:
+    def update(
+        self, other: object | None = None, **kwargs: MODDICT_VALUE_TYPES
+    ) -> None:
         """Update ModDict with another mapping or iterable"""
         if other is not None:
             if hasattr(other, "keys"):
-                for key in other:
-                    self[key] = other[key]
+                for key in other:  # type: ignore
+                    self[key] = other[key]  # type: ignore
             else:
-                for key, value in other:
+                for key, value in other:  # type: ignore
                     self[key] = value
 
         for key, value in kwargs.items():
             try:
                 self[int(key)] = value
             except ValueError:
-                raise TypeError(f"Keyword argument key '{key}' cannot be converted to int")
+                raise TypeError(
+                    f"Keyword argument key '{key}' cannot be converted to int"
+                )
 
     def __eq__(self, other: Any) -> bool:
         """Equality comparison"""
@@ -148,20 +158,22 @@ class ModDict(UserDict[int, ModList]):
 
     def copy(self, deep: bool = True) -> ModDict:
         """Create a copy of the ModDict"""
-        if deep:
-            return copy.deepcopy(self)
-        else:
-            result = ModDict()
-            for key, value in self.data.items():
-                result.data[key] = value.copy(deep=False)
-            return result
+        result = ModDict()
+        # Each ModList needs to be copied, but Mod objects inside are immutable
+        for key, modlist in self.data.items():
+            new_modlist = modlist.copy()
+            result.data[key] = new_modlist
+        return result
 
     def merge(self, other: Mapping[int, MODDICT_VALUE_TYPES]) -> None:
         """Merge another ModDict into this one"""
         if isinstance(other, ModDict):
             items = other.items()
-        elif isinstance(other, Mapping):
-            items = [(k, setup_mod_list(v, allow_dups=True, stackable=False)) for k, v in other.items()]
+        elif isinstance(other, Mapping):  # type: ignore
+            items = [
+                (k, setup_mod_list(v, allow_dups=True, stackable=False))
+                for k, v in other.items()
+            ]
         else:
             raise TypeError(f"Cannot merge ModDict with {type(other)}")
 
@@ -239,11 +251,9 @@ class ModDict(UserDict[int, ModList]):
 
 ACCEPTED_MODDICT_INPUT_TYPES = Mapping[int, MODDICT_VALUE_TYPES] | ModDict | None
 
+
 def setup_mod_dict(initial: ACCEPTED_MODDICT_INPUT_TYPES = None) -> ModDict:
     """Initialize a ModDict from various input types."""
     if isinstance(initial, ModDict):
         return initial
     return ModDict(initial)
-
-
-

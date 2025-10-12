@@ -47,7 +47,10 @@ def get_sites(
         for site in mod_sites:
             if site not in sites:
                 sites[site] = []
-            sites[site].extend(mod_values)
+            if isinstance(mod_values, str):
+                sites[site].append(mod_values)
+            else:
+                sites[site].extend(mod_values)
     return sites
 
 
@@ -146,6 +149,7 @@ def build_mods(
     labile_variable: Mapping[str, Iterable[str | float | int | Mod]] | None = None,
     max_variable_mods: int = 2,
     use_regex: bool = False,
+    inplace: bool = False,
 ) -> Generator[ProFormaAnnotation, None, None]:
     """
     Generate all possible combinations of modifications for a peptide.
@@ -169,17 +173,17 @@ def build_mods(
 
     # Get all modification sites
     nterm_variable_sites = (
-        get_sites(annotation.sequence, nterm_variable, use_regex)
+        get_sites(annotation.stripped_sequence, nterm_variable, use_regex)
         if nterm_variable
         else {}
     )
     cterm_variable_sites = (
-        get_sites(annotation.sequence, cterm_variable, use_regex)
+        get_sites(annotation.stripped_sequence, cterm_variable, use_regex)
         if cterm_variable
         else {}
     )
     internal_variable_sites = (
-        get_sites(annotation.sequence, internal_variable, use_regex)
+        get_sites(annotation.stripped_sequence, internal_variable, use_regex)
         if internal_variable
         else {}
     )
@@ -187,7 +191,7 @@ def build_mods(
     # Get terminal modifications
     nterm_variable_mods: list[str | float | int | Mod] = nterm_variable_sites.get(0, [])
     cterm_variable_mods: list[str | float | int | Mod] = cterm_variable_sites.get(
-        len(annotation.sequence) - 1, []
+        len(annotation) - 1, []
     )
 
     # Create list of all possible variable modification sites with their mods
@@ -220,10 +224,16 @@ def build_mods(
         nterm=nterm_static,
         cterm=cterm_static,
         internal=internal_static,
-        inplace=False,
+        inplace=inplace,
         merge_strat="merge",
         is_regex=use_regex,
     )
+
+    if labile_static:
+        labile_static_sites = get_sites(annotation.sequence, labile_static, use_regex)
+        for site, mods in labile_static_sites.items():
+            for mod in mods:
+                static_modified_annotation.append_labile_mod(mod)
 
     # Generate all combinations of variable modifications up to max_variable_mods
     for num_var_mods in range(max_variable_mods + 1):
@@ -246,15 +256,6 @@ def build_mods(
 
             # Start with base annotation and apply static mods
             modified_annotation = static_modified_annotation.copy()
-
-            # Apply static labile modifications if any
-            if labile_static:
-                labile_static_sites = get_sites(
-                    annotation.sequence, labile_static, use_regex
-                )
-                for site, mods in labile_static_sites.items():
-                    for mod in mods:
-                        modified_annotation.append_labile_mod(mod)
 
             # Apply variable modifications directly by site
             for mod_type, site, mod in var_mod_combination:

@@ -6,10 +6,13 @@ from .combinatoric import *
 from .fragmentation import *
 
 from .mod_builder import *
-from .sequence import *
+from .basic import *
+from .transformations import *
+from .coverage import *
+
 
 from .properties import *
 from .mass import *
 from .comp import *
-
+from .decoy import *
 from .digestion import *

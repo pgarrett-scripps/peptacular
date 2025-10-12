@@ -57,16 +57,16 @@ class MultiProFormaAnnotation:
         for prof_parser, connection in ProFormaParser(sequence).parse():
             annot = ProFormaAnnotation(
                 sequence="".join(prof_parser.amino_acids),
-                isotope_mods=prof_parser.isotope_mods.copy(),
-                static_mods=prof_parser.static_mods.copy(),
-                labile_mods=prof_parser.labile_mods.copy(),
-                unknown_mods=prof_parser.unknown_mods.copy(),
-                nterm_mods=prof_parser.nterm_mods.copy(),
-                cterm_mods=prof_parser.cterm_mods.copy(),
-                internal_mods=prof_parser.internal_mods.copy(),
-                intervals=prof_parser.intervals.copy(),
+                isotope_mods=prof_parser.isotope_mods,
+                static_mods=prof_parser.static_mods,
+                labile_mods=prof_parser.labile_mods,
+                unknown_mods=prof_parser.unknown_mods,
+                nterm_mods=prof_parser.nterm_mods,
+                cterm_mods=prof_parser.cterm_mods,
+                internal_mods=prof_parser.internal_mods,
+                intervals=prof_parser.intervals,
                 charge=prof_parser.charge,
-                charge_adducts=prof_parser.charge_adducts.copy(),
+                charge_adducts=prof_parser.charge_adducts,
             )
             annots.append(annot)
             if connection is not None:

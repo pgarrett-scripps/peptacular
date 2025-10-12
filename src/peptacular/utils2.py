@@ -287,7 +287,12 @@ class ModLabler:
 
 
 def get_label(
-    ion_type: str, charge: int, number: str, loss: float, isotope: int, precision: int | None = None
+    ion_type: str,
+    charge: int,
+    number: str,
+    loss: float,
+    isotope: int,
+    precision: int | None = None,
 ) -> str:
     """
     Returns the label of the fragment, e.g., b2, y3i, etc.

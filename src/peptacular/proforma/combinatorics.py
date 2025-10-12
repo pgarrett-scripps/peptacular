@@ -165,4 +165,4 @@ def _apply_extracted_mods(
             from ..constants import ModType
 
             mod_type = ModType(mod_type_str)
-            annotation._set_mod_by_type(mod_value, mod_type)
+            annotation._set_mod_by_type(mod_value, mod_type)  # type: ignore

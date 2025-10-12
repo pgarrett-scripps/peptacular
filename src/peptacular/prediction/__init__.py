@@ -7,14 +7,14 @@ try:
     import ms2pip
 
     MS2PIP_AVAILABLE = True
-    from .prediction_core import predict_msms_spectra
+    from .psm_utils_core import predict_msms_spectra
 
 except ImportError:
     MS2PIP_AVAILABLE = False
 
     def ms2pip_not_available(*args, **kwargs):  # type: ignore
         raise ImportError(
-            "Ms2pip is not installed. Install with: " "pip install peptacular[Ms2pip]"
+            "Ms2pip is not installed. Install with: pip install peptacular[Ms2pip]"
         )
 
     # Create dummy functions for all expected exports

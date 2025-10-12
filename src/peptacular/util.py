@@ -758,7 +758,7 @@ def validate_single_mod_multiplier(func: Callable[..., None]) -> Callable[..., N
     """
 
     @wraps(func)
-    def wrapper(self, mod: Mod | Iterable[Mod]) -> None: # type: ignore
+    def wrapper(self, mod: Mod | Iterable[Mod]) -> None:  # type: ignore
         if isinstance(mod, Mod):
             if mod.mult > 1:
                 raise ValueError(

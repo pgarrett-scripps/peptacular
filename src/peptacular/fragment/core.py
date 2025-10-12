@@ -114,7 +114,6 @@ def _build_fragments(
             for iso in isotopes:
                 for loss in applicable_losses:
                     for c in charges:
-
                         fragment_mass = adjust_mass(
                             base_mass=base_mass,
                             charge=c,
@@ -148,7 +147,9 @@ def _build_fragments(
                             number = get_number(
                                 ion_type, len(base_unmod_sequence), span[0], span[1]
                             )
-                            yield get_label(ion_type, c, number, loss, iso, precision=precision)
+                            yield get_label(
+                                ion_type, c, number, loss, iso, precision=precision
+                            )
 
                         elif return_type == FragmentReturnType.MASS:
                             yield fragment_mass
@@ -162,7 +163,9 @@ def _build_fragments(
                             )
                             yield (
                                 fragment_mass,
-                                get_label(ion_type, c, number, loss, iso, precision=precision),
+                                get_label(
+                                    ion_type, c, number, loss, iso, precision=precision
+                                ),
                             )
 
                         elif return_type == FragmentReturnType.MZ_LABEL:
@@ -171,7 +174,9 @@ def _build_fragments(
                             )
                             yield (
                                 fragment_mz,
-                                get_label(ion_type, c, number, loss, iso, precision=precision),
+                                get_label(
+                                    ion_type, c, number, loss, iso, precision=precision
+                                ),
                             )
 
 

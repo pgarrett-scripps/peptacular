@@ -184,6 +184,8 @@ def join_annotations(annotations: Sequence[ProFormaAnnotation]) -> ProFormaAnnot
 def shift_annotation(
     annotation: ProFormaAnnotation,
     n: int,
+    keep_nterm: int = 0,
+    keep_cterm: int = 0,
     inplace: bool = False,
 ) -> ProFormaAnnotation:
     """
@@ -192,9 +194,9 @@ def shift_annotation(
     Args:
         annotation: The ProFormaAnnotation to shift
         n: Number of positions to shift (positive shifts right, negative shifts left)
+        keep_nterm: Number of N-terminal residues to keep unchanged
+        keep_cterm: Number of C-terminal residues to keep unchanged
         inplace: If True, modify the annotation in place
-        shift_intervals: If True, shift intervals with the sequence
-        slice_intervals: If True, slice intervals that get cut off by shift
 
     Returns:
         The shifted annotation
@@ -203,12 +205,12 @@ def shift_annotation(
         ValueError: If intervals would be cut off and slice_intervals=False
     """
 
-    # throw error if interval is split
-
     if not inplace:
         return shift_annotation(
             annotation.copy(),
             n=n,
+            keep_nterm=keep_nterm,
+            keep_cterm=keep_cterm,
             inplace=True,
         )
 
@@ -217,35 +219,79 @@ def shift_annotation(
 
     seq_len = len(annotation.sequence)
 
+    # Validate keep parameters
+    if keep_nterm < 0 or keep_cterm < 0:
+        raise ValueError("keep_nterm and keep_cterm must be non-negative")
+    if keep_nterm + keep_cterm > seq_len:
+        raise ValueError("keep_nterm + keep_cterm cannot exceed sequence length")
+
+    # If nothing to shift, return as is
+    if keep_nterm + keep_cterm >= seq_len:
+        return annotation
+
     effective_shift = n % seq_len
     if effective_shift == 0:
         return annotation
 
-    # Shift sequence
-    shifted_sequence = (
-        annotation.sequence[effective_shift:] + annotation.sequence[:effective_shift]
-    )
+    # Extract the parts of the sequence
+    nterm_part = annotation.sequence[:keep_nterm]
+    middle_part = annotation.sequence[keep_nterm : seq_len - keep_cterm]
+    cterm_part = annotation.sequence[seq_len - keep_cterm :]
 
-    # Shift internal modifications
+    # Calculate effective shift for the middle part
+    middle_len = len(middle_part)
+    if middle_len == 0:
+        return annotation
+
+    middle_shift = effective_shift % middle_len if middle_len > 0 else 0
+
+    # Shift only the middle part
+    shifted_middle = middle_part[middle_shift:] + middle_part[:middle_shift]
+    shifted_sequence = nterm_part + shifted_middle + cterm_part
+
+    # Shift internal modifications (only in the middle section)
     new_internal_mods: dict[int, ModList] = {}
     if annotation.has_internal_mods:
         for mod_index, mods in annotation.get_internal_mod_dict().items():
-            shifted_index = (mod_index - effective_shift) % seq_len
-            new_internal_mods[shifted_index] = mods
+            if mod_index < keep_nterm:
+                # Keep N-terminal mods in place
+                new_internal_mods[mod_index] = mods
+            elif mod_index >= seq_len - keep_cterm:
+                # Keep C-terminal mods in place
+                new_internal_mods[mod_index] = mods
+            else:
+                # Shift middle mods
+                relative_pos = mod_index - keep_nterm
+                shifted_relative_pos = (relative_pos - middle_shift) % middle_len
+                new_internal_mods[keep_nterm + shifted_relative_pos] = mods
 
     # Handle intervals
     new_intervals: list[Interval] = []
     for interval in annotation.get_interval_list():
-        new_start = (interval.start - effective_shift) % seq_len
-        new_end = (interval.end - effective_shift) % seq_len
+        # Check if interval is entirely in kept regions
+        if interval.end <= keep_nterm or interval.start >= seq_len - keep_cterm:
+            # Keep interval as is
+            new_intervals.append(interval)
+        elif interval.start >= keep_nterm and interval.end <= seq_len - keep_cterm:
+            # Interval is entirely in middle - shift it
+            relative_start = interval.start - keep_nterm
+            relative_end = interval.end - keep_nterm
+            new_start = (relative_start - middle_shift) % middle_len + keep_nterm
+            new_end = (relative_end - middle_shift) % middle_len + keep_nterm
 
-        if new_start < new_end:
-            new_intervals.append(
-                Interval(new_start, new_end, interval.ambiguous, interval.mods)
-            )
+            if new_start < new_end:
+                new_intervals.append(
+                    Interval(new_start, new_end, interval.ambiguous, interval.mods)
+                )
+            else:
+                raise ValueError(
+                    "Shifting intervals that wrap around the sequence end is not supported."
+                )
         else:
+            # Interval spans kept and shifted regions
             raise ValueError(
-                "Shifting intervals that wrap around the sequence end is not supported."
+                f"Interval [{interval.start}:{interval.end}] spans kept and shifted regions. "
+                "This is not supported."
             )
 
     # Update annotation
@@ -256,7 +302,11 @@ def shift_annotation(
 
 
 def shuffle_annotation(
-    annotation: ProFormaAnnotation, seed: Any = None, inplace: bool = False
+    annotation: ProFormaAnnotation,
+    seed: Any = None,
+    keep_nterm: int = 0,
+    keep_cterm: int = 0,
+    inplace: bool = False,
 ) -> ProFormaAnnotation:
     """
     Shuffle the annotation sequence randomly.
@@ -264,35 +314,65 @@ def shuffle_annotation(
     Args:
         annotation: The ProFormaAnnotation to shuffle
         seed: Random seed for reproducible shuffling
+        keep_nterm: Number of N-terminal residues to keep unchanged
+        keep_cterm: Number of C-terminal residues to keep unchanged
         inplace: If True, modify the annotation in place
 
     Returns:
         The shuffled annotation
     """
     if not inplace:
-        return shuffle_annotation(annotation.copy(), seed, inplace=True)
+        return shuffle_annotation(
+            annotation.copy(), seed, keep_nterm, keep_cterm, inplace=True
+        )
 
     if seed is not None:
         random.seed(seed)
 
     seq_len = len(annotation.sequence)
-    if seq_len <= 1:
+
+    # Validate keep parameters
+    if keep_nterm < 0 or keep_cterm < 0:
+        raise ValueError("keep_nterm and keep_cterm must be non-negative")
+    if keep_nterm + keep_cterm > seq_len:
+        raise ValueError("keep_nterm + keep_cterm cannot exceed sequence length")
+
+    # If nothing to shuffle, return as is
+    if seq_len <= 1 or keep_nterm + keep_cterm >= seq_len:
         return annotation
 
-    # Create position mapping through shuffling
-    sequence_positions = list(enumerate(annotation.sequence))
-    random.shuffle(sequence_positions)
+    # Extract parts
+    nterm_part = annotation.sequence[:keep_nterm]
+    middle_part = annotation.sequence[keep_nterm : seq_len - keep_cterm]
+    cterm_part = annotation.sequence[seq_len - keep_cterm :]
 
-    # Extract shuffled sequence and create position mapping
-    shuffled_sequence: list[str] = []
+    # Create position mapping for middle part only
+    middle_positions = list(enumerate(middle_part, start=keep_nterm))
+
+    # Shuffle only the middle positions
+    middle_shuffled = [(i, aa) for i, aa in middle_positions]
+    random.shuffle(middle_shuffled)
+
+    # Build shuffled sequence
+    shuffled_middle: list[str] = []
     position_mapping: dict[int, int] = {}
 
-    for new_pos, (original_pos, aa) in enumerate(sequence_positions):
-        shuffled_sequence.append(aa)
+    # Keep N-term positions unchanged
+    for i in range(keep_nterm):
+        position_mapping[i] = i
+
+    # Map shuffled middle positions
+    for new_relative_pos, (original_pos, aa) in enumerate(middle_shuffled):
+        new_pos = keep_nterm + new_relative_pos
+        shuffled_middle.append(aa)
         position_mapping[original_pos] = new_pos
 
+    # Keep C-term positions unchanged
+    for i in range(seq_len - keep_cterm, seq_len):
+        position_mapping[i] = i
+
     # Update sequence
-    annotation.sequence = "".join(shuffled_sequence)
+    annotation.sequence = nterm_part + "".join(shuffled_middle) + cterm_part
 
     # Update internal modifications with new positions
     if annotation.has_internal_mods:
@@ -302,17 +382,46 @@ def shuffle_annotation(
             new_internal_mods[new_pos] = mods
         annotation.internal_mods = new_internal_mods if new_internal_mods else None
 
+    # Handle intervals - check if they're in shuffled region
+    if annotation.has_intervals:
+        for interval in annotation.get_interval_list():
+            if interval.start < keep_nterm or interval.end > seq_len - keep_cterm:
+                # Interval overlaps with kept regions - check if it's entirely in kept region
+                if not (
+                    interval.end <= keep_nterm or interval.start >= seq_len - keep_cterm
+                ):
+                    raise ValueError(
+                        f"Interval [{interval.start}:{interval.end}] spans kept and shuffled regions. "
+                        "This is not supported."
+                    )
+            # If interval is entirely in middle, its positions will be shuffled via the mapping
+            # Note: This could lead to non-contiguous intervals, which might not be valid
+            # Consider raising an error if intervals exist in the shuffled region
+            if (
+                keep_nterm < interval.start < seq_len - keep_cterm
+                or keep_nterm < interval.end < seq_len - keep_cterm
+            ):
+                raise ValueError(
+                    f"Shuffling sequences with intervals in the shuffled region is not supported. "
+                    f"Interval [{interval.start}:{interval.end}] would be disrupted."
+                )
+
     return annotation
 
 
 def reverse_annotation(
-    annotation: ProFormaAnnotation, inplace: bool = False, swap_terms: bool = False
+    annotation: ProFormaAnnotation,
+    keep_nterm: int = 0,
+    keep_cterm: int = 0,
+    inplace: bool = False,
 ) -> ProFormaAnnotation:
     """
     Reverse the annotation sequence.
 
     Args:
         annotation: The ProFormaAnnotation to reverse
+        keep_nterm: Number of N-terminal residues to keep unchanged
+        keep_cterm: Number of C-terminal residues to keep unchanged
         inplace: If True, modify the annotation in place
         swap_terms: If True, swap N-term and C-term modifications
 
@@ -321,36 +430,84 @@ def reverse_annotation(
     """
     if not inplace:
         return reverse_annotation(
-            annotation.copy(), inplace=True, swap_terms=swap_terms
+            annotation.copy(),
+            keep_nterm=keep_nterm,
+            keep_cterm=keep_cterm,
+            inplace=True,
         )
 
-    # Reverse sequence
-    annotation.sequence = annotation.sequence[::-1]
+    seq_len = len(annotation.sequence)
 
-    # Reverse internal modifications
+    # Validate keep parameters
+    if keep_nterm < 0 or keep_cterm < 0:
+        raise ValueError("keep_nterm and keep_cterm must be non-negative")
+    if keep_nterm + keep_cterm > seq_len:
+        raise ValueError("keep_nterm + keep_cterm cannot exceed sequence length")
+
+    # If nothing to reverse, return as is
+    if seq_len <= 1 or keep_nterm + keep_cterm >= seq_len:
+        return annotation
+
+    # Extract parts
+    nterm_part = annotation.sequence[:keep_nterm]
+    middle_part = annotation.sequence[keep_nterm : seq_len - keep_cterm]
+    cterm_part = annotation.sequence[seq_len - keep_cterm :]
+
+    # Reverse only the middle part
+    reversed_middle = middle_part[::-1]
+    annotation.sequence = nterm_part + reversed_middle + cterm_part
+
+    # Reverse internal modifications (only in the middle section)
     if annotation.has_internal_mods:
         new_internal_mods: ModDict = ModDict()
+        middle_len = len(middle_part)
+
         for pos, mods in annotation.get_internal_mod_dict().items():
-            new_pos = len(annotation.sequence) - 1 - pos
-            new_internal_mods[new_pos] = mods
+            if pos < keep_nterm:
+                # Keep N-terminal mods in place
+                new_internal_mods[pos] = mods
+            elif pos >= seq_len - keep_cterm:
+                # Keep C-terminal mods in place
+                new_internal_mods[pos] = mods
+            else:
+                # Reverse middle mods
+                relative_pos = pos - keep_nterm
+                reversed_relative_pos = middle_len - 1 - relative_pos
+                new_internal_mods[keep_nterm + reversed_relative_pos] = mods
+
         annotation._internal_mod_dict = new_internal_mods  # type: ignore
 
-    # reverse the intervals too
+    # Reverse the intervals too (only in the middle section)
     if annotation.has_intervals:
-        for interval in annotation.get_interval_list():
-            start: int = interval.start
-            end: int = interval.end
-            new_start = len(annotation.sequence) - end
-            new_end = len(annotation.sequence) - start
-            interval.start = new_start
-            interval.end = new_end
+        middle_len = len(middle_part)
+        new_intervals: list[Interval] = []
 
-    # Swap terminal modifications if requested
-    if swap_terms:
-        annotation.nterm_mods, annotation.cterm_mods = (
-            annotation.cterm_mods,
-            annotation.nterm_mods,
-        )
+        for interval in annotation.get_interval_list():
+            if interval.end <= keep_nterm or interval.start >= seq_len - keep_cterm:
+                # Keep intervals in kept regions as is
+                new_intervals.append(interval)
+            elif interval.start >= keep_nterm and interval.end <= seq_len - keep_cterm:
+                # Interval is entirely in middle - reverse it
+                relative_start = interval.start - keep_nterm
+                relative_end = interval.end - keep_nterm
+                new_start = keep_nterm + (middle_len - relative_end)
+                new_end = keep_nterm + (middle_len - relative_start)
+                new_intervals.append(
+                    Interval(
+                        start=new_start,
+                        end=new_end,
+                        ambiguous=interval.ambiguous,
+                        mods=interval.mods,
+                    )
+                )
+            else:
+                # Interval spans kept and reversed regions
+                raise ValueError(
+                    f"Interval [{interval.start}:{interval.end}] spans kept and reversed regions. "
+                    "This is not supported."
+                )
+
+        annotation.get_interval_list().data = new_intervals
 
     return annotation
 

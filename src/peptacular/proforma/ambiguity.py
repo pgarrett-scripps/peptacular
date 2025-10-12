@@ -1,5 +1,5 @@
 from __future__ import annotations
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable
 import itertools
 from typing import TYPE_CHECKING, Any
 
@@ -27,7 +27,7 @@ def condense_ambiguity_to_xnotation(
             elem_annot = elem.filter_mods(
                 [ModType.INTERNAL, ModType.STATIC, ModType.ISOTOPE, ModType.INTERVAL]
             )
-            mass = elem_annot.mass(ion_type=IonType.NEUTRAL)
+            mass = elem_annot.mass(ion_type=IonType.NEUTRAL, charge=1)
 
             elem.sequence = "X"
             elem.remove_internal_mods()
@@ -148,7 +148,7 @@ def _construct_ambiguity_intervals(
         return ambiguity_intervals
 
     ambiguity_intervals: list[tuple[int, int]] = []
-    current_interval = None
+    current_interval: tuple[int, int] | None = None
     for i, cnt in enumerate(counts):
         if cnt == 0:
             if current_interval is not None:
@@ -449,7 +449,7 @@ def unique_fragments(
 
     for i, (annotation, masses) in enumerate(annotation_masses):
         # Get all other masses from other annotations
-        all_other_masses = set()
+        all_other_masses: set[int] = set()
         for j, (_, other_masses) in enumerate(annotation_masses):
             if i != j:
                 all_other_masses.update(other_masses)
@@ -458,4 +458,4 @@ def unique_fragments(
         globally_unique_masses = masses - all_other_masses
         results.append((annotation, len(globally_unique_masses)))
 
-    return results
+    return [count for _, count in results]
