@@ -559,6 +559,38 @@ def _parse_chem_mass_from_proforma_str(
         raise InvalidChemFormulaError(chem_str, err.msg) from err
 
 
+from functools import lru_cache
+
+
+@lru_cache(maxsize=512)
+def _parse_mod_mass_cached(
+    mod: str | int | float,
+    mod_type: str,  # Add type to differentiate 1.0 from 1
+    monoisotopic: bool = True,
+    precision: int | None = None,
+) -> float | None:
+    """
+    Cached version of mod mass parsing.
+
+    Args:
+        mod: The modification value
+        mod_type: Type name ("str", "int", "float") to avoid hash collisions
+        monoisotopic: Whether to use monoisotopic masses
+        precision: The precision of the mass
+
+    Note: mod_type is only used for cache key differentiation since hash(1.0) == hash(1)
+    """
+    # Get type name for cache key to avoid hash(1.0) == hash(1) collision
+    mod_type = type(mod).__name__
+
+    # Only cache if input is hashable (str, int, float)
+    if isinstance(mod, (str, int, float)):
+        return _parse_mod_mass_cached(mod, mod_type, monoisotopic, precision)
+    else:
+        # Fallback for non-hashable types
+        raise TypeError(f"Cannot parse mod mass for type {type(mod)}")
+
+
 def _parse_mod_mass(
     mod: str, monoisotopic: bool = True, precision: int | None = None
 ) -> float | None:

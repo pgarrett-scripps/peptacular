@@ -356,7 +356,9 @@ class ProFormaParser:
                 self.position += 1
             multiplier = int(seq[multiplier_start : self.position])
 
-        return Mod(convert_type(mod), multiplier)
+        mod_value = convert_type(mod)
+
+        return Mod(mod_value, multiplier)
 
     def _parse_integer(self) -> int:
         """Parse integer from sequence."""

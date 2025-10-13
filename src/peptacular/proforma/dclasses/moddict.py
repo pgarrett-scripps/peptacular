@@ -1,5 +1,4 @@
 from __future__ import annotations
-import copy
 from collections import UserDict
 from collections.abc import Iterable, Mapping
 from typing import Any
@@ -34,7 +33,7 @@ class ModDict(UserDict[int, ModList]):
             if value.allow_dups and not value.stackable:
                 return value
             # Need to convert
-            return setup_mod_list(list(value), allow_dups=True, stackable=False)
+            return setup_mod_list(value.data, allow_dups=True, stackable=False)
 
         # Convert other types
         return setup_mod_list(value, allow_dups=True, stackable=False)
@@ -157,12 +156,17 @@ class ModDict(UserDict[int, ModList]):
         return f"ModDict({dict(self.data)})"
 
     def copy(self, deep: bool = True) -> ModDict:
-        """Create a copy of the ModDict"""
-        result = ModDict()
-        # Each ModList needs to be copied, but Mod objects inside are immutable
-        for key, modlist in self.data.items():
-            new_modlist = modlist.copy()
-            result.data[key] = new_modlist
+        """Create a copy of the ModDict - optimized to bypass __init__"""
+        result = object.__new__(ModDict)
+
+        # Fast path: empty dict
+        if not self.data:
+            result.data = {}
+            return result
+
+        # Copy with pre-allocated dict
+        result.data = {key: modlist.copy() for key, modlist in self.data.items()}
+
         return result
 
     def merge(self, other: Mapping[int, MODDICT_VALUE_TYPES]) -> None:

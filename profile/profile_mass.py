@@ -48,6 +48,7 @@ def run_mass_single():
     """Run mass calculation on peptides from a single protein."""
     protein = generate_random_protein(1000)
 
+    protein = "M[+100]" + protein + "K-[Oxidation]"  # Ensure cleavable ends
     
     start_time = time.time()
     masses = pt.mass(
@@ -95,7 +96,3 @@ if __name__ == "__main__":
     print("=" * 60)
     profile_mass_single()
     
-    print("\n" + "=" * 60)
-    print("MULTI-PROTEIN MASS CALCULATION (with multiprocessing)")
-    print("=" * 60)
-    profile_mass_multi()

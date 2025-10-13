@@ -3,6 +3,7 @@ import copy
 from collections import UserList
 from collections.abc import Iterable
 from typing import Any, Self, SupportsIndex
+from unittest import result
 import warnings
 
 from ...mod import Mod, MOD_VALUE_TYPES, setup_mod
@@ -202,10 +203,17 @@ class ModList(UserList[Mod]):
 
     # ModList - optimized shallow copy
     def copy(self, deep: bool = True) -> ModList:
-        """Create a copy of the ModList"""
-        result = ModList(allow_dups=self.allow_dups, stackable=self.stackable)
-        # Mod objects are immutable - safe to share! Just copy the list
-        result.data = self.data.copy()
+        """Create a copy of the ModList - optimized to bypass __init__"""
+        result = object.__new__(ModList)
+        result.allow_dups = self.allow_dups
+        result.stackable = self.stackable
+
+        # Micro-optimization: avoid .copy() overhead for empty lists
+        if self.data:
+            result.data = self.data.copy()
+        else:
+            result.data = []
+
         return result
 
     def flatten(self, sort: bool = False) -> tuple[MOD_VALUE_TYPES, ...]:

@@ -362,6 +362,7 @@ AMINO_ACIDS: set[str] = set(AA_COMPOSITIONS.keys()) | {"B", "Z"}
 ORDERED_AMINO_ACIDS = sorted(list(AMINO_ACIDS))
 AMBIGUOUS_AMINO_ACIDS: set[str] = {"J", "B", "Z", "X"}
 MASS_AMBIGUOUS_AMINO_ACIDS: set[str] = {"B", "Z"}
+UNAMBIGUOUS_AMINO_ACIDS: set[str] = AMINO_ACIDS - AMBIGUOUS_AMINO_ACIDS
 
 # 3 letter codes
 AA_TO_THREE_LETTER_CODE: dict[str, str] = {

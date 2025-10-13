@@ -86,6 +86,9 @@ class UnifiedDatabase:
         fasta_path: str,
         decoy: bool = False,
         decoy_strategy: Literal["reverse", "shuffle", "debruijn"] = "reverse",
+        static_residues: str = "KR",
+        debruijn_kmer: int = 3,
+        random_seed: int | None = None,
     ) -> None:
         """Load proteins from a FASTA file."""
         t0 = time.time()
@@ -107,7 +110,12 @@ class UnifiedDatabase:
             elif decoy_strategy == "shuffle":
                 sequences = shuffle_sequence(sequences)
             elif decoy_strategy == "debruijn":
-                sequences = debruijin_sequence(sequences, k=3)
+                sequences = debruijin_sequence(
+                    sequences,
+                    k=debruijn_kmer,
+                    seed=random_seed,
+                    static_residues=static_residues,
+                )
             else:
                 raise ValueError(
                     "decoy_strategy must be 'reverse', 'shuffle', or 'debruijn'"
@@ -470,6 +478,14 @@ class UnifiedDatabase:
             idx: len(peptides) for idx, peptides in self._protein_to_peptides.items()
         }
 
+    def get_peptide_proteins(self, peptide_seq: str) -> list[Peptide]:
+        """
+        Get Peptide objects for a specific peptide sequence.
+        Returns list of Peptide objects.
+        O(1) lookup.
+        """
+        return self._peptide_to_proteins.get(peptide_seq, [])
+
     def get_proteins_for_peptides(
         self, peptide_seqs: Iterable[str]
     ) -> dict[str, list[Protein]]:
@@ -591,3 +607,49 @@ class UnifiedDatabase:
 
     def __len__(self) -> int:
         return len(self._proteins)
+
+    def get_protein_peptide_masses(self, protein_idx: int) -> set[int]:
+        """
+        Get all unique peptide masses (as integers) for a specific protein.
+        Masses are rounded to 5 decimals and converted to int (mass * 100000).
+        Returns set of integer masses.
+        O(1) lookup.
+        """
+        peptide_seqs = self._protein_to_peptides.get(protein_idx, set())
+        return {
+            int(round(self._peptide_to_mass[seq], 5) * 100000) for seq in peptide_seqs
+        }
+
+    def get_protein_peptide_masses_float(self, protein_idx: int) -> set[float]:
+        """
+        Get all unique peptide masses (as floats) for a specific protein.
+        Masses are rounded to 5 decimals.
+        Returns set of float masses.
+        O(1) lookup.
+        """
+        peptide_seqs = self._protein_to_peptides.get(protein_idx, set())
+        return {round(self._peptide_to_mass[seq], 5) for seq in peptide_seqs}
+
+    def get_all_protein_peptide_masses(self) -> dict[int, set[int]]:
+        """
+        Get unique peptide masses for all proteins.
+        Masses are rounded to 5 decimals and converted to int (mass * 100000).
+        Returns dict mapping protein_idx -> set of integer masses.
+        """
+        return {
+            idx: {
+                int(round(self._peptide_to_mass[seq], 5) * 100000) for seq in peptides
+            }
+            for idx, peptides in self._protein_to_peptides.items()
+        }
+
+    def get_all_protein_peptide_masses_float(self) -> dict[int, set[float]]:
+        """
+        Get unique peptide masses for all proteins.
+        Masses are rounded to 5 decimals.
+        Returns dict mapping protein_idx -> set of float masses.
+        """
+        return {
+            idx: {round(self._peptide_to_mass[seq], 5) for seq in peptides}
+            for idx, peptides in self._protein_to_peptides.items()
+        }

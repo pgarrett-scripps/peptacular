@@ -240,7 +240,7 @@ def build_mods(
         for var_mod_combination in itertools.combinations(
             variable_site_mod_pairs, num_var_mods
         ):
-            # Check for site conflicts (only one mod per site per type)
+            # Check for site conflicts
             site_conflicts = {}
             has_conflict = False
 
@@ -257,19 +257,40 @@ def build_mods(
             # Start with base annotation and apply static mods
             modified_annotation = static_modified_annotation.copy()
 
-            # Apply variable modifications directly by site
+            # Cache references to avoid repeated getter calls
+            nterm_list = None
+            cterm_list = None
+            internal_dict = None
+
+            # OPTIMIZED: Apply variable modifications directly
             for mod_type, site, mod in var_mod_combination:
                 if mod_type == "nterm":
-                    mod_list = modified_annotation.get_nterm_mod_list()
-                    mod_list.append(mod)
+                    if nterm_list is None:
+                        nterm_list = modified_annotation.get_nterm_mod_list()
+                    nterm_list.append(mod)
+
                 elif mod_type == "cterm":
-                    mod_list = modified_annotation.get_cterm_mod_list()
-                    mod_list.append(mod)
+                    if cterm_list is None:
+                        cterm_list = modified_annotation.get_cterm_mod_list()
+                    cterm_list.append(mod)
+
                 elif mod_type == "internal":
-                    mod_dict = modified_annotation.get_internal_mod_dict()
-                    mod_dict[site] = update_mod_list(
-                        mod_dict.get(site, ModList()), merge_strat="merge", mods=[mod]
-                    )
+                    if internal_dict is None:
+                        internal_dict = modified_annotation.get_internal_mod_dict()
+
+                    if site not in internal_dict.data:
+                        new_modlist = (
+                            modified_annotation.create_empty_internal_mod_list()
+                        )
+                        # SUPER OPTIMIZED: Skip all validation, append directly to data
+                        mod_obj = mod if isinstance(mod, Mod) else Mod(mod, 1)
+                        new_modlist.data.append(mod_obj)
+                        internal_dict.data[site] = new_modlist
+                    else:
+                        # SUPER OPTIMIZED: Skip merge check, append directly
+                        mod_obj = mod if isinstance(mod, Mod) else Mod(mod, 1)
+                        internal_dict.data[site].data.append(mod_obj)
+
                 elif mod_type == "labile":
                     modified_annotation.append_labile_mod(mod)
 

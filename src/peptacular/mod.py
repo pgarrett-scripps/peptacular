@@ -1,8 +1,40 @@
 from __future__ import annotations
-import copy
+from functools import lru_cache
 from typing import Any
 
 MOD_VALUE_TYPES = str | int | float
+
+
+@lru_cache(maxsize=512)
+def _serialize_mod_cached(
+    val: MOD_VALUE_TYPES,
+    val_type: str,  # Add this!
+    mult: int,
+    brackets: str,
+    include_plus: bool,
+    precision: int | None,
+) -> str:
+    """Global cache for mod serialization."""
+    # Serialize val (val_type is just for cache key differentiation)
+    if isinstance(val, float):
+        if precision is not None:
+            val_str = f"{val:.{precision}f}"
+        else:
+            val_str = str(val)
+            if "." not in val_str and "e" not in val_str.lower():
+                val_str += ".0"
+    else:
+        val_str = str(val)
+
+    # Add plus if needed
+    if include_plus and isinstance(val, (int, float)) and val > 0:
+        val_str = f"+{val_str}"
+
+    # Format with multiplier
+    if mult > 1:
+        return f"{brackets[0]}{val_str}{brackets[1]}^{mult}"
+    else:
+        return f"{brackets[0]}{val_str}{brackets[1]}"
 
 
 class Mod:
@@ -22,44 +54,20 @@ class Mod:
     def mult(self) -> int:
         return self.__mult
 
-    def _serialize_val(self, precision: int | None = None) -> str:
-        s = ""
-        if precision is not None:
-            if isinstance(self.val, float):
-                s = f"{self.val:.{precision}f}"
-            elif isinstance(self.val, int):
-                s = str(self.val)
-            else:
-                s = str(self.val)
-        else:
-            s = str(self.val)
-
-        return s
-
     def serialize(
         self,
         brackets: str,
         include_plus: bool = False,
         precision: int | None = None,
     ) -> str:
-        """
-        Serialize the mod into a string
-        """
-        # Determine if the value is positive and prefix '+' for positive numbers
-        if include_plus is True:
-            val_str = (
-                f"+{self._serialize_val(precision)}"
-                if isinstance(self.val, (int, float)) and self.val > 0
-                else self._serialize_val(precision)
-            )
-        else:
-            val_str = self._serialize_val(precision)
-
-        # Return the formatted string based on the multiplier value
-        return (
-            f"{brackets[0]}{val_str}{brackets[1]}^{self.mult}"
-            if self.mult > 1
-            else f"{brackets[0]}{val_str}{brackets[1]}"
+        """Serialize the mod into a string (globally cached)."""
+        return _serialize_mod_cached(
+            self.val,
+            type(self.val).__name__,  # Add type name to cache key!
+            self.mult,
+            brackets,
+            include_plus,
+            precision,
         )
 
     def __hash__(self) -> int:
@@ -74,7 +82,6 @@ class Mod:
     def __eq__(self, other: Any) -> bool:
         if isinstance(other, (str, float, int)):
             other = Mod(other, 1)
-
         if self.val != other.val:
             return False
         if self.mult != other.mult:
@@ -85,10 +92,8 @@ class Mod:
         """
         Compare two mods (Doesn't Really matter, just for sorting)
         """
-
         if isinstance(other, (str, float, int)):
             other = Mod(other, 1)
-
         if str(self.val) < str(other.val):
             return True
         if self.val == other.val:
@@ -99,7 +104,6 @@ class Mod:
         """
         Create a copy of the mod
         """
-
         return self
 
     def to_dict(self) -> dict[str, str | float | int]:
@@ -112,8 +116,6 @@ class Mod:
 def setup_mod(mod: MOD_VALUE_TYPES | Mod) -> Mod:
     if isinstance(mod, Mod):
         return mod
-
     if isinstance(mod, (str, int, float)):  # type: ignore
         return Mod(mod, 1)
-
     raise TypeError(f"Invalid mod input: {mod}")

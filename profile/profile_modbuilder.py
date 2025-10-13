@@ -13,11 +13,10 @@ def profile_single_peptide_mods():
     profiler = cProfile.Profile()
     profiler.enable()
     
-    modified = list(pt.ProFormaAnnotation.parse(peptide).build_mods(
+    modified = list(pt.build_mods(peptide,
         internal_static={'C': [57.021]},
         internal_variable={'M': [15.995], 'E': [79.966]},
         max_variable_mods=2,
-        inplace=True,
     ))
     
     profiler.disable()

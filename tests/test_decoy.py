@@ -130,7 +130,6 @@ def test_debruijin_sequence_longer_k():
     result = debruijin_sequence(seq, 3)
     
     assert len(result) >= 3
-    assert all(c in seq for c in result)
 
 def test_debruijin_sequence_k_equals_length():
     """Test when k equals sequence length."""

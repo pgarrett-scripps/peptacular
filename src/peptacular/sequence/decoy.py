@@ -5,6 +5,7 @@ import random
 from .util import get_annotation_input
 from .parrallel import parallel_apply_internal
 from ..proforma.annotation import ProFormaAnnotation
+from ..constants import UNAMBIGUOUS_AMINO_ACIDS
 
 
 # ============================================================================
@@ -81,6 +82,7 @@ def reverse_sequence(
 def _shuffle_sequence_single(
     sequence: str | ProFormaAnnotation,
     static_residues: str = "",
+    seed: int | None = None,
 ) -> str:
     """Internal function for shuffling a single sequence."""
     annot = get_annotation_input(sequence, copy=False)
@@ -88,7 +90,13 @@ def _shuffle_sequence_single(
     seq_list = list(seq_str)
     indices = [i for i, aa in enumerate(seq_list) if aa not in static_residues]
     residues_to_shuffle = [seq_list[i] for i in indices]
+
+    if seed is not None:
+        random.seed(seed)
     random.shuffle(residues_to_shuffle)
+    if seed is not None:
+        random.seed()  # Reset to avoid affecting other operations
+
     for idx, new_aa in zip(indices, residues_to_shuffle):
         seq_list[idx] = new_aa
     annot.sequence = "".join(seq_list)
@@ -99,6 +107,7 @@ def _shuffle_sequence_single(
 def shuffle_sequence(
     sequence: str | ProFormaAnnotation,
     static_residues: str = "",
+    seed: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
     method: Literal["process", "thread"] | None = None,
@@ -109,6 +118,7 @@ def shuffle_sequence(
 def shuffle_sequence(
     sequence: Sequence[str | ProFormaAnnotation],
     static_residues: str = "",
+    seed: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
     method: Literal["process", "thread"] | None = None,
@@ -118,6 +128,7 @@ def shuffle_sequence(
 def shuffle_sequence(
     sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
     static_residues: str = "",
+    seed: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
     method: Literal["process", "thread"] | None = None,
@@ -129,6 +140,8 @@ def shuffle_sequence(
     :type sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation]
     :param static_residues: Amino acids to keep in their original positions.
     :type static_residues: str
+    :param seed: Random seed for reproducible shuffling. If None, shuffling is random.
+    :type seed: int | None
     :param n_workers: Number of worker processes. If None, uses CPU count.
     :type n_workers: int | None
     :param chunksize: Number of items per chunk. If None, auto-calculated.
@@ -147,12 +160,15 @@ def shuffle_sequence(
             _shuffle_sequence_single,
             sequence,
             static_residues=static_residues,
+            seed=seed,
             n_workers=n_workers,
             chunksize=chunksize,
             method=method,
         )
     else:
-        return _shuffle_sequence_single(sequence, static_residues=static_residues)
+        return _shuffle_sequence_single(
+            sequence, static_residues=static_residues, seed=seed
+        )
 
 
 # ============================================================================
@@ -281,25 +297,49 @@ def _build_kmer_graph(seq: str, k: int) -> dict[str, dict[str, str]]:
 def _randomize_graph_edges(
     graph: dict[str, dict[str, str]],
     static_residues: str,
+    seed: int | None = None,
 ) -> None:
-    """Randomize the amino acid transitions in the graph, keeping static residues fixed."""
-    all_amino_acids = set()
-    for kmer in graph:
-        for next_kmer in graph[kmer]:
-            aa = graph[kmer][next_kmer]
-            if aa != "-":
-                all_amino_acids.add(aa)
+    """Deterministically map k-mer transitions in the graph, keeping static residues fixed."""
 
-    randomizable_aas = [aa for aa in all_amino_acids if aa not in static_residues]
+    # Use ALL amino acids for the mapping pool
+    randomizable_aas = [
+        aa for aa in UNAMBIGUOUS_AMINO_ACIDS if aa not in static_residues
+    ]
 
     if not randomizable_aas:
         return
 
+    # Collect all unique k-mer transitions first
+    transitions: set[tuple[str, str]] = set()
     for kmer in graph:
         for next_kmer in graph[kmer]:
             aa = graph[kmer][next_kmer]
             if aa != "-" and aa not in static_residues:
-                graph[kmer][next_kmer] = random.choice(randomizable_aas)
+                transitions.add((kmer, next_kmer))
+
+    # Pre-compute mappings for all transitions
+    transition_mapping: dict[tuple[str, str], str] = {}
+    if seed is not None:
+        # Deterministic: create mappings based on seed
+        for kmer, next_kmer in transitions:
+            transition_key = f"{seed}:{kmer}:{next_kmer}"
+            transition_seed = sum(
+                ord(c) * (i + 1) for i, c in enumerate(transition_key)
+            ) % (2**31)
+            local_random = random.Random(transition_seed)
+            transition_mapping[(kmer, next_kmer)] = local_random.choice(
+                randomizable_aas
+            )
+    else:
+        # Random: create random mappings
+        for kmer, next_kmer in transitions:
+            transition_mapping[(kmer, next_kmer)] = random.choice(randomizable_aas)
+
+    # Apply the mappings
+    for kmer in graph:
+        for next_kmer in graph[kmer]:
+            if (kmer, next_kmer) in transition_mapping:
+                graph[kmer][next_kmer] = transition_mapping[(kmer, next_kmer)]
 
 
 def _reconstruct_sequence_from_graph(
@@ -308,11 +348,11 @@ def _reconstruct_sequence_from_graph(
     k: int,
 ) -> str:
     """Reconstruct a sequence by traversing the randomized graph."""
-    new_sequence = []
+    new_sequence: list[str] = []
 
     padded_seq = "-" * k + original_seq
 
-    kmers = []
+    kmers: list[str] = []
     n_kmers = len(padded_seq) - k + 1
     for i in range(n_kmers):
         kmer = padded_seq[i : i + k]
@@ -336,6 +376,7 @@ def _debruijin_sequence_single(
     sequence: str | ProFormaAnnotation,
     k: int,
     static_residues: str = "",
+    seed: int | None = None,
 ) -> str:
     """Internal function for creating de Bruijn decoy from a single sequence."""
     annot = get_annotation_input(sequence, copy=False)
@@ -346,7 +387,7 @@ def _debruijin_sequence_single(
 
     padded_seq = "-" * k + seq_str
     graph = _build_kmer_graph(padded_seq, k)
-    _randomize_graph_edges(graph, static_residues)
+    _randomize_graph_edges(graph, static_residues, seed=seed)
     annot.sequence = _reconstruct_sequence_from_graph(seq_str, graph, k)
     return annot.serialize()
 
@@ -356,6 +397,7 @@ def debruijin_sequence(
     sequence: str | ProFormaAnnotation,
     k: int,
     static_residues: str = "",
+    seed: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
     method: Literal["process", "thread"] | None = None,
@@ -367,6 +409,7 @@ def debruijin_sequence(
     sequence: Sequence[str | ProFormaAnnotation],
     k: int,
     static_residues: str = "",
+    seed: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
     method: Literal["process", "thread"] | None = None,
@@ -377,6 +420,7 @@ def debruijin_sequence(
     sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
     k: int,
     static_residues: str = "",
+    seed: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
     method: Literal["process", "thread"] | None = None,
@@ -394,6 +438,8 @@ def debruijin_sequence(
     :type k: int
     :param static_residues: Amino acids to keep in their original positions.
     :type static_residues: str
+    :param seed: Random seed for reproducible edge randomization. If None, randomization is random.
+    :type seed: int | None
     :param n_workers: Number of worker processes. If None, uses CPU count.
     :type n_workers: int | None
     :param chunksize: Number of items per chunk. If None, auto-calculated.
@@ -427,11 +473,12 @@ def debruijin_sequence(
             sequence,
             k=k,
             static_residues=static_residues,
+            seed=seed,
             n_workers=n_workers,
             chunksize=chunksize,
             method=method,
         )
     else:
         return _debruijin_sequence_single(
-            sequence, k=k, static_residues=static_residues
+            sequence, k=k, static_residues=static_residues, seed=seed
         )

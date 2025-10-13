@@ -97,6 +97,18 @@ def _correct_mods(
 
 
 class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin):
+    # Class-level constants - created once, copied many times
+    _EMPTY_ISOTOPE_MODLIST = ModList(allow_dups=False, stackable=False)
+    _EMPTY_STATIC_MODLIST = ModList(allow_dups=True, stackable=True)
+    _EMPTY_LABILE_MODLIST = ModList(allow_dups=True, stackable=True)
+    _EMPTY_UNKNOWN_MODLIST = ModList(allow_dups=True, stackable=True)
+    _EMPTY_NTERM_MODLIST = ModList(allow_dups=True, stackable=True)
+    _EMPTY_CTERM_MODLIST = ModList(allow_dups=True, stackable=False)
+    _EMPTY_CHARGE_ADDUCTS_MODLIST = ModList(allow_dups=True, stackable=False)
+    _EMPTY_MODDICT = ModDict()
+    _EMPTY_INTERNAL_MODLIST = ModList(allow_dups=True, stackable=False)
+    _EMPTY_INTERVALLIST = IntervalList()
+
     def __init__(
         self,
         sequence: str | None = None,
@@ -112,8 +124,9 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         charge: int | None = None,
     ) -> None:
         self._sequence: str = sequence if sequence is not None else ""
+        self._charge: int | None = charge
 
-        # Initialize to None first
+        # Initialize to None - lazy initialization
         self._isotope_mod_list: ModList | None = None
         self._static_mod_list: ModList | None = None
         self._labile_mod_list: ModList | None = None
@@ -123,9 +136,8 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         self._adduct_mod_list: ModList | None = None
         self._internal_mod_dict: ModDict | None = None
         self._interval_list: IntervalList | None = None
-        self._charge: int | None = charge
 
-        # Then use setters to populate if not None
+        # Use setters to populate if not None
         if isotope_mods is not None:
             self.isotope_mods = isotope_mods
         if static_mods is not None:
@@ -147,39 +159,43 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
 
     @staticmethod
     def create_isotope_mod_list() -> ModList:
-        return ModList(allow_dups=False, stackable=False)
+        return ProFormaAnnotation._EMPTY_ISOTOPE_MODLIST.copy()
 
     @staticmethod
     def create_static_mod_list() -> ModList:
-        return ModList(allow_dups=True, stackable=True)
+        return ProFormaAnnotation._EMPTY_STATIC_MODLIST.copy()
 
     @staticmethod
     def create_labile_mod_list() -> ModList:
-        return ModList(allow_dups=True, stackable=True)
+        return ProFormaAnnotation._EMPTY_LABILE_MODLIST.copy()
 
     @staticmethod
     def create_unknown_mod_list() -> ModList:
-        return ModList(allow_dups=True, stackable=True)
+        return ProFormaAnnotation._EMPTY_UNKNOWN_MODLIST.copy()
 
     @staticmethod
     def create_nterm_mod_list() -> ModList:
-        return ModList(allow_dups=True, stackable=True)
+        return ProFormaAnnotation._EMPTY_NTERM_MODLIST.copy()
 
     @staticmethod
     def create_cterm_mod_list() -> ModList:
-        return ModList(allow_dups=True, stackable=False)
+        return ProFormaAnnotation._EMPTY_CTERM_MODLIST.copy()
 
     @staticmethod
     def create_charge_adducts_mod_list() -> ModList:
-        return ModList(allow_dups=True, stackable=False)
+        return ProFormaAnnotation._EMPTY_CHARGE_ADDUCTS_MODLIST.copy()
 
     @staticmethod
     def create_internal_mod_dict() -> ModDict:
-        return ModDict()
+        return ProFormaAnnotation._EMPTY_MODDICT.copy()
 
     @staticmethod
     def create_interval_list() -> IntervalList:
-        return IntervalList()
+        return ProFormaAnnotation._EMPTY_INTERVALLIST.copy()
+
+    @staticmethod
+    def create_empty_internal_mod_list() -> ModList:
+        return ProFormaAnnotation._EMPTY_INTERNAL_MODLIST.copy()
 
     @staticmethod
     def parse(sequence: str) -> "ProFormaAnnotation":
@@ -1656,42 +1672,42 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
     def get_static_mod_list(self) -> ModList:
         if self._static_mod_list is None:
             self._static_mod_list = setup_mod_list(
-                None, allow_dups=False, stackable=False
+                None, allow_dups=True, stackable=True
             )
         return self._static_mod_list
 
     def get_labile_mod_list(self) -> ModList:
         if self._labile_mod_list is None:
             self._labile_mod_list = setup_mod_list(
-                None, allow_dups=False, stackable=False
+                None, allow_dups=True, stackable=True
             )
         return self._labile_mod_list
 
     def get_unknown_mod_list(self) -> ModList:
         if self._unknown_mod_list is None:
             self._unknown_mod_list = setup_mod_list(
-                None, allow_dups=False, stackable=False
+                None, allow_dups=True, stackable=True
             )
         return self._unknown_mod_list
 
     def get_nterm_mod_list(self) -> ModList:
         if self._nterm_mod_list is None:
             self._nterm_mod_list = setup_mod_list(
-                None, allow_dups=False, stackable=False
+                None, allow_dups=True, stackable=False
             )
         return self._nterm_mod_list
 
     def get_cterm_mod_list(self) -> ModList:
         if self._cterm_mod_list is None:
             self._cterm_mod_list = setup_mod_list(
-                None, allow_dups=False, stackable=False
+                None, allow_dups=True, stackable=False
             )
         return self._cterm_mod_list
 
     def get_charge_adduct_list(self) -> ModList:
         if self._adduct_mod_list is None:
             self._adduct_mod_list = setup_mod_list(
-                None, allow_dups=False, stackable=False
+                None, allow_dups=True, stackable=False
             )
         return self._adduct_mod_list
 
@@ -1961,37 +1977,44 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         return self
 
     def copy(self, deep: bool = True) -> Self:
-        return self.__class__(
-            sequence=self._sequence,
-            isotope_mods=self._isotope_mod_list.copy()
-            if self._isotope_mod_list is not None
-            else None,
-            static_mods=self._static_mod_list.copy()
-            if self._static_mod_list is not None
-            else None,
-            labile_mods=self._labile_mod_list.copy()
-            if self._labile_mod_list is not None
-            else None,
-            unknown_mods=self._unknown_mod_list.copy()
-            if self._unknown_mod_list is not None
-            else None,
-            nterm_mods=self._nterm_mod_list.copy()
-            if self._nterm_mod_list is not None
-            else None,
-            cterm_mods=self._cterm_mod_list.copy()
-            if self._cterm_mod_list is not None
-            else None,
-            internal_mods=self._internal_mod_dict.copy()
-            if self._internal_mod_dict is not None
-            else None,
-            intervals=self._interval_list.copy()
-            if self._interval_list is not None
-            else None,
-            charge=self._charge,
-            charge_adducts=self._adduct_mod_list.copy()
-            if self._adduct_mod_list is not None
-            else None,
+        """Optimized copy that bypasses __init__"""
+        # Create new instance without calling __init__
+        new_obj = object.__new__(self.__class__)
+
+        # Copy simple attributes
+        new_obj._sequence = self._sequence
+        new_obj._charge = self._charge
+
+        # Copy ModLists - Mod objects are immutable, so shallow copy of data is safe
+        new_obj._isotope_mod_list = (
+            None if self._isotope_mod_list is None else self._isotope_mod_list.copy()
         )
+        new_obj._static_mod_list = (
+            None if self._static_mod_list is None else self._static_mod_list.copy()
+        )
+        new_obj._labile_mod_list = (
+            None if self._labile_mod_list is None else self._labile_mod_list.copy()
+        )
+        new_obj._unknown_mod_list = (
+            None if self._unknown_mod_list is None else self._unknown_mod_list.copy()
+        )
+        new_obj._nterm_mod_list = (
+            None if self._nterm_mod_list is None else self._nterm_mod_list.copy()
+        )
+        new_obj._cterm_mod_list = (
+            None if self._cterm_mod_list is None else self._cterm_mod_list.copy()
+        )
+        new_obj._adduct_mod_list = (
+            None if self._adduct_mod_list is None else self._adduct_mod_list.copy()
+        )
+        new_obj._internal_mod_dict = (
+            None if self._internal_mod_dict is None else self._internal_mod_dict.copy()
+        )
+        new_obj._interval_list = (
+            None if self._interval_list is None else self._interval_list.copy()
+        )
+
+        return new_obj
 
     def copy_from(self, other: Self, deep: bool = True) -> None:
         self._sequence = other._sequence
