@@ -1,6 +1,6 @@
 from __future__ import annotations
 from collections import Counter
-import regex as re
+import re
 from typing import TYPE_CHECKING, Iterable
 from .utils import parse_static_mods
 

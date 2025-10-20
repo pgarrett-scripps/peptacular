@@ -23,6 +23,15 @@ All notable changes to this project will be documented in this file.
 - Extensive tests
 - uv backend
 - ms2pip optional dep
+- added decoy gen methods
+- auto multiproccessing in functional api
+- removed need fo deep copying
+- mod objects are static now
+- added search db classes (kmer protein db, peptide db, and unified db)
+- plotting/streamlit optional deps/functions
+- spectra compression
+- spectra module
+
 
 ## [2.5.1]
 - added ambiguity support to coverage funcs

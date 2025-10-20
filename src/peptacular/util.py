@@ -4,11 +4,10 @@ Utils.py
 
 import warnings
 from functools import wraps
-import regex as re
+import re
 from typing import Callable, Generator, Iterable
 
 from .constants import ADDUCT_PATTERN, ISOTOPE_NUM_PATTERN
-
 from .mod import MOD_VALUE_TYPES, Mod
 
 
@@ -61,7 +60,14 @@ def get_regex_match_indices(
     else:
         regex_pattern = regex_str
 
-    for match in regex_pattern.finditer(input_str, overlapped=True):
+    # Use overlapping search
+    pos = 0
+    while pos < len(input_str):
+        match = regex_pattern.search(input_str, pos)
+
+        if match is None:
+            break
+
         if match.start() != match.end():
             warnings.warn(
                 message="The regex pattern has a match with a none zero length. Using start index + 1 for the match.",
@@ -69,6 +75,9 @@ def get_regex_match_indices(
             yield match.start() + offset + 1
         else:
             yield match.start() + offset
+
+        # Advance by 1 to find overlapping matches
+        pos = match.start() + 1
 
 
 def get_regex_match_range(
@@ -103,17 +112,26 @@ def get_regex_match_range(
 
     """
 
-    # if regex is compiled
-    if isinstance(regex_str, re.Pattern):
-        return [
-            (i.start() + offset, i.end() + offset)
-            for i in regex_str.finditer(input_str)
-        ]
+    if not isinstance(regex_str, re.Pattern):
+        regex_pattern = re.compile(regex_str)
+    else:
+        regex_pattern = regex_str
 
-    return [
-        (match.start() + offset, match.end() + offset)
-        for match in re.finditer(regex_str, input_str, overlapped=True)
-    ]
+    # Use overlapping search
+    matches: list[tuple[int, int]] = []
+    pos = 0
+    while pos < len(input_str):
+        match = regex_pattern.search(input_str, pos)
+
+        if match is None:
+            break
+
+        matches.append((match.start() + offset, match.end() + offset))
+
+        # Advance by 1 to find overlapping matches
+        pos = match.start() + 1
+
+    return matches
 
 
 def validate_span(span: tuple[int, int, int]) -> None:

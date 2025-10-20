@@ -10,6 +10,7 @@ from ..fragment import FragmentReturnType
 from ..proforma.annotation import ProFormaAnnotation
 from .basic import get_annotation_input
 from .parrallel import parallel_apply_internal
+from ..constants import ParrallelMethodLiteral, ParrallelMethod
 
 
 def _get_losses_single(
@@ -29,7 +30,7 @@ def get_losses(
     max_losses: int,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> set[float]: ...
 
 
@@ -40,7 +41,7 @@ def get_losses(
     max_losses: int,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[set[float]]: ...
 
 
@@ -50,7 +51,7 @@ def get_losses(
     max_losses: int,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> set[float] | list[set[float]]:
     """
     Returns a set of applicable losses for a given sequence or list of sequences.
@@ -169,7 +170,7 @@ def fragment(
     _mass_components: Sequence[float] | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[float]: ...
 
 
@@ -190,7 +191,7 @@ def fragment(
     _mass_components: Sequence[float] | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[list[float]]: ...
 
 
@@ -212,7 +213,7 @@ def fragment(
     _mass_components: Sequence[float] | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[tuple[float, str]]: ...
 
 
@@ -234,7 +235,7 @@ def fragment(
     _mass_components: Sequence[float] | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[list[tuple[float, str]]]: ...
 
 
@@ -257,7 +258,7 @@ def fragment(
     _mass_components: Sequence[float] | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> (
     list[float]
     | list[tuple[float, str]]

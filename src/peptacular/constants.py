@@ -6,7 +6,7 @@ import os
 from typing import Iterable, Literal
 from enum import StrEnum
 
-import regex as re
+import re
 
 from .element_setup import (
     get_element_info,
@@ -532,3 +532,12 @@ def get_mods(
     raise ValueError(
         f"mods parameter must be str, list of str, or None, got {type(mods)}"
     )
+
+
+class ParrallelMethod(StrEnum):
+    PROCESS = "process"
+    THREAD = "thread"
+    SEQUENTIAL = "sequential"
+
+
+ParrallelMethodLiteral = Literal["process", "thread", "sequential"]

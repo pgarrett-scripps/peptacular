@@ -5,23 +5,23 @@ from typing import Callable, Any, Literal, TypeVar, Sequence
 import multiprocessing as mp
 import sys
 
+from ..constants import ParrallelMethodLiteral, ParrallelMethod
+
 T = TypeVar("T")
 
 
 def _is_gil_disabled() -> bool:
     """
     Detect if the GIL is disabled (Python 3.13+ with free-threading).
-
     :return: True if GIL is disabled, False otherwise
     """
     # Python 3.13+ with free-threading
     if sys.version_info >= (3, 13):
         try:
-            import _thread
-
-            if hasattr(_thread, "get_gil_enabled"):
-                return not _thread.get_gil_enabled()
-        except (ImportError, AttributeError):
+            if hasattr(sys, "_is_gil_enabled"):
+                result = not sys._is_gil_enabled()
+                return result
+        except AttributeError:
             pass
     return False
 
@@ -52,44 +52,45 @@ def parallel_apply_internal(
     items: Sequence[Any],
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
     **func_kwargs: Any,
 ) -> list[T]:
     """
     Internal function for parallel processing.
-
     Automatically detects if GIL is disabled and uses threading for better performance.
     Otherwise defaults to multiprocessing.
-
     Results are returned in the same order as the input items.
 
     :param func: Function to apply to each item
     :param items: Sequence of items to process
     :param n_workers: Number of worker processes/threads. If None, uses CPU count
     :param chunksize: Number of items per chunk. If None, auto-calculated
-    :param method: 'process', 'thread', or None (auto-detect). Default is None.
+    :param method: 'process', 'thread', 'sequential', or None (auto-detect). Default is None.
     :param func_kwargs: Keyword arguments to pass to the function
     :return: List of results in the same order as input items
     """
+    # Convert to list if needed
+    items_list = list(items)
+
+    method_enum = (
+        ParrallelMethod(method) if method is not None else ParrallelMethod.PROCESS
+    )
+
+    # Handle sequential execution
+    if method_enum == ParrallelMethod.SEQUENTIAL:
+        return [func(item, **func_kwargs) for item in items_list]
+
+    # Handle parallel execution
     if n_workers is None:
         n_workers = mp.cpu_count()
-
-    # Convert to list if needed for pool operations
-    items_list = list(items)
 
     if chunksize is None:
         chunksize = max(1, len(items_list) // (n_workers * 2))
         print(f"Using chunksize: {chunksize}")
 
-    # Auto-detect optimal method if not specified
-    if method is None:
-        method = _get_optimal_method()
-        print(f"Auto-detected parallelization method: {method}")
-
     wrapper = partial(_apply_wrapper, func=func, func_kwargs=func_kwargs)
-    PoolClass: type[Pool] | type[ThreadPool] = (
-        ThreadPool if method == "thread" else Pool
-    )  # type: ignore
+
+    PoolClass = ThreadPool if method_enum == ParrallelMethod.THREAD else Pool
 
     with PoolClass(processes=n_workers) as pool:
         return pool.map(wrapper, items_list, chunksize=chunksize)

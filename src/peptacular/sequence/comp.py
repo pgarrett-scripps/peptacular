@@ -5,6 +5,7 @@ from .util import get_annotation_input, override_annotation_properties
 from ..proforma import ProFormaAnnotation
 from ..constants import IonType, IonTypeLiteral
 from .parrallel import parallel_apply_internal
+from ..constants import ParrallelMethodLiteral, ParrallelMethod
 
 
 def _comp_single(
@@ -40,7 +41,7 @@ def comp(
     use_isotope_on_mods: bool = False,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> dict[str, int | float]: ...
 
 
@@ -54,7 +55,7 @@ def comp(
     use_isotope_on_mods: bool = False,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[dict[str, int | float]]: ...
 
 
@@ -67,7 +68,7 @@ def comp(
     use_isotope_on_mods: bool = False,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> dict[str, int | float] | list[dict[str, int | float]]:
     """
     Calculates the elemental composition of a peptide sequence, including modifications,

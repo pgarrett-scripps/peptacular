@@ -2,7 +2,7 @@ from __future__ import annotations
 import itertools
 from typing import TYPE_CHECKING, Generator, Iterable, Literal, Mapping
 import warnings
-import regex as re
+import re
 
 from .dclasses.modlist import ModList
 from ..mod import Mod

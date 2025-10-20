@@ -1,3 +1,5 @@
+from .spectra import Spectrum
+
 _mz_spectra: list[float] = [
     283.75153,
     287.60138,
@@ -1468,4 +1470,4 @@ _intensity_spectra: list[float] = [
     1.79,
     7.42,
 ]
-spectra: tuple[list[float], list[float]] = (_mz_spectra, _intensity_spectra)
+example_spectra: Spectrum = Spectrum(peaks=(_mz_spectra, _intensity_spectra))

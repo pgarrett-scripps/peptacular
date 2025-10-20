@@ -7,7 +7,7 @@ import copy
 from typing import Counter, Iterable
 
 from ..mod import Mod, MOD_VALUE_TYPES
-from ..utils2 import parse_ion_elements
+from ..funcs import parse_ion_elements
 from ..util import parse_isotope_mods
 
 from .chem_constants import ISOTOPIC_AVERAGINE_MASS
@@ -34,7 +34,7 @@ from ..mods.mod_db import (
     parse_gno_comp,
 )
 
-from ..utils2 import convert_type
+from ..funcs import convert_type
 
 
 def glycan_to_chem(glycan: dict[str, int | float] | str) -> str:

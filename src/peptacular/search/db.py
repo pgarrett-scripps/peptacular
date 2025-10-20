@@ -89,6 +89,7 @@ class UnifiedDatabase:
         static_residues: str = "KR",
         debruijn_kmer: int = 3,
         random_seed: int | None = None,
+        method: Literal["sequential", "thread", "process"] = "sequential",
     ) -> None:
         """Load proteins from a FASTA file."""
         t0 = time.time()
@@ -139,10 +140,12 @@ class UnifiedDatabase:
         if self.verbose:
             print(f"Loading {len(proteins)} proteins from {fasta_path}...")
 
-        self.add_proteins(proteins)
+        self.add_proteins(proteins, method=method)
 
     def add_proteins(
-        self, proteins: Iterable[Protein | str | ProFormaAnnotation]
+        self,
+        proteins: Iterable[Protein | str | ProFormaAnnotation],
+        method: Literal["sequential", "thread", "process"] = "sequential",
     ) -> None:
         """Add multiple proteins."""
         t0 = time.time()
@@ -157,7 +160,9 @@ class UnifiedDatabase:
 
         # Serialize sequences
         sequences = [p.sequence for p in protein_list]
-        serialized = serialize(sequences, include_plus=False, precision=5)
+        serialized = serialize(
+            sequences, include_plus=False, precision=5, method=method
+        )
 
         t1 = time.time()
 
@@ -211,13 +216,14 @@ class UnifiedDatabase:
         labile_variable: MOD_BUILDER_INPUT_TYPE | None = None,
         max_variable_mods: int = 2,
         use_regex: bool = False,
+        method: Literal["sequential", "thread", "process"] = "sequential",
     ) -> None:
         """Digest all proteins and add resulting peptides (with optional modifications) to the database."""
         from ..sequence import build_mods  # Import here to avoid circular imports
 
         t0 = time.time()
 
-        protein_sequences = [p.sequence for p in self._proteins]
+        protein_sequences: list[str] = [p.sequence for p in self._proteins]
 
         # Digest proteins
         peptides_per_protein: list[list[str]] = digest(
@@ -230,6 +236,7 @@ class UnifiedDatabase:
             semi=semi,
             min_len=min_len,
             max_len=max_len,
+            method=method,
         )
 
         t1 = time.time()
@@ -282,6 +289,7 @@ class UnifiedDatabase:
                 use_regex=use_regex,
                 precision=5,
                 include_plus=False,
+                method=method,
             )
 
             t3 = time.time()
@@ -317,7 +325,7 @@ class UnifiedDatabase:
                 )
 
         # Add peptides with protein references
-        self._add_digested_peptides(peptides_per_protein)
+        self._add_digested_peptides(peptides_per_protein, method=method)
 
         t5 = time.time()
 
@@ -326,7 +334,11 @@ class UnifiedDatabase:
             print(f"Total digest time: {t5 - t0:.2f} seconds.")
             self.print_stats()
 
-    def _add_digested_peptides(self, peptides_per_protein: list[list[str]]) -> None:
+    def _add_digested_peptides(
+        self,
+        peptides_per_protein: list[list[str]],
+        method: Literal["sequential", "thread", "process"] = "sequential",
+    ) -> None:
         """Add digested peptides with protein references."""
         t0 = time.time()
 
@@ -348,7 +360,9 @@ class UnifiedDatabase:
         if new_peptides:
             # Calculate masses for ALL new peptides at once (better multiprocessing performance)
             t2 = time.time()
-            masses = mass(new_peptides, charge=0, precision=5, ion_type="p")
+            masses = mass(
+                new_peptides, charge=0, precision=5, ion_type="p", method=method
+            )
             t3 = time.time()
 
             if self.verbose:

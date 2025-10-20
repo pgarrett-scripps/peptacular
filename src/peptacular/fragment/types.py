@@ -4,7 +4,7 @@ from functools import cached_property
 from typing import Literal, NamedTuple, Protocol, Self
 
 from ..constants import PROTON_MASS, IonType, IonTypeLiteral
-from ..utils2 import get_label, get_number
+from ..funcs import get_label, get_number
 
 
 class FragmentableAnnotation(Protocol):

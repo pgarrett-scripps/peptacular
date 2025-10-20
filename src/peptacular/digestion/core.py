@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Generator, Iterable, Sequence
 
-import regex as re
+import re
 
 from ..util import get_regex_match_indices
 from ..spans import (
@@ -132,6 +132,11 @@ def get_cleavage_sites(
     enzyme_compiled_regex = PROTEASES_COMPILED.get(
         enzyme_regex, re.compile(enzyme_regex)
     )
+
+    if enzyme_compiled_regex.pattern == "()":
+        # No cleavage sites for non-specific or no-cleave
+        return (i for i in range(len(annotation.stripped_sequence) + 1))
+
     return get_regex_match_indices(
         input_str=annotation.stripped_sequence, regex_str=enzyme_compiled_regex
     )

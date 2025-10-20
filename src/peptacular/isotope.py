@@ -169,12 +169,6 @@ def isotopic_distribution(
 
     formula_mass = chem_mass(chemical_formula)
 
-    # raise warning
-    if delta_mass != 0.0:
-        warnings.warn(
-            f"The chemical formula has a mass difference of {delta_mass} Da. This is likely due to floating point errors. The mass will be corrected for this."
-        )
-
     total_distribution = {0.0: 1.0}  # Start with a base distribution
     for element, count in chemical_formula.items():
         elemental_distribution = _calculate_elemental_distribution(
@@ -513,3 +507,57 @@ def _scale_isotope_abundances(
         ]
 
     return isotopes
+
+
+class IsotopeLookup:
+    def __init__(
+        self,
+        mass_step: int = 50,
+        max_isotopes: int = 25,
+        min_abundance_threshold: float = 0.005,
+        use_neutron_count: bool = True,
+        is_abundance_sum: bool = True,
+    ):
+        self.mass_step = mass_step
+        self.max_isotopes = max_isotopes
+        self.min_abundance_threshold = min_abundance_threshold
+        self.use_neutron_count = use_neutron_count
+        self.is_abundance_sum = is_abundance_sum
+        self.lookup: dict[int, list[tuple[float, float]]] = {}
+
+    def _get_mass_bin(self, mass: float) -> int:
+        """Calculate the mass bin for a given mass."""
+        return round(mass / self.mass_step) * self.mass_step
+
+    def _generate_pattern(self, mass_bin: int) -> list[tuple[float, float]]:
+        """Generate isotope pattern for a specific mass bin."""
+        iso_pattern: list[tuple[float, float]] = estimate_isotopic_distribution(
+            neutral_mass=mass_bin,
+            max_isotopes=self.max_isotopes,
+            min_abundance_threshold=self.min_abundance_threshold,
+            use_neutron_count=self.use_neutron_count,
+            is_abundance_sum=self.is_abundance_sum,
+        )
+        return iso_pattern
+
+    def get_isotope_pattern(self, mass: float) -> list[tuple[float, float]]:
+        """
+        Get the isotope pattern for a given mass.
+
+        Generates and caches the pattern if not already present.
+        """
+        mass_bin = self._get_mass_bin(mass)
+
+        # Check if pattern exists, if not generate it
+        if mass_bin not in self.lookup:
+            self.lookup[mass_bin] = self._generate_pattern(mass_bin)
+
+        return self.lookup[mass_bin]
+
+    def clear_cache(self):
+        """Clear the cached isotope patterns."""
+        self.lookup.clear()
+
+    def get_cache_size(self) -> int:
+        """Return the number of cached isotope patterns."""
+        return len(self.lookup)

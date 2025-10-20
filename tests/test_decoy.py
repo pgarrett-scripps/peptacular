@@ -149,8 +149,6 @@ def test_reverse_then_shift():
     # Actually let me recalculate: EDCBA -> shift right by 1 -> AEDCB
     assert shifted == "AEDCB"
 
-    # EDCBA
-
 def test_shift_preserves_character_counts():
     """Test that shift preserves character frequency."""
     seq = "AABBCCDD"

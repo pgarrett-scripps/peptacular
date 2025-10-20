@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from .dclasses.modlist import ModList
-
+from .dclasses.intervallist import IntervalList
 from .characters import ProformaChar as PC
 
 if TYPE_CHECKING:
@@ -175,65 +175,26 @@ def _serialize_interval_end(
 
 
 def _serialize_intervals_at_position(
-    interval_list: list,  # Replace with actual type
+    interval_list: IntervalList | None,
     position: int,
     comps: list[str],
     include_plus: bool,
     precision: int | None,
 ) -> None:
     """Serialize all intervals that start or end at the given position."""
-    for interval in interval_list:
+    if interval_list is None:
+        return
+
+    for interval in interval_list.data:
         if interval.start == position:
             _serialize_interval_start(interval, comps)
         if interval.end == position:
             _serialize_interval_end(interval, comps, include_plus, precision)
 
 
-def _serialize_internal_mods_at_position(
-    internal_mods_data: dict[int, Any],  # Replace Any with ModList type
-    position: int,
-    comps: list[str],
-    include_plus: bool,
-    precision: int | None,
-) -> None:
-    """Serialize internal modifications at the given position."""
-    if position in internal_mods_data:
-        for mod in internal_mods_data[position]:
-            comps.append(mod.serialize(MOD_BRACKETS, include_plus, precision))
-
-
-def _serialize_sequence_with_mods(
-    sequence: str,
-    interval_list: list | None,  # Replace with actual type
-    internal_mods_data: dict[int, Any] | None,  # Replace Any with ModList type
-    comps: list[str],
-    include_plus: bool,
-    precision: int | None,
-) -> None:
-    """Serialize the sequence with intervals and internal modifications."""
-    has_intervals = interval_list is not None
-    has_internal_mods = internal_mods_data is not None
-
-    for i, aa in enumerate(sequence):
-        # Process intervals at this position
-        if has_intervals:
-            _serialize_intervals_at_position(
-                interval_list, i, comps, include_plus, precision
-            )
-
-        # Add amino acid
-        comps.append(aa)
-
-        # Add internal mods at this position
-        if has_internal_mods:
-            _serialize_internal_mods_at_position(
-                internal_mods_data, i, comps, include_plus, precision
-            )
-
-
 def _serialize_end_intervals(
     sequence_length: int,
-    interval_list: list | None,  # Replace with actual type
+    interval_list: IntervalList | None,
     comps: list[str],
     include_plus: bool,
     precision: int | None,

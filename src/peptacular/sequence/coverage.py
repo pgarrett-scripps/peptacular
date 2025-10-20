@@ -4,6 +4,7 @@ from .util import get_annotation_input
 from ..proforma.annotation import (
     ProFormaAnnotation,
 )
+from ..constants import ParrallelMethodLiteral, ParrallelMethod
 
 
 from .basic import count_residues

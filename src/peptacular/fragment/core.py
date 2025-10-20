@@ -4,7 +4,7 @@ from collections import defaultdict
 import itertools
 from typing import Counter, Generator, Mapping, Sequence
 
-import regex as re
+import re
 
 from ..constants import (
     BACKWARD_ION_TYPES,
@@ -19,7 +19,7 @@ from ..spans import (
     build_non_enzymatic_spans,
     build_right_semi_spans,
 )
-from ..utils2 import get_label, get_number
+from ..funcs import get_label, get_number
 from ..mass_calc import adjust_mass, adjust_mz
 from .types import (
     FragmentableAnnotation,

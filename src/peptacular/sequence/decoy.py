@@ -6,6 +6,7 @@ from .util import get_annotation_input
 from .parrallel import parallel_apply_internal
 from ..proforma.annotation import ProFormaAnnotation
 from ..constants import UNAMBIGUOUS_AMINO_ACIDS
+from ..constants import ParrallelMethodLiteral, ParrallelMethod
 
 
 # ============================================================================
@@ -25,7 +26,7 @@ def reverse_sequence(
     sequence: str | ProFormaAnnotation,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> str: ...
 
 
@@ -34,7 +35,7 @@ def reverse_sequence(
     sequence: Sequence[str | ProFormaAnnotation],
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[str]: ...
 
 
@@ -42,7 +43,7 @@ def reverse_sequence(
     sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> str | list[str]:
     """
     Reverse a peptide sequence or list of sequences.
@@ -110,7 +111,7 @@ def shuffle_sequence(
     seed: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> str: ...
 
 
@@ -121,7 +122,7 @@ def shuffle_sequence(
     seed: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[str]: ...
 
 
@@ -131,7 +132,7 @@ def shuffle_sequence(
     seed: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> str | list[str]:
     """
     Shuffle a peptide sequence while keeping static residues in place.
@@ -207,7 +208,7 @@ def shift_sequence(
     static_residues: str = "",
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> str: ...
 
 
@@ -218,7 +219,7 @@ def shift_sequence(
     static_residues: str = "",
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[str]: ...
 
 
@@ -228,7 +229,7 @@ def shift_sequence(
     static_residues: str = "",
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> str | list[str]:
     """
     Shift a peptide sequence by n positions while keeping static residues in place.
@@ -400,7 +401,7 @@ def debruijin_sequence(
     seed: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> str: ...
 
 
@@ -412,7 +413,7 @@ def debruijin_sequence(
     seed: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[str]: ...
 
 
@@ -423,7 +424,7 @@ def debruijin_sequence(
     seed: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> str | list[str]:
     """
     Generate decoy sequences using a de Bruijn graph with randomized edges.

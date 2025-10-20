@@ -2,12 +2,13 @@
 This module provides functions to generate permutations, combinations, and products of sequences.
 """
 
-from typing import Literal, overload
+from typing import overload
 from collections.abc import Sequence
 
 from ..proforma.annotation import ProFormaAnnotation
 from .util import get_annotation_input
 from .parrallel import parallel_apply_internal
+from ..constants import ParrallelMethodLiteral, ParrallelMethod
 
 
 def _permutations_single(
@@ -32,7 +33,7 @@ def permutations(
     precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[str]: ...
 
 
@@ -44,7 +45,7 @@ def permutations(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[list[str]]: ...
 
 
@@ -55,7 +56,7 @@ def permutations(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[str] | list[list[str]]:
     """
     Generates all permutations of the input sequence. Terminal sequence are kept in place.
@@ -143,7 +144,7 @@ def product(
     precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[str]: ...
 
 
@@ -155,7 +156,7 @@ def product(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[list[str]]: ...
 
 
@@ -166,7 +167,7 @@ def product(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[str] | list[list[str]]:
     """
     Generates all cartesian products of the input sequence of a given size. Terminal sequence are kept in place.
@@ -254,7 +255,7 @@ def combinations(
     precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[str]: ...
 
 
@@ -266,7 +267,7 @@ def combinations(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[list[str]]: ...
 
 
@@ -277,7 +278,7 @@ def combinations(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[str] | list[list[str]]:
     """
     Generates all combinations of the input sequence of a given size. Terminal sequence are kept in place.
@@ -366,7 +367,7 @@ def combinations_with_replacement(
     precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[str]: ...
 
 
@@ -378,7 +379,7 @@ def combinations_with_replacement(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[list[str]]: ...
 
 
@@ -389,7 +390,7 @@ def combinations_with_replacement(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[str] | list[list[str]]:
     """
     Generates all combinations with replacement of the input sequence of a given size. Terminal sequence are kept

@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Literal
 
-import regex as re
+import re
 
 
 PROTEASES: dict[str, str] = {

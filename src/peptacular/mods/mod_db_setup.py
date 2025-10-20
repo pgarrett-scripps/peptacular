@@ -6,7 +6,7 @@ import dataclasses
 from enum import StrEnum
 import os
 import pickle
-import regex as re
+import re
 import tempfile
 import warnings
 from collections import Counter
@@ -22,7 +22,7 @@ from ..chem.chem_util import (
     _parse_split_chem_formula,
 )
 from ..errors import InvalidChemFormulaError, InvalidGlycanFormulaError
-from ..utils2 import convert_type
+from ..funcs import convert_type
 
 
 @dataclasses.dataclass

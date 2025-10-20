@@ -17,6 +17,15 @@ class ModInterval:
     ambiguous: bool
     mods: tuple[MOD_VALUE_TYPES, ...] = field(default_factory=tuple)
 
+    def __post_init__(self) -> None:
+        if self.start < 0:
+            raise ValueError("Interval start must be non-negative")
+        if self.end < self.start:
+            raise ValueError("Interval end must be >= start")
+        # if not ambiguous and no mods, raise error
+        if not self.ambiguous and len(self.mods) == 0:
+            raise ValueError("Interval must be ambiguous or have mods")
+
 
 class Interval:
     """A sequence interval with modlist"""
@@ -36,6 +45,15 @@ class Interval:
             if not isinstance(mods, ModList)
             else mods
         )
+
+    def __post_init__(self) -> None:
+        if self.start < 0:
+            raise ValueError("Interval start must be non-negative")
+        if self.end < self.start:
+            raise ValueError("Interval end must be >= start")
+        # if not ambiguous and no mods, raise error
+        if not self.ambiguous and len(self.mods) == 0:
+            raise ValueError("Interval must be ambiguous or have mods")
 
     @property
     def has_mods(self) -> bool:

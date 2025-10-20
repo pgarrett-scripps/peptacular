@@ -20,8 +20,9 @@ from .converters import *
 from .proforma.dclasses import *
 from .errors import *
 from .digestion import *
-from .compression import *
 from .streamlit_ui import *
 from .plotting import *
 from .prediction import *
 from .search import *
+from .example_data import example_spectra
+from .spectra import *

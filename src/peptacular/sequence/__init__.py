@@ -16,3 +16,4 @@ from .mass import *
 from .comp import *
 from .decoy import *
 from .digestion import *
+from .compress import *

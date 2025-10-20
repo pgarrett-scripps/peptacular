@@ -1,7 +1,7 @@
 from collections.abc import Generator
 from typing import Self
 
-from ..utils2 import convert_type
+from ..funcs import convert_type
 
 from .dclasses import Mod, Interval, IntervalList, ModList, ModDict
 from ..constants import AMINO_ACIDS

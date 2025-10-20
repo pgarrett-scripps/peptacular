@@ -22,6 +22,7 @@ from ..digestion import EnzymeConfig, DigestReturnType
 from ..proforma.annotation import ProFormaAnnotation
 from . import get_annotation_input
 from .parrallel import parallel_apply_internal
+from ..constants import ParrallelMethodLiteral, ParrallelMethod
 
 
 def _get_left_semi_enzymatic_sequences_single(
@@ -46,7 +47,7 @@ def get_left_semi_enzymatic_sequences(
     max_len: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[str]: ...
 
 
@@ -57,7 +58,7 @@ def get_left_semi_enzymatic_sequences(
     max_len: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[list[str]]: ...
 
 
@@ -67,7 +68,7 @@ def get_left_semi_enzymatic_sequences(
     max_len: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[str] | list[list[str]]:
     """
     Builds all left-hand semi-enzymatic subsequences derived from the input `sequence`.
@@ -142,7 +143,7 @@ def get_right_semi_enzymatic_sequences(
     max_len: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[str]: ...
 
 
@@ -153,7 +154,7 @@ def get_right_semi_enzymatic_sequences(
     max_len: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[list[str]]: ...
 
 
@@ -163,7 +164,7 @@ def get_right_semi_enzymatic_sequences(
     max_len: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[str] | list[list[str]]:
     """
     Builds all right-hand semi-enzymatic subsequences derived from the input `sequence`.
@@ -235,7 +236,7 @@ def get_semi_enzymatic_sequences(
     max_len: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[str]: ...
 
 
@@ -246,7 +247,7 @@ def get_semi_enzymatic_sequences(
     max_len: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[list[str]]: ...
 
 
@@ -256,7 +257,7 @@ def get_semi_enzymatic_sequences(
     max_len: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[str] | list[list[str]]:
     """
     Builds all semi-enzymatic sequences from the given input `sequence`.
@@ -324,7 +325,7 @@ def get_non_enzymatic_sequences(
     max_len: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[str]: ...
 
 
@@ -335,7 +336,7 @@ def get_non_enzymatic_sequences(
     max_len: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[list[str]]: ...
 
 
@@ -345,7 +346,7 @@ def get_non_enzymatic_sequences(
     max_len: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[str] | list[list[str]]:
     """
     Builds all non-enzymatic sequences from the given input `sequence`.
@@ -412,7 +413,7 @@ def get_cleavage_sites(
     enzyme_regex: str,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[int]: ...
 
 
@@ -422,7 +423,7 @@ def get_cleavage_sites(
     enzyme_regex: str,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[list[int]]: ...
 
 
@@ -431,7 +432,7 @@ def get_cleavage_sites(
     enzyme_regex: str,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[int] | list[list[int]]:
     """
     Return positions where cleavage occurs in input `sequence` based on the provided enzyme regex.
@@ -515,7 +516,7 @@ def digest_by_regex(
     sort_output: bool = True,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[str]: ...
 
 
@@ -532,7 +533,7 @@ def digest_by_regex(
     sort_output: bool = True,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[list[str]]: ...
 
 
@@ -548,7 +549,7 @@ def digest_by_regex(
     sort_output: bool = True,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[str] | list[list[str]]:
     """
     Returns digested sequences using a regular expression to define cleavage sites.
@@ -668,7 +669,7 @@ def digest(
     sort_output: bool = True,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[str]: ...
 
 
@@ -688,7 +689,7 @@ def digest(
     sort_output: bool = True,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[list[str]]: ...
 
 
@@ -707,7 +708,7 @@ def digest(
     sort_output: bool = True,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[str] | list[list[str]]:
     """
     Returns digested sequences using amino acid specifications with optional restrictions.
@@ -821,7 +822,7 @@ def digest_from_config(
     sort_output: bool = True,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[str]: ...
 
 
@@ -834,7 +835,7 @@ def digest_from_config(
     sort_output: bool = True,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[list[str]]: ...
 
 
@@ -846,7 +847,7 @@ def digest_from_config(
     sort_output: bool = True,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[str] | list[list[str]]:
     """
     Same as digest() but with a simplified configuration object for a single enzyme.
@@ -904,7 +905,7 @@ def sequential_digest(
     max_len: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[str]: ...
 
 
@@ -916,7 +917,7 @@ def sequential_digest(
     max_len: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[list[str]]: ...
 
 
@@ -927,7 +928,7 @@ def sequential_digest(
     max_len: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[str] | list[list[str]]:
     """
     Returns digested sequences using sequential digestion with multiple enzymes.

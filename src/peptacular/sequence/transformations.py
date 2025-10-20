@@ -1,10 +1,11 @@
-from typing import Any, Callable, Sequence, overload, Literal
+from typing import Any, Callable, Sequence, overload
 
 from .util import get_annotation_input
 from ..proforma.annotation import (
     ProFormaAnnotation,
 )
 from .parrallel import parallel_apply_internal
+from ..constants import ParrallelMethodLiteral, ParrallelMethod
 
 
 def _reverse_single(
@@ -31,7 +32,7 @@ def reverse(
     precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> str: ...
 
 
@@ -44,7 +45,7 @@ def reverse(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[str]: ...
 
 
@@ -56,7 +57,7 @@ def reverse(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> str | list[str]:
     """
     Reverses the sequence, while preserving the position of any modifications.
@@ -159,7 +160,7 @@ def shuffle(
     precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> str: ...
 
 
@@ -173,7 +174,7 @@ def shuffle(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[str]: ...
 
 
@@ -186,7 +187,7 @@ def shuffle(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> str | list[str]:
     """
     Shuffles the sequence, while preserving the position of any modifications.
@@ -288,7 +289,7 @@ def shift(
     include_plus: bool = False,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> str: ...
 
 
@@ -301,7 +302,7 @@ def shift(
     include_plus: bool = False,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[str]: ...
 
 
@@ -313,7 +314,7 @@ def shift(
     include_plus: bool = False,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> str | list[str]:
     """
     Shifts the sequence to the left by a given number of positions, while preserving the position of any modifications.
@@ -408,7 +409,7 @@ def span_to_sequence(
     precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> str: ...
 
 
@@ -420,7 +421,7 @@ def span_to_sequence(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[str]: ...
 
 
@@ -431,7 +432,7 @@ def span_to_sequence(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> str | list[str]:
     """
     Extracts a subsequence from the input sequence based on the provided span.
@@ -512,7 +513,7 @@ def split(
     precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[str]: ...
 
 
@@ -523,7 +524,7 @@ def split(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[list[str]]: ...
 
 
@@ -533,7 +534,7 @@ def split(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[str] | list[list[str]]:
     """
     Splits sequence into a list of amino acids, preserving modifications.
@@ -618,7 +619,7 @@ def sort(
     precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> str: ...
 
 
@@ -631,7 +632,7 @@ def sort(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[str]: ...
 
 
@@ -643,7 +644,7 @@ def sort(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> str | list[str]:
     """
     Sorts the input sequence using the provided sort function. Terminal sequences are kept in place.

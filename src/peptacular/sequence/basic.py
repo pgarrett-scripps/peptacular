@@ -20,7 +20,7 @@ a result they can be positioned anywhere in the sequence. Maybe add a check to s
 end of the sequence and if not raise an error.
 """
 
-from typing import Any, Sequence, overload, Literal
+from typing import Any, Sequence, overload
 
 from .util import get_annotation_input
 from ..constants import ORDERED_AMINO_ACIDS
@@ -28,6 +28,7 @@ from ..proforma.annotation import (
     ProFormaAnnotation,
 )
 from .parrallel import parallel_apply_internal
+from ..constants import ParrallelMethodLiteral, ParrallelMethod
 
 
 def _serialize_single(
@@ -48,7 +49,7 @@ def serialize(
     precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> str: ...
 
 
@@ -59,7 +60,7 @@ def serialize(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[str]: ...
 
 
@@ -69,7 +70,7 @@ def serialize(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> str | list[str]:
     """
     Serialize a peptide sequence or list of sequences to ProForma string format.
@@ -138,7 +139,7 @@ def sequence_length(
     sequence: str | ProFormaAnnotation,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> int: ...
 
 
@@ -147,7 +148,7 @@ def sequence_length(
     sequence: Sequence[str | ProFormaAnnotation],
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[int]: ...
 
 
@@ -155,7 +156,7 @@ def sequence_length(
     sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> int | list[int]:
     """
     Compute the length of the peptide sequence based on the unmodified sequence.
@@ -221,7 +222,7 @@ def is_ambiguous(
     sequence: str | ProFormaAnnotation,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> bool: ...
 
 
@@ -230,7 +231,7 @@ def is_ambiguous(
     sequence: Sequence[str | ProFormaAnnotation],
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[bool]: ...
 
 
@@ -238,7 +239,7 @@ def is_ambiguous(
     sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> bool | list[bool]:
     """
     Check if the sequence contains ambiguous amino acids.
@@ -307,7 +308,7 @@ def is_modified(
     sequence: str | ProFormaAnnotation,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> bool: ...
 
 
@@ -316,7 +317,7 @@ def is_modified(
     sequence: Sequence[str | ProFormaAnnotation],
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[bool]: ...
 
 
@@ -324,7 +325,7 @@ def is_modified(
     sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> bool | list[bool]:
     """
     Check if the sequence contains any modifications.
@@ -390,7 +391,7 @@ def count_residues(
     sequence: str | ProFormaAnnotation,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> dict[str, int]: ...
 
 
@@ -399,7 +400,7 @@ def count_residues(
     sequence: Sequence[str | ProFormaAnnotation],
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[dict[str, int]]: ...
 
 
@@ -407,7 +408,7 @@ def count_residues(
     sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> dict[str, int] | list[dict[str, int]]:
     """
     Counts the occurrences of each amino acid in the input sequence.
@@ -472,7 +473,7 @@ def percent_residues(
     precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> dict[str, float]: ...
 
 
@@ -482,7 +483,7 @@ def percent_residues(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[dict[str, float]]: ...
 
 
@@ -491,7 +492,7 @@ def percent_residues(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> dict[str, float] | list[dict[str, float]]:
     """
     Calculates the percentage of each amino acid in the input sequence.
@@ -557,7 +558,7 @@ def count_aa(
     sequence: str | ProFormaAnnotation,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> dict[str, int]: ...
 
 
@@ -566,7 +567,7 @@ def count_aa(
     sequence: Sequence[str | ProFormaAnnotation],
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[dict[str, int]]: ...
 
 
@@ -574,7 +575,7 @@ def count_aa(
     sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> dict[str, int] | list[dict[str, int]]:
     """
     Converts a sequence to a feature vector.

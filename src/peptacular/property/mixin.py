@@ -30,7 +30,7 @@ from .properties import (
     SurfaceAccessibilityScale,
     HydrophobicityScale,
 )
-from ..utils2 import round_to_precision
+from ..funcs import round_to_precision
 
 
 class SequencePropertyMixin:

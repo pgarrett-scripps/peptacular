@@ -4,6 +4,7 @@ from ..proforma import ProFormaAnnotation
 from ..constants import IonType, IonTypeLiteral
 from .parrallel import parallel_apply_internal
 from typing import overload, Literal
+from ..constants import ParrallelMethodLiteral, ParrallelMethod
 
 
 def _mass_single(
@@ -42,7 +43,7 @@ def mass(
     use_isotope_on_mods: bool = False,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float: ...
 
 
@@ -59,7 +60,7 @@ def mass(
     use_isotope_on_mods: bool = False,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[float]: ...
 
 
@@ -75,7 +76,7 @@ def mass(
     use_isotope_on_mods: bool = False,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float | list[float]:
     """
     Calculate the mass of an amino acid 'sequence'.
@@ -217,7 +218,7 @@ def mz(
     use_isotope_on_mods: bool = False,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float: ...
 
 
@@ -233,7 +234,7 @@ def mz(
     use_isotope_on_mods: bool = False,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[float]: ...
 
 
@@ -248,7 +249,7 @@ def mz(
     use_isotope_on_mods: bool = False,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float | list[float]:
     """
     Calculate the m/z (mass-to-charge ratio) of an amino acid 'sequence'.
@@ -358,7 +359,7 @@ def condense_to_mass_mods(
     precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> str: ...
 
 
@@ -370,7 +371,7 @@ def condense_to_mass_mods(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[str]: ...
 
 
@@ -381,7 +382,7 @@ def condense_to_mass_mods(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> str | list[str]:
     """
     Converts all modifications in a sequence to their mass equivalents by calculating

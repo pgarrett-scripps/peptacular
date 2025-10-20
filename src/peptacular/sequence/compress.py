@@ -1,7 +1,7 @@
 import base64
 from collections import Counter
 from typing import Sequence
-from .core import compress_with_method, decompress_with_method
+from ..funcs import compress_with_method, decompress_with_method
 from ..sequence.util import get_annotation_input
 
 
@@ -160,23 +160,3 @@ def decompress_peptides(compressed_str: str) -> list[str]:
 
     except Exception as e:
         raise ValueError(f"Failed to decompress peptide data: {e}")
-
-
-if __name__ == "__main__":
-    # Example usage
-    sample_peptides = [
-        "PEPTIDE",
-        "PEPTIDE/2",
-        "PEPTIDE/3",
-        "PEPTIDE/2",
-        "REPFYD",
-        "REPFYD/3",
-        "MGLSDGEWQQVLNVWGK",
-        "MGLSDGEWQQVLNVWGK/2",
-        "MGLSDGEWQQVLNVWGK/3",
-    ]
-
-    print("Original peptides:")
-    for peptide in sample_peptides:
-        print(f"  {peptide}")
-    print()

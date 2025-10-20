@@ -75,6 +75,52 @@ class TestSpectraCompression(unittest.TestCase):
         self.assertEqual(len(intensities), 1)
         self.assertAlmostEqual(mzs[0], 100.5, places=PRECISION_TOL)
         self.assertAlmostEqual(intensities[0], 1500.75, places=PRECISION_TOL)
+    
+    def test_compressed_output_is_string(self):
+        """Verify that compression returns a string."""
+        compressed = pt.compress_spectra(self.sample_spectra)
+        self.assertIsInstance(compressed, str)
+        self.assertTrue(len(compressed) > 0)
+    
+    def test_compression_with_charges(self):
+        """Test compression with charge information."""
+        mzs = [100.0, 200.0, 300.0]
+        intensities = [1000.0, 2000.0, 3000.0]
+        charges = [2, 3, None]
+        spectra_with_charges = (mzs, intensities, charges)
+        
+        compressed = pt.compress_spectra(spectra_with_charges)
+        self.assertIsInstance(compressed, str)
+        
+        decompressed = pt.decompress_spectra(compressed)
+        self.assertEqual(len(decompressed), 3)  # Should return 3-tuple
+        
+        decomp_mzs, decomp_intensities, decomp_charges = decompressed
+        self.assertEqual(len(decomp_mzs), len(mzs))
+        self.assertEqual(len(decomp_intensities), len(intensities))
+        self.assertEqual(len(decomp_charges), len(charges))
+        
+        for orig, decomp in zip(mzs, decomp_mzs):
+            self.assertAlmostEqual(orig, decomp, places=PRECISION_TOL)
+        
+        self.assertEqual(decomp_charges, charges)
+    
+    def test_different_compression_methods(self):
+        """Test that different compression methods all work."""
+        for method in ['gzip', 'zlib', 'brotli']:
+            try:
+                compressed = pt.compress_spectra(self.sample_spectra, compression=method)
+                self.assertIsInstance(compressed, str)
+                
+                decompressed = pt.decompress_spectra(compressed)
+                mzs, intensities = decompressed
+                
+                self.assertEqual(len(mzs), len(self.sample_mzs))
+                for orig, decomp in zip(self.sample_mzs, mzs):
+                    self.assertAlmostEqual(orig, decomp, places=PRECISION_TOL)
+            except ImportError:
+                if method == 'brotli':
+                    self.skipTest(f"{method} not available")
 
 
 class TestPeptideCompression(unittest.TestCase):

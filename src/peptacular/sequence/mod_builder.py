@@ -1,4 +1,4 @@
-from typing import Iterable, Literal, Mapping, overload, Any
+from typing import Iterable, Mapping, overload, Any
 from collections.abc import Sequence
 from ..proforma.annotation import ProFormaAnnotation
 from .util import get_annotation_input
@@ -62,7 +62,7 @@ def build_mods(
     include_plus: bool = False,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[str]: ...
 
 
@@ -83,7 +83,7 @@ def build_mods(
     include_plus: bool = False,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[list[str]]: ...
 
 
@@ -103,7 +103,7 @@ def build_mods(
     include_plus: bool = False,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[str] | list[list[str]]:
     """
     Build modified sequences by applying static and variable modifications to a sequence or list of sequences.

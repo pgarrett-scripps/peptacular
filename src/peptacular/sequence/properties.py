@@ -24,7 +24,7 @@ from ..property.core import (
     charge_at_ph as _charge_at_ph,
     secondary_structure as _secondary_structure,
 )
-from ..utils2 import round_to_precision
+from ..funcs import round_to_precision
 from ..proforma.annotation import ProFormaAnnotation
 from .parrallel import parallel_apply_internal
 from typing import overload, Literal

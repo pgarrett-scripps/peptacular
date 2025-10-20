@@ -24,7 +24,7 @@ from .chem.chem_constants import (
     AVERAGE_FRAGMENT_ION_ADJUSTMENTS,
 )
 
-from .utils2 import convert_type, parse_ion_elements, round_to_precision
+from .funcs import convert_type, parse_ion_elements, round_to_precision
 from .errors import (
     InvalidDeltaMassError,
     InvalidModificationMassError,
