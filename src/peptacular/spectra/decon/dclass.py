@@ -2,11 +2,12 @@
 Data structure classes and constants used throughout the package.
 """
 
-from typing import NamedTuple, Protocol, TypeVar, Generic
 from dataclasses import dataclass
-from .score import score_isotopic_pattern, IsotopicPatternScore
-from ...isotope import estimate_isotopic_distribution, IsotopeLookup
-from ...constants import PROTON_MASS, C13_NEUTRON_MASS
+from typing import Generic, NamedTuple, Protocol, TypeVar
+
+from ...constants import C13_NEUTRON_MASS, PROTON_MASS
+from ...isotope import IsotopeLookup, estimate_isotopic_distribution
+from .score import IsotopicPatternScore, score_isotopic_pattern
 
 
 class PeakLike(Protocol):

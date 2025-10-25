@@ -5,12 +5,11 @@ fragmentation.py contains functions for fragmenting peptides
 from collections.abc import Sequence
 from typing import Literal, Mapping, overload
 
-from ..constants import IonTypeLiteral
+from ..constants import IonTypeLiteral, ParrallelMethod, ParrallelMethodLiteral
 from ..fragment import FragmentReturnType
 from ..proforma.annotation import ProFormaAnnotation
 from .basic import get_annotation_input
 from .parrallel import parallel_apply_internal
-from ..constants import ParrallelMethodLiteral, ParrallelMethod
 
 
 def _get_losses_single(

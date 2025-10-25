@@ -1,12 +1,11 @@
 from __future__ import annotations
-import copy
+
+import warnings
 from collections import UserList
 from collections.abc import Iterable
 from typing import Any, Self, SupportsIndex
-from unittest import result
-import warnings
 
-from ...mod import Mod, MOD_VALUE_TYPES, setup_mod
+from ...mod import MOD_VALUE_TYPES, Mod, setup_mod
 
 MODLIST_DATATYPE = MOD_VALUE_TYPES | Mod
 

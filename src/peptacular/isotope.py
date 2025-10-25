@@ -2,9 +2,9 @@
 Isotope.py - A module for calculating isotopic distributions of molecules.
 """
 
-from collections.abc import Mapping
 import sys
 import warnings
+from collections.abc import Mapping
 
 from . import constants
 from .chem.chem_calc import estimate_comp

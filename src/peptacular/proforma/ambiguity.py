@@ -1,6 +1,7 @@
 from __future__ import annotations
-from collections.abc import Iterable
+
 import itertools
+from collections.abc import Iterable
 from typing import TYPE_CHECKING, Any
 
 from peptacular.constants import IonType, ModType

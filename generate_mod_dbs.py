@@ -1,11 +1,11 @@
 import json
 
 from peptacular.mods.obo_parser import (
-    get_entries,
-    DbType,
-    count_invalid_entries,
-    EntryDb,
     MONOSACCHARIDES_DB,
+    DbType,
+    EntryDb,
+    count_invalid_entries,
+    get_entries,
 )
 
 # Load mono first and reset MONOSACCHARIDES_DB with the new entries

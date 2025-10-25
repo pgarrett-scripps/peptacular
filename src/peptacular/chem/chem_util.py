@@ -3,15 +3,16 @@ chem_util.py
 """
 
 from typing import Mapping
+
 from ..constants import (
-    HILL_ORDER,
-    ISOTOPIC_ATOMIC_MASSES,
-    ELECTRON_MASS,
-    PROTON_MASS,
-    NEUTRON_MASS,
     AVERAGE_ATOMIC_MASSES,
-    ISOTOPE_COMPONENT_PATTERN,
     CONDENSED_CHEM_FORMULA_PATTERN,
+    ELECTRON_MASS,
+    HILL_ORDER,
+    ISOTOPE_COMPONENT_PATTERN,
+    ISOTOPIC_ATOMIC_MASSES,
+    NEUTRON_MASS,
+    PROTON_MASS,
 )
 from ..errors import InvalidChemFormulaError
 from ..funcs import convert_type

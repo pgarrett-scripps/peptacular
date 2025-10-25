@@ -1,16 +1,15 @@
+import csv
+import os
 from collections.abc import Callable
 from dataclasses import dataclass, field
-import bisect
+from typing import Sequence
 
+from ..constants import C13_NEUTRON_MASS, PROTON_MASS
+from ..isotope import IsotopeLookup, estimate_isotopic_distribution
+from .decon.dclass import Graph
+from .decon.deconvolution import construct_graph, navigate_left, navigate_right
 from .decon.score import IsotopicPatternScore, score_isotopic_pattern
 from .hill import Hill
-
-from .hill import Hill
-from .decon.deconvolution import construct_graph, navigate_left, navigate_right
-from .decon.dclass import Graph
-from ..isotope import IsotopeLookup, estimate_isotopic_distribution
-from ..constants import C13_NEUTRON_MASS, PROTON_MASS
-from ..isotope import IsotopeLookup
 
 
 @dataclass
@@ -20,9 +19,7 @@ class IsotopeFeature:
     monoisotopic_hill: Hill
     charge: int
     isotope_hills: list[Hill] = field(default_factory=lambda: [])  # [M+1, M+2, ...]
-    isotope_positions: list[int] = field(
-        default_factory=lambda: []
-    )  # [1, 2, ...] corresponding to each hill
+    isotope_positions: list[int] = field(default_factory=lambda: [])
 
     @property
     def hills(self) -> list[Hill]:
@@ -382,6 +379,39 @@ class ScoredIsotopeFeature:
             - self.feature.charge * PROTON_MASS
         )
 
+    @property
+    def num_scans(self) -> int:
+        # get min start and max end scan across all hills
+        min_scan = min(hill.scan_start for hill in self.feature.hills)
+        max_scan = max(hill.scan_end for hill in self.feature.hills)
+        return max_scan - min_scan + 1
+
+    @property
+    def rt_apex(self) -> float:
+        # get largest hill rt_apex (based on intensity)
+        max_intensity = 0.0
+        rt_apex = 0.0
+        for hill in self.feature.hills:
+            if hill.intensity_max > max_intensity:
+                max_intensity = hill.intensity_max
+                rt_apex = hill.rt_apex
+        return rt_apex
+
+    @property
+    def intensity_max(self) -> float:
+        # get largest hill intensity_max
+        return max(hill.intensity_max for hill in self.feature.hills)
+
+    @property
+    def rt_start(self) -> float:
+        min_rt = min(hill.rt_start for hill in self.feature.hills)
+        return min_rt
+
+    @property
+    def rt_end(self) -> float:
+        max_rt = max(hill.rt_end for hill in self.feature.hills)
+        return max_rt
+
     def draw_isotope_profile(self, height: int = 10, width: int = 20) -> str:
         """
         Draw a text-based bar chart of the summed intensity for each isotope peak,
@@ -696,3 +726,77 @@ def detect_isotope_features(
             scored_features.append(scored)
 
     return scored_features
+
+
+def write_scored_features(
+    features: Sequence[ScoredIsotopeFeature], filepath: str, delimiter: str = "\t"
+) -> None:
+    """Write scored isotope features to a TSV file."""
+    # use csv module for writing
+
+    os.makedirs(os.path.dirname(filepath), exist_ok=True)
+
+    with open(filepath, "w", newline="") as f:
+        writer = csv.writer(f, delimiter=delimiter)
+        # Write header
+        writer.writerow(
+            [
+                "massCalib",
+                "rtApex",
+                "intensityApex",
+                "intensitySum",
+                "charge",
+                "nIsotopes",
+                "nScans",
+                "mz",
+                "rtStart",
+                "rtEnd",
+                "FAIMS",
+                "im",
+                "mono_hills_scan_lists",
+                "mono_hills_intensity_list",
+                "scanApex",
+                "isoerror",
+                "isoerror2",
+                "score_combined",
+                "score_offset",
+                "score_bhattacharyya",
+                "score_cosine_similarity",
+                "score_ratio_score",
+                "score_coverage",
+                "score_missed_penalty",
+            ]
+        )
+
+        def round_list(lst: list[float], decimals: int = 2) -> list[float]:
+            return [round(x, decimals) for x in lst]
+
+        for sf in features:
+            writer.writerow(
+                [
+                    round(sf.neutral_mass, 5),
+                    round(sf.rt_apex, 2),
+                    round(sf.feature.monoisotopic_hill.intensity_max, 2),
+                    round(sf.feature.total_intensity, 2),
+                    sf.feature.charge,
+                    sf.feature.n_isotopes,
+                    sf.feature.monoisotopic_hill.n_scans,
+                    round(sf.monoisotopic_mz, 5),
+                    round(sf.rt_start, 2),
+                    round(sf.rt_end, 2),
+                    None,  # FAIMS placeholder
+                    None,  # im placeholder
+                    sf.feature.monoisotopic_hill.scan_list,
+                    round_list(sf.feature.monoisotopic_hill.intensity_list, 2),
+                    sf.feature.monoisotopic_hill.scan_apex,
+                    round(1 - sf.score.combined_score, 5),  # isoerror placeholder
+                    round(1 - sf.score.combined_score, 5),  # isoerror placeholder
+                    round(sf.score.combined_score, 5),
+                    round(sf.score.offset, 5),
+                    round(sf.score.bhattacharyya, 5),
+                    round(sf.score.cosine_similarity, 5),
+                    round(sf.score.ratio_score, 5),
+                    round(sf.score.coverage, 5),
+                    round(sf.score.missed_penalty, 5),
+                ]
+            )

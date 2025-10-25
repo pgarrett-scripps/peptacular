@@ -1,18 +1,18 @@
-from ...mod import Mod, MOD_VALUE_TYPES, setup_mod
-from .interval import Interval, ModInterval, setup_interval, ACCEPTED_INTERVAL_DATATYPE
-from .modlist import (
-    ModList,
-    setup_mod_list,
-    MODLIST_DATATYPE,
-    ACCEPTED_MODLIST_INPUT_TYPES,
-)
+from ...mod import MOD_VALUE_TYPES, Mod, setup_mod
+from .interval import ACCEPTED_INTERVAL_DATATYPE, Interval, ModInterval, setup_interval
 from .intervallist import (
+    ACCEPTED_INTERVALLIST_INPUT_TYPES,
+    INTERVALLIST_DATATYPE,
     IntervalList,
     setup_interval_list,
-    INTERVALLIST_DATATYPE,
-    ACCEPTED_INTERVALLIST_INPUT_TYPES,
 )
-from .moddict import ModDict, setup_mod_dict, ACCEPTED_MODDICT_INPUT_TYPES
+from .moddict import ACCEPTED_MODDICT_INPUT_TYPES, ModDict, setup_mod_dict
+from .modlist import (
+    ACCEPTED_MODLIST_INPUT_TYPES,
+    MODLIST_DATATYPE,
+    ModList,
+    setup_mod_list,
+)
 
 SPAN_TYPE = tuple[int, int, int]
 

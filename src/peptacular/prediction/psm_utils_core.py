@@ -2,11 +2,11 @@ from collections.abc import Sequence
 from typing import NamedTuple
 
 import ms2pip  # type: ignore
-from psm_utils import PSM, PSMList  # type: ignore
 import numpy as np
+from psm_utils import PSM, PSMList  # type: ignore
 
-from ..sequence.util import get_annotation_input
 from ..proforma.annotation import ProFormaAnnotation
+from ..sequence.util import get_annotation_input
 
 
 class PredictedSpectrum(NamedTuple):

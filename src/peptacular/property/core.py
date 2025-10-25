@@ -1,29 +1,28 @@
 """Core property calculation functions."""
 
 from __future__ import annotations
+
+import math
+import statistics
 from collections.abc import Generator, Iterable, Mapping, Sequence
 
-import statistics
-
-
-from .weights import get_weights
 from .properties import (
+    NEGATIVE_AMINO_ACIDS,
+    POSITIVE_AMINO_ACIDS,
     ChargeScale,
     SecondaryStructureMethod,
     all_property_scales,
-    POSITIVE_AMINO_ACIDS,
-    NEGATIVE_AMINO_ACIDS,
     secondary_structure_scales_by_name,
 )
 from .types import (
+    AggregationMethod,
     AggregationMethodLiteral,
     MissingAAHandling,
-    AggregationMethod,
     MissingAAHandlingLiteral,
     WeightingMethods,
     WeightingMethodsLiteral,
 )
-
+from .weights import get_weights
 
 # Handle ambiguous amino acids
 AMIGUOUS_AMINO_ACID_MAP: dict[str, tuple[str, ...]] = {
@@ -462,3 +461,205 @@ def secondary_structure(
             d[key] /= total
 
     return d  # type: ignore
+
+
+def generate_sliding_window_features(
+    sequence: str,
+    scale: str | dict[str, float],
+    num_windows: int = 5,
+    aa_overlap: int = 0,
+    missing_aa_handling: (
+        MissingAAHandlingLiteral | MissingAAHandling
+    ) = MissingAAHandling.ERROR,
+    aggregation_method: (
+        AggregationMethodLiteral | AggregationMethod
+    ) = AggregationMethod.AVG,
+    normalize: bool = False,
+    weighting_scheme: (
+        WeightingMethodsLiteral | WeightingMethods | Sequence[float]
+    ) = WeightingMethods.UNIFORM,
+    min_weight: float = 0.1,
+    max_weight: float = 1.0,
+) -> list[float]:
+    """
+    Generate property values for sliding windows across the sequence.
+
+    If the sequence cannot be evenly divided, windows are distributed as evenly as
+    possible, with the first and last windows equally shortened.
+
+    Args:
+        sequence: Peptide sequence (string or ProFormaAnnotation)
+        scale: Property scale name or dictionary mapping AA to values
+        num_windows: Number of windows to divide the sequence into
+        aa_overlap: Number of amino acids to overlap between adjacent windows
+        missing_aa_handling: Strategy for handling missing amino acids
+        aggregation_method: How to aggregate values within each window
+        normalize: Whether to normalize values to 0-1 range
+        weighting_scheme: How to weight positions within each window
+        min_weight: Minimum weight for position-based weighting
+        max_weight: Maximum weight for position-based weighting
+
+    Returns:
+        List of length num_windows containing property value per window
+
+    Raises:
+        ValueError: If parameters result in invalid window configuration
+    """
+    seq_len = len(sequence)
+
+    if num_windows <= 0:
+        raise ValueError("num_windows must be positive")
+
+    if aa_overlap < 0:
+        raise ValueError("aa_overlap cannot be negative")
+
+    if seq_len == 0:
+        raise ValueError("Sequence cannot be empty")
+
+    if num_windows > seq_len and aa_overlap == 0:
+        raise ValueError(
+            f"Cannot create {num_windows} non-overlapping windows from sequence of length {seq_len}"
+        )
+
+    if num_windows == 1:
+        # Single window covers entire sequence
+        value = calc_property(
+            sequence=sequence,
+            scale=scale,
+            missing_aa_handling=missing_aa_handling,
+            aggregation_method=aggregation_method,
+            normalize=normalize,
+            weighting_scheme=weighting_scheme,
+            min_weight=min_weight,
+            max_weight=max_weight,
+        )
+        return [value]
+
+    # Handle case where sequence is very short
+    if seq_len < num_windows:
+        # For very short sequences, we need to allow windows to heavily overlap
+        # or even repeat the same positions
+        window_values: list[float] = []
+
+        # Create windows that maximally overlap
+        for i in range(num_windows):
+            # Distribute windows as evenly as possible across the sequence
+            # Each window will be at least 1 AA long
+            if seq_len == 1:
+                # Special case: single AA repeated for all windows
+                start = 0
+                end = 1
+            else:
+                # Interpolate position within sequence
+                progress = i / max(1, (num_windows - 1))
+                center = progress * (seq_len - 1)
+
+                # Create a window around this center point
+                half_window = max(0, aa_overlap) / 2.0
+                start = max(0, int(center - half_window))
+                end = min(seq_len, int(center + half_window + 1))
+
+                # Ensure we have at least 1 character
+                if end <= start:
+                    end = start + 1
+                if end > seq_len:
+                    start = seq_len - 1
+                    end = seq_len
+
+            window_seq = sequence[start:end]
+
+            value = calc_property(
+                sequence=window_seq,
+                scale=scale,
+                missing_aa_handling=missing_aa_handling,
+                aggregation_method=aggregation_method,
+                normalize=normalize,
+                weighting_scheme=weighting_scheme,
+                min_weight=min_weight,
+                max_weight=max_weight,
+            )
+            window_values.append(value)
+
+        return window_values
+
+    # Calculate ideal window size and step size for normal cases
+    window_size = (seq_len + (num_windows - 1) * aa_overlap) / num_windows
+    window_size = max(1, math.ceil(window_size))  # Round up, minimum 1
+    step_size = max(1, window_size - aa_overlap)  # Ensure step_size is at least 1
+
+    # If step_size is too small, we need to adjust
+    if step_size < 1:
+        step_size = 1
+        aa_overlap = window_size - 1
+
+    # For very small sequences, ensure window_size doesn't exceed sequence length
+    if window_size > seq_len:
+        window_size = seq_len
+        step_size = max(1, (seq_len - aa_overlap) // max(1, (num_windows - 1)))
+        if step_size < 1:
+            step_size = 1
+
+    # Calculate positions for each window
+    window_positions: list[tuple[int, int]] = []
+
+    if num_windows == 2:
+        # Special case for 2 windows - place at start and end
+        window_positions = [
+            (0, min(window_size, seq_len)),
+            (max(0, seq_len - window_size), seq_len),
+        ]
+    else:
+        # Calculate total span if we used the ideal step size
+        total_span = (num_windows - 1) * step_size + window_size
+
+        if total_span <= seq_len:
+            # Windows fit within sequence - center them
+            offset = (seq_len - total_span) / 2.0
+            for i in range(num_windows):
+                start = int(i * step_size + offset)
+                end = min(seq_len, start + window_size)
+                window_positions.append((start, end))
+        else:
+            # Windows don't fit - need to compress
+            # Use floating point arithmetic for better distribution
+            effective_step = (seq_len - window_size) / max(1, (num_windows - 1))
+
+            for i in range(num_windows):
+                if i == 0:
+                    # First window starts at 0
+                    start = 0
+                    end = min(window_size, seq_len)
+                elif i == num_windows - 1:
+                    # Last window ends at sequence end
+                    end = seq_len
+                    start = max(0, end - window_size)
+                else:
+                    # Middle windows
+                    ideal_start = i * effective_step
+                    start = int(ideal_start)
+                    end = min(seq_len, start + window_size)
+
+                # Ensure valid window
+                if end <= start:
+                    end = min(seq_len, start + 1)
+
+                window_positions.append((start, end))
+
+    # Process each window
+    window_values: list[float] = []
+    for i, (start, end) in enumerate(window_positions):
+        window_seq = sequence[start:end]
+
+        value = calc_property(
+            sequence=window_seq,
+            scale=scale,
+            missing_aa_handling=missing_aa_handling,
+            aggregation_method=aggregation_method,
+            normalize=normalize,
+            weighting_scheme=weighting_scheme,
+            min_weight=min_weight,
+            max_weight=max_weight,
+        )
+        window_values.append(value)
+
+    return window_values

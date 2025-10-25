@@ -1,13 +1,10 @@
-from typing import Any, Sequence, overload, Literal
-from collections import defaultdict
 import random
+from typing import Sequence, overload
 
-from .util import get_annotation_input
-from .parrallel import parallel_apply_internal
+from ..constants import UNAMBIGUOUS_AMINO_ACIDS, ParrallelMethod, ParrallelMethodLiteral
 from ..proforma.annotation import ProFormaAnnotation
-from ..constants import UNAMBIGUOUS_AMINO_ACIDS
-from ..constants import ParrallelMethodLiteral, ParrallelMethod
-
+from .parrallel import parallel_apply_internal
+from .util import get_annotation_input
 
 # ============================================================================
 # Reverse Sequence
@@ -276,7 +273,7 @@ def _build_kmer_graph(seq: str, k: int) -> dict[str, dict[str, str]]:
     """Build k-mer graph where each k-mer maps to its next k-mer and transition letter."""
     nodes: dict[str, dict[str, str]] = {}
 
-    kmers = []
+    kmers: list[str] = []
     n_kmers = len(seq) - k + 1
     for i in range(n_kmers):
         kmer = seq[i : i + k]

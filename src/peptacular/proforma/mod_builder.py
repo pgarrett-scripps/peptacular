@@ -1,11 +1,12 @@
 from __future__ import annotations
-import itertools
-from typing import TYPE_CHECKING, Generator, Iterable, Literal, Mapping
-import warnings
-import re
 
-from .dclasses.modlist import ModList
+import itertools
+import re
+import warnings
+from typing import TYPE_CHECKING, Generator, Iterable, Literal, Mapping
+
 from ..mod import Mod
+from .dclasses.modlist import ModList
 
 if TYPE_CHECKING:
     from .annotation import ProFormaAnnotation

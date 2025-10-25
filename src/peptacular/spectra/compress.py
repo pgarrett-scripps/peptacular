@@ -1,6 +1,7 @@
-import struct
 import base64
+import struct
 from typing import Generator, Sequence
+
 from ..funcs import compress_with_method, decompress_with_method
 
 
@@ -153,12 +154,12 @@ def _validate_inputs(
 
     if mz_precision is not None and (
         not isinstance(mz_precision, int) or mz_precision < 0
-    ):  # type: ignore
+    ):
         raise ValueError("mz_precision must be non-negative integer or None")
 
     if intensity_precision is not None and (
         not isinstance(intensity_precision, int) or intensity_precision < 0
-    ):  # type: ignore
+    ):
         raise ValueError("intensity_precision must be non-negative integer or None")
 
 

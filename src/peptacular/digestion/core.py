@@ -1,25 +1,23 @@
 from __future__ import annotations
 
+import re
 from typing import Generator, Iterable, Sequence
 
-import re
-
-from ..util import get_regex_match_indices
+from ..proforma.dclasses import SPAN_TYPE
 from ..spans import (
     build_left_semi_spans,
     build_non_enzymatic_spans,
     build_right_semi_spans,
     build_spans,
 )
-from ..proforma.dclasses import SPAN_TYPE
-
+from ..util import get_regex_match_indices
 from .constants import PROTEASES_COMPILED
 from .types import (
-    DigestReturnType,
-    EnzymeConfig,
     DigestGenerator,
     DigestProtocol,
+    DigestReturnType,
     DigestReturnTypeLiterals,
+    EnzymeConfig,
 )
 
 

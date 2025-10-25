@@ -1,10 +1,11 @@
-from dataclasses import dataclass
-from typing import Any, Generator, Literal, NamedTuple, Self, Sequence
 from collections.abc import Callable
-from .decon import deconvolute, SpectrumPeak
-from ..constants import C13_NEUTRON_MASS, PROTON_MASS
+from dataclasses import dataclass
+from typing import Generator, Literal, Self, Sequence
+
+from ..constants import C13_NEUTRON_MASS
 from ..isotope import IsotopeLookup
 from .compress import compress_spectra, decompress_spectra
+from .decon import SpectrumPeak, deconvolute
 
 
 class Spectrum:
@@ -355,11 +356,6 @@ class Spectrum:
     def has_charges(self) -> bool:
         """Check if any peaks have assigned charges."""
         return any(p.charge is not None for p in self.peaks)
-
-    def copy(self) -> Self:
-        return self.__class__(
-            peaks=[SpectrumPeak(p.mz, p.intensity, p.charge) for p in self.peaks]
-        )
 
     def deconvolute(
         self,

@@ -1,21 +1,18 @@
 from __future__ import annotations
+
+import warnings
 from collections import Counter
 from typing import TYPE_CHECKING
-import warnings
 
-from .dclasses.modlist import ModList
-from ..chem.chem_constants import AVERAGE_AA_MASSES, MONOISOTOPIC_AA_MASSES
-from ..chem.chem_util import chem_mass
-from ..mass_calc import adjust_mass, adjust_mz, mod_mass
-from ..util import parse_static_mods
 from ..chem.chem_calc import (
-    parse_charge_adducts_comp,
-    parse_mod_delta_mass_only,
     apply_isotope_mods_to_composition,
     estimate_comp,
     mod_comp,
+    parse_charge_adducts_comp,
+    parse_mod_delta_mass_only,
 )
-from ..errors import AmbiguousAminoAcidError, UnknownAminoAcidError
+from ..chem.chem_constants import AVERAGE_AA_MASSES, MONOISOTOPIC_AA_MASSES
+from ..chem.chem_util import chem_mass
 from ..constants import (
     AA_COMPOSITIONS,
     FRAGMENT_ION_BASE_CHARGE_ADDUCTS,
@@ -23,6 +20,10 @@ from ..constants import (
     IonType,
     IonTypeLiteral,
 )
+from ..errors import AmbiguousAminoAcidError, UnknownAminoAcidError
+from ..mass_calc import adjust_mass, adjust_mz, mod_mass
+from ..util import parse_static_mods
+from .dclasses.modlist import ModList
 
 if TYPE_CHECKING:
     from .annotation import ProFormaAnnotation

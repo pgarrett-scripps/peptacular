@@ -1,11 +1,11 @@
 from typing import Any, Callable, Sequence, overload
 
-from .util import get_annotation_input
+from ..constants import ParrallelMethod, ParrallelMethodLiteral
 from ..proforma.annotation import (
     ProFormaAnnotation,
 )
 from .parrallel import parallel_apply_internal
-from ..constants import ParrallelMethodLiteral, ParrallelMethod
+from .util import get_annotation_input
 
 
 def _reverse_single(

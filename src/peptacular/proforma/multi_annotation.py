@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 from peptacular.proforma.parser import ProFormaParser
+
 from .annotation import ProFormaAnnotation
 
 
@@ -81,3 +82,15 @@ class MultiProFormaAnnotation:
             )
 
         return MultiProFormaAnnotation(annotations=annots, connections=connections)
+
+    def copy(self) -> "MultiProFormaAnnotation":
+        """
+        Create a copy of the MultiProFormaAnnotation.
+
+        :return: A copy of the MultiProFormaAnnotation.
+        :rtype: MultiProFormaAnnotation
+        """
+        return MultiProFormaAnnotation(
+            annotations=[annot.copy() for annot in self.annotations],
+            connections=self.connections.copy(),
+        )

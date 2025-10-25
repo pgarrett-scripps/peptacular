@@ -2,10 +2,10 @@
 Element_seup.py
 """
 
+from collections import defaultdict
 from copy import deepcopy
 from dataclasses import dataclass
 from typing import Callable, TypeVar
-from collections import defaultdict
 
 T = TypeVar("T")
 

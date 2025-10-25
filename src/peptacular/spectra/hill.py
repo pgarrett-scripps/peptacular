@@ -1,8 +1,9 @@
+import math
+from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Literal, Sequence
-from .spectrum import Spectrum, Ms1Spectrum, Ms2Spectrum
-from collections import defaultdict
-import math
+
+from .spectrum import Ms1Spectrum, Ms2Spectrum, Spectrum
 
 
 @dataclass
@@ -68,6 +69,21 @@ class Hill:
     def intensity(self) -> float:
         """Return the sum of intensities in the hill. (alias for intensity_sum)"""
         return self.intensity_max
+
+    @property
+    def scan_list(self) -> list[int]:
+        """Return the list of scan indices for the hill."""
+        return [self._scan_start + i for i in range(len(self.intensity_profile))]
+
+    @property
+    def intensity_list(self) -> list[float]:
+        """Return the intensity profile list for the hill."""
+        return self.intensity_profile
+
+    @property
+    def rt_list(self) -> list[float]:
+        """Return the retention time profile list for the hill."""
+        return self.rt_profile
 
     def draw_profile(
         self, height: int = 10, width: int | None = 30, log_scale: bool = False

@@ -1,13 +1,10 @@
 from typing import Iterable
 
-from .util import get_annotation_input
 from ..proforma.annotation import (
     ProFormaAnnotation,
 )
-from ..constants import ParrallelMethodLiteral, ParrallelMethod
-
-
 from .basic import count_residues
+from .util import get_annotation_input
 
 
 def is_subsequence(

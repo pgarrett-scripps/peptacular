@@ -1,16 +1,17 @@
 # Enhanced spectrum plotting with DataFrame-based approach
+import re
+from collections.abc import Sequence
 from typing import Any, Literal
+
+import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-from collections.abc import Sequence
-import numpy as np
-import re
 
-from ..score import FragmentMatch, MatchMode, Scorer, ToleranceType
-from ..sequence.util import get_annotation_input
 from ..fragment.types import Fragment
 from ..proforma.annotation import ProFormaAnnotation
+from ..score import FragmentMatch, MatchMode, Scorer, ToleranceType
+from ..sequence.util import get_annotation_input
 
 ION_TYPE_COLORS = {
     "a": "#3BC936",

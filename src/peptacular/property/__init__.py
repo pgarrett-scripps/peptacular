@@ -1,10 +1,9 @@
 """Protein property calculation module."""
 
+from .mixin import SequencePropertyMixin
 from .types import (
     SequenceProtocol,
 )
-
-from .mixin import SequencePropertyMixin
 
 __all__ = [
     "SequenceProtocol",

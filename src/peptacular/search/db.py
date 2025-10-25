@@ -1,15 +1,20 @@
-from pathlib import Path
+import multiprocessing as mp
 import pickle
-from typing import Any, Iterable, Literal
-from dataclasses import dataclass
 import time
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, Iterable, Literal
 
-
-from ..sequence.decoy import debruijin_sequence, reverse_sequence, shuffle_sequence
-from ..sequence.mod_builder import MOD_BUILDER_INPUT_TYPE
-from ..proforma.annotation import ProFormaAnnotation
-from ..sequence import serialize, digest, mass
 from ..fasta import parse_fasta
+from ..proforma.annotation import ProFormaAnnotation
+from ..sequence import (
+    build_mods,  # Import here to avoid circular imports
+    digest,
+    mass,
+    serialize,
+)
+from ..sequence.decoy import debruijin_sequence, reverse_sequence, shuffle_sequence
+from ..sequence.mod_builder import MOD_BUILDER_INPUT_TYPE, strip_mods
 
 DECOY_STRING = "DECOY_"
 
@@ -195,7 +200,7 @@ class UnifiedDatabase:
         if self.verbose:
             print(f"Total add_proteins time: {t3 - t0:.2f} seconds.")
 
-    def digest_proteins(
+    def digest_proteins_slow(
         self,
         cleave_on: str,
         restrict_before: str = "",
@@ -219,7 +224,6 @@ class UnifiedDatabase:
         method: Literal["sequential", "thread", "process"] = "sequential",
     ) -> None:
         """Digest all proteins and add resulting peptides (with optional modifications) to the database."""
-        from ..sequence import build_mods  # Import here to avoid circular imports
 
         t0 = time.time()
 
@@ -250,14 +254,14 @@ class UnifiedDatabase:
         # Check if any modifications are specified
         has_mods = any(
             [
-                nterm_static,
-                cterm_static,
-                internal_static,
-                labile_static,
-                nterm_variable,
-                cterm_variable,
-                internal_variable,
-                labile_variable,
+                nterm_static != None,
+                cterm_static != None,
+                internal_static != None,
+                labile_static != None,
+                nterm_variable != None,
+                cterm_variable != None,
+                internal_variable != None,
+                labile_variable != None,
             ]
         )
 
@@ -333,6 +337,186 @@ class UnifiedDatabase:
             print(f"Indexed peptides in {t5 - (t4 if has_mods else t1):.2f} seconds.")
             print(f"Total digest time: {t5 - t0:.2f} seconds.")
             self.print_stats()
+
+    def digest_proteins(
+        self,
+        cleave_on: str,
+        restrict_before: str = "",
+        restrict_after: str = "",
+        cterminal: bool = True,
+        missed_cleavages: int = 1,
+        semi: bool = False,
+        min_len: int | None = 6,
+        max_len: int | None = 50,
+        # Modification parameters
+        nterm_static: MOD_BUILDER_INPUT_TYPE | None = None,
+        cterm_static: MOD_BUILDER_INPUT_TYPE | None = None,
+        internal_static: MOD_BUILDER_INPUT_TYPE | None = None,
+        labile_static: MOD_BUILDER_INPUT_TYPE | None = None,
+        nterm_variable: MOD_BUILDER_INPUT_TYPE | None = None,
+        cterm_variable: MOD_BUILDER_INPUT_TYPE | None = None,
+        internal_variable: MOD_BUILDER_INPUT_TYPE | None = None,
+        labile_variable: MOD_BUILDER_INPUT_TYPE | None = None,
+        max_variable_mods: int = 2,
+        use_regex: bool = False,
+        n_workers: int | None = None,
+    ) -> None:
+        """
+        Fast digest using pre-initialized workers.
+        Avoids function serialization overhead.
+        """
+        from .worker import DigestWorkerPool
+
+        t0 = time.time()
+
+        has_mods = any(
+            [
+                nterm_static,
+                cterm_static,
+                internal_static,
+                labile_static,
+                nterm_variable,
+                cterm_variable,
+                internal_variable,
+                labile_variable,
+            ]
+        )
+
+        print(f"has_mods: {has_mods}")
+
+        protein_sequences = [p.sequence for p in self._proteins]
+
+        if self.verbose:
+            print(
+                f"Digesting {len(protein_sequences)} proteins with {n_workers or mp.cpu_count()} workers..."
+            )
+
+        t1 = time.time()
+
+        # Use pre-initialized worker pool
+        with DigestWorkerPool(
+            n_workers=n_workers or mp.cpu_count(),
+            cleave_on=cleave_on,
+            restrict_before=restrict_before,
+            restrict_after=restrict_after,
+            cterminal=cterminal,
+            missed_cleavages=missed_cleavages,
+            semi=semi,
+            min_len=min_len,
+            max_len=max_len,
+            has_mods=has_mods,
+            nterm_static=nterm_static,
+            cterm_static=cterm_static,
+            internal_static=internal_static,
+            labile_static=labile_static,
+            nterm_variable=nterm_variable,
+            cterm_variable=cterm_variable,
+            internal_variable=internal_variable,
+            labile_variable=labile_variable,
+            max_variable_mods=max_variable_mods,
+            use_regex=use_regex,
+        ) as pool:
+            peptides_mass_per_protein = pool.digest_proteins(protein_sequences)
+
+        t2 = time.time()
+
+        if self.verbose:
+            total_peptides = sum(len(peps[0]) for peps in peptides_mass_per_protein)
+            print(f"Digested into {total_peptides} peptides in {t2 - t1:.2f} seconds")
+
+        # Now add peptides to database
+        # Extract just the peptide sequences for indexing
+        peptides_per_protein = [peps[0] for peps in peptides_mass_per_protein]
+        peptide_masses_per_protein = [masses[1] for masses in peptides_mass_per_protein]
+
+        # Add to database with pre-calculated masses
+        self._add_digested_peptides_with_masses(
+            peptides_per_protein, peptide_masses_per_protein
+        )
+
+        t3 = time.time()
+
+        if self.verbose:
+            print(f"Indexed peptides in {t3 - t2:.2f} seconds")
+            print(f"Total digest_proteins_fast time: {t3 - t0:.2f} seconds")
+            self.print_stats()
+
+    def _add_digested_peptides_with_masses(
+        self,
+        peptides_per_protein: list[list[str]],
+        masses_per_protein: list[list[float]],
+    ) -> None:
+        """
+        Add digested peptides with pre-calculated masses.
+        Much faster than recalculating masses!
+        """
+        t0 = time.time()
+
+        # Build mapping of peptide -> mass (skip duplicates)
+        peptide_to_mass_map: dict[str, float] = {}
+        for peptides, masses in zip(peptides_per_protein, masses_per_protein):
+            for peptide_seq, mass in zip(peptides, masses):
+                if peptide_seq not in self._peptide_to_mass:
+                    peptide_to_mass_map[peptide_seq] = mass
+
+        t1 = time.time()
+
+        if self.verbose:
+            print(
+                f"  Found {len(peptide_to_mass_map)} new unique peptides in {t1 - t0:.2f} seconds"
+            )
+
+        # Add to mass cache and bins
+        for peptide_seq, peptide_mass in peptide_to_mass_map.items():
+            self._peptide_to_mass[peptide_seq] = peptide_mass
+
+            # Add to mass bins
+            bin_key = int(
+                round(peptide_mass, self.bin_precision) * 10**self.bin_precision
+            )
+            if bin_key not in self.mass_bins:
+                self.mass_bins[bin_key] = []
+            self.mass_bins[bin_key].append(peptide_seq)
+
+        t2 = time.time()
+
+        if self.verbose:
+            print(f"  Added peptides to mass bins in {t2 - t1:.2f} seconds")
+
+        # Build peptide -> protein mappings
+        for protein_idx, peptides in enumerate(peptides_per_protein):
+            if protein_idx not in self._protein_to_peptides:
+                self._protein_to_peptides[protein_idx] = set()
+
+            protein_seq = self._proteins[protein_idx].sequence
+
+            for peptide_seq in peptides:
+                self._protein_to_peptides[protein_idx].add(peptide_seq)
+                unmod_seq = strip_mods(peptide_seq)
+
+                # Find all occurrences
+                start = 0
+                while True:
+                    pos = protein_seq.find(unmod_seq, start)
+                    if pos == -1:
+                        break
+                    peptide_obj = Peptide(
+                        sequence=peptide_seq,
+                        protein_idx=protein_idx,
+                        start_pos=pos,
+                        end_pos=pos + len(peptide_seq),
+                    )
+
+                    if peptide_seq not in self._peptide_to_proteins:
+                        self._peptide_to_proteins[peptide_seq] = []
+                    self._peptide_to_proteins[peptide_seq].append(peptide_obj)
+
+                    start = pos + 1
+
+        t3 = time.time()
+
+        if self.verbose:
+            print(f"  Built peptide->protein mappings in {t3 - t2:.2f} seconds")
 
     def _add_digested_peptides(
         self,
@@ -429,8 +613,8 @@ class UnifiedDatabase:
         neutral_mass: float,
         tolerance: float,
         tolerance_type: Literal["ppm", "da"] = "ppm",
-    ) -> list[str]:
-        """Query peptides by neutral mass. Returns peptide sequences. O(1) average case."""
+    ) -> list[tuple[Peptide, set[Protein]]]:
+        """Query peptides by neutral mass. Returns list of tuples (Peptide, set of Proteins). O(1) average case."""
         if tolerance_type == "ppm":
             tol_da = neutral_mass * tolerance / 1e6
         elif tolerance_type == "da":
@@ -448,11 +632,21 @@ class UnifiedDatabase:
             if bin_key in self.mass_bins:
                 candidate_peptides.extend(self.mass_bins[bin_key])
 
-        return [
+        matching_peptides: list[str] = [
             pep
             for pep in candidate_peptides
             if min_mass <= self._peptide_to_mass[pep] <= max_mass
         ]
+
+        # Build result with Peptide objects and their associated Proteins
+        result: list[tuple[Peptide, set[Protein]]] = []
+        for peptide_seq in matching_peptides:
+            peptide_objects = self._peptide_to_proteins.get(peptide_seq, [])
+            for peptide_obj in peptide_objects:
+                proteins = {self._proteins[peptide_obj.protein_idx]}
+                result.append((peptide_obj, proteins))
+
+        return result
 
     def query_mz(
         self,

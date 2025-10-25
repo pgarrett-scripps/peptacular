@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from .constants import PROTEASES, PROTEASES_COMPILED, ProteaseLiterals
-from .types import DigestReturnType, EnzymeConfig, DigestProtocol
 from .mixin import DigestionMixin
+from .types import DigestProtocol, DigestReturnType, EnzymeConfig
 
 __all__ = [
     "PROTEASES",

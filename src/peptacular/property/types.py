@@ -1,6 +1,7 @@
 """Type definitions and enums for protein property calculations."""
 
 from __future__ import annotations
+
 from enum import StrEnum
 from typing import Literal, Protocol
 

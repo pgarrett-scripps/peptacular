@@ -2,12 +2,11 @@
 Randomizer for ProForma annotations.
 """
 
-from random import randint, choice, sample
 from enum import Enum, auto
+from random import choice, randint, sample
 
-from .dclasses import Mod, Interval
 from .annotation import ProFormaAnnotation
-
+from .dclasses import Interval, Mod
 
 _UNIMOD_LEVEL_BASE_MOD_VALS = ["Oxidation", "UNIMOD:10"]
 _UNIMOD_LEVEL2_MOD_VALS = [

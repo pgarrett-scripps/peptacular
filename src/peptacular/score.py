@@ -1,5 +1,5 @@
-from collections.abc import Iterable, Sequence
 import math
+from collections.abc import Iterable, Sequence
 from enum import StrEnum
 from typing import Any, NamedTuple
 

@@ -1,36 +1,38 @@
 """Mixin class providing property calculation methods for sequences."""
 
 from __future__ import annotations
+
 from collections.abc import Iterable, Sequence
 
 from peptacular.property.data import AROMATIC_AMINO_ACIDS
 
-from .types import (
-    AggregationMethodLiteral,
-    MissingAAHandling,
-    AggregationMethod,
-    MissingAAHandlingLiteral,
-    WeightingMethods,
-    SequenceProtocol,
-    WeightingMethodsLiteral,
-)
+from ..funcs import round_to_precision
 from .core import (
+    aa_property_percentage,
     calc_property,
     calc_window_property,
-    aa_property_percentage,
     charge_at_ph,
+    generate_sliding_window_features,
     secondary_structure,
 )
 from .properties import (
     HPLCScale,
+    HydrophobicityScale,
     PhysicalPropertyScale,
     PolarityScale,
     SecondaryStructureMethod,
     SecondaryStructureType,
     SurfaceAccessibilityScale,
-    HydrophobicityScale,
 )
-from ..funcs import round_to_precision
+from .types import (
+    AggregationMethod,
+    AggregationMethodLiteral,
+    MissingAAHandling,
+    MissingAAHandlingLiteral,
+    SequenceProtocol,
+    WeightingMethods,
+    WeightingMethodsLiteral,
+)
 
 
 class SequencePropertyMixin:
@@ -403,3 +405,29 @@ class SequencePropertyMixin:
             scale=SecondaryStructureMethod.DELEAGE_ROUX,
         )
         return d[SecondaryStructureType.COIL]
+
+    def generate_sliding_window_features(
+        self: SequenceProtocol,
+        scale: str | dict[str, float],
+        num_windows: int = 5,
+        aa_overlap: int = 0,
+        missing_aa_handling: (
+            MissingAAHandlingLiteral | MissingAAHandling
+        ) = MissingAAHandling.ERROR,
+        aggregation_method: (
+            AggregationMethodLiteral | AggregationMethod
+        ) = AggregationMethod.AVG,
+        precision: int | None = None,
+    ) -> list[float]:
+        """Generate sliding window features for the sequence."""
+        vals = generate_sliding_window_features(
+            sequence=self.stripped_sequence,
+            scale=scale,
+            num_windows=num_windows,
+            aa_overlap=aa_overlap,
+            missing_aa_handling=missing_aa_handling,
+            aggregation_method=aggregation_method,
+        )
+        if precision is not None:
+            vals = [round_to_precision(v, precision) for v in vals]
+        return vals

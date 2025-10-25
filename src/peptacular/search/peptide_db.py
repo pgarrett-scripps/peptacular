@@ -1,10 +1,11 @@
-from pathlib import Path
 import pickle
-from typing import Iterable, Literal
-from dataclasses import dataclass
 import time
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Iterable, Literal
+
 from ..proforma.annotation import ProFormaAnnotation
-from ..sequence import serialize, digest, mass
+from ..sequence import digest, mass, serialize
 
 
 @dataclass

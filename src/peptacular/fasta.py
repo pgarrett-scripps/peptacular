@@ -2,19 +2,19 @@
 Improved Fasta.py - Production-ready version
 """
 
-import pathlib
 import io
 import logging
-from typing import Generator, NamedTuple, Protocol, runtime_checkable
-from dataclasses import dataclass
-from contextlib import contextmanager
-
 import multiprocessing as mp
-from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, as_completed
+import pathlib
 import sys
 import time
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
+from contextlib import contextmanager
+from dataclasses import dataclass
+from typing import Generator, NamedTuple, Protocol, runtime_checkable
 
 from peptacular.digestion.core import generate_regex
+
 from .sequence.digestion import digest_by_regex
 
 logger = logging.getLogger(__name__)

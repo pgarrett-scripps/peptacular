@@ -1,33 +1,43 @@
 from collections.abc import Sequence
-from .util import get_annotation_input
-from ..property.types import (
-    AggregationMethodLiteral,
-    MissingAAHandling,
-    AggregationMethod,
-    MissingAAHandlingLiteral,
-    WeightingMethods,
-    WeightingMethodsLiteral,
+from typing import overload
+
+from ..constants import ParrallelMethod, ParrallelMethodLiteral
+from ..funcs import round_to_precision
+from ..proforma.annotation import ProFormaAnnotation
+from ..property.core import (
+    aa_property_percentage as _aa_property_percentage,
+)
+from ..property.core import (
+    calc_property as _calc_property,
+)
+from ..property.core import (
+    calc_window_property as _calc_window_property,
+)
+from ..property.core import (
+    charge_at_ph as _charge_at_ph,
+)
+from ..property.core import (
+    secondary_structure as _secondary_structure,
 )
 from ..property.properties import (
     HPLCScale,
+    HydrophobicityScale,
     PhysicalPropertyScale,
     PolarityScale,
     SecondaryStructureMethod,
     SecondaryStructureType,
     SurfaceAccessibilityScale,
-    HydrophobicityScale,
 )
-from ..property.core import (
-    calc_property as _calc_property,
-    calc_window_property as _calc_window_property,
-    aa_property_percentage as _aa_property_percentage,
-    charge_at_ph as _charge_at_ph,
-    secondary_structure as _secondary_structure,
+from ..property.types import (
+    AggregationMethod,
+    AggregationMethodLiteral,
+    MissingAAHandling,
+    MissingAAHandlingLiteral,
+    WeightingMethods,
+    WeightingMethodsLiteral,
 )
-from ..funcs import round_to_precision
-from ..proforma.annotation import ProFormaAnnotation
 from .parrallel import parallel_apply_internal
-from typing import overload, Literal
+from .util import get_annotation_input
 
 
 def _calc_property_single(
@@ -81,7 +91,7 @@ def calc_property(
     precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float: ...
 
 
@@ -104,7 +114,7 @@ def calc_property(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[float]: ...
 
 
@@ -126,7 +136,7 @@ def calc_property(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float | list[float]:
     """
     Calculate a physicochemical property for a sequence or list of sequences.
@@ -192,7 +202,7 @@ def hydrophobicity(
     precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float: ...
 
 
@@ -202,7 +212,7 @@ def hydrophobicity(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[float]: ...
 
 
@@ -211,7 +221,7 @@ def hydrophobicity(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float | list[float]:
     """Calculate hydrophobicity. Supports parallel processing for lists."""
     if (
@@ -242,7 +252,7 @@ def flexibility(
     precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float: ...
 
 
@@ -252,7 +262,7 @@ def flexibility(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[float]: ...
 
 
@@ -261,7 +271,7 @@ def flexibility(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float | list[float]:
     """Calculate flexibility. Supports parallel processing for lists."""
     if (
@@ -292,7 +302,7 @@ def hydrophilicity(
     precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float: ...
 
 
@@ -302,7 +312,7 @@ def hydrophilicity(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[float]: ...
 
 
@@ -311,7 +321,7 @@ def hydrophilicity(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float | list[float]:
     """Calculate hydrophilicity. Supports parallel processing for lists."""
     if (
@@ -342,7 +352,7 @@ def surface_accessibility(
     precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float: ...
 
 
@@ -352,7 +362,7 @@ def surface_accessibility(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[float]: ...
 
 
@@ -361,7 +371,7 @@ def surface_accessibility(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float | list[float]:
     """Calculate surface accessibility. Supports parallel processing for lists."""
     if (
@@ -392,7 +402,7 @@ def polarity(
     precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float: ...
 
 
@@ -402,7 +412,7 @@ def polarity(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[float]: ...
 
 
@@ -411,7 +421,7 @@ def polarity(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float | list[float]:
     """Calculate polarity. Supports parallel processing for lists."""
     if (
@@ -442,7 +452,7 @@ def mutability(
     precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float: ...
 
 
@@ -452,7 +462,7 @@ def mutability(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[float]: ...
 
 
@@ -461,7 +471,7 @@ def mutability(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float | list[float]:
     """Calculate mutability. Supports parallel processing for lists."""
     if (
@@ -492,7 +502,7 @@ def codons(
     precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float: ...
 
 
@@ -502,7 +512,7 @@ def codons(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[float]: ...
 
 
@@ -511,7 +521,7 @@ def codons(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float | list[float]:
     """Calculate codons. Supports parallel processing for lists."""
     if (
@@ -542,7 +552,7 @@ def bulkiness(
     precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float: ...
 
 
@@ -552,7 +562,7 @@ def bulkiness(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[float]: ...
 
 
@@ -561,7 +571,7 @@ def bulkiness(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float | list[float]:
     """Calculate bulkiness. Supports parallel processing for lists."""
     if (
@@ -592,7 +602,7 @@ def recognition_factors(
     precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float: ...
 
 
@@ -602,7 +612,7 @@ def recognition_factors(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[float]: ...
 
 
@@ -611,7 +621,7 @@ def recognition_factors(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float | list[float]:
     """Calculate recognition factors. Supports parallel processing for lists."""
     if (
@@ -642,7 +652,7 @@ def transmembrane_tendency(
     precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float: ...
 
 
@@ -652,7 +662,7 @@ def transmembrane_tendency(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[float]: ...
 
 
@@ -661,7 +671,7 @@ def transmembrane_tendency(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float | list[float]:
     """Calculate transmembrane tendency. Supports parallel processing for lists."""
     if (
@@ -692,7 +702,7 @@ def average_buried_area(
     precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float: ...
 
 
@@ -702,7 +712,7 @@ def average_buried_area(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[float]: ...
 
 
@@ -711,7 +721,7 @@ def average_buried_area(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float | list[float]:
     """Calculate average buried area. Supports parallel processing for lists."""
     if (
@@ -742,7 +752,7 @@ def hplc(
     precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float: ...
 
 
@@ -752,7 +762,7 @@ def hplc(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[float]: ...
 
 
@@ -761,7 +771,7 @@ def hplc(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float | list[float]:
     """Calculate HPLC retention. Supports parallel processing for lists."""
     if (
@@ -792,7 +802,7 @@ def refractivity(
     precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float: ...
 
 
@@ -802,7 +812,7 @@ def refractivity(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[float]: ...
 
 
@@ -811,7 +821,7 @@ def refractivity(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float | list[float]:
     """Calculate refractivity. Supports parallel processing for lists."""
     if (
@@ -892,7 +902,7 @@ def charge_at_ph(
     precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float: ...
 
 
@@ -903,7 +913,7 @@ def charge_at_ph(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[float]: ...
 
 
@@ -913,7 +923,7 @@ def charge_at_ph(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float | list[float]:
     """
     Calculate the charge of a protein at given pH using the Henderson-Hasselbalch equation.
@@ -994,7 +1004,7 @@ def pi(
     precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float: ...
 
 
@@ -1004,7 +1014,7 @@ def pi(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[float]: ...
 
 
@@ -1013,7 +1023,7 @@ def pi(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float | list[float]:
     """
     Calculate the isoelectric point (pI) of a protein sequence.
@@ -1077,7 +1087,7 @@ def aa_property_percentage(
     precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float: ...
 
 
@@ -1088,7 +1098,7 @@ def aa_property_percentage(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[float]: ...
 
 
@@ -1098,7 +1108,7 @@ def aa_property_percentage(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float | list[float]:
     """
     Calculate the percentage of specified amino acid residues in a sequence.
@@ -1133,7 +1143,7 @@ def aromaticity(
     precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float: ...
 
 
@@ -1144,7 +1154,7 @@ def aromaticity(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[float]: ...
 
 
@@ -1154,7 +1164,7 @@ def aromaticity(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float | list[float]:
     """
     Calculate the aromaticity value of a protein according to Lobry, 1994.
@@ -1205,7 +1215,7 @@ def secondary_structure(
     precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> dict[str, float]: ...
 
 
@@ -1216,7 +1226,7 @@ def secondary_structure(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[dict[str, float]]: ...
 
 
@@ -1226,7 +1236,7 @@ def secondary_structure(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> dict[str, float] | list[dict[str, float]]:
     """
     Calculate the secondary structure propensity of a peptide sequence.
@@ -1271,7 +1281,7 @@ def alpha_helix_percent(
     precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float: ...
 
 
@@ -1281,7 +1291,7 @@ def alpha_helix_percent(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[float]: ...
 
 
@@ -1290,7 +1300,7 @@ def alpha_helix_percent(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float | list[float]:
     """
     Calculate the propensity for alpha helix formation using the Deleage-Roux scale.
@@ -1333,7 +1343,7 @@ def beta_sheet_percent(
     precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float: ...
 
 
@@ -1343,7 +1353,7 @@ def beta_sheet_percent(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[float]: ...
 
 
@@ -1352,7 +1362,7 @@ def beta_sheet_percent(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float | list[float]:
     """
     Calculate the propensity for beta sheet formation using the Deleage-Roux scale.
@@ -1395,7 +1405,7 @@ def beta_turn_percent(
     precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float: ...
 
 
@@ -1405,7 +1415,7 @@ def beta_turn_percent(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[float]: ...
 
 
@@ -1414,7 +1424,7 @@ def beta_turn_percent(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float | list[float]:
     """
     Calculate the propensity for beta turn formation using the Deleage-Roux scale.
@@ -1457,7 +1467,7 @@ def coil_percent(
     precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float: ...
 
 
@@ -1467,7 +1477,7 @@ def coil_percent(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[float]: ...
 
 
@@ -1476,7 +1486,7 @@ def coil_percent(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: Literal["process", "thread"] | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float | list[float]:
     """
     Calculate the propensity for coil formation using the Deleage-Roux scale.

@@ -3,8 +3,9 @@ This module provides the main interface for the ProForma package.
 """
 
 from typing import Literal, overload
-from .dclasses import *
+
 from .annotation import ProFormaAnnotation
+from .dclasses import *
 from .multi_annotation import MultiProFormaAnnotation
 
 
@@ -75,9 +76,10 @@ def parse(
             raise ValueError(f"Unknown sequence type: {sequence_type}")
 
 
-def serialize(
+def serialize_annotation(
     annotation: ProFormaAnnotation | MultiProFormaAnnotation,
     include_plus: bool = False,
+    precision: int | None = None,
 ) -> str:
     """
     Serializes a ProForma annotation or multiple ProForma annotations into a single string representation.
@@ -91,7 +93,7 @@ def serialize(
     . python::
 
         Serializing a simple ProForma annotation:
-        >>> serialize(ProFormaAnnotation(sequence='PEPTIDE'))
+        >>> serialize_annotation(ProFormaAnnotation(sequence='PEPTIDE'))
         'PEPTIDE'
 
         >>> pfa1 = ProFormaAnnotation(sequence='PEPTIDE')
@@ -99,15 +101,15 @@ def serialize(
 
         Serializing a MultiProFormaAnnotation with chimeric connections:
         >>> multi_annotation = MultiProFormaAnnotation([pfa1, pfa2], [False])
-        >>> serialize(multi_annotation)
+        >>> serialize_annotation(multi_annotation)
         'PEPTIDE+PEPTIDE'
 
         Serializing a MultiProFormaAnnotation with crosslink connections:
         >>> multi_annotation = MultiProFormaAnnotation([pfa1, pfa2], [True])
-        >>> p = serialize(multi_annotation)
+        >>> p = serialize_annotation(multi_annotation)
         >>> p == r'PEPTIDE\\\PEPTIDE'
         True
 
     """
 
-    return annotation.serialize(include_plus)
+    return annotation.serialize(include_plus=include_plus, precision=precision)

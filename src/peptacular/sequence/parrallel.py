@@ -1,11 +1,11 @@
-from multiprocessing import Pool
-from multiprocessing.pool import ThreadPool
-from functools import partial
-from typing import Callable, Any, Literal, TypeVar, Sequence
 import multiprocessing as mp
 import sys
+from functools import partial
+from multiprocessing import Pool
+from multiprocessing.pool import ThreadPool
+from typing import Any, Callable, Literal, Sequence, TypeVar
 
-from ..constants import ParrallelMethodLiteral, ParrallelMethod
+from ..constants import ParrallelMethod, ParrallelMethodLiteral
 
 T = TypeVar("T")
 
@@ -89,7 +89,6 @@ def parallel_apply_internal(
         print(f"Using chunksize: {chunksize}")
 
     wrapper = partial(_apply_wrapper, func=func, func_kwargs=func_kwargs)
-
     PoolClass = ThreadPool if method_enum == ParrallelMethod.THREAD else Pool
 
     with PoolClass(processes=n_workers) as pool:

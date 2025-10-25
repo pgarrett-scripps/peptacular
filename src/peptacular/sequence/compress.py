@@ -1,6 +1,7 @@
 import base64
 from collections import Counter
 from typing import Sequence
+
 from ..funcs import compress_with_method, decompress_with_method
 from ..sequence.util import get_annotation_input
 

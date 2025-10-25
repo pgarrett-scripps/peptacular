@@ -1,5 +1,6 @@
 import re
-from typing import Sequence, overload, Literal
+from typing import Literal, Sequence, overload
+
 from .sequence.parrallel import parallel_apply_internal
 
 

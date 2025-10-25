@@ -1,15 +1,16 @@
 from typing import Sequence
+
 import streamlit as st
 
-from ..plotting import (
-    apply_spectral_filters,
-    prepare_spectrum_dataframe_from_matches,
-    plot_annotated_spectra_from_dataframe,
-)
-from ..proforma.annotation import ProFormaAnnotation
 from ..constants import IonType
 from ..fragment.types import Fragment
-from ..score import MatchMode, ToleranceType, Scorer
+from ..plotting import (
+    apply_spectral_filters,
+    plot_annotated_spectra_from_dataframe,
+    prepare_spectrum_dataframe_from_matches,
+)
+from ..proforma.annotation import ProFormaAnnotation
+from ..score import MatchMode, Scorer, ToleranceType
 from ..sequence.util import get_annotation_input
 
 

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from functools import wraps
 from typing import (
     Callable,
@@ -10,10 +11,8 @@ from typing import (
     Union,
 )
 
-import re
-
 from ..constants import ADDUCT_PATTERN, ISOTOPE_NUM_PATTERN
-from .dclasses import Mod, CHEM_COMPOSITION_TYPE, MOD_VALUE_TYPES
+from .dclasses import CHEM_COMPOSITION_TYPE, MOD_VALUE_TYPES, Mod
 
 
 def _parse_modifications(

@@ -6,35 +6,32 @@ sequence with/and modifications.
 import copy
 from typing import Counter, Iterable
 
-from ..mod import Mod, MOD_VALUE_TYPES
-from ..funcs import parse_ion_elements
-from ..util import parse_isotope_mods
-
-from .chem_constants import ISOTOPIC_AVERAGINE_MASS
-from .chem_util import parse_chem_formula, write_chem_formula
-from ..mods.mod_db_setup import MONOSACCHARIDES_DB
 from ..constants import (
     AVERAGINE_RATIOS,
 )
 from ..errors import (
-    InvalidCompositionError,
     DeltaMassCompositionError,
+    InvalidCompositionError,
 )
+from ..funcs import convert_type, parse_ion_elements
 from ..glycan import glycan_comp
+from ..mod import MOD_VALUE_TYPES, Mod
 from ..mods.mod_db import (
-    parse_unimod_comp,
-    parse_psi_comp,
-    is_psi_mod_str,
-    is_unimod_str,
-    parse_xlmod_comp,
-    parse_resid_comp,
-    is_resid_str,
-    is_xlmod_str,
     is_gno_str,
+    is_psi_mod_str,
+    is_resid_str,
+    is_unimod_str,
+    is_xlmod_str,
     parse_gno_comp,
+    parse_psi_comp,
+    parse_resid_comp,
+    parse_unimod_comp,
+    parse_xlmod_comp,
 )
-
-from ..funcs import convert_type
+from ..mods.mod_db_setup import MONOSACCHARIDES_DB
+from ..util import parse_isotope_mods
+from .chem_constants import ISOTOPIC_AVERAGINE_MASS
+from .chem_util import parse_chem_formula, write_chem_formula
 
 
 def glycan_to_chem(glycan: dict[str, int | float] | str) -> str:

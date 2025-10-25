@@ -1,10 +1,10 @@
 from collections.abc import Sequence
-from .util import get_annotation_input, override_annotation_properties
+from typing import overload
+
+from ..constants import IonType, IonTypeLiteral, ParrallelMethod, ParrallelMethodLiteral
 from ..proforma import ProFormaAnnotation
-from ..constants import IonType, IonTypeLiteral
 from .parrallel import parallel_apply_internal
-from typing import overload, Literal
-from ..constants import ParrallelMethodLiteral, ParrallelMethod
+from .util import get_annotation_input
 
 
 def _mass_single(

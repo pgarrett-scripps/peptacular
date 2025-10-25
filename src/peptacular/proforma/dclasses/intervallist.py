@@ -1,14 +1,13 @@
 from __future__ import annotations
+
 import copy
+import warnings
 from collections import UserList
 from collections.abc import Iterable
 from typing import Any, Self, SupportsIndex
-import warnings
 
 from ..dclasses.modlist import MODLIST_DATATYPE, ModList
-
-from .interval import Interval, setup_interval, ModInterval
-
+from .interval import Interval, ModInterval, setup_interval
 
 INTERVALLIST_DATATYPE = (
     Interval

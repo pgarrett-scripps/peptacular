@@ -3,24 +3,24 @@ mode_db_setup.py
 """
 
 import dataclasses
-from enum import StrEnum
 import os
 import pickle
 import re
 import tempfile
 import warnings
 from collections import Counter
+from enum import StrEnum
 from functools import cached_property
 from typing import IO, Any, Generator, Iterable, Iterator
 
-from ..constants import ISOTOPIC_ATOMIC_MASSES
 from ..chem.chem_util import (
-    write_chem_formula,
     _parse_isotope_component,
-    parse_chem_formula,
-    chem_mass,
     _parse_split_chem_formula,
+    chem_mass,
+    parse_chem_formula,
+    write_chem_formula,
 )
+from ..constants import ISOTOPIC_ATOMIC_MASSES
 from ..errors import InvalidChemFormulaError, InvalidGlycanFormulaError
 from ..funcs import convert_type
 

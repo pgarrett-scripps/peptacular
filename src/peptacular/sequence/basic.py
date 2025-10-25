@@ -22,29 +22,31 @@ end of the sequence and if not raise an error.
 
 from typing import Any, Sequence, overload
 
-from .util import get_annotation_input
-from ..constants import ORDERED_AMINO_ACIDS
+from ..constants import ORDERED_AMINO_ACIDS, ParrallelMethod, ParrallelMethodLiteral
 from ..proforma.annotation import (
     ProFormaAnnotation,
 )
+from ..proforma.multi_annotation import (
+    MultiProFormaAnnotation,
+)
 from .parrallel import parallel_apply_internal
-from ..constants import ParrallelMethodLiteral, ParrallelMethod
+from .util import SequenceType, get_annotation_input
 
 
 def _serialize_single(
-    sequence: str | ProFormaAnnotation,
+    sequence: str | ProFormaAnnotation | MultiProFormaAnnotation,
     include_plus: bool = False,
     precision: int | None = None,
 ) -> str:
     """Internal function for serializing a single sequence."""
-    return get_annotation_input(sequence, copy=False).serialize(
-        include_plus=include_plus, precision=precision
-    )
+    return get_annotation_input(
+        sequence, copy=False, sequence_type=SequenceType.BOTH
+    ).serialize(include_plus=include_plus, precision=precision)
 
 
 @overload
 def serialize(
-    sequence: str | ProFormaAnnotation,
+    sequence: str | ProFormaAnnotation | MultiProFormaAnnotation,
     include_plus: bool = False,
     precision: int | None = None,
     n_workers: None = None,
@@ -55,7 +57,7 @@ def serialize(
 
 @overload
 def serialize(
-    sequence: Sequence[str | ProFormaAnnotation],
+    sequence: Sequence[str | ProFormaAnnotation | MultiProFormaAnnotation],
     include_plus: bool = False,
     precision: int | None = None,
     n_workers: int | None = None,
@@ -65,7 +67,10 @@ def serialize(
 
 
 def serialize(
-    sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
+    sequence: str
+    | ProFormaAnnotation
+    | MultiProFormaAnnotation
+    | Sequence[str | ProFormaAnnotation | MultiProFormaAnnotation],
     include_plus: bool = False,
     precision: int | None = None,
     n_workers: int | None = None,

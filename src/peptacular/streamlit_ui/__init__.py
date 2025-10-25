@@ -5,10 +5,9 @@ Only available if streamlit is installed.
 
 from typing import Any
 
-
 try:
-    import streamlit as st
     import pandas as pd
+    import streamlit as st
 
     STREAMLIT_AVAILABLE = True
     from .streamlit_core import annotated_spectrum_plot

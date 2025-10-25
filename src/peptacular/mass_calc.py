@@ -2,48 +2,46 @@
 mass_calc.py is a simple module for computing the m/z and mass of an amino acid sequence.
 """
 
-from .mod import Mod, MOD_VALUE_TYPES
-
+from .chem.chem_calc import (
+    parse_chem_formula,
+)
+from .chem.chem_constants import (
+    AVERAGE_FRAGMENT_ADJUSTMENTS,
+    AVERAGE_FRAGMENT_ION_ADJUSTMENTS,
+    MONOISOTOPIC_FRAGMENT_ADJUSTMENTS,
+    MONOISOTOPIC_FRAGMENT_ION_ADJUSTMENTS,
+)
+from .chem.chem_util import chem_mass
 from .constants import (
-    PROTON_MASS,
     AVERAGE_ATOMIC_MASSES,
     ELECTRON_MASS,
     ISOTOPIC_ATOMIC_MASSES,
     NEUTRON_MASS,
+    PROTON_MASS,
     IonType,
 )
-from .chem.chem_calc import (
-    parse_chem_formula,
-)
-from .chem.chem_util import chem_mass
-from .mods.mod_db_setup import MONOSACCHARIDES_DB
-from .chem.chem_constants import (
-    AVERAGE_FRAGMENT_ADJUSTMENTS,
-    MONOISOTOPIC_FRAGMENT_ADJUSTMENTS,
-    MONOISOTOPIC_FRAGMENT_ION_ADJUSTMENTS,
-    AVERAGE_FRAGMENT_ION_ADJUSTMENTS,
-)
-
-from .funcs import convert_type, parse_ion_elements, round_to_precision
 from .errors import (
-    InvalidDeltaMassError,
-    InvalidModificationMassError,
-    InvalidGlycanFormulaError,
     InvalidChemFormulaError,
+    InvalidDeltaMassError,
+    InvalidGlycanFormulaError,
+    InvalidModificationMassError,
 )
+from .funcs import convert_type, parse_ion_elements, round_to_precision
 from .glycan import parse_glycan_formula
+from .mod import MOD_VALUE_TYPES, Mod
 from .mods.mod_db import (
-    parse_psi_mass,
-    parse_unimod_mass,
-    is_unimod_str,
-    is_psi_mod_str,
-    parse_xlmod_mass,
-    parse_resid_mass,
     is_gno_str,
-    parse_gno_mass,
-    is_xlmod_str,
+    is_psi_mod_str,
     is_resid_str,
+    is_unimod_str,
+    is_xlmod_str,
+    parse_gno_mass,
+    parse_psi_mass,
+    parse_resid_mass,
+    parse_unimod_mass,
+    parse_xlmod_mass,
 )
+from .mods.mod_db_setup import MONOSACCHARIDES_DB
 
 
 def _convert_adducts_to_str(

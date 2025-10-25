@@ -1,29 +1,29 @@
 from __future__ import annotations
 
-from typing import Generator, Self, Sequence, overload, Literal
+from typing import Generator, Literal, Self, Sequence, overload
 
 from ..proforma.dclasses import SPAN_TYPE
+from .core import (
+    digest_annotation_by_aa,
+    digest_annotation_by_regex,
+    get_cleavage_sites,
+    get_left_semi_enzymatic_sequences,
+    get_non_enzymatic_sequences,
+    get_right_semi_enzymatic_sequences,
+    get_semi_enzymatic_sequences,
+    sequential_digest_annotation,
+)
 from .types import (
+    DigestGenerator,
+    DigestProtocol,
     DigestReturnType,
     DigestReturnTypeAnnotationLiteral,
     DigestReturnTypeAnnotationSpanLiteral,
+    DigestReturnTypeLiterals,
     DigestReturnTypeSpanLiteral,
     DigestReturnTypeStrLiteral,
     DigestReturnTypeStrSpanLiteral,
     EnzymeConfig,
-    DigestGenerator,
-    DigestProtocol,
-    DigestReturnTypeLiterals,
-)
-from .core import (
-    digest_annotation_by_aa,
-    digest_annotation_by_regex,
-    sequential_digest_annotation,
-    get_left_semi_enzymatic_sequences,
-    get_right_semi_enzymatic_sequences,
-    get_semi_enzymatic_sequences,
-    get_non_enzymatic_sequences,
-    get_cleavage_sites,
 )
 
 

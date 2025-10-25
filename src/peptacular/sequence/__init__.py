@@ -2,18 +2,15 @@
 This module contains functions for generating and manipulating peptide sequences.
 """
 
-from .combinatoric import *
-from .fragmentation import *
-
-from .mod_builder import *
 from .basic import *
-from .transformations import *
-from .coverage import *
-
-
-from .properties import *
-from .mass import *
+from .combinatoric import *
 from .comp import *
+from .compress import *
+from .coverage import *
 from .decoy import *
 from .digestion import *
-from .compress import *
+from .fragmentation import *
+from .mass import *
+from .mod_builder import *
+from .properties import *
+from .transformations import *

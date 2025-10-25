@@ -1,4 +1,5 @@
 from enum import StrEnum
+
 from .data import *  # type: ignore (Too many imports to care)
 
 

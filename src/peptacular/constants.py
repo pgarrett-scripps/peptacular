@@ -3,19 +3,18 @@ Constants used throughout the peptacular package.
 """
 
 import os
-from typing import Iterable, Literal
-from enum import StrEnum
-
 import re
+from enum import StrEnum
+from typing import Iterable, Literal
 
 from .element_setup import (
     get_element_info,
-    map_atomic_symbol_to_average_mass,
-    map_atomic_number_to_comp_neutron_offset,
     get_isotopic_atomic_masses,
-    map_hill_order,
     map_atomic_number_to_comp,
+    map_atomic_number_to_comp_neutron_offset,
     map_atomic_number_to_symbol,
+    map_atomic_symbol_to_average_mass,
+    map_hill_order,
 )
 
 
@@ -358,11 +357,11 @@ AA_COMPOSITIONS: dict[str, dict[str, int]] = {
     "X": {},  # Unknown amino acid (treated as 0 mass)
 }
 
-AMINO_ACIDS: set[str] = set(AA_COMPOSITIONS.keys()) | {"B", "Z"}
+AMINO_ACIDS: frozenset[str] = frozenset(AA_COMPOSITIONS.keys()) | {"B", "Z"}
 ORDERED_AMINO_ACIDS = sorted(list(AMINO_ACIDS))
-AMBIGUOUS_AMINO_ACIDS: set[str] = {"J", "B", "Z", "X"}
-MASS_AMBIGUOUS_AMINO_ACIDS: set[str] = {"B", "Z"}
-UNAMBIGUOUS_AMINO_ACIDS: set[str] = AMINO_ACIDS - AMBIGUOUS_AMINO_ACIDS
+AMBIGUOUS_AMINO_ACIDS: frozenset[str] = frozenset({"J", "B", "Z", "X"})
+MASS_AMBIGUOUS_AMINO_ACIDS: frozenset[str] = frozenset({"B", "Z"})
+UNAMBIGUOUS_AMINO_ACIDS: frozenset[str] = AMINO_ACIDS - AMBIGUOUS_AMINO_ACIDS
 
 # 3 letter codes
 AA_TO_THREE_LETTER_CODE: dict[str, str] = {
@@ -432,22 +431,26 @@ AA_TO_NAME: dict[str, str] = {
 # Reverse amino acid to name
 NAME_TO_AA: dict[str, str] = {v: k for k, v in AA_TO_NAME.items()}
 
-FORWARD_ION_TYPES: set[str] = {IonType.A, IonType.B, IonType.C}
-BACKWARD_ION_TYPES: set[str] = {IonType.X, IonType.Y, IonType.Z}
-INTERNAL_ION_TYPES: set[str] = {
-    IonType.AX,
-    IonType.AY,
-    IonType.AZ,
-    IonType.BX,
-    IonType.BY,
-    IonType.BZ,
-    IonType.CX,
-    IonType.CY,
-    IonType.CZ,
-}
-TERMINAL_ION_TYPES: set[str] = FORWARD_ION_TYPES | BACKWARD_ION_TYPES
-IMMONIUM_ION_TYPES: set[str] = {IonType.IMMONIUM}
-VALID_ION_TYPES: set[str] = TERMINAL_ION_TYPES | INTERNAL_ION_TYPES | IMMONIUM_ION_TYPES
+FORWARD_ION_TYPES: frozenset[str] = frozenset([IonType.A, IonType.B, IonType.C])
+BACKWARD_ION_TYPES: frozenset[str] = frozenset([IonType.X, IonType.Y, IonType.Z])
+INTERNAL_ION_TYPES: frozenset[str] = frozenset(
+    [
+        IonType.AX,
+        IonType.AY,
+        IonType.AZ,
+        IonType.BX,
+        IonType.BY,
+        IonType.BZ,
+        IonType.CX,
+        IonType.CY,
+        IonType.CZ,
+    ]
+)
+TERMINAL_ION_TYPES: frozenset[str] = FORWARD_ION_TYPES | BACKWARD_ION_TYPES
+IMMONIUM_ION_TYPES: frozenset[str] = frozenset([IonType.IMMONIUM])
+VALID_ION_TYPES: frozenset[str] = (
+    TERMINAL_ION_TYPES | INTERNAL_ION_TYPES | IMMONIUM_ION_TYPES
+)
 AVERAGINE_RATIOS: dict[str, float] = {
     "C": 4.9384,
     "H": 7.7583,

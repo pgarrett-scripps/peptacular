@@ -1,11 +1,12 @@
 from __future__ import annotations
+
 import copy
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 from typing import Any, Self
 
 from ...mod import MOD_VALUE_TYPES
-from .modlist import ModList, setup_mod_list, MODLIST_DATATYPE
+from .modlist import MODLIST_DATATYPE, ModList, setup_mod_list
 
 
 @dataclass

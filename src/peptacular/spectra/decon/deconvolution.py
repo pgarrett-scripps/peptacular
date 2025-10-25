@@ -4,12 +4,12 @@ methods to identify isotopic envelopes among the provided peaks.
 """
 
 from typing import Literal
-from .graph_ops import construct_graph
-from .navigation import navigate_left, navigate_right
-from .dclass import DeconvolutedPeak, SpectrumPeak
+
 from ...constants import C13_NEUTRON_MASS, PROTON_MASS
 from ...isotope import IsotopeLookup
-
+from .dclass import DeconvolutedPeak, SpectrumPeak
+from .graph_ops import construct_graph
+from .navigation import navigate_left, navigate_right
 
 # Global isotope lookup instance for performance
 _GLOBAL_ISOTOPE_LOOKUP: IsotopeLookup | None = None

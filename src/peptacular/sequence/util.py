@@ -1,46 +1,116 @@
-from typing import Union, Optional, List
 import warnings
+from enum import StrEnum
+from typing import List, Literal, Optional, Union, overload
 
+from ..proforma.annotation import ProFormaAnnotation
 from ..proforma.dclasses import MOD_VALUE_TYPES
-
-from ..proforma.annotation import (
-    ProFormaAnnotation,
+from ..proforma.multi_annotation import (
+    MultiProFormaAnnotation,
 )
 
 
-def sequence_to_annotation(sequence: str) -> ProFormaAnnotation:
+class SequenceType(StrEnum):
+    SINGLE = "single"
+    MULTI = "multi"
+    BOTH = "both"
+
+
+@overload
+def sequence_to_annotation(
+    sequence: str,
+    sequence_type: Literal[SequenceType.SINGLE] = SequenceType.SINGLE,
+) -> ProFormaAnnotation: ...
+
+
+@overload
+def sequence_to_annotation(
+    sequence: str, sequence_type: Literal[SequenceType.MULTI]
+) -> MultiProFormaAnnotation: ...
+
+
+@overload
+def sequence_to_annotation(
+    sequence: str, sequence_type: Literal[SequenceType.BOTH]
+) -> ProFormaAnnotation | MultiProFormaAnnotation: ...
+
+
+def sequence_to_annotation(
+    sequence: str, sequence_type: SequenceType = SequenceType.SINGLE
+) -> ProFormaAnnotation | MultiProFormaAnnotation:
     """
-    Parses a peptide sequence with modifications and returns a ProFormaAnnotation object.
+    Parses a peptide sequence with modifications and returns a ProFormaAnnotation or MultiProFormaAnnotation object.
 
     :param sequence: The amino acid sequence.
     :type sequence: str
-
-    :raises ValueError: If the input sequence contains multiple sequences.
+    :param sequence_type: The type of sequence to parse (SINGLE, MULTI, or BOTH).
+    :type sequence_type: SequenceType
+    :raises ValueError: If the input sequence contains multiple sequences when SINGLE is specified.
     :raises ProFormaFormatError: if the proforma sequence is not valid
-
-    :return: A ProFormaAnnotation object representing the input sequence.
-    :rtype: ProFormaAnnotation
-
+    :return: A ProFormaAnnotation or MultiProFormaAnnotation object representing the input sequence.
+    :rtype: Union[ProFormaAnnotation, MultiProFormaAnnotation]
     """
-    annotation = ProFormaAnnotation.parse(sequence)
-
+    if sequence_type == SequenceType.SINGLE:
+        annotation = ProFormaAnnotation.parse(sequence)
+    elif sequence_type == SequenceType.MULTI:
+        annotation = MultiProFormaAnnotation.parse(sequence)
+    else:  # SequenceType.BOTH
+        try:
+            annotation = ProFormaAnnotation.parse(sequence)
+        except:
+            annotation = MultiProFormaAnnotation.parse(sequence)
     return annotation
 
 
+@overload
 def get_annotation_input(
-    sequence: str | ProFormaAnnotation, copy: bool = True
-) -> ProFormaAnnotation:
+    sequence: str | ProFormaAnnotation | MultiProFormaAnnotation,
+    sequence_type: Literal[SequenceType.SINGLE] = SequenceType.SINGLE,
+    copy: bool = True,
+) -> ProFormaAnnotation: ...
+
+
+@overload
+def get_annotation_input(
+    sequence: str | ProFormaAnnotation | MultiProFormaAnnotation,
+    sequence_type: Literal[SequenceType.MULTI],
+    copy: bool = True,
+) -> MultiProFormaAnnotation: ...
+
+
+@overload
+def get_annotation_input(
+    sequence: str | ProFormaAnnotation | MultiProFormaAnnotation,
+    sequence_type: Literal[SequenceType.BOTH],
+    copy: bool = True,
+) -> ProFormaAnnotation | MultiProFormaAnnotation: ...
+
+
+def get_annotation_input(
+    sequence: str | ProFormaAnnotation | MultiProFormaAnnotation,
+    sequence_type: SequenceType = SequenceType.SINGLE,
+    copy: bool = True,
+) -> ProFormaAnnotation | MultiProFormaAnnotation:
     if isinstance(sequence, str):
-        annotation = sequence_to_annotation(sequence)
-    elif isinstance(sequence, ProFormaAnnotation):  # type: ignore
+        annotation = sequence_to_annotation(sequence, sequence_type)
+    elif isinstance(sequence, ProFormaAnnotation) and sequence_type in (
+        SequenceType.SINGLE,
+        SequenceType.BOTH,
+    ):
+        if copy:
+            annotation = sequence.copy()
+        else:
+            annotation = sequence
+    elif isinstance(sequence, MultiProFormaAnnotation) and sequence_type in (
+        SequenceType.MULTI,
+        SequenceType.BOTH,
+    ):
         if copy:
             annotation = sequence.copy()
         else:
             annotation = sequence
     else:
         raise TypeError(f"Expected str or ProFormaAnnotation, got {type(sequence)}")
-
-    return annotation  # type: ignore
+    return annotation
 
 
 def override_annotation_properties(

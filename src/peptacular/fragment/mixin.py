@@ -1,20 +1,20 @@
 from typing import Generator, Literal, Mapping, Sequence, overload
 
+from ..constants import IonType, IonTypeLiteral
+from .core import fragment, get_losses
 from .types import (
     FRAGMENT_RETURN_TYPING,
+    Fragment,
+    FragmentableAnnotation,
     FragmentLiteral,
     FragmentReturnLiteral,
     FragmentReturnType,
-    FragmentableAnnotation,
-    Fragment,
     LabelLiteral,
     MassLabelLiteral,
     MassLiteral,
     MzLabelLiteral,
     MzLiteral,
 )
-from .core import get_losses, fragment
-from ..constants import IonType, IonTypeLiteral
 
 
 class FragmenterMixin(FragmentableAnnotation):

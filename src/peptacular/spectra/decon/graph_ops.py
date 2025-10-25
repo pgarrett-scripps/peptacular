@@ -2,9 +2,9 @@
 Graph construction and subgraph separation utilities.
 """
 
-from typing import Literal, Callable, TypeVar, Generic
-from .dclass import GraphNode, GraphEdge, Graph, IsotopeGap, PeakLike, SpectrumPeak
+from typing import Callable, Generic, Literal, TypeVar
 
+from .dclass import Graph, GraphEdge, GraphNode, IsotopeGap, PeakLike, SpectrumPeak
 
 # Generic type variable for peak types
 P = TypeVar("P", bound=PeakLike)

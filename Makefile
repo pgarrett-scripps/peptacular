@@ -43,6 +43,8 @@ lint:
 
 format:
 	uv run ruff format src
+	uv run ruff check --select I --fix src
+	uv run ruff check --select I --fix *.py
 
 format-check:
 	uv run ruff format --check src

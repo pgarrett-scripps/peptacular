@@ -1,12 +1,12 @@
 try:
-    import plotly
     import pandas as pd
+    import plotly
 
     PLOTTING_AVAILABLE = True
 
     from .plotting_core import (
-        plot_annotated_spectra_from_dataframe,
         apply_spectral_filters,
+        plot_annotated_spectra_from_dataframe,
         prepare_spectrum_dataframe_from_matches,
         protein_coverage_plot,
     )

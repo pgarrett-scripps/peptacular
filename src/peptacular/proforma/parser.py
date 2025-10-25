@@ -1,14 +1,12 @@
 from collections.abc import Generator
 from typing import Self
 
-from ..funcs import convert_type
-
-from .dclasses import Mod, Interval, IntervalList, ModList, ModDict
 from ..constants import AMINO_ACIDS
 from ..errors import ProFormaFormatError
+from ..funcs import convert_type
 from ..util import validate_single_mod_multiplier
-
 from .characters import ProformaChar as PC
+from .dclasses import Interval, IntervalList, Mod, ModDict, ModList
 
 end_chars = {PC.CHIMERIC, PC.CONNECTED, PC.CHARGE_SEP}
 
@@ -92,33 +90,33 @@ class ProFormaParser:
     @validate_single_mod_multiplier
     def _add_static_mod(self, mod: Mod) -> None:
         if self.static_mods is None:
-            self.static_mods = ModList()
+            self.static_mods = ModList(allow_dups=True, stackable=True)
         self.static_mods.append(mod)
 
     @validate_single_mod_multiplier
     def _add_isotope_mod(self, mod: Mod) -> None:
         if self.isotope_mods is None:
-            self.isotope_mods = ModList()
+            self.isotope_mods = ModList(allow_dups=False, stackable=False)
         self.isotope_mods.append(mod)
 
     def _add_labile_mod(self, mods: list[Mod]) -> None:
         if self.labile_mods is None:
-            self.labile_mods = ModList()
+            self.labile_mods = ModList(allow_dups=True, stackable=True)
         self.labile_mods.extend(mods)
 
     def _add_unknown_mod(self, mods: list[Mod]) -> None:
         if self.unknown_mods is None:
-            self.unknown_mods = ModList()
+            self.unknown_mods = ModList(allow_dups=True, stackable=True)
         self.unknown_mods.extend(mods)
 
     def _add_nterm_mod(self, mods: list[Mod]) -> None:
         if self.nterm_mods is None:
-            self.nterm_mods = ModList()
+            self.nterm_mods = ModList(allow_dups=True, stackable=True)
         self.nterm_mods.extend(mods)
 
     def _add_cterm_mod(self, mods: list[Mod]) -> None:
         if self.cterm_mods is None:
-            self.cterm_mods = ModList()
+            self.cterm_mods = ModList(allow_dups=True, stackable=False)
         self.cterm_mods.extend(mods)
 
     def _add_internal_mod(self, mods: list[Mod]) -> None:
@@ -130,7 +128,7 @@ class ProFormaParser:
     @validate_single_mod_multiplier
     def _add_charge_adducts(self, mods: list[Mod]) -> None:
         if self.charge_adducts is None:
-            self.charge_adducts = ModList()
+            self.charge_adducts = ModList(allow_dups=True, stackable=False)
         self.charge_adducts.extend(mods)
 
     def _add_interval(self, interval: Interval) -> None:

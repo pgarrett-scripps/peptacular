@@ -2,9 +2,9 @@
 Utils.py
 """
 
+import re
 import warnings
 from functools import wraps
-import re
 from typing import Callable, Generator, Iterable
 
 from .constants import ADDUCT_PATTERN, ISOTOPE_NUM_PATTERN

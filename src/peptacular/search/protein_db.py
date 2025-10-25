@@ -1,11 +1,12 @@
-from pathlib import Path
 import pickle
-from typing import Iterable
-from dataclasses import dataclass
 import time
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Iterable
+
+from ..fasta import parse_fasta
 from ..proforma.annotation import ProFormaAnnotation
 from ..sequence import serialize
-from ..fasta import parse_fasta
 
 
 @dataclass(frozen=True)

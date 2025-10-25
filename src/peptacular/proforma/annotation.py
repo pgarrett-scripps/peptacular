@@ -1,79 +1,7 @@
-from collections.abc import Callable, Generator
 import copy
+from collections.abc import Callable, Generator
 from typing import Any, Iterable, Mapping, Self, Sequence, cast
 
-from .dclasses.modlist import populate_mod_list
-
-from .dclasses.interval import Interval
-
-from ..fragment import FragmenterMixin
-
-from ..util import parse_static_mods
-
-from .serializer import serialize_annotation, serialize_charge
-from .parser import ProFormaParser
-from .ambiguity import (
-    annotate_ambiguity,
-    condense_ambiguity_to_xnotation,
-    group_by_ambiguity,
-    unique_fragments,
-)
-from .manipulation import (
-    condense_mods_to_intervals,
-    condense_static_mods,
-    is_subsequence,
-    count_residues,
-    modification_coverage,
-    percent_residues,
-    find_indices,
-    coverage,
-    percent_coverage,
-)
-from .slicing import (
-    generate_sliding_windows,
-    join_annotations,
-    reverse_annotation,
-    shift_annotation,
-    shuffle_annotation,
-    slice_annotation,
-    sort_annotation,
-    split_annotation,
-)
-from .combinatorics import (
-    generate_permutations,
-    generate_product,
-    generate_combinations,
-    generate_combinations_with_replacement,
-)
-
-from ..digestion import (
-    DigestionMixin,
-)
-
-from .mass_comp import (
-    comp,
-    mass,
-    mz,
-    condense_to_mass_mods,
-)
-
-
-from .dclasses import (
-    MOD_VALUE_TYPES,
-    MODLIST_DATATYPE,
-    ACCEPTED_INTERVALLIST_INPUT_TYPES,
-    ACCEPTED_MODDICT_INPUT_TYPES,
-    ACCEPTED_MODLIST_INPUT_TYPES,
-    ACCEPTED_INTERVAL_DATATYPE,
-    ModInterval,
-    IntervalList,
-    ModDict,
-    Mod,
-    setup_mod_dict,
-    setup_mod_list,
-    setup_interval_list,
-    ModList,
-)
 from ..constants import (
     AMBIGUOUS_AMINO_ACIDS,
     MASS_AMBIGUOUS_AMINO_ACIDS,
@@ -84,10 +12,72 @@ from ..constants import (
     get_mod_type,
     get_mods,
 )
-
+from ..digestion import (
+    DigestionMixin,
+)
+from ..fragment import FragmenterMixin
 from ..property import SequencePropertyMixin
-
+from ..util import parse_static_mods
+from .ambiguity import (
+    annotate_ambiguity,
+    condense_ambiguity_to_xnotation,
+    group_by_ambiguity,
+    unique_fragments,
+)
+from .combinatorics import (
+    generate_combinations,
+    generate_combinations_with_replacement,
+    generate_permutations,
+    generate_product,
+)
+from .dclasses import (
+    ACCEPTED_INTERVAL_DATATYPE,
+    ACCEPTED_INTERVALLIST_INPUT_TYPES,
+    ACCEPTED_MODDICT_INPUT_TYPES,
+    ACCEPTED_MODLIST_INPUT_TYPES,
+    MOD_VALUE_TYPES,
+    MODLIST_DATATYPE,
+    IntervalList,
+    Mod,
+    ModDict,
+    ModInterval,
+    ModList,
+    setup_interval_list,
+    setup_mod_dict,
+    setup_mod_list,
+)
+from .dclasses.interval import Interval
+from .dclasses.modlist import populate_mod_list
+from .manipulation import (
+    condense_mods_to_intervals,
+    condense_static_mods,
+    count_residues,
+    coverage,
+    find_indices,
+    is_subsequence,
+    modification_coverage,
+    percent_coverage,
+    percent_residues,
+)
+from .mass_comp import (
+    comp,
+    condense_to_mass_mods,
+    mass,
+    mz,
+)
 from .mod_builder import build_mods
+from .parser import ProFormaParser
+from .serializer import serialize_annotation, serialize_charge
+from .slicing import (
+    generate_sliding_windows,
+    join_annotations,
+    reverse_annotation,
+    shift_annotation,
+    shuffle_annotation,
+    slice_annotation,
+    sort_annotation,
+    split_annotation,
+)
 
 
 def _correct_mods(
@@ -97,18 +87,6 @@ def _correct_mods(
 
 
 class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin):
-    # Class-level constants - created once, copied many times
-    _EMPTY_ISOTOPE_MODLIST = ModList(allow_dups=False, stackable=False)
-    _EMPTY_STATIC_MODLIST = ModList(allow_dups=True, stackable=True)
-    _EMPTY_LABILE_MODLIST = ModList(allow_dups=True, stackable=True)
-    _EMPTY_UNKNOWN_MODLIST = ModList(allow_dups=True, stackable=True)
-    _EMPTY_NTERM_MODLIST = ModList(allow_dups=True, stackable=True)
-    _EMPTY_CTERM_MODLIST = ModList(allow_dups=True, stackable=False)
-    _EMPTY_CHARGE_ADDUCTS_MODLIST = ModList(allow_dups=True, stackable=False)
-    _EMPTY_MODDICT = ModDict()
-    _EMPTY_INTERNAL_MODLIST = ModList(allow_dups=True, stackable=False)
-    _EMPTY_INTERVALLIST = IntervalList()
-
     def __init__(
         self,
         sequence: str | None = None,
@@ -159,43 +137,44 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
 
     @staticmethod
     def create_isotope_mod_list() -> ModList:
-        return ProFormaAnnotation._EMPTY_ISOTOPE_MODLIST.copy()
+        # Create fresh object each time - no sharing!
+        return ModList(allow_dups=False, stackable=False)
 
     @staticmethod
     def create_static_mod_list() -> ModList:
-        return ProFormaAnnotation._EMPTY_STATIC_MODLIST.copy()
+        return ModList(allow_dups=True, stackable=True)
 
     @staticmethod
     def create_labile_mod_list() -> ModList:
-        return ProFormaAnnotation._EMPTY_LABILE_MODLIST.copy()
+        return ModList(allow_dups=True, stackable=True)
 
     @staticmethod
     def create_unknown_mod_list() -> ModList:
-        return ProFormaAnnotation._EMPTY_UNKNOWN_MODLIST.copy()
+        return ModList(allow_dups=True, stackable=True)
 
     @staticmethod
     def create_nterm_mod_list() -> ModList:
-        return ProFormaAnnotation._EMPTY_NTERM_MODLIST.copy()
+        return ModList(allow_dups=True, stackable=True)
 
     @staticmethod
     def create_cterm_mod_list() -> ModList:
-        return ProFormaAnnotation._EMPTY_CTERM_MODLIST.copy()
+        return ModList(allow_dups=True, stackable=False)
 
     @staticmethod
     def create_charge_adducts_mod_list() -> ModList:
-        return ProFormaAnnotation._EMPTY_CHARGE_ADDUCTS_MODLIST.copy()
+        return ModList(allow_dups=True, stackable=False)
 
     @staticmethod
     def create_internal_mod_dict() -> ModDict:
-        return ProFormaAnnotation._EMPTY_MODDICT.copy()
+        return ModDict()
 
     @staticmethod
     def create_interval_list() -> IntervalList:
-        return ProFormaAnnotation._EMPTY_INTERVALLIST.copy()
+        return IntervalList()
 
     @staticmethod
     def create_empty_internal_mod_list() -> ModList:
-        return ProFormaAnnotation._EMPTY_INTERNAL_MODLIST.copy()
+        return ModList(allow_dups=True, stackable=False)
 
     @staticmethod
     def parse(sequence: str) -> "ProFormaAnnotation":

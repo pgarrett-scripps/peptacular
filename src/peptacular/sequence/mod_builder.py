@@ -1,11 +1,11 @@
-from typing import Iterable, Mapping, overload, Any
 from collections.abc import Sequence
-from ..proforma.annotation import ProFormaAnnotation
-from .util import get_annotation_input
-from ..mod import Mod
-from .parrallel import parallel_apply_internal
-from ..constants import ModType, ModTypeLiteral
+from typing import Any, Iterable, Mapping, overload
 
+from ..constants import ModType, ModTypeLiteral, ParrallelMethod, ParrallelMethodLiteral
+from ..mod import Mod
+from ..proforma.annotation import ProFormaAnnotation
+from .parrallel import parallel_apply_internal
+from .util import get_annotation_input
 
 MOD_BUILDER_INPUT_TYPE = Mapping[str, Iterable[str | float | int | Mod]]
 
@@ -597,3 +597,112 @@ def filter_mods(
         .filter_mods(mods=mods, inplace=True)
         .serialize(include_plus=include_plus, precision=precision)
     )
+
+
+def _to_MS2PIP_single(
+    sequence: ProFormaAnnotation | str,
+) -> tuple[str, str]:
+    """Convert a single peptide sequence to MS2PIP format"""
+    annot = get_annotation_input(sequence=sequence, copy=True)
+    annot.condense_static_mods(inplace=True)
+
+    mod_tuples: list[tuple[int, str]] = []
+    if annot.has_nterm_mods:
+        if len(annot.nterm_mods) > 1:
+            raise ValueError("MS2PIP format only supports one N-terminal modification.")
+        for mod in annot.nterm_mods:
+            mod_tuples.append((0, str(mod)))
+
+    if annot.has_cterm_mods:
+        if len(annot.cterm_mods) > 1:
+            raise ValueError("MS2PIP format only supports one C-terminal modification.")
+        for mod in annot.cterm_mods:
+            mod_tuples.append((-1, str(mod)))
+
+    if annot.has_internal_mods:
+        for index, mods in annot.internal_mods.items():
+            for mod in mods:
+                mod_tuples.append((index + 1, str(mod)))
+
+    unmod_sequence = annot.stripped_sequence
+
+    mod_str = "|".join(f"{loc}|{name}" for loc, name in mod_tuples)
+
+    return unmod_sequence, mod_str
+
+
+@overload
+def to_MS2PIP(
+    sequence: ProFormaAnnotation | str,
+    n_workers: None = None,
+    chunksize: None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+) -> tuple[str, str]: ...
+
+
+@overload
+def to_MS2PIP(
+    sequence: Sequence[ProFormaAnnotation | str],
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+) -> list[tuple[str, str]]: ...
+
+
+def to_MS2PIP(
+    sequence: ProFormaAnnotation | str | Sequence[ProFormaAnnotation | str],
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+) -> tuple[str, str] | list[tuple[str, str]]:
+    """
+    Convert a peptide sequence to MS2PIP format by condensing modifications.
+
+    Automatically uses parallel processing when a list of sequences is provided.
+    When method=None (default), automatically detects if GIL is disabled and uses
+    threading for better performance, otherwise uses multiprocessing.
+
+    modifications: MS2PIP-style formatted modifications: Every modification is
+    listed as location|name, separated by a pipe (|) between the location, the name,
+    and other modifications. location is an integer counted starting at 1 for the first AA.
+    0 is reserved for N-terminal modifications, -1 for C-terminal modifications. name has to
+    correspond to a Unimod (PSI-MS) name.
+
+    :param sequence: The sequence or ProFormaAnnotation object, or list of sequences.
+    :type sequence: Union[str, ProFormaAnnotation, list[str | ProFormaAnnotation]]
+    :param n_workers: Number of worker processes (only for lists). If None, uses CPU count.
+    :type n_workers: int | None
+    :param chunksize: Number of items per chunk (only for lists). If None, auto-calculated.
+    :type chunksize: int | None
+    :param method: 'process', 'thread', or None (auto-detect). Default is None.
+    :type method: Literal["process", "thread"] | None
+
+    :return: Tuple of (unmodified_sequence, modification_string) or list of tuples.
+    :rtype: tuple[str, str] | list[tuple[str, str]]
+
+    .. code-block:: python
+
+        # Single sequence
+        >>> to_MS2PIP('PEP[Phospho]TIDE')
+        ('PEPTIDE', '3|Phospho')
+
+        # Batch processing
+        >>> sequences = ['PEP[Phospho]TIDE', 'PROT[Oxidation]EIN']
+        >>> to_MS2PIP(sequences)
+        [('PEPTIDE', '3|Phospho'), ('PROTEIN', '4|Oxidation')]
+
+    """
+    if (
+        isinstance(sequence, Sequence)
+        and not isinstance(sequence, str)
+        and not isinstance(sequence, ProFormaAnnotation)
+    ):
+        return parallel_apply_internal(
+            _to_MS2PIP_single,
+            sequence,
+            n_workers=n_workers,
+            chunksize=chunksize,
+            method=method,
+        )
+    else:
+        return _to_MS2PIP_single(sequence=sequence)

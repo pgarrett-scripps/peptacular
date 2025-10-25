@@ -2,13 +2,13 @@
 This module provides functions to generate permutations, combinations, and products of sequences.
 """
 
-from typing import overload
 from collections.abc import Sequence
+from typing import overload
 
+from ..constants import ParrallelMethod, ParrallelMethodLiteral
 from ..proforma.annotation import ProFormaAnnotation
-from .util import get_annotation_input
 from .parrallel import parallel_apply_internal
-from ..constants import ParrallelMethodLiteral, ParrallelMethod
+from .util import get_annotation_input
 
 
 def _permutations_single(

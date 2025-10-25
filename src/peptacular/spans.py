@@ -9,8 +9,8 @@ Working with spans can be a more efficient way of processing the data, since a p
 """
 
 from collections.abc import Generator
-from typing import Iterable
 from itertools import groupby
+from typing import Iterable
 
 from .proforma.dclasses import SPAN_TYPE
 

@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from .dclasses.modlist import ModList
-from .dclasses.intervallist import IntervalList
 from .characters import ProformaChar as PC
+from .dclasses.intervallist import IntervalList
+from .dclasses.modlist import ModList
 
 if TYPE_CHECKING:
     from .annotation import ProFormaAnnotation

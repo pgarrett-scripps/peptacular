@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-from collections import defaultdict
 import itertools
-from typing import Counter, Generator, Mapping, Sequence
-
 import re
+from collections import defaultdict
+from typing import Counter, Generator, Mapping, Sequence
 
 from ..constants import (
     BACKWARD_ION_TYPES,
@@ -14,19 +13,19 @@ from ..constants import (
     IonType,
     IonTypeLiteral,
 )
+from ..funcs import get_label, get_number
+from ..mass_calc import adjust_mass, adjust_mz
 from ..spans import (
     build_left_semi_spans,
     build_non_enzymatic_spans,
     build_right_semi_spans,
 )
-from ..funcs import get_label, get_number
-from ..mass_calc import adjust_mass, adjust_mz
 from .types import (
+    FRAGMENT_RETURN_TYPING,
+    Fragment,
     FragmentableAnnotation,
     FragmentReturnLiteral,
     FragmentReturnType,
-    Fragment,
-    FRAGMENT_RETURN_TYPING,
 )
 
 

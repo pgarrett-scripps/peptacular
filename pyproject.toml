@@ -17,6 +17,13 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
+dependencies = [
+    "matplotlib>=3.7.5",
+    "numpy>=1.24.4",
+    "pandas>=1.5.3",
+    "scikit-learn>=1.3.2",
+    "xgboost>=1.7.6",
+]
 
 [tool.setuptools]
 package-dir = {"" = "src"}
@@ -75,10 +82,15 @@ ms2pip = [
     "ms2pip"
 ]
 
+pymzml = [
+    "pymzml"
+]
+
 all = [
     {include-group = "plotting"},
     {include-group = "streamlit"},
     {include-group = "ms2pip"},
+    {include-group = "pymzml"},
     "brotli"
 ]
 

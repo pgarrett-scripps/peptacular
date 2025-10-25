@@ -1,6 +1,6 @@
-from typing import Optional, Tuple, Union
 import gzip
 import zlib
+from typing import Optional, Tuple, Union
 
 from .constants import BACKWARD_ION_TYPES, FORWARD_ION_TYPES, INTERNAL_ION_TYPES
 

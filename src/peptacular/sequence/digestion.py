@@ -14,15 +14,14 @@ Valid DigestReturnType's:
 
 """
 
-from typing import Literal, overload
 from collections.abc import Sequence
+from typing import overload
 
-from ..digestion import EnzymeConfig, DigestReturnType
-
+from ..constants import ParrallelMethod, ParrallelMethodLiteral
+from ..digestion import DigestReturnType, EnzymeConfig
 from ..proforma.annotation import ProFormaAnnotation
 from . import get_annotation_input
 from .parrallel import parallel_apply_internal
-from ..constants import ParrallelMethodLiteral, ParrallelMethod
 
 
 def _get_left_semi_enzymatic_sequences_single(

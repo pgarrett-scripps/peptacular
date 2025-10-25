@@ -1,12 +1,11 @@
 from __future__ import annotations
-from collections.abc import Generator
+
 import random
+from collections.abc import Generator
 from typing import TYPE_CHECKING, Any, Callable, Sequence
 
+from .dclasses import Interval, IntervalList, ModDict
 from .dclasses.modlist import ModList
-
-from .dclasses import ModDict, IntervalList, Interval
-
 from .parser import ProFormaParser
 
 if TYPE_CHECKING:

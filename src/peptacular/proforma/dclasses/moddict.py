@@ -1,10 +1,11 @@
 from __future__ import annotations
+
 from collections import UserDict
 from collections.abc import Iterable, Mapping
 from typing import Any
 
 from ...mod import setup_mod
-from .modlist import ModList, setup_mod_list, MODLIST_DATATYPE
+from .modlist import MODLIST_DATATYPE, ModList, setup_mod_list
 
 MODDICT_VALUE_TYPES = ModList | MODLIST_DATATYPE | Iterable[MODLIST_DATATYPE]
 
