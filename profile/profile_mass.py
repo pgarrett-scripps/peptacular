@@ -14,8 +14,8 @@ def run_mass():
     """Run mass calculation on many peptides."""
     # Generate proteins and digest them
     proteins = [generate_random_protein(1_000) for _ in range(100)]
-    
-    all_peptides = []
+
+    all_peptides: list[str] = []
     for protein in proteins:
         peptides = pt.digest(
             protein,
@@ -26,8 +26,12 @@ def run_mass():
             max_len=50
         )
         all_peptides.extend(list(peptides))
+
+    all_peptides = pt.build_mods(all_peptides, nterm_static="[+100]", cterm_static="[-50]", internal_variable={"M": "[+15.995]", "C": "[+57.021]"})
     
     print(f"Generated {len(all_peptides)} peptides for mass calculation")
+
+    print(all_peptides[:5])  # Show first 5 peptides
     
     # Now profile the mass calculation
     start_time = time.time()
@@ -44,11 +48,10 @@ def run_mass():
     print(f"Took {elapsed:.2f} seconds ({elapsed/len(all_peptides)*1000:.3f} ms per peptide)")
     return masses
 
-def run_mass_single():
+def run_mass_single(protein):
     """Run mass calculation on peptides from a single protein."""
-    protein = generate_random_protein(1000)
 
-    protein = "M[+100]" + protein + "K-[Oxidation]"  # Ensure cleavable ends
+    protein = "{Oxidation}M[+100]" + protein + "K-[Oxidation]"  # Ensure cleavable ends
     
     start_time = time.time()
     masses = pt.mass(
@@ -66,7 +69,12 @@ def profile_mass_single():
     """Profile mass calculation for single protein peptides (no multiprocessing)."""
     profiler = cProfile.Profile()
     profiler.enable()
-    result = run_mass_single()
+
+    proteins = [generate_random_protein(20) for _ in range(1)]
+
+    for protein in proteins:
+        for i in range(500):
+            result = run_mass_single(protein)
     profiler.disable()
     
     # Print stats
