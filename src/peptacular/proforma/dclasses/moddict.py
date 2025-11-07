@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from collections import UserDict
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable, Iterator, Mapping, MutableMapping
 from typing import Any
 
 from ...mod import setup_mod
@@ -10,9 +9,9 @@ from .modlist import MODLIST_DATATYPE, ModList, setup_mod_list
 MODDICT_VALUE_TYPES = ModList | MODLIST_DATATYPE | Iterable[MODLIST_DATATYPE]
 
 
-class ModDict(UserDict[int, ModList]):
+class ModDict(MutableMapping[int, ModList]):
     """Dictionary mapping positions to ModList instances."""
-    __slots__ = ('allow_dups', 'stackable', 'name')
+    __slots__ = ('_data', 'allow_dups', 'stackable', 'name')
 
     def __init__(
         self, 
@@ -21,12 +20,19 @@ class ModDict(UserDict[int, ModList]):
         stackable: bool = False,
         name: str | None = None
     ) -> None:
-        super().__init__()
+        self._data: dict[int, ModList] = {}
         self.allow_dups = allow_dups
         self.stackable = stackable
         self.name = name
         if initial is not None:
             self.update(initial)
+
+    # Required MutableMapping abstract methods
+    def __len__(self) -> int:
+        return len(self._data)
+
+    def __iter__(self) -> Iterator[int]:
+        return iter(self._data)
 
     def _validate_key(self, key: Any) -> None:
         """Validate that key is a non-negative integer"""
@@ -42,56 +48,56 @@ class ModDict(UserDict[int, ModList]):
             if value.allow_dups == self.allow_dups and value.stackable == self.stackable:
                 return value
             else:
-                return setup_mod_list(value.data, allow_dups=self.allow_dups, stackable=self.stackable, name=value.name)
+                return setup_mod_list(value._data, allow_dups=self.allow_dups, stackable=self.stackable, name=value.name)
 
         # Convert other types
         return setup_mod_list(value, allow_dups=self.allow_dups, stackable=self.stackable, name=self.name)
 
     def _cleanup_empty(self) -> None:
         """Remove any keys with empty ModLists"""
-        empty_keys = [k for k, v in self.data.items() if not v]
+        empty_keys = [k for k, v in self._data.items() if not v]
         for k in empty_keys:
-            del self.data[k]
+            del self._data[k]
 
     def __getitem__(self, key: int) -> ModList:
         """Get ModList for key, with validation"""
         self._validate_key(key)
-        return self.data[key]
+        return self._data[key]
 
     def __setitem__(self, key: int, value: MODDICT_VALUE_TYPES | None) -> None:
         """Set value for key, converting to ModList and handling empty values"""
         self._validate_key(key)
 
         if value is None:
-            if key in self.data:
-                del self.data[key]
+            if key in self._data:
+                del self._data[key]
             return
 
         modlist = self._normalize_value(value)
 
         if modlist:
-            self.data[key] = modlist
-        elif key in self.data:
-            del self.data[key]
+            self._data[key] = modlist
+        elif key in self._data:
+            del self._data[key]
 
     def __delitem__(self, key: int) -> None:
         """Delete key with validation"""
         self._validate_key(key)
-        del self.data[key]
+        del self._data[key]
 
     def __contains__(self, key: object) -> bool:
         """Check if key exists with validation"""
         if not isinstance(key, int) or key < 0:
             return False
-        return key in self.data
+        return key in self._data
 
     def get(self, key: object, default: Any = None) -> Any:
         """Get ModList for key with optional default"""
         if not isinstance(key, int) or key < 0:
             return None if default is None else self._normalize_value(default)
 
-        if key in self.data:
-            return self.data[key]
+        if key in self._data:
+            return self._data[key]
 
         return None if default is None else self._normalize_value(default)
 
@@ -100,7 +106,7 @@ class ModDict(UserDict[int, ModList]):
         self._validate_key(key)
 
         try:
-            return self.data.pop(key)
+            return self._data.pop(key)
         except KeyError:
             if default is None:
                 raise
@@ -112,16 +118,16 @@ class ModDict(UserDict[int, ModList]):
         """Get ModList for key, setting default if key doesn't exist"""
         self._validate_key(key)
 
-        if key in self.data:
-            return self.data[key]
+        if key in self._data:
+            return self._data[key]
 
         default_modlist = (
             self._normalize_value(default) if default is not None else ModList(allow_dups=self.allow_dups, stackable=self.stackable, name=f"{self.name}_{key}")
         )
 
         if default_modlist:
-            self.data[key] = default_modlist
-            return self.data[key]
+            self._data[key] = default_modlist
+            return self._data[key]
         else:
             return default_modlist
 
@@ -162,7 +168,7 @@ class ModDict(UserDict[int, ModList]):
         return True
 
     def __repr__(self) -> str:
-        return f"ModDict({dict(self.data)})"
+        return f"ModDict({dict(self._data)})"
 
     def copy(self, deep: bool = True) -> ModDict:
         """Create a copy of the ModDict - optimized to bypass __init__"""
@@ -174,12 +180,12 @@ class ModDict(UserDict[int, ModList]):
         result.name = self.name
         
         # Fast path: empty dict
-        if not self.data:
-            result.data = {}
+        if not self._data:
+            result._data = {}
             return result
         
         # Copy with pre-allocated dict
-        result.data = {key: modlist.copy() for key, modlist in self.data.items()}
+        result._data = {key: modlist.copy() for key, modlist in self._data.items()}
         
         return result
 
@@ -199,8 +205,8 @@ class ModDict(UserDict[int, ModList]):
             self._validate_key(key)
             new_modlist = self._normalize_value(value)
 
-            if key in self.data:
-                self.data[key] += new_modlist
+            if key in self._data:
+                self._data[key] += new_modlist
             else:
                 self[key] = new_modlist
 
@@ -210,8 +216,8 @@ class ModDict(UserDict[int, ModList]):
         """Extend ModList at key"""
         self._validate_key(key)
 
-        if key in self.data:
-            self.data[key] += self._normalize_value(value)
+        if key in self._data:
+            self._data[key] += self._normalize_value(value)
         else:
             self[key] = value
 
@@ -219,8 +225,8 @@ class ModDict(UserDict[int, ModList]):
         """Append single value to ModList at key"""
         self._validate_key(key)
 
-        if key in self.data:
-            self.data[key].append(value)
+        if key in self._data:
+            self._data[key].append(value)
         else:
             self[key] = [value]
 
@@ -228,13 +234,13 @@ class ModDict(UserDict[int, ModList]):
         """Remove value from ModList at key"""
         self._validate_key(key)
 
-        if key not in self.data:
+        if key not in self._data:
             raise KeyError(f"Key {key} not found in ModDict")
 
-        self.data[key].remove(value)
+        self._data[key].remove(value)
 
-        if not self.data[key]:
-            del self.data[key]
+        if not self._data[key]:
+            del self._data[key]
 
     def discard_from_key(self, key: int, value: MODLIST_DATATYPE) -> None:
         """Remove value from ModList at key without raising error"""
@@ -254,17 +260,27 @@ class ModDict(UserDict[int, ModList]):
 
     def is_empty(self) -> bool:
         """Check if ModDict has no modifications"""
-        return len(self.data) == 0
+        return len(self._data) == 0
 
     @property
     def has_mods(self) -> bool:
         """Check if ModDict has any modifications"""
-        return len(self.data) > 0
+        return len(self._data) > 0
 
     def clean_empty_lists(self):
-        for key in list(self.data.keys()):
-            if not self.data[key]:
-                del self.data[key]
+        for key in list(self._data.keys()):
+            if not self._data[key]:
+                del self._data[key]
+
+    @property
+    def data(self) -> dict[int, ModList]:
+        """Compatibility property for existing code that accesses .data"""
+        return self._data
+    
+    @data.setter
+    def data(self, value: dict[int, ModList]) -> None:
+        """Setter for compatibility with existing code that sets .data"""
+        self._data = value
 
 
 ACCEPTED_MODDICT_INPUT_TYPES = Mapping[int, MODDICT_VALUE_TYPES] | ModDict | None

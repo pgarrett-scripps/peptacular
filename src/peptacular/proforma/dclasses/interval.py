@@ -27,36 +27,27 @@ class ModInterval:
         if not self.ambiguous and len(self.mods) == 0:
             raise ValueError("Interval must be ambiguous or have mods")
 
-
+@dataclass(slots=True)
 class Interval:
     """A sequence interval with modlist"""
-    __slots__ = ('start', 'end', 'ambiguous', 'mods')
-
-
-    def __init__(
-        self,
-        start: int,
-        end: int,
-        ambiguous: bool,
-        mods: ModList | Iterable[MODLIST_DATATYPE] | MODLIST_DATATYPE | None = None,
-    ) -> None:
-        self.start: int = start
-        self.end: int = end
-        self.ambiguous: bool = ambiguous
-        self.mods: ModList = (
-            setup_mod_list(mods, allow_dups=True, stackable=False)
-            if not isinstance(mods, ModList)
-            else mods
-        )
+    start: int
+    end: int
+    ambiguous: bool
+    mods: ModList | Iterable[MODLIST_DATATYPE] | MODLIST_DATATYPE | None = None
 
     def __post_init__(self) -> None:
+
+        self.mods: ModList = (
+            setup_mod_list(self.mods, allow_dups=True, stackable=False)
+            if not isinstance(self.mods, ModList)
+            else self.mods
+        )
+
         if self.start < 0:
             raise ValueError("Interval start must be non-negative")
         if self.end < self.start:
             raise ValueError("Interval end must be >= start")
         # if not ambiguous and no mods, raise error
-        if not self.ambiguous and len(self.mods) == 0:
-            raise ValueError("Interval must be ambiguous or have mods")
 
     @property
     def has_mods(self) -> bool:

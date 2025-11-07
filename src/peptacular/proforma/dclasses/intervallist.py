@@ -2,8 +2,7 @@ from __future__ import annotations
 
 import copy
 import warnings
-from collections import UserList
-from collections.abc import Iterable
+from collections.abc import Iterable, Iterator, MutableSequence
 from typing import Any, Self, SupportsIndex
 
 from ..dclasses.modlist import MODLIST_DATATYPE, ModList
@@ -18,21 +17,36 @@ INTERVALLIST_DATATYPE = (
 )
 
 
-class IntervalList(UserList[Interval]):
+class IntervalList(MutableSequence[Interval]):
     """
     A list of Interval objects that automatically merges intervals with identical spans.
 
     Accepts Interval instances, ModInterval instances, tuples (start, end, ambiguous[, mods]),
     or iterables thereof. Internally stores everything as Interval instances with no duplicate spans.
     """
-    __slots__ = ()
+    __slots__ = ('_data',)
 
     def __init__(self, data: Iterable[INTERVALLIST_DATATYPE] | None = None) -> None:
-        # Initialize empty UserList
-        super().__init__()
+        self._data: list[Interval] = []
 
         if data is not None:
             self.extend(data)
+
+    # Required MutableSequence abstract methods
+    def __len__(self) -> int:
+        return len(self._data)
+
+    def __getitem__(self, index: int | slice) -> Interval | list[Interval]:
+        return self._data[index]
+
+    def __setitem__(self, index: int | slice, value: Interval | Iterable[Interval]) -> None:
+        self._data[index] = value  # type: ignore
+
+    def __delitem__(self, index: int | slice) -> None:
+        del self._data[index]
+
+    def __iter__(self) -> Iterator[Interval]:
+        return iter(self._data)
 
     def _normalize_input(self, item: INTERVALLIST_DATATYPE) -> Interval:
         """Convert input to Interval instance"""
@@ -40,7 +54,7 @@ class IntervalList(UserList[Interval]):
 
     def _find_same_span_index(self, interval: Interval) -> int | None:
         """Find index of existing interval with same span"""
-        for i, existing in enumerate(self.data):
+        for i, existing in enumerate(self._data):
             if existing.start == interval.start and existing.end == interval.end:
                 return i
         return None
@@ -50,10 +64,10 @@ class IntervalList(UserList[Interval]):
         idx = self._find_same_span_index(item)
         if idx is not None:
             # Merge into existing interval
-            self.data[idx].merge(item)
+            self._data[idx].merge(item)
         else:
             # Append new interval
-            self.data.append(item)
+            self._data.append(item)
 
     def append(self, item: INTERVALLIST_DATATYPE) -> None:
         """Add an interval, merging with existing interval if same span"""
@@ -82,9 +96,9 @@ class IntervalList(UserList[Interval]):
         interval = self._normalize_input(item)
 
         # Find exact match
-        for i, existing in enumerate(self.data):
+        for i, existing in enumerate(self._data):
             if existing == interval:
-                del self.data[i]
+                del self._data[i]
                 return
 
         raise ValueError(f"{item} is not in list")
@@ -99,7 +113,7 @@ class IntervalList(UserList[Interval]):
     def count(self, item: INTERVALLIST_DATATYPE) -> int:
         """Count occurrences of an interval (0 or 1 due to merging)"""
         interval = self._normalize_input(item)
-        return 1 if interval in self.data else 0
+        return 1 if interval in self._data else 0
 
     def index(
         self,
@@ -110,12 +124,12 @@ class IntervalList(UserList[Interval]):
         """Find index of interval"""
         interval = self._normalize_input(item)
 
-        length = len(self.data)
+        length = len(self._data)
         start_idx = start if isinstance(start, int) else 0
         stop_idx = stop if isinstance(stop, int) else length
 
         for i in range(start_idx, min(stop_idx, length)):
-            if self.data[i] == interval:
+            if self._data[i] == interval:
                 return i
         raise ValueError(f"{item} is not in list")
 
@@ -124,7 +138,7 @@ class IntervalList(UserList[Interval]):
         try:
             if isinstance(item, (Interval, ModInterval)):  # type: ignore
                 interval = self._normalize_input(item)
-                return interval in self.data
+                return interval in self._data
         except (TypeError, ValueError):
             pass
         return False
@@ -139,14 +153,14 @@ class IntervalList(UserList[Interval]):
             raise TypeError(f"Cannot add IntervalList with {type(other)}")
 
         result = IntervalList()
-        result.extend(self.data)
-        result.extend(other_intervallist.data)
+        result.extend(self._data)
+        result.extend(other_intervallist._data)
         return result
 
     def __iadd__(self, other: Iterable[INTERVALLIST_DATATYPE] | Self) -> IntervalList:
         """In-place addition"""
         if isinstance(other, IntervalList):
-            self.extend(other.data)
+            self.extend(other._data)
         elif isinstance(other, Iterable):  # type: ignore
             self.extend(other)
         else:
@@ -161,63 +175,76 @@ class IntervalList(UserList[Interval]):
             except (TypeError, ValueError):
                 return False
 
-        if len(self.data) != len(other.data):
+        if len(self._data) != len(other._data):
             return False
 
         # Since spans are unique due to merging, we can compare sets
-        return set(self.data) == set(other.data)
+        return set(self._data) == set(other._data)
 
     def copy(self, deep: bool = True) -> IntervalList:
         result = IntervalList()
         # Need to copy each Interval (which contains ModLists)
-        # Assuming Interval has a copy(deep=False) method
-        result.data = [interval.copy(deep=False) for interval in self.data]
+        result._data = [interval.copy(deep=False) for interval in self._data]
         return result
+
+    def clear(self) -> None:
+        """Remove all items from the IntervalList"""
+        self._data.clear()
 
     @property
     def has_ambiguous_intervals(self) -> bool:
         """Check if there are any ambiguous intervals"""
-        return any(interval.ambiguous for interval in self.data)
+        return any(interval.ambiguous for interval in self._data)
 
     def get_ambiguous_intervals(self) -> IntervalList:
         """Return a list of intervals that are ambiguous"""
-        return IntervalList([interval for interval in self.data if interval.ambiguous])
+        return IntervalList([interval for interval in self._data if interval.ambiguous])
 
     def pop_ambiguous_intervals(self) -> IntervalList:
         """Remove and return all ambiguous intervals"""
         ambiguous = self.get_ambiguous_intervals()
-        self.data = [interval for interval in self.data if not interval.ambiguous]
+        self._data = [interval for interval in self._data if not interval.ambiguous]
         return ambiguous
 
     @property
     def has_unambiguous_intervals(self) -> bool:
         """Check if there are any unambiguous intervals"""
-        return any(not interval.ambiguous for interval in self.data)
+        return any(not interval.ambiguous for interval in self._data)
 
     def get_unambiguous_intervals(self) -> IntervalList:
         """Return a list of intervals that are unambiguous"""
         return IntervalList(
-            [interval for interval in self.data if not interval.ambiguous]
+            [interval for interval in self._data if not interval.ambiguous]
         )
 
     def pop_unambiguous_intervals(self) -> IntervalList:
         """Remove and return all unambiguous intervals"""
         unambiguous = self.get_unambiguous_intervals()
-        self.data = [interval for interval in self.data if interval.ambiguous]
+        self._data = [interval for interval in self._data if interval.ambiguous]
         return unambiguous
 
     @property
     def has_intervals(self) -> bool:
         """Check if list has any intervals"""
-        return len(self.data) > 0
+        return len(self._data) > 0
 
     @property
     def is_empty(self) -> bool:
         """Check if list is empty"""
-        return len(self.data) == 0
+        return len(self._data) == 0
+
+    @property
+    def data(self) -> list[Interval]:
+        """Compatibility property for existing code that accesses .data"""
+        return self._data
+    
+    @data.setter
+    def data(self, value: list[Interval]) -> None:
+        """Setter for compatibility with existing code that sets .data"""
+        self._data = value
 
     def __repr__(self) -> str:
-        return f"IntervalList({self.data})"
+        return f"IntervalList({self._data})"
 
     # Additional convenience methods
 
@@ -226,7 +253,7 @@ class IntervalList(UserList[Interval]):
         return IntervalList(
             [
                 interval
-                for interval in self.data
+                for interval in self._data
                 if interval.start <= position < interval.end
             ]
         )
@@ -236,23 +263,23 @@ class IntervalList(UserList[Interval]):
         return IntervalList(
             [
                 interval
-                for interval in self.data
+                for interval in self._data
                 if interval.start < end and interval.end > start
             ]
         )
 
     def total_span(self) -> tuple[int, int] | None:
         """Get the total span covered by all intervals"""
-        if not self.data:
+        if not self._data:
             return None
 
-        min_start = min(interval.start for interval in self.data)
-        max_end = max(interval.end for interval in self.data)
+        min_start = min(interval.start for interval in self._data)
+        max_end = max(interval.end for interval in self._data)
         return (min_start, max_end)
 
     def get_mod_intervals(self) -> tuple[ModInterval, ...]:
         """Return a list of intervals that have modifications"""
-        return tuple(interval.get_immutable_interval() for interval in self.data)
+        return tuple(interval.get_immutable_interval() for interval in self._data)
 
 
 ACCEPTED_INTERVALLIST_INPUT_TYPES = (
