@@ -24,6 +24,7 @@ from ..errors import AmbiguousAminoAcidError, UnknownAminoAcidError
 from ..mass_calc import adjust_mass, adjust_mz, mod_mass
 from ..util import parse_static_mods
 from .dclasses.modlist import ModList
+from .dclasses import Mod
 
 if TYPE_CHECKING:
     from .annotation import ProFormaAnnotation
@@ -268,12 +269,12 @@ def mass(
         # No charge provided, use annotation's charge (or 0 if annotation has no charge)
         charge = annotation.charge if annotation.has_charge else 0
 
-    if annotation.has_static_mods or annotation.has_isotope_mods:
-        annotation = annotation.copy(deep=True)
-        annotation.condense_static_mods(inplace=True)
+        
 
     # more complex mass calculation (based on chem composition)
     if annotation.has_isotope_mods:
+        annotation = annotation.copy(deep=True)
+        annotation.condense_static_mods(inplace=True)
         peptide_composition, delta_mass = _comp_with_delta_mass(
             annotation=annotation,
             ion_type=ion_type,
@@ -289,6 +290,7 @@ def mass(
             )
             + delta_mass
         )
+    
 
     if ion_type not in (IonType.PRECURSOR, IonType.NEUTRAL):
         if annotation.charge is None or annotation.charge == 0:
@@ -298,6 +300,16 @@ def mass(
             )
 
     m: float = 0.0
+
+    if annotation.has_static_mods:
+        smod_info: dict[str, Mod] = parse_static_mods(annotation.get_static_mod_list().data)
+        # convert to mass
+        smod_masss: dict[str, float] = {k: mod_mass(v) for k, v in smod_info.items()}
+
+        for aa in annotation.sequence:
+            if aa in smod_masss:
+                m += smod_masss[aa]
+
     """
     if annotation.has_static_mods():
         static_map = parse_static_mods(annotation.static_mods)
@@ -327,31 +339,40 @@ def mass(
         raise UnknownAminoAcidError(str(err)) from err
 
     # Apply labile mods
-    if ion_type == IonType.PRECURSOR:
+    if ion_type == IonType.PRECURSOR and annotation.has_labile_mods:
         for mod in annotation.get_labile_mod_list():
             m += mod_mass(mod)
 
     # Apply Unknown mods
-    for mod in annotation.get_unknown_mod_list():
-        m += mod_mass(mod)
+    if annotation.has_unknown_mods:
+        for mod in annotation.get_unknown_mod_list():
+            m += mod_mass(mod)
 
     # Apply N-term mods
-    for mod in annotation.get_nterm_mod_list():
-        m += mod_mass(mod)
+    if annotation.has_nterm_mods:
+        for mod in annotation.get_nterm_mod_list():
+            m += mod_mass(mod)
 
     # Apply intervals
-    for interval in annotation.get_interval_list():
-        for mod in interval.mods:
-            m += mod_mass(mod)
+    if annotation.has_intervals:
+        for interval in annotation.get_interval_list():
+            for mod in interval.mods:
+                m += mod_mass(mod)
 
     # apply internal mods
-    for _, mods in annotation.get_internal_mod_dict().items():
-        for mod in mods:
-            m += mod_mass(mod)
+    if annotation.has_internal_mods:
+        for _, mods in annotation.get_internal_mod_dict().items():
+            for mod in mods:
+                m += mod_mass(mod)
 
     # apply C-term mods
-    for mod in annotation.get_cterm_mod_list():
-        m += mod_mass(mod)
+    if annotation.has_cterm_mods:
+        for mod in annotation.get_cterm_mod_list():
+            m += mod_mass(mod)
+
+    charge_adducts = None
+    if annotation.has_charge_adducts:
+        charge_adducts = annotation.get_charge_adduct_list().data
 
     return adjust_mass(
         base_mass=m,
@@ -360,7 +381,7 @@ def mass(
         monoisotopic=monoisotopic,
         isotope=isotope,
         loss=loss,
-        charge_adducts=annotation.get_charge_adduct_list().data,
+        charge_adducts=charge_adducts,
         precision=precision,
     )
 

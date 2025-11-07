@@ -6,6 +6,7 @@ from ..constants import C13_NEUTRON_MASS
 from ..isotope import IsotopeLookup
 from .compress import compress_spectra, decompress_spectra
 from .decon import SpectrumPeak, deconvolute
+import bisect
 
 
 class Spectrum:
@@ -512,6 +513,7 @@ class Spectrum:
         for peak in reversed(self.peaks):
             yield peak
 
+
     def merge_peaks_within_tolerance(
         self,
         tolerance: float,
@@ -519,67 +521,70 @@ class Spectrum:
         inplace: bool = True,
     ) -> Self:
         """
-        Merge peaks within tolerance by combining them into the most abundant peak.
-
-        Iterates through peaks in order of decreasing intensity, merging nearby peaks
-        into the most abundant one and removing the merged peaks.
-
-        Args:
-            tolerance: Tolerance value for merging
-            tolerance_unit: Unit of tolerance ('ppm' or 'da')
-            inplace: Whether to modify spectrum in place
-
-        Returns:
-            Modified spectrum
+        Merge peaks within tolerance using bisect for binary search.
         """
         if not self.peaks:
             return self if inplace else self.copy()
-
+        
         spectrum = self if inplace else self.copy()
-
-        # Sort peaks by intensity (descending)
-        sorted_peaks = sorted(spectrum.peaks, key=lambda p: p.intensity, reverse=True)
-
+        
+        # Sort peaks by m/z
+        mz_sorted_peaks = sorted(spectrum.peaks, key=lambda p: p.mz)
+        mz_values = [p.mz for p in mz_sorted_peaks]  # For binary search
+        
+        # Create intensity-sorted indices
+        intensity_idx = sorted(
+            range(len(mz_sorted_peaks)), 
+            key=lambda i: mz_sorted_peaks[i].intensity, 
+            reverse=True
+        )
+        
+        merged = [False] * len(mz_sorted_peaks)
         merged_peaks: list[SpectrumPeak] = []
-        merged_indices: set[int] = set()
-
-        # Create index mapping for original peaks
-        peak_to_idx = {id(peak): i for i, peak in enumerate(sorted_peaks)}
-
-        for i, base_peak in enumerate(sorted_peaks):
-            if i in merged_indices:
+        
+        for base_idx in intensity_idx:
+            if merged[base_idx]:
                 continue
-
-            # Calculate tolerance window for this peak
-            lower, upper = self._calculate_mz_window(
-                base_peak.mz, tolerance, tolerance_unit
-            )
-
-            # Find all peaks within tolerance
-            merged_intensity = base_peak.intensity
+            
+            base_peak = mz_sorted_peaks[base_idx]
+            base_mz = base_peak.mz
+            
+            # Calculate tolerance window
+            if tolerance_unit == "ppm":
+                tol = base_mz * tolerance * 1e-6
+            else:
+                tol = tolerance
+            
+            lower = base_mz - tol
+            upper = base_mz + tol
+            
+            # Binary search for range
+            left_idx = bisect.bisect_left(mz_values, lower)
+            right_idx = bisect.bisect_right(mz_values, upper)
+            
+            # Merge peaks in range
+            merged_intensity = 0.0
             merged_charge = base_peak.charge
-
-            for j, other_peak in enumerate(sorted_peaks[i + 1 :], start=i + 1):
-                if j in merged_indices:
-                    continue
-
-                if lower <= other_peak.mz <= upper:
-                    # Merge this peak
-                    merged_intensity += other_peak.intensity
-                    merged_indices.add(j)
-
-                    # Keep charge if consistent, otherwise set to None
-                    if merged_charge is not None and other_peak.charge is not None:
-                        if merged_charge != other_peak.charge:
-                            merged_charge = None
-
-            # Create merged peak with combined intensity
-            merged_peak = SpectrumPeak(base_peak.mz, merged_intensity, merged_charge)
-            merged_peaks.append(merged_peak)
-
-        # Sort merged peaks by m/z
+            has_inconsistent_charge = False
+            
+            for i in range(left_idx, right_idx):
+                if not merged[i]:
+                    peak = mz_sorted_peaks[i]
+                    merged_intensity += peak.intensity
+                    merged[i] = True
+                    
+                    # Check charge consistency
+                    if merged_charge is not None and peak.charge is not None:
+                        if merged_charge != peak.charge:
+                            has_inconsistent_charge = True
+            
+            # Create merged peak
+            final_charge = None if has_inconsistent_charge else merged_charge
+            merged_peaks.append(SpectrumPeak(base_mz, merged_intensity, final_charge))
+        
+        # Sort by m/z
         merged_peaks.sort(key=lambda p: p.mz)
-
+        
         spectrum.peaks = merged_peaks
         return spectrum
 

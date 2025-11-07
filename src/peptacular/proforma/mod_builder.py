@@ -138,6 +138,23 @@ def apply_mods(
     return annotation
 
 
+def apply_static_mods_infront(
+    annotation: ProFormaAnnotation,
+    internal_static: Mapping[str, Iterable[str | float | int | Mod]] | None = None,
+    is_regex: bool = False,
+) -> ProFormaAnnotation:
+    if is_regex:
+        raise NotImplementedError("Regex not supported for infront static mods")
+    
+    if internal_static is None:
+        return annotation
+
+    for mod_aa, mod_values in internal_static.items():
+        for mod_value in mod_values:
+            annotation.add_static_mod_by_residue(mod_aa, mod_value, inplace=True)
+
+    return annotation
+
 def build_mods(
     annotation: ProFormaAnnotation,
     nterm_static: Mapping[str, Iterable[str | float | int | Mod]] | None = None,
@@ -150,6 +167,8 @@ def build_mods(
     labile_variable: Mapping[str, Iterable[str | float | int | Mod]] | None = None,
     max_variable_mods: int = 2,
     use_regex: bool = False,
+    use_static_notation: bool = False,
+    unique_peptidoforms: bool = False,
     inplace: bool = False,
 ) -> Generator[ProFormaAnnotation, None, None]:
     """
@@ -167,6 +186,7 @@ def build_mods(
         labile_variable: Variable labile modifications
         max_variable_mods: Maximum number of variable modifications to apply
         use_regex: Whether to use regex for modification site matching
+        unique_peptidoforms: If True, only yield unique modification patterns (by mod composition, not position)
 
     Yields:
         ProFormaAnnotation: Each possible modification combination
@@ -220,21 +240,33 @@ def build_mods(
             for mod in mods:
                 variable_site_mod_pairs.append(("labile", site, mod))
 
-    static_modified_annotation = apply_mods(
-        annotation,
-        nterm=nterm_static,
-        cterm=cterm_static,
-        internal=internal_static,
-        inplace=inplace,
-        merge_strat="merge",
-        is_regex=use_regex,
-    )
+    if use_static_notation:
+        static_modified_annotation = apply_static_mods_infront(
+            annotation,
+            internal_static=internal_static,
+            is_regex=use_regex,
+        )
+    else:
+        static_modified_annotation = apply_mods(
+            annotation,
+            nterm=nterm_static,
+            cterm=cterm_static,
+            internal=internal_static,
+            inplace=inplace,
+            merge_strat="merge",
+            is_regex=use_regex,
+        )
 
     if labile_static:
         labile_static_sites = get_sites(annotation.sequence, labile_static, use_regex)
         for site, mods in labile_static_sites.items():
             for mod in mods:
                 static_modified_annotation.append_labile_mod(mod)
+
+    # Track seen modification combinations if first_proteoform_only
+    seen_mod_combinations: set[tuple] | None = None
+    if unique_peptidoforms:
+        seen_mod_combinations = set()
 
     # Generate all combinations of variable modifications up to max_variable_mods
     for num_var_mods in range(max_variable_mods + 1):
@@ -254,6 +286,19 @@ def build_mods(
 
             if has_conflict:
                 continue
+
+            # OPTIMIZATION: Check uniqueness early if first_proteoform_only
+            if unique_peptidoforms:
+                # Create a hashable signature of the modification combination
+                # Sort by (mod_type, mod_value) to make position-independent
+                mod_signature = tuple(sorted(
+                    (mod_type, _get_mod_value(mod))
+                    for mod_type, site, mod in var_mod_combination
+                ))
+                
+                if mod_signature in seen_mod_combinations:
+                    continue
+                seen_mod_combinations.add(mod_signature)
 
             # Start with base annotation and apply static mods
             modified_annotation = static_modified_annotation.copy()
@@ -296,3 +341,10 @@ def build_mods(
                     modified_annotation.append_labile_mod(mod)
 
             yield modified_annotation
+
+
+def _get_mod_value(mod: str | float | int | Mod) -> str | float | int:
+    """Extract the comparable value from a modification."""
+    if isinstance(mod, Mod):
+        return mod.val
+    return mod

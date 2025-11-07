@@ -4,6 +4,16 @@ import unittest
 
 
 class TestMass(unittest.TestCase):
+
+    def test_calculate_mass1(self):
+        sequence1 = "PE[+10]PTIDE[+10]"
+        sequence2 = "<[+10]@E>PEPTIDE"
+
+        # ensure the mass calculations are the same
+        mass1 = pt.mass(sequence1, charge=0, ion_type="y", monoisotopic=True)
+        mass2 = pt.mass(sequence2, charge=0, ion_type="y", monoisotopic=True)
+        self.assertEqual(mass1, mass2)
+
     def test_calculate_mz_with_unmodified_peptide(self):
         sequence = "PEPTIDE"
         places = 2
@@ -523,3 +533,7 @@ class TestMass(unittest.TestCase):
                 self.assertAlmostEqual(
                     pt_frag, py_frag, places, msg=f"Failed for {n}th {i} ion type"
                 )
+
+
+if __name__ == "__main__":
+    unittest.main()

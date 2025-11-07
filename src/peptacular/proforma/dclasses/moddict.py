@@ -14,9 +14,16 @@ class ModDict(UserDict[int, ModList]):
     """Dictionary mapping positions to ModList instances."""
 
     def __init__(
-        self, initial: Mapping[int, MODDICT_VALUE_TYPES] | None = None
+        self, 
+        initial: Mapping[int, MODDICT_VALUE_TYPES] | None = None,
+        allow_dups: bool = True,
+        stackable: bool = False,
+        name: str | None = None
     ) -> None:
         super().__init__()
+        self.allow_dups = allow_dups
+        self.stackable = stackable
+        self.name = name
         if initial is not None:
             self.update(initial)
 
@@ -31,13 +38,13 @@ class ModDict(UserDict[int, ModList]):
         """Convert value to ModList instance - optimized"""
         # Fast path: already a ModList with correct settings
         if isinstance(value, ModList):
-            if value.allow_dups and not value.stackable:
+            if value.allow_dups == self.allow_dups and value.stackable == self.stackable:
                 return value
-            # Need to convert
-            return setup_mod_list(value.data, allow_dups=True, stackable=False)
+            else:
+                return setup_mod_list(value.data, allow_dups=self.allow_dups, stackable=self.stackable, name=value.name)
 
         # Convert other types
-        return setup_mod_list(value, allow_dups=True, stackable=False)
+        return setup_mod_list(value, allow_dups=self.allow_dups, stackable=self.stackable, name=self.name)
 
     def _cleanup_empty(self) -> None:
         """Remove any keys with empty ModLists"""
@@ -108,7 +115,7 @@ class ModDict(UserDict[int, ModList]):
             return self.data[key]
 
         default_modlist = (
-            self._normalize_value(default) if default is not None else ModList()
+            self._normalize_value(default) if default is not None else ModList(allow_dups=self.allow_dups, stackable=self.stackable, name=f"{self.name}_{key}")
         )
 
         if default_modlist:
@@ -159,15 +166,20 @@ class ModDict(UserDict[int, ModList]):
     def copy(self, deep: bool = True) -> ModDict:
         """Create a copy of the ModDict - optimized to bypass __init__"""
         result = object.__new__(ModDict)
-
+        
+        # CRITICAL: Set instance attributes that __init__ would have set
+        result.allow_dups = self.allow_dups
+        result.stackable = self.stackable
+        result.name = self.name
+        
         # Fast path: empty dict
         if not self.data:
             result.data = {}
             return result
-
+        
         # Copy with pre-allocated dict
         result.data = {key: modlist.copy() for key, modlist in self.data.items()}
-
+        
         return result
 
     def merge(self, other: Mapping[int, MODDICT_VALUE_TYPES]) -> None:
@@ -176,7 +188,7 @@ class ModDict(UserDict[int, ModList]):
             items = other.items()
         elif isinstance(other, Mapping):  # type: ignore
             items = [
-                (k, setup_mod_list(v, allow_dups=True, stackable=False))
+                (k, setup_mod_list(v, allow_dups=self.allow_dups, stackable=self.stackable, name=self.name))
                 for k, v in other.items()
             ]
         else:
@@ -257,8 +269,27 @@ class ModDict(UserDict[int, ModList]):
 ACCEPTED_MODDICT_INPUT_TYPES = Mapping[int, MODDICT_VALUE_TYPES] | ModDict | None
 
 
-def setup_mod_dict(initial: ACCEPTED_MODDICT_INPUT_TYPES = None) -> ModDict:
+def setup_mod_dict(initial: ACCEPTED_MODDICT_INPUT_TYPES = None, allow_dups: bool = True, stackable: bool = False) -> ModDict:
     """Initialize a ModDict from various input types."""
     if isinstance(initial, ModDict):
         return initial
-    return ModDict(initial)
+    return ModDict(initial, allow_dups=allow_dups, stackable=stackable)
+
+
+def populate_mod_dict(
+    mod_dict: ModDict,
+    data: ACCEPTED_MODDICT_INPUT_TYPES
+) -> ModDict:
+    """Populates and returns a ModDict from various input types."""
+    if data is None:
+        return mod_dict
+
+    if isinstance(data, ModDict):
+        mod_dict.merge(data)
+    elif isinstance(data, Mapping):  # type: ignore
+        for key, value in data.items():
+            mod_dict[key] = value
+    else:
+        raise TypeError(f"Cannot populate ModDict with {type(data)}")
+
+    return mod_dict

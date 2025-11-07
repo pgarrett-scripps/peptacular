@@ -141,6 +141,41 @@ def condense_static_mods(
     return annotation
 
 
+def condense_to_peptidoform(
+    annotation: ProFormaAnnotation, inplace: bool = True
+) -> ProFormaAnnotation:
+    """
+    Condense all modifications into peptidoform notation
+    PEP[+100]TI[+20]DE-[30]
+
+    {+100|info:P}{+20|info:T}{-30|info:Nterm}PEPTIDE
+    """
+
+    if inplace is False:
+        return condense_to_peptidoform(annotation.copy(), inplace=True)
+    
+    # pop intervals
+    intervals = annotation.pop_intervals()
+
+    internal_mods = annotation.pop_internal_mods()
+    unknown_mods: list[str] = []
+    if internal_mods is not None:
+        for _, mods in internal_mods.items():
+            for mod in mods:
+                unknown_mods.append(f"{str(mod)}")
+
+    if intervals is not None:
+        for interval in intervals:
+            for mod in interval.mods:
+                unknown_mods.append(f"{str(mod)}")
+
+    try:
+        annotation.extend_unknown_mods(unknown_mods)
+    except Exception as e:
+        print(f"Error extending unknown mods: {e}. Annotation: {annotation}")
+    annotation.sort_mods()
+    return annotation
+
 def count_residues(
     annotation: ProFormaAnnotation, include_mods: bool = True
 ) -> dict[str, int]:

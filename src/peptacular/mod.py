@@ -11,7 +11,7 @@ def _serialize_mod_cached(
     val: MOD_VALUE_TYPES,
     val_type: str,  # Add this!
     mult: int,
-    brackets: str,
+    brackets: str | None,
     include_plus: bool,
     precision: int | None,
 ) -> str:
@@ -30,6 +30,15 @@ def _serialize_mod_cached(
     # Add plus if needed
     if include_plus and isinstance(val, (int, float)) and val > 0:
         val_str = f"+{val_str}"
+
+    if brackets is None:
+        brackets: tuple[str, str] = ("", "")
+        if mult > 1:
+            raise ValueError("Brackets must be provided if multiplier is greater than 1.")
+    else:
+        if len(brackets) != 2:
+            raise ValueError("Brackets string must be of length 2.")
+        brackets = (brackets[0], brackets[1])
 
     # Format with multiplier
     if mult > 1:
@@ -57,7 +66,7 @@ class Mod:
 
     def serialize(
         self,
-        brackets: str,
+        brackets: str | None,
         include_plus: bool = False,
         precision: int | None = None,
     ) -> str:
@@ -70,6 +79,50 @@ class Mod:
             include_plus,
             precision,
         )
+    
+    @staticmethod
+    def parse(mod_str: str, brackets: str | None) -> Mod:
+        """
+        Parse a mod string into a Mod object
+        """
+        # Handle multiplier
+        if brackets is not None and len(brackets) != 2:
+            raise ValueError("Brackets string must be of length 2.")
+        
+        mult = 1
+        val_str = mod_str
+        
+        # Remove brackets if present
+        if brackets is not None:
+            open_br, close_br = brackets[0], brackets[1]
+            if mod_str.startswith(open_br) and close_br in mod_str:
+                # Find the closing bracket and check for multiplier
+                close_idx = mod_str.rfind(close_br)
+                val_str = mod_str[len(open_br):close_idx]
+                
+                # Check for ^multiplier after closing bracket
+                remainder = mod_str[close_idx + len(close_br):]
+                if remainder.startswith('^'):
+                    mult = int(remainder[1:])
+            else:
+                val_str = mod_str
+        
+        # Remove leading plus sign if present
+        if val_str.startswith('+'):
+            val_str = val_str[1:]
+        
+        # Try to parse as float or int
+        try:
+            if '.' in val_str or 'e' in val_str.lower():
+                val = float(val_str)
+            else:
+                val = int(val_str)
+        except ValueError:
+            # If parsing fails, treat as string
+            val = val_str
+        
+        return Mod(val, mult)
+        
 
     def __hash__(self) -> int:
         return hash((self.val, self.mult))

@@ -10,6 +10,8 @@ from ...mod import MOD_VALUE_TYPES, Mod, setup_mod
 MODLIST_DATATYPE = MOD_VALUE_TYPES | Mod
 
 
+from functools import lru_cache
+
 class ModList(UserList[Mod]):
     """
     A list of modifications that automatically merges duplicates by aggregating multipliers.
@@ -20,10 +22,12 @@ class ModList(UserList[Mod]):
         data: Iterable[MODLIST_DATATYPE] | None = None,
         allow_dups: bool = True,
         stackable: bool = True,
+        name: str | None = None,
     ) -> None:
         super().__init__()
         self.allow_dups = allow_dups
         self.stackable = stackable
+        self.name = name
 
         if allow_dups is False and stackable is True:
             warnings.warn(
@@ -53,9 +57,9 @@ class ModList(UserList[Mod]):
         """Merge with existing mod or append new one"""
         idx = self._find_same_mod_index(item)
         if idx is not None:
-            if not self.allow_dups and item.mult > 0:
+            if self.allow_dups is False and item.mult > 0:
                 raise ValueError(
-                    f"Cannot add modification {item} to non-stackable ModList"
+                    f"Cannot add modification {item} to non-stackable ModList({self.name if self.name else ''})"
                 )
 
             self.data[idx] = Mod(self.data[idx].val, self.data[idx].mult + item.mult)
@@ -160,7 +164,7 @@ class ModList(UserList[Mod]):
 
     def __add__(self, other: Iterable[MODLIST_DATATYPE] | Self) -> ModList:
         """Return new ModList combining both lists"""
-        result = ModList()
+        result = ModList(allow_dups=self.allow_dups, stackable=self.stackable)
         result.extend(self.data)
 
         if isinstance(other, ModList):
@@ -168,7 +172,7 @@ class ModList(UserList[Mod]):
         elif isinstance(other, Iterable):  # type: ignore
             result.extend(other)
         else:
-            raise TypeError(f"Cannot add ModList with {type(other)}")
+            raise TypeError(f"Cannot add ModList({self.name if self.name else ''}) with {type(other)}")
 
         return result
 
@@ -179,7 +183,7 @@ class ModList(UserList[Mod]):
         elif isinstance(other, Iterable):  # type: ignore
             self.extend(other)
         else:
-            raise TypeError(f"Cannot add ModList with {type(other)}")
+            raise TypeError(f"Cannot add ModList({self.name if self.name else ''}) with {type(other)}")
 
         return self
 
@@ -206,6 +210,7 @@ class ModList(UserList[Mod]):
         result = object.__new__(ModList)
         result.allow_dups = self.allow_dups
         result.stackable = self.stackable
+        result.name = self.name
 
         # Micro-optimization: avoid .copy() overhead for empty lists
         if self.data:
@@ -226,6 +231,13 @@ class ModList(UserList[Mod]):
 
         return tuple(values)
 
+    def __hash__(self) -> int:
+        """Make ModList hashable based on its contents"""
+        return hash((
+            tuple((mod.val, mod.mult) for mod in self.data),
+            self.stackable
+        ))
+
     def serialize(
         self,
         brackets: str,
@@ -233,26 +245,48 @@ class ModList(UserList[Mod]):
         include_plus: bool = False,
         precision: int | None = None,
     ) -> str:
-        """Serialize the ModList into a string representation."""
+        """Serialize the ModList into a string representation (cached)."""
+        return self._serialize_cached(
+            tuple((mod.val, mod.mult) for mod in self.data),
+            brackets,
+            sort,
+            include_plus,
+            precision,
+            self.stackable
+        )
+    
+    @staticmethod
+    @lru_cache(maxsize=10000)
+    def _serialize_cached(
+        mods_tuple: tuple[tuple[MOD_VALUE_TYPES, int], ...],
+        brackets: str,
+        sort: bool,
+        include_plus: bool,
+        precision: int | None,
+        stackable: bool
+    ) -> str:
+        """Cached implementation of serialization."""
         elems: list[str] = []
-        for mod in self.data:
-            if self.stackable:
+        
+        for val, mult in mods_tuple:
+            mod = Mod(val, mult)
+            if stackable:
                 elems.append(
                     mod.serialize(
                         brackets, include_plus=include_plus, precision=precision
                     )
                 )
             else:
-                for _ in range(mod.mult):
+                for _ in range(mult):
                     elems.append(
-                        Mod(mod.val, 1).serialize(
+                        Mod(val, 1).serialize(
                             brackets, include_plus=include_plus, precision=precision
                         )
                     )
-
+        
         if sort:
             elems.sort()
-
+        
         return "".join(elems)
 
     @property
@@ -276,12 +310,13 @@ def setup_mod_list(
     mods: MODLIST_DATATYPE | Iterable[MODLIST_DATATYPE] | ModList | None,
     allow_dups: bool = False,
     stackable: bool = False,
+    name: str | None = None,
 ) -> ModList:
     """Helper function to set up a ModList from various input types."""
     if isinstance(mods, ModList):
         return mods
 
-    mod_list: ModList = ModList(allow_dups=allow_dups, stackable=stackable)
+    mod_list: ModList = ModList(allow_dups=allow_dups, stackable=stackable, name=name)
 
     if mods is None:
         pass

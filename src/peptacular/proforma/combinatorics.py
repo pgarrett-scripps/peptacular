@@ -33,11 +33,12 @@ def generate_permutations(
 
     # Generate permutations of split amino acids
     split_aas = annotation_copy.split()
+    from .annotation import ProFormaAnnotation
 
     for permutation in itertools.permutations(split_aas, size):
         # Create new annotation from permuted sequence
         combined_sequence = "".join(aa.serialize() for aa in permutation)
-        result = annotation.__class__(sequence=combined_sequence)
+        result = ProFormaAnnotation.parse(combined_sequence)
         _apply_extracted_mods(result, outside_mods)
         yield result
 
@@ -66,9 +67,10 @@ def generate_product(
 
     split_aas = annotation_copy.split()
 
+    from .annotation import ProFormaAnnotation
     for product in itertools.product(split_aas, repeat=repeat):
         combined_sequence = "".join(aa.serialize() for aa in product)
-        result = annotation.__class__(sequence=combined_sequence)
+        result = ProFormaAnnotation.parse(combined_sequence)
         _apply_extracted_mods(result, outside_mods)
         yield result
 
@@ -96,10 +98,11 @@ def generate_combinations(
     outside_mods = _extract_non_internal_mods(annotation_copy)
 
     split_aas = annotation_copy.split()
+    from .annotation import ProFormaAnnotation
 
     for combination in itertools.combinations(split_aas, r=r):
         combined_sequence = "".join(aa.serialize() for aa in combination)
-        result = annotation.__class__(sequence=combined_sequence)
+        result = ProFormaAnnotation.parse(combined_sequence)
         _apply_extracted_mods(result, outside_mods)
         yield result
 
@@ -127,10 +130,11 @@ def generate_combinations_with_replacement(
     outside_mods = _extract_non_internal_mods(annotation_copy)
 
     split_aas = annotation_copy.split()
+    from .annotation import ProFormaAnnotation
 
     for combination in itertools.combinations_with_replacement(split_aas, r=r):
         combined_sequence = "".join(aa.serialize() for aa in combination)
-        result = annotation.__class__(sequence=combined_sequence)
+        result = ProFormaAnnotation.parse(combined_sequence)
         _apply_extracted_mods(result, outside_mods)
         yield result
 

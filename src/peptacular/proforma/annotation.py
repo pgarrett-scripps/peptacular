@@ -11,6 +11,7 @@ from ..constants import (
     ModTypeLiteral,
     get_mod_type,
     get_mods,
+    AMINO_ACIDS
 )
 from ..digestion import (
     DigestionMixin,
@@ -42,16 +43,16 @@ from .dclasses import (
     ModDict,
     ModInterval,
     ModList,
-    setup_interval_list,
-    setup_mod_dict,
-    setup_mod_list,
+    populate_mod_dict,
+    populate_interval_list,
+    populate_mod_list,
 )
 from .dclasses.interval import Interval
-from .dclasses.modlist import populate_mod_list
 from .manipulation import (
     condense_mods_to_intervals,
     condense_static_mods,
     count_residues,
+    condense_to_peptidoform,
     coverage,
     find_indices,
     is_subsequence,
@@ -101,6 +102,8 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         intervals: ACCEPTED_INTERVALLIST_INPUT_TYPES = None,
         charge: int | None = None,
     ) -> None:
+        
+
         self._sequence: str = sequence if sequence is not None else ""
         self._charge: int | None = charge
 
@@ -114,6 +117,14 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         self._adduct_mod_list: ModList | None = None
         self._internal_mod_dict: ModDict | None = None
         self._interval_list: IntervalList | None = None
+
+
+        # check if sequence is modified
+        if any(aa not in AMINO_ACIDS for aa in sequence or ""):
+            # modified sequence - parse it
+            raise ValueError(
+                "Sequence contains modifications. Use ProFormaAnnotation.parse() to parse modified sequences."
+            )
 
         # Use setters to populate if not None
         if isotope_mods is not None:
@@ -138,43 +149,43 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
     @staticmethod
     def create_isotope_mod_list() -> ModList:
         # Create fresh object each time - no sharing!
-        return ModList(allow_dups=False, stackable=False)
+        return ProFormaParser.create_isotope_mod_list()
 
     @staticmethod
     def create_static_mod_list() -> ModList:
-        return ModList(allow_dups=True, stackable=True)
+        return ProFormaParser.create_static_mod_list()
 
     @staticmethod
     def create_labile_mod_list() -> ModList:
-        return ModList(allow_dups=True, stackable=True)
+        return ProFormaParser.create_labile_mod_list()
 
     @staticmethod
     def create_unknown_mod_list() -> ModList:
-        return ModList(allow_dups=True, stackable=True)
+        return ProFormaParser.create_unknown_mod_list()
 
     @staticmethod
     def create_nterm_mod_list() -> ModList:
-        return ModList(allow_dups=True, stackable=True)
+        return ProFormaParser.create_nterm_mod_list()
 
     @staticmethod
     def create_cterm_mod_list() -> ModList:
-        return ModList(allow_dups=True, stackable=False)
+        return ProFormaParser.create_cterm_mod_list()
 
     @staticmethod
     def create_charge_adducts_mod_list() -> ModList:
-        return ModList(allow_dups=True, stackable=False)
+        return ProFormaParser.create_charge_adducts_mod_list()
 
     @staticmethod
     def create_internal_mod_dict() -> ModDict:
-        return ModDict()
+        return ProFormaParser.create_internal_mod_dict()
 
     @staticmethod
     def create_interval_list() -> IntervalList:
-        return IntervalList()
+        return ProFormaParser.create_interval_list()
 
     @staticmethod
     def create_empty_internal_mod_list() -> ModList:
-        return ModList(allow_dups=True, stackable=False)
+        return ProFormaParser.create_empty_internal_mod_list()
 
     @staticmethod
     def parse(sequence: str) -> "ProFormaAnnotation":
@@ -665,8 +676,8 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         else:
             self._internal_mod_dict.clear()
 
-        for key, mod_value in setup_mod_dict(value).items():
-            self._internal_mod_dict[key] = mod_value
+        populate_mod_dict(self._internal_mod_dict, value)
+
 
     @intervals.setter
     def intervals(self, value: ACCEPTED_INTERVALLIST_INPUT_TYPES) -> None:
@@ -679,7 +690,7 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         else:
             self._interval_list.clear()
 
-        self._interval_list.extend(setup_interval_list(value))
+        populate_interval_list(self._interval_list, value)
 
     @charge.setter
     def charge(self, value: int | None):
@@ -1390,7 +1401,7 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         if not inplace:
             return self.copy().extend_isotope_mods(mods, inplace=True)
         if mods is not None:
-            self.get_isotope_mod_list().extend(setup_mod_list(mods))
+            self.get_isotope_mod_list().extend(mods)
         return self
 
     def extend_static_mods(
@@ -1399,7 +1410,7 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         if not inplace:
             return self.copy().extend_static_mods(mods, inplace=True)
         if mods is not None:
-            self.get_static_mod_list().extend(setup_mod_list(mods))
+            self.get_static_mod_list().extend(mods)
         return self
 
     def extend_labile_mods(
@@ -1408,7 +1419,7 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         if not inplace:
             return self.copy().extend_labile_mods(mods, inplace=True)
         if mods is not None:
-            self.get_labile_mod_list().extend(setup_mod_list(mods))
+            self.get_labile_mod_list().extend(mods)
         return self
 
     def extend_unknown_mods(
@@ -1417,7 +1428,7 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         if not inplace:
             return self.copy().extend_unknown_mods(mods, inplace=True)
         if mods is not None:
-            self.get_unknown_mod_list().extend(setup_mod_list(mods))
+            self.get_unknown_mod_list().extend(mods)
         return self
 
     def extend_nterm_mods(
@@ -1426,7 +1437,7 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         if not inplace:
             return self.copy().extend_nterm_mods(mods, inplace=True)
         if mods is not None:
-            self.get_nterm_mod_list().extend(setup_mod_list(mods))
+            self.get_nterm_mod_list().extend(mods)
         return self
 
     def extend_cterm_mods(
@@ -1435,7 +1446,7 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         if not inplace:
             return self.copy().extend_cterm_mods(mods, inplace=True)
         if mods is not None:
-            self.get_cterm_mod_list().extend(setup_mod_list(mods))
+            self.get_cterm_mod_list().extend(mods)
         return self
 
     def extend_charge_adducts(
@@ -1444,7 +1455,7 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         if not inplace:
             return self.copy().extend_charge_adducts(charge_adducts, inplace=True)
         if charge_adducts is not None:
-            self.get_charge_adduct_list().extend(setup_mod_list(charge_adducts))
+            self.get_charge_adduct_list().extend(mods)
         return self
 
     def extend_internal_mods_at_index(
@@ -1462,7 +1473,7 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         if not inplace:
             return self.copy().extend_intervals(intervals, inplace=True)
         if intervals is not None:
-            self.get_interval_list().extend(setup_interval_list(intervals))
+            self.get_interval_list().extend(intervals)
         return self
 
     def _extend_by_type(self, value: Any, mod_type: ModType) -> Self:
@@ -1643,61 +1654,47 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
 
     def get_isotope_mod_list(self) -> ModList:
         if self._isotope_mod_list is None:
-            self._isotope_mod_list = setup_mod_list(
-                None, allow_dups=False, stackable=False
-            )
+            self._isotope_mod_list = ProFormaAnnotation.create_isotope_mod_list()
         return self._isotope_mod_list
 
     def get_static_mod_list(self) -> ModList:
         if self._static_mod_list is None:
-            self._static_mod_list = setup_mod_list(
-                None, allow_dups=True, stackable=True
-            )
+            self._static_mod_list = ProFormaAnnotation.create_static_mod_list()
         return self._static_mod_list
 
     def get_labile_mod_list(self) -> ModList:
         if self._labile_mod_list is None:
-            self._labile_mod_list = setup_mod_list(
-                None, allow_dups=True, stackable=True
-            )
+            self._labile_mod_list = ProFormaAnnotation.create_labile_mod_list()
         return self._labile_mod_list
 
     def get_unknown_mod_list(self) -> ModList:
         if self._unknown_mod_list is None:
-            self._unknown_mod_list = setup_mod_list(
-                None, allow_dups=True, stackable=True
-            )
+            self._unknown_mod_list = ProFormaAnnotation.create_unknown_mod_list()
         return self._unknown_mod_list
 
     def get_nterm_mod_list(self) -> ModList:
         if self._nterm_mod_list is None:
-            self._nterm_mod_list = setup_mod_list(
-                None, allow_dups=True, stackable=False
-            )
+            self._nterm_mod_list = ProFormaAnnotation.create_nterm_mod_list()
         return self._nterm_mod_list
 
     def get_cterm_mod_list(self) -> ModList:
         if self._cterm_mod_list is None:
-            self._cterm_mod_list = setup_mod_list(
-                None, allow_dups=True, stackable=False
-            )
+            self._cterm_mod_list = ProFormaAnnotation.create_cterm_mod_list()
         return self._cterm_mod_list
 
     def get_charge_adduct_list(self) -> ModList:
         if self._adduct_mod_list is None:
-            self._adduct_mod_list = setup_mod_list(
-                None, allow_dups=True, stackable=False
-            )
+            self._adduct_mod_list = ProFormaAnnotation.create_charge_adducts_mod_list()
         return self._adduct_mod_list
 
     def get_internal_mod_dict(self) -> ModDict:
         if self._internal_mod_dict is None:
-            self._internal_mod_dict = ModDict()
+            self._internal_mod_dict = ProFormaAnnotation.create_internal_mod_dict()
         return self._internal_mod_dict
 
     def get_interval_list(self) -> IntervalList:
         if self._interval_list is None:
-            self._interval_list = setup_interval_list(None)
+            self._interval_list = ProFormaAnnotation.create_interval_list()
         return self._interval_list
 
     """
@@ -1921,6 +1918,37 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
     Other
     """
 
+    def add_static_mod_by_residue(
+        self,
+        residue: str | Iterable[str],
+        mod: str | int | float | Mod,
+        include_plus: bool = False,
+        precision: int = 5,
+        inplace: bool = True) -> Self:
+
+        if not inplace:
+            return self.copy().add_static_mod_by_residue(residue, mod, inplace=True)
+        
+        residues = list(residue)
+
+        # filter residues to only those in the sequence
+        residues = [aa for aa in residues if aa in self.stripped_sequence]
+
+        if len(residues) == 0:
+            return self
+
+        # aa sep by ,
+        static_residue_str: str = ','.join(residues)
+
+        if isinstance(mod, (str, int, float)):
+            mod = Mod(mod)
+
+        static_mod = f"{mod.serialize('[]', include_plus=include_plus, precision=precision)}@{static_residue_str}"
+        
+        
+        self.append_static_mod(static_mod, inplace=True)
+        return self
+
     def contains_sequence_ambiguity(self) -> bool:
         return self.has_intervals or self.has_unknown_mods
 
@@ -2083,6 +2111,9 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
 
     def condense_static_mods(self, inplace: bool = True) -> Self:
         return cast(Self, condense_static_mods(self, inplace=inplace))
+
+    def condense_to_peptidoform(self, inplace: bool = True) -> Self:
+        return cast(Self, condense_to_peptidoform(self, inplace=inplace))
 
     def get_static_mod_dict(self) -> ModDict:
         static_mod_dict: ModDict = ModDict()
@@ -2379,6 +2410,8 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         max_variable_mods: int = 2,
         use_regex: bool = False,
         inplace: bool = False,
+        use_static_notation: bool = False,
+        unique_peptidoforms: bool = True,
     ) -> Generator[Self, None, None]:
         """
         Build all modifications from intervals and mass shifts.
@@ -2396,5 +2429,125 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
             max_variable_mods=max_variable_mods,
             use_regex=use_regex,
             inplace=inplace,
+            use_static_notation=use_static_notation,
+            unique_peptidoforms=unique_peptidoforms,
         ):
             yield cast(Self, annot)
+
+
+    def to_ms2_pip(
+        self,
+        inplace: bool = False,
+        include_plus: bool = False,
+        precision: int | None = None,
+    ) -> tuple[str, str]:
+        """Convert a single peptide sequence to MS2PIP format"""
+
+
+        if self.has_mods((ModType.ISOTOPE, ModType.LABILE, ModType.UNKNOWN, ModType.INTERVAL, ModType.CHARGE, ModType.CHARGE_ADDUCTS)):
+            raise ValueError("MS2PIP format does not support isotope, labile, unknown, interval, charge, or charge adduct modifications.")
+
+        if not inplace:
+            self.to_ms2_pip(inplace=True, include_plus=include_plus, precision=precision)
+
+        self.condense_static_mods(inplace=True)
+
+        mod_tuples: list[tuple[int, str]] = []
+        if self.has_nterm_mods:
+            for mod in self.get_nterm_mod_list():
+                if mod.mult != 1:
+                    raise ValueError("Brackets must be provided if multiplier is greater than 1.")
+                mod_tuples.append((0, mod.serialize(include_plus=include_plus, precision=precision, brackets=None)))
+
+
+        if self.has_cterm_mods:
+            for mod in self.get_cterm_mod_list():
+                if mod.mult != 1:
+                    raise ValueError("MS2PIP format does not support modification multipliers.")
+                mod_tuples.append((-1, mod.serialize(include_plus=include_plus, precision=precision, brackets=None)))
+
+        if self.has_internal_mods:
+            for index, mods in self.get_internal_mod_dict().items():
+                if len(mods) > 1:
+                    raise ValueError("MS2PIP format does not support multiple modifications at the same site.")
+                for mod in mods:
+                    if mod.mult != 1:
+                        raise ValueError("MS2PIP format does not support modification multipliers.")
+                    mod_tuples.append((index + 1, mod.serialize(include_plus=include_plus, precision=precision, brackets=None)))
+
+        unmod_sequence = self.stripped_sequence
+
+        mod_str = "|".join(f"{loc}|{name}" for loc, name in mod_tuples)
+
+        return unmod_sequence, mod_str
+    
+    @staticmethod
+    def from_ms2_pip(
+        sequence: str,
+        mod_str: str,
+        static_mods: Mapping[str, float | int | str] | None = None
+    ) -> "ProFormaAnnotation":
+        """Create ProFormaAnnotation from MS2PIP format"""
+
+        internal_mods: ModDict = ProFormaAnnotation.create_internal_mod_dict()
+        nterm_mods: ModList = ProFormaAnnotation.create_nterm_mod_list()
+        cterm_mods: ModList = ProFormaAnnotation.create_cterm_mod_list()
+
+        if mod_str.strip() == "":
+            # No modifications
+            annot = ProFormaAnnotation(
+                sequence=sequence,
+                internal_mods=None,
+                nterm_mods=None,
+                cterm_mods=None,
+            )
+            for static_aa, mass in (static_mods or {}).items():
+                annot.add_static_mod_by_residue(static_aa, mass, inplace=True)
+
+            return annot
+
+        # Parse modification string: format is "loc1|name1|loc2|name2|..."
+        mod_parts = mod_str.split("|")
+        
+        if len(mod_parts) % 2 != 0:
+            raise ValueError(f"Invalid MS2PIP modification string format: {mod_str}")
+        
+        # Process modifications in pairs (location, name)
+        for i in range(0, len(mod_parts), 2):
+            loc_str = mod_parts[i]
+            mod_name = mod_parts[i + 1]
+            
+            # Parse location
+            loc = int(loc_str)
+            
+            # Parse the modification
+            parsed_mod = Mod.parse(mod_name, None)
+            
+            # Add to appropriate list based on location
+            if loc == 0:
+                # N-terminal modification
+                nterm_mods.append(parsed_mod)
+            elif loc == -1:
+                # C-terminal modification
+                cterm_mods.append(parsed_mod)
+            else:
+                # Internal modification (1-indexed in MS2PIP, convert to 0-indexed)
+                internal_index = loc - 1
+                if internal_index < 0 or internal_index >= len(sequence):
+                    raise ValueError(f"Modification location {loc} is out of range for sequence of length {len(sequence)}")
+                internal_mods.append_at_key(internal_index, parsed_mod)
+        
+        annot = ProFormaAnnotation(
+            sequence=sequence,
+            internal_mods=internal_mods if internal_mods.has_mods else None,
+            nterm_mods=nterm_mods if nterm_mods.has_mods else None,
+            cterm_mods=cterm_mods if cterm_mods.has_mods else None,
+        )
+
+        for static_aa, mass in (static_mods or {}).items():
+            annot.add_static_mod_by_residue(static_aa, mass, inplace=True)
+
+        # condense static mods
+        annot.condense_static_mods(inplace=True)
+
+        return annot

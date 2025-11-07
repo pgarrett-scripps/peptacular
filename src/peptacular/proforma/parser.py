@@ -46,6 +46,49 @@ class ProFormaParser:
         self.intervals: IntervalList | None = None
         self.current_connection: bool | None = None
 
+
+    @staticmethod
+    def create_isotope_mod_list() -> ModList:
+        # Create fresh object each time - no sharing!
+        return ModList(allow_dups=False, stackable=False, name="Isotope Mods")
+
+    @staticmethod
+    def create_static_mod_list() -> ModList:
+        return ModList(allow_dups=True, stackable=True, name="Static Mods")
+
+    @staticmethod
+    def create_labile_mod_list() -> ModList:
+        return ModList(allow_dups=True, stackable=True, name="Labile Mods")
+
+    @staticmethod
+    def create_unknown_mod_list() -> ModList:
+        return ModList(allow_dups=True, stackable=True, name="Unknown Mods")
+
+    @staticmethod
+    def create_nterm_mod_list() -> ModList:
+        return ModList(allow_dups=True, stackable=True, name="N-Terminal Mods")
+
+    @staticmethod
+    def create_cterm_mod_list() -> ModList:
+        return ModList(allow_dups=True, stackable=False, name="C-Terminal Mods")
+
+    @staticmethod
+    def create_charge_adducts_mod_list() -> ModList:
+        return ModList(allow_dups=True, stackable=False, name="Charge Adducts")
+
+    @staticmethod
+    def create_empty_internal_mod_list() -> ModList:
+        return ModList(allow_dups=True, stackable=False, name="Internal Mods")
+    
+    @staticmethod
+    def create_internal_mod_dict() -> ModDict:
+        return ModDict(allow_dups=True, stackable=False, name="Internal Mods")
+
+    @staticmethod
+    def create_interval_list() -> IntervalList:
+        return IntervalList()
+    
+
     def parse(self) -> Generator[tuple[Self, bool | None], None, None]:
         """
         Parse the proforma sequence, yielding annotations and connections
@@ -87,36 +130,37 @@ class ProFormaParser:
         self.charge_adducts = None
         self.intervals = None
 
+
     @validate_single_mod_multiplier
     def _add_static_mod(self, mod: Mod) -> None:
         if self.static_mods is None:
-            self.static_mods = ModList(allow_dups=True, stackable=True)
+            self.static_mods = ProFormaParser.create_static_mod_list()
         self.static_mods.append(mod)
 
     @validate_single_mod_multiplier
     def _add_isotope_mod(self, mod: Mod) -> None:
         if self.isotope_mods is None:
-            self.isotope_mods = ModList(allow_dups=False, stackable=False)
+            self.isotope_mods = ProFormaParser.create_isotope_mod_list()
         self.isotope_mods.append(mod)
 
     def _add_labile_mod(self, mods: list[Mod]) -> None:
         if self.labile_mods is None:
-            self.labile_mods = ModList(allow_dups=True, stackable=True)
+            self.labile_mods = ProFormaParser.create_labile_mod_list()
         self.labile_mods.extend(mods)
 
     def _add_unknown_mod(self, mods: list[Mod]) -> None:
         if self.unknown_mods is None:
-            self.unknown_mods = ModList(allow_dups=True, stackable=True)
+            self.unknown_mods = ProFormaParser.create_unknown_mod_list()
         self.unknown_mods.extend(mods)
 
     def _add_nterm_mod(self, mods: list[Mod]) -> None:
         if self.nterm_mods is None:
-            self.nterm_mods = ModList(allow_dups=True, stackable=True)
+            self.nterm_mods = ProFormaParser.create_nterm_mod_list()
         self.nterm_mods.extend(mods)
 
     def _add_cterm_mod(self, mods: list[Mod]) -> None:
         if self.cterm_mods is None:
-            self.cterm_mods = ModList(allow_dups=True, stackable=False)
+            self.cterm_mods = ProFormaParser.create_cterm_mod_list()
         self.cterm_mods.extend(mods)
 
     def _add_internal_mod(self, mods: list[Mod]) -> None:
@@ -128,7 +172,7 @@ class ProFormaParser:
     @validate_single_mod_multiplier
     def _add_charge_adducts(self, mods: list[Mod]) -> None:
         if self.charge_adducts is None:
-            self.charge_adducts = ModList(allow_dups=True, stackable=False)
+            self.charge_adducts = ProFormaParser.create_charge_adducts_mod_list()
         self.charge_adducts.extend(mods)
 
     def _add_interval(self, interval: Interval) -> None:

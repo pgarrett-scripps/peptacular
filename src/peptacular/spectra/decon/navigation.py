@@ -27,6 +27,8 @@ def navigate_left(
 
         for n in neighbors:
             edge_data_list = graph.get_edge_data(current_node, n)
+            if edge_data_list is None:
+                continue
             for edge_data in (
                 edge_data_list if isinstance(edge_data_list, list) else [edge_data_list]
             ):
@@ -78,6 +80,8 @@ def navigate_right(
 
         for n in neighbors:
             edge_data_list = graph.get_edge_data(current_node, n)
+            if edge_data_list is None:
+                continue
             for edge_data in (
                 edge_data_list if isinstance(edge_data_list, list) else [edge_data_list]
             ):

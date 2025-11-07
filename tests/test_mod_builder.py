@@ -11,6 +11,7 @@ from peptacular.proforma.mod_builder import (
     update_mod_list,
     apply_mods,
     build_mods,
+    apply_static_mods_infront
 )
 
 
@@ -286,6 +287,19 @@ class TestApplyMods(unittest.TestCase):
         self.oxidation_mod = pt.Mod("Oxidation", 1)
         self.acetyl_mod = pt.Mod("Acetyl", 1)
 
+
+    def test_apply_static_mod_infront(self):
+        """Test applying only static modifications."""
+        static_mods = {"P": [self.phospho_mod]}
+        result = apply_static_mods_infront(self.annotation, internal_static=static_mods)
+        self.assertEqual(result.serialize(), "<[Phospho]@P>PEPTIDE")
+
+    def test_apply_static_mod_infront2(self):
+        """Test applying only static modifications."""
+        static_mods = {"PC": [self.phospho_mod]}
+        result = apply_static_mods_infront(self.annotation, internal_static=static_mods)
+        self.assertEqual(result.serialize(), "<[Phospho]@P,C>PEPTIDE")
+
     def test_apply_internal_mods_only(self):
         """Test applying only internal modifications."""
         internal_mods = {"P": [self.phospho_mod]}
@@ -432,6 +446,24 @@ class TestBuildMods(unittest.TestCase):
         self.assertIn("PEPT[Phospho]IDE", serialized)
         self.assertIn("P[Oxidation]EPT[Phospho]IDE", serialized)
         self.assertIn("PEP[Oxidation]T[Phospho]IDE", serialized)
+
+    def test_static_and_variable_modifications_infront(self):
+        """Test build_mods with both static and variable modifications."""
+        results = list(
+            build_mods(
+                self.annotation,
+                internal_static={"T": [self.phospho_mod]},
+                internal_variable={"P": [self.oxidation_mod]},
+                max_variable_mods=1,
+                use_static_notation=True,
+            )
+        )
+        # Should generate: static only, static + P@0, static + P@2
+        self.assertEqual(len(results), 3)
+        serialized = [r.serialize() for r in results]
+        self.assertIn("<[Phospho]@T>PEPTIDE", serialized)
+        self.assertIn("<[Phospho]@T>P[Oxidation]EPTIDE", serialized)
+        self.assertIn("<[Phospho]@T>PEP[Oxidation]TIDE", serialized)
 
     def test_nterm_static_modifications(self):
         """Test N-terminal static modifications."""
@@ -620,6 +652,378 @@ class TestBuildMods(unittest.TestCase):
         self.assertIn("P", serialized)
         self.assertIn("P[Phospho]", serialized)
 
+
+    def test_condense_peptidoform(self):
+        """Test condense_to_peptidoform function."""
+        annotation = pt.parse(sequence="PEPTIDE")
+        condensed_str = pt.condense_to_peptidoform(annotation)
+        self.assertEqual(condensed_str, "PEPTIDE")
+
+    def test_condense_peptidoform_mod(self):
+        """Test condense_to_peptidoform function."""
+        annotation = pt.parse(sequence="P[100]EPTIDE")
+        condensed_str = pt.condense_to_peptidoform(annotation)
+        self.assertEqual(condensed_str, "[100]?PEPTIDE")
+
+    def test_condense_peptidoform_multi_mod(self):
+        """Test condense_to_peptidoform function."""
+        annotation = pt.parse(sequence="[3.14]-P[100]EPTID[10]E-[Oxidation]")
+        condensed_str = pt.condense_to_peptidoform(annotation)
+        self.assertEqual(condensed_str, "[10][100]?[3.14]-PEPTIDE-[Oxidation]")
+
+
+class TestBuildModsFirstProteoformOnly(unittest.TestCase):
+    def setUp(self):
+        self.annotation = pt.ProFormaAnnotation(sequence="PEPTIDE")
+        self.phospho_mod = pt.Mod("Phospho", 1)
+        self.oxidation_mod = pt.Mod("Oxidation", 1)
+        self.acetyl_mod = pt.Mod("Acetyl", 1)
+        self.methyl_mod = pt.Mod("Methyl", 1)
+
+    def test_first_proteoform_only_removes_positional_duplicates(self):
+        """Test that first_proteoform_only=True removes positional duplicates."""
+        # Without first_proteoform_only: should get both P@0 and P@2
+        results_all = list(
+            build_mods(
+                self.annotation,
+                internal_variable={"P": [self.phospho_mod]},
+                max_variable_mods=1,
+                unique_peptidoforms=False,
+            )
+        )
+        self.assertEqual(len(results_all), 3)  # no mods, P@0, P@2
+        
+        # With first_proteoform_only: should get only one P modification
+        results_unique = list(
+            build_mods(
+                self.annotation,
+                internal_variable={"P": [self.phospho_mod]},
+                max_variable_mods=1,
+                unique_peptidoforms=True,
+            )
+        )
+        self.assertEqual(len(results_unique), 2)  # no mods, P (position-independent)
+        
+        serialized = [r.serialize() for r in results_unique]
+        self.assertIn("PEPTIDE", serialized)
+        # Should have exactly one phosphorylated P (at either position)
+        phospho_count = sum(1 for s in serialized if "Phospho" in s)
+        self.assertEqual(phospho_count, 1)
+
+    def test_first_proteoform_only_with_two_modifications(self):
+        """Test that first_proteoform_only works with max_variable_mods=2."""
+        results = list(
+            build_mods(
+                self.annotation,
+                internal_variable={"P": [self.phospho_mod]},
+                max_variable_mods=2,
+                unique_peptidoforms=True,
+            )
+        )
+        # Should get: no mods, 1 P, 2 P (but not different positional combinations)
+        self.assertEqual(len(results), 3)
+        
+        serialized = [r.serialize() for r in results]
+        self.assertIn("PEPTIDE", serialized)
+        
+        # Count how many have phospho
+        phospho_counts = {}
+        for s in serialized:
+            count = s.count("Phospho")
+            phospho_counts[count] = phospho_counts.get(count, 0) + 1
+        
+        self.assertEqual(phospho_counts.get(0, 0), 1)  # no mods
+        self.assertEqual(phospho_counts.get(1, 0), 1)  # one P
+        self.assertEqual(phospho_counts.get(2, 0), 1)  # two P
+
+    def test_first_proteoform_only_with_different_mod_types(self):
+        """Test that first_proteoform_only distinguishes different modification types."""
+        results = list(
+            build_mods(
+                self.annotation,
+                internal_variable={"P": [self.phospho_mod, self.oxidation_mod]},
+                max_variable_mods=1,
+                unique_peptidoforms=True,
+            )
+        )
+        # Should get: no mods, one phospho, one oxidation
+        self.assertEqual(len(results), 3)
+        
+        serialized = [r.serialize() for r in results]
+        self.assertIn("PEPTIDE", serialized)
+        
+        # Should have one of each mod type
+        phospho_count = sum(1 for s in serialized if "Phospho" in s)
+        oxidation_count = sum(1 for s in serialized if "Oxidation" in s)
+        self.assertEqual(phospho_count, 1)
+        self.assertEqual(oxidation_count, 1)
+
+    def test_first_proteoform_only_with_mixed_mods(self):
+        """Test first_proteoform_only with multiple mod types on different residues."""
+        results = list(
+            build_mods(
+                self.annotation,
+                internal_variable={
+                    "P": [self.phospho_mod],
+                    "E": [self.oxidation_mod],
+                },
+                max_variable_mods=2,
+                unique_peptidoforms=True,
+            )
+        )
+
+        serialized = [r.serialize() for r in results]
+       
+        self.assertEqual(len(results), 6)
+        
+
+        self.assertIn("PEPTIDE", serialized)
+        
+        # Check that we have the right combinations
+        has_phospho_only = any("Phospho" in s and "Oxidation" not in s for s in serialized)
+        has_oxidation_only = any("Oxidation" in s and "Phospho" not in s for s in serialized)
+        has_both = any("Phospho" in s and "Oxidation" in s for s in serialized)
+        
+        self.assertTrue(has_phospho_only)
+        self.assertTrue(has_oxidation_only)
+        self.assertTrue(has_both)
+
+    def test_first_proteoform_only_with_nterm_mods(self):
+        """Test first_proteoform_only with N-terminal modifications."""
+        results = list(
+            build_mods(
+                self.annotation,
+                nterm_variable={"P": [self.acetyl_mod]},
+                internal_variable={"P": [self.phospho_mod]},
+                max_variable_mods=1,
+                unique_peptidoforms=True,
+            )
+        )
+        
+        # Should get: no mods, nterm acetyl, internal phospho
+        self.assertEqual(len(results), 3)
+        
+        serialized = [r.serialize() for r in results]
+        self.assertIn("PEPTIDE", serialized)
+        
+        # Check we have one of each
+        acetyl_count = sum(1 for s in serialized if "Acetyl" in s)
+        phospho_count = sum(1 for s in serialized if "Phospho" in s)
+        self.assertEqual(acetyl_count, 1)
+        self.assertEqual(phospho_count, 1)
+
+    def test_first_proteoform_only_with_cterm_mods(self):
+        """Test first_proteoform_only with C-terminal modifications."""
+        results = list(
+            build_mods(
+                self.annotation,
+                cterm_variable={"E": [self.oxidation_mod]},
+                internal_variable={"E": [self.phospho_mod]},
+                max_variable_mods=1,
+                unique_peptidoforms=True,
+            )
+        )
+        
+        # Should get: no mods, cterm oxidation, internal phospho
+        self.assertEqual(len(results), 3)
+        
+        serialized = [r.serialize() for r in results]
+        self.assertIn("PEPTIDE", serialized)
+
+    def test_first_proteoform_only_with_static_mods(self):
+        """Test that static mods don't affect first_proteoform_only logic."""
+        results_without = list(
+            build_mods(
+                self.annotation,
+                internal_variable={"P": [self.phospho_mod]},
+                max_variable_mods=1,
+                unique_peptidoforms=True,
+            )
+        )
+        
+        results_with_static = list(
+            build_mods(
+                self.annotation,
+                internal_static={"T": [self.methyl_mod]},
+                internal_variable={"P": [self.phospho_mod]},
+                max_variable_mods=1,
+                unique_peptidoforms=True,
+            )
+        )
+        
+        # Should have same number of results (static doesn't affect variable uniqueness)
+        self.assertEqual(len(results_without), len(results_with_static))
+
+    def test_first_proteoform_only_with_labile_mods(self):
+        """Test first_proteoform_only with labile modifications."""
+        results = list(
+            build_mods(
+                self.annotation,
+                labile_variable={"P": [self.phospho_mod]},
+                max_variable_mods=1,
+                unique_peptidoforms=True,
+            )
+        )
+        
+        # Should get: no mods, one labile phospho (position-independent)
+        self.assertEqual(len(results), 2)
+        
+        serialized = [r.serialize() for r in results]
+        labile_count = sum(1 for s in serialized if "{Phospho}" in s)
+        self.assertEqual(labile_count, 1)
+
+    def test_first_proteoform_only_complex_scenario(self):
+        """Test first_proteoform_only with complex modification scenario."""
+        # Sequence with multiple mod sites
+        complex_annotation = pt.ProFormaAnnotation(sequence="MPEPTIPEP")
+        
+        results = list(
+            build_mods(
+                complex_annotation,
+                internal_variable={
+                    "M": [self.oxidation_mod],
+                    "P": [self.phospho_mod],
+                },
+                max_variable_mods=2,
+                unique_peptidoforms=True,
+            )
+        )
+        
+        # Should get unique combinations by mod type count, not position:
+        # - no mods
+        # - 1 oxidation
+        # - 1 phospho
+        # - 2 phospho
+        # - 1 oxidation + 1 phospho
+        self.assertEqual(len(results), 5)
+
+    def test_first_proteoform_only_false_gives_all_combinations(self):
+        """Test that first_proteoform_only=False gives all positional combinations."""
+        results = list(
+            build_mods(
+                self.annotation,
+                internal_variable={"P": [self.phospho_mod]},
+                max_variable_mods=2,
+                unique_peptidoforms=False,
+            )
+        )
+        
+        # Should get: no mods, P@0, P@2, P@0+P@2
+        self.assertEqual(len(results), 4)
+        
+        serialized = [r.serialize() for r in results]
+        self.assertIn("PEPTIDE", serialized)
+        self.assertIn("P[Phospho]EPTIDE", serialized)
+        self.assertIn("PEP[Phospho]TIDE", serialized)
+        self.assertIn("P[Phospho]EP[Phospho]TIDE", serialized)
+
+    def test_first_proteoform_only_with_numeric_mods(self):
+        """Test first_proteoform_only with numeric modification values."""
+        results = list(
+            build_mods(
+                self.annotation,
+                internal_variable={"P": [15.99]},
+                max_variable_mods=1,
+                unique_peptidoforms=True,
+            )
+        )
+        
+        # Should get: no mods, one +15.99 (position-independent)
+        self.assertEqual(len(results), 2)
+
+    def test_first_proteoform_only_with_string_mods(self):
+        """Test first_proteoform_only with string modification values."""
+        results = list(
+            build_mods(
+                self.annotation,
+                internal_variable={"P": ["CustomMod"]},
+                max_variable_mods=1,
+                unique_peptidoforms=True,
+            )
+        )
+        
+        # Should get: no mods, one CustomMod (position-independent)
+        self.assertEqual(len(results), 2)
+
+    def test_first_proteoform_only_empty_sequence(self):
+        """Test first_proteoform_only with empty sequence."""
+        empty_annotation = pt.ProFormaAnnotation(sequence="")
+        results = list(
+            build_mods(
+                empty_annotation,
+                max_variable_mods=0,
+                unique_peptidoforms=True,
+            )
+        )
+        
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0].serialize(), "")
+
+    def test_first_proteoform_only_single_amino_acid(self):
+        """Test first_proteoform_only with single amino acid sequence."""
+        single_aa = pt.ProFormaAnnotation(sequence="P")
+        results = list(
+            build_mods(
+                single_aa,
+                internal_variable={"P": [self.phospho_mod]},
+                max_variable_mods=1,
+                unique_peptidoforms=True,
+            )
+        )
+        
+        # Should get: no mods, one phospho (only one position anyway)
+        self.assertEqual(len(results), 2)
+
+    def test_first_proteoform_only_triple_mods_same_type(self):
+        """Test first_proteoform_only with three mods of the same type."""
+        triple_p_annotation = pt.ProFormaAnnotation(sequence="PPPTIDE")
+        
+        results = list(
+            build_mods(
+                triple_p_annotation,
+                internal_variable={"P": [self.phospho_mod]},
+                max_variable_mods=3,
+                unique_peptidoforms=True,
+            )
+        )
+        
+        # Should get: 0 mods, 1 phospho, 2 phospho, 3 phospho
+        self.assertEqual(len(results), 4)
+        
+        serialized = [r.serialize() for r in results]
+        phospho_count_distribution = {}
+        for s in serialized:
+            count = s.count("Phospho")
+            phospho_count_distribution[count] = phospho_count_distribution.get(count, 0) + 1
+        
+        # Each count should appear exactly once
+        self.assertEqual(phospho_count_distribution, {0: 1, 1: 1, 2: 1, 3: 1})
+
+    def test_first_proteoform_only_nterm_cterm_combination(self):
+        """Test first_proteoform_only with both nterm and cterm modifications."""
+        results = list(
+            build_mods(
+                self.annotation,
+                nterm_variable={"P": [self.acetyl_mod]},
+                cterm_variable={"E": [self.oxidation_mod]},
+                max_variable_mods=2,
+                unique_peptidoforms=True,
+            )
+        )
+        
+        # Should get: no mods, nterm only, cterm only, both
+        self.assertEqual(len(results), 4)
+        
+        serialized = [r.serialize() for r in results]
+        self.assertIn("PEPTIDE", serialized)
+        
+        has_nterm = any("[Acetyl]-" in s and "Oxidation" not in s for s in serialized)
+        has_cterm = any("-[Oxidation]" in s and "Acetyl" not in s for s in serialized)
+        has_both = any("[Acetyl]-" in s and "-[Oxidation]" in s for s in serialized)
+        
+        self.assertTrue(has_nterm)
+        self.assertTrue(has_cterm)
+        self.assertTrue(has_both)
 
 if __name__ == "__main__":
     unittest.main()

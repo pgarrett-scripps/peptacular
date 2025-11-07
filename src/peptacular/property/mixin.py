@@ -413,7 +413,7 @@ class SequencePropertyMixin:
         aa_overlap: int = 0,
         missing_aa_handling: (
             MissingAAHandlingLiteral | MissingAAHandling
-        ) = MissingAAHandling.ERROR,
+        ) = MissingAAHandling.AVG,
         aggregation_method: (
             AggregationMethodLiteral | AggregationMethod
         ) = AggregationMethod.AVG,

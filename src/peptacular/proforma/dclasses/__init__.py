@@ -5,13 +5,15 @@ from .intervallist import (
     INTERVALLIST_DATATYPE,
     IntervalList,
     setup_interval_list,
+    populate_interval_list
 )
-from .moddict import ACCEPTED_MODDICT_INPUT_TYPES, ModDict, setup_mod_dict
+from .moddict import ACCEPTED_MODDICT_INPUT_TYPES, ModDict, setup_mod_dict, populate_mod_dict
 from .modlist import (
     ACCEPTED_MODLIST_INPUT_TYPES,
     MODLIST_DATATYPE,
     ModList,
     setup_mod_list,
+    populate_mod_list,
 )
 
 SPAN_TYPE = tuple[int, int, int]
@@ -40,4 +42,7 @@ __all__ = [
     "ACCEPTED_MODDICT_INPUT_TYPES",
     "SPAN_TYPE",
     "CHEM_COMPOSITION_TYPE",
+    "populate_mod_list",
+    "populate_interval_list",
+    "populate_mod_dict",
 ]

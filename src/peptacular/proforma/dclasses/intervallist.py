@@ -283,3 +283,26 @@ def setup_interval_list(data: ACCEPTED_INTERVALLIST_INPUT_TYPES) -> IntervalList
         f"Invalid type for interval data: {type(data)}. "
         f"Must be an Interval, ModInterval, or iterable of these."
     )
+
+
+def populate_interval_list(
+    interval_list: IntervalList,
+    data: ACCEPTED_INTERVALLIST_INPUT_TYPES
+) -> IntervalList:
+    """Populates and returns an IntervalList from various input types."""
+
+    if data is None:
+        return interval_list
+
+    if isinstance(data, IntervalList):
+        interval_list += data
+    elif isinstance(data, Iterable):  # type: ignore
+        interval_list += data  # type: ignore
+    elif isinstance(data, (Interval, ModInterval)):
+        interval_list.append(data)
+    elif isinstance(data, tuple) and len(data) == 4 and isinstance(data[0], int):
+        interval_list.append(data)  # type: ignore
+    else:
+        raise TypeError(f"Cannot populate IntervalList with {type(data)}")
+
+    return interval_list

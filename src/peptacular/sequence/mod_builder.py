@@ -489,7 +489,7 @@ def pop_mods(
     )
 
 
-def strip_mods(
+def _strip_mods(
     sequence: str | ProFormaAnnotation,
     mods: ModType | Iterable[ModType] | None = None,
     include_plus: bool = False,
@@ -546,6 +546,70 @@ def strip_mods(
         include_plus=include_plus, precision=precision
     )
 
+@overload
+def strip_mods(
+    sequence: str | ProFormaAnnotation,
+    mods: ModType | Iterable[ModType] | None = None,
+    include_plus: bool = False,
+    precision: int | None = None,
+) -> str: ...
+
+@overload
+def strip_mods(
+    sequence: Sequence[str | ProFormaAnnotation],
+    mods: ModType | Iterable[ModType] | None = None,
+    include_plus: bool = False,
+    precision: int | None = None,
+) -> list[str]: ...
+
+def strip_mods(
+    sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
+    mods: ModType | Iterable[ModType] | None = None,
+    include_plus: bool = False,
+    precision: int | None = None,
+) -> str | list[str]:
+    """
+    Strips all modifications from the given sequence or list of sequences, returning the unmodified sequence(s).
+
+    Automatically uses parallel processing when a list of sequences is provided.
+    When method=None (default), automatically detects if GIL is disabled and uses
+    threading for better performance, otherwise uses multiprocessing.
+
+    :param sequence: The sequence or ProFormaAnnotation object, or list of sequences.
+    :type sequence: Union[str, ProFormaAnnotation, list[str | ProFormaAnnotation]]
+    :param mods: The modifications to remove. If None, all modifications will be removed.
+    :type mods: Optional[Union[str, List[str]]]
+    :param include_plus: If True, the modifications will be serialized with a '+' sign for positive values.
+    :type include_plus: bool
+
+    :raises ValueError: If the input sequence contains multiple sequences.
+    :raises ProFormaFormatError: if the proforma sequence is not valid
+
+    :return: The stripped sequence(s).
+    :rtype: str | list[str]
+
+    """
+
+    if (
+        isinstance(sequence, Sequence)
+        and not isinstance(sequence, str)
+        and not isinstance(sequence, ProFormaAnnotation)
+    ):
+        return parallel_apply_internal(
+            _strip_mods,
+            sequence,
+            mods=mods,
+            include_plus=include_plus,
+            precision=precision,
+        )
+    else:
+        return _strip_mods(
+            sequence=sequence,
+            mods=mods,
+            include_plus=include_plus,
+            precision=precision,
+        )
+
 
 def filter_mods(
     sequence: str | ProFormaAnnotation,
@@ -599,40 +663,15 @@ def filter_mods(
     )
 
 
-def _to_MS2PIP_single(
+def _to_ms2_pip_single(
     sequence: ProFormaAnnotation | str,
 ) -> tuple[str, str]:
     """Convert a single peptide sequence to MS2PIP format"""
     annot = get_annotation_input(sequence=sequence, copy=True)
-    annot.condense_static_mods(inplace=True)
-
-    mod_tuples: list[tuple[int, str]] = []
-    if annot.has_nterm_mods:
-        if len(annot.nterm_mods) > 1:
-            raise ValueError("MS2PIP format only supports one N-terminal modification.")
-        for mod in annot.nterm_mods:
-            mod_tuples.append((0, str(mod)))
-
-    if annot.has_cterm_mods:
-        if len(annot.cterm_mods) > 1:
-            raise ValueError("MS2PIP format only supports one C-terminal modification.")
-        for mod in annot.cterm_mods:
-            mod_tuples.append((-1, str(mod)))
-
-    if annot.has_internal_mods:
-        for index, mods in annot.internal_mods.items():
-            for mod in mods:
-                mod_tuples.append((index + 1, str(mod)))
-
-    unmod_sequence = annot.stripped_sequence
-
-    mod_str = "|".join(f"{loc}|{name}" for loc, name in mod_tuples)
-
-    return unmod_sequence, mod_str
-
+    return annot.to_ms2_pip(inplace=True)
 
 @overload
-def to_MS2PIP(
+def to_ms2_pip(
     sequence: ProFormaAnnotation | str,
     n_workers: None = None,
     chunksize: None = None,
@@ -641,7 +680,7 @@ def to_MS2PIP(
 
 
 @overload
-def to_MS2PIP(
+def to_ms2_pip(
     sequence: Sequence[ProFormaAnnotation | str],
     n_workers: int | None = None,
     chunksize: int | None = None,
@@ -649,7 +688,7 @@ def to_MS2PIP(
 ) -> list[tuple[str, str]]: ...
 
 
-def to_MS2PIP(
+def to_ms2_pip(
     sequence: ProFormaAnnotation | str | Sequence[ProFormaAnnotation | str],
     n_workers: int | None = None,
     chunksize: int | None = None,
@@ -683,12 +722,12 @@ def to_MS2PIP(
     .. code-block:: python
 
         # Single sequence
-        >>> to_MS2PIP('PEP[Phospho]TIDE')
+        >>> to_ms2_pip('PEP[Phospho]TIDE')
         ('PEPTIDE', '3|Phospho')
 
         # Batch processing
         >>> sequences = ['PEP[Phospho]TIDE', 'PROT[Oxidation]EIN']
-        >>> to_MS2PIP(sequences)
+        >>> to_ms2_pip(sequences)
         [('PEPTIDE', '3|Phospho'), ('PROTEIN', '4|Oxidation')]
 
     """
@@ -698,11 +737,215 @@ def to_MS2PIP(
         and not isinstance(sequence, ProFormaAnnotation)
     ):
         return parallel_apply_internal(
-            _to_MS2PIP_single,
+            _to_ms2_pip_single,
             sequence,
             n_workers=n_workers,
             chunksize=chunksize,
             method=method,
         )
     else:
-        return _to_MS2PIP_single(sequence=sequence)
+        return _to_ms2_pip_single(sequence=sequence)
+    
+    
+def _from_ms2_pip_single(
+    item: tuple[str, str],
+    static_mods: Mapping[str, float] | None = None,
+    include_plus: bool = False,
+    precision: int | None = None,
+) -> str:
+    """Convert a single MS2PIP format to ProForma string"""
+    sequence, modifications = item
+    return ProFormaAnnotation.from_ms2_pip(
+        sequence=sequence,
+        mod_str=modifications,
+        static_mods=static_mods,
+    ).serialize(include_plus=include_plus, precision=precision)
+
+
+@overload
+def from_ms2_pip(
+    sequence: tuple[str, str],
+    static_mods: Mapping[str, float] | None = None,
+    n_workers: None = None,
+    chunksize: None = None,
+    include_plus: bool = False,
+    precision: int | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+) -> str: ...
+
+
+@overload
+def from_ms2_pip(
+    sequence: Sequence[tuple[str, str]],
+    static_mods: Mapping[str, float] | None = None,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    include_plus: bool = False,
+    precision: int | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+) -> list[str]: ...
+
+
+def from_ms2_pip(
+    sequence: tuple[str, str] | Sequence[tuple[str, str]],
+    static_mods: Mapping[str, float] | None = None,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    include_plus: bool = False,
+    precision: int | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+) -> str | list[str]:
+    """
+    Convert MS2PIP format to ProForma string(s).
+    Automatically uses parallel processing when a list is provided.
+    When method=None (default), automatically detects if GIL is disabled and uses
+    threading for better performance, otherwise uses multiprocessing.
+
+    MS2PIP modifications format: Every modification is listed as location|name, 
+    separated by a pipe (|) between the location, the name, and other modifications. 
+    Location is an integer counted starting at 1 for the first AA. 0 is reserved for 
+    N-terminal modifications, -1 for C-terminal modifications.
+
+    :param sequence: Tuple of (sequence, modifications) or list of such tuples.
+    :type sequence: tuple[str, str] | list[tuple[str, str]]
+    :param n_workers: Number of worker processes (only for lists). If None, uses CPU count.
+    :type n_workers: int | None
+    :param chunksize: Number of items per chunk (only for lists). If None, auto-calculated.
+    :type chunksize: int | None
+    :param include_plus: Whether to include '+' prefix for positive modifications.
+    :type include_plus: bool
+    :param precision: Number of decimal places for floating point modifications.
+    :type precision: int | None
+    :param method: 'process', 'thread', or None (auto-detect). Default is None.
+    :type method: Literal["process", "thread"] | None
+    :return: ProForma string or list of ProForma strings.
+    :rtype: str | list[str]
+
+    .. code-block:: python
+
+        # Single sequence
+        >>> from_ms2_pip(('PEPTIDE', '3|Phospho'))
+        'PEPTIDE[Phospho]'
+
+        # Batch processing
+        >>> items = [('PEPTIDE', '3|Phospho'), ('PROTEIN', '4|Oxidation')]
+        >>> from_ms2_pip(items)
+        ['PEP[Phospho]TIDE', 'PROT[Oxidation]EIN']
+
+        # Empty modifications
+        >>> from_ms2_pip(('PEPTIDE', ''))
+        'PEPTIDE'
+    """
+    # Check if batch processing (list of tuples)
+    if isinstance(sequence, Sequence) and not isinstance(sequence, tuple):
+        # Validate that all items are tuples
+        if not all(isinstance(item, tuple) and len(item) == 2 for item in sequence):
+            raise ValueError(
+                "All items in sequence must be tuples of (sequence, modifications)"
+            )
+        
+        return parallel_apply_internal(
+            _from_ms2_pip_single,
+            sequence,
+            static_mods=static_mods,
+            n_workers=n_workers,
+            chunksize=chunksize,
+            method=method,
+            include_plus=include_plus,
+            precision=precision,
+        )
+    else:
+        # Single tuple processing
+        if not isinstance(sequence, tuple) or len(sequence) != 2:
+            raise ValueError(
+                "sequence must be a tuple of (sequence, modifications) for single processing"
+            )
+        
+        return _from_ms2_pip_single(
+            item=sequence,
+            static_mods=static_mods,
+            include_plus=include_plus,
+            precision=precision,
+        )
+
+def _condense_to_peptidoform(
+    sequence: str | ProFormaAnnotation,
+    include_plus: bool = False,
+    precision: int | None = None,
+) -> str:
+    """
+    Condenses all modifications into a peptidoform representation.
+
+    :param sequence: The sequence or ProFormaAnnotation object.
+    :type sequence: Union[str, ProFormaAnnotation]
+
+    :raises ValueError: If the input sequence contains multiple sequences.
+    :raises ProFormaFormatError: if the proforma sequence is not valid
+
+    :return: The peptide sequence in peptidoform representation.
+    :rtype: str
+
+    """
+
+    return (
+        get_annotation_input(sequence=sequence, copy=True)
+        .condense_to_peptidoform(inplace=False)
+        .serialize(include_plus=include_plus, precision=precision)
+)
+
+@overload
+def condense_to_peptidoform(
+    sequence: str | ProFormaAnnotation,
+    include_plus: bool = False,
+    precision: int | None = None,
+) -> str: ...
+
+@overload
+def condense_to_peptidoform(
+    sequence: Sequence[str | ProFormaAnnotation],
+    include_plus: bool = False,
+    precision: int | None = None,
+) -> list[str]: ...
+
+def condense_to_peptidoform(
+    sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
+    include_plus: bool = False,
+    precision: int | None = None,
+) -> str | list[str]:
+    """
+    Condenses all modifications into a peptidoform representation for a sequence or list of sequences.
+
+    Automatically uses parallel processing when a list of sequences is provided.
+    When method=None (default), automatically detects if GIL is disabled and uses
+    threading for better performance, otherwise uses multiprocessing.
+
+    :param sequence: The sequence or ProFormaAnnotation object, or list of sequences.
+    :type sequence: Union[str, ProFormaAnnotation, list[str | ProFormaAnnotation]]
+    :param include_plus: If True, the modifications will be serialized with a '+' sign for positive values.
+    :type include_plus: bool
+
+    :raises ValueError: If the input sequence contains multiple sequences.
+    :raises ProFormaFormatError: if the proforma sequence is not valid
+
+    :return: The peptide sequence(s) in peptidoform representation.
+    :rtype: str | list[str]
+
+    """
+
+    if (
+        isinstance(sequence, Sequence)
+        and not isinstance(sequence, str)
+        and not isinstance(sequence, ProFormaAnnotation)
+    ):
+        return parallel_apply_internal(
+            _condense_to_peptidoform,
+            sequence,
+            include_plus=include_plus,
+            precision=precision,
+        )
+    else:
+        return _condense_to_peptidoform(
+            sequence=sequence,
+            include_plus=include_plus,
+            precision=precision,
+        )
