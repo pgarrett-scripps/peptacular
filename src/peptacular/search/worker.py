@@ -48,7 +48,7 @@ class DigestWorker(Process):
         use_regex: bool,
         condense_peptidoforms: bool = False,
         invalid_residues: set[str] | None = None,
-        use_static_notation: bool = False
+        use_static_notation: bool = False,
     ):
         super().__init__()
         self.task_queue = task_queue
@@ -78,7 +78,9 @@ class DigestWorker(Process):
         self.max_variable_mods = max_variable_mods
         self.use_regex = use_regex
         self.condense_peptidoforms = condense_peptidoforms
-        self.invalid_residues = invalid_residues if invalid_residues is not None else set()
+        self.invalid_residues = (
+            invalid_residues if invalid_residues is not None else set()
+        )
         self.use_static_notation = use_static_notation
 
     def run(self):
@@ -114,7 +116,13 @@ class DigestWorker(Process):
                         )
                     )
 
-                    peptide_annots = [p for p in peptide_annots if not any(aa in self.invalid_residues for aa in p.stripped_sequence)]
+                    peptide_annots = [
+                        p
+                        for p in peptide_annots
+                        if not any(
+                            aa in self.invalid_residues for aa in p.stripped_sequence
+                        )
+                    ]
 
                     # Apply modifications if needed
                     if self.has_mods:
@@ -135,13 +143,11 @@ class DigestWorker(Process):
                                     use_regex=self.use_regex,
                                     use_static_notation=self.use_static_notation,
                                     unique_peptidoforms=True,
-
                                 )
                             )
                             modified_peptide_annots.extend(mod_peptides)
 
                         peptide_annots = modified_peptide_annots
-
 
                     serialized_peptide_to_mass: dict[str, float] = {}
                     # ensure that any annotations that have the same mass have different sequences
@@ -154,7 +160,10 @@ class DigestWorker(Process):
                     self.result_queue.put(
                         (
                             protein_idx,
-                            (list(serialized_peptide_to_mass.keys()), list(serialized_peptide_to_mass.values())),
+                            (
+                                list(serialized_peptide_to_mass.keys()),
+                                list(serialized_peptide_to_mass.values()),
+                            ),
                             None,  # No error
                         )
                     )
@@ -265,21 +274,21 @@ class DigestWorkerPool:
             List of (serialized_peptides, peptide_masses) tuples, one per protein
         """
         n_proteins = len(protein_sequences)
-        
+
         # Single-threaded mode - bypass multiprocessing overhead
         if self.n_workers == 1:
             start_time = time.time()
             results: list[tuple[list[str], list[float]]] = []
-            
+
             for idx, protein_seq in enumerate(protein_sequences):
                 try:
                     peptide_start = time.time()
-                    
+
                     # Parse protein
                     parse_start = time.time()
                     protein_annot = ProFormaAnnotation.parse(protein_seq)
                     parse_time = time.time() - parse_start
-                    
+
                     # Digest protein
                     digest_start = time.time()
                     peptide_annots: list[ProFormaAnnotation] = list(
@@ -296,41 +305,55 @@ class DigestWorkerPool:
                         )
                     )
                     digest_time = time.time() - digest_start
-                    
+
                     # Filter invalid residues
                     filter_start = time.time()
                     invalid_residues = self.worker_params["invalid_residues"] or set()
-                    peptide_annots = [p for p in peptide_annots if not any(aa in invalid_residues for aa in p.stripped_sequence)]
+                    peptide_annots = [
+                        p
+                        for p in peptide_annots
+                        if not any(aa in invalid_residues for aa in p.stripped_sequence)
+                    ]
                     filter_time = time.time() - filter_start
-                    
+
                     # Apply modifications if needed
                     mod_time = 0
                     if self.worker_params["has_mods"]:
                         mod_start = time.time()
                         modified_peptide_annots: list[ProFormaAnnotation] = []
-                        
+
                         for peptide in peptide_annots:
                             mod_peptides = list(
                                 peptide.build_mods(
                                     nterm_static=self.worker_params["nterm_static"],
                                     cterm_static=self.worker_params["cterm_static"],
-                                    internal_static=self.worker_params["internal_static"],
+                                    internal_static=self.worker_params[
+                                        "internal_static"
+                                    ],
                                     labile_static=self.worker_params["labile_static"],
                                     nterm_variable=self.worker_params["nterm_variable"],
                                     cterm_variable=self.worker_params["cterm_variable"],
-                                    internal_variable=self.worker_params["internal_variable"],
-                                    labile_variable=self.worker_params["labile_variable"],
-                                    max_variable_mods=self.worker_params["max_variable_mods"],
+                                    internal_variable=self.worker_params[
+                                        "internal_variable"
+                                    ],
+                                    labile_variable=self.worker_params[
+                                        "labile_variable"
+                                    ],
+                                    max_variable_mods=self.worker_params[
+                                        "max_variable_mods"
+                                    ],
                                     use_regex=self.worker_params["use_regex"],
-                                    use_static_notation=self.worker_params["use_static_notation"],
+                                    use_static_notation=self.worker_params[
+                                        "use_static_notation"
+                                    ],
                                     unique_peptidoforms=True,
                                 )
                             )
                             modified_peptide_annots.extend(mod_peptides)
-                        
+
                         peptide_annots = modified_peptide_annots
                         mod_time = time.time() - mod_start
-                                        
+
                     # Serialize and calculate masses
                     serialize_start = time.time()
                     serialized_peptides: list[str] = []
@@ -353,58 +376,71 @@ class DigestWorkerPool:
 
                     # Create final dictionary
                     dict_start = time.time()
-                    serialized_peptide_to_mass: dict[str, float] = dict(zip(serialized_peptides, peptide_masses))
+                    serialized_peptide_to_mass: dict[str, float] = dict(
+                        zip(serialized_peptides, peptide_masses)
+                    )
                     dict_time = time.time() - dict_start
 
                     peptide_total_time = time.time() - peptide_start
 
                     # Print timing for first few proteins
                     if idx < 50:
-                        print(f"Protein {idx}: parse={parse_time*1000:.1f}ms, digest={digest_time*1000:.1f}ms, "
-                            f"filter={filter_time*1000:.1f}ms, mods={mod_time*1000:.1f}ms, "
-                            f"serialize={serialize_time*1000:.1f}ms, mass={mass_time*1000:.1f}ms, "
-                            f"dict={dict_time*1000:.1f}ms, total={peptide_total_time*1000:.1f}ms, "
-                            f"peptides={len(serialized_peptide_to_mass)}")
+                        print(
+                            f"Protein {idx}: parse={parse_time * 1000:.1f}ms, digest={digest_time * 1000:.1f}ms, "
+                            f"filter={filter_time * 1000:.1f}ms, mods={mod_time * 1000:.1f}ms, "
+                            f"serialize={serialize_time * 1000:.1f}ms, mass={mass_time * 1000:.1f}ms, "
+                            f"dict={dict_time * 1000:.1f}ms, total={peptide_total_time * 1000:.1f}ms, "
+                            f"peptides={len(serialized_peptide_to_mass)}"
+                        )
 
-                    results.append((list(serialized_peptide_to_mass.keys()), list(serialized_peptide_to_mass.values())))
-                    
+                    results.append(
+                        (
+                            list(serialized_peptide_to_mass.keys()),
+                            list(serialized_peptide_to_mass.values()),
+                        )
+                    )
+
                 except Exception as e:
                     raise RuntimeError(f"Error processing protein {idx}: {e}") from e
-            
+
             total_time = time.time() - start_time
-            print(f"\nSingle-threaded digest completed: {n_proteins} proteins in {total_time:.2f}s ({n_proteins/total_time:.1f} proteins/sec)")
+            print(
+                f"\nSingle-threaded digest completed: {n_proteins} proteins in {total_time:.2f}s ({n_proteins / total_time:.1f} proteins/sec)"
+            )
             return results
-        
+
         # Multi-threaded mode (original code)
         start_time = time.time()
-        
+
         # Submit all proteins
         submit_start = time.time()
         for idx, protein_seq in enumerate(protein_sequences):
             self.task_queue.put((idx, protein_seq))
         submit_time = time.time() - submit_start
-        
+
         # Collect results
         collect_start = time.time()
         results_mt: list[tuple[list[str], list[float]] | None] = [None] * n_proteins
         errors = []
-        
+
         for _ in range(n_proteins):
             protein_idx, result, error = self.result_queue.get()
-            
+
             if error:
                 errors.append((protein_idx, error))
             else:
                 results_mt[protein_idx] = result
-        
+
         collect_time = time.time() - collect_start
         total_time = time.time() - start_time
-        
-        print(f"\nMulti-threaded digest completed: {n_proteins} proteins in {total_time:.2f}s")
+
+        print(
+            f"\nMulti-threaded digest completed: {n_proteins} proteins in {total_time:.2f}s"
+        )
         print(f"  Submit time: {submit_time:.2f}s, Collect time: {collect_time:.2f}s")
-        print(f"  Throughput: {n_proteins/total_time:.1f} proteins/sec")
-        
+        print(f"  Throughput: {n_proteins / total_time:.1f} proteins/sec")
+
         if errors:
             raise RuntimeError(f"Errors in {len(errors)} proteins: {errors[0][1]}")
-        
+
         return results_mt  # type: ignore

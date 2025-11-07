@@ -1,21 +1,26 @@
-from .span import Span
 from ...mod import MOD_VALUE_TYPES, Mod, setup_mod
 from .interval import ACCEPTED_INTERVAL_DATATYPE, Interval, ModInterval, setup_interval
 from .intervallist import (
     ACCEPTED_INTERVALLIST_INPUT_TYPES,
     INTERVALLIST_DATATYPE,
     IntervalList,
+    populate_interval_list,
     setup_interval_list,
-    populate_interval_list
 )
-from .moddict import ACCEPTED_MODDICT_INPUT_TYPES, ModDict, setup_mod_dict, populate_mod_dict
+from .moddict import (
+    ACCEPTED_MODDICT_INPUT_TYPES,
+    ModDict,
+    populate_mod_dict,
+    setup_mod_dict,
+)
 from .modlist import (
     ACCEPTED_MODLIST_INPUT_TYPES,
     MODLIST_DATATYPE,
     ModList,
-    setup_mod_list,
     populate_mod_list,
+    setup_mod_list,
 )
+from .span import Span
 
 # Chem Composition Type
 CHEM_COMPOSITION_TYPE = dict[str, int | float]

@@ -24,7 +24,8 @@ class IntervalList(MutableSequence[Interval]):
     Accepts Interval instances, ModInterval instances, tuples (start, end, ambiguous[, mods]),
     or iterables thereof. Internally stores everything as Interval instances with no duplicate spans.
     """
-    __slots__ = ('_data',)
+
+    __slots__ = ("_data",)
 
     def __init__(self, data: Iterable[INTERVALLIST_DATATYPE] | None = None) -> None:
         self._data: list[Interval] = []
@@ -39,7 +40,9 @@ class IntervalList(MutableSequence[Interval]):
     def __getitem__(self, index: int | slice) -> Interval | list[Interval]:
         return self._data[index]
 
-    def __setitem__(self, index: int | slice, value: Interval | Iterable[Interval]) -> None:
+    def __setitem__(
+        self, index: int | slice, value: Interval | Iterable[Interval]
+    ) -> None:
         self._data[index] = value  # type: ignore
 
     def __delitem__(self, index: int | slice) -> None:
@@ -237,7 +240,7 @@ class IntervalList(MutableSequence[Interval]):
     def data(self) -> list[Interval]:
         """Compatibility property for existing code that accesses .data"""
         return self._data
-    
+
     @data.setter
     def data(self, value: list[Interval]) -> None:
         """Setter for compatibility with existing code that sets .data"""
@@ -314,8 +317,7 @@ def setup_interval_list(data: ACCEPTED_INTERVALLIST_INPUT_TYPES) -> IntervalList
 
 
 def populate_interval_list(
-    interval_list: IntervalList,
-    data: ACCEPTED_INTERVALLIST_INPUT_TYPES
+    interval_list: IntervalList, data: ACCEPTED_INTERVALLIST_INPUT_TYPES
 ) -> IntervalList:
     """Populates and returns an IntervalList from various input types."""
 

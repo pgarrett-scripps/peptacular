@@ -145,7 +145,7 @@ def apply_static_mods_infront(
 ) -> ProFormaAnnotation:
     if is_regex:
         raise NotImplementedError("Regex not supported for infront static mods")
-    
+
     if internal_static is None:
         return annotation
 
@@ -154,6 +154,7 @@ def apply_static_mods_infront(
             annotation.add_static_mod_by_residue(mod_aa, mod_value, inplace=True)
 
     return annotation
+
 
 def build_mods(
     annotation: ProFormaAnnotation,
@@ -291,11 +292,13 @@ def build_mods(
             if unique_peptidoforms:
                 # Create a hashable signature of the modification combination
                 # Sort by (mod_type, mod_value) to make position-independent
-                mod_signature = tuple(sorted(
-                    (mod_type, _get_mod_value(mod))
-                    for mod_type, site, mod in var_mod_combination
-                ))
-                
+                mod_signature = tuple(
+                    sorted(
+                        (mod_type, _get_mod_value(mod))
+                        for mod_type, site, mod in var_mod_combination
+                    )
+                )
+
                 if mod_signature in seen_mod_combinations:
                     continue
                 seen_mod_combinations.add(mod_signature)

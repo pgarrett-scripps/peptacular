@@ -11,11 +11,13 @@ MODLIST_DATATYPE = MOD_VALUE_TYPES | Mod
 
 from functools import lru_cache
 
+
 class ModList(MutableSequence[Mod]):
     """
     A list of modifications that automatically merges duplicates by aggregating multipliers.
     """
-    __slots__ = ('_data', 'allow_dups', 'stackable', 'name')
+
+    __slots__ = ("_data", "allow_dups", "stackable", "name")
 
     def __init__(
         self,
@@ -188,7 +190,9 @@ class ModList(MutableSequence[Mod]):
         elif isinstance(other, Iterable):  # type: ignore
             result.extend(other)
         else:
-            raise TypeError(f"Cannot add ModList({self.name if self.name else ''}) with {type(other)}")
+            raise TypeError(
+                f"Cannot add ModList({self.name if self.name else ''}) with {type(other)}"
+            )
 
         return result
 
@@ -199,7 +203,9 @@ class ModList(MutableSequence[Mod]):
         elif isinstance(other, Iterable):  # type: ignore
             self.extend(other)
         else:
-            raise TypeError(f"Cannot add ModList({self.name if self.name else ''}) with {type(other)}")
+            raise TypeError(
+                f"Cannot add ModList({self.name if self.name else ''}) with {type(other)}"
+            )
 
         return self
 
@@ -248,10 +254,7 @@ class ModList(MutableSequence[Mod]):
 
     def __hash__(self) -> int:
         """Make ModList hashable based on its contents"""
-        return hash((
-            tuple((mod.val, mod.mult) for mod in self._data),
-            self.stackable
-        ))
+        return hash((tuple((mod.val, mod.mult) for mod in self._data), self.stackable))
 
     def serialize(
         self,
@@ -267,9 +270,9 @@ class ModList(MutableSequence[Mod]):
             sort,
             include_plus,
             precision,
-            self.stackable
+            self.stackable,
         )
-    
+
     @staticmethod
     @lru_cache(maxsize=10000)
     def _serialize_cached(
@@ -278,11 +281,11 @@ class ModList(MutableSequence[Mod]):
         sort: bool,
         include_plus: bool,
         precision: int | None,
-        stackable: bool
+        stackable: bool,
     ) -> str:
         """Cached implementation of serialization."""
         elems: list[str] = []
-        
+
         for val, mult in mods_tuple:
             mod = Mod(val, mult)
             if stackable:
@@ -298,10 +301,10 @@ class ModList(MutableSequence[Mod]):
                             brackets, include_plus=include_plus, precision=precision
                         )
                     )
-        
+
         if sort:
             elems.sort()
-        
+
         return "".join(elems)
 
     @property
@@ -311,7 +314,7 @@ class ModList(MutableSequence[Mod]):
     @property
     def is_empty(self) -> bool:
         return len(self._data) == 0
-    
+
     @property
     def data(self) -> list[Mod]:
         """Compatibility property for existing code that accesses .data"""
@@ -319,8 +322,10 @@ class ModList(MutableSequence[Mod]):
 
     def __repr__(self) -> str:
         return f"ModList({self._data})"
-    
-    def sort(self, key: Callable[[Mod], Any] | None = None, reverse: bool = False) -> None:
+
+    def sort(
+        self, key: Callable[[Mod], Any] | None = None, reverse: bool = False
+    ) -> None:
         """Sort the ModList in place"""
         self._data.sort(key=key, reverse=reverse)
 
@@ -332,7 +337,7 @@ class ModList(MutableSequence[Mod]):
     def data(self) -> list[Mod]:
         """Compatibility property for existing code that accesses .data"""
         return self._data
-    
+
     @data.setter
     def data(self, value: list[Mod]) -> None:
         """Setter for compatibility with existing code that sets .data"""

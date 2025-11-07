@@ -23,8 +23,8 @@ from ..constants import (
 from ..errors import AmbiguousAminoAcidError, UnknownAminoAcidError
 from ..mass_calc import adjust_mass, adjust_mz, mod_mass
 from ..util import parse_static_mods
-from .dclasses.modlist import ModList
 from .dclasses import Mod
+from .dclasses.modlist import ModList
 
 if TYPE_CHECKING:
     from .annotation import ProFormaAnnotation
@@ -269,8 +269,6 @@ def mass(
         # No charge provided, use annotation's charge (or 0 if annotation has no charge)
         charge = annotation.charge if annotation.has_charge else 0
 
-        
-
     # more complex mass calculation (based on chem composition)
     if annotation.has_isotope_mods:
         annotation = annotation.copy(deep=True)
@@ -290,7 +288,6 @@ def mass(
             )
             + delta_mass
         )
-    
 
     if ion_type not in (IonType.PRECURSOR, IonType.NEUTRAL):
         if annotation.charge is None or annotation.charge == 0:
@@ -302,7 +299,9 @@ def mass(
     m: float = 0.0
 
     if annotation.has_static_mods:
-        smod_info: dict[str, Mod] = parse_static_mods(annotation.get_static_mod_list().data)
+        smod_info: dict[str, Mod] = parse_static_mods(
+            annotation.get_static_mod_list().data
+        )
         # convert to mass
         smod_masss: dict[str, float] = {k: mod_mass(v) for k, v in smod_info.items()}
 

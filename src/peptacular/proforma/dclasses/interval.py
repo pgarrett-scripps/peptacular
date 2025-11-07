@@ -27,16 +27,17 @@ class ModInterval:
         if not self.ambiguous and len(self.mods) == 0:
             raise ValueError("Interval must be ambiguous or have mods")
 
+
 @dataclass(slots=True)
 class Interval:
     """A sequence interval with modlist"""
+
     start: int
     end: int
     ambiguous: bool
     mods: ModList | Iterable[MODLIST_DATATYPE] | MODLIST_DATATYPE | None = None
 
     def __post_init__(self) -> None:
-
         self.mods: ModList = (
             setup_mod_list(self.mods, allow_dups=True, stackable=False)
             if not isinstance(self.mods, ModList)

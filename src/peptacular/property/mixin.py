@@ -37,6 +37,7 @@ from .types import (
 
 class SequencePropertyMixin:
     """Mixin providing named property calculation methods"""
+
     __slots__ = ()
 
     def calc_property(

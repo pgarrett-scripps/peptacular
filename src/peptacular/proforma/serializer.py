@@ -137,19 +137,29 @@ def _serialize_start(
     """Serialize the start portion into comps list."""
     # OPTIMIZED: Check has_* before calling getter to avoid lazy initialization
     if annotation.has_labile_mods:
-        _serialize_labile(annotation.get_labile_mod_list(), comps, include_plus, precision)
+        _serialize_labile(
+            annotation.get_labile_mod_list(), comps, include_plus, precision
+        )
 
     if annotation.has_static_mods:
-        _serialize_static(annotation.get_static_mod_list(), comps, include_plus, precision)
+        _serialize_static(
+            annotation.get_static_mod_list(), comps, include_plus, precision
+        )
 
     if annotation.has_isotope_mods:
-        _serialize_isotope(annotation.get_isotope_mod_list(), comps, include_plus, precision)
+        _serialize_isotope(
+            annotation.get_isotope_mod_list(), comps, include_plus, precision
+        )
 
     if annotation.has_unknown_mods:
-        _serialize_unknown(annotation.get_unknown_mod_list(), comps, include_plus, precision)
+        _serialize_unknown(
+            annotation.get_unknown_mod_list(), comps, include_plus, precision
+        )
 
     if annotation.has_nterm_mods:
-        _serialize_nterm(annotation.get_nterm_mod_list(), comps, include_plus, precision)
+        _serialize_nterm(
+            annotation.get_nterm_mod_list(), comps, include_plus, precision
+        )
 
 
 def _serialize_interval_start(
@@ -296,7 +306,9 @@ def _serialize_end(
     """Serialize the end portion into comps list."""
     # C-term mods
     if annotation.has_cterm_mods:
-        _serialize_cterm(annotation.get_cterm_mod_list(), comps, include_plus, precision)
+        _serialize_cterm(
+            annotation.get_cterm_mod_list(), comps, include_plus, precision
+        )
 
     _serialize_charge(annotation, comps, include_plus, precision)
 
@@ -309,15 +321,15 @@ def serialize_annotation(
     """Serialize a complete ProForma annotation."""
     # Single list, single join at the end!
     comps: list[str] = []
-    
+
     # Start
     _serialize_start(annotation, comps, include_plus, precision)
-    
+
     # Middle (fast path for unmodified sequences)
     _serialize_middle(annotation, comps, include_plus, precision)
-    
+
     # End
     _serialize_end(annotation, comps, include_plus, precision)
-    
+
     # Single join operation!
     return "".join(comps)

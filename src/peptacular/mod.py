@@ -35,7 +35,9 @@ def _serialize_mod_cached(
     if brackets is None:
         brackets_tuple: tuple[str, str] = ("", "")
         if mult > 1:
-            raise ValueError("Brackets must be provided if multiplier is greater than 1.")
+            raise ValueError(
+                "Brackets must be provided if multiplier is greater than 1."
+            )
     else:
         if len(brackets) != 2:
             raise ValueError("Brackets string must be of length 2.")
@@ -52,6 +54,7 @@ class Mod(NamedTuple):
     """
     A modification with optional multiplier
     """
+
     val: MOD_VALUE_TYPES
     mult: int = 1
 
@@ -70,7 +73,7 @@ class Mod(NamedTuple):
             include_plus,
             precision,
         )
-    
+
     @staticmethod
     def parse(mod_str: str, brackets: str | None) -> "Mod":
         """
@@ -79,39 +82,39 @@ class Mod(NamedTuple):
         # Handle multiplier
         if brackets is not None and len(brackets) != 2:
             raise ValueError("Brackets string must be of length 2.")
-        
+
         mult = 1
         val_str = mod_str
-        
+
         # Remove brackets if present
         if brackets is not None:
             open_br, close_br = brackets[0], brackets[1]
             if mod_str.startswith(open_br) and close_br in mod_str:
                 # Find the closing bracket and check for multiplier
                 close_idx = mod_str.rfind(close_br)
-                val_str = mod_str[len(open_br):close_idx]
-                
+                val_str = mod_str[len(open_br) : close_idx]
+
                 # Check for ^multiplier after closing bracket
-                remainder = mod_str[close_idx + len(close_br):]
-                if remainder.startswith('^'):
+                remainder = mod_str[close_idx + len(close_br) :]
+                if remainder.startswith("^"):
                     mult = int(remainder[1:])
             else:
                 val_str = mod_str
-        
+
         # Remove leading plus sign if present
-        if val_str.startswith('+'):
+        if val_str.startswith("+"):
             val_str = val_str[1:]
-        
+
         # Try to parse as float or int
         try:
-            if '.' in val_str or 'e' in val_str.lower():
+            if "." in val_str or "e" in val_str.lower():
                 val = float(val_str)
             else:
                 val = int(val_str)
         except ValueError:
             # If parsing fails, treat as string
             val = val_str
-        
+
         return get_mod(val, mult)
 
     def __hash__(self) -> int:
@@ -161,7 +164,7 @@ class Mod(NamedTuple):
 def _get_mod_impl(val: MOD_VALUE_TYPES, mult: int, val_type: type) -> Mod:
     """
     Internal implementation with type-aware caching.
-    
+
     The val_type parameter ensures int(1) and float(1.0) don't collide in cache.
     """
     # Intern strings for better memory sharing
@@ -173,10 +176,10 @@ def _get_mod_impl(val: MOD_VALUE_TYPES, mult: int, val_type: type) -> Mod:
 def get_mod(val: MOD_VALUE_TYPES, mult: int = 1) -> Mod:
     """
     Get a cached Mod instance. Returns the same object for identical values.
-    
+
     This ensures memory efficiency by reusing Mod instances across the application.
     String values are automatically interned for better memory sharing.
-    
+
     Note: Cache is type-aware - get_mod(1, 1) and get_mod(1.0, 1) return different Mods.
     """
     return _get_mod_impl(val, mult, type(val))
@@ -205,26 +208,31 @@ def clear_mod_cache() -> None:
 def get_mod_cache_info() -> dict[str, Any]:
     """
     Get cache statistics for debugging and monitoring.
-    
+
     Returns:
         Dictionary with cache hits, misses, size, and maxsize for both caches
     """
     mod_info = _get_mod_impl.cache_info()
     serialize_info = _serialize_mod_cached.cache_info()
-    
+
     return {
         "mod_cache": {
             "hits": mod_info.hits,
             "misses": mod_info.misses,
             "size": mod_info.currsize,
             "maxsize": mod_info.maxsize,
-            "hit_rate": mod_info.hits / (mod_info.hits + mod_info.misses) if (mod_info.hits + mod_info.misses) > 0 else 0.0
+            "hit_rate": mod_info.hits / (mod_info.hits + mod_info.misses)
+            if (mod_info.hits + mod_info.misses) > 0
+            else 0.0,
         },
         "serialize_cache": {
             "hits": serialize_info.hits,
             "misses": serialize_info.misses,
             "size": serialize_info.currsize,
             "maxsize": serialize_info.maxsize,
-            "hit_rate": serialize_info.hits / (serialize_info.hits + serialize_info.misses) if (serialize_info.hits + serialize_info.misses) > 0 else 0.0
-        }
+            "hit_rate": serialize_info.hits
+            / (serialize_info.hits + serialize_info.misses)
+            if (serialize_info.hits + serialize_info.misses) > 0
+            else 0.0,
+        },
     }

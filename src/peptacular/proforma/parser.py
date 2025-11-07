@@ -46,7 +46,6 @@ class ProFormaParser:
         self.intervals: IntervalList | None = None
         self.current_connection: bool | None = None
 
-
     @staticmethod
     def create_isotope_mod_list() -> ModList:
         # Create fresh object each time - no sharing!
@@ -79,7 +78,7 @@ class ProFormaParser:
     @staticmethod
     def create_empty_internal_mod_list() -> ModList:
         return ModList(allow_dups=True, stackable=False, name="Internal Mods")
-    
+
     @staticmethod
     def create_internal_mod_dict() -> ModDict:
         return ModDict(allow_dups=True, stackable=False, name="Internal Mods")
@@ -87,7 +86,6 @@ class ProFormaParser:
     @staticmethod
     def create_interval_list() -> IntervalList:
         return IntervalList()
-    
 
     def parse(self) -> Generator[tuple[Self, bool | None], None, None]:
         """
@@ -129,7 +127,6 @@ class ProFormaParser:
         self.charge = None
         self.charge_adducts = None
         self.intervals = None
-
 
     @validate_single_mod_multiplier
     def _add_static_mod(self, mod: Mod) -> None:

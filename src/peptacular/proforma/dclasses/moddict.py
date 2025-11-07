@@ -11,14 +11,15 @@ MODDICT_VALUE_TYPES = ModList | MODLIST_DATATYPE | Iterable[MODLIST_DATATYPE]
 
 class ModDict(MutableMapping[int, ModList]):
     """Dictionary mapping positions to ModList instances."""
-    __slots__ = ('_data', 'allow_dups', 'stackable', 'name')
+
+    __slots__ = ("_data", "allow_dups", "stackable", "name")
 
     def __init__(
-        self, 
+        self,
         initial: Mapping[int, MODDICT_VALUE_TYPES] | None = None,
         allow_dups: bool = True,
         stackable: bool = False,
-        name: str | None = None
+        name: str | None = None,
     ) -> None:
         self._data: dict[int, ModList] = {}
         self.allow_dups = allow_dups
@@ -45,13 +46,23 @@ class ModDict(MutableMapping[int, ModList]):
         """Convert value to ModList instance - optimized"""
         # Fast path: already a ModList with correct settings
         if isinstance(value, ModList):
-            if value.allow_dups == self.allow_dups and value.stackable == self.stackable:
+            if (
+                value.allow_dups == self.allow_dups
+                and value.stackable == self.stackable
+            ):
                 return value
             else:
-                return setup_mod_list(value._data, allow_dups=self.allow_dups, stackable=self.stackable, name=value.name)
+                return setup_mod_list(
+                    value._data,
+                    allow_dups=self.allow_dups,
+                    stackable=self.stackable,
+                    name=value.name,
+                )
 
         # Convert other types
-        return setup_mod_list(value, allow_dups=self.allow_dups, stackable=self.stackable, name=self.name)
+        return setup_mod_list(
+            value, allow_dups=self.allow_dups, stackable=self.stackable, name=self.name
+        )
 
     def _cleanup_empty(self) -> None:
         """Remove any keys with empty ModLists"""
@@ -122,7 +133,13 @@ class ModDict(MutableMapping[int, ModList]):
             return self._data[key]
 
         default_modlist = (
-            self._normalize_value(default) if default is not None else ModList(allow_dups=self.allow_dups, stackable=self.stackable, name=f"{self.name}_{key}")
+            self._normalize_value(default)
+            if default is not None
+            else ModList(
+                allow_dups=self.allow_dups,
+                stackable=self.stackable,
+                name=f"{self.name}_{key}",
+            )
         )
 
         if default_modlist:
@@ -173,20 +190,20 @@ class ModDict(MutableMapping[int, ModList]):
     def copy(self, deep: bool = True) -> ModDict:
         """Create a copy of the ModDict - optimized to bypass __init__"""
         result = object.__new__(ModDict)
-        
+
         # CRITICAL: Set instance attributes that __init__ would have set
         result.allow_dups = self.allow_dups
         result.stackable = self.stackable
         result.name = self.name
-        
+
         # Fast path: empty dict
         if not self._data:
             result._data = {}
             return result
-        
+
         # Copy with pre-allocated dict
         result._data = {key: modlist.copy() for key, modlist in self._data.items()}
-        
+
         return result
 
     def merge(self, other: Mapping[int, MODDICT_VALUE_TYPES]) -> None:
@@ -195,7 +212,15 @@ class ModDict(MutableMapping[int, ModList]):
             items = other.items()
         elif isinstance(other, Mapping):  # type: ignore
             items = [
-                (k, setup_mod_list(v, allow_dups=self.allow_dups, stackable=self.stackable, name=self.name))
+                (
+                    k,
+                    setup_mod_list(
+                        v,
+                        allow_dups=self.allow_dups,
+                        stackable=self.stackable,
+                        name=self.name,
+                    ),
+                )
                 for k, v in other.items()
             ]
         else:
@@ -276,7 +301,7 @@ class ModDict(MutableMapping[int, ModList]):
     def data(self) -> dict[int, ModList]:
         """Compatibility property for existing code that accesses .data"""
         return self._data
-    
+
     @data.setter
     def data(self, value: dict[int, ModList]) -> None:
         """Setter for compatibility with existing code that sets .data"""
@@ -286,17 +311,18 @@ class ModDict(MutableMapping[int, ModList]):
 ACCEPTED_MODDICT_INPUT_TYPES = Mapping[int, MODDICT_VALUE_TYPES] | ModDict | None
 
 
-def setup_mod_dict(initial: ACCEPTED_MODDICT_INPUT_TYPES = None, allow_dups: bool = True, stackable: bool = False) -> ModDict:
+def setup_mod_dict(
+    initial: ACCEPTED_MODDICT_INPUT_TYPES = None,
+    allow_dups: bool = True,
+    stackable: bool = False,
+) -> ModDict:
     """Initialize a ModDict from various input types."""
     if isinstance(initial, ModDict):
         return initial
     return ModDict(initial, allow_dups=allow_dups, stackable=stackable)
 
 
-def populate_mod_dict(
-    mod_dict: ModDict,
-    data: ACCEPTED_MODDICT_INPUT_TYPES
-) -> ModDict:
+def populate_mod_dict(mod_dict: ModDict, data: ACCEPTED_MODDICT_INPUT_TYPES) -> ModDict:
     """Populates and returns a ModDict from various input types."""
     if data is None:
         return mod_dict

@@ -18,17 +18,6 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "lxml>=6.0.1",
-    "matplotlib>=3.7.5",
-    "numpy>=1.24.4",
-    "optuna>=4.5.0",
-    "pandas>=1.5.3",
-    "pympler>=1.1",
-    "pymzml>=2.5.11",
-    "pyteomics>=4.7.5",
-    "scikit-learn>=1.3.2",
-    "statsmodels>=0.14.1",
-    "xgboost>=1.7.6",
 ]
 
 [tool.setuptools]
@@ -75,11 +64,12 @@ plotting = [
     "plotly",
     "pandas"
 ]
-streamlit = [
-    "plotly",
-    "pandas",
-    "streamlit"
+
+benchmark = [
+    "lxml>=6.0.1",
+    "pyteomics>=4.7.5",
 ]
+
 dev = [
     "pympler>=1.1",
     "pytest",
@@ -87,26 +77,17 @@ dev = [
     "ruff",
     "sphinx",
     "sphinx-rtd-theme",
+    {include-group = "benchmark"},
+
 ]
 
-ms2pip = [
-    "ms2pip"
-]
-
-pymzml = [
-    "pymzml"
-]
 
 all = [
     {include-group = "plotting"},
-    {include-group = "streamlit"},
-    {include-group = "ms2pip"},
-    {include-group = "pymzml"},
-    "brotli"
 ]
 
 all-dev = [
     {include-group = "all"},
-    {include-group = "dev"}
+    {include-group = "dev"},
 ]
 

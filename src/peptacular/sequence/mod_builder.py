@@ -546,6 +546,7 @@ def _strip_mods(
         include_plus=include_plus, precision=precision
     )
 
+
 @overload
 def strip_mods(
     sequence: str | ProFormaAnnotation,
@@ -554,6 +555,7 @@ def strip_mods(
     precision: int | None = None,
 ) -> str: ...
 
+
 @overload
 def strip_mods(
     sequence: Sequence[str | ProFormaAnnotation],
@@ -561,6 +563,7 @@ def strip_mods(
     include_plus: bool = False,
     precision: int | None = None,
 ) -> list[str]: ...
+
 
 def strip_mods(
     sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
@@ -670,6 +673,7 @@ def _to_ms2_pip_single(
     annot = get_annotation_input(sequence=sequence, copy=True)
     return annot.to_ms2_pip(inplace=True)
 
+
 @overload
 def to_ms2_pip(
     sequence: ProFormaAnnotation | str,
@@ -745,8 +749,8 @@ def to_ms2_pip(
         )
     else:
         return _to_ms2_pip_single(sequence=sequence)
-    
-    
+
+
 def _from_ms2_pip_single(
     item: tuple[str, str],
     static_mods: Mapping[str, float] | None = None,
@@ -801,9 +805,9 @@ def from_ms2_pip(
     When method=None (default), automatically detects if GIL is disabled and uses
     threading for better performance, otherwise uses multiprocessing.
 
-    MS2PIP modifications format: Every modification is listed as location|name, 
-    separated by a pipe (|) between the location, the name, and other modifications. 
-    Location is an integer counted starting at 1 for the first AA. 0 is reserved for 
+    MS2PIP modifications format: Every modification is listed as location|name,
+    separated by a pipe (|) between the location, the name, and other modifications.
+    Location is an integer counted starting at 1 for the first AA. 0 is reserved for
     N-terminal modifications, -1 for C-terminal modifications.
 
     :param sequence: Tuple of (sequence, modifications) or list of such tuples.
@@ -843,7 +847,7 @@ def from_ms2_pip(
             raise ValueError(
                 "All items in sequence must be tuples of (sequence, modifications)"
             )
-        
+
         return parallel_apply_internal(
             _from_ms2_pip_single,
             sequence,
@@ -860,13 +864,14 @@ def from_ms2_pip(
             raise ValueError(
                 "sequence must be a tuple of (sequence, modifications) for single processing"
             )
-        
+
         return _from_ms2_pip_single(
             item=sequence,
             static_mods=static_mods,
             include_plus=include_plus,
             precision=precision,
         )
+
 
 def _condense_to_peptidoform(
     sequence: str | ProFormaAnnotation,
@@ -891,7 +896,8 @@ def _condense_to_peptidoform(
         get_annotation_input(sequence=sequence, copy=True)
         .condense_to_peptidoform(inplace=False)
         .serialize(include_plus=include_plus, precision=precision)
-)
+    )
+
 
 @overload
 def condense_to_peptidoform(
@@ -900,12 +906,14 @@ def condense_to_peptidoform(
     precision: int | None = None,
 ) -> str: ...
 
+
 @overload
 def condense_to_peptidoform(
     sequence: Sequence[str | ProFormaAnnotation],
     include_plus: bool = False,
     precision: int | None = None,
 ) -> list[str]: ...
+
 
 def condense_to_peptidoform(
     sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],

@@ -68,6 +68,7 @@ def generate_product(
     split_aas = annotation_copy.split()
 
     from .annotation import ProFormaAnnotation
+
     for product in itertools.product(split_aas, repeat=repeat):
         combined_sequence = "".join(aa.serialize() for aa in product)
         result = ProFormaAnnotation.parse(combined_sequence)

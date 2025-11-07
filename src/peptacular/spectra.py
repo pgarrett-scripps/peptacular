@@ -1,88 +1,141 @@
+import bisect
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Generator, Literal, Self, Sequence
+from typing import Generator, Literal, NamedTuple, Self, Sequence, overload
 
-from ..constants import C13_NEUTRON_MASS
-from ..isotope import IsotopeLookup
-from .compress import compress_spectra, decompress_spectra
-from .decon import SpectrumPeak, deconvolute
-import bisect
+from .constants import C13_NEUTRON_MASS, PROTON_MASS
+
+
+class SpectrumPeak(NamedTuple):
+    """Peak with m/z, intensity, and optional charge."""
+
+    mz: float
+    intensity: float
+    charge: int | None = None
+    ion_mobility: float | None = None
+
+    @property
+    def neutral_mass(self) -> float | None:
+        """Calculate neutral mass if charge is known."""
+        if self.charge is None or self.charge == 0:
+            return None
+        return self.mz * abs(self.charge) - self.charge * PROTON_MASS
 
 
 class Spectrum:
     """Spectrum data structure with list of peaks."""
 
+    @overload
+    def __init__(self, peaks: Sequence[SpectrumPeak]) -> None: ...
+
+    @overload
+    def __init__(self, peaks: tuple[Sequence[float], Sequence[float]]) -> None: ...
+
+    @overload
+    def __init__(
+        self, peaks: tuple[Sequence[float], Sequence[float], Sequence[int | None]]
+    ) -> None: ...
+
+    @overload
     def __init__(
         self,
-        peaks: Sequence[SpectrumPeak]
-        | tuple[Sequence[float], Sequence[float]]
-        | tuple[Sequence[float], Sequence[float], Sequence[int | None]]
-        | Sequence[tuple[float, float]]
-        | Sequence[tuple[float, float, int | None]],
-    ) -> None:
+        peaks: tuple[
+            Sequence[float],
+            Sequence[float],
+            Sequence[int | None],
+            Sequence[float | None],
+        ],
+    ) -> None: ...
+
+    def __init__(self, peaks) -> None:
         """
         Initialize spectrum from:
-        - List of Peak objects
-        - Tuple of (mzs, intensities) or (mzs, intensities, charges)
-        - List of (mz, intensity) or (mz, intensity, charge) tuples
+        - List of SpectrumPeak objects
+        - Tuple of (mzs, intensities), (mzs, intensities, charges), or (mzs, intensities, charges, ion_mobilities)
+        - List of (mz, intensity), (mz, intensity, charge), or (mz, intensity, charge, ion_mobility) tuples
         """
-        # Case 1: Tuple of sequences - (mzs, intensities) or (mzs, intensities, charges)
+        # Empty case
+        if not peaks:
+            self.peaks: list[SpectrumPeak] = []
+            return
+
+        # Case 1: Already SpectrumPeak objects
+        if isinstance(peaks[0], SpectrumPeak):
+            self.peaks = list(peaks)  # type: ignore
+            return
+
+        # Case 2: Tuple of sequences
         if isinstance(peaks, tuple) and not isinstance(peaks[0], (int, float)):
-            if len(peaks) == 2:
+            n = len(peaks)
+            if n == 2:
                 mzs, intensities = peaks
-                if len(mzs) != len(intensities):
-                    raise ValueError("mzs and intensities must be the same length")
-                self.peaks: list[SpectrumPeak] = [
-                    SpectrumPeak(mz, intensity)
-                    for mz, intensity in zip(mzs, intensities)
+                self.peaks = [
+                    SpectrumPeak(float(mz), float(intensity))
+                    for mz, intensity in zip(mzs, intensities, strict=True)
                 ]
-            elif len(peaks) == 3:
+            elif n == 3:
                 mzs, intensities, charges = peaks
-                if not (len(mzs) == len(intensities) == len(charges)):
-                    raise ValueError(
-                        "mzs, intensities, and charges must be the same length"
+                self.peaks = [
+                    SpectrumPeak(
+                        float(mz),
+                        float(intensity),
+                        int(charge) if charge is not None else None,
                     )
-                self.peaks: list[SpectrumPeak] = [
-                    SpectrumPeak(mz, intensity, charge)
-                    for mz, intensity, charge in zip(mzs, intensities, charges)
+                    for mz, intensity, charge in zip(
+                        mzs, intensities, charges, strict=True
+                    )
+                ]
+            elif n == 4:
+                mzs, intensities, charges, ion_mobilities = peaks
+                self.peaks = [
+                    SpectrumPeak(
+                        float(mz),
+                        float(intensity),
+                        int(charge) if charge is not None else None,
+                        float(ion_mobility) if ion_mobility is not None else None,
+                    )
+                    for mz, intensity, charge, ion_mobility in zip(
+                        mzs, intensities, charges, ion_mobilities, strict=True
+                    )
                 ]
             else:
-                raise ValueError(
-                    "If peaks is a tuple of sequences, it must be (mzs, intensities) or (mzs, intensities, charges)"
-                )
+                raise ValueError("Tuple of sequences must have 2, 3, or 4 elements")
+            return
 
-        # Case 2: List of Peak objects or list of tuples
-        else:
-            first_item = peaks[0] if peaks else None
-
-            # Check if it's already Peak objects
-            if isinstance(first_item, SpectrumPeak):
-                self.peaks = list(peaks)
-
-            # Check if it's tuples
-            elif isinstance(first_item, tuple):
-                if len(first_item) == 2:
-                    self.peaks = [
-                        SpectrumPeak(mz, intensity) for mz, intensity in peaks
-                    ]
-                elif len(first_item) == 3:
-                    self.peaks = [
-                        SpectrumPeak(mz, intensity, charge)
-                        for mz, intensity, charge in peaks
-                    ]
-                else:
-                    raise ValueError(
-                        "Tuples must be (mz, intensity) or (mz, intensity, charge)"
+        # Case 3: List of tuples
+        first_item = peaks[0]
+        if isinstance(first_item, tuple):
+            n = len(first_item)
+            if n == 2:
+                self.peaks = [
+                    SpectrumPeak(float(mz), float(intensity)) for mz, intensity in peaks
+                ]  # type: ignore
+            elif n == 3:
+                self.peaks = [
+                    SpectrumPeak(
+                        float(mz),
+                        float(intensity),
+                        int(charge) if charge is not None else None,
                     )
-
-            # Empty list
-            elif first_item is None:
-                self.peaks = []
-
+                    for mz, intensity, charge in peaks  # type: ignore
+                ]
+            elif n == 4:
+                self.peaks = [
+                    SpectrumPeak(
+                        float(mz),
+                        float(intensity),
+                        int(charge) if charge is not None else None,
+                        float(ion_mobility) if ion_mobility is not None else None,
+                    )
+                    for mz, intensity, charge, ion_mobility in peaks  # type: ignore
+                ]
             else:
-                raise ValueError(
-                    "peaks must be a list of Peak objects, list of tuples, or tuple of sequences"
-                )
+                raise ValueError("Tuples must have 2, 3, or 4 elements")
+            return
+
+        raise ValueError(
+            "peaks must be a list of SpectrumPeak objects, list of tuples, or tuple of sequences"
+        )
 
     def __len__(self) -> int:
         return len(self.peaks)
@@ -102,9 +155,16 @@ class Spectrum:
     def charges(self) -> list[int | None]:
         return [p.charge for p in self.peaks]
 
+    @property
+    def ion_mobilities(self) -> list[float | None]:
+        return [p.ion_mobility for p in self.peaks]
+
     def copy(self) -> Self:
         return self.__class__(
-            peaks=[SpectrumPeak(p.mz, p.intensity, p.charge) for p in self.peaks]
+            peaks=[
+                SpectrumPeak(p.mz, p.intensity, p.charge, p.ion_mobility)
+                for p in self.peaks
+            ]
         )
 
     def _filter_peaks(
@@ -189,6 +249,23 @@ class Spectrum:
         lower, upper = self._calculate_mz_window(target_mz, tolerance, tolerance_unit)
         return self.remove_peaks_within_mz_range(lower, upper, inplace)
 
+    def _transform_intensities(
+        self, transform_func: Callable[[float], float], inplace: bool = True
+    ) -> Self:
+        """Apply transformation function to all intensities."""
+        transformed = [transform_func(p.intensity) for p in self.peaks]
+
+        new_peaks = [
+            SpectrumPeak(p.mz, trans_int, p.charge, p.ion_mobility)
+            for p, trans_int in zip(self.peaks, transformed)
+        ]
+
+        if inplace:
+            self.peaks = new_peaks
+            return self
+        else:
+            return self.__class__(peaks=new_peaks)
+
     def normalize_intensities(
         self, method: Literal["max", "sum", "tic"] = "max", inplace: bool = True
     ) -> Self:
@@ -196,57 +273,42 @@ class Spectrum:
         if not self.peaks:
             return self if inplace else self.copy()
 
-        intensities = [p.intensity for p in self.peaks]
+        intensities = self.intensities
 
         if method == "max":
-            max_intensity = max(intensities)
-            normalized = (
-                [i / max_intensity for i in intensities]
-                if max_intensity > 0
-                else intensities
-            )
+            norm_factor = max(intensities)
         elif method in ("sum", "tic"):
-            total_intensity = sum(intensities)
-            normalized = (
-                [i / total_intensity for i in intensities]
-                if total_intensity > 0
-                else intensities
-            )
+            norm_factor = sum(intensities)
         else:
             raise ValueError(f"Unknown normalization method: {method}")
 
+        if norm_factor == 0:
+            return self if inplace else self.copy()
+
+        return self._transform_intensities(lambda i: i / norm_factor, inplace)
+
+    def _sort_peaks(
+        self,
+        key_func: Callable[[SpectrumPeak], float],
+        reverse: bool = False,
+        inplace: bool = True,
+    ) -> Self:
+        """Sort peaks by a key function."""
+        sorted_peaks = sorted(self.peaks, key=key_func, reverse=reverse)
+
         if inplace:
-            self.peaks = [
-                SpectrumPeak(p.mz, norm_int, p.charge)
-                for p, norm_int in zip(self.peaks, normalized)
-            ]
+            self.peaks = sorted_peaks
             return self
         else:
-            new_peaks = [
-                SpectrumPeak(p.mz, norm_int, p.charge)
-                for p, norm_int in zip(self.peaks, normalized)
-            ]
-            return self.__class__(peaks=new_peaks)
+            return self.__class__(peaks=sorted_peaks[:])
 
     def sort_by_mz(self, inplace: bool = True) -> Self:
         """Sort peaks by m/z."""
-        sorted_peaks = sorted(self.peaks, key=lambda p: p.mz)
-
-        if inplace:
-            self.peaks = sorted_peaks
-            return self
-        else:
-            return self.__class__(peaks=sorted_peaks[:])
+        return self._sort_peaks(lambda p: p.mz, inplace=inplace)
 
     def sort_by_intensity(self, reverse: bool = True, inplace: bool = True) -> Self:
         """Sort peaks by intensity (descending by default)."""
-        sorted_peaks = sorted(self.peaks, key=lambda p: p.intensity, reverse=reverse)
-
-        if inplace:
-            self.peaks = sorted_peaks
-            return self
-        else:
-            return self.__class__(peaks=sorted_peaks[:])
+        return self._sort_peaks(lambda p: p.intensity, reverse=reverse, inplace=inplace)
 
     def keep_top_n_peaks(self, n: int, inplace: bool = True) -> Self:
         """Keep only top N most intense peaks."""
@@ -315,39 +377,13 @@ class Spectrum:
 
     def sqrt_transform(self, inplace: bool = True) -> Self:
         """Apply square root transformation to intensities."""
-        transformed = [p.intensity**0.5 for p in self.peaks]
-
-        if inplace:
-            self.peaks = [
-                SpectrumPeak(p.mz, trans_int, p.charge)
-                for p, trans_int in zip(self.peaks, transformed)
-            ]
-            return self
-        else:
-            new_peaks = [
-                SpectrumPeak(p.mz, trans_int, p.charge)
-                for p, trans_int in zip(self.peaks, transformed)
-            ]
-            return self.__class__(peaks=new_peaks)
+        return self._transform_intensities(lambda i: i**0.5, inplace)
 
     def log_transform(self, base: float = 2.0, inplace: bool = True) -> Self:
         """Apply log transformation to intensities (adds 1 to avoid log(0))."""
         import math
 
-        transformed = [math.log(p.intensity + 1, base) for p in self.peaks]
-
-        if inplace:
-            self.peaks = [
-                SpectrumPeak(p.mz, trans_int, p.charge)
-                for p, trans_int in zip(self.peaks, transformed)
-            ]
-            return self
-        else:
-            new_peaks = [
-                SpectrumPeak(p.mz, trans_int, p.charge)
-                for p, trans_int in zip(self.peaks, transformed)
-            ]
-            return self.__class__(peaks=new_peaks)
+        return self._transform_intensities(lambda i: math.log(i + 1, base), inplace)
 
     def get_total_ion_current(self) -> float:
         """Calculate total ion current (sum of all intensities)."""
@@ -358,114 +394,11 @@ class Spectrum:
         """Check if any peaks have assigned charges."""
         return any(p.charge is not None for p in self.peaks)
 
-    def deconvolute(
-        self,
-        tolerance: float = 50,
-        tolerance_type: Literal["ppm", "da"] = "ppm",
-        charge_range: tuple[int, int] = (1, 3),
-        max_left_decrease: float = 0.6,
-        max_right_decrease: float = 0.9,
-        isotope_mass: float = C13_NEUTRON_MASS,
-        isotope_lookup: IsotopeLookup | None = None,
-        inplace: bool = False,
-    ) -> Self:
-        """Deconvolute spectrum to identify isotopic envelopes."""
-        if self.has_charges:
-            raise ValueError(
-                "Spectrum already has assigned charges; cannot deconvolute."
-            )
-
-        if not inplace:
-            return self.copy().deconvolute(
-                tolerance=tolerance,
-                tolerance_type=tolerance_type,
-                charge_range=charge_range,
-                max_left_decrease=max_left_decrease,
-                max_right_decrease=max_right_decrease,
-                isotope_mass=isotope_mass,
-                isotope_lookup=isotope_lookup,
-                inplace=True,
-            )
-
-        peak_tupls = [(p.mz, p.intensity) for p in self.peaks]
-
-        dpeaks = deconvolute(
-            peaks=peak_tupls,
-            tolerance=tolerance,
-            tolerance_type=tolerance_type,
-            charge_range=charge_range,
-            max_left_decrease=max_left_decrease,
-            max_right_decrease=max_right_decrease,
-            isotope_mass=isotope_mass,
-            isotope_lookup=isotope_lookup,
-        )
-
-        # update charges in original peaks
-        mzs = [p.base_peak.mz for p in dpeaks]
-        ints = [p.base_peak.intensity for p in dpeaks]
-        charges = [p.charge for p in dpeaks]
-
-        # make new peaks list friom dpeaks
-        new_peaks: list[SpectrumPeak] = []
-        for mz, intensity, charge in zip(mzs, ints, charges):
-            new_peaks.append(SpectrumPeak(mz, intensity, charge))
-
-        # sort
-        new_peaks.sort(key=lambda p: p.mz)
-
-        self.peaks = new_peaks
-
-        return self
-
     def __str__(self) -> str:
         return f"Spectrum with {len(self.peaks)} peaks"
 
     def __repr__(self) -> str:
         return f"Spectrum(peaks=[{', '.join(repr(p) for p in self.peaks)}])"
-
-    def compress(
-        self,
-        compression: str = "gzip",
-        mz_precision: int | None = None,
-        intensity_precision: int | None = None,
-        url_safe: bool = False,
-    ) -> str:
-        """Compress spectrum to binary payload."""
-        if self.has_charges:
-            return compress_spectra(
-                spectra=(self.mzs, self.intensities, self.charges),
-                compression=compression,
-                mz_precision=mz_precision,
-                intensity_precision=intensity_precision,
-                url_safe=url_safe,
-            )
-        else:
-            return compress_spectra(
-                spectra=(self.mzs, self.intensities),
-                compression=compression,
-                mz_precision=mz_precision,
-                intensity_precision=intensity_precision,
-                url_safe=url_safe,
-            )
-
-    @staticmethod
-    def decompress(compressed_str: str) -> "Spectrum":
-        """Decompress binary payload to Spectrum."""
-
-        elems = decompress_spectra(compressed_str)
-
-        if len(elems) == 2:
-            mzs, intensities = elems
-            return Spectrum(peaks=(mzs, intensities))
-        elif len(elems) == 3:
-            mzs, intensities, charges = elems
-            return Spectrum(peaks=(mzs, intensities, charges))
-        else:
-            raise ValueError(
-                "Decompressed data must be (mzs, intensities) or (mzs, intensities, charges)"
-            )
-
-        # dunder iter method  so i can use for peak in spectrum:
 
     def __iter__(self) -> Generator[SpectrumPeak, None, None]:
         for peak in self.peaks:
@@ -499,10 +432,7 @@ class Spectrum:
         """Scale all intensities by a scalar."""
         if not isinstance(scalar, (int, float)):
             return NotImplemented
-        new_peaks = [
-            SpectrumPeak(p.mz, p.intensity * scalar, p.charge) for p in self.peaks
-        ]
-        return self.__class__(peaks=new_peaks)
+        return self._transform_intensities(lambda i: i * scalar, inplace=False)
 
     def __rmul__(self, scalar: float) -> "Spectrum":
         """Right multiplication (scalar * spectrum)."""
@@ -512,7 +442,6 @@ class Spectrum:
         """Iterate peaks in reverse order."""
         for peak in reversed(self.peaks):
             yield peak
-
 
     def merge_peaks_within_tolerance(
         self,
@@ -525,66 +454,66 @@ class Spectrum:
         """
         if not self.peaks:
             return self if inplace else self.copy()
-        
+
         spectrum = self if inplace else self.copy()
-        
+
         # Sort peaks by m/z
         mz_sorted_peaks = sorted(spectrum.peaks, key=lambda p: p.mz)
         mz_values = [p.mz for p in mz_sorted_peaks]  # For binary search
-        
+
         # Create intensity-sorted indices
         intensity_idx = sorted(
-            range(len(mz_sorted_peaks)), 
-            key=lambda i: mz_sorted_peaks[i].intensity, 
-            reverse=True
+            range(len(mz_sorted_peaks)),
+            key=lambda i: mz_sorted_peaks[i].intensity,
+            reverse=True,
         )
-        
+
         merged = [False] * len(mz_sorted_peaks)
         merged_peaks: list[SpectrumPeak] = []
-        
+
         for base_idx in intensity_idx:
             if merged[base_idx]:
                 continue
-            
+
             base_peak = mz_sorted_peaks[base_idx]
             base_mz = base_peak.mz
-            
+
             # Calculate tolerance window
             if tolerance_unit == "ppm":
                 tol = base_mz * tolerance * 1e-6
             else:
                 tol = tolerance
-            
+
             lower = base_mz - tol
             upper = base_mz + tol
-            
+
             # Binary search for range
             left_idx = bisect.bisect_left(mz_values, lower)
             right_idx = bisect.bisect_right(mz_values, upper)
-            
+
             # Merge peaks in range
             merged_intensity = 0.0
             merged_charge = base_peak.charge
             has_inconsistent_charge = False
-            
+
             for i in range(left_idx, right_idx):
                 if not merged[i]:
                     peak = mz_sorted_peaks[i]
                     merged_intensity += peak.intensity
                     merged[i] = True
-                    
+
                     # Check charge consistency
                     if merged_charge is not None and peak.charge is not None:
                         if merged_charge != peak.charge:
                             has_inconsistent_charge = True
-            
+
             # Create merged peak
             final_charge = None if has_inconsistent_charge else merged_charge
             merged_peaks.append(SpectrumPeak(base_mz, merged_intensity, final_charge))
-        
+
         # Sort by m/z
         merged_peaks.sort(key=lambda p: p.mz)
-        
+
         spectrum.peaks = merged_peaks
         return spectrum
 
@@ -593,26 +522,25 @@ class Spectrum:
 class Ms1Spectrum(Spectrum):
     retention_time: float | None = None
     ms1_scan_number: int | None = None
-    ion_mobility: float | None = None
 
     def __init__(
         self,
-        peaks,
+        peaks,  # type: ignore
         retention_time: float | None = None,
         ms1_scan_number: int | None = None,
-        ion_mobility: float | None = None,
     ):
         super().__init__(peaks)
         self.retention_time = retention_time
         self.ms1_scan_number = ms1_scan_number
-        self.ion_mobility = ion_mobility
 
     def copy(self) -> Self:
         return self.__class__(
-            peaks=[SpectrumPeak(p.mz, p.intensity, p.charge) for p in self.peaks],
+            peaks=[
+                SpectrumPeak(p.mz, p.intensity, p.charge, p.ion_mobility)
+                for p in self.peaks
+            ],
             retention_time=self.retention_time,
             ms1_scan_number=self.ms1_scan_number,
-            ion_mobility=self.ion_mobility,
         )
 
 
@@ -628,10 +556,9 @@ class Ms2Spectrum(Ms1Spectrum):
 
     def __init__(
         self,
-        peaks,
+        peaks,  # type: ignore
         retention_time: float | None = None,
         ms1_scan_number: int | None = None,
-        ion_mobility: float | None = None,
         precursor_mz: float | None = None,
         precursor_charge: int | None = None,
         ms2_scan_number: int | None = None,
@@ -642,7 +569,6 @@ class Ms2Spectrum(Ms1Spectrum):
             peaks=peaks,
             retention_time=retention_time,
             ms1_scan_number=ms1_scan_number,
-            ion_mobility=ion_mobility,
         )
         self.precursor_mz = precursor_mz
         self.precursor_charge = precursor_charge
@@ -652,10 +578,12 @@ class Ms2Spectrum(Ms1Spectrum):
 
     def copy(self) -> Self:
         return self.__class__(
-            peaks=[SpectrumPeak(p.mz, p.intensity, p.charge) for p in self.peaks],
+            peaks=[
+                SpectrumPeak(p.mz, p.intensity, p.charge, p.ion_mobility)
+                for p in self.peaks
+            ],
             retention_time=self.retention_time,
             ms1_scan_number=self.ms1_scan_number,
-            ion_mobility=self.ion_mobility,
             precursor_mz=self.precursor_mz,
             precursor_charge=self.precursor_charge,
             ms2_scan_number=self.ms2_scan_number,
@@ -715,79 +643,3 @@ class Ms2Spectrum(Ms1Spectrum):
                 )
 
         return spectrum
-
-
-def parse_pymzml_spectrum(spectrum) -> Spectrum:
-    """Parse pymzML spectrum object into Spectrum."""
-
-    mzs = []
-    intensities = []
-    for mz, intensity in spectrum.peaks("centroided"):
-        mzs.append(float(mz))
-        intensities.append(float(intensity))
-
-    if spectrum.ms_level == 1:
-        return Ms1Spectrum(
-            retention_time=float(spectrum.scan_time_in_minutes() or 0),
-            ms1_scan_number=spectrum.ID,
-            ion_mobility=float(spectrum.get("ion mobility drift time (ms)", 0) or 0)
-            if spectrum.get("ion mobility drift time (ms)")
-            else None,
-            peaks=[
-                SpectrumPeak(mz, intensity) for mz, intensity in zip(mzs, intensities)
-            ],
-        )
-    elif spectrum.ms_level == 2:
-        return Ms2Spectrum(
-            retention_time=float(spectrum.scan_time_in_minutes() or 0),
-            ms1_scan_number=int(spectrum.get("ms1 scan number", 0) or 0)
-            if spectrum.get("ms1 scan number")
-            else None,
-            ion_mobility=float(spectrum.get("ion mobility drift time (ms)", 0) or 0)
-            if spectrum.get("ion mobility drift time (ms)")
-            else None,
-            precursor_mz=float(spectrum.selected_precursors[0]["mz"])
-            if spectrum.selected_precursors and "mz" in spectrum.selected_precursors[0]
-            else None,
-            precursor_charge=int(spectrum.selected_precursors[0]["charge"])
-            if spectrum.selected_precursors
-            and "charge" in spectrum.selected_precursors[0]
-            and isinstance(spectrum.selected_precursors[0]["charge"], int)
-            else None,
-            ms2_scan_number=spectrum.ID,
-            activation_method=spectrum.get("activation method"),
-            isolation_window=(
-                float(spectrum.get("isolation window target m/z", 0) or 0)
-                - float(spectrum.get("isolation window lower offset", 0) or 0),
-                float(spectrum.get("isolation window target m/z", 0) or 0)
-                + float(spectrum.get("isolation window upper offset", 0) or 0),
-            )
-            if all(
-                k in spectrum
-                for k in [
-                    "isolation window target m/z",
-                    "isolation window lower offset",
-                    "isolation window upper offset",
-                ]
-            )
-            else None,
-            peaks=[
-                SpectrumPeak(mz, intensity) for mz, intensity in zip(mzs, intensities)
-            ],
-        )
-    else:
-        return Spectrum((mzs, intensities))
-
-
-def parse_mzml(
-    mzml_file: str, ms_level: int | None = None
-) -> Generator[Spectrum, None, None]:
-    """Parse mzML file and yield Spectrum objects."""
-    import pymzml
-
-    for spectrum in pymzml.run.Reader(mzml_file):
-        if spectrum.ms_level != ms_level and ms_level is not None:
-            continue
-
-        spec = parse_pymzml_spectrum(spectrum)
-        yield spec

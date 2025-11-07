@@ -153,7 +153,7 @@ def condense_to_peptidoform(
 
     if inplace is False:
         return condense_to_peptidoform(annotation.copy(), inplace=True)
-    
+
     # pop intervals
     intervals = annotation.pop_intervals()
 
@@ -175,6 +175,7 @@ def condense_to_peptidoform(
         print(f"Error extending unknown mods: {e}. Annotation: {annotation}")
     annotation.sort_mods()
     return annotation
+
 
 def count_residues(
     annotation: ProFormaAnnotation, include_mods: bool = True

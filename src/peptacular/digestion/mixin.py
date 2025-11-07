@@ -32,6 +32,7 @@ class DigestionMixin(DigestProtocol):
     Mixin to add digestion methods to ProFormaAnnotation.
     Preserves all type overloads from the standalone functions.
     """
+
     __slots__ = ()
 
     # Overloads for get_left_semi_enzymatic_sequences

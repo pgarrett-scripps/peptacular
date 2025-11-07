@@ -65,8 +65,8 @@ class UnifiedDatabase:
         # Protein storage with multiple lookup keys
         self._proteins: list[Protein] = []
         self._sequence_to_idx: dict[str, int] = {}  # sequence -> protein_idx
-        self._header_to_idx: dict[str, int] = {}    # header -> protein_idx
-        self._accession_to_idx: dict[str, int] = {} # accession -> protein_idx
+        self._header_to_idx: dict[str, int] = {}  # header -> protein_idx
+        self._accession_to_idx: dict[str, int] = {}  # accession -> protein_idx
 
         # Peptide storage
         self._peptide_to_mass: dict[str, float] = {}
@@ -119,7 +119,11 @@ class UnifiedDatabase:
         # Create Protein objects
         proteins: list[Protein] = []
         for i, entry in enumerate(entries):
-            protein = Protein(sequence=sequences[i], header=f"{decoy_prefix}{entry.header.lstrip(">")}", protein_idx=len(self._proteins) + i)
+            protein = Protein(
+                sequence=sequences[i],
+                header=f"{decoy_prefix}{entry.header.lstrip('>')}",
+                protein_idx=len(self._proteins) + i,
+            )
             proteins.append(protein)
 
         self._add_proteins(proteins)
@@ -137,7 +141,7 @@ class UnifiedDatabase:
                 raise ValueError(f"Duplicate protein header detected: {p.header}")
             if p.accession in self._accession_to_idx:
                 raise ValueError(f"Duplicate protein accession detected: {p.accession}")
-            
+
             new_proteins.append(p)
 
         if not new_proteins:
@@ -171,10 +175,11 @@ class UnifiedDatabase:
         # Convert to Protein objects if needed
         protein_list: list[Protein] = []
         for i, (p, h) in enumerate(zip(serialized, headers)):
-            protein_list.append(Protein(sequence=p, header=h, protein_idx=len(self._proteins) + i))
+            protein_list.append(
+                Protein(sequence=p, header=h, protein_idx=len(self._proteins) + i)
+            )
 
         self._add_proteins(protein_list)
-
 
     def digest_proteins(
         self,
@@ -222,7 +227,6 @@ class UnifiedDatabase:
 
         protein_sequences = [p.sequence for p in self._proteins]
 
-
         # Use pre-initialized worker pool
         with DigestWorkerPool(
             n_workers=n_workers or mp.cpu_count(),
@@ -251,7 +255,6 @@ class UnifiedDatabase:
         ) as pool:
             peptides_mass_per_protein = pool.digest_proteins(protein_sequences)
 
-
         # Now add peptides to database
         # Extract just the peptide sequences for indexing
         peptides_per_protein = [peps[0] for peps in peptides_mass_per_protein]
@@ -262,78 +265,82 @@ class UnifiedDatabase:
             peptides_per_protein, peptide_masses_per_protein
         )
 
-
     def _add_digested_peptides_with_masses(
         self,
         peptides_per_protein: list[list[str]],
         masses_per_protein: list[list[float]],
     ) -> None:
         """Add digested peptides with pre-calculated masses."""
-        
+
         # OPTIMIZATION 1: Flatten all peptides and strip once with multiprocessing
         # Build index mapping to reconstruct per-protein structure
         all_peptides: list[str] = []
-        peptide_indices: list[tuple[int, int]] = []  # (protein_idx, peptide_idx_in_protein)
-        
+        peptide_indices: list[
+            tuple[int, int]
+        ] = []  # (protein_idx, peptide_idx_in_protein)
+
         for protein_idx, peptides in enumerate(peptides_per_protein):
             for peptide_idx, peptide_seq in enumerate(peptides):
                 all_peptides.append(peptide_seq)
                 peptide_indices.append((protein_idx, peptide_idx))
-        
+
         # Strip all peptides at once (uses multiprocessing internally)
         all_stripped = strip_mods(all_peptides)
-        
+
         # Reconstruct per-protein stripped peptides
         stripped_peptides_per_protein: list[list[str]] = [
             [None] * len(peptides) for peptides in peptides_per_protein
         ]
-        
+
         for idx, (protein_idx, peptide_idx) in enumerate(peptide_indices):
             stripped_peptides_per_protein[protein_idx][peptide_idx] = all_stripped[idx]
-        
+
         # OPTIMIZATION 2: Build peptide_to_mass_map in a single pass
         peptide_to_mass_map: dict[str, float] = {}
         for peptides, masses in zip(peptides_per_protein, masses_per_protein):
             for peptide_seq, mass in zip(peptides, masses):
-                if peptide_seq not in self._peptide_to_mass and peptide_seq not in peptide_to_mass_map:
+                if (
+                    peptide_seq not in self._peptide_to_mass
+                    and peptide_seq not in peptide_to_mass_map
+                ):
                     peptide_to_mass_map[peptide_seq] = mass
-        
+
         # OPTIMIZATION 3: Batch update mass bins (pre-calculate bin_keys)
-        bin_precision_mult = 10 ** self.bin_precision
-        
+        bin_precision_mult = 10**self.bin_precision
+
         for peptide_seq, peptide_mass in peptide_to_mass_map.items():
             self._peptide_to_mass[peptide_seq] = peptide_mass
             bin_key = int(round(peptide_mass, self.bin_precision) * bin_precision_mult)
-            
+
             if bin_key not in self.mass_bins:
                 self.mass_bins[bin_key] = []
             self.mass_bins[bin_key].append(peptide_seq)
-        
+
         # OPTIMIZATION 4: Process peptides with pre-stripped sequences
         next_peptide_idx = len(self._peptide_idx)
-        
+
         for protein_idx, (peptides, stripped_peptides) in enumerate(
             zip(peptides_per_protein, stripped_peptides_per_protein)
         ):
             if protein_idx not in self._protein_to_peptides:
                 self._protein_to_peptides[protein_idx] = set()
-            
+
             # Cache protein sequence lookup
             protein_seq = self._proteins[protein_idx].sequence
-            
+
             # Process peptides for this protein
             for peptide_seq, unmod_seq in zip(peptides, stripped_peptides):
                 self._protein_to_peptides[protein_idx].add(peptide_seq)
-                
+
                 # Find all occurrences of this peptide
                 unmod_len = len(unmod_seq)
                 start = 0
-                
+
                 while True:
                     pos = protein_seq.find(unmod_seq, start)
                     if pos == -1:
                         break
-                    
+
                     peptide_obj = Peptide(
                         sequence=peptide_seq,
                         protein_idx=protein_idx,
@@ -341,50 +348,50 @@ class UnifiedDatabase:
                         end_pos=pos + unmod_len,
                         mass=self._peptide_to_mass[peptide_seq],
                     )
-                    
+
                     # Add to peptide object lookups
                     if peptide_obj not in self._peptide_idx:
                         self._peptide_idx[peptide_obj] = next_peptide_idx
                         self._idx_to_peptide[next_peptide_idx] = peptide_obj
                         next_peptide_idx += 1
-                    
+
                     if peptide_seq not in self._peptide_to_objects:
                         self._peptide_to_objects[peptide_seq] = []
                     self._peptide_to_objects[peptide_seq].append(peptide_obj)
-                    
+
                     start = pos + 1
 
-    def get_protein(
-        self, identifier: str | int | Protein
-    ) -> Protein | None:
+    def get_protein(self, identifier: str | int | Protein) -> Protein | None:
         """
         Get protein by any identifier: sequence, header, accession, index, or Protein object.
         Returns Protein object or None if not found.
         """
         if isinstance(identifier, Protein):
             return identifier
-        
+
         if isinstance(identifier, int):
-            return self._proteins[identifier] if 0 <= identifier < len(self._proteins) else None
-        
+            return (
+                self._proteins[identifier]
+                if 0 <= identifier < len(self._proteins)
+                else None
+            )
+
         # Try all string-based lookups
         idx = (
-            self._sequence_to_idx.get(identifier) or
-            self._header_to_idx.get(identifier) or
-            self._accession_to_idx.get(identifier)
+            self._sequence_to_idx.get(identifier)
+            or self._header_to_idx.get(identifier)
+            or self._accession_to_idx.get(identifier)
         )
-        
+
         return self._proteins[idx] if idx is not None else None
 
-    def get_proteins_by_peptide(
-        self, identifier: str | Peptide | int
-    ) -> list[Protein]:
+    def get_proteins_by_peptide(self, identifier: str | Peptide | int) -> list[Protein]:
         """
         Get proteins by peptide sequence, Peptide object, or peptide index.
         Returns list of Protein objects.
         """
         peptide_objects: list[Peptide] = []
-        
+
         if isinstance(identifier, str):
             # Peptide sequence
             peptide_objects = self._peptide_to_objects.get(identifier, [])
@@ -396,7 +403,7 @@ class UnifiedDatabase:
             peptide_obj = self._idx_to_peptide.get(identifier)
             if peptide_obj:
                 peptide_objects = [peptide_obj]
-        
+
         # Convert to unique proteins
         protein_indices = {p.protein_idx for p in peptide_objects}
         return [self._proteins[idx] for idx in protein_indices]
@@ -546,7 +553,6 @@ class UnifiedDatabase:
         print(f"Bin precision: {stats['bin_precision']}")
         print("===================================\n")
 
-
     def save(self, filepath: str | Path) -> None:
         """Save the database to a file using pickle."""
         filepath = Path(filepath)
@@ -586,7 +592,9 @@ class UnifiedDatabase:
         db._header_to_idx = state.get("_header_to_idx", {})
         db._accession_to_idx = state.get("_accession_to_idx", {})
         db._peptide_to_mass = state["_peptide_to_mass"]
-        db._peptide_to_objects = state.get("_peptide_to_objects", state.get("_peptide_to_proteins", {}))
+        db._peptide_to_objects = state.get(
+            "_peptide_to_objects", state.get("_peptide_to_proteins", {})
+        )
         db._peptide_idx = state.get("_peptide_idx", {})
         db._idx_to_peptide = state.get("_idx_to_peptide", {})
         db.mass_bins = state["mass_bins"]

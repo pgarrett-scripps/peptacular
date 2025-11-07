@@ -19,6 +19,7 @@ from .types import (
 
 class FragmenterMixin(FragmentableAnnotation):
     """Mixin class providing fragmentation functionality."""
+
     __slots__ = ()
 
     @overload
