@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from typing import Generator, Iterable, Sequence
 
-from ..proforma.dclasses import SPAN_TYPE
+from ..proforma.dclasses import Span
 from ..spans import (
     build_left_semi_spans,
     build_non_enzymatic_spans,
@@ -23,7 +23,7 @@ from .types import (
 
 def _return_digested_sequences(
     annotation: DigestProtocol,
-    spans: Iterable[SPAN_TYPE],
+    spans: Iterable[Span],
     return_type: DigestReturnTypeLiterals | DigestReturnType,
 ) -> DigestGenerator:
     """Helper function to return digested sequences in various formats."""
@@ -285,7 +285,7 @@ def digest_annotation_by_regex(
         DigestReturnTypeLiterals | DigestReturnType
     ) = DigestReturnType.ANNOTATION,
 ) -> DigestGenerator:
-    all_spans: set[SPAN_TYPE] = set()
+    all_spans: set[Span] = set()
     if not complete_digestion:
         all_spans.add((0, len(annotation), 0))
 
@@ -321,7 +321,7 @@ def sequential_digest_annotation(
     ) = DigestReturnType.ANNOTATION_SPAN,
 ) -> DigestGenerator:
     """Perform sequential digestion with multiple enzymes."""
-    digested_anot_spans: list[tuple[DigestProtocol, SPAN_TYPE]] = []
+    digested_anot_spans: list[tuple[DigestProtocol, Span]] = []
 
     for i, enzyme_config in enumerate(enzyme_configs):
         if i == 0:
@@ -342,7 +342,7 @@ def sequential_digest_annotation(
             if len(digested_anot_spans) == 0:
                 break
 
-            sequential_digested_anot_spans: list[tuple[DigestProtocol, SPAN_TYPE]] = []
+            sequential_digested_anot_spans: list[tuple[DigestProtocol, Span]] = []
 
             for anot, span in digested_anot_spans:
                 _digested_anot_spans = list(
@@ -359,7 +359,7 @@ def sequential_digest_annotation(
                     )
                 )
 
-                fixed_digested_anot_spans: list[tuple[DigestProtocol, SPAN_TYPE]] = []
+                fixed_digested_anot_spans: list[tuple[DigestProtocol, Span]] = []
                 for digested_anot, digested_span in _digested_anot_spans:  # type: ignore
                     fixed_digested_span = (  # type: ignore
                         span[0] + digested_span[0],  # type: ignore

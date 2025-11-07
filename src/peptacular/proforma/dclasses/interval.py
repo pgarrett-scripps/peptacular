@@ -9,7 +9,7 @@ from ...mod import MOD_VALUE_TYPES
 from .modlist import MODLIST_DATATYPE, ModList, setup_mod_list
 
 
-@dataclass
+@dataclass(slots=True)
 class ModInterval:
     """An immutable sequence interval for return type"""
 
@@ -30,6 +30,8 @@ class ModInterval:
 
 class Interval:
     """A sequence interval with modlist"""
+    __slots__ = ('start', 'end', 'ambiguous', 'mods')
+
 
     def __init__(
         self,

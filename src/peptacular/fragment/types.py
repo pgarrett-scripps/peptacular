@@ -1,6 +1,4 @@
-from dataclasses import dataclass
 from enum import StrEnum
-from functools import cached_property
 from typing import Literal, NamedTuple, Protocol, Self
 
 from ..constants import PROTON_MASS, IonType, IonTypeLiteral

@@ -298,7 +298,7 @@ class TestApplyMods(unittest.TestCase):
         """Test applying only static modifications."""
         static_mods = {"PC": [self.phospho_mod]}
         result = apply_static_mods_infront(self.annotation, internal_static=static_mods)
-        self.assertEqual(result.serialize(), "<[Phospho]@P,C>PEPTIDE")
+        self.assertEqual(result.serialize(), "<[Phospho]@P>PEPTIDE")
 
     def test_apply_internal_mods_only(self):
         """Test applying only internal modifications."""

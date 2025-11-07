@@ -78,6 +78,7 @@ streamlit = [
     "streamlit"
 ]
 dev = [
+    "pympler>=1.1",
     "pytest",
     "pytest-cov",
     "ruff",

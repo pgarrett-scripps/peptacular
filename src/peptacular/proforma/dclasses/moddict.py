@@ -12,6 +12,7 @@ MODDICT_VALUE_TYPES = ModList | MODLIST_DATATYPE | Iterable[MODLIST_DATATYPE]
 
 class ModDict(UserDict[int, ModList]):
     """Dictionary mapping positions to ModList instances."""
+    __slots__ = ('allow_dups', 'stackable', 'name')
 
     def __init__(
         self, 

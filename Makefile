@@ -3,6 +3,7 @@
 # Default target
 help:
 	@echo "Available commands:"
+	@echo "  install-uv   - Install uv"
 	@echo "  install      - Install production dependencies"
 	@echo "  install-dev  - Install all dependencies (including dev)"
 	@echo "  sync         - Sync dependencies with lock file"
@@ -16,6 +17,9 @@ help:
 	@echo "  docs         - Build documentation"
 	@echo "  serve-docs  - Serve documentation with live reload"
 	@echo "  run-gen      - Run generate_mod_dbs.py"
+
+install-uv:
+	curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Dependency management
 install:

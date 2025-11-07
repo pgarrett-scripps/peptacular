@@ -1,3 +1,4 @@
+from .span import Span
 from ...mod import MOD_VALUE_TYPES, Mod, setup_mod
 from .interval import ACCEPTED_INTERVAL_DATATYPE, Interval, ModInterval, setup_interval
 from .intervallist import (
@@ -15,8 +16,6 @@ from .modlist import (
     setup_mod_list,
     populate_mod_list,
 )
-
-SPAN_TYPE = tuple[int, int, int]
 
 # Chem Composition Type
 CHEM_COMPOSITION_TYPE = dict[str, int | float]
@@ -40,7 +39,7 @@ __all__ = [
     "ModDict",
     "setup_mod_dict",
     "ACCEPTED_MODDICT_INPUT_TYPES",
-    "SPAN_TYPE",
+    "Span",
     "CHEM_COMPOSITION_TYPE",
     "populate_mod_list",
     "populate_interval_list",

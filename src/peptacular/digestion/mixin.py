@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Generator, Literal, Self, Sequence, overload
 
-from ..proforma.dclasses import SPAN_TYPE
+from ..proforma.dclasses import Span
 from .core import (
     digest_annotation_by_aa,
     digest_annotation_by_regex,
@@ -32,6 +32,7 @@ class DigestionMixin(DigestProtocol):
     Mixin to add digestion methods to ProFormaAnnotation.
     Preserves all type overloads from the standalone functions.
     """
+    __slots__ = ()
 
     # Overloads for get_left_semi_enzymatic_sequences
     @overload
@@ -41,7 +42,7 @@ class DigestionMixin(DigestProtocol):
         max_len: int | None = None,
         *,
         return_type: DigestReturnTypeSpanLiteral | Literal[DigestReturnType.SPAN],
-    ) -> Generator[SPAN_TYPE, None, None]: ...
+    ) -> Generator[Span, None, None]: ...
 
     @overload
     def get_left_semi_enzymatic_sequences(
@@ -72,7 +73,7 @@ class DigestionMixin(DigestProtocol):
         return_type: (
             DigestReturnTypeStrSpanLiteral | Literal[DigestReturnType.STR_SPAN]
         ),
-    ) -> Generator[tuple[str, SPAN_TYPE], None, None]: ...
+    ) -> Generator[tuple[str, Span], None, None]: ...
 
     @overload
     def get_left_semi_enzymatic_sequences(
@@ -84,7 +85,7 @@ class DigestionMixin(DigestProtocol):
             DigestReturnTypeAnnotationSpanLiteral
             | Literal[DigestReturnType.ANNOTATION_SPAN]
         ),
-    ) -> Generator[tuple[Self, SPAN_TYPE], None, None]: ...
+    ) -> Generator[tuple[Self, Span], None, None]: ...
 
     @overload
     def get_left_semi_enzymatic_sequences(
@@ -118,7 +119,7 @@ class DigestionMixin(DigestProtocol):
         return_type: (
             DigestReturnTypeSpanLiteral | Literal[DigestReturnType.SPAN]
         ) = DigestReturnType.SPAN,
-    ) -> Generator[SPAN_TYPE, None, None]: ...
+    ) -> Generator[Span, None, None]: ...
 
     @overload
     def get_right_semi_enzymatic_sequences(
@@ -151,7 +152,7 @@ class DigestionMixin(DigestProtocol):
         return_type: (
             DigestReturnTypeStrSpanLiteral | Literal[DigestReturnType.STR_SPAN]
         ) = DigestReturnType.STR_SPAN,
-    ) -> Generator[tuple[str, SPAN_TYPE], None, None]: ...
+    ) -> Generator[tuple[str, Span], None, None]: ...
 
     @overload
     def get_right_semi_enzymatic_sequences(
@@ -163,7 +164,7 @@ class DigestionMixin(DigestProtocol):
             DigestReturnTypeAnnotationSpanLiteral
             | Literal[DigestReturnType.ANNOTATION_SPAN]
         ) = DigestReturnType.ANNOTATION_SPAN,
-    ) -> Generator[tuple[Self, SPAN_TYPE], None, None]: ...
+    ) -> Generator[tuple[Self, Span], None, None]: ...
 
     @overload
     def get_right_semi_enzymatic_sequences(
@@ -197,7 +198,7 @@ class DigestionMixin(DigestProtocol):
         return_type: (
             DigestReturnTypeSpanLiteral | Literal[DigestReturnType.SPAN]
         ) = DigestReturnType.SPAN,
-    ) -> Generator[SPAN_TYPE, None, None]: ...
+    ) -> Generator[Span, None, None]: ...
 
     @overload
     def get_semi_enzymatic_sequences(
@@ -230,7 +231,7 @@ class DigestionMixin(DigestProtocol):
         return_type: (
             DigestReturnTypeStrSpanLiteral | Literal[DigestReturnType.STR_SPAN]
         ) = DigestReturnType.STR_SPAN,
-    ) -> Generator[tuple[str, SPAN_TYPE], None, None]: ...
+    ) -> Generator[tuple[str, Span], None, None]: ...
 
     @overload
     def get_semi_enzymatic_sequences(
@@ -242,7 +243,7 @@ class DigestionMixin(DigestProtocol):
             DigestReturnTypeAnnotationSpanLiteral
             | Literal[DigestReturnType.ANNOTATION_SPAN]
         ) = DigestReturnType.ANNOTATION_SPAN,
-    ) -> Generator[tuple[Self, SPAN_TYPE], None, None]: ...
+    ) -> Generator[tuple[Self, Span], None, None]: ...
 
     @overload
     def get_semi_enzymatic_sequences(
@@ -274,7 +275,7 @@ class DigestionMixin(DigestProtocol):
         return_type: (
             DigestReturnTypeSpanLiteral | Literal[DigestReturnType.SPAN]
         ) = DigestReturnType.SPAN,
-    ) -> Generator[SPAN_TYPE, None, None]: ...
+    ) -> Generator[Span, None, None]: ...
 
     @overload
     def get_non_enzymatic_sequences(
@@ -307,7 +308,7 @@ class DigestionMixin(DigestProtocol):
         return_type: (
             DigestReturnTypeStrSpanLiteral | Literal[DigestReturnType.STR_SPAN]
         ) = DigestReturnType.STR_SPAN,
-    ) -> Generator[tuple[str, SPAN_TYPE], None, None]: ...
+    ) -> Generator[tuple[str, Span], None, None]: ...
 
     @overload
     def get_non_enzymatic_sequences(
@@ -319,7 +320,7 @@ class DigestionMixin(DigestProtocol):
             DigestReturnTypeAnnotationSpanLiteral
             | Literal[DigestReturnType.ANNOTATION_SPAN]
         ) = DigestReturnType.ANNOTATION_SPAN,
-    ) -> Generator[tuple[Self, SPAN_TYPE], None, None]: ...
+    ) -> Generator[tuple[Self, Span], None, None]: ...
 
     @overload
     def get_non_enzymatic_sequences(
@@ -359,7 +360,7 @@ class DigestionMixin(DigestProtocol):
         return_type: (
             DigestReturnTypeSpanLiteral | Literal[DigestReturnType.SPAN]
         ) = DigestReturnType.SPAN,
-    ) -> Generator[SPAN_TYPE, None, None]: ...
+    ) -> Generator[Span, None, None]: ...
 
     @overload
     def regex_digest(
@@ -407,7 +408,7 @@ class DigestionMixin(DigestProtocol):
         return_type: (
             DigestReturnTypeStrSpanLiteral | Literal[DigestReturnType.STR_SPAN]
         ) = DigestReturnType.STR_SPAN,
-    ) -> Generator[tuple[str, SPAN_TYPE], None, None]: ...
+    ) -> Generator[tuple[str, Span], None, None]: ...
 
     @overload
     def regex_digest(
@@ -424,7 +425,7 @@ class DigestionMixin(DigestProtocol):
             DigestReturnTypeAnnotationSpanLiteral
             | Literal[DigestReturnType.ANNOTATION_SPAN]
         ) = DigestReturnType.ANNOTATION_SPAN,
-    ) -> Generator[tuple[Self, SPAN_TYPE], None, None]: ...
+    ) -> Generator[tuple[Self, Span], None, None]: ...
 
     @overload
     def regex_digest(
@@ -485,7 +486,7 @@ class DigestionMixin(DigestProtocol):
         return_type: (
             DigestReturnTypeSpanLiteral | Literal[DigestReturnType.SPAN]
         ) = DigestReturnType.SPAN,
-    ) -> Generator[SPAN_TYPE, None, None]: ...
+    ) -> Generator[Span, None, None]: ...
 
     @overload
     def digest(
@@ -539,7 +540,7 @@ class DigestionMixin(DigestProtocol):
         return_type: (
             DigestReturnTypeStrSpanLiteral | Literal[DigestReturnType.STR_SPAN]
         ) = DigestReturnType.STR_SPAN,
-    ) -> Generator[tuple[str, SPAN_TYPE], None, None]: ...
+    ) -> Generator[tuple[str, Span], None, None]: ...
 
     @overload
     def digest(
@@ -558,7 +559,7 @@ class DigestionMixin(DigestProtocol):
             DigestReturnTypeAnnotationSpanLiteral
             | Literal[DigestReturnType.ANNOTATION_SPAN]
         ) = DigestReturnType.ANNOTATION_SPAN,
-    ) -> Generator[tuple[Self, SPAN_TYPE], None, None]: ...
+    ) -> Generator[tuple[Self, Span], None, None]: ...
 
     @overload
     def digest(
@@ -621,7 +622,7 @@ class DigestionMixin(DigestProtocol):
         return_type: (
             DigestReturnTypeSpanLiteral | Literal[DigestReturnType.SPAN]
         ) = DigestReturnType.SPAN,
-    ) -> Generator[SPAN_TYPE, None, None]: ...
+    ) -> Generator[Span, None, None]: ...
 
     @overload
     def sequential_digest(
@@ -657,7 +658,7 @@ class DigestionMixin(DigestProtocol):
         return_type: (
             DigestReturnTypeStrSpanLiteral | Literal[DigestReturnType.STR_SPAN]
         ) = DigestReturnType.STR_SPAN,
-    ) -> Generator[tuple[str, SPAN_TYPE], None, None]: ...
+    ) -> Generator[tuple[str, Span], None, None]: ...
 
     @overload
     def sequential_digest(
@@ -670,7 +671,7 @@ class DigestionMixin(DigestProtocol):
             DigestReturnTypeAnnotationSpanLiteral
             | Literal[DigestReturnType.ANNOTATION_SPAN]
         ) = DigestReturnType.ANNOTATION_SPAN,
-    ) -> Generator[tuple[Self, SPAN_TYPE], None, None]: ...
+    ) -> Generator[tuple[Self, Span], None, None]: ...
 
     @overload
     def sequential_digest(

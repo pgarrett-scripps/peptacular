@@ -25,6 +25,7 @@ class IntervalList(UserList[Interval]):
     Accepts Interval instances, ModInterval instances, tuples (start, end, ambiguous[, mods]),
     or iterables thereof. Internally stores everything as Interval instances with no duplicate spans.
     """
+    __slots__ = ()
 
     def __init__(self, data: Iterable[INTERVALLIST_DATATYPE] | None = None) -> None:
         # Initialize empty UserList

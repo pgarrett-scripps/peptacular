@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 import warnings
-from collections import UserList
-from collections.abc import Iterable
-from typing import Any, Self, SupportsIndex
+from collections.abc import Iterable, MutableSequence
+from typing import Any, Callable, Iterator, Self, SupportsIndex
 
 from ...mod import MOD_VALUE_TYPES, Mod, setup_mod
 
@@ -12,10 +11,11 @@ MODLIST_DATATYPE = MOD_VALUE_TYPES | Mod
 
 from functools import lru_cache
 
-class ModList(UserList[Mod]):
+class ModList(MutableSequence[Mod]):
     """
     A list of modifications that automatically merges duplicates by aggregating multipliers.
     """
+    __slots__ = ('_data', 'allow_dups', 'stackable', 'name')
 
     def __init__(
         self,
@@ -24,7 +24,7 @@ class ModList(UserList[Mod]):
         stackable: bool = True,
         name: str | None = None,
     ) -> None:
-        super().__init__()
+        self._data: list[Mod] = []
         self.allow_dups = allow_dups
         self.stackable = stackable
         self.name = name
@@ -39,6 +39,22 @@ class ModList(UserList[Mod]):
         if data is not None:
             self.extend(data)
 
+    # Required MutableSequence abstract methods
+    def __len__(self) -> int:
+        return len(self._data)
+
+    def __getitem__(self, index: int | slice) -> Mod | list[Mod]:
+        return self._data[index]
+
+    def __setitem__(self, index: int | slice, value: Mod | Iterable[Mod]) -> None:
+        self._data[index] = value  # type: ignore
+
+    def __delitem__(self, index: int | slice) -> None:
+        del self._data[index]
+
+    def __iter__(self) -> Iterator[Mod]:
+        return iter(self._data)
+
     def _normalize_input(self, item: MODLIST_DATATYPE) -> Mod:
         """Convert input to Mod instance - optimized to check Mod first"""
         if isinstance(item, Mod):
@@ -48,7 +64,7 @@ class ModList(UserList[Mod]):
     def _find_same_mod_index(self, mod: Mod) -> int | None:
         """Find index of existing mod with same value"""
         mod_val = mod.val
-        for i, m in enumerate(self.data):
+        for i, m in enumerate(self._data):
             if m.val == mod_val:
                 return i
         return None
@@ -62,16 +78,16 @@ class ModList(UserList[Mod]):
                     f"Cannot add modification {item} to non-stackable ModList({self.name if self.name else ''})"
                 )
 
-            self.data[idx] = Mod(self.data[idx].val, self.data[idx].mult + item.mult)
-            if self.data[idx].mult == 0:
-                del self.data[idx]
-            elif self.data[idx].mult < 0:
+            self._data[idx] = Mod(self._data[idx].val, self._data[idx].mult + item.mult)
+            if self._data[idx].mult == 0:
+                del self._data[idx]
+            elif self._data[idx].mult < 0:
                 raise ValueError(
-                    f"Modification multiplier cannot be negative: {self.data[idx].mult}"
+                    f"Modification multiplier cannot be negative: {self._data[idx].mult}"
                 )
         else:
             if item.mult != 0:
-                self.data.append(item)
+                self._data.append(item)
 
     def append(self, item: MODLIST_DATATYPE) -> None:
         """Add a modification, merging with existing mod if same value"""
@@ -86,7 +102,7 @@ class ModList(UserList[Mod]):
         """Extend with modifications, merging duplicates"""
         # Fast path for ModList
         if isinstance(other, ModList):
-            for item in other.data:
+            for item in other._data:
                 self._merge_or_append(item)
         elif isinstance(other, Iterable):  # type: ignore
             for item in other:
@@ -111,14 +127,14 @@ class ModList(UserList[Mod]):
         if idx is None:
             raise ValueError(f"{item} is not in list")
 
-        # self.data[idx].mult -= mod.mult (now frozen)
-        self.data[idx] = Mod(self.data[idx].val, self.data[idx].mult - mod.mult)
+        # self._data[idx].mult -= mod.mult (now frozen)
+        self._data[idx] = Mod(self._data[idx].val, self._data[idx].mult - mod.mult)
 
-        if self.data[idx].mult == 0:
-            del self.data[idx]
-        elif self.data[idx].mult < 0:
+        if self._data[idx].mult == 0:
+            del self._data[idx]
+        elif self._data[idx].mult < 0:
             raise ValueError(
-                f"Modification multiplier cannot be negative: {self.data[idx].mult}"
+                f"Modification multiplier cannot be negative: {self._data[idx].mult}"
             )
 
     def discard(self, item: MODLIST_DATATYPE) -> None:
@@ -132,7 +148,7 @@ class ModList(UserList[Mod]):
         """Count total multiplier for a modification"""
         mod = self._normalize_input(item)
         idx = self._find_same_mod_index(mod)
-        return self.data[idx].mult if idx is not None else 0
+        return self._data[idx].mult if idx is not None else 0
 
     def index(
         self,
@@ -143,12 +159,12 @@ class ModList(UserList[Mod]):
         """Find index of modification by value"""
         mod = self._normalize_input(item)
 
-        length = len(self.data)
+        length = len(self._data)
         start_idx = start if isinstance(start, int) else 0
         stop_idx = stop if isinstance(stop, int) else length
 
         for i in range(start_idx, min(stop_idx, length)):
-            if self.data[i].val == mod.val:
+            if self._data[i].val == mod.val:
                 return i
         raise ValueError(f"{item} is not in list")
 
@@ -165,10 +181,10 @@ class ModList(UserList[Mod]):
     def __add__(self, other: Iterable[MODLIST_DATATYPE] | Self) -> ModList:
         """Return new ModList combining both lists"""
         result = ModList(allow_dups=self.allow_dups, stackable=self.stackable)
-        result.extend(self.data)
+        result.extend(self._data)
 
         if isinstance(other, ModList):
-            result.extend(other.data)
+            result.extend(other._data)
         elif isinstance(other, Iterable):  # type: ignore
             result.extend(other)
         else:
@@ -179,7 +195,7 @@ class ModList(UserList[Mod]):
     def __iadd__(self, other: Iterable[MODLIST_DATATYPE] | Self) -> ModList:
         """In-place addition"""
         if isinstance(other, ModList):
-            self.extend(other.data)
+            self.extend(other._data)
         elif isinstance(other, Iterable):  # type: ignore
             self.extend(other)
         else:
@@ -195,16 +211,15 @@ class ModList(UserList[Mod]):
             except (TypeError, ValueError):
                 return False
 
-        if len(self.data) != len(other.data):
+        if len(self._data) != len(other._data):
             return False
 
-        for mod in self.data:
+        for mod in self._data:
             other_idx = other._find_same_mod_index(mod)
-            if other_idx is None or other.data[other_idx].mult != mod.mult:
+            if other_idx is None or other._data[other_idx].mult != mod.mult:
                 return False
         return True
 
-    # ModList - optimized shallow copy
     def copy(self, deep: bool = True) -> ModList:
         """Create a copy of the ModList - optimized to bypass __init__"""
         result = object.__new__(ModList)
@@ -213,17 +228,17 @@ class ModList(UserList[Mod]):
         result.name = self.name
 
         # Micro-optimization: avoid .copy() overhead for empty lists
-        if self.data:
-            result.data = self.data.copy()
+        if self._data:
+            result._data = self._data.copy()
         else:
-            result.data = []
+            result._data = []
 
         return result
 
     def flatten(self, sort: bool = False) -> tuple[MOD_VALUE_TYPES, ...]:
         """Return tuple of all mod values, expanding multipliers"""
         values: list[MOD_VALUE_TYPES] = []
-        for mod in self.data:
+        for mod in self._data:
             values.extend([mod.val] * mod.mult)
 
         if sort:
@@ -234,7 +249,7 @@ class ModList(UserList[Mod]):
     def __hash__(self) -> int:
         """Make ModList hashable based on its contents"""
         return hash((
-            tuple((mod.val, mod.mult) for mod in self.data),
+            tuple((mod.val, mod.mult) for mod in self._data),
             self.stackable
         ))
 
@@ -247,7 +262,7 @@ class ModList(UserList[Mod]):
     ) -> str:
         """Serialize the ModList into a string representation (cached)."""
         return self._serialize_cached(
-            tuple((mod.val, mod.mult) for mod in self.data),
+            tuple((mod.val, mod.mult) for mod in self._data),
             brackets,
             sort,
             include_plus,
@@ -291,14 +306,37 @@ class ModList(UserList[Mod]):
 
     @property
     def has_mods(self) -> bool:
-        return len(self.data) > 0
+        return len(self._data) > 0
 
     @property
     def is_empty(self) -> bool:
-        return len(self.data) == 0
+        return len(self._data) == 0
+    
+    @property
+    def data(self) -> list[Mod]:
+        """Compatibility property for existing code that accesses .data"""
+        return self._data
 
     def __repr__(self) -> str:
-        return f"ModList({self.data})"
+        return f"ModList({self._data})"
+    
+    def sort(self, key: Callable[[Mod], Any] | None = None, reverse: bool = False) -> None:
+        """Sort the ModList in place"""
+        self._data.sort(key=key, reverse=reverse)
+
+    def clear(self) -> None:
+        """Remove all items from the ModList"""
+        self._data.clear()
+
+    @property
+    def data(self) -> list[Mod]:
+        """Compatibility property for existing code that accesses .data"""
+        return self._data
+    
+    @data.setter
+    def data(self, value: list[Mod]) -> None:
+        """Setter for compatibility with existing code that sets .data"""
+        self._data = value
 
 
 ACCEPTED_MODLIST_INPUT_TYPES = (
@@ -340,7 +378,7 @@ def populate_mod_list(
         return
 
     if isinstance(mods, ModList):
-        modlist.extend(mods.data)
+        modlist.extend(mods._data)
     elif isinstance(mods, (str, int, float, Mod)):
         modlist.append(setup_mod(mods))
     elif isinstance(mods, Iterable):  # type: ignore

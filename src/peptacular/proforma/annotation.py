@@ -88,6 +88,20 @@ def _correct_mods(
 
 
 class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin):
+    __slots__ = (
+        '_sequence',
+        '_charge',
+        '_isotope_mod_list',
+        '_static_mod_list',
+        '_labile_mod_list',
+        '_unknown_mod_list',
+        '_nterm_mod_list',
+        '_cterm_mod_list',
+        '_adduct_mod_list',
+        '_internal_mod_dict',
+        '_interval_list',
+    )
+    
     def __init__(
         self,
         sequence: str | None = None,
