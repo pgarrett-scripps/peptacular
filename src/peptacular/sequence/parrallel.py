@@ -91,7 +91,7 @@ def clear_pool_cache() -> None:
 def get_pool_cache_info() -> dict[str, Any]:
     """
     Get information about the current pool cache.
-    
+
     :return: Dictionary with cache statistics:
         - 'size': Number of cached pools
         - 'pools': List of (method, n_workers) tuples for each cached pool

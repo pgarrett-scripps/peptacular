@@ -3,19 +3,9 @@ from collections.abc import Iterable, Sequence
 from enum import StrEnum
 from typing import Any, NamedTuple
 
+from .constants import MatchMode, ToleranceType
 from .fragment import Fragment
 from .sequence import strip_mods
-
-
-class ToleranceType(StrEnum):
-    PPM = "ppm"
-    TH = "th"
-
-
-class MatchMode(StrEnum):
-    CLOSEST = "closest"
-    LARGEST = "largest"
-    ALL = "all"
 
 
 def get_matched_indices(

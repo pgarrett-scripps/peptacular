@@ -10,12 +10,12 @@ from ..constants import (
     AVERAGE_ATOMIC_MASSES,
     AVERAGINE_RATIOS,
     ISOTOPIC_ATOMIC_MASSES,
-    NEUTRAL_FRAGMENT_ION_COMPOSITIONS
+    NEUTRAL_FRAGMENT_ION_COMPOSITIONS,
 )
 
-
 MONOISOTOPIC_NEUTRAL_FRAGMENT_ION: Dict[str, float] = {
-    aa: chem_mass(comp, monoisotopic=True) for aa, comp in NEUTRAL_FRAGMENT_ION_COMPOSITIONS.items()
+    aa: chem_mass(comp, monoisotopic=True)
+    for aa, comp in NEUTRAL_FRAGMENT_ION_COMPOSITIONS.items()
 }
 AVERAGE_NEUTRAL_FRAGMENT_ION: Dict[str, float] = {
     aa: chem_mass(comp, monoisotopic=False)

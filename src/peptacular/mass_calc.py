@@ -2,11 +2,13 @@
 mass_calc.py is a simple module for computing the m/z and mass of an amino acid sequence.
 """
 
-from .chem.chem_constants import MONOISOTOPIC_NEUTRAL_FRAGMENT_ION, AVERAGE_NEUTRAL_FRAGMENT_ION
 from .chem.chem_calc import (
     parse_chem_formula,
 )
-
+from .chem.chem_constants import (
+    AVERAGE_NEUTRAL_FRAGMENT_ION,
+    MONOISOTOPIC_NEUTRAL_FRAGMENT_ION,
+)
 from .chem.chem_util import chem_mass
 from .constants import (
     AVERAGE_ATOMIC_MASSES,
@@ -15,7 +17,7 @@ from .constants import (
     NEUTRON_MASS,
     PROTON_MASS,
     IonType,
-    IonTypeLiteral
+    IonTypeLiteral,
 )
 from .errors import (
     InvalidChemFormulaError,
@@ -146,9 +148,7 @@ def adjust_mass(
     if adduct_str is None or adduct_str == "":
         m += PROTON_MASS * charge
     else:
-        m += _parse_charge_adducts_mass(
-            adduct_str, monoisotopic=monoisotopic
-        )
+        m += _parse_charge_adducts_mass(adduct_str, monoisotopic=monoisotopic)
 
     # m += (charge * charge_adduct_mass)
     m += isotope * NEUTRON_MASS + loss  # Add isotope and loss
@@ -754,10 +754,10 @@ def _parse_adduct_mass(
         >>> _parse_adduct_mass('+2Na-', precision=5)
         45.98009
 
-        >>> _parse_adduct_mass('H+', precision=5)
+        >>> _parse_adduct_mass('H+', precision=5) #-e
         1.00728
 
-        >>> _parse_adduct_mass('H-', precision=5)
+        >>> _parse_adduct_mass('H-', precision=5) #+e
         1.00837
 
     """

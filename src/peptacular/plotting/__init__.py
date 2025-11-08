@@ -16,7 +16,7 @@ except ImportError:
 
     def plotly_not_available(*args, **kwargs):
         raise ImportError(
-            "Plotly is not installed. Install with: pip install peptacular[plotly]"
+            "Plotting libraries are not installed. Install with: pip install peptacular[plotting]"
         )
 
     # Create dummy functions for all expected exports

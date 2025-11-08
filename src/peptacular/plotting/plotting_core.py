@@ -1,79 +1,26 @@
 # Enhanced spectrum plotting with DataFrame-based approach
 import re
 from collections.abc import Sequence
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
-import numpy as np
-import pandas as pd
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
+if TYPE_CHECKING:
+    import pandas as pd
+    import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
 
+from ..constants import MatchMode, ToleranceType
 from ..fragment.types import Fragment
 from ..proforma.annotation import ProFormaAnnotation
-from ..score import FragmentMatch, MatchMode, Scorer, ToleranceType
+from ..score import FragmentMatch, Scorer
 from ..sequence.util import get_annotation_input
-
-ION_TYPE_COLORS = {
-    "a": "#3BC936",
-    "b": "#2E30C5",
-    "c": "#45B7D1",
-    "x": "#96CEB4",
-    "y": "#DD4A30",
-    "z": "#FF9FF3",
-    "i": "#9E0C8B",
-    "unmatched": "#808080",
-}
-
-CHARGE_SYMBOLS = ["circle", "square", "diamond", "star", "cross"]
-
-
-def _get_charge_symbol_mapping(
-    fragment_matches: Sequence[FragmentMatch],
-) -> dict[int, str]:
-    """Map fragment charges to marker symbols."""
-    charges = sorted(
-        {match.fragment.charge for match in fragment_matches if match.fragment}
-    )
-    return {
-        charge: CHARGE_SYMBOLS[min(i, len(CHARGE_SYMBOLS) - 1)]
-        for i, charge in enumerate(charges)
-    }
-
-
-def _create_base_dataframe(
-    mz_spectra: Sequence[float],
-    intensity_spectra: Sequence[float],
-    normalize: bool,
-    baseline_offset: float,
-) -> pd.DataFrame:
-    """Create base spectrum DataFrame with standard columns."""
-    df = pd.DataFrame(
-        {
-            "mz": mz_spectra,
-            "intensity": intensity_spectra,
-            "matched": False,
-            "fragment_label": "",
-            "ion_type": "",
-            "charge": 0,
-            "loss": 0.0,
-            "error_ppm": 0.0,
-            "theoretical_mz": 0.0,
-            "isotope": 0,
-            "color": ION_TYPE_COLORS["unmatched"],
-            "marker_symbol": None,
-            "line_dash": "solid",
-            "show_marker": False,
-            "show_label": False,
-        }
-    )
-
-    if normalize and intensity_spectra:
-        max_intensity = max(intensity_spectra)
-        if max_intensity > 0:
-            df["intensity"] = (df["intensity"] / max_intensity) * 100
-
-    df["intensity"] += baseline_offset
-    return df
+from .plotting_utils import (
+    IonTypeColor,
+    _calculate_marker_sizes,
+    _calculate_plot_ranges,
+    _create_base_dataframe,
+    _get_charge_legend_labels,
+    _get_charge_symbol_mapping,
+)
 
 
 def _update_matched_peaks(
@@ -121,9 +68,7 @@ def _update_matched_peaks(
             fragment.isotope,
         ]
 
-        df.loc[idx, "color"] = ION_TYPE_COLORS.get(
-            ion_base, ION_TYPE_COLORS["unmatched"]
-        )
+        df.loc[idx, "color"] = IonTypeColor.get(ion_base, IonTypeColor.UNMATCHED)
         df.loc[idx, "line_dash"] = "dash" if fragment.loss != 0 else "solid"
         df.loc[idx, "marker_symbol"] = charge_symbols.get(fragment.charge, "circle")
         df.loc[idx, ["show_marker", "show_label"]] = fragment.isotope == 0
@@ -168,6 +113,8 @@ def _add_spectrum_traces(
     subplot_col: int,
 ) -> None:
     """Add spectrum lines, markers, and labels to figure."""
+    import plotly.graph_objects as go
+
     add_trace_kwargs = {"row": subplot_row, "col": subplot_col} if subplot_row else {}
 
     # Calculate a fixed label offset based on the overall intensity range
@@ -241,41 +188,10 @@ def _add_spectrum_traces(
             fig.add_annotation(**annotation_kwargs)
 
 
-def _get_charge_legend_labels(charge_symbols: dict[int, str]) -> dict[int, str]:
-    """Generate legend labels for charge states, handling symbol collisions."""
-    if not charge_symbols:
-        return {}
-
-    # Find which symbols are used by multiple charges
-    symbol_to_charges = {}
-    for charge, symbol in charge_symbols.items():
-        if symbol not in symbol_to_charges:
-            symbol_to_charges[symbol] = []
-        symbol_to_charges[symbol].append(charge)
-
-    # Generate labels
-    labels = {}
-    for charge, symbol in charge_symbols.items():
-        charges_with_same_symbol = sorted(symbol_to_charges[symbol])
-
-        if len(charges_with_same_symbol) > 1:
-            # Multiple charges share this symbol
-            min_charge = min(charges_with_same_symbol)
-            if charge == min_charge:
-                # This is the lowest charge with this symbol - add + to indicate "and higher"
-                labels[charge] = f"{charge}+"
-            else:
-                # Higher charges with same symbol - don't show in legend
-                labels[charge] = None
-        else:
-            # Only one charge uses this symbol - no + needed
-            labels[charge] = str(charge)
-
-    return labels
-
-
 def _add_legends(fig: go.Figure, df: pd.DataFrame) -> None:
     """Add legend entries for ion types and charge states with proper grouping."""
+    import plotly.graph_objects as go
+
     matched_df = df[df["matched"]]
     if matched_df.empty:
         return
@@ -283,13 +199,13 @@ def _add_legends(fig: go.Figure, df: pd.DataFrame) -> None:
     # Ion types - first entry gets the group title
     ion_types = sorted(set(matched_df["ion_type"].str[0].str.lower()))
     for i, ion_type in enumerate(ion_types):
-        if ion_type in ION_TYPE_COLORS:
+        if ion_type in IonTypeColor:
             fig.add_trace(
                 go.Scatter(
                     x=[None],
                     y=[None],
                     mode="markers",
-                    marker=dict(size=10, color=ION_TYPE_COLORS[ion_type]),
+                    marker=dict(size=10, color=IonTypeColor.get(ion_type)),
                     name=ion_type,
                     showlegend=True,
                     legendgroup="ion_types",
@@ -374,46 +290,6 @@ def _get_legend_config_for_subplot(subplot_config: dict, has_matches: bool) -> d
     )
 
 
-def _calculate_plot_ranges(
-    df: pd.DataFrame, baseline_offset: float
-) -> tuple[tuple[float, float], tuple[float, float]]:
-    """Calculate appropriate x and y ranges for the plot."""
-    if df.empty:
-        return (0, 1000), (0, 1000)
-
-    x_margin = (df["mz"].max() - df["mz"].min()) * 0.05
-    y_margin = (df["intensity"].max() - baseline_offset) * 0.1
-
-    x_range = (df["mz"].min() - x_margin, df["mz"].max() + x_margin)
-    y_range = (baseline_offset - y_margin, df["intensity"].max() + y_margin)
-
-    return x_range, y_range
-
-
-def _calculate_marker_sizes(
-    intensities: Sequence[float], min_size: float, max_size: float
-) -> list[float]:
-    """Calculate marker sizes scaled to intensity values."""
-    if len(intensities) == 0:
-        return []
-
-    intensities = np.array(intensities)
-    if len(intensities) == 1:
-        return [max_size]
-
-    min_intensity = intensities.min()
-    max_intensity = intensities.max()
-
-    if max_intensity == min_intensity:
-        return [max_size] * len(intensities)
-
-    # Scale intensities to marker size range
-    normalized = (intensities - min_intensity) / (max_intensity - min_intensity)
-    marker_sizes = min_size + normalized * (max_size - min_size)
-
-    return marker_sizes.tolist()
-
-
 def _add_error_subplot(
     fig: go.Figure,
     df: pd.DataFrame,
@@ -423,6 +299,8 @@ def _add_error_subplot(
     max_marker_size: float,
 ) -> None:
     """Add mass error subplot for matched peaks."""
+    import plotly.graph_objects as go
+
     matched_df = df[df["matched"]]
     if matched_df.empty:
         return
@@ -482,6 +360,9 @@ def _add_coverage_subplot_vertical(
     max_marker_size: float,
 ) -> None:
     """Add vertical fragment coverage subplot showing matched fragments by position and ion type."""
+    import numpy as np
+    import plotly.graph_objects as go
+
     matched_df = df[(df["matched"]) & (df["isotope"] == 0)]
     if matched_df.empty or not peptide_sequence:
         return
@@ -723,6 +604,9 @@ def plot_spectrum_from_dataframe(
     max_marker_size: float = 8.0,
 ) -> go.Figure:
     """Plot spectrum using prepared DataFrame."""
+    import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
+
     has_coverage = show_coverage_plot and bool(peptide_sequence)
     has_matches = not df[df["matched"]].empty
     subplot_config = _get_subplot_config(show_error_plot, has_coverage)
@@ -1222,6 +1106,9 @@ def protein_coverage_plot(
     Returns:
         Plotly figure with two side-by-side coverage heatmaps
     """
+    import numpy as np
+    import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
 
     # Validate inputs
     if len(protein_sequence) != len(psm_coverage_array) or len(protein_sequence) != len(

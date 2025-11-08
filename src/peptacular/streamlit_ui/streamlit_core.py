@@ -1,8 +1,6 @@
 from typing import Sequence
 
-import streamlit as st
-
-from ..constants import IonType
+from ..constants import IonType, MatchMode, ToleranceType
 from ..fragment.types import Fragment
 from ..plotting import (
     apply_spectral_filters,
@@ -10,7 +8,7 @@ from ..plotting import (
     prepare_spectrum_dataframe_from_matches,
 )
 from ..proforma.annotation import ProFormaAnnotation
-from ..score import MatchMode, Scorer, ToleranceType
+from ..score import Scorer
 from ..sequence.util import get_annotation_input
 
 
@@ -22,6 +20,8 @@ def annotated_spectrum_plot(
     max_charge: int = 5,
     default_charge: tuple[int, int] = (1, 2),
 ):
+    import streamlit as st
+
     input_container = st.container()
     chart_container = st.container()
 
