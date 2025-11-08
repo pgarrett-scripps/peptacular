@@ -80,7 +80,7 @@ class TestFragment(unittest.TestCase):
                 precision=3,
             )
         )
-        expected = [(114.091, "+by1-2"), (229.118, "+by1-3"), (116.034, "+by2-3")]
+        expected = [(86.096, '+by1-2'), (201.123, '+by1-3'), (88.039, '+by2-3')]
         self.assertEqual(result, expected)
 
     def test_fragment_regex_losses(self):

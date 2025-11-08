@@ -1,13 +1,17 @@
+import atexit
 import multiprocessing as mp
 import sys
 from functools import partial
 from multiprocessing import Pool
 from multiprocessing.pool import ThreadPool
-from typing import Any, Callable, Literal, Sequence, TypeVar
+from typing import Any, Callable, Literal, Sequence, TypeVar, Union
 
 from ..constants import ParrallelMethod, ParrallelMethodLiteral
 
 T = TypeVar("T")
+
+# Global pool cache: (method, n_workers) -> pool instance
+_POOL_CACHE = {}
 
 
 def _is_gil_disabled() -> bool:
@@ -47,12 +51,68 @@ def _apply_wrapper(item: Any, func: Callable[..., T], func_kwargs: dict[str, Any
     return func(item, **func_kwargs)
 
 
+def _get_or_create_pool(
+    method: Literal["process", "thread"], n_workers: int
+) -> Union[Pool, ThreadPool]:
+    """
+    Get a cached pool or create a new one if it doesn't exist.
+
+    :param method: 'process' or 'thread'
+    :param n_workers: Number of workers
+    :return: Pool or ThreadPool instance
+    """
+    cache_key = (method, n_workers)
+
+    if cache_key not in _POOL_CACHE:
+        PoolClass = ThreadPool if method == "thread" else Pool
+        _POOL_CACHE[cache_key] = PoolClass(processes=n_workers)
+
+    return _POOL_CACHE[cache_key]
+
+
+def _cleanup_pools() -> None:
+    """
+    Clean up all cached pools. Called automatically at exit.
+    """
+    for pool in _POOL_CACHE.values():
+        pool.close()
+        pool.join()
+    _POOL_CACHE.clear()
+
+
+def clear_pool_cache() -> None:
+    """
+    Manually clear the pool cache and terminate all workers.
+    Useful for explicit cleanup or when you want to force recreation of pools.
+    """
+    _cleanup_pools()
+
+
+def get_pool_cache_info() -> dict[str, Any]:
+    """
+    Get information about the current pool cache.
+    
+    :return: Dictionary with cache statistics:
+        - 'size': Number of cached pools
+        - 'pools': List of (method, n_workers) tuples for each cached pool
+    """
+    return {
+        "size": len(_POOL_CACHE),
+        "pools": list(_POOL_CACHE.keys()),
+    }
+
+
+# Register cleanup function to run at exit
+atexit.register(_cleanup_pools)
+
+
 def parallel_apply_internal(
     func: Callable[..., T],
     items: Sequence[Any],
     n_workers: int | None = None,
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    use_cache: bool = True,
     **func_kwargs: Any,
 ) -> list[T]:
     """
@@ -66,6 +126,7 @@ def parallel_apply_internal(
     :param n_workers: Number of worker processes/threads. If None, uses CPU count
     :param chunksize: Number of items per chunk. If None, auto-calculated
     :param method: 'process', 'thread', 'sequential', or None (auto-detect). Default is None.
+    :param use_cache: If True, reuse cached pools. If False, create a new pool each time. Default is True.
     :param func_kwargs: Keyword arguments to pass to the function
     :return: List of results in the same order as input items
     """
@@ -89,7 +150,14 @@ def parallel_apply_internal(
         print(f"Using chunksize: {chunksize}")
 
     wrapper = partial(_apply_wrapper, func=func, func_kwargs=func_kwargs)
-    PoolClass = ThreadPool if method_enum == ParrallelMethod.THREAD else Pool
 
-    with PoolClass(processes=n_workers) as pool:
+    # Use cached pool or create new one
+    if use_cache:
+        pool_method = "thread" if method_enum == ParrallelMethod.THREAD else "process"
+        pool = _get_or_create_pool(pool_method, n_workers)
         return pool.map(wrapper, items_list, chunksize=chunksize)
+    else:
+        # Create a new pool for this call only (old behavior)
+        PoolClass = ThreadPool if method_enum == ParrallelMethod.THREAD else Pool
+        with PoolClass(processes=n_workers) as pool:
+            return pool.map(wrapper, items_list, chunksize=chunksize)

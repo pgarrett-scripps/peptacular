@@ -9,36 +9,17 @@ from ..constants import (
     AA_COMPOSITIONS,
     AVERAGE_ATOMIC_MASSES,
     AVERAGINE_RATIOS,
-    FRAGMENT_ION_COMPOSITION_ADJUSTMENTS,
-    FRAGMENT_ION_COMPOSITIONS,
     ISOTOPIC_ATOMIC_MASSES,
-    NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS,
+    NEUTRAL_FRAGMENT_ION_COMPOSITIONS
 )
 
-# NEUTRAL FRAGMENT MASSES
-MONOISOTOPIC_FRAGMENT_ADJUSTMENTS: Dict[str, float] = {
-    aa: chem_mass(comp) for aa, comp in NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS.items()
-}
-AVERAGE_FRAGMENT_ADJUSTMENTS: Dict[str, float] = {
-    aa: chem_mass(comp, monoisotopic=False)
-    for aa, comp in NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS.items()
-}
 
-MONOISOTOPIC_FRAGMENT_ION_ADJUSTMENTS: Dict[str, float] = {
-    aa: chem_mass(comp) for aa, comp in FRAGMENT_ION_COMPOSITIONS.items()
+MONOISOTOPIC_NEUTRAL_FRAGMENT_ION: Dict[str, float] = {
+    aa: chem_mass(comp, monoisotopic=True) for aa, comp in NEUTRAL_FRAGMENT_ION_COMPOSITIONS.items()
 }
-AVERAGE_FRAGMENT_ION_ADJUSTMENTS: Dict[str, float] = {
+AVERAGE_NEUTRAL_FRAGMENT_ION: Dict[str, float] = {
     aa: chem_mass(comp, monoisotopic=False)
-    for aa, comp in FRAGMENT_ION_COMPOSITIONS.items()
-}
-
-# FRAGMENT ION MASSES (+1)
-MONOISOTOPIC_ION_ADJUSTMENTS: Dict[str, float] = {
-    aa: chem_mass(comp) for aa, comp in FRAGMENT_ION_COMPOSITION_ADJUSTMENTS.items()
-}
-AVERAGE_ION_ADJUSTMENTS: Dict[str, float] = {
-    aa: chem_mass(comp, monoisotopic=False)
-    for aa, comp in FRAGMENT_ION_COMPOSITION_ADJUSTMENTS.items()
+    for aa, comp in NEUTRAL_FRAGMENT_ION_COMPOSITIONS.items()
 }
 
 # AA MASSES

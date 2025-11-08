@@ -783,6 +783,9 @@ all = [
 ]
 all-dev = [
     { name = "lxml" },
+    { name = "numpy", version = "2.0.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
+    { name = "numpy", version = "2.3.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "pandas" },
     { name = "plotly" },
     { name = "pympler" },
@@ -797,10 +800,16 @@ all-dev = [
 ]
 benchmark = [
     { name = "lxml" },
+    { name = "numpy", version = "2.0.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
+    { name = "numpy", version = "2.3.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "pyteomics" },
 ]
 dev = [
     { name = "lxml" },
+    { name = "numpy", version = "2.0.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
+    { name = "numpy", version = "2.3.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "pympler" },
     { name = "pyteomics" },
     { name = "pytest" },
@@ -825,6 +834,7 @@ all = [
 ]
 all-dev = [
     { name = "lxml", specifier = ">=6.0.1" },
+    { name = "numpy" },
     { name = "pandas" },
     { name = "plotly" },
     { name = "pympler", specifier = ">=1.1" },
@@ -837,10 +847,12 @@ all-dev = [
 ]
 benchmark = [
     { name = "lxml", specifier = ">=6.0.1" },
+    { name = "numpy" },
     { name = "pyteomics", specifier = ">=4.7.5" },
 ]
 dev = [
     { name = "lxml", specifier = ">=6.0.1" },
+    { name = "numpy" },
     { name = "pympler", specifier = ">=1.1" },
     { name = "pyteomics", specifier = ">=4.7.5" },
     { name = "pytest" },

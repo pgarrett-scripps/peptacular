@@ -68,6 +68,7 @@ plotting = [
 benchmark = [
     "lxml>=6.0.1",
     "pyteomics>=4.7.5",
+    "numpy",
 ]
 
 dev = [

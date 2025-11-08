@@ -2,15 +2,11 @@
 mass_calc.py is a simple module for computing the m/z and mass of an amino acid sequence.
 """
 
+from .chem.chem_constants import MONOISOTOPIC_NEUTRAL_FRAGMENT_ION, AVERAGE_NEUTRAL_FRAGMENT_ION
 from .chem.chem_calc import (
     parse_chem_formula,
 )
-from .chem.chem_constants import (
-    AVERAGE_FRAGMENT_ADJUSTMENTS,
-    AVERAGE_FRAGMENT_ION_ADJUSTMENTS,
-    MONOISOTOPIC_FRAGMENT_ADJUSTMENTS,
-    MONOISOTOPIC_FRAGMENT_ION_ADJUSTMENTS,
-)
+
 from .chem.chem_util import chem_mass
 from .constants import (
     AVERAGE_ATOMIC_MASSES,
@@ -19,6 +15,7 @@ from .constants import (
     NEUTRON_MASS,
     PROTON_MASS,
     IonType,
+    IonTypeLiteral
 )
 from .errors import (
     InvalidChemFormulaError,
@@ -99,7 +96,7 @@ def _convert_adducts_to_str(
 def adjust_mass(
     base_mass: float,
     charge: int | None,
-    ion_type: str = "p",
+    ion_type: IonType | IonTypeLiteral = IonType.PRECURSOR,
     monoisotopic: bool = True,
     isotope: int = 0,
     loss: float = 0.0,
@@ -130,6 +127,9 @@ def adjust_mass(
     :rtype: float
     """
 
+    if not isinstance(ion_type, IonType):
+        ion_type = IonType(ion_type)
+
     if charge is None:
         charge = 0
 
@@ -137,29 +137,18 @@ def adjust_mass(
 
     adduct_str = _convert_adducts_to_str(charge_adducts)
 
+    m += (
+        MONOISOTOPIC_NEUTRAL_FRAGMENT_ION[ion_type]
+        if monoisotopic is True
+        else AVERAGE_NEUTRAL_FRAGMENT_ION[ion_type]
+    )
+
     if adduct_str is None or adduct_str == "":
-        if ion_type in (IonType.PRECURSOR, IonType.NEUTRAL):
-            charge_adduct_mass = PROTON_MASS * charge
-        else:
-            frag_ion_offset = (
-                MONOISOTOPIC_FRAGMENT_ION_ADJUSTMENTS[ion_type]
-                if monoisotopic is True
-                else AVERAGE_FRAGMENT_ION_ADJUSTMENTS[ion_type]
-            )
-            charge_adduct_mass = PROTON_MASS * (charge - 1) + frag_ion_offset
+        m += PROTON_MASS * charge
     else:
-        charge_adduct_mass = _parse_charge_adducts_mass(
+        m += _parse_charge_adducts_mass(
             adduct_str, monoisotopic=monoisotopic
         )
-
-    m += charge_adduct_mass
-
-    # Base mass
-    m += (
-        MONOISOTOPIC_FRAGMENT_ADJUSTMENTS[ion_type]
-        if monoisotopic
-        else AVERAGE_FRAGMENT_ADJUSTMENTS[ion_type]
-    )
 
     # m += (charge * charge_adduct_mass)
     m += isotope * NEUTRON_MASS + loss  # Add isotope and loss

@@ -384,7 +384,7 @@ class TestMass(unittest.TestCase):
 
             for n, (pt_frag, py_frag) in enumerate(zip(frags, pyteomics_fragments[i])):
                 self.assertAlmostEqual(
-                    pt_frag, py_frag, places, msg=f"Failed for {n}th {i} ion type"
+                    pt_frag, py_frag, places, msg=f"Failed for {n}th {i} ion type, pt_frag: {pt_frag}, py_frag: {py_frag}"
                 )
 
     def test_all_aa_and_ions_charge2(self):
@@ -530,9 +530,12 @@ class TestMass(unittest.TestCase):
             frags = pt.fragment(seq, i, 2, return_type="mz")
 
             for n, (pt_frag, py_frag) in enumerate(zip(frags, pyteomics_fragments[i])):
-                self.assertAlmostEqual(
-                    pt_frag, py_frag, places, msg=f"Failed for {n}th {i} ion type"
-                )
+                try:
+                    self.assertAlmostEqual(
+                        pt_frag, py_frag, places, msg=f"Failed for {n}th {i} ion type, pt_frag: {pt_frag}, py_frag: {py_frag}"
+                    )
+                except AssertionError as e:
+                    self.fail(f"Assertion failed: {e}")
 
 
 if __name__ == "__main__":

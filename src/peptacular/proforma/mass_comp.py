@@ -15,10 +15,9 @@ from ..chem.chem_constants import AVERAGE_AA_MASSES, MONOISOTOPIC_AA_MASSES
 from ..chem.chem_util import chem_mass
 from ..constants import (
     AA_COMPOSITIONS,
-    FRAGMENT_ION_BASE_CHARGE_ADDUCTS,
-    NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS,
     IonType,
     IonTypeLiteral,
+    NEUTRAL_FRAGMENT_ION_COMPOSITIONS
 )
 from ..errors import AmbiguousAminoAcidError, UnknownAminoAcidError
 from ..mass_calc import adjust_mass, adjust_mz, mod_mass
@@ -170,7 +169,7 @@ def _sequence_comp(
     sequence_composition: Counter[str] = _get_sequence_composition(
         sequence=annotation.sequence
     )
-    sequence_composition.update(NEUTRAL_FRAGMENT_COMPOSITION_ADJUSTMENTS[ion_type])
+    sequence_composition.update(NEUTRAL_FRAGMENT_ION_COMPOSITIONS[ion_type])
     sequence_composition.update(parse_charge_adducts_comp(adducts=charge_adducts))
 
     mod_composition: Counter[str] = Counter()
@@ -248,6 +247,70 @@ def _sequence_comp(
 
     return composition
 
+def check_ion_compatibility(annotation: ProFormaAnnotation, ion_type: IonType) -> None:
+
+    first_aa = annotation.sequence[0]
+    last_aa = annotation.sequence[-1]
+
+    if ion_type == IonType.IMMONIUM and len(annotation.sequence) != 1:
+        raise ValueError(
+            "Immonium ion can only be calculated for single amino acid sequences."
+        )
+
+    if ion_type == IonType.D_VALINE and last_aa != "V":
+        raise ValueError(
+            f"Calculating d-valine ion mass but last amino acid is {last_aa}."
+        )
+
+    if ion_type == IonType.DA_THREONINE and last_aa != "T":
+        raise ValueError(
+            f"Calculating da-threonine ion mass but last amino acid is {last_aa}."
+        )
+
+    if ion_type == IonType.DA_ISOLEUCINE and last_aa != "I":
+        raise ValueError(
+            f"Calculating da-isoleucine ion mass but last amino acid is {last_aa}."
+        )
+
+    if ion_type == IonType.D and last_aa in ("G", "A", "P"):
+        raise ValueError(
+            f"Calculating d ion mass but last amino acid is {last_aa}, which has no d ion."
+        )
+
+    if ion_type == IonType.D and last_aa in ('T', 'I'):
+        raise AmbiguousAminoAcidError(
+            aa=last_aa,
+            msg=f"Cannot determine d ion mass for last amino acid {last_aa} due to ambiguity between threonine and isoleucine.",
+        )
+    
+    if ion_type == IonType.W_VALINE and first_aa != "V":
+        raise ValueError(
+            f"Calculating w-valine ion mass but first amino acid is {first_aa}."
+        )
+    
+    if ion_type == IonType.W and first_aa in ("G", "A", "P"):
+        raise ValueError(
+            f"Calculating w ion mass but first amino acid is {first_aa}, which has no w ion."
+        )
+
+    if ion_type == IonType.WA_THREONINE and first_aa != "T":
+        raise ValueError(
+            f"Calculating wa-threonine ion mass but first amino acid is {first_aa}."
+        )
+
+    if ion_type == IonType.WA_ISOLEUCINE and first_aa != "I":
+        raise ValueError(
+            f"Calculating wa-isoleucine ion mass but first amino acid is {first_aa}."
+        )
+
+    if ion_type == IonType.W and first_aa in ('T', 'I'):
+        raise AmbiguousAminoAcidError(
+            aa=first_aa,
+            msg=f"Cannot determine w ion mass for first amino acid {first_aa} due to ambiguity between threonine and isoleucine.",
+        )    
+    
+
+
 
 def mass(
     annotation: ProFormaAnnotation,
@@ -264,6 +327,9 @@ def mass(
             aa=",".join(annotation.get_residue_ambiguity_residues()),
             msg="Cannot determine the mass of a sequence with ambiguous amino acids: {annotation.sequence}",
         )
+    
+
+    check_ion_compatibility(annotation, IonType(ion_type))
 
     if charge is None:
         # No charge provided, use annotation's charge (or 0 if annotation has no charge)
