@@ -1,6 +1,6 @@
 {
     "metadata": {
-        "generated_date": "2025-12-05T18:08:39.813069",
+        "generated_date": "2025-12-15T15:55:35.009650",
         "generator": "peptacular data generator",
         "created_by": "Patrick Garrett <pgarrett@scripps.edu>",
         "peptacular_version": "3.0.0"
@@ -10,8 +10,8 @@
             "id": "p",
             "name": "Precursor",
             "formula": "H2O",
-            "monoisotopic_mass": "18.010565",
-            "average_mass": "18.015286",
+            "monoisotopic_mass": 18.010565,
+            "average_mass": 18.015286,
             "composition": {
                 "H": 2,
                 "O": 1
@@ -21,16 +21,16 @@
             "id": "n",
             "name": "Neutral",
             "formula": "",
-            "monoisotopic_mass": "0.000000",
-            "average_mass": "0.000000",
+            "monoisotopic_mass": 0.0,
+            "average_mass": 0.0,
             "composition": {}
         },
         {
             "id": "a",
             "name": "a-ion",
             "formula": "C-1O-1",
-            "monoisotopic_mass": "-27.994915",
-            "average_mass": "-28.010141",
+            "monoisotopic_mass": -27.994915,
+            "average_mass": -28.010141,
             "composition": {
                 "C": -1,
                 "O": -1
@@ -40,16 +40,16 @@
             "id": "b",
             "name": "b-ion",
             "formula": "",
-            "monoisotopic_mass": "0.000000",
-            "average_mass": "0.000000",
+            "monoisotopic_mass": 0.0,
+            "average_mass": 0.0,
             "composition": {}
         },
         {
             "id": "c",
             "name": "c-ion",
             "formula": "H3N",
-            "monoisotopic_mass": "17.026549",
-            "average_mass": "17.030525",
+            "monoisotopic_mass": 17.026549,
+            "average_mass": 17.030525,
             "composition": {
                 "H": 3,
                 "N": 1
@@ -59,8 +59,8 @@
             "id": "x",
             "name": "x-ion",
             "formula": "CO2",
-            "monoisotopic_mass": "43.989829",
-            "average_mass": "44.009546",
+            "monoisotopic_mass": 43.989829,
+            "average_mass": 44.009546,
             "composition": {
                 "C": 1,
                 "O": 2
@@ -70,8 +70,8 @@
             "id": "y",
             "name": "y-ion",
             "formula": "H2O",
-            "monoisotopic_mass": "18.010565",
-            "average_mass": "18.015286",
+            "monoisotopic_mass": 18.010565,
+            "average_mass": 18.015286,
             "composition": {
                 "H": 2,
                 "O": 1
@@ -81,8 +81,8 @@
             "id": "z",
             "name": "z-ion",
             "formula": "H-1N-1O",
-            "monoisotopic_mass": "0.984016",
-            "average_mass": "0.984761",
+            "monoisotopic_mass": 0.984016,
+            "average_mass": 0.984761,
             "composition": {
                 "H": -1,
                 "N": -1,
@@ -93,8 +93,8 @@
             "id": "z.",
             "name": "z\u2022 radical ion",
             "formula": "N-1O",
-            "monoisotopic_mass": "1.991841",
-            "average_mass": "1.992702",
+            "monoisotopic_mass": 1.991841,
+            "average_mass": 1.992702,
             "composition": {
                 "N": -1,
                 "O": 1
@@ -104,8 +104,8 @@
             "id": "z+H",
             "name": "z+H ion",
             "formula": "HN-1O",
-            "monoisotopic_mass": "2.999666",
-            "average_mass": "3.000642",
+            "monoisotopic_mass": 2.999666,
+            "average_mass": 3.000642,
             "composition": {
                 "H": 1,
                 "N": -1,
@@ -116,8 +116,8 @@
             "id": "c-H",
             "name": "c-H ion",
             "formula": "H2N",
-            "monoisotopic_mass": "16.018724",
-            "average_mass": "16.022585",
+            "monoisotopic_mass": 16.018724,
+            "average_mass": 16.022585,
             "composition": {
                 "H": 2,
                 "N": 1
@@ -127,8 +127,8 @@
             "id": "i",
             "name": "Immonium",
             "formula": "C-1O-1",
-            "monoisotopic_mass": "-27.994915",
-            "average_mass": "-28.010141",
+            "monoisotopic_mass": -27.994915,
+            "average_mass": -28.010141,
             "composition": {
                 "C": -1,
                 "O": -1
@@ -138,8 +138,8 @@
             "id": "d",
             "name": "d-ion",
             "formula": "C2H3N",
-            "monoisotopic_mass": "41.026549",
-            "average_mass": "41.051997",
+            "monoisotopic_mass": 41.026549,
+            "average_mass": 41.051997,
             "composition": {
                 "C": 2,
                 "H": 3,
@@ -150,8 +150,8 @@
             "id": "d-valine",
             "name": "d-ion (valine)",
             "formula": "C3H6N",
-            "monoisotopic_mass": "56.050024",
-            "average_mass": "56.086555",
+            "monoisotopic_mass": 56.050024,
+            "average_mass": 56.086555,
             "composition": {
                 "C": 3,
                 "H": 6,
@@ -159,11 +159,27 @@
             }
         },
         {
+            "id": "da",
+            "name": "da-ion",
+            "formula": null,
+            "monoisotopic_mass": null,
+            "average_mass": null,
+            "composition": {}
+        },
+        {
+            "id": "db",
+            "name": "db-ion",
+            "formula": null,
+            "monoisotopic_mass": null,
+            "average_mass": null,
+            "composition": {}
+        },
+        {
             "id": "da-threonine",
             "name": "da-ion (threonine)",
             "formula": "C2H4NO",
-            "monoisotopic_mass": "58.029289",
-            "average_mass": "58.059343",
+            "monoisotopic_mass": 58.029289,
+            "average_mass": 58.059343,
             "composition": {
                 "C": 2,
                 "H": 4,
@@ -175,8 +191,8 @@
             "id": "da-isoleucine",
             "name": "da-ion (isoleucine)",
             "formula": "C4H8N",
-            "monoisotopic_mass": "70.065674",
-            "average_mass": "70.113173",
+            "monoisotopic_mass": 70.065674,
+            "average_mass": 70.113173,
             "composition": {
                 "C": 4,
                 "H": 8,
@@ -187,8 +203,8 @@
             "id": "db-threonine",
             "name": "db-ion (threonine)",
             "formula": "C3H6N",
-            "monoisotopic_mass": "56.050024",
-            "average_mass": "56.086555",
+            "monoisotopic_mass": 56.050024,
+            "average_mass": 56.086555,
             "composition": {
                 "C": 3,
                 "H": 6,
@@ -199,8 +215,8 @@
             "id": "db-isoleucine",
             "name": "db-ion (isoleucine)",
             "formula": "C3H6N",
-            "monoisotopic_mass": "56.050024",
-            "average_mass": "56.086555",
+            "monoisotopic_mass": 56.050024,
+            "average_mass": 56.086555,
             "composition": {
                 "C": 3,
                 "H": 6,
@@ -211,8 +227,8 @@
             "id": "v",
             "name": "v-ion",
             "formula": "C2H2NO",
-            "monoisotopic_mass": "56.013639",
-            "average_mass": "56.043461",
+            "monoisotopic_mass": 56.013639,
+            "average_mass": 56.043461,
             "composition": {
                 "C": 2,
                 "H": 2,
@@ -224,8 +240,8 @@
             "id": "w",
             "name": "w-ion",
             "formula": "C3H3O",
-            "monoisotopic_mass": "55.018390",
-            "average_mass": "55.055435",
+            "monoisotopic_mass": 55.01839,
+            "average_mass": 55.055435,
             "composition": {
                 "C": 3,
                 "H": 3,
@@ -236,8 +252,8 @@
             "id": "w-valine",
             "name": "w-ion (valine)",
             "formula": "C4H6O",
-            "monoisotopic_mass": "70.041865",
-            "average_mass": "70.089993",
+            "monoisotopic_mass": 70.041865,
+            "average_mass": 70.089993,
             "composition": {
                 "C": 4,
                 "H": 6,
@@ -248,8 +264,8 @@
             "id": "wa-threonine",
             "name": "wa-ion (threonine)",
             "formula": "C3H4O2",
-            "monoisotopic_mass": "72.021129",
-            "average_mass": "72.062781",
+            "monoisotopic_mass": 72.021129,
+            "average_mass": 72.062781,
             "composition": {
                 "C": 3,
                 "H": 4,
@@ -257,11 +273,27 @@
             }
         },
         {
+            "id": "wa",
+            "name": "wa-ion",
+            "formula": null,
+            "monoisotopic_mass": null,
+            "average_mass": null,
+            "composition": {}
+        },
+        {
+            "id": "wb",
+            "name": "wb-ion",
+            "formula": null,
+            "monoisotopic_mass": null,
+            "average_mass": null,
+            "composition": {}
+        },
+        {
             "id": "wa-isoleucine",
             "name": "wa-ion (isoleucine)",
             "formula": "C5H8O",
-            "monoisotopic_mass": "84.057515",
-            "average_mass": "84.116610",
+            "monoisotopic_mass": 84.057515,
+            "average_mass": 84.11661,
             "composition": {
                 "C": 5,
                 "H": 8,
@@ -272,8 +304,8 @@
             "id": "wb-threonine",
             "name": "wb-ion (threonine)",
             "formula": "C4H6O",
-            "monoisotopic_mass": "70.041865",
-            "average_mass": "70.089993",
+            "monoisotopic_mass": 70.041865,
+            "average_mass": 70.089993,
             "composition": {
                 "C": 4,
                 "H": 6,
@@ -284,8 +316,8 @@
             "id": "wb-isoleucine",
             "name": "wb-ion (isoleucine)",
             "formula": "C4H6O",
-            "monoisotopic_mass": "70.041865",
-            "average_mass": "70.089993",
+            "monoisotopic_mass": 70.041865,
+            "average_mass": 70.089993,
             "composition": {
                 "C": 4,
                 "H": 6,
@@ -296,8 +328,8 @@
             "id": "by",
             "name": "by internal fragment",
             "formula": "C-1O-1",
-            "monoisotopic_mass": "-27.994915",
-            "average_mass": "-28.010141",
+            "monoisotopic_mass": -27.994915,
+            "average_mass": -28.010141,
             "composition": {
                 "C": -1,
                 "O": -1
@@ -307,8 +339,8 @@
             "id": "ax",
             "name": "ax internal fragment",
             "formula": "C-1O-1",
-            "monoisotopic_mass": "-27.994915",
-            "average_mass": "-28.010141",
+            "monoisotopic_mass": -27.994915,
+            "average_mass": -28.010141,
             "composition": {
                 "C": -1,
                 "O": -1
@@ -318,8 +350,8 @@
             "id": "cz",
             "name": "cz internal fragment",
             "formula": "C-1O-1",
-            "monoisotopic_mass": "-27.994915",
-            "average_mass": "-28.010141",
+            "monoisotopic_mass": -27.994915,
+            "average_mass": -28.010141,
             "composition": {
                 "C": -1,
                 "O": -1
@@ -329,8 +361,8 @@
             "id": "ay",
             "name": "ay internal fragment",
             "formula": "C-2O-2",
-            "monoisotopic_mass": "-55.989829",
-            "average_mass": "-56.020282",
+            "monoisotopic_mass": -55.989829,
+            "average_mass": -56.020282,
             "composition": {
                 "C": -2,
                 "O": -2
@@ -340,8 +372,8 @@
             "id": "az",
             "name": "az internal fragment",
             "formula": "C-2H-1N-1O-2",
-            "monoisotopic_mass": "-71.000728",
-            "average_mass": "-71.034926",
+            "monoisotopic_mass": -71.000728,
+            "average_mass": -71.034926,
             "composition": {
                 "C": -2,
                 "H": -1,
@@ -353,16 +385,16 @@
             "id": "bx",
             "name": "bx internal fragment",
             "formula": "",
-            "monoisotopic_mass": "0.000000",
-            "average_mass": "0.000000",
+            "monoisotopic_mass": 0.0,
+            "average_mass": 0.0,
             "composition": {}
         },
         {
             "id": "bz",
             "name": "bz internal fragment",
             "formula": "C-1H-1N-1O-1",
-            "monoisotopic_mass": "-43.005814",
-            "average_mass": "-43.024785",
+            "monoisotopic_mass": -43.005814,
+            "average_mass": -43.024785,
             "composition": {
                 "C": -1,
                 "H": -1,
@@ -374,8 +406,8 @@
             "id": "cx",
             "name": "cx internal fragment",
             "formula": "N",
-            "monoisotopic_mass": "14.003074",
-            "average_mass": "14.006703",
+            "monoisotopic_mass": 14.003074,
+            "average_mass": 14.006703,
             "composition": {
                 "N": 1
             }
@@ -384,8 +416,8 @@
             "id": "cy",
             "name": "cy internal fragment",
             "formula": "C-1H-1NO-1",
-            "monoisotopic_mass": "-14.999666",
-            "average_mass": "-15.011378",
+            "monoisotopic_mass": -14.999666,
+            "average_mass": -15.011378,
             "composition": {
                 "C": -1,
                 "H": -1,

@@ -1,6 +1,6 @@
 {
     "metadata": {
-        "generated_date": "2025-12-05T18:08:39.811842",
+        "generated_date": "2025-12-15T15:55:35.005977",
         "generator": "peptacular data generator",
         "created_by": "Patrick Garrett <pgarrett@scripps.edu>",
         "peptacular_version": "3.0.0"
@@ -10,2833 +10,2833 @@
             "number": 1,
             "symbol": "H",
             "mass_number": 1,
-            "mass": "1.007825",
+            "mass": 1.007825,
             "abundance": 0.999885,
-            "average_mass": "1.007941"
+            "average_mass": 1.007941
         },
         {
             "number": 1,
             "symbol": "D",
             "mass_number": 2,
-            "mass": "2.014102",
+            "mass": 2.014102,
             "abundance": 0.000115,
-            "average_mass": "1.007941"
+            "average_mass": 1.007941
         },
         {
             "number": 1,
             "symbol": "T",
             "mass_number": 3,
-            "mass": "3.016049",
+            "mass": 3.016049,
             "abundance": 0.0,
-            "average_mass": "1.007941"
+            "average_mass": 1.007941
         },
         {
             "number": 2,
             "symbol": "He",
             "mass_number": 3,
-            "mass": "3.016029",
+            "mass": 3.016029,
             "abundance": 1.34e-06,
-            "average_mass": "4.002602"
+            "average_mass": 4.002602
         },
         {
             "number": 2,
             "symbol": "He",
             "mass_number": 4,
-            "mass": "4.002603",
+            "mass": 4.002603,
             "abundance": 0.99999866,
-            "average_mass": "4.002602"
+            "average_mass": 4.002602
         },
         {
             "number": 3,
             "symbol": "Li",
             "mass_number": 6,
-            "mass": "6.015123",
+            "mass": 6.015123,
             "abundance": 0.0759,
-            "average_mass": "6.940037"
+            "average_mass": 6.940037
         },
         {
             "number": 3,
             "symbol": "Li",
             "mass_number": 7,
-            "mass": "7.016003",
+            "mass": 7.016003,
             "abundance": 0.9241,
-            "average_mass": "6.940037"
+            "average_mass": 6.940037
         },
         {
             "number": 4,
             "symbol": "Be",
             "mass_number": 9,
-            "mass": "9.012183",
+            "mass": 9.012183,
             "abundance": 1.0,
-            "average_mass": "9.012183"
+            "average_mass": 9.012183
         },
         {
             "number": 5,
             "symbol": "B",
             "mass_number": 10,
-            "mass": "10.012937",
+            "mass": 10.012937,
             "abundance": 0.199,
-            "average_mass": "10.811028"
+            "average_mass": 10.811028
         },
         {
             "number": 5,
             "symbol": "B",
             "mass_number": 11,
-            "mass": "11.009305",
+            "mass": 11.009305,
             "abundance": 0.801,
-            "average_mass": "10.811028"
+            "average_mass": 10.811028
         },
         {
             "number": 6,
             "symbol": "C",
             "mass_number": 12,
-            "mass": "12.000000",
+            "mass": 12.0,
             "abundance": 0.9893,
-            "average_mass": "12.010736"
+            "average_mass": 12.010736
         },
         {
             "number": 6,
             "symbol": "C",
             "mass_number": 13,
-            "mass": "13.003355",
+            "mass": 13.003355,
             "abundance": 0.0107,
-            "average_mass": "12.010736"
+            "average_mass": 12.010736
         },
         {
             "number": 6,
             "symbol": "C",
             "mass_number": 14,
-            "mass": "14.003242",
+            "mass": 14.003242,
             "abundance": 0.0,
-            "average_mass": "12.010736"
+            "average_mass": 12.010736
         },
         {
             "number": 7,
             "symbol": "N",
             "mass_number": 14,
-            "mass": "14.003074",
+            "mass": 14.003074,
             "abundance": 0.99636,
-            "average_mass": "14.006703"
+            "average_mass": 14.006703
         },
         {
             "number": 7,
             "symbol": "N",
             "mass_number": 15,
-            "mass": "15.000109",
+            "mass": 15.000109,
             "abundance": 0.00364,
-            "average_mass": "14.006703"
+            "average_mass": 14.006703
         },
         {
             "number": 8,
             "symbol": "O",
             "mass_number": 16,
-            "mass": "15.994915",
+            "mass": 15.994915,
             "abundance": 0.99757,
-            "average_mass": "15.999405"
+            "average_mass": 15.999405
         },
         {
             "number": 8,
             "symbol": "O",
             "mass_number": 17,
-            "mass": "16.999132",
+            "mass": 16.999132,
             "abundance": 0.00038,
-            "average_mass": "15.999405"
+            "average_mass": 15.999405
         },
         {
             "number": 8,
             "symbol": "O",
             "mass_number": 18,
-            "mass": "17.999160",
+            "mass": 17.99916,
             "abundance": 0.00205,
-            "average_mass": "15.999405"
+            "average_mass": 15.999405
         },
         {
             "number": 9,
             "symbol": "F",
             "mass_number": 19,
-            "mass": "18.998403",
+            "mass": 18.998403,
             "abundance": 1.0,
-            "average_mass": "18.998403"
+            "average_mass": 18.998403
         },
         {
             "number": 10,
             "symbol": "Ne",
             "mass_number": 20,
-            "mass": "19.992440",
+            "mass": 19.99244,
             "abundance": 0.9048,
-            "average_mass": "20.180046"
+            "average_mass": 20.180046
         },
         {
             "number": 10,
             "symbol": "Ne",
             "mass_number": 21,
-            "mass": "20.993847",
+            "mass": 20.993847,
             "abundance": 0.0027,
-            "average_mass": "20.180046"
+            "average_mass": 20.180046
         },
         {
             "number": 10,
             "symbol": "Ne",
             "mass_number": 22,
-            "mass": "21.991385",
+            "mass": 21.991385,
             "abundance": 0.0925,
-            "average_mass": "20.180046"
+            "average_mass": 20.180046
         },
         {
             "number": 11,
             "symbol": "Na",
             "mass_number": 23,
-            "mass": "22.989769",
+            "mass": 22.989769,
             "abundance": 1.0,
-            "average_mass": "22.989769"
+            "average_mass": 22.989769
         },
         {
             "number": 12,
             "symbol": "Mg",
             "mass_number": 24,
-            "mass": "23.985042",
+            "mass": 23.985042,
             "abundance": 0.7899,
-            "average_mass": "24.305052"
+            "average_mass": 24.305052
         },
         {
             "number": 12,
             "symbol": "Mg",
             "mass_number": 25,
-            "mass": "24.985837",
+            "mass": 24.985837,
             "abundance": 0.1,
-            "average_mass": "24.305052"
+            "average_mass": 24.305052
         },
         {
             "number": 12,
             "symbol": "Mg",
             "mass_number": 26,
-            "mass": "25.982593",
+            "mass": 25.982593,
             "abundance": 0.1101,
-            "average_mass": "24.305052"
+            "average_mass": 24.305052
         },
         {
             "number": 13,
             "symbol": "Al",
             "mass_number": 27,
-            "mass": "26.981539",
+            "mass": 26.981539,
             "abundance": 1.0,
-            "average_mass": "26.981539"
+            "average_mass": 26.981539
         },
         {
             "number": 14,
             "symbol": "Si",
             "mass_number": 28,
-            "mass": "27.976927",
+            "mass": 27.976927,
             "abundance": 0.92223,
-            "average_mass": "28.085499"
+            "average_mass": 28.085499
         },
         {
             "number": 14,
             "symbol": "Si",
             "mass_number": 29,
-            "mass": "28.976495",
+            "mass": 28.976495,
             "abundance": 0.04685,
-            "average_mass": "28.085499"
+            "average_mass": 28.085499
         },
         {
             "number": 14,
             "symbol": "Si",
             "mass_number": 30,
-            "mass": "29.973770",
+            "mass": 29.97377,
             "abundance": 0.03092,
-            "average_mass": "28.085499"
+            "average_mass": 28.085499
         },
         {
             "number": 15,
             "symbol": "P",
             "mass_number": 31,
-            "mass": "30.973762",
+            "mass": 30.973762,
             "abundance": 1.0,
-            "average_mass": "30.973762"
+            "average_mass": 30.973762
         },
         {
             "number": 16,
             "symbol": "S",
             "mass_number": 32,
-            "mass": "31.972071",
+            "mass": 31.972071,
             "abundance": 0.9499,
-            "average_mass": "32.064787"
+            "average_mass": 32.064787
         },
         {
             "number": 16,
             "symbol": "S",
             "mass_number": 33,
-            "mass": "32.971459",
+            "mass": 32.971459,
             "abundance": 0.0075,
-            "average_mass": "32.064787"
+            "average_mass": 32.064787
         },
         {
             "number": 16,
             "symbol": "S",
             "mass_number": 34,
-            "mass": "33.967867",
+            "mass": 33.967867,
             "abundance": 0.0425,
-            "average_mass": "32.064787"
+            "average_mass": 32.064787
         },
         {
             "number": 16,
             "symbol": "S",
             "mass_number": 36,
-            "mass": "35.967081",
+            "mass": 35.967081,
             "abundance": 0.0001,
-            "average_mass": "32.064787"
+            "average_mass": 32.064787
         },
         {
             "number": 17,
             "symbol": "Cl",
             "mass_number": 35,
-            "mass": "34.968853",
+            "mass": 34.968853,
             "abundance": 0.7576,
-            "average_mass": "35.452938"
+            "average_mass": 35.452938
         },
         {
             "number": 17,
             "symbol": "Cl",
             "mass_number": 37,
-            "mass": "36.965903",
+            "mass": 36.965903,
             "abundance": 0.2424,
-            "average_mass": "35.452938"
+            "average_mass": 35.452938
         },
         {
             "number": 18,
             "symbol": "Ar",
             "mass_number": 36,
-            "mass": "35.967545",
+            "mass": 35.967545,
             "abundance": 0.003336,
-            "average_mass": "39.947799"
+            "average_mass": 39.947799
         },
         {
             "number": 18,
             "symbol": "Ar",
             "mass_number": 38,
-            "mass": "37.962732",
+            "mass": 37.962732,
             "abundance": 0.000629,
-            "average_mass": "39.947799"
+            "average_mass": 39.947799
         },
         {
             "number": 18,
             "symbol": "Ar",
             "mass_number": 40,
-            "mass": "39.962383",
+            "mass": 39.962383,
             "abundance": 0.996035,
-            "average_mass": "39.947799"
+            "average_mass": 39.947799
         },
         {
             "number": 19,
             "symbol": "K",
             "mass_number": 39,
-            "mass": "38.963706",
+            "mass": 38.963706,
             "abundance": 0.932581,
-            "average_mass": "39.098301"
+            "average_mass": 39.098301
         },
         {
             "number": 19,
             "symbol": "K",
             "mass_number": 40,
-            "mass": "39.963998",
+            "mass": 39.963998,
             "abundance": 0.000117,
-            "average_mass": "39.098301"
+            "average_mass": 39.098301
         },
         {
             "number": 19,
             "symbol": "K",
             "mass_number": 41,
-            "mass": "40.961825",
+            "mass": 40.961825,
             "abundance": 0.067302,
-            "average_mass": "39.098301"
+            "average_mass": 39.098301
         },
         {
             "number": 20,
             "symbol": "Ca",
             "mass_number": 40,
-            "mass": "39.962591",
+            "mass": 39.962591,
             "abundance": 0.96941,
-            "average_mass": "40.078023"
+            "average_mass": 40.078023
         },
         {
             "number": 20,
             "symbol": "Ca",
             "mass_number": 42,
-            "mass": "41.958618",
+            "mass": 41.958618,
             "abundance": 0.00647,
-            "average_mass": "40.078023"
+            "average_mass": 40.078023
         },
         {
             "number": 20,
             "symbol": "Ca",
             "mass_number": 43,
-            "mass": "42.958766",
+            "mass": 42.958766,
             "abundance": 0.00135,
-            "average_mass": "40.078023"
+            "average_mass": 40.078023
         },
         {
             "number": 20,
             "symbol": "Ca",
             "mass_number": 44,
-            "mass": "43.955482",
+            "mass": 43.955482,
             "abundance": 0.02086,
-            "average_mass": "40.078023"
+            "average_mass": 40.078023
         },
         {
             "number": 20,
             "symbol": "Ca",
             "mass_number": 46,
-            "mass": "45.953689",
+            "mass": 45.953689,
             "abundance": 4e-05,
-            "average_mass": "40.078023"
+            "average_mass": 40.078023
         },
         {
             "number": 20,
             "symbol": "Ca",
             "mass_number": 48,
-            "mass": "47.952523",
+            "mass": 47.952523,
             "abundance": 0.00187,
-            "average_mass": "40.078023"
+            "average_mass": 40.078023
         },
         {
             "number": 21,
             "symbol": "Sc",
             "mass_number": 45,
-            "mass": "44.955908",
+            "mass": 44.955908,
             "abundance": 1.0,
-            "average_mass": "44.955908"
+            "average_mass": 44.955908
         },
         {
             "number": 22,
             "symbol": "Ti",
             "mass_number": 46,
-            "mass": "45.952628",
+            "mass": 45.952628,
             "abundance": 0.0825,
-            "average_mass": "47.866745"
+            "average_mass": 47.866745
         },
         {
             "number": 22,
             "symbol": "Ti",
             "mass_number": 47,
-            "mass": "46.951759",
+            "mass": 46.951759,
             "abundance": 0.0744,
-            "average_mass": "47.866745"
+            "average_mass": 47.866745
         },
         {
             "number": 22,
             "symbol": "Ti",
             "mass_number": 48,
-            "mass": "47.947942",
+            "mass": 47.947942,
             "abundance": 0.7372,
-            "average_mass": "47.866745"
+            "average_mass": 47.866745
         },
         {
             "number": 22,
             "symbol": "Ti",
             "mass_number": 49,
-            "mass": "48.947866",
+            "mass": 48.947866,
             "abundance": 0.0541,
-            "average_mass": "47.866745"
+            "average_mass": 47.866745
         },
         {
             "number": 22,
             "symbol": "Ti",
             "mass_number": 50,
-            "mass": "49.944787",
+            "mass": 49.944787,
             "abundance": 0.0518,
-            "average_mass": "47.866745"
+            "average_mass": 47.866745
         },
         {
             "number": 23,
             "symbol": "V",
             "mass_number": 50,
-            "mass": "49.947156",
+            "mass": 49.947156,
             "abundance": 0.0025,
-            "average_mass": "50.941465"
+            "average_mass": 50.941465
         },
         {
             "number": 23,
             "symbol": "V",
             "mass_number": 51,
-            "mass": "50.943957",
+            "mass": 50.943957,
             "abundance": 0.9975,
-            "average_mass": "50.941465"
+            "average_mass": 50.941465
         },
         {
             "number": 24,
             "symbol": "Cr",
             "mass_number": 50,
-            "mass": "49.946042",
+            "mass": 49.946042,
             "abundance": 0.04345,
-            "average_mass": "51.996132"
+            "average_mass": 51.996132
         },
         {
             "number": 24,
             "symbol": "Cr",
             "mass_number": 52,
-            "mass": "51.940506",
+            "mass": 51.940506,
             "abundance": 0.83789,
-            "average_mass": "51.996132"
+            "average_mass": 51.996132
         },
         {
             "number": 24,
             "symbol": "Cr",
             "mass_number": 53,
-            "mass": "52.940648",
+            "mass": 52.940648,
             "abundance": 0.09501,
-            "average_mass": "51.996132"
+            "average_mass": 51.996132
         },
         {
             "number": 24,
             "symbol": "Cr",
             "mass_number": 54,
-            "mass": "53.938879",
+            "mass": 53.938879,
             "abundance": 0.02365,
-            "average_mass": "51.996132"
+            "average_mass": 51.996132
         },
         {
             "number": 25,
             "symbol": "Mn",
             "mass_number": 55,
-            "mass": "54.938044",
+            "mass": 54.938044,
             "abundance": 1.0,
-            "average_mass": "54.938044"
+            "average_mass": 54.938044
         },
         {
             "number": 26,
             "symbol": "Fe",
             "mass_number": 54,
-            "mass": "53.939609",
+            "mass": 53.939609,
             "abundance": 0.05845,
-            "average_mass": "55.845144"
+            "average_mass": 55.845144
         },
         {
             "number": 26,
             "symbol": "Fe",
             "mass_number": 56,
-            "mass": "55.934936",
+            "mass": 55.934936,
             "abundance": 0.91754,
-            "average_mass": "55.845144"
+            "average_mass": 55.845144
         },
         {
             "number": 26,
             "symbol": "Fe",
             "mass_number": 57,
-            "mass": "56.935393",
+            "mass": 56.935393,
             "abundance": 0.02119,
-            "average_mass": "55.845144"
+            "average_mass": 55.845144
         },
         {
             "number": 26,
             "symbol": "Fe",
             "mass_number": 58,
-            "mass": "57.933274",
+            "mass": 57.933274,
             "abundance": 0.00282,
-            "average_mass": "55.845144"
+            "average_mass": 55.845144
         },
         {
             "number": 27,
             "symbol": "Co",
             "mass_number": 59,
-            "mass": "58.933194",
+            "mass": 58.933194,
             "abundance": 1.0,
-            "average_mass": "58.933194"
+            "average_mass": 58.933194
         },
         {
             "number": 28,
             "symbol": "Ni",
             "mass_number": 58,
-            "mass": "57.935342",
+            "mass": 57.935342,
             "abundance": 0.68077,
-            "average_mass": "58.693347"
+            "average_mass": 58.693347
         },
         {
             "number": 28,
             "symbol": "Ni",
             "mass_number": 60,
-            "mass": "59.930786",
+            "mass": 59.930786,
             "abundance": 0.26223,
-            "average_mass": "58.693347"
+            "average_mass": 58.693347
         },
         {
             "number": 28,
             "symbol": "Ni",
             "mass_number": 61,
-            "mass": "60.931056",
+            "mass": 60.931056,
             "abundance": 0.011399,
-            "average_mass": "58.693347"
+            "average_mass": 58.693347
         },
         {
             "number": 28,
             "symbol": "Ni",
             "mass_number": 62,
-            "mass": "61.928345",
+            "mass": 61.928345,
             "abundance": 0.036346,
-            "average_mass": "58.693347"
+            "average_mass": 58.693347
         },
         {
             "number": 28,
             "symbol": "Ni",
             "mass_number": 64,
-            "mass": "63.927967",
+            "mass": 63.927967,
             "abundance": 0.009255,
-            "average_mass": "58.693347"
+            "average_mass": 58.693347
         },
         {
             "number": 29,
             "symbol": "Cu",
             "mass_number": 63,
-            "mass": "62.929598",
+            "mass": 62.929598,
             "abundance": 0.6915,
-            "average_mass": "63.546040"
+            "average_mass": 63.54604
         },
         {
             "number": 29,
             "symbol": "Cu",
             "mass_number": 65,
-            "mass": "64.927790",
+            "mass": 64.92779,
             "abundance": 0.3085,
-            "average_mass": "63.546040"
+            "average_mass": 63.54604
         },
         {
             "number": 30,
             "symbol": "Zn",
             "mass_number": 64,
-            "mass": "63.929142",
+            "mass": 63.929142,
             "abundance": 0.4917,
-            "average_mass": "65.377783"
+            "average_mass": 65.377783
         },
         {
             "number": 30,
             "symbol": "Zn",
             "mass_number": 66,
-            "mass": "65.926034",
+            "mass": 65.926034,
             "abundance": 0.2773,
-            "average_mass": "65.377783"
+            "average_mass": 65.377783
         },
         {
             "number": 30,
             "symbol": "Zn",
             "mass_number": 67,
-            "mass": "66.927128",
+            "mass": 66.927128,
             "abundance": 0.0404,
-            "average_mass": "65.377783"
+            "average_mass": 65.377783
         },
         {
             "number": 30,
             "symbol": "Zn",
             "mass_number": 68,
-            "mass": "67.924845",
+            "mass": 67.924845,
             "abundance": 0.1845,
-            "average_mass": "65.377783"
+            "average_mass": 65.377783
         },
         {
             "number": 30,
             "symbol": "Zn",
             "mass_number": 70,
-            "mass": "69.925319",
+            "mass": 69.925319,
             "abundance": 0.0061,
-            "average_mass": "65.377783"
+            "average_mass": 65.377783
         },
         {
             "number": 31,
             "symbol": "Ga",
             "mass_number": 69,
-            "mass": "68.925573",
+            "mass": 68.925573,
             "abundance": 0.60108,
-            "average_mass": "69.723066"
+            "average_mass": 69.723066
         },
         {
             "number": 31,
             "symbol": "Ga",
             "mass_number": 71,
-            "mass": "70.924703",
+            "mass": 70.924703,
             "abundance": 0.39892,
-            "average_mass": "69.723066"
+            "average_mass": 69.723066
         },
         {
             "number": 32,
             "symbol": "Ge",
             "mass_number": 70,
-            "mass": "69.924249",
+            "mass": 69.924249,
             "abundance": 0.2057,
-            "average_mass": "72.627550"
+            "average_mass": 72.62755
         },
         {
             "number": 32,
             "symbol": "Ge",
             "mass_number": 72,
-            "mass": "71.922076",
+            "mass": 71.922076,
             "abundance": 0.2745,
-            "average_mass": "72.627550"
+            "average_mass": 72.62755
         },
         {
             "number": 32,
             "symbol": "Ge",
             "mass_number": 73,
-            "mass": "72.923459",
+            "mass": 72.923459,
             "abundance": 0.0775,
-            "average_mass": "72.627550"
+            "average_mass": 72.62755
         },
         {
             "number": 32,
             "symbol": "Ge",
             "mass_number": 74,
-            "mass": "73.921178",
+            "mass": 73.921178,
             "abundance": 0.365,
-            "average_mass": "72.627550"
+            "average_mass": 72.62755
         },
         {
             "number": 32,
             "symbol": "Ge",
             "mass_number": 76,
-            "mass": "75.921403",
+            "mass": 75.921403,
             "abundance": 0.0773,
-            "average_mass": "72.627550"
+            "average_mass": 72.62755
         },
         {
             "number": 33,
             "symbol": "As",
             "mass_number": 75,
-            "mass": "74.921595",
+            "mass": 74.921595,
             "abundance": 1.0,
-            "average_mass": "74.921595"
+            "average_mass": 74.921595
         },
         {
             "number": 34,
             "symbol": "Se",
             "mass_number": 74,
-            "mass": "73.922476",
+            "mass": 73.922476,
             "abundance": 0.0089,
-            "average_mass": "78.959389"
+            "average_mass": 78.959389
         },
         {
             "number": 34,
             "symbol": "Se",
             "mass_number": 76,
-            "mass": "75.919214",
+            "mass": 75.919214,
             "abundance": 0.0937,
-            "average_mass": "78.959389"
+            "average_mass": 78.959389
         },
         {
             "number": 34,
             "symbol": "Se",
             "mass_number": 77,
-            "mass": "76.919914",
+            "mass": 76.919914,
             "abundance": 0.0763,
-            "average_mass": "78.959389"
+            "average_mass": 78.959389
         },
         {
             "number": 34,
             "symbol": "Se",
             "mass_number": 78,
-            "mass": "77.917309",
+            "mass": 77.917309,
             "abundance": 0.2377,
-            "average_mass": "78.959389"
+            "average_mass": 78.959389
         },
         {
             "number": 34,
             "symbol": "Se",
             "mass_number": 80,
-            "mass": "79.916522",
+            "mass": 79.916522,
             "abundance": 0.4961,
-            "average_mass": "78.959389"
+            "average_mass": 78.959389
         },
         {
             "number": 34,
             "symbol": "Se",
             "mass_number": 82,
-            "mass": "81.916699",
+            "mass": 81.916699,
             "abundance": 0.0873,
-            "average_mass": "78.959389"
+            "average_mass": 78.959389
         },
         {
             "number": 35,
             "symbol": "Br",
             "mass_number": 79,
-            "mass": "78.918338",
+            "mass": 78.918338,
             "abundance": 0.5069,
-            "average_mass": "79.903528"
+            "average_mass": 79.903528
         },
         {
             "number": 35,
             "symbol": "Br",
             "mass_number": 81,
-            "mass": "80.916290",
+            "mass": 80.91629,
             "abundance": 0.4931,
-            "average_mass": "79.903528"
+            "average_mass": 79.903528
         },
         {
             "number": 36,
             "symbol": "Kr",
             "mass_number": 78,
-            "mass": "77.920365",
+            "mass": 77.920365,
             "abundance": 0.00355,
-            "average_mass": "83.798000"
+            "average_mass": 83.798
         },
         {
             "number": 36,
             "symbol": "Kr",
             "mass_number": 80,
-            "mass": "79.916378",
+            "mass": 79.916378,
             "abundance": 0.02286,
-            "average_mass": "83.798000"
+            "average_mass": 83.798
         },
         {
             "number": 36,
             "symbol": "Kr",
             "mass_number": 82,
-            "mass": "81.913483",
+            "mass": 81.913483,
             "abundance": 0.11593,
-            "average_mass": "83.798000"
+            "average_mass": 83.798
         },
         {
             "number": 36,
             "symbol": "Kr",
             "mass_number": 83,
-            "mass": "82.914127",
+            "mass": 82.914127,
             "abundance": 0.115,
-            "average_mass": "83.798000"
+            "average_mass": 83.798
         },
         {
             "number": 36,
             "symbol": "Kr",
             "mass_number": 84,
-            "mass": "83.911498",
+            "mass": 83.911498,
             "abundance": 0.56987,
-            "average_mass": "83.798000"
+            "average_mass": 83.798
         },
         {
             "number": 36,
             "symbol": "Kr",
             "mass_number": 86,
-            "mass": "85.910611",
+            "mass": 85.910611,
             "abundance": 0.17279,
-            "average_mass": "83.798000"
+            "average_mass": 83.798
         },
         {
             "number": 37,
             "symbol": "Rb",
             "mass_number": 85,
-            "mass": "84.911790",
+            "mass": 84.91179,
             "abundance": 0.7217,
-            "average_mass": "85.467664"
+            "average_mass": 85.467664
         },
         {
             "number": 37,
             "symbol": "Rb",
             "mass_number": 87,
-            "mass": "86.909181",
+            "mass": 86.909181,
             "abundance": 0.2783,
-            "average_mass": "85.467664"
+            "average_mass": 85.467664
         },
         {
             "number": 38,
             "symbol": "Sr",
             "mass_number": 84,
-            "mass": "83.913419",
+            "mass": 83.913419,
             "abundance": 0.0056,
-            "average_mass": "87.616644"
+            "average_mass": 87.616644
         },
         {
             "number": 38,
             "symbol": "Sr",
             "mass_number": 86,
-            "mass": "85.909261",
+            "mass": 85.909261,
             "abundance": 0.0986,
-            "average_mass": "87.616644"
+            "average_mass": 87.616644
         },
         {
             "number": 38,
             "symbol": "Sr",
             "mass_number": 87,
-            "mass": "86.908878",
+            "mass": 86.908878,
             "abundance": 0.07,
-            "average_mass": "87.616644"
+            "average_mass": 87.616644
         },
         {
             "number": 38,
             "symbol": "Sr",
             "mass_number": 88,
-            "mass": "87.905613",
+            "mass": 87.905613,
             "abundance": 0.8258,
-            "average_mass": "87.616644"
+            "average_mass": 87.616644
         },
         {
             "number": 39,
             "symbol": "Y",
             "mass_number": 89,
-            "mass": "88.905840",
+            "mass": 88.90584,
             "abundance": 1.0,
-            "average_mass": "88.905840"
+            "average_mass": 88.90584
         },
         {
             "number": 40,
             "symbol": "Zr",
             "mass_number": 90,
-            "mass": "89.904698",
+            "mass": 89.904698,
             "abundance": 0.5145,
-            "average_mass": "91.223642"
+            "average_mass": 91.223642
         },
         {
             "number": 40,
             "symbol": "Zr",
             "mass_number": 91,
-            "mass": "90.905640",
+            "mass": 90.90564,
             "abundance": 0.1122,
-            "average_mass": "91.223642"
+            "average_mass": 91.223642
         },
         {
             "number": 40,
             "symbol": "Zr",
             "mass_number": 92,
-            "mass": "91.905035",
+            "mass": 91.905035,
             "abundance": 0.1715,
-            "average_mass": "91.223642"
+            "average_mass": 91.223642
         },
         {
             "number": 40,
             "symbol": "Zr",
             "mass_number": 94,
-            "mass": "93.906311",
+            "mass": 93.906311,
             "abundance": 0.1738,
-            "average_mass": "91.223642"
+            "average_mass": 91.223642
         },
         {
             "number": 40,
             "symbol": "Zr",
             "mass_number": 96,
-            "mass": "95.908271",
+            "mass": 95.908271,
             "abundance": 0.028,
-            "average_mass": "91.223642"
+            "average_mass": 91.223642
         },
         {
             "number": 41,
             "symbol": "Nb",
             "mass_number": 93,
-            "mass": "92.906373",
+            "mass": 92.906373,
             "abundance": 1.0,
-            "average_mass": "92.906373"
+            "average_mass": 92.906373
         },
         {
             "number": 42,
             "symbol": "Mo",
             "mass_number": 92,
-            "mass": "91.906808",
+            "mass": 91.906808,
             "abundance": 0.1453,
-            "average_mass": "95.959789"
+            "average_mass": 95.959789
         },
         {
             "number": 42,
             "symbol": "Mo",
             "mass_number": 94,
-            "mass": "93.905085",
+            "mass": 93.905085,
             "abundance": 0.0915,
-            "average_mass": "95.959789"
+            "average_mass": 95.959789
         },
         {
             "number": 42,
             "symbol": "Mo",
             "mass_number": 95,
-            "mass": "94.905839",
+            "mass": 94.905839,
             "abundance": 0.1584,
-            "average_mass": "95.959789"
+            "average_mass": 95.959789
         },
         {
             "number": 42,
             "symbol": "Mo",
             "mass_number": 96,
-            "mass": "95.904676",
+            "mass": 95.904676,
             "abundance": 0.1667,
-            "average_mass": "95.959789"
+            "average_mass": 95.959789
         },
         {
             "number": 42,
             "symbol": "Mo",
             "mass_number": 97,
-            "mass": "96.906018",
+            "mass": 96.906018,
             "abundance": 0.096,
-            "average_mass": "95.959789"
+            "average_mass": 95.959789
         },
         {
             "number": 42,
             "symbol": "Mo",
             "mass_number": 98,
-            "mass": "97.905405",
+            "mass": 97.905405,
             "abundance": 0.2439,
-            "average_mass": "95.959789"
+            "average_mass": 95.959789
         },
         {
             "number": 42,
             "symbol": "Mo",
             "mass_number": 100,
-            "mass": "99.907472",
+            "mass": 99.907472,
             "abundance": 0.0982,
-            "average_mass": "95.959789"
+            "average_mass": 95.959789
         },
         {
             "number": 43,
             "symbol": "Tc",
             "mass_number": 97,
-            "mass": "96.906367",
+            "mass": 96.906367,
             "abundance": 0.0,
-            "average_mass": "96.906367"
+            "average_mass": 96.906367
         },
         {
             "number": 43,
             "symbol": "Tc",
             "mass_number": 98,
-            "mass": "97.907212",
+            "mass": 97.907212,
             "abundance": 0.0,
-            "average_mass": "96.906367"
+            "average_mass": 96.906367
         },
         {
             "number": 43,
             "symbol": "Tc",
             "mass_number": 99,
-            "mass": "98.906251",
+            "mass": 98.906251,
             "abundance": 0.0,
-            "average_mass": "96.906367"
+            "average_mass": 96.906367
         },
         {
             "number": 44,
             "symbol": "Ru",
             "mass_number": 96,
-            "mass": "95.907590",
+            "mass": 95.90759,
             "abundance": 0.0554,
-            "average_mass": "101.064940"
+            "average_mass": 101.06494
         },
         {
             "number": 44,
             "symbol": "Ru",
             "mass_number": 98,
-            "mass": "97.905287",
+            "mass": 97.905287,
             "abundance": 0.0187,
-            "average_mass": "101.064940"
+            "average_mass": 101.06494
         },
         {
             "number": 44,
             "symbol": "Ru",
             "mass_number": 99,
-            "mass": "98.905934",
+            "mass": 98.905934,
             "abundance": 0.1276,
-            "average_mass": "101.064940"
+            "average_mass": 101.06494
         },
         {
             "number": 44,
             "symbol": "Ru",
             "mass_number": 100,
-            "mass": "99.904214",
+            "mass": 99.904214,
             "abundance": 0.126,
-            "average_mass": "101.064940"
+            "average_mass": 101.06494
         },
         {
             "number": 44,
             "symbol": "Ru",
             "mass_number": 101,
-            "mass": "100.905577",
+            "mass": 100.905577,
             "abundance": 0.1706,
-            "average_mass": "101.064940"
+            "average_mass": 101.06494
         },
         {
             "number": 44,
             "symbol": "Ru",
             "mass_number": 102,
-            "mass": "101.904344",
+            "mass": 101.904344,
             "abundance": 0.3155,
-            "average_mass": "101.064940"
+            "average_mass": 101.06494
         },
         {
             "number": 44,
             "symbol": "Ru",
             "mass_number": 104,
-            "mass": "103.905428",
+            "mass": 103.905428,
             "abundance": 0.1862,
-            "average_mass": "101.064940"
+            "average_mass": 101.06494
         },
         {
             "number": 45,
             "symbol": "Rh",
             "mass_number": 103,
-            "mass": "102.905498",
+            "mass": 102.905498,
             "abundance": 1.0,
-            "average_mass": "102.905498"
+            "average_mass": 102.905498
         },
         {
             "number": 46,
             "symbol": "Pd",
             "mass_number": 102,
-            "mass": "101.905602",
+            "mass": 101.905602,
             "abundance": 0.0102,
-            "average_mass": "106.415328"
+            "average_mass": 106.415328
         },
         {
             "number": 46,
             "symbol": "Pd",
             "mass_number": 104,
-            "mass": "103.904031",
+            "mass": 103.904031,
             "abundance": 0.1114,
-            "average_mass": "106.415328"
+            "average_mass": 106.415328
         },
         {
             "number": 46,
             "symbol": "Pd",
             "mass_number": 105,
-            "mass": "104.905080",
+            "mass": 104.90508,
             "abundance": 0.2233,
-            "average_mass": "106.415328"
+            "average_mass": 106.415328
         },
         {
             "number": 46,
             "symbol": "Pd",
             "mass_number": 106,
-            "mass": "105.903480",
+            "mass": 105.90348,
             "abundance": 0.2733,
-            "average_mass": "106.415328"
+            "average_mass": 106.415328
         },
         {
             "number": 46,
             "symbol": "Pd",
             "mass_number": 108,
-            "mass": "107.903892",
+            "mass": 107.903892,
             "abundance": 0.2646,
-            "average_mass": "106.415328"
+            "average_mass": 106.415328
         },
         {
             "number": 46,
             "symbol": "Pd",
             "mass_number": 110,
-            "mass": "109.905172",
+            "mass": 109.905172,
             "abundance": 0.1172,
-            "average_mass": "106.415328"
+            "average_mass": 106.415328
         },
         {
             "number": 47,
             "symbol": "Ag",
             "mass_number": 107,
-            "mass": "106.905092",
+            "mass": 106.905092,
             "abundance": 0.51839,
-            "average_mass": "107.868150"
+            "average_mass": 107.86815
         },
         {
             "number": 47,
             "symbol": "Ag",
             "mass_number": 109,
-            "mass": "108.904755",
+            "mass": 108.904755,
             "abundance": 0.48161,
-            "average_mass": "107.868150"
+            "average_mass": 107.86815
         },
         {
             "number": 48,
             "symbol": "Cd",
             "mass_number": 106,
-            "mass": "105.906460",
+            "mass": 105.90646,
             "abundance": 0.0125,
-            "average_mass": "112.411558"
+            "average_mass": 112.411558
         },
         {
             "number": 48,
             "symbol": "Cd",
             "mass_number": 108,
-            "mass": "107.904183",
+            "mass": 107.904183,
             "abundance": 0.0089,
-            "average_mass": "112.411558"
+            "average_mass": 112.411558
         },
         {
             "number": 48,
             "symbol": "Cd",
             "mass_number": 110,
-            "mass": "109.903007",
+            "mass": 109.903007,
             "abundance": 0.1249,
-            "average_mass": "112.411558"
+            "average_mass": 112.411558
         },
         {
             "number": 48,
             "symbol": "Cd",
             "mass_number": 111,
-            "mass": "110.904183",
+            "mass": 110.904183,
             "abundance": 0.128,
-            "average_mass": "112.411558"
+            "average_mass": 112.411558
         },
         {
             "number": 48,
             "symbol": "Cd",
             "mass_number": 112,
-            "mass": "111.902763",
+            "mass": 111.902763,
             "abundance": 0.2413,
-            "average_mass": "112.411558"
+            "average_mass": 112.411558
         },
         {
             "number": 48,
             "symbol": "Cd",
             "mass_number": 113,
-            "mass": "112.904408",
+            "mass": 112.904408,
             "abundance": 0.1222,
-            "average_mass": "112.411558"
+            "average_mass": 112.411558
         },
         {
             "number": 48,
             "symbol": "Cd",
             "mass_number": 114,
-            "mass": "113.903365",
+            "mass": 113.903365,
             "abundance": 0.2873,
-            "average_mass": "112.411558"
+            "average_mass": 112.411558
         },
         {
             "number": 48,
             "symbol": "Cd",
             "mass_number": 116,
-            "mass": "115.904763",
+            "mass": 115.904763,
             "abundance": 0.0749,
-            "average_mass": "112.411558"
+            "average_mass": 112.411558
         },
         {
             "number": 49,
             "symbol": "In",
             "mass_number": 113,
-            "mass": "112.904062",
+            "mass": 112.904062,
             "abundance": 0.0429,
-            "average_mass": "114.818087"
+            "average_mass": 114.818087
         },
         {
             "number": 49,
             "symbol": "In",
             "mass_number": 115,
-            "mass": "114.903879",
+            "mass": 114.903879,
             "abundance": 0.9571,
-            "average_mass": "114.818087"
+            "average_mass": 114.818087
         },
         {
             "number": 50,
             "symbol": "Sn",
             "mass_number": 112,
-            "mass": "111.904824",
+            "mass": 111.904824,
             "abundance": 0.0097,
-            "average_mass": "118.710113"
+            "average_mass": 118.710113
         },
         {
             "number": 50,
             "symbol": "Sn",
             "mass_number": 114,
-            "mass": "113.902783",
+            "mass": 113.902783,
             "abundance": 0.0066,
-            "average_mass": "118.710113"
+            "average_mass": 118.710113
         },
         {
             "number": 50,
             "symbol": "Sn",
             "mass_number": 115,
-            "mass": "114.903345",
+            "mass": 114.903345,
             "abundance": 0.0034,
-            "average_mass": "118.710113"
+            "average_mass": 118.710113
         },
         {
             "number": 50,
             "symbol": "Sn",
             "mass_number": 116,
-            "mass": "115.901743",
+            "mass": 115.901743,
             "abundance": 0.1454,
-            "average_mass": "118.710113"
+            "average_mass": 118.710113
         },
         {
             "number": 50,
             "symbol": "Sn",
             "mass_number": 117,
-            "mass": "116.902954",
+            "mass": 116.902954,
             "abundance": 0.0768,
-            "average_mass": "118.710113"
+            "average_mass": 118.710113
         },
         {
             "number": 50,
             "symbol": "Sn",
             "mass_number": 118,
-            "mass": "117.901607",
+            "mass": 117.901607,
             "abundance": 0.2422,
-            "average_mass": "118.710113"
+            "average_mass": 118.710113
         },
         {
             "number": 50,
             "symbol": "Sn",
             "mass_number": 119,
-            "mass": "118.903311",
+            "mass": 118.903311,
             "abundance": 0.0859,
-            "average_mass": "118.710113"
+            "average_mass": 118.710113
         },
         {
             "number": 50,
             "symbol": "Sn",
             "mass_number": 120,
-            "mass": "119.902202",
+            "mass": 119.902202,
             "abundance": 0.3258,
-            "average_mass": "118.710113"
+            "average_mass": 118.710113
         },
         {
             "number": 50,
             "symbol": "Sn",
             "mass_number": 122,
-            "mass": "121.903444",
+            "mass": 121.903444,
             "abundance": 0.0463,
-            "average_mass": "118.710113"
+            "average_mass": 118.710113
         },
         {
             "number": 50,
             "symbol": "Sn",
             "mass_number": 124,
-            "mass": "123.905277",
+            "mass": 123.905277,
             "abundance": 0.0579,
-            "average_mass": "118.710113"
+            "average_mass": 118.710113
         },
         {
             "number": 51,
             "symbol": "Sb",
             "mass_number": 121,
-            "mass": "120.903812",
+            "mass": 120.903812,
             "abundance": 0.5721,
-            "average_mass": "121.759784"
+            "average_mass": 121.759784
         },
         {
             "number": 51,
             "symbol": "Sb",
             "mass_number": 123,
-            "mass": "122.904213",
+            "mass": 122.904213,
             "abundance": 0.4279,
-            "average_mass": "121.759784"
+            "average_mass": 121.759784
         },
         {
             "number": 52,
             "symbol": "Te",
             "mass_number": 120,
-            "mass": "119.904059",
+            "mass": 119.904059,
             "abundance": 0.0009,
-            "average_mass": "127.603126"
+            "average_mass": 127.603126
         },
         {
             "number": 52,
             "symbol": "Te",
             "mass_number": 122,
-            "mass": "121.903043",
+            "mass": 121.903043,
             "abundance": 0.0255,
-            "average_mass": "127.603126"
+            "average_mass": 127.603126
         },
         {
             "number": 52,
             "symbol": "Te",
             "mass_number": 123,
-            "mass": "122.904270",
+            "mass": 122.90427,
             "abundance": 0.0089,
-            "average_mass": "127.603126"
+            "average_mass": 127.603126
         },
         {
             "number": 52,
             "symbol": "Te",
             "mass_number": 124,
-            "mass": "123.902817",
+            "mass": 123.902817,
             "abundance": 0.0474,
-            "average_mass": "127.603126"
+            "average_mass": 127.603126
         },
         {
             "number": 52,
             "symbol": "Te",
             "mass_number": 125,
-            "mass": "124.904430",
+            "mass": 124.90443,
             "abundance": 0.0707,
-            "average_mass": "127.603126"
+            "average_mass": 127.603126
         },
         {
             "number": 52,
             "symbol": "Te",
             "mass_number": 126,
-            "mass": "125.903311",
+            "mass": 125.903311,
             "abundance": 0.1884,
-            "average_mass": "127.603126"
+            "average_mass": 127.603126
         },
         {
             "number": 52,
             "symbol": "Te",
             "mass_number": 128,
-            "mass": "127.904461",
+            "mass": 127.904461,
             "abundance": 0.3174,
-            "average_mass": "127.603126"
+            "average_mass": 127.603126
         },
         {
             "number": 52,
             "symbol": "Te",
             "mass_number": 130,
-            "mass": "129.906223",
+            "mass": 129.906223,
             "abundance": 0.3408,
-            "average_mass": "127.603126"
+            "average_mass": 127.603126
         },
         {
             "number": 53,
             "symbol": "I",
             "mass_number": 127,
-            "mass": "126.904472",
+            "mass": 126.904472,
             "abundance": 1.0,
-            "average_mass": "126.904472"
+            "average_mass": 126.904472
         },
         {
             "number": 54,
             "symbol": "Xe",
             "mass_number": 124,
-            "mass": "123.905892",
+            "mass": 123.905892,
             "abundance": 0.000952,
-            "average_mass": "131.292761"
+            "average_mass": 131.292761
         },
         {
             "number": 54,
             "symbol": "Xe",
             "mass_number": 126,
-            "mass": "125.904298",
+            "mass": 125.904298,
             "abundance": 0.00089,
-            "average_mass": "131.292761"
+            "average_mass": 131.292761
         },
         {
             "number": 54,
             "symbol": "Xe",
             "mass_number": 128,
-            "mass": "127.903531",
+            "mass": 127.903531,
             "abundance": 0.019102,
-            "average_mass": "131.292761"
+            "average_mass": 131.292761
         },
         {
             "number": 54,
             "symbol": "Xe",
             "mass_number": 129,
-            "mass": "128.904781",
+            "mass": 128.904781,
             "abundance": 0.264006,
-            "average_mass": "131.292761"
+            "average_mass": 131.292761
         },
         {
             "number": 54,
             "symbol": "Xe",
             "mass_number": 130,
-            "mass": "129.903509",
+            "mass": 129.903509,
             "abundance": 0.04071,
-            "average_mass": "131.292761"
+            "average_mass": 131.292761
         },
         {
             "number": 54,
             "symbol": "Xe",
             "mass_number": 131,
-            "mass": "130.905084",
+            "mass": 130.905084,
             "abundance": 0.212324,
-            "average_mass": "131.292761"
+            "average_mass": 131.292761
         },
         {
             "number": 54,
             "symbol": "Xe",
             "mass_number": 132,
-            "mass": "131.904155",
+            "mass": 131.904155,
             "abundance": 0.269086,
-            "average_mass": "131.292761"
+            "average_mass": 131.292761
         },
         {
             "number": 54,
             "symbol": "Xe",
             "mass_number": 134,
-            "mass": "133.905395",
+            "mass": 133.905395,
             "abundance": 0.104357,
-            "average_mass": "131.292761"
+            "average_mass": 131.292761
         },
         {
             "number": 54,
             "symbol": "Xe",
             "mass_number": 136,
-            "mass": "135.907214",
+            "mass": 135.907214,
             "abundance": 0.088573,
-            "average_mass": "131.292761"
+            "average_mass": 131.292761
         },
         {
             "number": 55,
             "symbol": "Cs",
             "mass_number": 133,
-            "mass": "132.905452",
+            "mass": 132.905452,
             "abundance": 1.0,
-            "average_mass": "132.905452"
+            "average_mass": 132.905452
         },
         {
             "number": 56,
             "symbol": "Ba",
             "mass_number": 130,
-            "mass": "129.906321",
+            "mass": 129.906321,
             "abundance": 0.00106,
-            "average_mass": "137.326892"
+            "average_mass": 137.326892
         },
         {
             "number": 56,
             "symbol": "Ba",
             "mass_number": 132,
-            "mass": "131.905061",
+            "mass": 131.905061,
             "abundance": 0.00101,
-            "average_mass": "137.326892"
+            "average_mass": 137.326892
         },
         {
             "number": 56,
             "symbol": "Ba",
             "mass_number": 134,
-            "mass": "133.904508",
+            "mass": 133.904508,
             "abundance": 0.02417,
-            "average_mass": "137.326892"
+            "average_mass": 137.326892
         },
         {
             "number": 56,
             "symbol": "Ba",
             "mass_number": 135,
-            "mass": "134.905688",
+            "mass": 134.905688,
             "abundance": 0.06592,
-            "average_mass": "137.326892"
+            "average_mass": 137.326892
         },
         {
             "number": 56,
             "symbol": "Ba",
             "mass_number": 136,
-            "mass": "135.904576",
+            "mass": 135.904576,
             "abundance": 0.07854,
-            "average_mass": "137.326892"
+            "average_mass": 137.326892
         },
         {
             "number": 56,
             "symbol": "Ba",
             "mass_number": 137,
-            "mass": "136.905827",
+            "mass": 136.905827,
             "abundance": 0.11232,
-            "average_mass": "137.326892"
+            "average_mass": 137.326892
         },
         {
             "number": 56,
             "symbol": "Ba",
             "mass_number": 138,
-            "mass": "137.905247",
+            "mass": 137.905247,
             "abundance": 0.71698,
-            "average_mass": "137.326892"
+            "average_mass": 137.326892
         },
         {
             "number": 57,
             "symbol": "La",
             "mass_number": 138,
-            "mass": "137.907115",
+            "mass": 137.907115,
             "abundance": 0.0008881,
-            "average_mass": "138.905469"
+            "average_mass": 138.905469
         },
         {
             "number": 57,
             "symbol": "La",
             "mass_number": 139,
-            "mass": "138.906356",
+            "mass": 138.906356,
             "abundance": 0.9991119,
-            "average_mass": "138.905469"
+            "average_mass": 138.905469
         },
         {
             "number": 58,
             "symbol": "Ce",
             "mass_number": 136,
-            "mass": "135.907129",
+            "mass": 135.907129,
             "abundance": 0.00185,
-            "average_mass": "140.115731"
+            "average_mass": 140.115731
         },
         {
             "number": 58,
             "symbol": "Ce",
             "mass_number": 138,
-            "mass": "137.905991",
+            "mass": 137.905991,
             "abundance": 0.00251,
-            "average_mass": "140.115731"
+            "average_mass": 140.115731
         },
         {
             "number": 58,
             "symbol": "Ce",
             "mass_number": 140,
-            "mass": "139.905443",
+            "mass": 139.905443,
             "abundance": 0.8845,
-            "average_mass": "140.115731"
+            "average_mass": 140.115731
         },
         {
             "number": 58,
             "symbol": "Ce",
             "mass_number": 142,
-            "mass": "141.909250",
+            "mass": 141.90925,
             "abundance": 0.11114,
-            "average_mass": "140.115731"
+            "average_mass": 140.115731
         },
         {
             "number": 59,
             "symbol": "Pr",
             "mass_number": 141,
-            "mass": "140.907658",
+            "mass": 140.907658,
             "abundance": 1.0,
-            "average_mass": "140.907658"
+            "average_mass": 140.907658
         },
         {
             "number": 60,
             "symbol": "Nd",
             "mass_number": 142,
-            "mass": "141.907729",
+            "mass": 141.907729,
             "abundance": 0.27152,
-            "average_mass": "144.241596"
+            "average_mass": 144.241596
         },
         {
             "number": 60,
             "symbol": "Nd",
             "mass_number": 143,
-            "mass": "142.909820",
+            "mass": 142.90982,
             "abundance": 0.12174,
-            "average_mass": "144.241596"
+            "average_mass": 144.241596
         },
         {
             "number": 60,
             "symbol": "Nd",
             "mass_number": 144,
-            "mass": "143.910093",
+            "mass": 143.910093,
             "abundance": 0.23798,
-            "average_mass": "144.241596"
+            "average_mass": 144.241596
         },
         {
             "number": 60,
             "symbol": "Nd",
             "mass_number": 145,
-            "mass": "144.912579",
+            "mass": 144.912579,
             "abundance": 0.08293,
-            "average_mass": "144.241596"
+            "average_mass": 144.241596
         },
         {
             "number": 60,
             "symbol": "Nd",
             "mass_number": 146,
-            "mass": "145.913123",
+            "mass": 145.913123,
             "abundance": 0.17189,
-            "average_mass": "144.241596"
+            "average_mass": 144.241596
         },
         {
             "number": 60,
             "symbol": "Nd",
             "mass_number": 148,
-            "mass": "147.916899",
+            "mass": 147.916899,
             "abundance": 0.05756,
-            "average_mass": "144.241596"
+            "average_mass": 144.241596
         },
         {
             "number": 60,
             "symbol": "Nd",
             "mass_number": 150,
-            "mass": "149.920902",
+            "mass": 149.920902,
             "abundance": 0.05638,
-            "average_mass": "144.241596"
+            "average_mass": 144.241596
         },
         {
             "number": 61,
             "symbol": "Pm",
             "mass_number": 145,
-            "mass": "144.912756",
+            "mass": 144.912756,
             "abundance": 0.0,
-            "average_mass": "144.912756"
+            "average_mass": 144.912756
         },
         {
             "number": 61,
             "symbol": "Pm",
             "mass_number": 147,
-            "mass": "146.915145",
+            "mass": 146.915145,
             "abundance": 0.0,
-            "average_mass": "144.912756"
+            "average_mass": 144.912756
         },
         {
             "number": 62,
             "symbol": "Sm",
             "mass_number": 144,
-            "mass": "143.912006",
+            "mass": 143.912006,
             "abundance": 0.0307,
-            "average_mass": "150.366356"
+            "average_mass": 150.366356
         },
         {
             "number": 62,
             "symbol": "Sm",
             "mass_number": 147,
-            "mass": "146.914904",
+            "mass": 146.914904,
             "abundance": 0.1499,
-            "average_mass": "150.366356"
+            "average_mass": 150.366356
         },
         {
             "number": 62,
             "symbol": "Sm",
             "mass_number": 148,
-            "mass": "147.914829",
+            "mass": 147.914829,
             "abundance": 0.1124,
-            "average_mass": "150.366356"
+            "average_mass": 150.366356
         },
         {
             "number": 62,
             "symbol": "Sm",
             "mass_number": 149,
-            "mass": "148.917192",
+            "mass": 148.917192,
             "abundance": 0.1382,
-            "average_mass": "150.366356"
+            "average_mass": 150.366356
         },
         {
             "number": 62,
             "symbol": "Sm",
             "mass_number": 150,
-            "mass": "149.917283",
+            "mass": 149.917283,
             "abundance": 0.0738,
-            "average_mass": "150.366356"
+            "average_mass": 150.366356
         },
         {
             "number": 62,
             "symbol": "Sm",
             "mass_number": 152,
-            "mass": "151.919740",
+            "mass": 151.91974,
             "abundance": 0.2675,
-            "average_mass": "150.366356"
+            "average_mass": 150.366356
         },
         {
             "number": 62,
             "symbol": "Sm",
             "mass_number": 154,
-            "mass": "153.922217",
+            "mass": 153.922217,
             "abundance": 0.2275,
-            "average_mass": "150.366356"
+            "average_mass": 150.366356
         },
         {
             "number": 63,
             "symbol": "Eu",
             "mass_number": 151,
-            "mass": "150.919858",
+            "mass": 150.919858,
             "abundance": 0.4781,
-            "average_mass": "151.964378"
+            "average_mass": 151.964378
         },
         {
             "number": 63,
             "symbol": "Eu",
             "mass_number": 153,
-            "mass": "152.921238",
+            "mass": 152.921238,
             "abundance": 0.5219,
-            "average_mass": "151.964378"
+            "average_mass": 151.964378
         },
         {
             "number": 64,
             "symbol": "Gd",
             "mass_number": 152,
-            "mass": "151.919800",
+            "mass": 151.9198,
             "abundance": 0.002,
-            "average_mass": "157.252131"
+            "average_mass": 157.252131
         },
         {
             "number": 64,
             "symbol": "Gd",
             "mass_number": 154,
-            "mass": "153.920874",
+            "mass": 153.920874,
             "abundance": 0.0218,
-            "average_mass": "157.252131"
+            "average_mass": 157.252131
         },
         {
             "number": 64,
             "symbol": "Gd",
             "mass_number": 155,
-            "mass": "154.922630",
+            "mass": 154.92263,
             "abundance": 0.148,
-            "average_mass": "157.252131"
+            "average_mass": 157.252131
         },
         {
             "number": 64,
             "symbol": "Gd",
             "mass_number": 156,
-            "mass": "155.922131",
+            "mass": 155.922131,
             "abundance": 0.2047,
-            "average_mass": "157.252131"
+            "average_mass": 157.252131
         },
         {
             "number": 64,
             "symbol": "Gd",
             "mass_number": 157,
-            "mass": "156.923969",
+            "mass": 156.923969,
             "abundance": 0.1565,
-            "average_mass": "157.252131"
+            "average_mass": 157.252131
         },
         {
             "number": 64,
             "symbol": "Gd",
             "mass_number": 158,
-            "mass": "157.924112",
+            "mass": 157.924112,
             "abundance": 0.2484,
-            "average_mass": "157.252131"
+            "average_mass": 157.252131
         },
         {
             "number": 64,
             "symbol": "Gd",
             "mass_number": 160,
-            "mass": "159.927062",
+            "mass": 159.927062,
             "abundance": 0.2186,
-            "average_mass": "157.252131"
+            "average_mass": 157.252131
         },
         {
             "number": 65,
             "symbol": "Tb",
             "mass_number": 159,
-            "mass": "158.925355",
+            "mass": 158.925355,
             "abundance": 1.0,
-            "average_mass": "158.925355"
+            "average_mass": 158.925355
         },
         {
             "number": 66,
             "symbol": "Dy",
             "mass_number": 156,
-            "mass": "155.924285",
+            "mass": 155.924285,
             "abundance": 0.00056,
-            "average_mass": "162.499473"
+            "average_mass": 162.499473
         },
         {
             "number": 66,
             "symbol": "Dy",
             "mass_number": 158,
-            "mass": "157.924416",
+            "mass": 157.924416,
             "abundance": 0.00095,
-            "average_mass": "162.499473"
+            "average_mass": 162.499473
         },
         {
             "number": 66,
             "symbol": "Dy",
             "mass_number": 160,
-            "mass": "159.925205",
+            "mass": 159.925205,
             "abundance": 0.02329,
-            "average_mass": "162.499473"
+            "average_mass": 162.499473
         },
         {
             "number": 66,
             "symbol": "Dy",
             "mass_number": 161,
-            "mass": "160.926941",
+            "mass": 160.926941,
             "abundance": 0.18889,
-            "average_mass": "162.499473"
+            "average_mass": 162.499473
         },
         {
             "number": 66,
             "symbol": "Dy",
             "mass_number": 162,
-            "mass": "161.926806",
+            "mass": 161.926806,
             "abundance": 0.25475,
-            "average_mass": "162.499473"
+            "average_mass": 162.499473
         },
         {
             "number": 66,
             "symbol": "Dy",
             "mass_number": 163,
-            "mass": "162.928738",
+            "mass": 162.928738,
             "abundance": 0.24896,
-            "average_mass": "162.499473"
+            "average_mass": 162.499473
         },
         {
             "number": 66,
             "symbol": "Dy",
             "mass_number": 164,
-            "mass": "163.929182",
+            "mass": 163.929182,
             "abundance": 0.2826,
-            "average_mass": "162.499473"
+            "average_mass": 162.499473
         },
         {
             "number": 67,
             "symbol": "Ho",
             "mass_number": 165,
-            "mass": "164.930329",
+            "mass": 164.930329,
             "abundance": 1.0,
-            "average_mass": "164.930329"
+            "average_mass": 164.930329
         },
         {
             "number": 68,
             "symbol": "Er",
             "mass_number": 162,
-            "mass": "161.928788",
+            "mass": 161.928788,
             "abundance": 0.00139,
-            "average_mass": "167.259083"
+            "average_mass": 167.259083
         },
         {
             "number": 68,
             "symbol": "Er",
             "mass_number": 164,
-            "mass": "163.929209",
+            "mass": 163.929209,
             "abundance": 0.01601,
-            "average_mass": "167.259083"
+            "average_mass": 167.259083
         },
         {
             "number": 68,
             "symbol": "Er",
             "mass_number": 166,
-            "mass": "165.930299",
+            "mass": 165.930299,
             "abundance": 0.33503,
-            "average_mass": "167.259083"
+            "average_mass": 167.259083
         },
         {
             "number": 68,
             "symbol": "Er",
             "mass_number": 167,
-            "mass": "166.932055",
+            "mass": 166.932055,
             "abundance": 0.22869,
-            "average_mass": "167.259083"
+            "average_mass": 167.259083
         },
         {
             "number": 68,
             "symbol": "Er",
             "mass_number": 168,
-            "mass": "167.932377",
+            "mass": 167.932377,
             "abundance": 0.26978,
-            "average_mass": "167.259083"
+            "average_mass": 167.259083
         },
         {
             "number": 68,
             "symbol": "Er",
             "mass_number": 170,
-            "mass": "169.935470",
+            "mass": 169.93547,
             "abundance": 0.1491,
-            "average_mass": "167.259083"
+            "average_mass": 167.259083
         },
         {
             "number": 69,
             "symbol": "Tm",
             "mass_number": 169,
-            "mass": "168.934218",
+            "mass": 168.934218,
             "abundance": 1.0,
-            "average_mass": "168.934218"
+            "average_mass": 168.934218
         },
         {
             "number": 70,
             "symbol": "Yb",
             "mass_number": 168,
-            "mass": "167.933890",
+            "mass": 167.93389,
             "abundance": 0.00123,
-            "average_mass": "173.054150"
+            "average_mass": 173.05415
         },
         {
             "number": 70,
             "symbol": "Yb",
             "mass_number": 170,
-            "mass": "169.934766",
+            "mass": 169.934766,
             "abundance": 0.02982,
-            "average_mass": "173.054150"
+            "average_mass": 173.05415
         },
         {
             "number": 70,
             "symbol": "Yb",
             "mass_number": 171,
-            "mass": "170.936330",
+            "mass": 170.93633,
             "abundance": 0.1409,
-            "average_mass": "173.054150"
+            "average_mass": 173.05415
         },
         {
             "number": 70,
             "symbol": "Yb",
             "mass_number": 172,
-            "mass": "171.936386",
+            "mass": 171.936386,
             "abundance": 0.2168,
-            "average_mass": "173.054150"
+            "average_mass": 173.05415
         },
         {
             "number": 70,
             "symbol": "Yb",
             "mass_number": 173,
-            "mass": "172.938215",
+            "mass": 172.938215,
             "abundance": 0.16103,
-            "average_mass": "173.054150"
+            "average_mass": 173.05415
         },
         {
             "number": 70,
             "symbol": "Yb",
             "mass_number": 174,
-            "mass": "173.938866",
+            "mass": 173.938866,
             "abundance": 0.32026,
-            "average_mass": "173.054150"
+            "average_mass": 173.05415
         },
         {
             "number": 70,
             "symbol": "Yb",
             "mass_number": 176,
-            "mass": "175.942576",
+            "mass": 175.942576,
             "abundance": 0.12996,
-            "average_mass": "173.054150"
+            "average_mass": 173.05415
         },
         {
             "number": 71,
             "symbol": "Lu",
             "mass_number": 175,
-            "mass": "174.940775",
+            "mass": 174.940775,
             "abundance": 0.97401,
-            "average_mass": "174.966815"
+            "average_mass": 174.966815
         },
         {
             "number": 71,
             "symbol": "Lu",
             "mass_number": 176,
-            "mass": "175.942690",
+            "mass": 175.94269,
             "abundance": 0.02599,
-            "average_mass": "174.966815"
+            "average_mass": 174.966815
         },
         {
             "number": 72,
             "symbol": "Hf",
             "mass_number": 174,
-            "mass": "173.940046",
+            "mass": 173.940046,
             "abundance": 0.0016,
-            "average_mass": "178.484979"
+            "average_mass": 178.484979
         },
         {
             "number": 72,
             "symbol": "Hf",
             "mass_number": 176,
-            "mass": "175.941408",
+            "mass": 175.941408,
             "abundance": 0.0526,
-            "average_mass": "178.484979"
+            "average_mass": 178.484979
         },
         {
             "number": 72,
             "symbol": "Hf",
             "mass_number": 177,
-            "mass": "176.943228",
+            "mass": 176.943228,
             "abundance": 0.186,
-            "average_mass": "178.484979"
+            "average_mass": 178.484979
         },
         {
             "number": 72,
             "symbol": "Hf",
             "mass_number": 178,
-            "mass": "177.943706",
+            "mass": 177.943706,
             "abundance": 0.2728,
-            "average_mass": "178.484979"
+            "average_mass": 178.484979
         },
         {
             "number": 72,
             "symbol": "Hf",
             "mass_number": 179,
-            "mass": "178.945823",
+            "mass": 178.945823,
             "abundance": 0.1362,
-            "average_mass": "178.484979"
+            "average_mass": 178.484979
         },
         {
             "number": 72,
             "symbol": "Hf",
             "mass_number": 180,
-            "mass": "179.946557",
+            "mass": 179.946557,
             "abundance": 0.3508,
-            "average_mass": "178.484979"
+            "average_mass": 178.484979
         },
         {
             "number": 73,
             "symbol": "Ta",
             "mass_number": 180,
-            "mass": "179.947465",
+            "mass": 179.947465,
             "abundance": 0.0001201,
-            "average_mass": "180.947876"
+            "average_mass": 180.947876
         },
         {
             "number": 73,
             "symbol": "Ta",
             "mass_number": 181,
-            "mass": "180.947996",
+            "mass": 180.947996,
             "abundance": 0.9998799,
-            "average_mass": "180.947876"
+            "average_mass": 180.947876
         },
         {
             "number": 74,
             "symbol": "W",
             "mass_number": 180,
-            "mass": "179.946711",
+            "mass": 179.946711,
             "abundance": 0.0012,
-            "average_mass": "183.841778"
+            "average_mass": 183.841778
         },
         {
             "number": 74,
             "symbol": "W",
             "mass_number": 182,
-            "mass": "181.948204",
+            "mass": 181.948204,
             "abundance": 0.265,
-            "average_mass": "183.841778"
+            "average_mass": 183.841778
         },
         {
             "number": 74,
             "symbol": "W",
             "mass_number": 183,
-            "mass": "182.950223",
+            "mass": 182.950223,
             "abundance": 0.1431,
-            "average_mass": "183.841778"
+            "average_mass": 183.841778
         },
         {
             "number": 74,
             "symbol": "W",
             "mass_number": 184,
-            "mass": "183.950931",
+            "mass": 183.950931,
             "abundance": 0.3064,
-            "average_mass": "183.841778"
+            "average_mass": 183.841778
         },
         {
             "number": 74,
             "symbol": "W",
             "mass_number": 186,
-            "mass": "185.954363",
+            "mass": 185.954363,
             "abundance": 0.2843,
-            "average_mass": "183.841778"
+            "average_mass": 183.841778
         },
         {
             "number": 75,
             "symbol": "Re",
             "mass_number": 185,
-            "mass": "184.952955",
+            "mass": 184.952955,
             "abundance": 0.374,
-            "average_mass": "186.206705"
+            "average_mass": 186.206705
         },
         {
             "number": 75,
             "symbol": "Re",
             "mass_number": 187,
-            "mass": "186.955750",
+            "mass": 186.95575,
             "abundance": 0.626,
-            "average_mass": "186.206705"
+            "average_mass": 186.206705
         },
         {
             "number": 76,
             "symbol": "Os",
             "mass_number": 184,
-            "mass": "183.952488",
+            "mass": 183.952488,
             "abundance": 0.0002,
-            "average_mass": "190.224860"
+            "average_mass": 190.22486
         },
         {
             "number": 76,
             "symbol": "Os",
             "mass_number": 186,
-            "mass": "185.953835",
+            "mass": 185.953835,
             "abundance": 0.0159,
-            "average_mass": "190.224860"
+            "average_mass": 190.22486
         },
         {
             "number": 76,
             "symbol": "Os",
             "mass_number": 187,
-            "mass": "186.955747",
+            "mass": 186.955747,
             "abundance": 0.0196,
-            "average_mass": "190.224860"
+            "average_mass": 190.22486
         },
         {
             "number": 76,
             "symbol": "Os",
             "mass_number": 188,
-            "mass": "187.955835",
+            "mass": 187.955835,
             "abundance": 0.1324,
-            "average_mass": "190.224860"
+            "average_mass": 190.22486
         },
         {
             "number": 76,
             "symbol": "Os",
             "mass_number": 189,
-            "mass": "188.958144",
+            "mass": 188.958144,
             "abundance": 0.1615,
-            "average_mass": "190.224860"
+            "average_mass": 190.22486
         },
         {
             "number": 76,
             "symbol": "Os",
             "mass_number": 190,
-            "mass": "189.958444",
+            "mass": 189.958444,
             "abundance": 0.2626,
-            "average_mass": "190.224860"
+            "average_mass": 190.22486
         },
         {
             "number": 76,
             "symbol": "Os",
             "mass_number": 192,
-            "mass": "191.961477",
+            "mass": 191.961477,
             "abundance": 0.4078,
-            "average_mass": "190.224860"
+            "average_mass": 190.22486
         },
         {
             "number": 77,
             "symbol": "Ir",
             "mass_number": 191,
-            "mass": "190.960589",
+            "mass": 190.960589,
             "abundance": 0.373,
-            "average_mass": "192.216052"
+            "average_mass": 192.216052
         },
         {
             "number": 77,
             "symbol": "Ir",
             "mass_number": 193,
-            "mass": "192.962922",
+            "mass": 192.962922,
             "abundance": 0.627,
-            "average_mass": "192.216052"
+            "average_mass": 192.216052
         },
         {
             "number": 78,
             "symbol": "Pt",
             "mass_number": 190,
-            "mass": "189.959930",
+            "mass": 189.95993,
             "abundance": 0.00012,
-            "average_mass": "195.084457"
+            "average_mass": 195.084457
         },
         {
             "number": 78,
             "symbol": "Pt",
             "mass_number": 192,
-            "mass": "191.961039",
+            "mass": 191.961039,
             "abundance": 0.00782,
-            "average_mass": "195.084457"
+            "average_mass": 195.084457
         },
         {
             "number": 78,
             "symbol": "Pt",
             "mass_number": 194,
-            "mass": "193.962681",
+            "mass": 193.962681,
             "abundance": 0.3286,
-            "average_mass": "195.084457"
+            "average_mass": 195.084457
         },
         {
             "number": 78,
             "symbol": "Pt",
             "mass_number": 195,
-            "mass": "194.964792",
+            "mass": 194.964792,
             "abundance": 0.3378,
-            "average_mass": "195.084457"
+            "average_mass": 195.084457
         },
         {
             "number": 78,
             "symbol": "Pt",
             "mass_number": 196,
-            "mass": "195.964952",
+            "mass": 195.964952,
             "abundance": 0.2521,
-            "average_mass": "195.084457"
+            "average_mass": 195.084457
         },
         {
             "number": 78,
             "symbol": "Pt",
             "mass_number": 198,
-            "mass": "197.967895",
+            "mass": 197.967895,
             "abundance": 0.07356,
-            "average_mass": "195.084457"
+            "average_mass": 195.084457
         },
         {
             "number": 79,
             "symbol": "Au",
             "mass_number": 197,
-            "mass": "196.966569",
+            "mass": 196.966569,
             "abundance": 1.0,
-            "average_mass": "196.966569"
+            "average_mass": 196.966569
         },
         {
             "number": 80,
             "symbol": "Hg",
             "mass_number": 196,
-            "mass": "195.965833",
+            "mass": 195.965833,
             "abundance": 0.0015,
-            "average_mass": "200.599167"
+            "average_mass": 200.599167
         },
         {
             "number": 80,
             "symbol": "Hg",
             "mass_number": 198,
-            "mass": "197.966769",
+            "mass": 197.966769,
             "abundance": 0.0997,
-            "average_mass": "200.599167"
+            "average_mass": 200.599167
         },
         {
             "number": 80,
             "symbol": "Hg",
             "mass_number": 199,
-            "mass": "198.968281",
+            "mass": 198.968281,
             "abundance": 0.1687,
-            "average_mass": "200.599167"
+            "average_mass": 200.599167
         },
         {
             "number": 80,
             "symbol": "Hg",
             "mass_number": 200,
-            "mass": "199.968327",
+            "mass": 199.968327,
             "abundance": 0.231,
-            "average_mass": "200.599167"
+            "average_mass": 200.599167
         },
         {
             "number": 80,
             "symbol": "Hg",
             "mass_number": 201,
-            "mass": "200.970303",
+            "mass": 200.970303,
             "abundance": 0.1318,
-            "average_mass": "200.599167"
+            "average_mass": 200.599167
         },
         {
             "number": 80,
             "symbol": "Hg",
             "mass_number": 202,
-            "mass": "201.970643",
+            "mass": 201.970643,
             "abundance": 0.2986,
-            "average_mass": "200.599167"
+            "average_mass": 200.599167
         },
         {
             "number": 80,
             "symbol": "Hg",
             "mass_number": 204,
-            "mass": "203.973494",
+            "mass": 203.973494,
             "abundance": 0.0687,
-            "average_mass": "200.599167"
+            "average_mass": 200.599167
         },
         {
             "number": 81,
             "symbol": "Tl",
             "mass_number": 203,
-            "mass": "202.972345",
+            "mass": 202.972345,
             "abundance": 0.2952,
-            "average_mass": "204.383413"
+            "average_mass": 204.383413
         },
         {
             "number": 81,
             "symbol": "Tl",
             "mass_number": 205,
-            "mass": "204.974428",
+            "mass": 204.974428,
             "abundance": 0.7048,
-            "average_mass": "204.383413"
+            "average_mass": 204.383413
         },
         {
             "number": 82,
             "symbol": "Pb",
             "mass_number": 204,
-            "mass": "203.973044",
+            "mass": 203.973044,
             "abundance": 0.014,
-            "average_mass": "207.216908"
+            "average_mass": 207.216908
         },
         {
             "number": 82,
             "symbol": "Pb",
             "mass_number": 206,
-            "mass": "205.974466",
+            "mass": 205.974466,
             "abundance": 0.241,
-            "average_mass": "207.216908"
+            "average_mass": 207.216908
         },
         {
             "number": 82,
             "symbol": "Pb",
             "mass_number": 207,
-            "mass": "206.975897",
+            "mass": 206.975897,
             "abundance": 0.221,
-            "average_mass": "207.216908"
+            "average_mass": 207.216908
         },
         {
             "number": 82,
             "symbol": "Pb",
             "mass_number": 208,
-            "mass": "207.976653",
+            "mass": 207.976653,
             "abundance": 0.524,
-            "average_mass": "207.216908"
+            "average_mass": 207.216908
         },
         {
             "number": 83,
             "symbol": "Bi",
             "mass_number": 209,
-            "mass": "208.980399",
+            "mass": 208.980399,
             "abundance": 1.0,
-            "average_mass": "208.980399"
+            "average_mass": 208.980399
         },
         {
             "number": 84,
             "symbol": "Po",
             "mass_number": 209,
-            "mass": "208.982431",
+            "mass": 208.982431,
             "abundance": 0.0,
-            "average_mass": "208.982431"
+            "average_mass": 208.982431
         },
         {
             "number": 84,
             "symbol": "Po",
             "mass_number": 210,
-            "mass": "209.982874",
+            "mass": 209.982874,
             "abundance": 0.0,
-            "average_mass": "208.982431"
+            "average_mass": 208.982431
         },
         {
             "number": 85,
             "symbol": "At",
             "mass_number": 210,
-            "mass": "209.987148",
+            "mass": 209.987148,
             "abundance": 0.0,
-            "average_mass": "209.987148"
+            "average_mass": 209.987148
         },
         {
             "number": 85,
             "symbol": "At",
             "mass_number": 211,
-            "mass": "210.987497",
+            "mass": 210.987497,
             "abundance": 0.0,
-            "average_mass": "209.987148"
+            "average_mass": 209.987148
         },
         {
             "number": 86,
             "symbol": "Rn",
             "mass_number": 211,
-            "mass": "210.990601",
+            "mass": 210.990601,
             "abundance": 0.0,
-            "average_mass": "210.990601"
+            "average_mass": 210.990601
         },
         {
             "number": 86,
             "symbol": "Rn",
             "mass_number": 220,
-            "mass": "220.011394",
+            "mass": 220.011394,
             "abundance": 0.0,
-            "average_mass": "210.990601"
+            "average_mass": 210.990601
         },
         {
             "number": 86,
             "symbol": "Rn",
             "mass_number": 222,
-            "mass": "222.017578",
+            "mass": 222.017578,
             "abundance": 0.0,
-            "average_mass": "210.990601"
+            "average_mass": 210.990601
         },
         {
             "number": 87,
             "symbol": "Fr",
             "mass_number": 223,
-            "mass": "223.019736",
+            "mass": 223.019736,
             "abundance": 0.0,
-            "average_mass": "223.019736"
+            "average_mass": 223.019736
         },
         {
             "number": 88,
             "symbol": "Ra",
             "mass_number": 223,
-            "mass": "223.018502",
+            "mass": 223.018502,
             "abundance": 0.0,
-            "average_mass": "223.018502"
+            "average_mass": 223.018502
         },
         {
             "number": 88,
             "symbol": "Ra",
             "mass_number": 224,
-            "mass": "224.020212",
+            "mass": 224.020212,
             "abundance": 0.0,
-            "average_mass": "223.018502"
+            "average_mass": 223.018502
         },
         {
             "number": 88,
             "symbol": "Ra",
             "mass_number": 226,
-            "mass": "226.025410",
+            "mass": 226.02541,
             "abundance": 0.0,
-            "average_mass": "223.018502"
+            "average_mass": 223.018502
         },
         {
             "number": 88,
             "symbol": "Ra",
             "mass_number": 228,
-            "mass": "228.031071",
+            "mass": 228.031071,
             "abundance": 0.0,
-            "average_mass": "223.018502"
+            "average_mass": 223.018502
         },
         {
             "number": 89,
             "symbol": "Ac",
             "mass_number": 227,
-            "mass": "227.027752",
+            "mass": 227.027752,
             "abundance": 0.0,
-            "average_mass": "227.027752"
+            "average_mass": 227.027752
         },
         {
             "number": 90,
             "symbol": "Th",
             "mass_number": 230,
-            "mass": "230.033134",
+            "mass": 230.033134,
             "abundance": 0.0,
-            "average_mass": "232.038056"
+            "average_mass": 232.038056
         },
         {
             "number": 90,
             "symbol": "Th",
             "mass_number": 232,
-            "mass": "232.038056",
+            "mass": 232.038056,
             "abundance": 1.0,
-            "average_mass": "232.038056"
+            "average_mass": 232.038056
         },
         {
             "number": 91,
             "symbol": "Pa",
             "mass_number": 231,
-            "mass": "231.035884",
+            "mass": 231.035884,
             "abundance": 1.0,
-            "average_mass": "231.035884"
+            "average_mass": 231.035884
         },
         {
             "number": 92,
             "symbol": "U",
             "mass_number": 233,
-            "mass": "233.039636",
+            "mass": 233.039636,
             "abundance": 0.0,
-            "average_mass": "238.028910"
+            "average_mass": 238.02891
         },
         {
             "number": 92,
             "symbol": "U",
             "mass_number": 234,
-            "mass": "234.040952",
+            "mass": 234.040952,
             "abundance": 5.4e-05,
-            "average_mass": "238.028910"
+            "average_mass": 238.02891
         },
         {
             "number": 92,
             "symbol": "U",
             "mass_number": 235,
-            "mass": "235.043930",
+            "mass": 235.04393,
             "abundance": 0.007204,
-            "average_mass": "238.028910"
+            "average_mass": 238.02891
         },
         {
             "number": 92,
             "symbol": "U",
             "mass_number": 236,
-            "mass": "236.045568",
+            "mass": 236.045568,
             "abundance": 0.0,
-            "average_mass": "238.028910"
+            "average_mass": 238.02891
         },
         {
             "number": 92,
             "symbol": "U",
             "mass_number": 238,
-            "mass": "238.050788",
+            "mass": 238.050788,
             "abundance": 0.992742,
-            "average_mass": "238.028910"
+            "average_mass": 238.02891
         },
         {
             "number": 93,
             "symbol": "Np",
             "mass_number": 236,
-            "mass": "236.046570",
+            "mass": 236.04657,
             "abundance": 0.0,
-            "average_mass": "236.046570"
+            "average_mass": 236.04657
         },
         {
             "number": 93,
             "symbol": "Np",
             "mass_number": 237,
-            "mass": "237.048174",
+            "mass": 237.048174,
             "abundance": 0.0,
-            "average_mass": "236.046570"
+            "average_mass": 236.04657
         },
         {
             "number": 94,
             "symbol": "Pu",
             "mass_number": 238,
-            "mass": "238.049560",
+            "mass": 238.04956,
             "abundance": 0.0,
-            "average_mass": "238.049560"
+            "average_mass": 238.04956
         },
         {
             "number": 94,
             "symbol": "Pu",
             "mass_number": 239,
-            "mass": "239.052164",
+            "mass": 239.052164,
             "abundance": 0.0,
-            "average_mass": "238.049560"
+            "average_mass": 238.04956
         },
         {
             "number": 94,
             "symbol": "Pu",
             "mass_number": 240,
-            "mass": "240.053814",
+            "mass": 240.053814,
             "abundance": 0.0,
-            "average_mass": "238.049560"
+            "average_mass": 238.04956
         },
         {
             "number": 94,
             "symbol": "Pu",
             "mass_number": 241,
-            "mass": "241.056852",
+            "mass": 241.056852,
             "abundance": 0.0,
-            "average_mass": "238.049560"
+            "average_mass": 238.04956
         },
         {
             "number": 94,
             "symbol": "Pu",
             "mass_number": 242,
-            "mass": "242.058743",
+            "mass": 242.058743,
             "abundance": 0.0,
-            "average_mass": "238.049560"
+            "average_mass": 238.04956
         },
         {
             "number": 94,
             "symbol": "Pu",
             "mass_number": 244,
-            "mass": "244.064205",
+            "mass": 244.064205,
             "abundance": 0.0,
-            "average_mass": "238.049560"
+            "average_mass": 238.04956
         },
         {
             "number": 95,
             "symbol": "Am",
             "mass_number": 241,
-            "mass": "241.056829",
+            "mass": 241.056829,
             "abundance": 0.0,
-            "average_mass": "241.056829"
+            "average_mass": 241.056829
         },
         {
             "number": 95,
             "symbol": "Am",
             "mass_number": 243,
-            "mass": "243.061381",
+            "mass": 243.061381,
             "abundance": 0.0,
-            "average_mass": "241.056829"
+            "average_mass": 241.056829
         },
         {
             "number": 96,
             "symbol": "Cm",
             "mass_number": 243,
-            "mass": "243.061389",
+            "mass": 243.061389,
             "abundance": 0.0,
-            "average_mass": "243.061389"
+            "average_mass": 243.061389
         },
         {
             "number": 96,
             "symbol": "Cm",
             "mass_number": 244,
-            "mass": "244.062753",
+            "mass": 244.062753,
             "abundance": 0.0,
-            "average_mass": "243.061389"
+            "average_mass": 243.061389
         },
         {
             "number": 96,
             "symbol": "Cm",
             "mass_number": 245,
-            "mass": "245.065492",
+            "mass": 245.065492,
             "abundance": 0.0,
-            "average_mass": "243.061389"
+            "average_mass": 243.061389
         },
         {
             "number": 96,
             "symbol": "Cm",
             "mass_number": 246,
-            "mass": "246.067224",
+            "mass": 246.067224,
             "abundance": 0.0,
-            "average_mass": "243.061389"
+            "average_mass": 243.061389
         },
         {
             "number": 96,
             "symbol": "Cm",
             "mass_number": 247,
-            "mass": "247.070354",
+            "mass": 247.070354,
             "abundance": 0.0,
-            "average_mass": "243.061389"
+            "average_mass": 243.061389
         },
         {
             "number": 96,
             "symbol": "Cm",
             "mass_number": 248,
-            "mass": "248.072350",
+            "mass": 248.07235,
             "abundance": 0.0,
-            "average_mass": "243.061389"
+            "average_mass": 243.061389
         },
         {
             "number": 97,
             "symbol": "Bk",
             "mass_number": 247,
-            "mass": "247.070307",
+            "mass": 247.070307,
             "abundance": 0.0,
-            "average_mass": "247.070307"
+            "average_mass": 247.070307
         },
         {
             "number": 97,
             "symbol": "Bk",
             "mass_number": 249,
-            "mass": "249.074988",
+            "mass": 249.074988,
             "abundance": 0.0,
-            "average_mass": "247.070307"
+            "average_mass": 247.070307
         },
         {
             "number": 98,
             "symbol": "Cf",
             "mass_number": 249,
-            "mass": "249.074854",
+            "mass": 249.074854,
             "abundance": 0.0,
-            "average_mass": "249.074854"
+            "average_mass": 249.074854
         },
         {
             "number": 98,
             "symbol": "Cf",
             "mass_number": 250,
-            "mass": "250.076406",
+            "mass": 250.076406,
             "abundance": 0.0,
-            "average_mass": "249.074854"
+            "average_mass": 249.074854
         },
         {
             "number": 98,
             "symbol": "Cf",
             "mass_number": 251,
-            "mass": "251.079589",
+            "mass": 251.079589,
             "abundance": 0.0,
-            "average_mass": "249.074854"
+            "average_mass": 249.074854
         },
         {
             "number": 98,
             "symbol": "Cf",
             "mass_number": 252,
-            "mass": "252.081627",
+            "mass": 252.081627,
             "abundance": 0.0,
-            "average_mass": "249.074854"
+            "average_mass": 249.074854
         },
         {
             "number": 99,
             "symbol": "Es",
             "mass_number": 252,
-            "mass": "252.082980",
+            "mass": 252.08298,
             "abundance": 0.0,
-            "average_mass": "252.082980"
+            "average_mass": 252.08298
         },
         {
             "number": 100,
             "symbol": "Fm",
             "mass_number": 257,
-            "mass": "257.095106",
+            "mass": 257.095106,
             "abundance": 0.0,
-            "average_mass": "257.095106"
+            "average_mass": 257.095106
         },
         {
             "number": 101,
             "symbol": "Md",
             "mass_number": 258,
-            "mass": "258.098432",
+            "mass": 258.098432,
             "abundance": 0.0,
-            "average_mass": "258.098432"
+            "average_mass": 258.098432
         },
         {
             "number": 101,
             "symbol": "Md",
             "mass_number": 260,
-            "mass": "260.103650",
+            "mass": 260.10365,
             "abundance": 0.0,
-            "average_mass": "258.098432"
+            "average_mass": 258.098432
         },
         {
             "number": 102,
             "symbol": "No",
             "mass_number": 259,
-            "mass": "259.101030",
+            "mass": 259.10103,
             "abundance": 0.0,
-            "average_mass": "259.101030"
+            "average_mass": 259.10103
         },
         {
             "number": 103,
             "symbol": "Lr",
             "mass_number": 262,
-            "mass": "262.109610",
+            "mass": 262.10961,
             "abundance": 0.0,
-            "average_mass": "262.109610"
+            "average_mass": 262.10961
         },
         {
             "number": 104,
             "symbol": "Rf",
             "mass_number": 267,
-            "mass": "267.121790",
+            "mass": 267.12179,
             "abundance": 0.0,
-            "average_mass": "267.121790"
+            "average_mass": 267.12179
         },
         {
             "number": 105,
             "symbol": "Db",
             "mass_number": 268,
-            "mass": "268.125670",
+            "mass": 268.12567,
             "abundance": 0.0,
-            "average_mass": "268.125670"
+            "average_mass": 268.12567
         },
         {
             "number": 106,
             "symbol": "Sg",
             "mass_number": 271,
-            "mass": "271.133930",
+            "mass": 271.13393,
             "abundance": 0.0,
-            "average_mass": "271.133930"
+            "average_mass": 271.13393
         },
         {
             "number": 107,
             "symbol": "Bh",
             "mass_number": 272,
-            "mass": "272.138260",
+            "mass": 272.13826,
             "abundance": 0.0,
-            "average_mass": "272.138260"
+            "average_mass": 272.13826
         },
         {
             "number": 108,
             "symbol": "Hs",
             "mass_number": 270,
-            "mass": "270.134290",
+            "mass": 270.13429,
             "abundance": 0.0,
-            "average_mass": "270.134290"
+            "average_mass": 270.13429
         },
         {
             "number": 109,
             "symbol": "Mt",
             "mass_number": 276,
-            "mass": "276.151590",
+            "mass": 276.15159,
             "abundance": 0.0,
-            "average_mass": "276.151590"
+            "average_mass": 276.15159
         },
         {
             "number": 110,
             "symbol": "Ds",
             "mass_number": 281,
-            "mass": "281.164510",
+            "mass": 281.16451,
             "abundance": 0.0,
-            "average_mass": "281.164510"
+            "average_mass": 281.16451
         },
         {
             "number": 111,
             "symbol": "Rg",
             "mass_number": 280,
-            "mass": "280.165140",
+            "mass": 280.16514,
             "abundance": 0.0,
-            "average_mass": "280.165140"
+            "average_mass": 280.16514
         },
         {
             "number": 112,
             "symbol": "Cn",
             "mass_number": 285,
-            "mass": "285.177120",
+            "mass": 285.17712,
             "abundance": 0.0,
-            "average_mass": "285.177120"
+            "average_mass": 285.17712
         },
         {
             "number": 113,
             "symbol": "Nh",
             "mass_number": 284,
-            "mass": "284.178730",
+            "mass": 284.17873,
             "abundance": 0.0,
-            "average_mass": "284.178730"
+            "average_mass": 284.17873
         },
         {
             "number": 114,
             "symbol": "Fl",
             "mass_number": 289,
-            "mass": "289.190420",
+            "mass": 289.19042,
             "abundance": 0.0,
-            "average_mass": "289.190420"
+            "average_mass": 289.19042
         },
         {
             "number": 115,
             "symbol": "Mc",
             "mass_number": 288,
-            "mass": "288.192740",
+            "mass": 288.19274,
             "abundance": 0.0,
-            "average_mass": "288.192740"
+            "average_mass": 288.19274
         },
         {
             "number": 116,
             "symbol": "Lv",
             "mass_number": 293,
-            "mass": "293.204490",
+            "mass": 293.20449,
             "abundance": 0.0,
-            "average_mass": "293.204490"
+            "average_mass": 293.20449
         },
         {
             "number": 117,
             "symbol": "Ts",
             "mass_number": 292,
-            "mass": "292.207460",
+            "mass": 292.20746,
             "abundance": 0.0,
-            "average_mass": "292.207460"
+            "average_mass": 292.20746
         },
         {
             "number": 118,
             "symbol": "Og",
             "mass_number": 294,
-            "mass": "294.213920",
+            "mass": 294.21392,
             "abundance": 0.0,
-            "average_mass": "294.213920"
+            "average_mass": 294.21392
         }
     ]
 }

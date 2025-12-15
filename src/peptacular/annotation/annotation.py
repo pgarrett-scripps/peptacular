@@ -230,7 +230,9 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
     def validate_sequence(self) -> None:
         for aa in self.sequence:
             if aa not in AA_LOOKUP:
-                raise ValueError(f"Invalid amino acid '{aa}' in sequence '{self.sequence}'")
+                raise ValueError(
+                    f"Invalid amino acid '{aa}' in sequence '{self.sequence}'"
+                )
 
     def validate_isotope_mods(self) -> None:
         if errors := self.isotope_mods.validate():
@@ -259,14 +261,16 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
     def validate_internal_mods(self) -> None:
         for pos, mods in self.internal_mods.items():
             if errors := mods.validate():
-                raise ValueError(f"Invalid internal modifications at position {pos}: {errors}")
+                raise ValueError(
+                    f"Invalid internal modifications at position {pos}: {errors}"
+                )
 
     def validate_intervals(self) -> None:
         intervals = self.intervals
         for interval in intervals:
             if errors := interval.validate():
                 raise ValueError(f"Invalid interval: {errors}")
-            
+
         # ensure no overlapping intervals
         sorted_intervals = sorted(intervals, key=lambda x: x.start)
         for i in range(1, len(sorted_intervals)):
@@ -719,7 +723,7 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
         if mods is None:
             self._internal_mods = None
             return self
-        
+
         internal_mods: dict[int, dict[str, int]] = {}
         for pos, mods_dict in mods.items():
             internalmod = convert_moddict_input(mods_dict)
@@ -742,14 +746,12 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
             validate = self.validate
 
         if not inplace:
-            return self.copy().set_intervals(
-                intervals, inplace=True, validate=validate
-            )
-        
+            return self.copy().set_intervals(intervals, inplace=True, validate=validate)
+
         if intervals is None:
             self._intervals = None
             return self
-        
+
         self._intervals = intervals
         if validate:
             self.validate_intervals()
@@ -774,7 +776,9 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
         mods = convert_moddict_input(mods)
 
         if validate:
-            if not Mods[ModificationTags](mod_type=ModType.INTERNAL, _mods=mods).is_valid:
+            if not Mods[ModificationTags](
+                mod_type=ModType.INTERNAL, _mods=mods
+            ).is_valid:
                 raise ValueError(f"Invalid internal modifications at position {index}")
 
         if self._internal_mods is None:
@@ -1314,7 +1318,6 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
     REMOVE Methods
     """
 
-
     def _remove_mod_generic(
         self,
         mod: Any,
@@ -1324,27 +1327,27 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
         """Generic method to remove a modification by decrementing its count."""
         if not inplace:
             return self.copy()._remove_mod_generic(mod, attr_name, inplace=True)
-        
+
         mod_dict = getattr(self, attr_name)
         if mod_dict is None:
             return self
-        
+
         mod_str, count = convert_single_mod_input(mod)
-        
+
         if mod_str not in mod_dict:
             return self
-        
+
         # Decrement count, ensuring it doesn't go below 0
         mod_dict[mod_str] = max(0, mod_dict[mod_str] - count)
-        
+
         # Remove if count reaches 0
         if mod_dict[mod_str] == 0:
             del mod_dict[mod_str]
-        
+
         # Clean up if dict is now empty
         if len(mod_dict) == 0:
             setattr(self, attr_name, None)
-        
+
         return self
 
     def remove_isotope_mod(self, mod: Any, inplace: bool = True) -> Self:
@@ -1385,51 +1388,51 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
         """Remove a specific internal modification at a position by decrementing its count."""
         if not inplace:
             return self.copy().remove_internal_mod_at_index(index, mod, inplace=True)
-        
+
         if self._internal_mods is None or index not in self._internal_mods:
             return self
-        
+
         mod_str, count = convert_single_mod_input(mod)
-        
+
         if mod_str not in self._internal_mods[index]:
             return self
-        
+
         # Decrement count, ensuring it doesn't go below 0
         self._internal_mods[index][mod_str] = max(
             0, self._internal_mods[index][mod_str] - count
         )
-        
+
         # Remove if count reaches 0
         if self._internal_mods[index][mod_str] == 0:
             del self._internal_mods[index][mod_str]
-        
+
         # Remove position if no mods left
         if len(self._internal_mods[index]) == 0:
             del self._internal_mods[index]
-        
+
         # Clean up if internal_mods is now empty
         if len(self._internal_mods) == 0:
             self._internal_mods = None
-        
+
         return self
 
     def remove_interval(self, interval: Interval, inplace: bool = True) -> Self:
         """Remove a specific interval from the intervals list."""
         if not inplace:
             return self.copy().remove_interval(interval, inplace=True)
-        
+
         if self._intervals is None:
             return self
-        
+
         try:
             self._intervals.remove(interval)
         except ValueError:
             # Interval not found, just return
             pass
-        
+
         if len(self._intervals) == 0:
             self._intervals = None
-        
+
         return self
 
     """
@@ -2040,12 +2043,12 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
                 )
             )
         return vec
-    
+
     @property
     def monoisotopic_mass(self) -> float:
         """Calculate monoisotopic mass of the unmodified sequence."""
         return self.base_mass(monoisotopic=True)
-    
+
     @property
     def average_mass(self) -> float:
         """Calculate average mass of the unmodified sequence."""
@@ -3256,7 +3259,6 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
 
         return annot
 
-
     def isotopic_distribution(
         self,
         ion_type: ION_TYPE = IonType.PRECURSOR,
@@ -3264,17 +3266,15 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
         isotopes: ISOTOPE_TYPE | None = None,
         losses: dict[LOSS_TYPE, int] | None = None,
         max_isotopes: int | None = 10,
-        min_abundance_threshold: float = 0.001, # based on the most abundant peak
+        min_abundance_threshold: float = 0.001,  # based on the most abundant peak
         distribution_resolution: int | None = 5,
         use_neutron_count: bool = False,
         conv_min_abundance_threshold: float = 10e-15,
     ) -> list[IsotopicData]:
-        
-        composition = self.comp(ion_type=ion_type,
-                       charge=charge,
-                       isotopes=isotopes,
-                       losses=losses)
-        
+        composition = self.comp(
+            ion_type=ion_type, charge=charge, isotopes=isotopes, losses=losses
+        )
+
         # get charge state
         if charge is None:
             charge_state = self.charge_state
@@ -3288,5 +3288,5 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
             distribution_resolution=distribution_resolution,
             use_neutron_count=use_neutron_count,
             conv_min_abundance_threshold=conv_min_abundance_threshold,
-            charge=charge_state
+            charge=charge_state,
         )

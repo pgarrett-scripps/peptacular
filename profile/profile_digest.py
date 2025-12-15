@@ -16,7 +16,7 @@ def run_digest():
     proteins = [generate_random_protein(1_000) for _ in range(100)]
     
     start_time = time.time()
-    peptides = list(pt.digest(
+    peptides = list(pt.simple_digest(
         proteins,
         cleave_on="KR",
         missed_cleavages=2,
@@ -36,7 +36,7 @@ def run_digest_single():
     protein = generate_random_protein(1_000)
     
     start_time = time.time()
-    peptides = pt.digest(
+    peptides = pt.simple_digest(
         protein,  # Single protein
         cleave_on="KR",
         missed_cleavages=2,

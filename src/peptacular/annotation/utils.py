@@ -194,7 +194,7 @@ class Fragment:
                         raise ValueError(
                             f"Internal ion type {ion_info.ion_type} not supported in mzPAF."
                         )
-                    internal_loss = INTERNAL_MASS_DIFFS[internal_ion_key] # type: ignore
+                    internal_loss = INTERNAL_MASS_DIFFS[internal_ion_key]  # type: ignore
 
                     ion = InternalFragment(
                         start_position=start,
@@ -495,7 +495,6 @@ def adjust_comp(
             fragment_isotope_notation[elem] += count
 
         if isinstance(isotopes, int):
-
             base_comp[ELEMENT_LOOKUP["13C"]] += isotopes
             base_comp[ELEMENT_LOOKUP["C"]] -= isotopes
 
@@ -505,7 +504,7 @@ def adjust_comp(
     fragment_loss_notation: dict[str | float, int] | None = None
     if neutral_deltas is not None:
         loss_comp, float_losses = process_losses(neutral_deltas)
-        
+
         if float_losses:
             raise ValueError("Cannot adjust composition with float losses.")
 
@@ -560,7 +559,6 @@ def adjust_comp(
                 )
             case _:
                 raise TypeError(f"Invalid charge type: {type(charge)}")
-
 
     # Validate no negative counts
     if any(count < 0 for count in base_comp.values()):

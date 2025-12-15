@@ -27,14 +27,14 @@ class RefMolInfo:
         """Get the composition as a Counter"""
         return Counter(parse_composition(dict(self.dict_composition)))
 
-    def to_dict(self, float_format: str = "{:.6f}") -> dict[str, object]:
+    def to_dict(self, float_precision: int = 6) -> dict[str, object]:
         """Convert the RefMolInfo to a dictionary"""
         return {
             "name": self.name,
             "label_type": self.label_type,
             "molecule_type": self.molecule_type,
             "chemical_formula": self.chemical_formula,
-            "monoisotopic_mass": float_format.format(self.monoisotopic_mass),
-            "average_mass": float_format.format(self.average_mass),
+            "monoisotopic_mass": round(self.monoisotopic_mass, float_precision),
+            "average_mass": round(self.average_mass, float_precision),
             "composition": self.dict_composition,
         }

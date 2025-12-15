@@ -171,7 +171,7 @@ def match_spectra(
 
     if mode not in [MatchMode.CLOSEST, MatchMode.LARGEST, MatchMode.ALL]:
         raise ValueError('Invalid mode. Must be "closest" or "largest" or "all"')
-    
+
     fragments_mzs: list[float] = []
     for fragment in fragments:
         if isinstance(fragment, Fragment):

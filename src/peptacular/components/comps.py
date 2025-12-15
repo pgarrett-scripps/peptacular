@@ -64,7 +64,7 @@ class FormulaElement(MassPropertyMixin):
     @property
     def is_valid(self) -> bool:
         return self.validate() is None
-        
+
     def validate(self) -> str | None:
         try:
             _ = self.get_mass()
@@ -121,7 +121,7 @@ class ChargedFormula(MassPropertyMixin):
     @property
     def is_valid(self) -> bool:
         return self.validate() is None
-        
+
     def validate(self) -> str | None:
         try:
             _ = self.get_mass()
@@ -275,7 +275,7 @@ class TagAccession(MassPropertyMixin):
     @property
     def is_valid(self) -> bool:
         return self.validate() is None
-        
+
     def validate(self) -> str | None:
         try:
             mod_info = self._get_mod_info_by_accession()
@@ -344,7 +344,7 @@ class TagMass(MassPropertyMixin):
     @property
     def is_valid(self) -> bool:
         return self.validate() is None
-        
+
     def validate(self) -> str | None:
         try:
             _ = self.get_mass()
@@ -386,7 +386,7 @@ class TagName(MassPropertyMixin):
     @property
     def is_valid(self) -> bool:
         return self.validate() is None
-        
+
     def validate(self) -> str | None:
         try:
             mod_info = self._get_mod_info_by_name()
@@ -461,7 +461,7 @@ class TagInfo(MassPropertyMixin):
     @property
     def is_valid(self) -> bool:
         return self.validate() is None
-        
+
     def validate(self) -> str | None:
         return None
 
@@ -494,11 +494,11 @@ class TagCustom(MassPropertyMixin):
     """A custom/user-defined modification"""
 
     name: str
-    
+
     @property
     def is_valid(self) -> bool:
         return self.validate() is None
-        
+
     def validate(self) -> str | None:
         return None
 
@@ -587,7 +587,7 @@ class GlycanTag(MassPropertyMixin):
     @property
     def is_valid(self) -> bool:
         return self.validate() is None
-        
+
     def validate(self) -> str | None:
         try:
             _ = self.get_mass()
@@ -637,7 +637,7 @@ class IsotopeReplacement(MassPropertyMixin):
     @property
     def is_valid(self) -> bool:
         return self.validate() is None
-        
+
     def validate(self) -> str | None:
         try:
             _ = self.get_isotope_replacements()
@@ -685,7 +685,7 @@ class GlobalChargeCarrier(MassPropertyMixin):
     @property
     def is_valid(self) -> bool:
         return self.validate() is None
-        
+
     def validate(self) -> str | None:
         return self.charged_formula.validate()
 
@@ -747,21 +747,21 @@ class ModificationTags(MassPropertyMixin):
     @property
     def is_valid(self) -> bool:
         return self.validate() is None
-        
+
     def validate(self, all_tags: bool = False) -> str | None:
         if not self.tags:
             return "ModificationTags cannot be empty"
-        
+
         tags_to_check = self.tags if all_tags else (self.tags[0],)
-        
+
         for tag in tags_to_check:
-            if hasattr(tag, 'validate'):
+            if hasattr(tag, "validate"):
                 error = tag.validate()  # type: ignore
                 if error is not None:
                     return error
-        
+
         return None
-    
+
     def get_mass(self, monoisotopic: bool = True) -> float:
         """Get the mass from this modification"""
         first_tag = self.tags[0]
@@ -927,7 +927,7 @@ class FixedModification(MassPropertyMixin):
     @property
     def is_valid(self) -> bool:
         return self.validate() is None
-        
+
     def validate(self) -> str | None:
         return self.modifications.validate()
 

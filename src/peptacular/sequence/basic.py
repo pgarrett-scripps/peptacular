@@ -34,9 +34,10 @@ from ..amino_acids import AA_LOOKUP
 ORDERED_AMINO_ACIDS = [aa.id for aa in AA_LOOKUP.ordered_amino_acids]
 
 
-def _parse_single(s: str, validate: bool = True) -> ProFormaAnnotation:
+def _parse_single(s: str, validate: bool = False) -> ProFormaAnnotation:
     """Parse a ProForma string into a ProFormaAnnotation object."""
     return ProFormaAnnotation.parse(s, validate=validate)
+
 
 @overload
 def parse(
@@ -46,9 +47,8 @@ def parse(
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
     reuse_pool: bool = True,
-) -> ProFormaAnnotation:
-    ...
-    
+) -> ProFormaAnnotation: ...
+
 
 @overload
 def parse(
@@ -58,8 +58,8 @@ def parse(
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
     reuse_pool: bool = True,
-) -> list[ProFormaAnnotation]:
-    ...
+) -> list[ProFormaAnnotation]: ...
+
 
 def parse(
     s: str | Sequence[str],
@@ -81,7 +81,6 @@ def parse(
         )
     else:
         return _parse_single(s, validate=validate)
-
 
 
 def _serialize_single(

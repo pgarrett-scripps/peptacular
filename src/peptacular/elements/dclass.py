@@ -38,16 +38,17 @@ class ElementInfo:
         """Get the mass of this element isotope"""
         return self.mass if monoisotopic else self.average_mass
 
-    def to_dict(self, float_format: str = "{:.6f}") -> dict[str, object]:
+    def to_dict(self, float_precision: int = 6) -> dict[str, object]:
         """Convert the ElementInfo to a dictionary"""
         return {
             "number": self.number,
             "symbol": self.symbol,
             "mass_number": self.mass_number,
-            "mass": float_format.format(self.mass),
+            "mass": round(self.mass, float_precision),
             "abundance": self.abundance,
-            "average_mass": float_format.format(self.average_mass),
+            "average_mass": round(self.average_mass, float_precision),
         }
+    
 
     def __repr__(self) -> str:
         return (

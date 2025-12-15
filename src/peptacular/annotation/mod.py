@@ -4,7 +4,11 @@ from typing import Any, Callable, Generic, Iterable, Iterator, Self, TypeVar, ca
 from collections import Counter
 
 from ..amino_acids.lookup import AA_LOOKUP
-from ..components.parsers import parse_modification, parse_modification_tag, parse_modification_tags
+from ..components.parsers import (
+    parse_modification,
+    parse_modification_tag,
+    parse_modification_tags,
+)
 from ..constants import ModType
 from ..components.comps import (
     FixedModification,
@@ -39,14 +43,14 @@ class Mod(Generic[T]):
     @property
     def is_valid(self) -> bool:
         return self.validate() is None
-        
+
     def validate(self) -> str | None:
         if self.count < 0:
             return f"Count must be non-negative, got {self.count}"
-        
-        if hasattr(self.value, 'validate'):
+
+        if hasattr(self.value, "validate"):
             return self.value.validate()  # type: ignore
-        
+
         return None
 
     def get_mass(self, monoisotopic: bool = True) -> float:
@@ -109,14 +113,14 @@ class Mods(Generic[T], MassPropertyMixin):
     @property
     def is_valid(self) -> bool:
         return self.validate() is None
-        
+
     def validate(self) -> str | None:
         if self.mod_type not in _MOD_PARSERS:
             return f"Unsupported mod_type: {self.mod_type}"
-        
+
         if self._mods is None:
             return None
-        
+
         for mod in self.mods:
             error = mod.validate()
             if error is not None:
@@ -364,11 +368,11 @@ class Interval:
     @property
     def is_valid(self) -> bool:
         return self.validate() is None
-        
+
     def validate(self) -> str | None:
         if self.end < self.start:
             return f"End ({self.end}) must be >= start ({self.start})"
-        
+
         return self.mods.validate()
 
     @property

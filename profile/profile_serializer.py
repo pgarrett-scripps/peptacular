@@ -66,13 +66,13 @@ def profile_serialization():
     # Test cases with increasing complexity
     test_cases = {
         "Simple peptide": "PEPTIDE",
-        "With C-term mod": "PEPTIDE-[Amidation]",
+        "With C-term mod": "PEPTIDE-[Amidated]",
         "With N-term mod": "[Acetyl]-PEPTIDE",
         "With internal mods": "PEP[+15.99]TI[+0.98]DE",
-        "With multiple mods": "[Acetyl]-PEP[+15.99]TI[+0.98]DE-[Amidation]",
-        "Complex with charge": "[Acetyl]-M[+15.99]PEPTIDEWITHM[+15.99]ETHIONINE-[Amidation]/2",
+        "With multiple mods": "[Acetyl]-PEP[+15.99]TI[+0.98]DE-[Amidated]",
+        "Complex with charge": "[Acetyl]-M[+15.99]PEPTIDEWITHM[+15.99]ETHIONINE-[Amidated]/2",
         "Long peptide": "MKTAYIAKQRQISFVKSHFSRQLEERLGLIEVQAPILSRVGDGTQDNLSGAEKAVQVKVKALPDAQFEVVHSLAKWKRQTLGQHDFSAGEGLYTHMKALRPDEDRLSPLHSVYVDQWDWERVMGDGERQFSTLKSTVEAIWAGIKATEAAVSEEFGLAPFLPDQIHFVHSQELLSRYPDLDAKGRERAIAKDLGAVFLVGIGGKLSDGHRHDVRAPDYDDWSTPSELGHAGLNGDILVWNPVLEDAFELSSMGIRVDADTLKHQLALTGDEDRLELEWHQALLRGEMPQTIGGGIGQSRLTMLLLQLPHIGQVQAGVWPAAVRESVPSLL",
-        "Long with mods": "[Acetyl]-M[+15.99]KTAYIAKQRQISFVKSHFSRQLEERLGLIEVQAPILSRVGDGTQDNLSGAEKAVQVKVKALPDAQFEVVHSLAKWKRQTLGQHDFSAGEGLYTHMKALRPDEDRLSPLHSVYVDQWDWERVMGDGERQFSTLKSTVEAIWAGIKATEAAVSEEFGLAPFLPDQIHFVHSQELLSRYPDLDAKGRERAIAKDLGAVFLVGIGGKLSDGHRHDVRAPDYDDWSTPSELGHAGLNGDILVWNPVLEDAFELSSMGIRVDADTLKHQLALTGDEDRLELEWHQALLRGEM[+15.99]PQTIGGGIGQSRLTMLLLQLPHIGQVQAGVWPAAVRESVPSLL-[Amidation]/3",
+        "Long with mods": "[Acetyl]-M[+15.99]KTAYIAKQRQISFVKSHFSRQLEERLGLIEVQAPILSRVGDGTQDNLSGAEKAVQVKVKALPDAQFEVVHSLAKWKRQTLGQHDFSAGEGLYTHMKALRPDEDRLSPLHSVYVDQWDWERVMGDGERQFSTLKSTVEAIWAGIKATEAAVSEEFGLAPFLPDQIHFVHSQELLSRYPDLDAKGRERAIAKDLGAVFLVGIGGKLSDGHRHDVRAPDYDDWSTPSELGHAGLNGDILVWNPVLEDAFELSSMGIRVDADTLKHQLALTGDEDRLELEWHQALLRGEM[+15.99]PQTIGGGIGQSRLTMLLLQLPHIGQVQAGVWPAAVRESVPSLL-[Amidated]/3",
     }
     
     print("=" * 80)
@@ -120,7 +120,7 @@ def profile_batch_serialization():
     
     # Generate realistic test data - peptides with modifications
     protein = generate_random_protein(1000)
-    peptides = list(pt.digest(
+    peptides = list(pt.simple_digest(
         protein,
         cleave_on="KR",
         missed_cleavages=2,
@@ -128,21 +128,19 @@ def profile_batch_serialization():
         min_len=6,
         max_len=50
     ))
+    sequence_spans = peptides[:500]  # Limit to first 500 for speed
+    sequences = [seq for seq, s in sequence_spans]
     
     print(f"\nGenerated {len(peptides)} peptides from digestion")
-    
     # Add modifications to some peptides
     modified_peptides = []
-    for peptide in peptides[:100]:  # Take first 100 for speed
-        try:
-            variants = list(pt.build_mods(
-                peptide,
-                internal_variable={'M': [15.995], 'C': [57.021]},
-                max_variable_mods=2,
-            ))
-            modified_peptides.extend(variants)
-        except:
-            pass
+    for peptide in sequences[:100]:  # Take first 100 for speed
+        variants = list(pt.build_mods(
+            peptide,
+            internal_variable={'M': [15.995], 'C': [57.021]},
+            max_variable_mods=2,
+        ))
+        modified_peptides.extend(variants)
     
     print(f"Generated {len(modified_peptides)} modified peptide variants")
     
@@ -150,11 +148,8 @@ def profile_batch_serialization():
     annotations = []
     parse_start = time.time()
     for peptide in modified_peptides:
-        try:
-            ann = pt.parse(peptide)
-            annotations.append(ann)
-        except:
-            pass
+        ann = pt.parse(peptide)
+        annotations.append(ann)
     parse_time = time.time() - parse_start
     
     print(f"Parsed {len(annotations)} annotations in {parse_time:.3f}s")
@@ -182,7 +177,7 @@ def profile_detailed_single():
     print("=" * 80)
     
     # Create a complex peptide with many features
-    complex_peptide = "[Acetyl]-M[+15.99]PEPTIDEWITHM[+15.99]ETHIONINEANDC[+57.02]YSTEINE-[Amidation]/2"
+    complex_peptide = "[Acetyl]-M[+15.99]PEPTIDEWITHM[+15.99]ETHIONINEANDC[+57.02]YSTEINE-[Amidated]/2"
     
     print(f"\nProfiling: {complex_peptide}")
     
@@ -216,10 +211,10 @@ def profile_edge_cases():
     edge_cases = {
         "Empty modifications": "PEPTIDE",
         "Only N-term": "[Acetyl]-PEPTIDE",
-        "Only C-term": "PEPTIDE-[Amidation]",
+        "Only C-term": "PEPTIDE-[Amidated]",
         "Only internal": "PEPT[+15.99]IDE",
         "Multiple same position": "M[+15.99][+0.98]PEPTIDE",
-        "All mod types": "[Acetyl]-M[+15.99]PEPTIDE-[Amidation]/2",
+        "All mod types": "[Acetyl]-M[+15.99]PEPTIDE-[Amidated]/2",
         "Very long sequence": "A" * 1000,
         "Many mods": "M[+15.99]" * 50,
     }

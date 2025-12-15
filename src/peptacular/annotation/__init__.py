@@ -8,7 +8,6 @@ from .mod import Mod, Mods
 from .utils import Fragment
 
 
-
 __all__ = [
     "ProFormaParser",
     "Interval",

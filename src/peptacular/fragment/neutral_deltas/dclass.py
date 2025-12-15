@@ -42,14 +42,14 @@ class NeutralDeltaInfo:
         """Calculate the number of possible loss sites in a sequence"""
         return sum(1 for aa in sequence if aa in self.amino_acids)
 
-    def to_dict(self, float_format: str = "{:.6f}") -> dict[str, object]:
+    def to_dict(self, float_precision: int = 6) -> dict[str, object]:
         """Convert to dictionary representation"""
         return {
             "formula": self.formula,
             "name": self.name,
             "description": self.description,
             "amino_acids": list(self.amino_acids),
-            "monoisotopic_mass": float_format.format(self.monoisotopic_mass),
-            "average_mass": float_format.format(self.average_mass),
+            "monoisotopic_mass": round(self.monoisotopic_mass, float_precision),
+            "average_mass": round(self.average_mass, float_precision),
             "dict_composition": dict(self.dict_composition),
         }

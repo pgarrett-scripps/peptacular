@@ -29,6 +29,7 @@ AVERAGE_AVERAGINE_MASS: float = sum(
     for k, v in AVERAGINE_RATIOS.items()
 )
 
+
 @dataclass(frozen=True, slots=True)
 class IsotopicData:
     """Represents a single isotope peak with mass, neutron count, and relative abundance."""
@@ -61,12 +62,11 @@ def estimate_comp(neutral_mass: float) -> dict[str, float]:
 def isotopic_distribution(
     chemical_formula: dict[str, int | float] | Counter[ElementInfo],
     max_isotopes: int | None = 10,
-    min_abundance_threshold: float = 0.001, # based on the most abundant peak
+    min_abundance_threshold: float = 0.001,  # based on the most abundant peak
     distribution_resolution: int | None = 5,
     use_neutron_count: bool = False,
     conv_min_abundance_threshold: float = 10e-15,
     charge: int | None = None,
-
 ) -> list[IsotopicData]:
     """
     Calculate the isotopic distribution for a given chemical formula.
@@ -98,7 +98,7 @@ def isotopic_distribution(
         >>> [(round(r.mass, 2), round(r.abundance, 2)) for r in result]
         [(192.06, 1.0), (193.05, 0.01), (193.06, 0.13)]
 
-        # Example usage with Isotopes Specified, '13C' is assumed to be 
+        # Example usage with Isotopes Specified, '13C' is assumed to be
         # static and will not be used in convolution, though mass is corrected
         >>> formula = {'C': 12, 'H': 6, 'N': 3, '13C': 1}
         >>> result = isotopic_distribution(formula, 3, 0.0, 5)
@@ -182,10 +182,16 @@ def isotopic_distribution(
             UserWarning,
         )
 
-    total_distribution = {0.0: (1.0, 0)}  # Start with a base distribution (mass/offset: (abundance, neutron_count))
+    total_distribution = {
+        0.0: (1.0, 0)
+    }  # Start with a base distribution (mass/offset: (abundance, neutron_count))
     for element, count in chemical_formula.items():
         elemental_distribution = _calculate_elemental_distribution(
-            element, int(count), use_neutron_count, conv_min_abundance_threshold, max_isotopes
+            element,
+            int(count),
+            use_neutron_count,
+            conv_min_abundance_threshold,
+            max_isotopes,
         )
         total_distribution = _convolve_distributions(
             total_distribution,
@@ -252,14 +258,16 @@ def merge_isotopic_distributions(
             if mass in merged_distribution:
                 merged_distribution[mass] = (
                     merged_distribution[mass][0] + isotope.abundance,
-                    merged_distribution[mass][1]  # Keep existing neutron count
+                    merged_distribution[mass][1],  # Keep existing neutron count
                 )
             else:
                 merged_distribution[mass] = (isotope.abundance, isotope.neutron_count)
 
     return [
         IsotopicData(mass=mass, neutron_count=neutron_count, abundance=abundance)
-        for mass, (abundance, neutron_count) in sorted(merged_distribution.items(), key=lambda x: x[0])
+        for mass, (abundance, neutron_count) in sorted(
+            merged_distribution.items(), key=lambda x: x[0]
+        )
     ]
 
 
@@ -354,7 +362,6 @@ def _convolve_distributions(
     result: dict[float, tuple[float, int]] = {}
     for mass1, (abundance1, neutron1) in dist1.items():
         for mass2, (abundance2, neutron2) in dist2.items():
-
             new_abundance = abundance1 * abundance2
             if new_abundance < min_abundance_threshold:
                 break
@@ -365,7 +372,10 @@ def _convolve_distributions(
 
             new_neutron_count = neutron1 + neutron2
             if new_mass in result:
-                result[new_mass] = (result[new_mass][0] + new_abundance, new_neutron_count)
+                result[new_mass] = (
+                    result[new_mass][0] + new_abundance,
+                    new_neutron_count,
+                )
             else:
                 result[new_mass] = (new_abundance, new_neutron_count)
 
@@ -430,6 +440,7 @@ def _calculate_elemental_distribution_slow(
         )
     return distribution
 
+
 def _calculate_elemental_distribution(
     element: str,
     count: int,
@@ -448,28 +459,32 @@ def _calculate_elemental_distribution(
         else:
             mass = elem_info.get_mass(monoisotopic=True)
             return {mass: (1.0, 0)}
-    
+
     if use_neutron_count:
         isotopes = ELEMENT_LOOKUP.get_neutron_offsets_and_abundances(element)
     else:
         isotopes = ELEMENT_LOOKUP.get_masses_and_abundances(element)
-    
+
     # Build base distribution
     isotope_distribution = {}
     for i, (mass_or_offset, abundance) in enumerate(isotopes):
         neutron_count = int(mass_or_offset) if use_neutron_count else i
         isotope_distribution[mass_or_offset] = (abundance, neutron_count)
-    
+
     # Fast exponentiation by squaring: compute isotope_distribution^count
     result = {0.0: (1.0, 0)}
     base = isotope_distribution
-    
+
     while count > 0:
         if count % 2 == 1:
-            result = _convolve_distributions(result, base, max_isotopes, min_abundance_threshold, None)
-        base = _convolve_distributions(base, base, max_isotopes, min_abundance_threshold, None)
+            result = _convolve_distributions(
+                result, base, max_isotopes, min_abundance_threshold, None
+            )
+        base = _convolve_distributions(
+            base, base, max_isotopes, min_abundance_threshold, None
+        )
         count //= 2
-    
+
     return result
 
 

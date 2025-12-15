@@ -52,15 +52,12 @@ def _serialize_labile(
     comps.append(annotation.labile_mods.serialize())
 
 
-
 def _serialize_static(
     annotation: ProFormaAnnotation,
     comps: list[str],
 ) -> None:
     """Serialize static modifications into comps list."""
-    comps.append(
-        annotation.static_mods.serialize()
-    )
+    comps.append(annotation.static_mods.serialize())
 
 
 def _serialize_isotope(
@@ -68,9 +65,8 @@ def _serialize_isotope(
     comps: list[str],
 ) -> None:
     """Serialize isotope modifications into comps list."""
-    comps.append(
-        annotation.isotope_mods.serialize()
-    )
+    comps.append(annotation.isotope_mods.serialize())
+
 
 def _serialize_unknown(
     annotation: ProFormaAnnotation,
@@ -94,6 +90,7 @@ def _serialize_cterm(
 ) -> None:
     """Serialize C-terminal modifications into comps list."""
     comps.append(annotation.cterm_mods.serialize())
+
 
 def _serialize_start(
     annotation: ProFormaAnnotation,

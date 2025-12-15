@@ -17,7 +17,7 @@ def run_mass():
 
     all_peptides: list[str] = []
     for protein in proteins:
-        peptides = pt.digest(
+        peptides = pt.simple_digest(
             protein,
             cleave_on="KR",
             missed_cleavages=2,
@@ -39,7 +39,6 @@ def run_mass():
         masses = pt.mass(
             peptide,
             charge=0,
-            precision=5,
             ion_type='p'
         )
     elapsed = time.time() - start_time
@@ -57,7 +56,6 @@ def run_mass_single(protein):
     masses = pt.mass(
         protein,
         charge=0,
-        precision=5,
         ion_type='p'
     )
     elapsed = time.time() - start_time
