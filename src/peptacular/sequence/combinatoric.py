@@ -6,7 +6,7 @@ from collections.abc import Sequence
 from typing import overload
 
 from ..constants import ParrallelMethod, ParrallelMethodLiteral
-from ..proforma.annotation import ProFormaAnnotation
+from ..annotation import ProFormaAnnotation
 from .parrallel import parallel_apply_internal
 from .util import get_annotation_input
 
@@ -14,23 +14,16 @@ from .util import get_annotation_input
 def _permutations_single(
     sequence: str | ProFormaAnnotation,
     size: int | None = None,
-    include_plus: bool = False,
-    precision: int | None = None,
 ) -> list[str]:
     """Generate permutations for a single sequence"""
     annotation = get_annotation_input(sequence, copy=False)
-    return [
-        a.serialize(include_plus=include_plus, precision=precision)
-        for a in annotation.permutations(size=size)
-    ]
+    return [a.serialize() for a in annotation.permutations(size=size)]
 
 
 @overload
 def permutations(
     sequence: str | ProFormaAnnotation,
     size: int | None = None,
-    include_plus: bool = False,
-    precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
@@ -41,8 +34,6 @@ def permutations(
 def permutations(
     sequence: Sequence[str | ProFormaAnnotation],
     size: int | None = None,
-    include_plus: bool = False,
-    precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
@@ -52,8 +43,6 @@ def permutations(
 def permutations(
     sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
     size: int | None = None,
-    include_plus: bool = False,
-    precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
@@ -110,38 +99,27 @@ def permutations(
             chunksize=chunksize,
             method=method,
             size=size,
-            include_plus=include_plus,
-            precision=precision,
         )
     else:
         return _permutations_single(
             sequence=sequence,
             size=size,
-            include_plus=include_plus,
-            precision=precision,
         )
 
 
 def _product_single(
     sequence: str | ProFormaAnnotation,
     repeat: int | None,
-    include_plus: bool = False,
-    precision: int | None = None,
 ) -> list[str]:
     """Generate cartesian products for a single sequence"""
     annotation = get_annotation_input(sequence=sequence, copy=False)
-    return [
-        a.serialize(include_plus=include_plus, precision=precision)
-        for a in annotation.product(repeat=repeat)
-    ]
+    return [a.serialize() for a in annotation.product(repeat=repeat)]
 
 
 @overload
 def product(
     sequence: str | ProFormaAnnotation,
     repeat: int | None,
-    include_plus: bool = False,
-    precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
@@ -152,8 +130,6 @@ def product(
 def product(
     sequence: Sequence[str | ProFormaAnnotation],
     repeat: int | None,
-    include_plus: bool = False,
-    precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
@@ -163,8 +139,6 @@ def product(
 def product(
     sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
     repeat: int | None,
-    include_plus: bool = False,
-    precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
@@ -221,38 +195,27 @@ def product(
             chunksize=chunksize,
             method=method,
             repeat=repeat,
-            include_plus=include_plus,
-            precision=precision,
         )
     else:
         return _product_single(
             sequence=sequence,
             repeat=repeat,
-            include_plus=include_plus,
-            precision=precision,
         )
 
 
 def _combinations_single(
     sequence: str | ProFormaAnnotation,
     size: int | None,
-    include_plus: bool = False,
-    precision: int | None = None,
 ) -> list[str]:
     """Generate combinations for a single sequence"""
     annotation = get_annotation_input(sequence=sequence, copy=False)
-    return [
-        a.serialize(include_plus=include_plus, precision=precision)
-        for a in annotation.combinations(r=size)
-    ]
+    return [a.serialize() for a in annotation.combinations(r=size)]
 
 
 @overload
 def combinations(
     sequence: str | ProFormaAnnotation,
     size: int | None,
-    include_plus: bool = False,
-    precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
@@ -263,8 +226,6 @@ def combinations(
 def combinations(
     sequence: Sequence[str | ProFormaAnnotation],
     size: int | None,
-    include_plus: bool = False,
-    precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
@@ -274,8 +235,6 @@ def combinations(
 def combinations(
     sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
     size: int | None,
-    include_plus: bool = False,
-    precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
@@ -333,38 +292,27 @@ def combinations(
             chunksize=chunksize,
             method=method,
             size=size,
-            include_plus=include_plus,
-            precision=precision,
         )
     else:
         return _combinations_single(
             sequence=sequence,
             size=size,
-            include_plus=include_plus,
-            precision=precision,
         )
 
 
 def _combinations_with_replacement_single(
     sequence: str | ProFormaAnnotation,
     size: int | None,
-    include_plus: bool = False,
-    precision: int | None = None,
 ) -> list[str]:
     """Generate combinations with replacement for a single sequence"""
     annotation = get_annotation_input(sequence=sequence, copy=False)
-    return [
-        a.serialize(include_plus=include_plus, precision=precision)
-        for a in annotation.combinations_with_replacement(r=size)
-    ]
+    return [a.serialize() for a in annotation.combinations_with_replacement(r=size)]
 
 
 @overload
 def combinations_with_replacement(
     sequence: str | ProFormaAnnotation,
     size: int | None,
-    include_plus: bool = False,
-    precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
@@ -375,8 +323,6 @@ def combinations_with_replacement(
 def combinations_with_replacement(
     sequence: Sequence[str | ProFormaAnnotation],
     size: int | None,
-    include_plus: bool = False,
-    precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
@@ -386,8 +332,6 @@ def combinations_with_replacement(
 def combinations_with_replacement(
     sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
     size: int | None,
-    include_plus: bool = False,
-    precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
@@ -445,13 +389,9 @@ def combinations_with_replacement(
             chunksize=chunksize,
             method=method,
             size=size,
-            include_plus=include_plus,
-            precision=precision,
         )
     else:
         return _combinations_with_replacement_single(
             sequence=sequence,
             size=size,
-            include_plus=include_plus,
-            precision=precision,
         )

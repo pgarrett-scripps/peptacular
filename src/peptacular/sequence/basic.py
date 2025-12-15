@@ -22,33 +22,78 @@ end of the sequence and if not raise an error.
 
 from typing import Any, Sequence, overload
 
-from ..constants import ORDERED_AMINO_ACIDS, ParrallelMethod, ParrallelMethodLiteral
-from ..proforma.annotation import (
+from ..constants import ParrallelMethod, ParrallelMethodLiteral
+from ..annotation import (
     ProFormaAnnotation,
 )
-from ..proforma.multi_annotation import (
-    MultiProFormaAnnotation,
-)
 from .parrallel import parallel_apply_internal
-from .util import SequenceType, get_annotation_input
+from .util import get_annotation_input
+from ..amino_acids import AA_LOOKUP
+
+
+ORDERED_AMINO_ACIDS = [aa.id for aa in AA_LOOKUP.ordered_amino_acids]
+
+
+def _parse_single(s: str, validate: bool = True) -> ProFormaAnnotation:
+    """Parse a ProForma string into a ProFormaAnnotation object."""
+    return ProFormaAnnotation.parse(s, validate=validate)
+
+@overload
+def parse(
+    s: str,
+    validate: bool = True,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    reuse_pool: bool = True,
+) -> ProFormaAnnotation:
+    ...
+    
+
+@overload
+def parse(
+    s: Sequence[str],
+    validate: bool = True,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    reuse_pool: bool = True,
+) -> list[ProFormaAnnotation]:
+    ...
+
+def parse(
+    s: str | Sequence[str],
+    validate: bool = True,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    reuse_pool: bool = True,
+) -> ProFormaAnnotation | list[ProFormaAnnotation]:
+    if isinstance(s, Sequence) and not isinstance(s, str):
+        return parallel_apply_internal(
+            _parse_single,
+            s,
+            n_workers=n_workers,
+            chunksize=chunksize,
+            method=method,
+            validate=validate,
+            reuse_pool=reuse_pool,
+        )
+    else:
+        return _parse_single(s, validate=validate)
+
 
 
 def _serialize_single(
-    sequence: str | ProFormaAnnotation | MultiProFormaAnnotation,
-    include_plus: bool = False,
-    precision: int | None = None,
+    sequence: str | ProFormaAnnotation,
 ) -> str:
     """Internal function for serializing a single sequence."""
-    return get_annotation_input(
-        sequence, copy=False, sequence_type=SequenceType.BOTH
-    ).serialize(include_plus=include_plus, precision=precision)
+    return get_annotation_input(sequence, copy=False).serialize()
 
 
 @overload
 def serialize(
-    sequence: str | ProFormaAnnotation | MultiProFormaAnnotation,
-    include_plus: bool = False,
-    precision: int | None = None,
+    sequence: str | ProFormaAnnotation,
     n_workers: None = None,
     chunksize: None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
@@ -57,9 +102,7 @@ def serialize(
 
 @overload
 def serialize(
-    sequence: Sequence[str | ProFormaAnnotation | MultiProFormaAnnotation],
-    include_plus: bool = False,
-    precision: int | None = None,
+    sequence: Sequence[str | ProFormaAnnotation],
     n_workers: int | None = None,
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
@@ -67,12 +110,7 @@ def serialize(
 
 
 def serialize(
-    sequence: str
-    | ProFormaAnnotation
-    | MultiProFormaAnnotation
-    | Sequence[str | ProFormaAnnotation | MultiProFormaAnnotation],
-    include_plus: bool = False,
-    precision: int | None = None,
+    sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
     n_workers: int | None = None,
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
@@ -86,10 +124,6 @@ def serialize(
 
     :param sequence: The sequence, ProFormaAnnotation, or list of sequences.
     :type sequence: str | ProFormaAnnotation | list[str | ProFormaAnnotation]
-    :param include_plus: Whether to include '+' in the serialized output. Default is False.
-    :type include_plus: bool
-    :param precision: The precision for floating-point modifications. Default is None (no rounding).
-    :type precision: int | None
     :param n_workers: Number of worker processes (only for lists). If None, uses CPU count.
     :type n_workers: int | None
     :param chunksize: Number of items per chunk (only for lists). If None, auto-calculated.
@@ -109,9 +143,13 @@ def serialize(
         >>> serialize('PEPTIDE')
         'PEPTIDE'
 
-        # Sequence with modifications
-        >>> serialize('PEP[Phospho]TIDE', include_plus=True)
+        # Sequence with named modifications
+        >>> serialize('PEP[Phospho]TIDE')
         'PEP[Phospho]TIDE'
+
+        # Sequence with float modifications
+        >>> serialize('PEP[+79.966]TIDE')
+        'PEP[+79.966]TIDE'
 
     """
     if (
@@ -122,16 +160,12 @@ def serialize(
         return parallel_apply_internal(
             _serialize_single,
             sequence,
-            include_plus=include_plus,
-            precision=precision,
             n_workers=n_workers,
             chunksize=chunksize,
             method=method,
         )
     else:
-        return _serialize_single(
-            sequence, include_plus=include_plus, precision=precision
-        )
+        return _serialize_single(sequence)
 
 
 def _sequence_length_single(sequence: str | ProFormaAnnotation) -> int:
@@ -192,11 +226,11 @@ def sequence_length(
         7
 
         # Modifications are not counted in the sequence length
-        >>> sequence_length("[Acetyl]-PEP[1.2345]TID[3.14]E-[Amide]")
+        >>> sequence_length("[Acetyl]-PEP[+1.2345]TID[+3.14]E-[Amide]")
         7
-        >>> sequence_length("<C13>PEPTIDE[1.2345]")
+        >>> sequence_length("<C13>PEPTIDE[+1.2345]")
         7
-        >>> sequence_length("(?PE)PTIDE[1.2345]")
+        >>> sequence_length("(?PE)PTIDE[+1.2345]")
         7
 
 
@@ -624,9 +658,7 @@ def annotate_ambiguity(
     mass_shift: Any | None = None,
     add_mods_to_intervals: bool = False,
     sort_mods: bool = True,
-    include_plus: bool = False,
     condense_to_xnotation: bool = False,
-    precision: int | None = None,
 ) -> str:
     """
     Given a peptide sequence and coverage information for forward and reverse fragment ions,
@@ -634,7 +666,9 @@ def annotate_ambiguity(
 
     This function identifies regions in the sequence where there is insufficient fragment ion
     coverage and marks them as ambiguous using ProForma notation with parentheses.
-    If a mass shift is provided , it will be added to the appropriate location.
+    If a mass shift is provided, it will be added to the appropriate location.
+
+    Note: Mass shifts will be formatted with a '+' or '-' sign prefix.
 
     :param sequence: The peptide sequence or ProFormaAnnotation object to annotate.
     :type sequence: Union[str, ProFormaAnnotation]
@@ -644,6 +678,12 @@ def annotate_ambiguity(
     :type reverse_coverage: List[int]
     :param mass_shift: An optional mass shift to be added to the sequence at the appropriate position.
     :type mass_shift: Optional[Any]
+    :param add_mods_to_intervals: Whether to add modifications to interval annotations.
+    :type add_mods_to_intervals: bool
+    :param sort_mods: Whether to sort modifications.
+    :type sort_mods: bool
+    :param condense_to_xnotation: Whether to condense ambiguity to X notation.
+    :type condense_to_xnotation: bool
 
     :raises ValueError: If the annotation already contains intervals or if coverage lengths don't match sequence length.
 
@@ -656,30 +696,27 @@ def annotate_ambiguity(
         >>> annotate_ambiguity('PEPTIDE', [0,1,1,1,0,0,0], [0,0,0,0,0,1,0])
         '(?PE)PTI(?DE)'
 
-        # With a phosphorylation mass shift
+        # With a phosphorylation mass shift (note the '+' sign)
         >>> annotate_ambiguity('PEPTIDE', [1,1,1,0,0,0,0], [0,0,0,0,1,1,1], 79.966)
-        'PEPT[79.966]IDE'
+        'PEPT[+79.966]IDE'
 
         # Handling existing modifications
-        >>> annotate_ambiguity('P[10]EPTIDE', [1,1,1,0,0,0,0], [0,0,0,0,0,1,1])
-        'P[10]EP(?TI)DE'
+        >>> annotate_ambiguity('P[+10]EPTIDE', [1,1,1,0,0,0,0], [0,0,0,0,0,1,1])
+        'P[+10]EP(?TI)DE'
 
         # When mass shift can't be localized to a specific residue
         >>> annotate_ambiguity('PEPTIDE', [0,1,1,0,0,0,0], [0,0,0,0,0,1,0], 120)
-        '(?PE)P(?TI)[120](?DE)'
+        '(?PE)P(?TI)[+120](?DE)'
 
         # When mass shift is completely unlocalized, it becomes a labile modification
         >>> annotate_ambiguity('PEPTIDE', [0,1,1,1,1,0,0], [0,0,1,1,1,1,0], 120)
-        '{120}(?PE)PTI(?DE)'
+        '{+120}(?PE)PTI(?DE)'
 
-        (?SSGS)IA(?SS)(?YVQ)()[37.959]W(?YQQRPGSA)(?PT)TVIYEDDER(?PS)(?GV)(?PDR)
-        Seq: SSGSIASSYVQWYQQRPGSAPTTVIYEDDERPSGVPDR
-        For: 00011101001000000000000000000000000000
-        Rev: 00000000000110000000101111111111010100
+        # Complex example with multiple intervals
         >>> for_ions = list(map(int, '00011101001000000000000000000000000000'))
-        >>> rev_iosn = list(map(int, '00000000000110000000101111111111010100'))
-        >>> annotate_ambiguity('SSGSIASSYVQWYQQRPGSAPTTVIYEDDERPSGVPDR', for_ions, rev_iosn, 120)
-        '(?SSGS)IA(?SS)(?YVQ)W[120](?YQQRPGSA)(?PT)TVIYEDDER(?PS)(?GV)(?PDR)'
+        >>> rev_ions = list(map(int, '00000000000110000000101111111111010100'))
+        >>> annotate_ambiguity('SSGSIASSYVQWYQQRPGSAPTTVIYEDDERPSGVPDR', for_ions, rev_ions, 120)
+        '(?SSGS)IA(?SS)(?YVQ)W[+120](?YQQRPGSA)(?PT)TVIYEDDER(?PS)(?GV)(?PDR)'
     """
     annot = get_annotation_input(sequence=sequence, copy=True).annotate_ambiguity(
         forward_coverage=forward_coverage,
@@ -693,4 +730,4 @@ def annotate_ambiguity(
     if condense_to_xnotation:
         annot.condense_ambiguity_to_xnotation(inplace=True)
 
-    return annot.serialize(include_plus=include_plus, precision=precision)
+    return annot.serialize()

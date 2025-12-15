@@ -10,16 +10,23 @@ Working with spans can be a more efficient way of processing the data, since a p
 
 from collections.abc import Generator
 from itertools import groupby
-from typing import Iterable
+from typing import Iterable, NamedTuple
 
-from .proforma.dclasses import Span
+
+class Span(NamedTuple):
+    start: int
+    end: int
+    missed_cleavages: int
+
+    def __len__(self) -> int:
+        return self.end - self.start
 
 
 def build_non_enzymatic_spans(
     span: Span | tuple[int, int, int],
     min_len: int | None = None,
     max_len: int | None = None,
-) -> Generator[Span]:
+) -> Generator[Span, None, None]:
     """
     Generates non-enymatic spans with span lengths <= max_len and >= min_len
 

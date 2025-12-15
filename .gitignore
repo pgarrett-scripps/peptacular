@@ -1,56 +1,10 @@
-.venv/
-
-# Compiled Python files
+# Python-generated files
 __pycache__/
-__pycache__
-*.pyc
-
-# Virtual environment
-venv/
-env/
-
-# PyCharm
-.idea/
-
-# Logs and other generated files
-*.log
-*.sqlite3
-*.bak
-*.csv
-
-# Build files
-dist/
+*.py[oc]
 build/
-*.egg-info/
+dist/
+wheels/
+*.egg-info
 
-# OS generated files
-.DS_Store
-Thumbs.db
-*tmp*
-
-*.csv
-*.tsv
-*.xlsx
-*.xls
-*.json
-*.xml
-*.db
-*.sqlite3
-*.log
-*.bak
-*.out
-*.aux
-*.pkl
-*.h5
-*.ckpt
-*.model
-*.xgb
-*.prof
-
-try_*
-
-alignment_plots/
-bak/
-profile/
-
-/docs/_build/
+# Virtual environments
+.venv

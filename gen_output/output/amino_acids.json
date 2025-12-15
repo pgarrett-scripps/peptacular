@@ -1,0 +1,362 @@
+{
+    "metadata": {
+        "generated_date": "2025-12-05T18:08:39.811058",
+        "generator": "peptacular data generator",
+        "created_by": "Patrick Garrett <pgarrett@scripps.edu>",
+        "peptacular_version": "3.0.0"
+    },
+    "amino_acids": [
+        {
+            "id": "A",
+            "name": "Alanine",
+            "three_letter_code": "Ala",
+            "formula": "C3H5NO",
+            "monoisotopic_mass": "71.037114",
+            "average_mass": "71.078020",
+            "composition": {
+                "C": 3,
+                "H": 5,
+                "N": 1,
+                "O": 1
+            }
+        },
+        {
+            "id": "B",
+            "name": "Asparagine or Aspartic acid",
+            "three_letter_code": "Asx",
+            "formula": null,
+            "monoisotopic_mass": null,
+            "average_mass": null,
+            "composition": null
+        },
+        {
+            "id": "C",
+            "name": "Cysteine",
+            "three_letter_code": "Cys",
+            "formula": "C3H5NOS",
+            "monoisotopic_mass": "103.009185",
+            "average_mass": "103.142807",
+            "composition": {
+                "C": 3,
+                "H": 5,
+                "N": 1,
+                "O": 1,
+                "S": 1
+            }
+        },
+        {
+            "id": "D",
+            "name": "Aspartic acid",
+            "three_letter_code": "Asp",
+            "formula": "C4H5NO3",
+            "monoisotopic_mass": "115.026943",
+            "average_mass": "115.087565",
+            "composition": {
+                "C": 4,
+                "H": 5,
+                "N": 1,
+                "O": 3
+            }
+        },
+        {
+            "id": "E",
+            "name": "Glutamic acid",
+            "three_letter_code": "Glu",
+            "formula": "C5H7NO3",
+            "monoisotopic_mass": "129.042593",
+            "average_mass": "129.114183",
+            "composition": {
+                "C": 5,
+                "H": 7,
+                "N": 1,
+                "O": 3
+            }
+        },
+        {
+            "id": "F",
+            "name": "Phenylalanine",
+            "three_letter_code": "Phe",
+            "formula": "C9H9NO",
+            "monoisotopic_mass": "147.068414",
+            "average_mass": "147.174198",
+            "composition": {
+                "C": 9,
+                "H": 9,
+                "N": 1,
+                "O": 1
+            }
+        },
+        {
+            "id": "G",
+            "name": "Glycine",
+            "three_letter_code": "Gly",
+            "formula": "C2H3NO",
+            "monoisotopic_mass": "57.021464",
+            "average_mass": "57.051402",
+            "composition": {
+                "C": 2,
+                "H": 3,
+                "N": 1,
+                "O": 1
+            }
+        },
+        {
+            "id": "H",
+            "name": "Histidine",
+            "three_letter_code": "His",
+            "formula": "C6H7N3O",
+            "monoisotopic_mass": "137.058912",
+            "average_mass": "137.139515",
+            "composition": {
+                "C": 6,
+                "H": 7,
+                "N": 3,
+                "O": 1
+            }
+        },
+        {
+            "id": "I",
+            "name": "Isoleucine",
+            "three_letter_code": "Ile",
+            "formula": "C6H11NO",
+            "monoisotopic_mass": "113.084064",
+            "average_mass": "113.157872",
+            "composition": {
+                "C": 6,
+                "H": 11,
+                "N": 1,
+                "O": 1
+            }
+        },
+        {
+            "id": "J",
+            "name": "Leucine or Isoleucine",
+            "three_letter_code": "Xle",
+            "formula": "C6H11NO",
+            "monoisotopic_mass": "113.084064",
+            "average_mass": "113.157872",
+            "composition": {
+                "C": 6,
+                "H": 11,
+                "N": 1,
+                "O": 1
+            }
+        },
+        {
+            "id": "K",
+            "name": "Lysine",
+            "three_letter_code": "Lys",
+            "formula": "C6H12N2O",
+            "monoisotopic_mass": "128.094963",
+            "average_mass": "128.172516",
+            "composition": {
+                "C": 6,
+                "H": 12,
+                "N": 2,
+                "O": 1
+            }
+        },
+        {
+            "id": "L",
+            "name": "Leucine",
+            "three_letter_code": "Leu",
+            "formula": "C6H11NO",
+            "monoisotopic_mass": "113.084064",
+            "average_mass": "113.157872",
+            "composition": {
+                "C": 6,
+                "H": 11,
+                "N": 1,
+                "O": 1
+            }
+        },
+        {
+            "id": "M",
+            "name": "Methionine",
+            "three_letter_code": "Met",
+            "formula": "C5H9NOS",
+            "monoisotopic_mass": "131.040485",
+            "average_mass": "131.196042",
+            "composition": {
+                "C": 5,
+                "H": 9,
+                "N": 1,
+                "O": 1,
+                "S": 1
+            }
+        },
+        {
+            "id": "N",
+            "name": "Asparagine",
+            "three_letter_code": "Asn",
+            "formula": "C4H6N2O2",
+            "monoisotopic_mass": "114.042927",
+            "average_mass": "114.102804",
+            "composition": {
+                "C": 4,
+                "H": 6,
+                "N": 2,
+                "O": 2
+            }
+        },
+        {
+            "id": "O",
+            "name": "Pyrrolysine",
+            "three_letter_code": "Pyl",
+            "formula": "C12H19N3O2",
+            "monoisotopic_mass": "237.147727",
+            "average_mass": "237.298625",
+            "composition": {
+                "C": 12,
+                "H": 19,
+                "N": 3,
+                "O": 2
+            }
+        },
+        {
+            "id": "P",
+            "name": "Proline",
+            "three_letter_code": "Pro",
+            "formula": "C5H7NO",
+            "monoisotopic_mass": "97.052764",
+            "average_mass": "97.115373",
+            "composition": {
+                "C": 5,
+                "H": 7,
+                "N": 1,
+                "O": 1
+            }
+        },
+        {
+            "id": "Q",
+            "name": "Glutamine",
+            "three_letter_code": "Gln",
+            "formula": "C5H8N2O2",
+            "monoisotopic_mass": "128.058578",
+            "average_mass": "128.129422",
+            "composition": {
+                "C": 5,
+                "H": 8,
+                "N": 2,
+                "O": 2
+            }
+        },
+        {
+            "id": "R",
+            "name": "Arginine",
+            "three_letter_code": "Arg",
+            "formula": "C6H12N4O",
+            "monoisotopic_mass": "156.101111",
+            "average_mass": "156.185922",
+            "composition": {
+                "C": 6,
+                "H": 12,
+                "N": 4,
+                "O": 1
+            }
+        },
+        {
+            "id": "S",
+            "name": "Serine",
+            "three_letter_code": "Ser",
+            "formula": "C3H5NO2",
+            "monoisotopic_mass": "87.032028",
+            "average_mass": "87.077425",
+            "composition": {
+                "C": 3,
+                "H": 5,
+                "N": 1,
+                "O": 2
+            }
+        },
+        {
+            "id": "T",
+            "name": "Threonine",
+            "three_letter_code": "Thr",
+            "formula": "C4H7NO2",
+            "monoisotopic_mass": "101.047678",
+            "average_mass": "101.104042",
+            "composition": {
+                "C": 4,
+                "H": 7,
+                "N": 1,
+                "O": 2
+            }
+        },
+        {
+            "id": "U",
+            "name": "Selenocysteine",
+            "three_letter_code": "Sec",
+            "formula": "C3H5NOSe",
+            "monoisotopic_mass": "150.953636",
+            "average_mass": "150.037408",
+            "composition": {
+                "C": 3,
+                "H": 5,
+                "N": 1,
+                "O": 1,
+                "Se": 1
+            }
+        },
+        {
+            "id": "V",
+            "name": "Valine",
+            "three_letter_code": "Val",
+            "formula": "C5H9NO",
+            "monoisotopic_mass": "99.068414",
+            "average_mass": "99.131254",
+            "composition": {
+                "C": 5,
+                "H": 9,
+                "N": 1,
+                "O": 1
+            }
+        },
+        {
+            "id": "W",
+            "name": "Tryptophan",
+            "three_letter_code": "Trp",
+            "formula": "C11H10N2O",
+            "monoisotopic_mass": "186.079313",
+            "average_mass": "186.210314",
+            "composition": {
+                "C": 11,
+                "H": 10,
+                "N": 2,
+                "O": 1
+            }
+        },
+        {
+            "id": "X",
+            "name": "Any amino acid",
+            "three_letter_code": "Xaa",
+            "formula": null,
+            "monoisotopic_mass": "0.000000",
+            "average_mass": "0.000000",
+            "composition": null
+        },
+        {
+            "id": "Y",
+            "name": "Tyrosine",
+            "three_letter_code": "Tyr",
+            "formula": "C9H9NO2",
+            "monoisotopic_mass": "163.063329",
+            "average_mass": "163.173603",
+            "composition": {
+                "C": 9,
+                "H": 9,
+                "N": 1,
+                "O": 2
+            }
+        },
+        {
+            "id": "Z",
+            "name": "Glutamine or Glutamic acid",
+            "three_letter_code": "Glx",
+            "formula": null,
+            "monoisotopic_mass": null,
+            "average_mass": null,
+            "composition": null
+        }
+    ]
+}

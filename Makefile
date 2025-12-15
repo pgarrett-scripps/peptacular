@@ -1,86 +1,50 @@
-.PHONY: help install install-dev sync test test-cov test-watch lint format clean build docs run-gen
+.PHONY: help install sync test test-v test-cov clean lint format
 
-# Default target
-help:
-	@echo "Available commands:"
-	@echo "  install-uv   - Install uv"
-	@echo "  install      - Install production dependencies"
-	@echo "  install-dev  - Install all dependencies (including dev)"
-	@echo "  sync         - Sync dependencies with lock file"
-	@echo "  test         - Run tests with pytest"
-	@echo "  test-cov     - Run tests with coverage"
-	@echo "  test-watch   - Run tests in watch mode"
-	@echo "  lint         - Run linting (flake8)"
-	@echo "  format       - Format code (black)"
-	@echo "  clean        - Clean cache and build files"
-	@echo "  build        - Build package"
-	@echo "  docs         - Build documentation"
-	@echo "  serve-docs  - Serve documentation with live reload"
-	@echo "  run-gen      - Run generate_mod_dbs.py"
+help:  ## Show this help message
+	@echo "Available targets:"
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
 
-install-uv:
-	curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Dependency management
-install:
-	uv sync --no-dev
-
-install-dev:
-	uv sync --dev
-
-sync:
+install:  ## Install dependencies using uv
 	uv sync
 
-# Testing
-test:
-	uv run pytest
+sync:  ## Sync dependencies (same as install)
+	uv sync
 
-test-cov:
-	uv run pytest --cov=src --cov-report=html --cov-report=term
+test:  ## Run tests with pytest
+	uv run pytest tests/
 
-test-watch:
-	uv run pytest --watch
+test-v:  ## Run tests with verbose output
+	uv run pytest tests/ -v
 
-# Code quality
-lint:
-	uv run ruff check src
+test-vv:  ## Run tests with very verbose output
+	uv run pytest tests/ -vv
 
-format:
-	uv run ruff format src
-	uv run ruff check --select I --fix src
-	uv run ruff check --select I --fix *.py
+test-cov:  ## Run tests with coverage report
+	uv run pytest tests/ --cov=src/peptacular --cov-report=term-missing
 
-format-check:
-	uv run ruff format --check src
+test-file:  ## Run tests for a specific file (usage: make test-file FILE=test_mod_parser.py)
+	uv run pytest tests/$(FILE) -v
 
-# Maintenance
-clean:
-	find . -type d -name __pycache__ -exec rm -rf {} +
+test-watch:  ## Run tests in watch mode (requires pytest-watch)
+	uv run pytest-watch tests/
+
+clean:  ## Clean up cache files and build artifacts
+	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+	find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
+	find . -type d -name ".ruff_cache" -exec rm -rf {} + 2>/dev/null || true
+	find . -type d -name "*.egg-info" -exec rm -rf {} + 2>/dev/null || true
 	find . -type f -name "*.pyc" -delete
-	rm -rf build/
-	rm -rf dist/
-	rm -rf *.egg-info/
-	rm -rf htmlcov/
-	rm -rf .coverage
-	rm -rf .pytest_cache/
+	find . -type f -name "*.pyo" -delete
+	find . -type f -name ".coverage" -delete
 
-# Build
-build:
-	uv build
+lint:  ## Run linter (if ruff is installed)
+	uv run ruff check src/ tests/ || echo "Ruff not installed, skipping lint"
 
-# Documentation (if using sphinx)
-docs:
-	uv run sphinx-build -b html docs/source/ docs/_build/
+format:  ## Format code (if ruff is installed)
+	uv run ruff format src/ tests/ || echo "Ruff not installed, skipping format"
 
-serve-docs: docs
-	@echo "Serving documentation at http://localhost:8000"
-	@echo "Press Ctrl+C to stop the server"
-	cd docs/_build && uv run python -m http.server 8000
+check:  ## Run linter and tests
+	$(MAKE) lint
+	$(MAKE) test
 
-# Project-specific commands
-run-gen:
-	uv run python generate_mod_dbs.py
-
-# Development setup (run this after cloning)
-dev-setup: install-dev
-	@echo "Development environment ready!"
+all: clean install test  ## Clean, install dependencies, and run tests

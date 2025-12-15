@@ -1,10 +1,10 @@
+from dataclasses import dataclass
 import math
-from collections.abc import Iterable, Sequence
+from collections.abc import Sequence
 from enum import StrEnum
-from typing import Any, NamedTuple
 
-from .fragment import Fragment
-from .sequence import strip_mods
+
+from .annotation import Fragment
 
 
 class ToleranceType(StrEnum):
@@ -116,7 +116,7 @@ def get_matched_indices(
 
 
 def match_spectra(
-    fragments: Sequence[float],
+    fragments: Sequence[float | Fragment],
     mz_spectra: Sequence[float],
     tolerance_value: float,
     tolerance_type: ToleranceType = ToleranceType.PPM,
@@ -171,10 +171,17 @@ def match_spectra(
 
     if mode not in [MatchMode.CLOSEST, MatchMode.LARGEST, MatchMode.ALL]:
         raise ValueError('Invalid mode. Must be "closest" or "largest" or "all"')
+    
+    fragments_mzs: list[float] = []
+    for fragment in fragments:
+        if isinstance(fragment, Fragment):
+            fragments_mzs.append(fragment.mz)
+        else:
+            fragments_mzs.append(fragment)
 
     results: list[list[int]] = []
     for i, indexes in enumerate(
-        get_matched_indices(fragments, mz_spectra, tolerance_value, tolerance_type)
+        get_matched_indices(fragments_mzs, mz_spectra, tolerance_value, tolerance_type)
     ):
         if indexes is None:
             results.append([])
@@ -185,7 +192,7 @@ def match_spectra(
 
                 case MatchMode.CLOSEST:
                     mz_diffs = [
-                        abs(fragments[i] - mz_spectra[idx])
+                        abs(fragments_mzs[i] - mz_spectra[idx])
                         for idx in range(indexes[0], indexes[1])
                     ]
                     min_index = mz_diffs.index(min(mz_diffs))
@@ -203,151 +210,33 @@ def match_spectra(
     return results
 
 
-class FragmentMatch(NamedTuple):
+@dataclass(frozen=True)
+class FragmentMatch:
     """
     Represents a match between a theoretical fragment and an experimental spectrum.
-
-    :ivar fragment: Theoretical fragment object.
-    :ivar mz: Experimental m/z value.
-    :ivar intensity: Intensity of the experimental m/z value.
     """
 
-    fragment: Fragment | None
-    mz: float
+    fragment: Fragment
+    obs_mz: float
     intensity: float
 
     @property
     def error(self) -> float:
-        """
-        The error between the theoretical and experimental m/z values.
-
-        :return: error between the theoretical and experimental m/z values.
-        :rtype: float
-        """
-        return self.theo_mz - self.mz
+        """Error between theoretical and experimental m/z values (Da)."""
+        return self.fragment.mz - self.obs_mz
 
     @property
     def error_ppm(self) -> float:
-        """
-        The error between the theoretical and experimental m/z values in parts-per-million (ppm).
-
-        :return: error between the theoretical and experimental m/z values in parts-per-million (ppm).
-        :rtype: float
-        """
-        if self.fragment is None:
-            return 0.0
-
-        return self.error / self.fragment.mz * 1e6
+        """Error between theoretical and experimental m/z values (ppm)."""
+        return (self.error / self.fragment.mz) * 1e6
 
     @property
-    def charge(self) -> int:
-        if self.fragment is None:
-            return 0
-
-        return abs(self.fragment.charge)
-
-    @property
-    def ion_type(self) -> str:
-        if self.fragment is None:
-            return ""
-
-        return self.fragment.ion_type
-
-    @property
-    def start(self) -> int:
-        if self.fragment is None:
-            return 0
-
-        return self.fragment.start
-
-    @property
-    def end(self) -> int:
-        if self.fragment is None:
-            return 0
-
-        return self.fragment.end
-
-    @property
-    def monoisotopic(self) -> bool:
-        if self.fragment is None:
-            return False
-
-        return self.fragment.monoisotopic
-
-    @property
-    def isotope(self) -> int:
-        if self.fragment is None:
-            return 0
-        return self.fragment.isotope
-
-    @property
-    def loss(self) -> float:
-        if self.fragment is None:
-            return 0.0
-        return self.fragment.loss
-
-    @property
-    def sequence(self) -> str:
-        if self.fragment is None:
-            return ""
-        return self.fragment.sequence
-
-    @property
-    def theo_mz(self) -> float:
-        if self.fragment is None:
-            return 0.0
+    def mz(self) -> float:
+        """Theoretical m/z from the fragment."""
         return self.fragment.mz
 
-    @property
-    def internal(self) -> bool:
-        if self.fragment is None:
-            return False
-        return self.fragment.internal
-
-    @property
-    def label(self) -> str:
-        if self.fragment is None:
-            return ""
-        return self.fragment.label
-
-    @property
-    def parent_sequence(self) -> str:
-        if self.fragment is None:
-            return ""
-        return self.fragment.parent_sequence
-
-    @property
-    def number(self) -> str:
-        if self.fragment is None:
-            return "0"
-        return self.fragment.number
-
-    def to_dict(self) -> dict[str, Any]:
-        """
-        Converts the FragmentMatch object to a dictionary.
-
-        :return: Dictionary representation of the FragmentMatch object.
-        :rtype: Dict[str, Any]
-        """
-
-        return {
-            "mz": self.mz,
-            "intensity": self.intensity,
-            "error": self.error,
-            "error_ppm": self.error_ppm,
-            "charge": self.charge,
-            "ion_type": self.ion_type,
-            "start": self.start,
-            "end": self.end,
-            "monoisotopic": self.monoisotopic,
-            "isotope": self.isotope,
-            "loss": self.loss,
-            "sequence": self.sequence,
-            "theo_mz": self.theo_mz,
-            "internal": self.internal,
-            "label": self.label,
-            "number": self.number,
-        }
+    def __str__(self) -> str:
+        return f"{self.fragment} | Obs m/z: {self.obs_mz:.4f} | Δ: {self.error_ppm:.2f} ppm | I: {self.intensity:.2e}"
 
 
 def get_fragment_matches(
@@ -410,153 +299,6 @@ def get_fragment_matches(
             )
 
     return fragment_matches
-
-
-def get_match_coverage(
-    fragment_matches: Sequence[FragmentMatch],
-) -> dict[str, list[int]]:
-    """
-    Returns a dictionary of fragment coverage for each fragment type / charge.
-
-    :param fragment_matches: list of fragments.
-    :type fragment_matches: list[Fragment]
-
-    :return: Dictionary of fragment coverage.
-    :rtype: dict[str, list[int]]
-    """
-    cov: dict[str, list[int]] = {}
-
-    if not fragment_matches:
-        return cov
-
-    unmod_sequence = strip_mods(fragment_matches[0].parent_sequence)
-
-    for frag in fragment_matches:
-        label = f"{'+' * frag.charge}{frag.ion_type}"
-        if label not in cov:
-            cov[label] = [0] * len(unmod_sequence)
-        for i in range(frag.start, frag.end):
-            cov[label][i] += 1
-
-    return cov
-
-
-def _get_monoisotopic_label(label: str) -> str:
-    return label.replace("*", "")
-
-
-def filter_missing_mono_isotope(
-    fragment_matches: list[FragmentMatch],
-) -> list[FragmentMatch]:
-    """
-    Filters out fragment matches that do not have a monoisotopic peak.
-
-    :param fragment_matches: list of fragment matches.
-    :type fragment_matches: list[FragmentMatch]
-
-    :return: list of fragment matches with monoisotopic peaks.
-    :rtype: list[FragmentMatch]
-    """
-
-    mono_labels = set(f.label for f in fragment_matches if f.isotope == 0)
-    return [
-        f for f in fragment_matches if _get_monoisotopic_label(f.label) in mono_labels
-    ]
-
-
-def filter_skipped_isotopes(
-    fragment_matches: list[FragmentMatch],
-) -> list[FragmentMatch]:
-    """
-    Filters out fragment matches that have skipped isotopes - removes isotopes after a gap.
-
-    :param fragment_matches: list of fragment matches.
-    :type fragment_matches: list[FragmentMatch]
-
-    :return: list of fragment matches without isotopes after gaps.
-    :rtype: list[FragmentMatch]
-    """
-
-    # Group fragments by their base identity (same fragment, different isotopes)
-    fragment_groups: dict[str, list[FragmentMatch]] = {}
-
-    for match in fragment_matches:
-        if match.fragment is None:
-            continue
-
-        # Create a key that identifies the same fragment regardless of isotope
-        # Remove isotope markers from label to group isotopes of same fragment
-        base_label = match.fragment.label.replace("*", "")  # Remove isotope markers
-        key = f"{base_label}_{match.fragment.charge}_{match.fragment.start}_{match.fragment.end}_{match.fragment.loss}"
-
-        if key not in fragment_groups:
-            fragment_groups[key] = []
-        fragment_groups[key].append(match)
-
-    filtered_matches: list[FragmentMatch] = []
-
-    for group in fragment_groups.values():
-        if len(group) == 1:
-            # Only one isotope, keep it
-            filtered_matches.extend(group)
-            continue
-
-        # Sort by isotope number
-        group.sort(key=lambda x: x.fragment.isotope if x.fragment else 0)
-
-        # Find the first gap and remove everything after it
-        keep_matches: list[FragmentMatch] = []
-        expected_isotope = 0
-
-        for match in group:
-            if match.fragment is None:
-                continue
-
-            current_isotope = match.fragment.isotope
-
-            if current_isotope == expected_isotope:
-                # No gap, keep this match
-                keep_matches.append(match)
-                expected_isotope += 1
-            else:
-                # Gap found - don't keep this or any subsequent isotopes
-                break
-
-        filtered_matches.extend(keep_matches)
-
-    return filtered_matches
-
-
-def filter_losses(
-    fragment_matches: list[FragmentMatch],
-) -> list[FragmentMatch]:
-    """
-    Filters out fragment matches that do not have a base peak.
-
-    :param fragment_matches: list of fragment matches.
-    :type fragment_matches: list[FragmentMatch]
-
-    :return: list of fragment matches with base peaks.
-    :rtype: list[FragmentMatch]
-    """
-
-    new_matches: list[FragmentMatch] = []
-    for fragment_match in fragment_matches:
-        if fragment_match.loss != 0.0:
-            for other in fragment_matches:
-                if (
-                    other.ion_type == fragment_match.ion_type
-                    and other.start == fragment_match.start
-                    and other.end == fragment_match.end
-                    and other.charge == fragment_match.charge
-                    and other.loss == 0.0
-                ):
-                    new_matches.append(fragment_match)
-                    break
-        else:
-            new_matches.append(fragment_match)
-
-    return new_matches
 
 
 def _binomial_probability(n: int, k: int, p: float) -> float:
@@ -723,8 +465,6 @@ def bimodal_score_from_matches(
 
     matched_indices: set[int] = set()
     for fm in fragment_matches:
-        if fm.fragment is None:
-            continue
         idx = frag_id_map.get(id(fm.fragment))
         if idx is not None:
             matched_indices.add(idx)
@@ -764,171 +504,3 @@ def get_matched_intensity_percentage(
         return 0
 
     return matched_intensity / total_intensity
-
-
-class Scorer:
-    def __init__(
-        self,
-        experimental_spectra: tuple[Sequence[float], Sequence[float]],
-        fragments: Sequence[Fragment],
-        tolerance_type: ToleranceType,
-        tolerance: float,
-        match_mode: MatchMode,
-        filter_fragments_with_iso_gap: bool = False,
-        filter_fragments_without_mono: bool = False,
-        remove_duplicate_matches: bool = True,
-        filter_losses_without_base: bool = False,
-    ) -> None:
-        self.mz_spectra = experimental_spectra[0]
-        self.intensities = experimental_spectra[1]
-        self.fragments = fragments
-        self.tolerance_type = tolerance_type
-        self.tolerance = tolerance
-        self.match_mode = match_mode
-        self.filter_fragments_with_iso_gap = filter_fragments_with_iso_gap
-        self.filter_fragments_without_mono = filter_fragments_without_mono
-        self.remove_duplicate_matches = remove_duplicate_matches
-        self.filter_losses_without_base = filter_losses_without_base
-
-        self.fragment_matches = get_fragment_matches(
-            self.fragments,
-            self.mz_spectra,
-            self.intensities,
-            self.tolerance,
-            self.tolerance_type,
-            self.match_mode,
-        )
-
-        if self.remove_duplicate_matches:
-            seen_mzs: set[float] = set()
-            new_fragment_matches: list[FragmentMatch] = []
-            # sort fragments by priority
-            self.fragment_matches.sort(
-                key=lambda x: x.fragment.priority if x.fragment else 0, reverse=True
-            )
-            for fm in self.fragment_matches:
-                if fm.mz in seen_mzs:
-                    continue
-                seen_mzs.add(fm.mz)
-                new_fragment_matches.append(fm)
-
-            self.fragment_matches = new_fragment_matches
-
-        if self.filter_fragments_with_iso_gap:
-            self.fragment_matches = filter_skipped_isotopes(self.fragment_matches)
-
-        if self.filter_fragments_without_mono:
-            self.fragment_matches = filter_missing_mono_isotope(self.fragment_matches)
-
-        if self.filter_losses_without_base:
-            self.fragment_matches = filter_losses(self.fragment_matches)
-
-    def _get_fragment_matches_by_direction(
-        self, forward: bool, include_losses: bool, include_isotopes: bool
-    ) -> list[FragmentMatch]:
-        return self._get_fragment_matches_by_ion_type(
-            ["a", "b", "c"] if forward else ["x", "y", "z"],
-            include_losses,
-            include_isotopes,
-        )
-
-    def _get_fragment_matches_by_ion_type(
-        self,
-        ion_types: str | Iterable[str] | None,
-        include_losses: bool,
-        include_isotopes: bool,
-    ) -> list[FragmentMatch]:
-        if ion_types is None:
-            return [
-                f
-                for f in self.fragment_matches
-                if (include_losses or f.loss == 0.0)
-                and (include_isotopes or not f.isotope == 0)
-            ]
-        if isinstance(ion_types, str):
-            ion_types = [ion_types]
-        return [
-            f
-            for f in self.fragment_matches
-            if f.ion_type in ion_types
-            and (include_losses or f.loss == 0.0)
-            and (include_isotopes or not f.isotope == 0)
-        ]
-
-    def _get_fragments_by_direction(
-        self,
-        forward: bool = True,
-        include_losses: bool = True,
-        include_isotopes: bool = True,
-    ) -> Sequence[Fragment]:
-        return self._get_fragments_by_ion_type(
-            ["a", "b", "c"] if forward else ["x", "y", "z"],
-            include_losses,
-            include_isotopes,
-        )
-
-    def _get_fragments_by_ion_type(
-        self,
-        ion_types: str | Iterable[str] | None,
-        include_losses: bool = True,
-        include_isotopes: bool = True,
-    ) -> Sequence[Fragment]:
-        if ion_types is None:
-            return [
-                f
-                for f in self.fragments
-                if (include_losses or f.loss == 0.0)
-                and (include_isotopes or not f.isotope == 0)
-            ]
-        if isinstance(ion_types, str):
-            ion_types = [ion_types]
-        return [
-            f
-            for f in self.fragments
-            if f.ion_type in ion_types
-            and (include_losses or f.loss == 0.0)
-            and (include_isotopes or not f.isotope == 0)
-        ]
-
-    def get_match_coverage(
-        self,
-        ion_types: str | Iterable[str] | None = None,
-        include_losses: bool = True,
-        include_isotopes: bool = True,
-    ) -> dict[str, list[int]]:
-        return get_match_coverage(
-            self._get_fragment_matches_by_ion_type(
-                ion_types, include_losses, include_isotopes
-            )
-        )
-
-    def matched_intensity(
-        self,
-        ion_types: str | Iterable[str] | None = None,
-        include_losses: bool = True,
-        include_isotopes: bool = True,
-    ) -> float:
-        return get_matched_intensity_percentage(
-            self._get_fragment_matches_by_ion_type(
-                ion_types, include_losses, include_isotopes
-            ),
-            self.intensities,
-        )
-
-    def bimodal_score(
-        self,
-        ion_types: str | Iterable[str] | None,
-        include_losses: bool = True,
-        include_isotopes: bool = True,
-    ) -> float:
-        return bimodal_score_from_matches(
-            self._get_fragment_matches_by_ion_type(
-                ion_types, include_losses, include_isotopes
-            ),
-            self._get_fragments_by_ion_type(
-                ion_types, include_losses, include_isotopes
-            ),
-            self.mz_spectra,
-            self.tolerance,
-            self.tolerance_type,
-        )

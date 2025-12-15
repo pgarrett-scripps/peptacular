@@ -2,12 +2,11 @@ from collections.abc import Sequence
 from typing import Any, Iterable, Mapping, overload
 
 from ..constants import ModType, ModTypeLiteral, ParrallelMethod, ParrallelMethodLiteral
-from ..mod import Mod
-from ..proforma.annotation import ProFormaAnnotation
+from ..annotation import ProFormaAnnotation
 from .parrallel import parallel_apply_internal
 from .util import get_annotation_input
 
-MOD_BUILDER_INPUT_TYPE = Mapping[str, Iterable[str | float | int | Mod]]
+MOD_BUILDER_INPUT_TYPE = Mapping[str, Iterable[Any]]
 
 
 def _build_mods_single(
@@ -22,13 +21,11 @@ def _build_mods_single(
     labile_variable: MOD_BUILDER_INPUT_TYPE | None = None,
     max_variable_mods: int = 2,
     use_regex: bool = False,
-    precision: int | None = None,
-    include_plus: bool = False,
 ) -> list[str]:
     """Build modifications for a single sequence"""
     annotation = get_annotation_input(sequence, copy=True)
     return [
-        annot.serialize(precision=precision, include_plus=include_plus)
+        annot.serialize()
         for annot in annotation.build_mods(
             nterm_static=nterm_static,
             cterm_static=cterm_static,
@@ -58,8 +55,6 @@ def build_mods(
     labile_variable: MOD_BUILDER_INPUT_TYPE | None = None,
     max_variable_mods: int = 2,
     use_regex: bool = False,
-    precision: int | None = None,
-    include_plus: bool = False,
     n_workers: None = None,
     chunksize: None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
@@ -79,8 +74,6 @@ def build_mods(
     labile_variable: MOD_BUILDER_INPUT_TYPE | None = None,
     max_variable_mods: int = 2,
     use_regex: bool = False,
-    precision: int | None = None,
-    include_plus: bool = False,
     n_workers: int | None = None,
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
@@ -99,8 +92,6 @@ def build_mods(
     labile_variable: MOD_BUILDER_INPUT_TYPE | None = None,
     max_variable_mods: int = 2,
     use_regex: bool = False,
-    precision: int | None = None,
-    include_plus: bool = False,
     n_workers: int | None = None,
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
@@ -184,8 +175,6 @@ def build_mods(
             labile_variable=labile_variable,
             max_variable_mods=max_variable_mods,
             use_regex=use_regex,
-            precision=precision,
-            include_plus=include_plus,
         )
     else:
         return _build_mods_single(
@@ -200,8 +189,6 @@ def build_mods(
             labile_variable=labile_variable,
             max_variable_mods=max_variable_mods,
             use_regex=use_regex,
-            precision=precision,
-            include_plus=include_plus,
         )
 
 
@@ -212,199 +199,46 @@ def get_mods(
     """
     Parses a sequence with modifications and returns a dictionary where keys represent the position/type of the
     modifications.
-
-    Internal modifications are mapped to the unmodified sequence by their index in the unmodified sequence.
-
-    Special modifications are mapped to the sequence by the following:
-    - N-terminal modifications are mapped to the index 'nterm'
-    - C-terminal modifications are mapped to the index 'cterm'
-    - Isotopic modifications are mapped to the index 'isotope'
-    - Static modifications are mapped to the index 'static'
-    - Labile modifications are mapped to the index 'labile'
-    - Unknown modifications are mapped to the index 'unknown'
-    - Intervals are mapped to the index 'interval'
-    - charge state is mapped to the index 'charge'
-    - charge adducts are mapped to the index 'charge_adducts'
-
-    :param sequence: The sequence or ProFormaAnnotation object.
-    :type sequence: Union[str, ProFormaAnnotation]
-
-    :raises ValueError: If the input sequence contains multiple sequences.
-    :raises ProFormaFormatError: if the proforma sequence is not valid
-
-    :return: A dictionary with the modifications
-    :rtype: ModDict
-
-    .. code-block:: python
-
-        # All modifications will be returned as Mod objects which contain the modification value and multiplier
-        >>> get_mods('PEP[Phospho]T[1]IDE[-3.14]')['internal']
-        {2: ('Phospho',), 3: (1,), 6: (-3.14,)}
-
-        >>> get_mods('PEP[Phospho][1.0]TIDE')['internal']
-        {2: ('Phospho', 1.0)}
-
-        # N-terminal modifications are mapped to the index 'nterm'
-        >>> get_mods('[Acetyl]-PEPTIDE')['nterm']
-        ('Acetyl',)
-
-        # C-terminal modifications are mapped to the index 'cterm'
-        >>> get_mods('PEPTIDE-[Amide]')['cterm']
-        ('Amide',)
-
-        # Isotopic modifications are mapped to the index 'isotope'
-        >>> get_mods('<13C>PEPTIDE')['isotope']
-        ('13C',)
-
-        # Static modifications are mapped to the index 'static'
-        >>> get_mods('<[+1.234]@P>PEPTIDE')['static']
-        ('[+1.234]@P',)
-
-        # Labile modifications are mapped to the index 'labile'
-        >>> get_mods('{Glycan:Hex}PEPTIDE')['labile']
-        ('Glycan:Hex',)
-
-        # Unknown modifications are mapped to the index 'unknown'
-        >>> get_mods('[Phospho]^3?PEPTIDE')['unknown']
-        ('Phospho', 'Phospho', 'Phospho')
-
-        # Intervals are mapped to the index 'interval'
-        >>> get_mods('PEP(TI)[Phospho]DE')['interval']
-        (ModInterval(start=3, end=5, ambiguous=False, mods=('Phospho',)),)
-
-        # Charge state is mapped to the index 'charge'
-        >>> get_mods('PEPTIDE/+2')['charge']
-        2
-
-        # Charge adducts are mapped to the index 'charge_adducts'
-        >>> get_mods('PEPTIDE/+2[+2Na+,-H+]')['charge_adducts']
-        ('+2Na+,-H+',)
-
     """
 
     return get_annotation_input(sequence, copy=True).get_mods(mods)
 
 
-def add_mods(
-    sequence: str | ProFormaAnnotation,
-    mods: Mapping[ModType | ModTypeLiteral | int, Any],
-    append: bool = True,
-    include_plus: bool = False,
-    precision: int | None = None,
-) -> str:
-    """
-    Adds modifications to the given sequence. The modifications can be of type Mod, str, int, or float, and can be
-    a single value or a list of values. The modifications will be added to the sequence in the order they are provided.
-
-    :param sequence: The sequence or ProFormaAnnotation object.
-    :type sequence: Union[str, ProFormaAnnotation]
-    :param mods: Dictionary representing the modifications to be added to the sequence.
-    :type mods: Dict
-    :param append: If True, the modifications will be appended to the existing modifications.
-                      If False, the existing modifications will be replaced. Defaults to True.
-    :type append: bool
-    :param include_plus: If True, the modifications will be serialized with a '+' sign for positive values.
-    :type include_plus: bool
-
-    :raises ValueError: If the input sequence contains multiple sequences.
-    :raises ProFormaFormatError: if the proforma sequence is not valid
-
-    :return: The peptide sequence with the specified modifications.
-    :rtype: str
-
-    .. code-block:: python
-
-        >>> from peptacular import Mod
-
-        # Add internal modifications to an unmodified peptide
-        >>> add_mods('PEPTIDE', {2: [Mod('phospho', 1)]})
-        'PEP[phospho]TIDE'
-
-        # Can also add N and C terminal modifications
-        >>> add_mods('PEPTIDE', {'nterm': 'Acetyl', 6: 1.234, 'cterm': 'Amide'})
-        '[Acetyl]-PEPTIDE[1.234]-[Amide]'
-
-        >>> add_mods('PEPTIDE', {'nterm': 'Acetyl', 6: 1.234, 'cterm': 'Amide'}, include_plus=True)
-        '[Acetyl]-PEPTIDE[+1.234]-[Amide]'
-
-        # Can also add isotopic modifications
-        >>> add_mods('PEPTIDE', {'isotope': ['13C', '15N']})
-        '<13C><15N>PEPTIDE'
-
-        # Can also add static modifications
-        >>> add_mods('PEPTIDE', {'static': '[+1.234]@P'})
-        '<[+1.234]@P>PEPTIDE'
-
-        # Can also add labile modifications
-        >>> add_mods('PEPTIDE', {'labile': 'Glycan:Hex'})
-        '{Glycan:Hex}PEPTIDE'
-
-        # Can also add unknown modifications
-        >>> add_mods('PEPTIDE', {'unknown': Mod('Phospho', 3)})
-        '[Phospho]^3?PEPTIDE'
-
-        # Can also add intervals
-        >>> add_mods('PEPTIDE', {'interval': (3, 5, False, 'Phospho')})
-        'PEP(TI)[Phospho]DE'
-
-        # Can also add charge state
-        >>> add_mods('PEPTIDE', {'charge': 2})
-        'PEPTIDE/2'
-
-        # Can also add charge adducts
-        >>> add_mods('PEPTIDE', {'charge': 2, 'charge_adducts': '+2Na+,-H+'})
-        'PEPTIDE/2[+2Na+,-H+]'
-
-    """
-
-    annotation = get_annotation_input(sequence, copy=True)
-    annotation.add_mods(mods, inplace=True, append=append)
-    return annotation.serialize(include_plus=include_plus, precision=precision)
-
-
 def set_mods(
     sequence: str | ProFormaAnnotation,
     mods: Mapping[ModType | ModTypeLiteral | int, Any] | None,
-    include_plus: bool = False,
-    precision: int | None = None,
 ) -> str:
     return (
         get_annotation_input(sequence, copy=True)
         .set_mods(mods, inplace=True)
-        .serialize(include_plus=include_plus, precision=precision)
+        .serialize()
     )
 
 
 def append_mods(
     sequence: str | ProFormaAnnotation,
     mods: Mapping[ModType | ModTypeLiteral | int, Any],
-    include_plus: bool = False,
-    precision: int | None = None,
 ) -> str:
     return (
         get_annotation_input(sequence, copy=True)
         .append_mods(mods, inplace=True)
-        .serialize(include_plus=include_plus, precision=precision)
+        .serialize()
     )
 
 
 def extend_mods(
     sequence: str | ProFormaAnnotation,
     mods: Mapping[ModType | ModTypeLiteral | int, Any],
-    include_plus: bool = False,
-    precision: int | None = None,
 ) -> str:
     return (
         get_annotation_input(sequence, copy=True)
         .extend_mods(mods, inplace=True)
-        .serialize(include_plus=include_plus, precision=precision)
+        .serialize()
     )
 
 
 def condense_static_mods(
     sequence: str | ProFormaAnnotation,
-    include_plus: bool = False,
-    precision: int | None = None,
 ) -> str:
     """
     Condenses static modifications into internal modifications.
@@ -433,11 +267,11 @@ def condense_static_mods(
         'PEPTIDE'
 
         # Example for N-Term static modifications
-        >>> condense_static_mods('<[Oxidation]@N-Term>PEPTIDE')
+        >>> condense_static_mods('<[Oxidation]@N-term>PEPTIDE')
         '[Oxidation]-PEPTIDE'
 
         # Example for C-Term static modifications
-        >>> condense_static_mods('<[Oxidation]@C-Term>PEPTIDE')
+        >>> condense_static_mods('<[Oxidation]@C-term>PEPTIDE')
         'PEPTIDE-[Oxidation]'
 
     """
@@ -445,16 +279,14 @@ def condense_static_mods(
     return (
         get_annotation_input(sequence=sequence, copy=True)
         .condense_static_mods(inplace=False)
-        .serialize(include_plus=include_plus, precision=precision)
+        .serialize()
     )
 
 
 def pop_mods(
     sequence: str | ProFormaAnnotation,
     mods: ModType | Iterable[ModType] | None = None,
-    include_plus: bool = False,
-    precision: int | None = None,
-) -> tuple[str, dict[str, Any]]:
+) -> tuple[ModType, Any]:
     """
     Removes all modifications from the given sequence, returning the unmodified sequence and a dictionary of the
     removed modifications.
@@ -471,29 +303,31 @@ def pop_mods(
     .. code-block:: python
 
         # Simply combines the functionality of strip_modifications and get_modifications
-        >>> pop_mods('PEP[phospho]TIDE')[0]
+        >>> seq, mod_dict = pop_mods('PEP[phospho]TIDE')
+        >>> seq
         'PEPTIDE'
-        >>> pop_mods('PEP[phospho]TIDE')[1]['internal']
-        {2: ('phospho',)}
-
-        # can specify which modifications to pop
-        >>> pop_mods('PEP[phospho]TIDE-[+100]', mods=['internal'])
-        ('PEPTIDE-[100]', {'internal': {2: ('phospho',)}})
 
     """
     annotation = get_annotation_input(sequence=sequence, copy=True)
-    mod_dict = annotation.pop_mods(mod_types=mods)  # only include keys that have mods
+    mod_dict = annotation.pop_mods(mod_types=mods)
     return (
-        annotation.serialize(include_plus=include_plus, precision=precision),
+        annotation.serialize(),
         mod_dict,
     )
+
+
+def remove_mods(
+    sequence: str | ProFormaAnnotation,
+    mods: ModType | Iterable[ModType] | None = None,
+) -> str:
+    annotation = get_annotation_input(sequence=sequence, copy=True)
+
+    return annotation.clear_mods(mods=mods, inplace=True).serialize()
 
 
 def _strip_mods(
     sequence: str | ProFormaAnnotation,
     mods: ModType | Iterable[ModType] | None = None,
-    include_plus: bool = False,
-    precision: int | None = None,
 ) -> str:
     """
     Strips all modifications from the given sequence, returning the unmodified sequence.
@@ -535,24 +369,20 @@ def _strip_mods(
         >>> strip_mods('(?DQ)NGTWEM[Oxidation]ESNENFEGYM[Oxidation]K')
         'DQNGTWEMESNENFEGYMK'
 
-        >>> strip_mods('[1][2]^2?[100]^3-PEP[1]^2TIDE')
+        >>> strip_mods('[1][2]^2?[100]-PEP[1]TIDE')
         'PEPTIDE'
 
     """
 
     annotation = get_annotation_input(sequence=sequence, copy=True)
 
-    return annotation.remove_mods(mods=mods, inplace=True).serialize(
-        include_plus=include_plus, precision=precision
-    )
+    return annotation.clear_mods(mods=mods, inplace=True).serialize()
 
 
 @overload
 def strip_mods(
     sequence: str | ProFormaAnnotation,
     mods: ModType | Iterable[ModType] | None = None,
-    include_plus: bool = False,
-    precision: int | None = None,
 ) -> str: ...
 
 
@@ -560,16 +390,12 @@ def strip_mods(
 def strip_mods(
     sequence: Sequence[str | ProFormaAnnotation],
     mods: ModType | Iterable[ModType] | None = None,
-    include_plus: bool = False,
-    precision: int | None = None,
 ) -> list[str]: ...
 
 
 def strip_mods(
     sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
     mods: ModType | Iterable[ModType] | None = None,
-    include_plus: bool = False,
-    precision: int | None = None,
 ) -> str | list[str]:
     """
     Strips all modifications from the given sequence or list of sequences, returning the unmodified sequence(s).
@@ -602,23 +428,17 @@ def strip_mods(
             _strip_mods,
             sequence,
             mods=mods,
-            include_plus=include_plus,
-            precision=precision,
         )
     else:
         return _strip_mods(
             sequence=sequence,
             mods=mods,
-            include_plus=include_plus,
-            precision=precision,
         )
 
 
 def filter_mods(
     sequence: str | ProFormaAnnotation,
     mods: ModType | Iterable[ModType] | None = None,
-    include_plus: bool = False,
-    precision: int | None = None,
 ) -> str:
     """
     Keeps only the specified modifications in the sequence, removing all others.
@@ -662,7 +482,7 @@ def filter_mods(
     return (
         get_annotation_input(sequence=sequence, copy=True)
         .filter_mods(mods=mods, inplace=True)
-        .serialize(include_plus=include_plus, precision=precision)
+        .serialize()
     )
 
 
@@ -754,8 +574,6 @@ def to_ms2_pip(
 def _from_ms2_pip_single(
     item: tuple[str, str],
     static_mods: Mapping[str, float] | None = None,
-    include_plus: bool = False,
-    precision: int | None = None,
 ) -> str:
     """Convert a single MS2PIP format to ProForma string"""
     sequence, modifications = item
@@ -763,7 +581,7 @@ def _from_ms2_pip_single(
         sequence=sequence,
         mod_str=modifications,
         static_mods=static_mods,
-    ).serialize(include_plus=include_plus, precision=precision)
+    ).serialize()
 
 
 @overload
@@ -772,8 +590,6 @@ def from_ms2_pip(
     static_mods: Mapping[str, float] | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    include_plus: bool = False,
-    precision: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> str: ...
 
@@ -784,8 +600,6 @@ def from_ms2_pip(
     static_mods: Mapping[str, float] | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    include_plus: bool = False,
-    precision: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> list[str]: ...
 
@@ -795,8 +609,6 @@ def from_ms2_pip(
     static_mods: Mapping[str, float] | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    include_plus: bool = False,
-    precision: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> str | list[str]:
     """
@@ -829,7 +641,7 @@ def from_ms2_pip(
 
         # Single sequence
         >>> from_ms2_pip(('PEPTIDE', '3|Phospho'))
-        'PEPTIDE[Phospho]'
+        'PEP[Phospho]TIDE'
 
         # Batch processing
         >>> items = [('PEPTIDE', '3|Phospho'), ('PROTEIN', '4|Oxidation')]
@@ -855,8 +667,6 @@ def from_ms2_pip(
             n_workers=n_workers,
             chunksize=chunksize,
             method=method,
-            include_plus=include_plus,
-            precision=precision,
         )
     else:
         # Single tuple processing
@@ -868,15 +678,11 @@ def from_ms2_pip(
         return _from_ms2_pip_single(
             item=sequence,
             static_mods=static_mods,
-            include_plus=include_plus,
-            precision=precision,
         )
 
 
 def _condense_to_peptidoform(
     sequence: str | ProFormaAnnotation,
-    include_plus: bool = False,
-    precision: int | None = None,
 ) -> str:
     """
     Condenses all modifications into a peptidoform representation.
@@ -895,7 +701,7 @@ def _condense_to_peptidoform(
     return (
         get_annotation_input(sequence=sequence, copy=True)
         .condense_to_peptidoform(inplace=False)
-        .serialize(include_plus=include_plus, precision=precision)
+        .serialize()
     )
 
 
@@ -917,8 +723,6 @@ def condense_to_peptidoform(
 
 def condense_to_peptidoform(
     sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
-    include_plus: bool = False,
-    precision: int | None = None,
 ) -> str | list[str]:
     """
     Condenses all modifications into a peptidoform representation for a sequence or list of sequences.
@@ -948,12 +752,8 @@ def condense_to_peptidoform(
         return parallel_apply_internal(
             _condense_to_peptidoform,
             sequence,
-            include_plus=include_plus,
-            precision=precision,
         )
     else:
         return _condense_to_peptidoform(
             sequence=sequence,
-            include_plus=include_plus,
-            precision=precision,
         )

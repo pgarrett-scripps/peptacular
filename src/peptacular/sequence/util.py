@@ -1,125 +1,51 @@
 import warnings
-from enum import StrEnum
-from typing import List, Literal, Optional, Union, overload
+from typing import List, Optional, Union
 
-from ..proforma.annotation import ProFormaAnnotation
-from ..proforma.dclasses import MOD_VALUE_TYPES
-from ..proforma.multi_annotation import (
-    MultiProFormaAnnotation,
-)
+from ..annotation import ProFormaAnnotation
 
 
-class SequenceType(StrEnum):
-    SINGLE = "single"
-    MULTI = "multi"
-    BOTH = "both"
-
-
-@overload
-def sequence_to_annotation(
-    sequence: str,
-    sequence_type: Literal[SequenceType.SINGLE] = SequenceType.SINGLE,
-) -> ProFormaAnnotation: ...
-
-
-@overload
-def sequence_to_annotation(
-    sequence: str, sequence_type: Literal[SequenceType.MULTI]
-) -> MultiProFormaAnnotation: ...
-
-
-@overload
-def sequence_to_annotation(
-    sequence: str, sequence_type: Literal[SequenceType.BOTH]
-) -> ProFormaAnnotation | MultiProFormaAnnotation: ...
-
-
-def sequence_to_annotation(
-    sequence: str, sequence_type: SequenceType = SequenceType.SINGLE
-) -> ProFormaAnnotation | MultiProFormaAnnotation:
+def sequence_to_annotation(sequence: str) -> ProFormaAnnotation:
     """
-    Parses a peptide sequence with modifications and returns a ProFormaAnnotation or MultiProFormaAnnotation object.
-
-    :param sequence: The amino acid sequence.
-    :type sequence: str
-    :param sequence_type: The type of sequence to parse (SINGLE, MULTI, or BOTH).
-    :type sequence_type: SequenceType
-    :raises ValueError: If the input sequence contains multiple sequences when SINGLE is specified.
-    :raises ProFormaFormatError: if the proforma sequence is not valid
-    :return: A ProFormaAnnotation or MultiProFormaAnnotation object representing the input sequence.
-    :rtype: Union[ProFormaAnnotation, MultiProFormaAnnotation]
+    Parses a peptide sequence with modifications and returns a ProFormaAnnotation object.
     """
-    if sequence_type == SequenceType.SINGLE:
-        annotation = ProFormaAnnotation.parse(sequence)
-    elif sequence_type == SequenceType.MULTI:
-        annotation = MultiProFormaAnnotation.parse(sequence)
-    else:  # SequenceType.BOTH
-        try:
-            annotation = ProFormaAnnotation.parse(sequence)
-        except:
-            annotation = MultiProFormaAnnotation.parse(sequence)
-    return annotation
+    return ProFormaAnnotation.parse(sequence)
 
 
-@overload
-def get_annotation_input(
-    sequence: str | ProFormaAnnotation | MultiProFormaAnnotation,
-    sequence_type: Literal[SequenceType.SINGLE] = SequenceType.SINGLE,
-    copy: bool = True,
-) -> ProFormaAnnotation: ...
+def round_to_precision(value: float, precision: Optional[int] = None) -> float:
+    """
+    Round a float to a specified number of decimal places.
 
+    :param value: The float value to round.
+    :type value: float
+    :param precision: The number of decimal places to round to.
+    :type precision: int
 
-@overload
-def get_annotation_input(
-    sequence: str | ProFormaAnnotation | MultiProFormaAnnotation,
-    sequence_type: Literal[SequenceType.MULTI],
-    copy: bool = True,
-) -> MultiProFormaAnnotation: ...
-
-
-@overload
-def get_annotation_input(
-    sequence: str | ProFormaAnnotation | MultiProFormaAnnotation,
-    sequence_type: Literal[SequenceType.BOTH],
-    copy: bool = True,
-) -> ProFormaAnnotation | MultiProFormaAnnotation: ...
+    :return: The rounded float value.
+    :rtype: float
+    """
+    if precision is not None:
+        value = round(value, precision)
+    return value
 
 
 def get_annotation_input(
-    sequence: str | ProFormaAnnotation | MultiProFormaAnnotation,
-    sequence_type: SequenceType = SequenceType.SINGLE,
+    sequence: str | ProFormaAnnotation,
     copy: bool = True,
-) -> ProFormaAnnotation | MultiProFormaAnnotation:
+) -> ProFormaAnnotation:
     if isinstance(sequence, str):
-        annotation = sequence_to_annotation(sequence, sequence_type)
-    elif isinstance(sequence, ProFormaAnnotation) and sequence_type in (
-        SequenceType.SINGLE,
-        SequenceType.BOTH,
-    ):
-        if copy:
-            annotation = sequence.copy()
-        else:
-            annotation = sequence
-    elif isinstance(sequence, MultiProFormaAnnotation) and sequence_type in (
-        SequenceType.MULTI,
-        SequenceType.BOTH,
-    ):
-        if copy:
-            annotation = sequence.copy()
-        else:
-            annotation = sequence
-    else:
-        raise TypeError(f"Expected str or ProFormaAnnotation, got {type(sequence)}")
-    return annotation
+        return sequence_to_annotation(sequence)
+    elif isinstance(sequence, ProFormaAnnotation):  # type: ignore
+        return sequence.copy() if copy else sequence
+    raise TypeError("Input sequence must be a string or ProFormaAnnotation object.")
 
 
 def override_annotation_properties(
     annotation: ProFormaAnnotation,
     charge: Optional[int] = None,
-    charge_adducts: Optional[Union[MOD_VALUE_TYPES, List[MOD_VALUE_TYPES]]] = None,
-    isotope_mods: Optional[Union[MOD_VALUE_TYPES, List[MOD_VALUE_TYPES]]] = None,
+    charge_adducts: Optional[Union[str | int | float, List[str | int | float]]] = None,
+    isotope_mods: Optional[Union[str | int | float, List[str | int | float]]] = None,
 ):
-    if annotation.charge is not None and charge is not None:
+    if annotation.has_charge and charge is not None:
         # warning
         warnings.warn(
             "Both 'annotation.charge' and 'charge' are provided. Using user provided 'charge'.",

@@ -1,0 +1,124 @@
+{
+    "metadata": {
+        "generated_date": "2025-12-05T18:08:39.834842",
+        "generator": "peptacular data generator",
+        "created_by": "Patrick Garrett <pgarrett@scripps.edu>",
+        "peptacular_version": "3.0.0"
+    },
+    "proteases": [
+        {
+            "id": "arg_c",
+            "name": "Arg-C",
+            "full_name": "Clostripain",
+            "regex": "(?<=R)"
+        },
+        {
+            "id": "asp_n",
+            "name": "Asp-N",
+            "full_name": "Peptidyl-Asp metalloendopeptidase",
+            "regex": "(?=D)"
+        },
+        {
+            "id": "chymotrypsin",
+            "name": "Chymotrypsin",
+            "full_name": "Chymotrypsin (high specificity)",
+            "regex": "(?<=[FWYL])(?!P)"
+        },
+        {
+            "id": "chymotrypsin_low",
+            "name": "Chymotrypsin (low specificity)",
+            "full_name": "Chymotrypsin without proline restriction",
+            "regex": "(?<=[FWYL])"
+        },
+        {
+            "id": "chymotrypsin_promega_high",
+            "name": "Chymotrypsin (Promega, high specificity)",
+            "full_name": "Promega Chymotrypsin High Specificity",
+            "regex": "(?<=[YFW])"
+        },
+        {
+            "id": "chymotrypsin_promega_low",
+            "name": "Chymotrypsin (Promega, low specificity)",
+            "full_name": "Promega Chymotrypsin Low Specificity",
+            "regex": "(?<=[YFWLM])"
+        },
+        {
+            "id": "glu_c",
+            "name": "Glu-C",
+            "full_name": "Staphylococcus aureus V8 protease",
+            "regex": "(?<=E)"
+        },
+        {
+            "id": "lys_c",
+            "name": "Lys-C",
+            "full_name": "Lysyl endopeptidase",
+            "regex": "(?<=K)"
+        },
+        {
+            "id": "lys_n",
+            "name": "Lys-N",
+            "full_name": "Lysyl aminopeptidase",
+            "regex": "(?=K)"
+        },
+        {
+            "id": "proteinase_k",
+            "name": "Proteinase K",
+            "full_name": "Tritirachium album proteinase K",
+            "regex": "(?<=[AEFILTVWY])"
+        },
+        {
+            "id": "trypsin",
+            "name": "Trypsin",
+            "full_name": "Trypsin (no proline rule)",
+            "regex": "(?<=[KR])(?=[^P])"
+        },
+        {
+            "id": "trypsin_full",
+            "name": "Trypsin (full cleavage)",
+            "full_name": "Trypsin without proline restriction",
+            "regex": "(?<=[KR])"
+        },
+        {
+            "id": "proalanase",
+            "name": "Proalanase",
+            "full_name": "Proalanase (high specificity)",
+            "regex": "(?<=[PA])"
+        },
+        {
+            "id": "proalanase_low",
+            "name": "Proalanase (low specificity)",
+            "full_name": "Proalanase Low Specificity",
+            "regex": "(?<=[PASG])"
+        },
+        {
+            "id": "elastase",
+            "name": "Elastase",
+            "full_name": "Pancreatic elastase",
+            "regex": "(?<=[AGSVLI])"
+        },
+        {
+            "id": "pepsin",
+            "name": "Pepsin",
+            "full_name": "Pepsin A",
+            "regex": "(?<=[FLWY])"
+        },
+        {
+            "id": "thermolysin",
+            "name": "Thermolysin",
+            "full_name": "Bacillus thermoproteolyticus thermolysin",
+            "regex": "(?<=[LFIAVM])"
+        },
+        {
+            "id": "unspecific",
+            "name": "Non-specific cleavage",
+            "full_name": "Non-specific protease",
+            "regex": "()"
+        },
+        {
+            "id": "no_enzyme",
+            "name": "No cleavage",
+            "full_name": "No enzymatic digestion",
+            "regex": "_"
+        }
+    ]
+}

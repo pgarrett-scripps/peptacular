@@ -1,7 +1,7 @@
 from typing import Any, Callable, Sequence, overload
 
 from ..constants import ParrallelMethod, ParrallelMethodLiteral
-from ..proforma.annotation import (
+from ..annotation import (
     ProFormaAnnotation,
 )
 from .parrallel import parallel_apply_internal
@@ -12,14 +12,12 @@ def _reverse_single(
     sequence: str | ProFormaAnnotation,
     keep_nterm: int = 0,
     keep_cterm: int = 0,
-    include_plus: bool = False,
-    precision: int | None = None,
 ) -> str:
     """Internal function for reversing a single sequence."""
     return (
         get_annotation_input(sequence=sequence, copy=True)
         .reverse(inplace=True, keep_nterm=keep_nterm, keep_cterm=keep_cterm)
-        .serialize(include_plus=include_plus, precision=precision)
+        .serialize()
     )
 
 
@@ -28,8 +26,6 @@ def reverse(
     sequence: str | ProFormaAnnotation,
     keep_nterm: int = 0,
     keep_cterm: int = 0,
-    include_plus: bool = False,
-    precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
@@ -41,8 +37,6 @@ def reverse(
     sequence: Sequence[str | ProFormaAnnotation],
     keep_nterm: int = 0,
     keep_cterm: int = 0,
-    include_plus: bool = False,
-    precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
@@ -53,8 +47,6 @@ def reverse(
     sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
     keep_nterm: int = 0,
     keep_cterm: int = 0,
-    include_plus: bool = False,
-    precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
@@ -99,7 +91,7 @@ def reverse(
 
         # Keep first 2 residues unchanged
         >>> reverse('PEPTIDE', keep_nterm=2)
-        'PEDITPE'
+        'PEEDITP'
 
         # Keep first and last residue unchanged
         >>> reverse('PEPTIDE', keep_nterm=1, keep_cterm=1)
@@ -125,13 +117,9 @@ def reverse(
             method=method,
             keep_nterm=keep_nterm,
             keep_cterm=keep_cterm,
-            include_plus=include_plus,
-            precision=precision,
         )
     else:
-        return _reverse_single(
-            sequence, keep_nterm, keep_cterm, include_plus, precision
-        )
+        return _reverse_single(sequence, keep_nterm, keep_cterm)
 
 
 def _shuffle_single(
@@ -139,14 +127,12 @@ def _shuffle_single(
     seed: int | None = None,
     keep_nterm: int = 0,
     keep_cterm: int = 0,
-    include_plus: bool = False,
-    precision: int | None = None,
 ) -> str:
     """Internal function for shuffling a single sequence."""
     return (
         get_annotation_input(sequence=sequence, copy=True)
         .shuffle(seed=seed, keep_nterm=keep_nterm, keep_cterm=keep_cterm, inplace=True)
-        .serialize(include_plus=include_plus, precision=precision)
+        .serialize()
     )
 
 
@@ -156,8 +142,6 @@ def shuffle(
     seed: int | None = None,
     keep_nterm: int = 0,
     keep_cterm: int = 0,
-    include_plus: bool = False,
-    precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
@@ -170,8 +154,6 @@ def shuffle(
     seed: int | None = None,
     keep_nterm: int = 0,
     keep_cterm: int = 0,
-    include_plus: bool = False,
-    precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
@@ -183,8 +165,6 @@ def shuffle(
     seed: int | None = None,
     keep_nterm: int = 0,
     keep_cterm: int = 0,
-    include_plus: bool = False,
-    precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
@@ -229,11 +209,11 @@ def shuffle(
 
         # Keep first 2 residues unchanged
         >>> shuffle('PEPTIDE', seed=0, keep_nterm=2)
-        'PEIPDTE'
+        'PEITPED'
 
         # Keep first and last residue unchanged
         >>> shuffle('PEPTIDE', seed=0, keep_nterm=1, keep_cterm=1)
-        'PIPEDTE'
+        'PTPEDIE'
 
         # Multiple sequences (automatic parallel processing)
         >>> sequences = ['PEPTIDE', 'PROTEIN', 'SEQUENCE']
@@ -256,13 +236,9 @@ def shuffle(
             seed=seed,
             keep_nterm=keep_nterm,
             keep_cterm=keep_cterm,
-            include_plus=include_plus,
-            precision=precision,
         )
     else:
-        return _shuffle_single(
-            sequence, seed, keep_nterm, keep_cterm, include_plus, precision
-        )
+        return _shuffle_single(sequence, seed, keep_nterm, keep_cterm)
 
 
 def _shift_single(
@@ -276,7 +252,7 @@ def _shift_single(
     return (
         get_annotation_input(sequence=sequence, copy=True)
         .shift(n=n, keep_nterm=keep_nterm, keep_cterm=keep_cterm, inplace=True)
-        .serialize(include_plus=include_plus)
+        .serialize()
     )
 
 
@@ -354,7 +330,7 @@ def shift(
 
         # Keep first 2 residues unchanged
         >>> shift('PEPTIDE', 2, keep_nterm=2)
-        'PEPTIDE'
+        'PEIDEPT'
 
         # Keep first and last residue unchanged - shift only the middle
         >>> shift('PEPTIDE', 2, keep_nterm=1, keep_cterm=1)
@@ -381,7 +357,6 @@ def shift(
             n=n,
             keep_nterm=keep_nterm,
             keep_cterm=keep_cterm,
-            include_plus=include_plus,
         )
     else:
         return _shift_single(sequence, n, keep_nterm, keep_cterm, include_plus)
@@ -390,14 +365,12 @@ def shift(
 def _span_to_sequence_single(
     sequence: str | ProFormaAnnotation,
     span: tuple[int, int, int],
-    include_plus: bool = False,
-    precision: int | None = None,
 ) -> str:
     """Internal function for extracting span from a single sequence."""
     return (
         get_annotation_input(sequence=sequence, copy=True)
         .slice(span[0], span[1], inplace=True)
-        .serialize(include_plus=include_plus, precision=precision)
+        .serialize()
     )
 
 
@@ -405,8 +378,6 @@ def _span_to_sequence_single(
 def span_to_sequence(
     sequence: str | ProFormaAnnotation,
     span: tuple[int, int, int],
-    include_plus: bool = False,
-    precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
@@ -417,8 +388,6 @@ def span_to_sequence(
 def span_to_sequence(
     sequence: Sequence[str | ProFormaAnnotation],
     span: tuple[int, int, int],
-    include_plus: bool = False,
-    precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
@@ -428,8 +397,6 @@ def span_to_sequence(
 def span_to_sequence(
     sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
     span: tuple[int, int, int],
-    include_plus: bool = False,
-    precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
@@ -487,21 +454,17 @@ def span_to_sequence(
             chunksize=chunksize,
             method=method,
             span=span,
-            include_plus=include_plus,
-            precision=precision,
         )
     else:
-        return _span_to_sequence_single(sequence, span, include_plus, precision)
+        return _span_to_sequence_single(sequence, span)
 
 
 def _split_single(
     sequence: str | ProFormaAnnotation,
-    include_plus: bool = False,
-    precision: int | None = None,
 ) -> list[str]:
     """Internal function for splitting a single sequence."""
     return [
-        a.serialize(include_plus=include_plus, precision=precision)
+        a.serialize()
         for a in get_annotation_input(sequence=sequence, copy=True).split()
     ]
 
@@ -509,8 +472,6 @@ def _split_single(
 @overload
 def split(
     sequence: str | ProFormaAnnotation,
-    include_plus: bool = False,
-    precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
@@ -520,8 +481,6 @@ def split(
 @overload
 def split(
     sequence: Sequence[str | ProFormaAnnotation],
-    include_plus: bool = False,
-    precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
@@ -530,8 +489,6 @@ def split(
 
 def split(
     sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
-    include_plus: bool = False,
-    precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
@@ -588,25 +545,21 @@ def split(
             n_workers=n_workers,
             chunksize=chunksize,
             method=method,
-            include_plus=include_plus,
-            precision=precision,
         )
     else:
-        return _split_single(sequence, include_plus, precision)
+        return _split_single(sequence)
 
 
 def _sort_single(
     sequence: str | ProFormaAnnotation,
     key: Callable[[str], Any] | None = None,
     reverse: bool = False,
-    include_plus: bool = False,
-    precision: int | None = None,
 ) -> str:
     """Internal function for sorting a single sequence."""
     return (
         get_annotation_input(sequence=sequence, copy=True)
         .sort(inplace=True, key=key, reverse=reverse)
-        .serialize(include_plus=include_plus, precision=precision)
+        .serialize()
     )
 
 
@@ -615,8 +568,6 @@ def sort(
     sequence: str | ProFormaAnnotation,
     key: Callable[[str], Any] | None = None,
     reverse: bool = False,
-    include_plus: bool = False,
-    precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
@@ -628,8 +579,6 @@ def sort(
     sequence: Sequence[str | ProFormaAnnotation],
     key: Callable[[str], Any] | None = None,
     reverse: bool = False,
-    include_plus: bool = False,
-    precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
@@ -640,8 +589,6 @@ def sort(
     sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
     key: Callable[[str], Any] | None = None,
     reverse: bool = False,
-    include_plus: bool = False,
-    precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
@@ -702,17 +649,13 @@ def sort(
             method=method,
             key=key,
             reverse=reverse,
-            include_plus=include_plus,
-            precision=precision,
         )
     else:
-        return _sort_single(sequence, key, reverse, include_plus, precision)
+        return _sort_single(sequence, key, reverse)
 
 
 def join(
     annotations: Sequence[ProFormaAnnotation | str],
-    include_plus: bool = False,
-    precision: int | None = None,
 ) -> str:
     """
     Join a list of ProFormaAnnotation objects into a single annotation.
@@ -729,6 +672,4 @@ def join(
         raise ValueError("Cannot join an empty list of annotations.")
 
     annotations = [get_annotation_input(a, copy=False) for a in annotations]
-    return ProFormaAnnotation.join(annotations).serialize(
-        include_plus=include_plus, precision=precision
-    )
+    return ProFormaAnnotation.join(annotations).serialize()

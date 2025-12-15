@@ -1,0 +1,71 @@
+"""
+Components package for peptacular.
+
+This package contains the core data structures (comps), parsing logic (parsers),
+and serialization logic (serializers).
+"""
+
+from .comps import (
+    FormulaElement,
+    ChargedFormula,
+    PositionRule,
+    TagAccession,
+    TagMass,
+    TagName,
+    TagInfo,
+    TagCustom,
+    GlycanComponent,
+    IsotopeReplacement,
+    GlobalChargeCarrier,
+    ModificationAmbiguousPrimary,
+    ModificationAmbiguousSecondary,
+    ModificationCrossLinker,
+    FixedModification,
+    Peptidoform,
+    SequenceElement,
+    SequenceRegion,
+    SEQUENCE_TYPE,
+    GLOBAL_CHARGE_TYPE,
+    PeptidoformIon,
+    CompoundPeptidoformIon,
+    MODIFICATION_TAG_TYPE,
+    MODIFICATION_AMBIGUOUS_TYPE,
+    MODIFICATION_TYPE,
+    GlycanTag,
+    ModificationTags,
+)
+
+from .parsers import parse_modification_tag, parse_modification_tags, parse_modification
+
+__all__ = [
+    "FormulaElement",
+    "ChargedFormula",
+    "PositionRule",
+    "TagAccession",
+    "TagMass",
+    "TagName",
+    "TagInfo",
+    "TagCustom",
+    "GlycanComponent",
+    "IsotopeReplacement",
+    "GlobalChargeCarrier",
+    "ModificationAmbiguousPrimary",
+    "ModificationAmbiguousSecondary",
+    "ModificationCrossLinker",
+    "FixedModification",
+    "SequenceElement",
+    "SequenceRegion",
+    "parse_modification_tag",
+    "parse_modification_tags",
+    "SEQUENCE_TYPE",
+    "GLOBAL_CHARGE_TYPE",
+    "PeptidoformIon",
+    "CompoundPeptidoformIon",
+    "MODIFICATION_TAG_TYPE",
+    "MODIFICATION_AMBIGUOUS_TYPE",
+    "MODIFICATION_TYPE",
+    "Peptidoform",
+    "parse_modification",
+    "GlycanTag",
+    "ModificationTags",
+]

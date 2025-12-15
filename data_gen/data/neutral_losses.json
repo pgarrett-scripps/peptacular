@@ -1,0 +1,80 @@
+[
+  {
+    "formula": "H",
+    "name": "Hydrogen",
+    "description": "For specifying hydrogen transfer from c to z ions in ETD",
+    "amino_acids": []
+  },
+  {
+    "formula": "NH3",
+    "name": "Ammonia",
+    "description": "From amine groups",
+    "amino_acids": ["K", "R", "N", "Q"]
+  },
+  {
+    "formula": "H2O",
+    "name": "Water",
+    "description": "From -OH and -COOH groups",
+    "amino_acids": ["S", "T", "D", "E"]
+  },
+  {
+    "formula": "CO",
+    "name": "Carbon monoxide",
+    "description": "For backbone fragments, use 'a' instead of 'b-CO'. But for internal fragments, use 'mx:y-CO'. Also seen as a neutral loss from formylated serine or threonine",
+    "amino_acids": ["S", "T"]
+  },
+  {
+    "formula": "CO2",
+    "name": "Carbon dioxide",
+    "description": "From -COOH groups",
+    "amino_acids": ["D", "E"]
+  },
+  {
+    "formula": "HCONH2",
+    "name": "Formamide",
+    "description": "From -CONH2 groups",
+    "amino_acids": ["N", "Q"]
+  },
+  {
+    "formula": "HCOOH",
+    "name": "Formic acid",
+    "description": "From -COOH groups",
+    "amino_acids": ["D", "E"]
+  },
+  {
+    "formula": "CH4OS",
+    "name": "Methanesulfenic acid",
+    "description": "From oxidized methionine",
+    "amino_acids": ["M"]
+  },
+  {
+    "formula": "SO3",
+    "name": "Sulfur trioxide",
+    "description": "From sulfotyrosine",
+    "amino_acids": ["Y"]
+  },
+  {
+    "formula": "HPO3",
+    "name": "Metaphosphoric acid",
+    "description": "From phosphotyrosine and sometimes from phosphoserine and phosphothreonine",
+    "amino_acids": ["S", "T", "Y"]
+  },
+  {
+    "formula": "C2H5NOS",
+    "name": "Mercaptoacetamide",
+    "description": "From carbamidomethyl cysteine",
+    "amino_acids": ["C"]
+  },
+  {
+    "formula": "C2H4O2S",
+    "name": "Mercaptoacetic acid",
+    "description": "From carboxymethyl cysteine",
+    "amino_acids": ["C"]
+  },
+  {
+    "formula": "H3PO4",
+    "name": "Phosphoric acid",
+    "description": "From phosphoserine and phosphothreonine",
+    "amino_acids": ["S", "T"]
+  }
+]

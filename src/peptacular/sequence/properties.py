@@ -2,8 +2,8 @@ from collections.abc import Sequence
 from typing import overload
 
 from ..constants import ParrallelMethod, ParrallelMethodLiteral
-from ..funcs import round_to_precision
-from ..proforma.annotation import ProFormaAnnotation
+from .util import round_to_precision
+from ..annotation import ProFormaAnnotation
 from ..property.core import (
     aa_property_percentage as _aa_property_percentage,
 )
@@ -19,7 +19,7 @@ from ..property.core import (
 from ..property.core import (
     secondary_structure as _secondary_structure,
 )
-from ..property.properties import (
+from ..property.data import (
     HPLCScale,
     HydrophobicityScale,
     PhysicalPropertyScale,

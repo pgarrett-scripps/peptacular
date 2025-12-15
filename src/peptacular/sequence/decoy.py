@@ -1,14 +1,16 @@
 import random
 from typing import Sequence, overload
 
-from ..constants import UNAMBIGUOUS_AMINO_ACIDS, ParrallelMethod, ParrallelMethodLiteral
-from ..proforma.annotation import ProFormaAnnotation
+from ..constants import ParrallelMethod, ParrallelMethodLiteral
+from ..annotation import ProFormaAnnotation
 from .parrallel import parallel_apply_internal
 from .util import get_annotation_input
-
+from ..amino_acids import AA_LOOKUP
 # ============================================================================
 # Reverse Sequence
 # ============================================================================
+
+UNAMBIGUOUS_AMINO_ACIDS: list[str] = [aa.id for aa in AA_LOOKUP.unambiguous_amino_acids]
 
 
 def _reverse_sequence_single(sequence: str | ProFormaAnnotation) -> str:
@@ -425,41 +427,6 @@ def debruijin_sequence(
 ) -> str | list[str]:
     """
     Generate decoy sequences using a de Bruijn graph with randomized edges.
-
-    Builds a k-mer graph from the sequence, randomizes the amino acid transitions
-    while respecting static residues, then reconstructs a sequence of the same length
-    with the same k-mer patterns but different amino acids.
-
-    :param sequence: The sequence, ProFormaAnnotation, or list of sequences.
-    :type sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation]
-    :param k: The k-mer size for building the graph.
-    :type k: int
-    :param static_residues: Amino acids to keep in their original positions.
-    :type static_residues: str
-    :param seed: Random seed for reproducible edge randomization. If None, randomization is random.
-    :type seed: int | None
-    :param n_workers: Number of worker processes. If None, uses CPU count.
-    :type n_workers: int | None
-    :param chunksize: Number of items per chunk. If None, auto-calculated.
-    :type chunksize: int | None
-    :param method: 'process', 'thread', or None (auto-detect).
-    :type method: Literal["process", "thread"] | None
-    :return: The decoy sequence or list of decoy sequences.
-    :rtype: str | list[str]
-
-    .. code-block:: python
-
-        # Single sequence
-        >>> debruijin_sequence('PEPTIDE', k=3)
-        'XEPXIDX'  # Randomized but maintains k-mer structure
-
-        # With static residues
-        >>> debruijin_sequence('PEPTIDE', k=3, static_residues='P')
-        'PEPXIDX'  # P residues stay in place
-
-        # Multiple sequences
-        >>> debruijin_sequence(['PEPTIDE', 'SEQUENCE'], k=3)
-        ['XEPXIDX', 'XEQXENX']
     """
     if (
         isinstance(sequence, Sequence)

@@ -4,34 +4,23 @@
 All notable changes to this project will be documented in this file.
 
 ### TODO (Next Release?)
-- Fix internal fragment ions (Some might not be correct).
-- Cleanup custom errors as many are not used.
-- Update tests
-- Add a mode to all mods additions: overwrite, append, skip...
 - Take valid mod values from the respective dbs for randomizer
-- Have Mod objects work for fragment loss?
-- Improve fragment loss handling based on ion type and sequence
-- Can improve the performance of mass calculations with isotopes and use_isotope_on_mods, by not calculating the composition of mods
-- update scorign functions
 
 ## [3.0.0]
-- Added a ton of new functionality (filter, annotate ambiguity, sequence properties)
+- Major refactor / overhaul
+- Proforma 2.1 compatible
 - Proforma annotation methods now return proforma objects such that methods can be chained (factory pattern)
-- Most functionality is now accessible through annotations
-- multiprocess/threading fasta reader
-- split now splits unambiguous segemnts of the annotation (intervals are not split)
+- Most functionality is now accessible through annotation objetcs
+- Fasta reader
+- Split now splits unambiguous segemnts of the annotation (intervals are not split)
 - Extensive tests
 - uv backend
-- ms2pip optional dep
-- added decoy gen methods
-- auto multiproccessing in functional api
-- removed need fo deep copying
-- mod objects are static now
-- added search db classes (kmer protein db, peptide db, and unified db)
-- plotting/streamlit optional deps/functions
-- spectra compression
-- spectra module
-
+- Decoy protein generation methods
+- Auto multiproccessing/threading via functional api
+- Improved copy perforamnce
+- Mod objects are frozen and cached
+- Proforma components dataclasses
+- Removed custom errors
 
 ## [2.5.1]
 - added ambiguity support to coverage funcs

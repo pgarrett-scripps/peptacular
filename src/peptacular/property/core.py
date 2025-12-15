@@ -6,7 +6,7 @@ import math
 import statistics
 from collections.abc import Generator, Iterable, Mapping, Sequence
 
-from .properties import (
+from .data import (
     NEGATIVE_AMINO_ACIDS,
     POSITIVE_AMINO_ACIDS,
     ChargeScale,
@@ -130,7 +130,7 @@ def _get_aa_value(
         ValueError: If amino acid is invalid and handling is ERROR
     """
 
-    missing_aa_handling = MissingAAHandling(missing_aa_handling)
+    missing_aa_handling = MissingAAHandling.from_str(missing_aa_handling)
 
     # Handle standard amino acids
     if aa in aa_data:
@@ -341,7 +341,7 @@ def aa_property_percentage(
     """Calculates the percentage of specified amino acids in the sequence."""
     residue_perc = _percent_residues(sequence)
     val = sum(residue_perc.get(aa, 0) for aa in residues)
-    return val
+    return float(val)
 
 
 def charge_at_ph(sequence: str, pH: float = 7.0) -> float:

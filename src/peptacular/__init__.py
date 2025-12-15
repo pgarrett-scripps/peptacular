@@ -1,26 +1,18 @@
 """
-Peptacular
+Peptacular: A ProForma peptide sequence parser and annotation library
 """
 
-__version__ = "3.0.0"
-
-from .chem import *
+from .annotation import *
+from .amino_acids import *
+from .components import *
 from .constants import *
-from .converters import *
-from .digestion import *
-from .errors import *
-from .example_data import example_spectra
-from .fasta import *
-from .glycan import *
-from .isotope import *
-from .mass_calc import *
+from .elements import *
 from .mods import *
-from .plotting import *
-from .proforma import *
-from .proforma.dclasses import *
-from .score import *
-from .search import *
 from .sequence import *
-from .spans import *
-from .spectra import *
-from .util import *
+from .digestion import *
+from .fragment import *
+from .isotope import *
+from .regex_utils import *
+
+
+__version__ = "3.0.0"

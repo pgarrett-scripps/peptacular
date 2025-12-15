@@ -263,7 +263,7 @@ def get_weights(
     :return: List of weights
     """
     if isinstance(weights, str):
-        weights_enum = WeightingMethods(weights)
+        weights_enum = WeightingMethods.from_str(weights)
 
         match weights_enum:
             case WeightingMethods.UNIFORM:

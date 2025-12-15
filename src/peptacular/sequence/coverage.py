@@ -1,6 +1,6 @@
 from typing import Iterable
 
-from ..proforma.annotation import (
+from ..annotation import (
     ProFormaAnnotation,
 )
 from .basic import count_residues

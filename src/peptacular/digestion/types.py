@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from enum import StrEnum
 from typing import Generator, Literal, Protocol, Self, TypeAlias, Union
 
+from ..spans import Span
+
 
 @dataclass
 class EnzymeConfig:
@@ -54,9 +56,9 @@ class DigestProtocol(Protocol):
 DigestResult: TypeAlias = Union[
     str,
     DigestProtocol,
-    tuple[int, int, int],
-    tuple[str, tuple[int, int, int]],
-    tuple[DigestProtocol, tuple[int, int, int]],
+    Span,
+    tuple[str, Span],
+    tuple[DigestProtocol, Span],
 ]
 
 DigestGenerator: TypeAlias = Generator[DigestResult, None, None]

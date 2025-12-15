@@ -1,94 +1,35 @@
-[build-system]
-requires = ["setuptools"]
-
 [project]
 name = "peptacular"
-authors = [
-    {name = "Patrick Garrett", email = "pgarrett@scripps.edu"},
-]
-description = "A spectacularly simple package for working with peptide sequences."
+version = "0.1.0"
+description = "A ProForma peptide sequence parser and annotation library"
 readme = "README.md"
-requires-python = ">=3.9"
-dynamic = ["version"]
-license = {file = "LICENSE"}
-classifiers = [
-    "Programming Language :: Python :: 3",
-    "Development Status :: 4 - Beta",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
-]
+requires-python = ">=3.12"
 dependencies = [
+    "pympler>=1.1",
+    "pyteomics>=4.7.5",
+    "ruff>=0.14.7",
 ]
 
-[tool.setuptools]
-package-dir = {"" = "src"}
-
-[tool.setuptools.package-data]
-peptacular = ["*.obo", "chem.txt"]
-
-[project.urls]
-repository = "https://github.com/pgarrett-scripps/peptacular.git"
-
-[tool.setuptools.dynamic]
-version = {attr = "peptacular.__version__"}
-
-[tool.ruff]
-target-version = "py310"
-
-[tool.ruff.lint]
-ignore = ["F403", "F405", "E741"]
-
-[tool.pylint]
-max-line-length = 120
-fail-under = 9.0
-good-names = ["db", "i", "j", "aa", "n", "k", "p", "Na", "Nb", "Nc", "Nx", "Ny", "Nz", "mz", "k", "v",
-    "f", "d", "m", "s", "r", "c", "id", "d1", "d2"]
-extension-pkg-whitelist = 'pydantic'
-max-branches = 50  # Increase the number of allowed branches
-max-locals = 30    # Increase the number of allowed local variables
-max-attributes = 50 # Increase the number of allowed attributes
-max-statements = 100  # Increase the number of allowed statements in a function
-max-args = 10  # Increase the number of allowed arguments in a function
-
-[tool.pytest.ini_options]
-filterwarnings = [
-    "ignore::UserWarning",
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-cov>=4.0.0",
 ]
-
-[tool.uv.sources]
-pymzml = { git = "https://github.com/pgarrett-scripps/pymzML.git", rev = "dev" }
-
 
 [dependency-groups]
-plotting = [
-    "plotly",
-    "pandas"
-]
-
-benchmark = [
-    "lxml>=6.0.1",
-    "pyteomics>=4.7.5",
-    "numpy",
-]
-
 dev = [
-    "pympler>=1.1",
-    "pytest",
-    "pytest-cov",
-    "ruff",
-    "sphinx",
-    "sphinx-rtd-theme",
-    {include-group = "benchmark"},
-
+    "pytest>=9.0.1",
+    "pytest-cov>=6.0.0",
 ]
 
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
-all = [
-    {include-group = "plotting"},
-]
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-v --strict-markers"
 
-all-dev = [
-    {include-group = "all"},
-    {include-group = "dev"},
-]
-
+[tool.hatch.build.targets.wheel]
+packages = ["src/peptacular"]
