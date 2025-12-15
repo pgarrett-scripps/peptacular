@@ -1,7 +1,7 @@
 from collections.abc import Sequence
-from typing import overload
+from typing import Iterable, overload
 
-from ..constants import IonType, IonTypeLiteral, ParrallelMethod, ParrallelMethodLiteral
+from ..constants import C13_NEUTRON_MASS, IonType, IonTypeLiteral, ParrallelMethod, ParrallelMethodLiteral
 from ..proforma import ProFormaAnnotation
 from .parrallel import parallel_apply_internal
 from .util import get_annotation_input
@@ -12,10 +12,11 @@ def _mass_single(
     charge: int | None = None,
     ion_type: IonTypeLiteral | IonType = IonType.PRECURSOR,
     monoisotopic: bool = True,
-    isotope: int = 0,
-    loss: float = 0.0,
+    isotope: int | float | str | dict[str, float | int] = 0,
+    delta: float | str | dict[str, float | int] | Iterable[float | str | dict[str, float | int]] = 0.0,
     precision: int | None = None,
     use_isotope_on_mods: bool = False,
+    default_isotopic_mass: float = C13_NEUTRON_MASS,
 ) -> float:
     """Calculate mass for a single sequence"""
     annotation = get_annotation_input(sequence=sequence, copy=False)
@@ -24,9 +25,10 @@ def _mass_single(
         charge=charge,
         monoisotopic=monoisotopic,
         isotope=isotope,
-        loss=loss,
+        delta=delta,
         precision=precision,
         use_isotope_on_mods=use_isotope_on_mods,
+        default_isotopic_mass=default_isotopic_mass,
     )
 
 
@@ -37,10 +39,11 @@ def mass(
     charge: int | None = None,
     ion_type: IonTypeLiteral | IonType = IonType.PRECURSOR,
     monoisotopic: bool = True,
-    isotope: int = 0,
-    loss: float = 0.0,
+    isotope: int | float | str | dict[str, float | int] = 0,
+    delta: float | str | dict[str, float | int] | Iterable[float | str | dict[str, float | int]] = 0.0,
     precision: int | None = None,
     use_isotope_on_mods: bool = False,
+    default_isotopic_mass: float = C13_NEUTRON_MASS,
     n_workers: None = None,
     chunksize: None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
@@ -54,10 +57,11 @@ def mass(
     charge: int | None = None,
     ion_type: IonTypeLiteral | IonType = IonType.PRECURSOR,
     monoisotopic: bool = True,
-    isotope: int = 0,
-    loss: float = 0.0,
+    isotope: int | float | str | dict[str, float | int] = 0,
+    delta: float | str | dict[str, float | int] | Iterable[float | str | dict[str, float | int]] = 0.0,
     precision: int | None = None,
     use_isotope_on_mods: bool = False,
+    default_isotopic_mass: float = C13_NEUTRON_MASS,
     n_workers: int | None = None,
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
@@ -70,10 +74,11 @@ def mass(
     charge: int | None = None,
     ion_type: IonTypeLiteral | IonType = IonType.PRECURSOR,
     monoisotopic: bool = True,
-    isotope: int = 0,
-    loss: float = 0.0,
+    isotope: int | float | str | dict[str, float | int] = 0,
+    delta: float | str | dict[str, float | int] | Iterable[float | str | dict[str, float | int]] = 0.0,
     precision: int | None = None,
     use_isotope_on_mods: bool = False,
+    default_isotopic_mass: float = C13_NEUTRON_MASS,
     n_workers: int | None = None,
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
@@ -163,9 +168,10 @@ def mass(
             ion_type=ion_type,
             monoisotopic=monoisotopic,
             isotope=isotope,
-            loss=loss,
+            delta=delta,
             precision=precision,
             use_isotope_on_mods=use_isotope_on_mods,
+            default_isotopic_mass=default_isotopic_mass,
         )
     else:
         # Single sequence processing
@@ -175,9 +181,10 @@ def mass(
             ion_type=ion_type,
             monoisotopic=monoisotopic,
             isotope=isotope,
-            loss=loss,
+            delta=delta,
             precision=precision,
             use_isotope_on_mods=use_isotope_on_mods,
+            default_isotopic_mass=default_isotopic_mass,
         )
 
 
@@ -187,10 +194,11 @@ def _mz_single(
     charge: int | None = None,
     ion_type: IonTypeLiteral | IonType = IonType.PRECURSOR,
     monoisotopic: bool = True,
-    isotope: int = 0,
-    loss: float = 0.0,
+    isotope: int | float | str | dict[str, float | int] = 0,
+    delta: float | str | dict[str, float | int] | Iterable[float | str | dict[str, float | int]] = 0.0,
     precision: int | None = None,
     use_isotope_on_mods: bool = False,
+    default_isotopic_mass: float = C13_NEUTRON_MASS,
 ) -> float:
     """Calculate m/z for a single sequence"""
     annotation = get_annotation_input(sequence=sequence, copy=False)
@@ -199,9 +207,10 @@ def _mz_single(
         charge=charge,
         monoisotopic=monoisotopic,
         isotope=isotope,
-        loss=loss,
+        delta=delta,
         precision=precision,
         use_isotope_on_mods=use_isotope_on_mods,
+        default_isotopic_mass=default_isotopic_mass,
     )
 
 
@@ -212,10 +221,11 @@ def mz(
     charge: int | None = None,
     ion_type: IonTypeLiteral | IonType = IonType.PRECURSOR,
     monoisotopic: bool = True,
-    isotope: int = 0,
-    loss: float = 0.0,
+    isotope: int | float | str | dict[str, float | int] = 0,
+    delta: float | str | dict[str, float | int] | Iterable[float | str | dict[str, float | int]] = 0.0,
     precision: int | None = None,
     use_isotope_on_mods: bool = False,
+    default_isotopic_mass: float = C13_NEUTRON_MASS,
     n_workers: None = None,
     chunksize: None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
@@ -228,10 +238,11 @@ def mz(
     charge: int | None = None,
     ion_type: IonTypeLiteral | IonType = IonType.PRECURSOR,
     monoisotopic: bool = True,
-    isotope: int = 0,
-    loss: float = 0.0,
+    isotope: int | float | str | dict[str, float | int] = 0,
+    delta: float | str | dict[str, float | int] | Iterable[float | str | dict[str, float | int]] = 0.0,
     precision: int | None = None,
     use_isotope_on_mods: bool = False,
+    default_isotopic_mass: float = C13_NEUTRON_MASS,
     n_workers: int | None = None,
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
@@ -243,10 +254,11 @@ def mz(
     charge: int | None = None,
     ion_type: IonTypeLiteral | IonType = IonType.PRECURSOR,
     monoisotopic: bool = True,
-    isotope: int = 0,
-    loss: float = 0.0,
+    isotope: int | float | str | dict[str, float | int] = 0,
+    delta: float | str | dict[str, float | int] | Iterable[float | str | dict[str, float | int]] = 0.0,
     precision: int | None = None,
     use_isotope_on_mods: bool = False,
+    default_isotopic_mass: float = C13_NEUTRON_MASS,
     n_workers: int | None = None,
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
@@ -318,9 +330,10 @@ def mz(
             ion_type=ion_type,
             monoisotopic=monoisotopic,
             isotope=isotope,
-            loss=loss,
+            delta=delta,
             precision=precision,
             use_isotope_on_mods=use_isotope_on_mods,
+            default_isotopic_mass=default_isotopic_mass,
         )
     else:
         return _mz_single(
@@ -329,9 +342,10 @@ def mz(
             ion_type=ion_type,
             monoisotopic=monoisotopic,
             isotope=isotope,
-            loss=loss,
+            delta=delta,
             precision=precision,
             use_isotope_on_mods=use_isotope_on_mods,
+            default_isotopic_mass=default_isotopic_mass,
         )
 
 

@@ -5,6 +5,7 @@ from typing import Any, Iterable, Mapping, Self, Sequence, cast
 from ..constants import (
     AMBIGUOUS_AMINO_ACIDS,
     AMINO_ACIDS,
+    C13_NEUTRON_MASS,
     MASS_AMBIGUOUS_AMINO_ACIDS,
     IonType,
     IonTypeLiteral,
@@ -2335,10 +2336,13 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         ion_type: IonTypeLiteral | IonType = IonType.PRECURSOR,
         charge: int | None = None,
         monoisotopic: bool = True,
-        isotope: int = 0,
-        loss: float = 0.0,
+        isotope: int | float | str | dict[str, float | int] = 0,
+        delta: float | str | dict[str, float | int] | Iterable[float | str | dict[str, float | int]] = 0.0,
+        # neutral_loss: float | str | dict[str, float | int] | Iterable[float | str | dict[str, float | int]] = 0.0,
+        # neutral_gain: float | str | dict[str, float | int] | Iterable[float | str | dict[str, float | int]] = 0.0,
         use_isotope_on_mods: bool = False,
         precision: int | None = None,
+        default_isotopic_mass: float = C13_NEUTRON_MASS,
     ) -> float:
         return mass(
             self,
@@ -2346,9 +2350,10 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
             charge=charge,
             monoisotopic=monoisotopic,
             isotope=isotope,
-            loss=loss,
+            delta=delta,
             use_isotope_on_mods=use_isotope_on_mods,
             precision=precision,
+            default_isotopic_mass=default_isotopic_mass,
         )
 
     def mz(
@@ -2356,10 +2361,11 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
         ion_type: IonTypeLiteral | IonType = IonType.PRECURSOR,
         charge: int | None = None,
         monoisotopic: bool = True,
-        isotope: int = 0,
-        loss: float = 0.0,
-        precision: int | None = None,
+        isotope: int | float | str | dict[str, float | int] = 0,
+    delta: float | str | dict[str, float | int] | Iterable[float | str | dict[str, float | int]] = 0.0,
         use_isotope_on_mods: bool = False,
+        precision: int | None = None,
+        default_isotopic_mass: float = C13_NEUTRON_MASS,
     ) -> float:
         return mz(
             self,
@@ -2367,21 +2373,26 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin, FragmenterMixin)
             charge=charge,
             monoisotopic=monoisotopic,
             isotope=isotope,
-            loss=loss,
+            delta=delta,
             precision=precision,
             use_isotope_on_mods=use_isotope_on_mods,
+            default_isotopic_mass=default_isotopic_mass,
         )
 
     def comp(
         self,
         ion_type: IonTypeLiteral | IonType = IonType.PRECURSOR,
-        isotope: int = 0,
+        charge: int | None = None,
+        isotope: int | float | str | dict[str, float | int] = 0,
+    delta: float | str | dict[str, float | int] | Iterable[float | str | dict[str, float | int]] = 0.0,
         use_isotope_on_mods: bool = False,
     ) -> dict[str, int | float]:
         return comp(
             self,
             ion_type=ion_type,
+            charge=charge,
             isotope=isotope,
+            delta=delta,
             use_isotope_on_mods=use_isotope_on_mods,
         )
 

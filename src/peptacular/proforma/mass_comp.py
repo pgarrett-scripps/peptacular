@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import warnings
 from collections import Counter
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Iterable
 
 from ..chem.chem_calc import (
     apply_isotope_mods_to_composition,
@@ -15,6 +15,7 @@ from ..chem.chem_constants import AVERAGE_AA_MASSES, MONOISOTOPIC_AA_MASSES
 from ..chem.chem_util import chem_mass
 from ..constants import (
     AA_COMPOSITIONS,
+    C13_NEUTRON_MASS,
     IonType,
     IonTypeLiteral,
     NEUTRAL_FRAGMENT_ION_COMPOSITIONS
@@ -126,7 +127,8 @@ def _get_sequence_composition(
 def _sequence_comp(
     annotation: ProFormaAnnotation,
     ion_type: IonTypeLiteral | IonType = IonType.PRECURSOR,
-    isotope: int = 0,
+    isotope: int | float | str | dict[str, int | float] = 0,
+    delta: float | str | dict[str, float | int] | Iterable[float | str | dict[str, float | int]] = 0.0,
     use_isotope_on_mods: bool = False,
 ) -> dict[str, int | float]:
     # If charge is not provided, set it to 0
@@ -145,12 +147,7 @@ def _sequence_comp(
         charge_adducts = annotation.get_charge_adduct_list()[0]
 
     if charge_adducts is None:
-        if ion_type in (IonType.PRECURSOR, IonType.NEUTRAL):
-            charge_adducts = f"{charge}H+"
-        else:
-            charge_adducts = (
-                f"{charge - 1}H+,{FRAGMENT_ION_BASE_CHARGE_ADDUCTS[ion_type]}"
-            )
+        charge_adducts = f"{charge}H+"
 
     if ion_type not in (IonType.PRECURSOR, IonType.NEUTRAL):
         if charge == 0:
@@ -217,7 +214,13 @@ def _sequence_comp(
                 comp = mod_comp(mod=m)
                 mod_composition.update({k: v * aa_count for k, v in comp.items()})
 
-    mod_composition["n"] = mod_composition.get("n", 0) + isotope
+    isotope_composition = parse_isotope_comp(isotope=isotope)
+    for elem, count in isotope_composition.items():
+        mod_composition[elem] = mod_composition.get(elem, 0) + count
+
+    delta_composition = parse_mass_delta_comp(delta=delta)
+    for elem, count in delta_composition.items():
+        mod_composition[elem] = mod_composition.get(elem, 0) + count
 
     # Apply isotopic mods
     if annotation.has_isotope_mods:
@@ -311,16 +314,118 @@ def check_ion_compatibility(annotation: ProFormaAnnotation, ion_type: IonType) -
     
 
 
+def parse_isotope_input(isotope: int | float | str | dict[str, float | int], monoisotopic: bool = True, precision: int | None = None, default_isotopic_mass: float = C13_NEUTRON_MASS) -> float:
+    if isinstance(isotope, str):
+        # isotope is a formula
+        isotope_comp = mod_comp(isotope, allow_missing_prefix=True)
+        isotope_delta: float = chem_mass(
+                formula=isotope_comp,
+                monoisotopic=monoisotopic,
+                precision=precision,
+            )
+    elif isinstance(isotope, dict):
+        # isotope is a composition
+        isotope_delta = chem_mass(
+                formula=isotope,
+                monoisotopic=monoisotopic,
+                precision=precision,
+            )
+    elif isinstance(isotope, int):
+        isotope_delta = isotope * default_isotopic_mass
+    elif isinstance(isotope, float): # type: ignore
+        isotope_delta = isotope
+    else:
+        raise TypeError("isotope must be int, float, str, or dict")
+    
+    return isotope_delta
+
+
+def parse_isotope_comp(isotope: int | float | str | dict[str, float | int]) -> dict[str, int]:
+    if isinstance(isotope, str):
+        # isotope is a formula
+        isotope_comp = mod_comp(isotope, allow_missing_prefix=True)
+    elif isinstance(isotope, dict):
+        # isotope is a composition
+        isotope_comp = isotope
+    elif isinstance(isotope, int):
+        isotope_comp = {"n": isotope}
+    elif isinstance(isotope, float): # type: ignore
+        if isotope == 0.0:
+            isotope_comp = {}
+        raise TypeError("isotope cannot be float when requesting composition")
+    else:
+        raise TypeError("isotope must be int, float, str, or dict")
+    
+    return isotope_comp # type: ignore
+
+
+def parse_mass_delta_input(delta: float | str | dict[str, float | int] | Iterable[float | str | dict[str, float | int]], monoisotopic: bool = True, precision: int | None = None) -> float:
+
+    if isinstance(delta, Iterable) and not isinstance(delta, (str, dict)):
+        # recursively call parse_mass_delta_input for each item and sum the masses
+        total_mass = 0.0
+        for d in delta:
+            mass = parse_mass_delta_input(d, monoisotopic=monoisotopic, precision=precision)
+            total_mass += mass
+        return total_mass
+
+    elif isinstance(delta, str):
+        # delta is a formula
+        mass_delta_comp = mod_comp(delta, allow_missing_prefix=True)
+        mass_delta_value: float = chem_mass(
+                formula=mass_delta_comp,
+                monoisotopic=monoisotopic,
+                precision=precision,
+            )
+    elif isinstance(delta, dict):
+        # delta is a composition
+        mass_delta_value = chem_mass(
+                formula=delta,
+                monoisotopic=monoisotopic,
+                precision=precision,
+            )
+    elif isinstance(delta, (float, int)): # type: ignore
+        mass_delta_value = delta
+    else:
+        raise TypeError("delta must be float, str, or dict")
+    
+    return mass_delta_value
+
+def parse_mass_delta_comp(delta: float | str | dict[str, float | int] | Iterable[float | str | dict[str, float | int]]) -> dict[str, int]:
+
+    if isinstance(delta, Iterable) and not isinstance(delta, (str, dict)):
+        # recursively call parse_mass_delta_comp for each item and sum the compositions
+        total_comp: Counter[str] = Counter()
+        for d in delta:
+            comp = parse_mass_delta_comp(d)
+            total_comp.update(comp)
+        return dict(total_comp)
+
+    elif isinstance(delta, str):
+        # delta is a formula
+        mass_delta_comp = mod_comp(delta, allow_missing_prefix=True)
+    elif isinstance(delta, dict):
+        # delta is a composition
+        mass_delta_comp = delta
+    elif isinstance(delta, (float, int)): # type: ignore
+        if delta == 0.0 or delta == 0:
+            mass_delta_comp = {}
+        raise TypeError("delta cannot be float or int when requesting composition")
+    else:
+        raise TypeError("delta must be float, str, or dict")
+    
+    return mass_delta_comp # type: ignore
 
 def mass(
     annotation: ProFormaAnnotation,
     ion_type: IonTypeLiteral | IonType = IonType.PRECURSOR,
     charge: int | None = None,
     monoisotopic: bool = True,
-    isotope: int = 0,
-    loss: float = 0.0,
+    isotope: int | float | str | dict[str, float | int] = 0,
+    delta: float | str | dict[str, float | int] | Iterable[float | str | dict[str, float | int]] = 0.0,
     use_isotope_on_mods: bool = False,
     precision: int | None = None,
+    default_isotopic_mass: float = C13_NEUTRON_MASS,
 ) -> float:
     if annotation.contains_mass_ambiguity():
         raise AmbiguousAminoAcidError(
@@ -328,7 +433,6 @@ def mass(
             msg="Cannot determine the mass of a sequence with ambiguous amino acids: {annotation.sequence}",
         )
     
-
     check_ion_compatibility(annotation, IonType(ion_type))
 
     if charge is None:
@@ -339,11 +443,14 @@ def mass(
     if annotation.has_isotope_mods:
         annotation = annotation.copy(deep=True)
         annotation.condense_static_mods(inplace=True)
+        annotation.charge = charge
         peptide_composition, delta_mass = _comp_with_delta_mass(
             annotation=annotation,
             ion_type=ion_type,
             isotope=isotope,
+            delta=delta,
             use_isotope_on_mods=use_isotope_on_mods,
+            default_isotopic_mass=default_isotopic_mass,
         )
 
         return (
@@ -354,6 +461,17 @@ def mass(
             )
             + delta_mass
         )
+    
+    isotope_delta = parse_isotope_input(
+        isotope=isotope,
+        monoisotopic=monoisotopic,
+        precision=None,
+        default_isotopic_mass=default_isotopic_mass,
+    )
+
+    mass_delta = parse_mass_delta_input(delta=delta, 
+                                        monoisotopic=monoisotopic, 
+                                        precision=None)
 
     if ion_type not in (IonType.PRECURSOR, IonType.NEUTRAL):
         if annotation.charge is None or annotation.charge == 0:
@@ -365,7 +483,7 @@ def mass(
     m: float = 0.0
 
     if annotation.has_static_mods:
-        smod_info: dict[str, Mod] = parse_static_mods(
+        smod_info: dict[str, list[Mod]] = parse_static_mods(
             annotation.get_static_mod_list().data
         )
         # convert to mass
@@ -375,26 +493,6 @@ def mass(
             if aa in smod_masss:
                 m += smod_masss[aa]
 
-    """
-    if annotation.has_static_mods():
-        static_map = parse_static_mods(annotation.static_mods)
-
-        n_term_mod = static_map.get("N-Term")
-        if n_term_mod is not None:
-            m += sum(mod_mass(m, monoisotopic, precision=None) for m in n_term_mod)
-
-        c_term_mod = static_map.get("C-Term")
-        if c_term_mod is not None:
-            m += sum(mod_mass(m, monoisotopic, precision=None) for m in c_term_mod)
-
-        for aa, mod in static_map.items():
-
-            if aa in ["N-Term", "C-Term"]:
-                continue
-
-            aa_count = annotation.sequence.count(aa)
-            m += sum(mod_mass(m, monoisotopic, precision=None) for m in mod) * aa_count
-    """
     try:
         m += sum(
             MONOISOTOPIC_AA_MASSES[aa] if monoisotopic else AVERAGE_AA_MASSES[aa]
@@ -444,8 +542,8 @@ def mass(
         charge=charge,
         ion_type=ion_type,
         monoisotopic=monoisotopic,
-        isotope=isotope,
-        loss=loss,
+        isotope_delta=isotope_delta,
+        mass_delta=mass_delta,
         charge_adducts=charge_adducts,
         precision=precision,
     )
@@ -456,8 +554,9 @@ def mz(
     ion_type: IonTypeLiteral | IonType = IonType.PRECURSOR,
     charge: int | None = None,
     monoisotopic: bool = True,
-    isotope: int = 0,
-    loss: float = 0.0,
+    isotope: int | float | str | dict[str, float | int] = 0,
+    delta: float | str | dict[str, float | int] = 0.0,
+    default_isotopic_mass: float = C13_NEUTRON_MASS,
     precision: int | None = None,
     use_isotope_on_mods: bool = False,
 ) -> float:
@@ -471,9 +570,10 @@ def mz(
         charge=charge,
         monoisotopic=monoisotopic,
         isotope=isotope,
-        loss=loss,
+        delta=delta,
         use_isotope_on_mods=use_isotope_on_mods,
         precision=precision,
+        default_isotopic_mass=default_isotopic_mass,
     )
 
     return adjust_mz(base_mass=m, charge=charge, precision=precision)
@@ -482,14 +582,23 @@ def mz(
 def comp(
     annotation: ProFormaAnnotation,
     ion_type: IonTypeLiteral | IonType = IonType.PRECURSOR,
+    charge: int | None = None,
     estimate_delta: bool = False,
-    isotope: int = 0,
+    isotope: int | float | str | dict[str, float | int] = 0,
+    delta: float | str | dict[str, float | int] | Iterable[float | str | dict[str, float | int]] = 0.0,
     use_isotope_on_mods: bool = False,
 ) -> dict[str, int | float]:
+    
+    if charge is not None:
+        # No charge provided, use annotation's charge (or 0 if annotation has no charge)
+        annotation = annotation.copy()
+        annotation.charge = charge
+
     composition, delta_mass = _comp_with_delta_mass(
         annotation,
         ion_type=ion_type,
         isotope=isotope,
+        delta=delta,
         use_isotope_on_mods=use_isotope_on_mods,
     )
 
@@ -513,8 +622,10 @@ def comp(
 def _comp_with_delta_mass(
     annotation: ProFormaAnnotation,
     ion_type: IonTypeLiteral | IonType = IonType.PRECURSOR,
-    isotope: int = 0,
+    isotope: int | float | str | dict[str, float | int] = 0,
+    delta: float | str | dict[str, float | int] | Iterable[float | str | dict[str, float | int]] = 0.0,
     use_isotope_on_mods: bool = False,
+    default_isotopic_mass: float = C13_NEUTRON_MASS,
 ) -> tuple[dict[str, int | float], float]:
     # returns a tuple containing the composition of the peptide, and the sum of all delta mass modifications,
     # which cannot be directly converted to a composition dictionary
@@ -525,9 +636,11 @@ def _comp_with_delta_mass(
     annotation.condense_static_mods(inplace=True)
     delta_mass = _pop_delta_mass_mods(
         annotation
-    )  # sum delta mass mods and remove them from the annotation
+    )  
+    
+    # sum delta mass mods and remove them from the annotation
     peptide_composition = _sequence_comp(
-        annotation, ion_type, isotope, use_isotope_on_mods
+        annotation, ion_type, isotope, use_isotope_on_mods, delta
     )
 
     if use_isotope_on_mods is True and delta_mass != 0:

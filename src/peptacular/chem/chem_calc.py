@@ -57,7 +57,7 @@ def glycan_to_chem(glycan: dict[str, int | float] | str) -> str:
     return write_chem_formula(glycan_comp(glycan))
 
 
-def mod_comp(mod: MOD_VALUE_TYPES | Mod) -> dict[str, int | float]:
+def mod_comp(mod: MOD_VALUE_TYPES | Mod, allow_missing_prefix: bool = False) -> dict[str, int | float]:
     """
     Parse a modification string.
 
@@ -90,7 +90,7 @@ def mod_comp(mod: MOD_VALUE_TYPES | Mod) -> dict[str, int | float]:
 
     mods = mod.split("|")
     for m in mods:
-        m = _parse_mod_comp(m)
+        m = _parse_mod_comp(m, allow_missing_prefix=allow_missing_prefix)
         if m is not None:
             return m
 
@@ -203,7 +203,7 @@ def _parse_glycan_comp(glycan_str: str) -> dict[str, int | float]:
     return parse_chem_formula(entry.composition)
 
 
-def _parse_mod_comp(mod: str) -> dict[str, int | float] | None:
+def _parse_mod_comp(mod: str, allow_missing_prefix: bool = False) -> dict[str, int | float] | None:
     """
     Parses a modification composition and returns a dictionary with the element and their counts.
 
@@ -256,18 +256,45 @@ def _parse_mod_comp(mod: str) -> dict[str, int | float] | None:
     mod_lower = mod.lower()
     if mod_lower.startswith("glycan:"):
         return _parse_glycan_comp(mod)
+    
+    if allow_missing_prefix:
+        try:
+            return _parse_glycan_comp(mod)
+        except Exception:
+            pass
 
     if is_gno_str(mod):
         # not implemented
         return parse_chem_formula(parse_gno_comp(mod))
+    
+    if allow_missing_prefix:
+        try:
+            if is_gno_str(f"GNO:{mod}"):
+                return parse_chem_formula(parse_gno_comp(f"GNO:{mod}"))
+        except Exception:
+            pass
 
     if is_xlmod_str(mod):
         # not implemented
         return parse_chem_formula(parse_xlmod_comp(mod))
+    
+    if allow_missing_prefix:
+        try:
+            if is_xlmod_str(f"XLMOD:{mod}"):
+                return parse_chem_formula(parse_xlmod_comp(f"XLMOD:{mod}"))
+        except Exception:
+            pass
 
     if is_resid_str(mod):
         # not implemented
         return parse_chem_formula(parse_resid_comp(mod))
+    
+    if allow_missing_prefix:
+        try:
+            if is_resid_str(f"RESID:{mod}"):
+                return parse_chem_formula(parse_resid_comp(f"RESID:{mod}"))
+        except Exception:
+            pass
 
     if mod_lower.startswith("info:"):  # cannot get comp for info
         return None
@@ -280,10 +307,15 @@ def _parse_mod_comp(mod: str) -> dict[str, int | float] | None:
 
     if is_unimod_str(mod):  # unimod
         return parse_chem_formula(parse_unimod_comp(mod))
-
+    
     # chemical formula
     if mod_lower.startswith("formula:"):
         return parse_chem_formula(mod.split(":")[1])
+    
+    try:
+        return parse_chem_formula(mod)
+    except Exception:
+        pass
 
     return None
 

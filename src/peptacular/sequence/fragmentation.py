@@ -14,18 +14,18 @@ from .parrallel import parallel_apply_internal
 
 def _get_losses_single(
     sequence: str | ProFormaAnnotation,
-    losses: Mapping[str, Sequence[float]],
+    deltas: Mapping[str, Sequence[float]],
     max_losses: int,
 ) -> set[float]:
     """Get losses for a single sequence"""
     annotation = get_annotation_input(sequence, copy=False)
-    return annotation.get_losses(losses=losses, max_losses=max_losses)
+    return annotation.get_deltas(deltas=deltas, max_losses=max_losses)
 
 
 @overload
 def get_losses(
     sequence: str | ProFormaAnnotation,
-    losses: Mapping[str, Sequence[float]],
+    deltas: Mapping[str, Sequence[float]],
     max_losses: int,
     n_workers: None = None,
     chunksize: None = None,
@@ -36,7 +36,7 @@ def get_losses(
 @overload
 def get_losses(
     sequence: Sequence[str | ProFormaAnnotation],
-    losses: Mapping[str, Sequence[float]],
+    deltas: Mapping[str, Sequence[float]],
     max_losses: int,
     n_workers: int | None = None,
     chunksize: int | None = None,
@@ -46,7 +46,7 @@ def get_losses(
 
 def get_losses(
     sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
-    losses: Mapping[str, Sequence[float]],
+    deltas: Mapping[str, Sequence[float]],
     max_losses: int,
     n_workers: int | None = None,
     chunksize: int | None = None,
@@ -98,13 +98,13 @@ def get_losses(
             n_workers=n_workers,
             chunksize=chunksize,
             method=method,
-            losses=losses,
+            deltas=deltas,
             max_losses=max_losses,
         )
     else:
         return _get_losses_single(
             sequence=sequence,
-            losses=losses,
+            deltas=deltas,
             max_losses=max_losses,
         )
 
@@ -117,7 +117,7 @@ def _fragment_single(
     isotopes: Sequence[int] | int = 0,
     water_loss: bool = False,
     ammonia_loss: bool = False,
-    losses: Mapping[str, Sequence[float]] | None = None,
+    deltas: Mapping[str, Sequence[float]] | None = None,
     max_losses: int = 1,
     precision: int | None = None,
     return_type: Literal["mz", "mz-label"]
@@ -143,7 +143,7 @@ def _fragment_single(
             isotopes=isotopes,
             water_loss=water_loss,
             ammonia_loss=ammonia_loss,
-            losses=losses,
+            deltas=deltas,
             max_losses=max_losses,
             precision=precision,
             _mass_components=_mass_components,
@@ -162,7 +162,7 @@ def fragment(
     isotopes: Sequence[int] | int = 0,
     water_loss: bool = False,
     ammonia_loss: bool = False,
-    losses: Mapping[str, Sequence[float]] | None = None,
+    deltas: Mapping[str, Sequence[float]] | None = None,
     max_losses: int = 1,
     precision: int | None = None,
     return_type: Literal["mz"] | Literal[FragmentReturnType.MZ] = FragmentReturnType.MZ,
@@ -183,7 +183,7 @@ def fragment(
     isotopes: Sequence[int] | int = 0,
     water_loss: bool = False,
     ammonia_loss: bool = False,
-    losses: Mapping[str, Sequence[float]] | None = None,
+    deltas: Mapping[str, Sequence[float]] | None = None,
     max_losses: int = 1,
     precision: int | None = None,
     return_type: Literal["mz"] | Literal[FragmentReturnType.MZ] = FragmentReturnType.MZ,
@@ -204,7 +204,7 @@ def fragment(
     isotopes: Sequence[int] | int = 0,
     water_loss: bool = False,
     ammonia_loss: bool = False,
-    losses: Mapping[str, Sequence[float]] | None = None,
+    deltas: Mapping[str, Sequence[float]] | None = None,
     max_losses: int = 1,
     precision: int | None = None,
     return_type: Literal["mz-label"]
@@ -226,7 +226,7 @@ def fragment(
     isotopes: Sequence[int] | int = 0,
     water_loss: bool = False,
     ammonia_loss: bool = False,
-    losses: Mapping[str, Sequence[float]] | None = None,
+    deltas: Mapping[str, Sequence[float]] | None = None,
     max_losses: int = 1,
     precision: int | None = None,
     return_type: Literal["mz-label"]
@@ -247,7 +247,7 @@ def fragment(
     isotopes: Sequence[int] | int = 0,
     water_loss: bool = False,
     ammonia_loss: bool = False,
-    losses: Mapping[str, Sequence[float]] | None = None,
+    deltas: Mapping[str, Sequence[float]] | None = None,
     max_losses: int = 1,
     precision: int | None = None,
     return_type: (
@@ -330,7 +330,7 @@ def fragment(
             isotopes=isotopes,
             water_loss=water_loss,
             ammonia_loss=ammonia_loss,
-            losses=losses,
+            deltas=deltas,
             max_losses=max_losses,
             precision=precision,
             return_type=return_type,
@@ -345,7 +345,7 @@ def fragment(
             isotopes=isotopes,
             water_loss=water_loss,
             ammonia_loss=ammonia_loss,
-            losses=losses,
+            deltas=deltas,
             max_losses=max_losses,
             precision=precision,
             return_type=return_type,

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import warnings
 from collections.abc import Iterable, MutableSequence
-from typing import Any, Callable, Iterator, Self, SupportsIndex
+from typing import Any, Callable, Iterator, Self, SupportsIndex, overload
 
 from ...mod import MOD_VALUE_TYPES, Mod, setup_mod
 
@@ -44,6 +44,11 @@ class ModList(MutableSequence[Mod]):
     # Required MutableSequence abstract methods
     def __len__(self) -> int:
         return len(self._data)
+
+    @overload
+    def __getitem__(self, index: int) -> Mod: ...
+    @overload
+    def __getitem__(self, index: slice) -> list[Mod]: ...
 
     def __getitem__(self, index: int | slice) -> Mod | list[Mod]:
         return self._data[index]

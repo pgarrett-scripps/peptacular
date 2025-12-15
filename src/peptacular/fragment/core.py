@@ -7,6 +7,7 @@ from typing import Counter, Generator, Mapping, Sequence
 
 from ..constants import (
     BACKWARD_ION_TYPES,
+    C13_NEUTRON_MASS,
     FORWARD_ION_TYPES,
     INTERNAL_ION_TYPES,
     TERMINAL_ION_TYPES,
@@ -29,47 +30,52 @@ from .types import (
 )
 
 
-def get_losses(
+def get_deltas(
     annotation: FragmentableAnnotation,
-    losses: Mapping[str, Sequence[float]],
+    deltas: Mapping[str, Sequence[int | float | str | dict[str, float | int]]],
     max_losses: int,
+    use_regex: bool = False,
 ) -> set[float]:
     """
-    Calculate applicable losses for a given annotation.
-    Returns a list to allow multiple losses of the same type.
+    Calculate applicable deltas for a given annotation.
+    Returns a list to allow multiple deltas of the same type.
     """
-    applicable_losses: Counter[float] = Counter()
+    applicable_deltas: list[tuple[int | float | str | dict[str, float | int], int]] = []
 
-    for restr, loss_list in losses.items():
+    for restr, loss_list in deltas.items():
         # Count how many times each pattern matches
-        matches = re.findall(restr, annotation.stripped_sequence)
+        if use_regex:
+            matches = re.findall(restr, annotation.stripped_sequence)
+        else:
+            matches = [i for i, aa in enumerate(annotation.stripped_sequence) if aa in restr]
+            
         match_count = len(matches)
 
         # Add each loss value multiplied by the number of matches
         for loss_value in loss_list:
-            applicable_losses[loss_value] += match_count
+            applicable_deltas.append((loss_value, match_count))
 
-    # Convert Counter to list of individual losses
-    individual_losses: list[float] = []
-    for loss_value, count in applicable_losses.items():
-        individual_losses.extend([loss_value] * count)
+    # Convert Counter to list of individual deltas
+    individual_deltas: list[float] = []
+    for loss_value, count in applicable_deltas.items():
+        individual_deltas.extend([loss_value] * count)
 
     # Generate combinations if max_losses > 1
-    all_losses: set[float] = set()
-    if max_losses > 1 and individual_losses:
-        for loss_count in range(1, min(max_losses + 1, len(individual_losses) + 1)):
+    all_deltas: set[float] = set()
+    if max_losses > 1 and individual_deltas:
+        for loss_count in range(1, min(max_losses + 1, len(individual_deltas) + 1)):
             for loss_combination in itertools.combinations(
-                individual_losses, loss_count
+                individual_deltas, loss_count
             ):
-                all_losses.add(sum(loss_combination))
+                all_deltas.add(sum(loss_combination))
     else:
-        # If max_losses == 1, just add individual losses
-        all_losses.update(individual_losses)
+        # If max_losses == 1, just add individual deltas
+        all_deltas.update(individual_deltas)
 
     # Always include 0.0 (no loss)
-    all_losses.add(0.0)
+    all_deltas.add(0.0)
 
-    return all_losses
+    return all_deltas
 
 
 def _build_fragments(
@@ -77,13 +83,15 @@ def _build_fragments(
     spans: Sequence[tuple[int, int, int]],
     ion_types: Sequence[IonType],
     charges: Sequence[int],
-    losses: Mapping[str, Sequence[float]],
-    isotopes: Sequence[int],
+    deltas: Mapping[str, Sequence[int | float | str | dict[str, float | int]]],
+    isotopes: Sequence[int | float | str | dict[str, float | int]],
     monoisotopic: bool,
     return_type: FragmentReturnType,
     mass_components: Sequence[float],
     max_losses: int,
     precision: None | int = None,
+    use_isotope_on_mods: bool = False,
+    default_isotopic_mass: float = C13_NEUTRON_MASS,
 ) -> Generator[FRAGMENT_RETURN_TYPING, None, None]:
     """
     Builds fragments for a given sequence.
@@ -105,13 +113,13 @@ def _build_fragments(
         base_sequence = base_annotation.serialize()
         base_unmod_sequence = base_annotation.stripped_sequence
 
-        applicable_losses = get_losses(
-            annotation=base_annotation, losses=losses, max_losses=max_losses
+        applicable_deltas = get_deltas(
+            annotation=base_annotation, deltas=deltas, max_losses=max_losses
         )
 
         for ion_type in ion_types:
             for iso in isotopes:
-                for loss in applicable_losses:
+                for loss in applicable_deltas:
                     for c in charges:
                         fragment_mass = adjust_mass(
                             base_mass=base_mass,
@@ -185,7 +193,7 @@ def _get_internal_fragments(
     charges: Sequence[int],
     monoisotopic: bool,
     isotopes: Sequence[int],
-    losses: Mapping[str, Sequence[float]],
+    deltas: Mapping[str, Sequence[float]],
     return_type: FragmentReturnType,
     mass_components: Sequence[float],
     precision: None | int,
@@ -203,7 +211,7 @@ def _get_internal_fragments(
         spans=internal_spans,
         ion_types=ion_types,
         charges=charges,
-        losses=losses,
+        deltas=deltas,
         isotopes=isotopes,
         monoisotopic=monoisotopic,
         return_type=return_type,
@@ -218,7 +226,7 @@ def _get_immonium_fragments(
     charges: Sequence[int],
     monoisotopic: bool,
     isotopes: Sequence[int],
-    losses: Mapping[str, Sequence[float]],
+    deltas: Mapping[str, Sequence[float]],
     return_type: FragmentReturnType,
     mass_components: Sequence[float],
     precision: None | int,
@@ -233,7 +241,7 @@ def _get_immonium_fragments(
         spans=spans,
         ion_types=[IonType.IMMONIUM],
         charges=charges,
-        losses=losses,
+        deltas=deltas,
         isotopes=isotopes,
         monoisotopic=monoisotopic,
         return_type=return_type,
@@ -249,7 +257,7 @@ def _get_forward_fragments(
     charges: Sequence[int],
     monoisotopic: bool,
     isotopes: Sequence[int],
-    losses: Mapping[str, Sequence[float]],
+    deltas: Mapping[str, Sequence[float]],
     return_type: FragmentReturnType,
     mass_components: Sequence[float],
     precision: None | int,
@@ -265,7 +273,7 @@ def _get_forward_fragments(
         spans=spans,
         ion_types=ion_types,
         charges=charges,
-        losses=losses,
+        deltas=deltas,
         isotopes=isotopes,
         monoisotopic=monoisotopic,
         return_type=return_type,
@@ -281,7 +289,7 @@ def _get_backward_fragments(
     charges: Sequence[int],
     monoisotopic: bool,
     isotopes: Sequence[int],
-    losses: Mapping[str, Sequence[float]],
+    deltas: Mapping[str, Sequence[float]],
     return_type: FragmentReturnType,
     mass_components: Sequence[float],
     precision: None | int,
@@ -297,7 +305,7 @@ def _get_backward_fragments(
         spans=spans,
         ion_types=ion_types,
         charges=charges,
-        losses=losses,
+        deltas=deltas,
         isotopes=isotopes,
         monoisotopic=monoisotopic,
         return_type=return_type,
@@ -313,7 +321,7 @@ def _get_terminal_fragments(
     charges: Sequence[int],
     monoisotopic: bool,
     isotopes: Sequence[int],
-    losses: Mapping[str, Sequence[float]],
+    deltas: Mapping[str, Sequence[float]],
     return_type: FragmentReturnType,
     mass_components: Sequence[float],
     precision: None | int,
@@ -331,7 +339,7 @@ def _get_terminal_fragments(
         charges=charges,
         monoisotopic=monoisotopic,
         isotopes=isotopes,
-        losses=losses,
+        deltas=deltas,
         return_type=return_type,
         mass_components=mass_components,
         precision=precision,
@@ -344,7 +352,7 @@ def _get_terminal_fragments(
         charges=charges,
         monoisotopic=monoisotopic,
         isotopes=isotopes,
-        losses=losses,
+        deltas=deltas,
         return_type=return_type,
         mass_components=mass_components,
         precision=precision,
@@ -361,7 +369,7 @@ def fragment(
     isotopes: Sequence[int] | int = 0,
     water_loss: bool = False,
     ammonia_loss: bool = False,
-    losses: None | Mapping[str, Sequence[float]] = None,
+    deltas: None | Mapping[str, Sequence[float]] = None,
     max_losses: int = 1,
     precision: None | int = None,
     _mass_components: None | Sequence[float] = None,
@@ -394,12 +402,12 @@ def fragment(
 
     loss_dict: dict[str, list[float]] = defaultdict(list)
 
-    if losses is not None:
-        if isinstance(losses, Mapping):  # type: ignore
-            for k, v in losses.items():
+    if deltas is not None:
+        if isinstance(deltas, Mapping):  # type: ignore
+            for k, v in deltas.items():
                 loss_dict[k].extend(v)
         else:
-            raise TypeError("Invalid losses format")
+            raise TypeError("Invalid deltas format")
 
     if water_loss:
         loss_dict["[STED]"].append(-18.01056)
@@ -433,7 +441,7 @@ def fragment(
             charges=charge_list,
             monoisotopic=monoisotopic,
             isotopes=isotope_list,
-            losses=loss_dict,
+            deltas=loss_dict,
             return_type=return_type_enum,
             mass_components=_mass_components,
             precision=precision,
@@ -447,7 +455,7 @@ def fragment(
             charges=charge_list,
             monoisotopic=monoisotopic,
             isotopes=isotope_list,
-            losses=loss_dict,
+            deltas=loss_dict,
             return_type=return_type_enum,
             mass_components=_mass_components,
             precision=precision,
@@ -460,7 +468,7 @@ def fragment(
             charges=charge_list,
             monoisotopic=monoisotopic,
             isotopes=isotope_list,
-            losses=loss_dict,
+            deltas=loss_dict,
             return_type=return_type_enum,
             mass_components=_mass_components,
             precision=precision,

@@ -10,6 +10,7 @@ from .chem.chem_calc import (
 from .chem.chem_util import chem_mass
 from .constants import (
     AVERAGE_ATOMIC_MASSES,
+    C13_NEUTRON_MASS,
     ELECTRON_MASS,
     ISOTOPIC_ATOMIC_MASSES,
     NEUTRON_MASS,
@@ -98,8 +99,8 @@ def adjust_mass(
     charge: int | None,
     ion_type: IonType | IonTypeLiteral = IonType.PRECURSOR,
     monoisotopic: bool = True,
-    isotope: int = 0,
-    loss: float = 0.0,
+    isotope_delta: float = 0.0,
+    mass_delta: float = 0.0,
     charge_adducts: str | list[str] | list[Mod] | None = None,
     precision: int | None = None,
 ) -> float:
@@ -151,7 +152,7 @@ def adjust_mass(
         )
 
     # m += (charge * charge_adduct_mass)
-    m += isotope * NEUTRON_MASS + loss  # Add isotope and loss
+    m += isotope_delta + mass_delta  # Add isotope and mass delta
 
     if precision is not None:
         m = round(m, precision)

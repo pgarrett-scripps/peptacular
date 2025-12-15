@@ -1,7 +1,7 @@
 from typing import Generator, Literal, Mapping, Sequence, overload
 
 from ..constants import IonType, IonTypeLiteral
-from .core import fragment, get_losses
+from .core import fragment, get_deltas
 from .types import (
     FRAGMENT_RETURN_TYPING,
     Fragment,
@@ -32,7 +32,7 @@ class FragmenterMixin(FragmentableAnnotation):
         isotopes: Sequence[int] | int = 0,
         water_loss: bool = False,
         ammonia_loss: bool = False,
-        losses: None | Mapping[str, Sequence[float]] = None,
+        deltas: None | Mapping[str, Sequence[float]] = None,
         max_losses: int = 1,
         precision: None | int = None,
         _mass_components: None | Sequence[float] = None,
@@ -49,7 +49,7 @@ class FragmenterMixin(FragmentableAnnotation):
         isotopes: Sequence[int] | int = 0,
         water_loss: bool = False,
         ammonia_loss: bool = False,
-        losses: None | Mapping[str, Sequence[float]] = None,
+        deltas: None | Mapping[str, Sequence[float]] = None,
         max_losses: int = 1,
         precision: None | int = None,
         _mass_components: None | Sequence[float] = None,
@@ -66,7 +66,7 @@ class FragmenterMixin(FragmentableAnnotation):
         isotopes: Sequence[int] | int = 0,
         water_loss: bool = False,
         ammonia_loss: bool = False,
-        losses: None | Mapping[str, Sequence[float]] = None,
+        deltas: None | Mapping[str, Sequence[float]] = None,
         max_losses: int = 1,
         precision: None | int = None,
         _mass_components: None | Sequence[float] = None,
@@ -83,7 +83,7 @@ class FragmenterMixin(FragmentableAnnotation):
         isotopes: Sequence[int] | int = 0,
         water_loss: bool = False,
         ammonia_loss: bool = False,
-        losses: None | Mapping[str, Sequence[float]] = None,
+        deltas: None | Mapping[str, Sequence[float]] = None,
         max_losses: int = 1,
         precision: None | int = None,
         _mass_components: None | Sequence[float] = None,
@@ -100,7 +100,7 @@ class FragmenterMixin(FragmentableAnnotation):
         isotopes: Sequence[int] | int = 0,
         water_loss: bool = False,
         ammonia_loss: bool = False,
-        losses: None | Mapping[str, Sequence[float]] = None,
+        deltas: None | Mapping[str, Sequence[float]] = None,
         max_losses: int = 1,
         precision: None | int = None,
         _mass_components: None | Sequence[float] = None,
@@ -117,7 +117,7 @@ class FragmenterMixin(FragmentableAnnotation):
         isotopes: Sequence[int] | int = 0,
         water_loss: bool = False,
         ammonia_loss: bool = False,
-        losses: None | Mapping[str, Sequence[float]] = None,
+        deltas: None | Mapping[str, Sequence[float]] = None,
         max_losses: int = 1,
         precision: None | int = None,
         _mass_components: None | Sequence[float] = None,
@@ -134,7 +134,7 @@ class FragmenterMixin(FragmentableAnnotation):
         isotopes: Sequence[int] | int = 0,
         water_loss: bool = False,
         ammonia_loss: bool = False,
-        losses: None | Mapping[str, Sequence[float]] = None,
+        deltas: None | Mapping[str, Sequence[float]] = None,
         max_losses: int = 1,
         precision: None | int = None,
         _mass_components: None | Sequence[float] = None,
@@ -152,7 +152,7 @@ class FragmenterMixin(FragmentableAnnotation):
         isotopes: Sequence[int] | int = 0,
         water_loss: bool = False,
         ammonia_loss: bool = False,
-        losses: None | Mapping[str, Sequence[float]] = None,
+        deltas: None | Mapping[str, Sequence[float]] = None,
         max_losses: int = 1,
         precision: None | int = None,
         _mass_components: None | Sequence[float] = None,
@@ -168,16 +168,16 @@ class FragmenterMixin(FragmentableAnnotation):
             isotopes=isotopes,
             water_loss=water_loss,
             ammonia_loss=ammonia_loss,
-            losses=losses,
+            deltas=deltas,
             max_losses=max_losses,
             precision=precision,
             _mass_components=_mass_components,
             return_type=return_type,
         )
 
-    def get_losses(
+    def get_deltas(
         self: FragmentableAnnotation,
-        losses: Mapping[str, Sequence[float]],
+        deltas: Mapping[str, Sequence[float]],
         max_losses: int,
     ) -> set[float]:
-        return get_losses(annotation=self, losses=losses, max_losses=max_losses)
+        return get_deltas(annotation=self, deltas=deltas, max_losses=max_losses)

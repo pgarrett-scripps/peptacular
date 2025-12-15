@@ -317,9 +317,6 @@ def find_indices(
     return indices
 
 
-# Helper functions
-
-
 def _remove_intervals_copy(annotation: ProFormaAnnotation) -> ProFormaAnnotation:
     """Create a copy of annotation with intervals removed"""
     copy_annot = annotation.copy()
