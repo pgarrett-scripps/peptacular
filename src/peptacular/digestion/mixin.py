@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from typing import Generator, overload
+from typing import Generator
 
 from ..spans import Span
 from .core import (

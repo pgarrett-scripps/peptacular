@@ -160,7 +160,7 @@ def _get_psimod_entries(
                 )
             
             if avg_mass is not None and abs(calc_avg - avg_mass) > 0.2:
-                symbol = '🔴' if abs(calc_avg - avg_mass) > 1.0 else '⚠️'
+                symbol = '⚠️⚠️' if abs(calc_avg - avg_mass) > 1.0 else '⚠️'
                 warnings.warn(
                     f"\n  {symbol}  PSI-MOD MASS MISMATCH [{term_id}] {term_name}\n"
                     f"      Average: calculated={calc_avg:.6f}, reported={avg_mass:.6f}\n"

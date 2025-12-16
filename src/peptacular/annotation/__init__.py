@@ -1,6 +1,3 @@
-from typing import overload
-
-from peptacular.constants import ParrallelMethod, ParrallelMethodLiteral
 from .parser import ProFormaParser, Interval
 from .annotation import ProFormaAnnotation
 from .serializer import serialize_annotation

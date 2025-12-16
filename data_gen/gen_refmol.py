@@ -53,9 +53,7 @@ def gen_refmol() -> None:
                 
                 # Check for non-zero charge
                 if formula.charge is not None:
-                    warnings.warn(
-                        f"Reference molecule {name} has non-zero charge in formula {chemical_formula}"
-                    )
+                    raise ValueError(f"Non-zero charge in formula: {chemical_formula}")
                 
                 formula = pt.ChargedFormula(formula=elements, charge=formula.charge)
                 composition_dict = formula.get_dict_composition()
@@ -69,23 +67,31 @@ def gen_refmol() -> None:
         if "neutral_mass" in info:
             provided_mass = info["neutral_mass"]
             if monoisotopic_mass != 0.0 and abs(provided_mass - monoisotopic_mass) > 0.01:
+
+                symbol = '🔴' if abs(provided_mass - monoisotopic_mass) > 1.0 else '⚠️'
+
                 warnings.warn(
-                    f"\n  ⚠️  REFMOL MASS MISMATCH: {name}\n"
+                    f"\n  {symbol}  REFMOL MASS MISMATCH: {name} | NEUTRAL MASS\n"
                     f"      Calculated: {monoisotopic_mass:.6f}, Provided: {provided_mass:.6f}\n"
+                    f"      Difference: {abs(provided_mass - monoisotopic_mass):.6f}\n"
                     f"      Composition: {composition_dict}"
                 )
-            monoisotopic_mass = provided_mass
-        elif "ion_mz" in info:
+
+        if "ion_mz" in info:
             # For ions, subtract proton mass to get neutral mass
             provided_mz = info["ion_mz"]
-            neutral = provided_mz - 1.007276466812  # Proton mass
-            if monoisotopic_mass != 0.0 and abs(neutral - monoisotopic_mass) > 0.01:
+            neutral_mass = provided_mz - pt.PROTON_MASS
+            if monoisotopic_mass != 0.0 and abs(neutral_mass - monoisotopic_mass) > 0.01:
+
+                symbol = '🔴' if abs(neutral_mass - monoisotopic_mass) > 1.0 else '⚠️'
+
+
                 warnings.warn(
-                    f"\n  ⚠️  REFMOL MASS MISMATCH: {name}\n"
-                    f"      Calculated: {monoisotopic_mass:.6f}, Ion m/z: {provided_mz:.6f} (neutral: {neutral:.6f})\n"
+                    f"\n  {symbol}  REFMOL MASS MISMATCH: {name} | ION M/Z\n"
+                    f"      Calculated: {monoisotopic_mass:.6f}, Ion m/z: {neutral_mass:.6f}\n"
+                    f"      Difference: {abs(neutral_mass - monoisotopic_mass):.6f}\n"
                     f"      Composition: {composition_dict}"
                 )
-            monoisotopic_mass = neutral
         
         dict_entry = f'''RefMolID.{enum_name}: RefMolInfo(
     name="{name}",

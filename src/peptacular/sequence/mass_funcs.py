@@ -12,7 +12,6 @@ from ..annotation.annotation import (
     CHARGE_TYPE,
     ISOTOPE_TYPE,
     LOSS_TYPE,
-    CUSTOM_LOSS_TYPE,
 )
 from .parrallel import parallel_apply_internal
 from .util import get_annotation_input

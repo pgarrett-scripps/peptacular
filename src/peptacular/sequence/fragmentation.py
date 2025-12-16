@@ -12,7 +12,6 @@ from ..annotation.annotation import (
     CHARGE_TYPE,
     ISOTOPE_TYPE,
     LOSS_TYPE,
-    CUSTOM_LOSS_TYPE,
 )
 from ..annotation.utils import Fragment
 from ..fragment import IonType

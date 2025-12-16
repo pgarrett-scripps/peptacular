@@ -13,6 +13,8 @@ A Python package for peptide sequence analysis built around **ProForma 2.0 notat
 - **Format Conversion** - Import sequences from IP2, DIANN, Casanovo, and MS2PIP
 - **Parallel Processing** - Automatic multiprocessing for batch operations
 
+Peptacular uses lazy loading of data wherever possible. Internally, all mods are represented as strings and are only parsed when needed (for example, when calculating mass or composition). If you need strict validation, set validate=True, e.g. pt.parse('PEPTIDE', validate=True). Similarly, accessing the mods via their property (like annotation.nterm_mods) returns a Mods object that contains a reference to the modification strings; this is also lazily loaded and only parses the mods when needed. Values are cached where appropriate, so Peptacular should become faster with repeated calculations.
+
 ## Installation
 
 ```bash
@@ -91,7 +93,7 @@ annot.set_charge(2)
 print(annot.serialize())  # [Acetyl]-PEM[Oxidation]TIDE/2
 ```
 
-### Mass Spectrometry Calculations
+### Mass / MZ / Composition
 
 ```python
 # Calculate masses with different parameters
@@ -126,7 +128,7 @@ dist_fragment = peptide.isotopic_distribution(
 )
 ```
 
-### Protein Digestion
+### Digestion
 
 ```python
 protein = pt.parse("PEPTIDEKPEPTIDERPEPTIDER")

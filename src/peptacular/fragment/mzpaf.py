@@ -87,9 +87,9 @@ class IsotopeSpecification:
         sign = "+" if self.count > 0 else ""
         count_str = "" if abs(self.count) == 1 else str(abs(self.count))
 
-        if self.is_average == True:
+        if self.is_average is True:
             return f"{sign}{count_str}iA"
-        elif self.element != None:
+        elif self.element is not None:
             return f"{sign}{count_str}i{self.element}"
         else:
             return f"{sign}{count_str}i"

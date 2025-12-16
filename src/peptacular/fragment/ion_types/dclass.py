@@ -91,14 +91,18 @@ class FragmentIonInfo:
             raise ValueError("Composition is not available for this ion type")
 
         return Counter(parse_composition(dict(self.dict_composition)))
-        
+
     def to_dict(self, float_precision: int = 6) -> dict[str, object]:
         """Convert the FragmentIonInfo to a dictionary"""
         return {
             "id": self.id,
             "name": self.name,
             "formula": self.formula,
-            "monoisotopic_mass": round(self.monoisotopic_mass, float_precision) if self.monoisotopic_mass is not None else None,
-            "average_mass": round(self.average_mass, float_precision) if self.average_mass is not None else None,
+            "monoisotopic_mass": round(self.monoisotopic_mass, float_precision)
+            if self.monoisotopic_mass is not None
+            else None,
+            "average_mass": round(self.average_mass, float_precision)
+            if self.average_mass is not None
+            else None,
             "composition": self.dict_composition,
         }

@@ -8,7 +8,7 @@ class ElementInfo:
     """
 
     number: int = field(compare=True)
-    mass_number: int | None= field(compare=True)
+    mass_number: int | None = field(compare=True)
     symbol: str = field(compare=False)
     mass: float = field(compare=False)
     abundance: float | None = field(compare=False)
@@ -50,7 +50,6 @@ class ElementInfo:
             "abundance": self.abundance,
             "average_mass": round(self.average_mass, float_precision),
         }
-    
 
     def __repr__(self) -> str:
         return (
@@ -58,17 +57,17 @@ class ElementInfo:
             f"mass={self.mass}, abundance={self.abundance}, average_mass={self.average_mass}, "
             f"is_monoisotopic={self.is_monoisotopic})"
         )
-    
+
     def update(self, **kwargs: object) -> "ElementInfo":
         """Return a new ElementInfo with updated fields"""
         # Since we use slots=True, we need to get fields manually
         current_values: dict[str, object] = {
-            'number': self.number,
-            'symbol': self.symbol,
-            'mass_number': self.mass_number,
-            'mass': self.mass,
-            'abundance': self.abundance,
-            'average_mass': self.average_mass,
-            'is_monoisotopic': self.is_monoisotopic,
+            "number": self.number,
+            "symbol": self.symbol,
+            "mass_number": self.mass_number,
+            "mass": self.mass,
+            "abundance": self.abundance,
+            "average_mass": self.average_mass,
+            "is_monoisotopic": self.is_monoisotopic,
         }
         return self.__class__(**{**current_values, **kwargs})

@@ -1,6 +1,6 @@
 from collections import Counter
 from dataclasses import dataclass
-from typing import Any, Literal, Sequence
+from typing import Any, Literal, Sequence,TypeVar, overload
 
 from ..fragment.neutral_deltas.data import NeutralDelta, NeutralDeltaLiteral
 
@@ -69,7 +69,7 @@ class Fragment:
         if charge_adducts is not None:
             for adduct in charge_adducts:
                 m = adduct.get_mass(monoisotopic=self.monoisotopic)
-                if m is None:
+                if m is None:  # type: ignore
                     raise ValueError(f"Mass not available for charge carrier: {adduct}")
                 adduct_mass += m
         neutral_mass = self.mass - adduct_mass
@@ -103,7 +103,7 @@ class Fragment:
             case dict() as iso_dict:
                 result: dict[ElementInfo, int] = {}
                 for key, value in iso_dict.items():
-                    element = ELEMENT_LOOKUP[key] if isinstance(key, str) else key
+                    element = ELEMENT_LOOKUP[key] if isinstance(key, str) else key 
                     result[element] = value
                 return result
             case int() as iso_count:
@@ -314,7 +314,7 @@ def _handle_charge_input_mass(
     return base_mass, charge_value
 
 
-def _handle_charge_input_comp(
+def handle_charge_input_comp(
     charge: int | str | GlobalChargeCarrier | tuple[GlobalChargeCarrier | str, ...],
 ) -> tuple[Counter[ElementInfo], int]:
     base_comp = Counter[ElementInfo]()
@@ -539,7 +539,7 @@ def adjust_comp(
     fragment_annotation_charge_adducts: tuple[str, ...] | None = None
     total_charge: int = 0
     if charge:
-        comp_adjustment, charge_value = _handle_charge_input_comp(charge=charge)
+        comp_adjustment, charge_value = handle_charge_input_comp(charge=charge)
         base_comp += comp_adjustment
         total_charge = charge_value
 
@@ -661,7 +661,6 @@ def process_losses(
     return total, float_losses
 
 
-from typing import TypeVar, overload
 
 T = TypeVar("T", float, Counter[Any])
 

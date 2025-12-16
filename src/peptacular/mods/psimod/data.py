@@ -3213,7 +3213,7 @@ try:
         formula="C22[1H30][2H8]N4O6S",
         monoisotopic_mass=494.30142,
         average_mass=494.3,
-        dict_composition={'C': 22, 'H': 30, '2D': 8, 'N': 4, 'O': 6, 'S': 1},
+        dict_composition={'C': 22, '1H': 30, '2H': 8, 'N': 4, 'O': 6, 'S': 1},
     ),
     "00403": PsimodInfo(
         id="00403",
@@ -3237,7 +3237,7 @@ try:
         formula="C20[1H26][2H8]N4O5S",
         monoisotopic_mass=450.275205,
         average_mass=450.28,
-        dict_composition={'C': 20, 'H': 26, '2D': 8, 'N': 4, 'O': 5, 'S': 1},
+        dict_composition={'C': 20, '1H': 26, '2H': 8, 'N': 4, 'O': 5, 'S': 1},
     ),
     "00406": PsimodInfo(
         id="00406",
@@ -3245,7 +3245,7 @@ try:
         formula="C20[1H34]N4O5S",
         monoisotopic_mass=442.224991,
         average_mass=442.22,
-        dict_composition={'C': 20, 'H': 34, 'N': 4, 'O': 5, 'S': 1},
+        dict_composition={'C': 20, '1H': 34, 'N': 4, 'O': 5, 'S': 1},
     ),
     "00408": PsimodInfo(
         id="00408",
@@ -3557,7 +3557,7 @@ try:
         formula="C2[1H-1][2H3]O",
         monoisotopic_mass=45.029395,
         average_mass=45.03,
-        dict_composition={'C': 2, 'H': -1, '2D': 3, 'O': 1},
+        dict_composition={'C': 2, '1H': -1, '2H': 3, 'O': 1},
     ),
     "00451": PsimodInfo(
         id="00451",
@@ -3589,7 +3589,7 @@ try:
         formula="C7[1H10][2H3]NO",
         monoisotopic_mass=130.118544,
         average_mass=130.12,
-        dict_composition={'C': 7, 'H': 10, '2D': 3, 'N': 1, 'O': 1},
+        dict_composition={'C': 7, '1H': 10, '2H': 3, 'N': 1, 'O': 1},
     ),
     "00455": PsimodInfo(
         id="00455",
@@ -3597,7 +3597,7 @@ try:
         formula="C7H7[2H6]NO",
         monoisotopic_mass=133.137375,
         average_mass=133.14,
-        dict_composition={'C': 7, 'H': 7, '2D': 6, 'N': 1, 'O': 1},
+        dict_composition={'C': 7, 'H': 7, '2H': 6, 'N': 1, 'O': 1},
     ),
     "00456": PsimodInfo(
         id="00456",
@@ -3605,7 +3605,7 @@ try:
         formula="C7[1H4][2H9]NO",
         monoisotopic_mass=136.156205,
         average_mass=136.16,
-        dict_composition={'C': 7, 'H': 4, '2D': 9, 'N': 1, 'O': 1},
+        dict_composition={'C': 7, '1H': 4, '2H': 9, 'N': 1, 'O': 1},
     ),
     "00457": PsimodInfo(
         id="00457",
@@ -3613,7 +3613,7 @@ try:
         formula="[12C4][1H4]O3",
         monoisotopic_mass=100.016044,
         average_mass=100.03,
-        dict_composition={'C': 4, 'H': 4, 'O': 3},
+        dict_composition={'12C': 4, '1H': 4, 'O': 3},
     ),
     "00458": PsimodInfo(
         id="00458",
@@ -3621,7 +3621,7 @@ try:
         formula="C4[2H4]O3",
         monoisotopic_mass=104.041151,
         average_mass=104.04,
-        dict_composition={'C': 4, '2D': 4, 'O': 3},
+        dict_composition={'C': 4, '2H': 4, 'O': 3},
     ),
     "00459": PsimodInfo(
         id="00459",
@@ -3709,7 +3709,7 @@ try:
         formula="C16[1H16][2H10]N4O2S",
         monoisotopic_mass=348.240415,
         average_mass=348.24,
-        dict_composition={'C': 16, 'H': 16, '2D': 10, 'N': 4, 'O': 2, 'S': 1},
+        dict_composition={'C': 16, '1H': 16, '2H': 10, 'N': 4, 'O': 2, 'S': 1},
     ),
     "00470": PsimodInfo(
         id="00470",
@@ -3733,7 +3733,7 @@ try:
         formula="C3[1H4]N2",
         monoisotopic_mass=68.037448,
         average_mass=68.04,
-        dict_composition={'C': 3, 'H': 4, 'N': 2},
+        dict_composition={'C': 3, '1H': 4, 'N': 2},
     ),
     "00473": PsimodInfo(
         id="00473",
@@ -3741,7 +3741,7 @@ try:
         formula="C3[2H4]N2",
         monoisotopic_mass=72.062555,
         average_mass=72.06,
-        dict_composition={'C': 3, '2D': 4, 'N': 2},
+        dict_composition={'C': 3, '2H': 4, 'N': 2},
     ),
     "00474": PsimodInfo(
         id="00474",
@@ -3749,7 +3749,7 @@ try:
         formula="C3[1H2][2H3]NO",
         monoisotopic_mass=74.055944,
         average_mass=74.06,
-        dict_composition={'C': 3, 'H': 2, '2D': 3, 'N': 1, 'O': 1},
+        dict_composition={'C': 3, '1H': 2, '2H': 3, 'N': 1, 'O': 1},
     ),
     "00475": PsimodInfo(
         id="00475",
@@ -3805,7 +3805,7 @@ try:
         formula="[12C][13C9]H17N3O3",
         monoisotopic_mass=236.157185,
         average_mass=236.16,
-        dict_composition={'C': 1, '13C': 9, 'H': 17, 'N': 3, 'O': 3},
+        dict_composition={'12C': 1, '13C': 9, 'H': 17, 'N': 3, 'O': 3},
     ),
     "00482": PsimodInfo(
         id="00482",
@@ -3917,7 +3917,7 @@ try:
         formula="[12C9][13C6]ClH20NO6S0",
         monoisotopic_mass=351.118044,
         average_mass=351.12,
-        dict_composition={'C': 9, '13C': 6, 'Cl': 1, 'H': 20, 'N': 1, 'O': 6, 'S': 0},
+        dict_composition={'12C': 9, '13C': 6, 'Cl': 1, 'H': 20, 'N': 1, 'O': 6, 'S': 0},
     ),
     "00497": PsimodInfo(
         id="00497",
@@ -4197,7 +4197,7 @@ try:
         formula="[12C6]H3NO2S",
         monoisotopic_mass=152.988449,
         average_mass=152.99,
-        dict_composition={'C': 6, 'H': 3, 'N': 1, 'O': 2, 'S': 1},
+        dict_composition={'12C': 6, 'H': 3, 'N': 1, 'O': 2, 'S': 1},
     ),
     "00534": PsimodInfo(
         id="00534",
@@ -4237,7 +4237,7 @@ try:
         formula="[12C-9][13C9]",
         monoisotopic_mass=9.030194,
         average_mass=9.03,
-        dict_composition={'C': -9, '13C': 9},
+        dict_composition={'12C': -9, '13C': 9},
     ),
     "00541": PsimodInfo(
         id="00541",
@@ -4245,7 +4245,7 @@ try:
         formula="[12C-9][13C9]HO3P",
         monoisotopic_mass=88.996524,
         average_mass=89.0,
-        dict_composition={'C': -9, '13C': 9, 'H': 1, 'O': 3, 'P': 1},
+        dict_composition={'12C': -9, '13C': 9, 'H': 1, 'O': 3, 'P': 1},
     ),
     "00542": PsimodInfo(
         id="00542",
@@ -4269,7 +4269,7 @@ try:
         formula="[12C-6][13C6]",
         monoisotopic_mass=6.020129,
         average_mass=6.02,
-        dict_composition={'C': -6, '13C': 6},
+        dict_composition={'12C': -6, '13C': 6},
     ),
     "00546": PsimodInfo(
         id="00546",
@@ -4277,7 +4277,7 @@ try:
         formula="[16O-2][18O2]",
         monoisotopic_mass=4.008493,
         average_mass=4.01,
-        dict_composition={'O': -2, '18O': 2},
+        dict_composition={'16O': -2, '18O': 2},
     ),
     "00547": PsimodInfo(
         id="00547",
@@ -4301,7 +4301,7 @@ try:
         formula="C9[1H16][2H3]N2O",
         monoisotopic_mass=174.168568,
         average_mass=174.17,
-        dict_composition={'C': 9, 'H': 16, '2D': 3, 'N': 2, 'O': 1},
+        dict_composition={'C': 9, '1H': 16, '2H': 3, 'N': 2, 'O': 1},
     ),
     "00550": PsimodInfo(
         id="00550",
@@ -4317,7 +4317,7 @@ try:
         formula="C10[1H15][2H5]N2O",
         monoisotopic_mass=189.188947,
         average_mass=189.19,
-        dict_composition={'C': 10, 'H': 15, '2D': 5, 'N': 2, 'O': 1},
+        dict_composition={'C': 10, '1H': 15, '2H': 5, 'N': 2, 'O': 1},
     ),
     "00552": PsimodInfo(
         id="00552",
@@ -4325,7 +4325,7 @@ try:
         formula="C2[2H4]",
         monoisotopic_mass=32.056407,
         average_mass=32.06,
-        dict_composition={'C': 2, '2D': 4},
+        dict_composition={'C': 2, '2H': 4},
     ),
     "00553": PsimodInfo(
         id="00553",
@@ -4349,7 +4349,7 @@ try:
         formula="C4[1H2][2H5]NO",
         monoisotopic_mass=90.084148,
         average_mass=90.08,
-        dict_composition={'C': 4, 'H': 2, '2D': 5, 'N': 1, 'O': 1},
+        dict_composition={'C': 4, '1H': 2, '2H': 5, 'N': 1, 'O': 1},
     ),
     "00563": PsimodInfo(
         id="00563",
@@ -4453,7 +4453,7 @@ try:
         formula="[16O-1][18O]",
         monoisotopic_mass=2.004246,
         average_mass=2.0,
-        dict_composition={'O': -1, '18O': 1},
+        dict_composition={'16O': -1, '18O': 1},
     ),
     "00582": PsimodInfo(
         id="00582",
@@ -4461,7 +4461,7 @@ try:
         formula="[12C-6][13C6][14N-2][15N2]",
         monoisotopic_mass=8.014199,
         average_mass=8.01,
-        dict_composition={'C': -6, '13C': 6, 'N': -2, '15N': 2},
+        dict_composition={'12C': -6, '13C': 6, '14N': -2, '15N': 2},
     ),
     "00583": PsimodInfo(
         id="00583",
@@ -4485,7 +4485,7 @@ try:
         formula="[1H-3][2H3]",
         monoisotopic_mass=3.01883,
         average_mass=3.02,
-        dict_composition={'H': -3, '2D': 3},
+        dict_composition={'1H': -3, '2H': 3},
     ),
     "00586": PsimodInfo(
         id="00586",
@@ -4501,7 +4501,7 @@ try:
         formula="[12C-6][13C6][14N-4][15N4]",
         monoisotopic_mass=10.008269,
         average_mass=10.01,
-        dict_composition={'C': -6, '13C': 6, 'N': -4, '15N': 4},
+        dict_composition={'12C': -6, '13C': 6, '14N': -4, '15N': 4},
     ),
     "00588": PsimodInfo(
         id="00588",
@@ -4509,7 +4509,7 @@ try:
         formula="[12C-5][13C5][14N-1][15N]",
         monoisotopic_mass=6.013809,
         average_mass=6.01,
-        dict_composition={'C': -5, '13C': 5, 'N': -1, '15N': 1},
+        dict_composition={'12C': -5, '13C': 5, '14N': -1, '15N': 1},
     ),
     "00589": PsimodInfo(
         id="00589",
@@ -4517,7 +4517,7 @@ try:
         formula="[12C-9][13C9][14N-1][15N]",
         monoisotopic_mass=10.027228,
         average_mass=10.03,
-        dict_composition={'C': -9, '13C': 9, 'N': -1, '15N': 1},
+        dict_composition={'12C': -9, '13C': 9, '14N': -1, '15N': 1},
     ),
     "00592": PsimodInfo(
         id="00592",
@@ -4597,7 +4597,7 @@ try:
         formula="C[2H2]",
         monoisotopic_mass=16.028204,
         average_mass=16.03,
-        dict_composition={'C': 1, '2D': 2},
+        dict_composition={'C': 1, '2H': 2},
     ),
     "00605": PsimodInfo(
         id="00605",
@@ -4605,7 +4605,7 @@ try:
         formula="[12C6]H5NO2S",
         monoisotopic_mass=155.004099,
         average_mass=155.0,
-        dict_composition={'C': 6, 'H': 5, 'N': 1, 'O': 2, 'S': 1},
+        dict_composition={'12C': 6, 'H': 5, 'N': 1, 'O': 2, 'S': 1},
     ),
     "00606": PsimodInfo(
         id="00606",
@@ -4693,7 +4693,7 @@ try:
         formula="C[1H-1][2H3]",
         monoisotopic_mass=17.03448,
         average_mass=17.03,
-        dict_composition={'C': 1, 'H': -1, '2D': 3},
+        dict_composition={'C': 1, '1H': -1, '2H': 3},
     ),
     "00618": PsimodInfo(
         id="00618",
@@ -4837,7 +4837,7 @@ try:
         formula="[13C][1H-1][2H3]",
         monoisotopic_mass=18.037835,
         average_mass=18.04,
-        dict_composition={'13C': 1, 'H': -1, '2D': 3},
+        dict_composition={'13C': 1, '1H': -1, '2H': 3},
     ),
     "00638": PsimodInfo(
         id="00638",
@@ -4845,7 +4845,7 @@ try:
         formula="[13C2][1H-2][2H6]",
         monoisotopic_mass=36.07567,
         average_mass=36.08,
-        dict_composition={'13C': 2, 'H': -2, '2D': 6},
+        dict_composition={'13C': 2, '1H': -2, '2H': 6},
     ),
     "00639": PsimodInfo(
         id="00639",
@@ -6037,7 +6037,7 @@ try:
         formula="[12C6]H3NO",
         monoisotopic_mass=105.021464,
         average_mass=105.02,
-        dict_composition={'C': 6, 'H': 3, 'N': 1, 'O': 1},
+        dict_composition={'12C': 6, 'H': 3, 'N': 1, 'O': 1},
     ),
     "00791": PsimodInfo(
         id="00791",
@@ -6405,7 +6405,7 @@ try:
         formula="[1H-3][2H3]",
         monoisotopic_mass=3.01883,
         average_mass=3.02,
-        dict_composition={'H': -3, '2D': 3},
+        dict_composition={'1H': -3, '2H': 3},
     ),
     "00839": PsimodInfo(
         id="00839",
@@ -6525,7 +6525,7 @@ try:
         formula="H-1N-1[16O-1][18O2]",
         monoisotopic_mass=4.992508,
         average_mass=4.99,
-        dict_composition={'H': -1, 'N': -1, 'O': -1, '18O': 2},
+        dict_composition={'H': -1, 'N': -1, '16O': -1, '18O': 2},
     ),
     "00854": PsimodInfo(
         id="00854",
@@ -6669,7 +6669,7 @@ try:
         formula="C7[2H5]NO",
         monoisotopic_mass=124.068498,
         average_mass=124.07,
-        dict_composition={'C': 7, '2D': 5, 'N': 1, 'O': 1},
+        dict_composition={'C': 7, '2H': 5, 'N': 1, 'O': 1},
     ),
     "00873": PsimodInfo(
         id="00873",
@@ -6733,7 +6733,7 @@ try:
         formula="[12C][13C6]H5NO3S2",
         monoisotopic_mass=220.991214,
         average_mass=220.99,
-        dict_composition={'C': 1, '13C': 6, 'H': 5, 'N': 1, 'O': 3, 'S': 2},
+        dict_composition={'12C': 1, '13C': 6, 'H': 5, 'N': 1, 'O': 3, 'S': 2},
     ),
     "00882": PsimodInfo(
         id="00882",
@@ -7085,7 +7085,7 @@ try:
         formula="[13C2][2H4]",
         monoisotopic_mass=34.063117,
         average_mass=34.06,
-        dict_composition={'13C': 2, '2D': 4},
+        dict_composition={'13C': 2, '2H': 4},
     ),
     "00928": PsimodInfo(
         id="00928",
@@ -7125,7 +7125,7 @@ try:
         formula="Br[12C10][13C2]H13N2O2",
         monoisotopic_mass=298.022749,
         average_mass=298.02,
-        dict_composition={'Br': 1, 'C': 10, '13C': 2, 'H': 13, 'N': 2, 'O': 2},
+        dict_composition={'Br': 1, '12C': 10, '13C': 2, 'H': 13, 'N': 2, 'O': 2},
     ),
     "00933": PsimodInfo(
         id="00933",
@@ -7205,7 +7205,7 @@ try:
         formula="[1H-4][2H4]",
         monoisotopic_mass=4.025107,
         average_mass=4.03,
-        dict_composition={'H': -4, '2D': 4},
+        dict_composition={'1H': -4, '2H': 4},
     ),
     "00943": PsimodInfo(
         id="00943",
@@ -7221,7 +7221,7 @@ try:
         formula="C7[1H5][2H9]NO",
         monoisotopic_mass=137.16403,
         average_mass=137.16,
-        dict_composition={'C': 7, 'H': 5, '2D': 9, 'N': 1, 'O': 1},
+        dict_composition={'C': 7, '1H': 5, '2H': 9, 'N': 1, 'O': 1},
     ),
     "00946": PsimodInfo(
         id="00946",
@@ -7405,7 +7405,7 @@ try:
         formula="[35Cl]H-1",
         monoisotopic_mass=33.961028,
         average_mass=33.96,
-        dict_composition={'Cl': 1, 'H': -1},
+        dict_composition={'35Cl': 1, 'H': -1},
     ),
     "00975": PsimodInfo(
         id="00975",
@@ -7469,7 +7469,7 @@ try:
         formula="[35Cl2]H-2",
         monoisotopic_mass=67.922055,
         average_mass=67.92,
-        dict_composition={'Cl': 2, 'H': -2},
+        dict_composition={'35Cl': 2, 'H': -2},
     ),
     "00985": PsimodInfo(
         id="00985",
@@ -7485,7 +7485,7 @@ try:
         formula="[35Cl][37Cl]H-2",
         monoisotopic_mass=69.919105,
         average_mass=69.92,
-        dict_composition={'Cl': 1, '37Cl': 1, 'H': -2},
+        dict_composition={'35Cl': 1, '37Cl': 1, 'H': -2},
     ),
     "00987": PsimodInfo(
         id="00987",
@@ -7541,7 +7541,7 @@ try:
         formula="[79Br]H-1",
         monoisotopic_mass=77.910512,
         average_mass=77.91,
-        dict_composition={'Br': 1, 'H': -1},
+        dict_composition={'79Br': 1, 'H': -1},
     ),
     "00995": PsimodInfo(
         id="00995",
@@ -7989,7 +7989,7 @@ try:
         formula="[79Br2]C0H-2N0O0",
         monoisotopic_mass=155.821024,
         average_mass=155.82,
-        dict_composition={'Br': 2, 'C': 0, 'H': -2, 'N': 0, 'O': 0},
+        dict_composition={'79Br': 2, 'C': 0, 'H': -2, 'N': 0, 'O': 0},
     ),
     "01057": PsimodInfo(
         id="01057",
@@ -7997,7 +7997,7 @@ try:
         formula="[79Br][81Br]C0H-2N0O0",
         monoisotopic_mass=157.818978,
         average_mass=157.82,
-        dict_composition={'Br': 1, '81Br': 1, 'C': 0, 'H': -2, 'N': 0, 'O': 0},
+        dict_composition={'79Br': 1, '81Br': 1, 'C': 0, 'H': -2, 'N': 0, 'O': 0},
     ),
     "01058": PsimodInfo(
         id="01058",
@@ -8893,7 +8893,7 @@ try:
         formula="C4[1H2][2H5]NO",
         monoisotopic_mass=90.084148,
         average_mass=90.08,
-        dict_composition={'C': 4, 'H': 2, '2D': 5, 'N': 1, 'O': 1},
+        dict_composition={'C': 4, '1H': 2, '2H': 5, 'N': 1, 'O': 1},
     ),
     "01189": PsimodInfo(
         id="01189",
@@ -8901,7 +8901,7 @@ try:
         formula="C4[1H2][2H5]NO",
         monoisotopic_mass=90.084148,
         average_mass=90.08,
-        dict_composition={'C': 4, 'H': 2, '2D': 5, 'N': 1, 'O': 1},
+        dict_composition={'C': 4, '1H': 2, '2H': 5, 'N': 1, 'O': 1},
     ),
     "01191": PsimodInfo(
         id="01191",
@@ -9101,7 +9101,7 @@ try:
         formula="[12C6]H5NO2S",
         monoisotopic_mass=155.004099,
         average_mass=155.0,
-        dict_composition={'C': 6, 'H': 5, 'N': 1, 'O': 2, 'S': 1},
+        dict_composition={'12C': 6, 'H': 5, 'N': 1, 'O': 2, 'S': 1},
     ),
     "01218": PsimodInfo(
         id="01218",
@@ -9109,7 +9109,7 @@ try:
         formula="[12C6]H5NO2S",
         monoisotopic_mass=155.004099,
         average_mass=155.0,
-        dict_composition={'C': 6, 'H': 5, 'N': 1, 'O': 2, 'S': 1},
+        dict_composition={'12C': 6, 'H': 5, 'N': 1, 'O': 2, 'S': 1},
     ),
     "01219": PsimodInfo(
         id="01219",
@@ -9205,7 +9205,7 @@ try:
         formula="[12C6]H3NO",
         monoisotopic_mass=105.021464,
         average_mass=105.02,
-        dict_composition={'C': 6, 'H': 3, 'N': 1, 'O': 1},
+        dict_composition={'12C': 6, 'H': 3, 'N': 1, 'O': 1},
     ),
     "01231": PsimodInfo(
         id="01231",
@@ -9221,7 +9221,7 @@ try:
         formula="[12C3]H4O",
         monoisotopic_mass=56.026215,
         average_mass=56.03,
-        dict_composition={'C': 3, 'H': 4, 'O': 1},
+        dict_composition={'12C': 3, 'H': 4, 'O': 1},
     ),
     "01233": PsimodInfo(
         id="01233",
@@ -9229,7 +9229,7 @@ try:
         formula="C2[1H-1][2H3]O",
         monoisotopic_mass=45.029395,
         average_mass=45.03,
-        dict_composition={'C': 2, 'H': -1, '2D': 3, 'O': 1},
+        dict_composition={'C': 2, '1H': -1, '2H': 3, 'O': 1},
     ),
     "01234": PsimodInfo(
         id="01234",
@@ -9237,7 +9237,7 @@ try:
         formula="[16O-1][18O]",
         monoisotopic_mass=2.004246,
         average_mass=2.0,
-        dict_composition={'O': -1, '18O': 1},
+        dict_composition={'16O': -1, '18O': 1},
     ),
     "01235": PsimodInfo(
         id="01235",
@@ -9245,7 +9245,7 @@ try:
         formula="[16O-1][18O]",
         monoisotopic_mass=2.004246,
         average_mass=2.0,
-        dict_composition={'O': -1, '18O': 1},
+        dict_composition={'16O': -1, '18O': 1},
     ),
     "01236": PsimodInfo(
         id="01236",
@@ -9253,7 +9253,7 @@ try:
         formula="[16O-1][18O]",
         monoisotopic_mass=2.004246,
         average_mass=2.0,
-        dict_composition={'O': -1, '18O': 1},
+        dict_composition={'16O': -1, '18O': 1},
     ),
     "01237": PsimodInfo(
         id="01237",
@@ -9293,7 +9293,7 @@ try:
         formula="C[1H-1][2H3]",
         monoisotopic_mass=17.03448,
         average_mass=17.03,
-        dict_composition={'C': 1, 'H': -1, '2D': 3},
+        dict_composition={'C': 1, '1H': -1, '2H': 3},
     ),
     "01242": PsimodInfo(
         id="01242",
@@ -9301,7 +9301,7 @@ try:
         formula="C[1H-1][2H3]",
         monoisotopic_mass=17.03448,
         average_mass=17.03,
-        dict_composition={'C': 1, 'H': -1, '2D': 3},
+        dict_composition={'C': 1, '1H': -1, '2H': 3},
     ),
     "01243": PsimodInfo(
         id="01243",
@@ -9373,7 +9373,7 @@ try:
         formula="C2[2H4]",
         monoisotopic_mass=32.056407,
         average_mass=32.06,
-        dict_composition={'C': 2, '2D': 4},
+        dict_composition={'C': 2, '2H': 4},
     ),
     "01255": PsimodInfo(
         id="01255",
@@ -9501,7 +9501,7 @@ try:
         formula="[12C-6][13C6][14N-1][15N]",
         monoisotopic_mass=7.017164,
         average_mass=7.02,
-        dict_composition={'C': -6, '13C': 6, 'N': -1, '15N': 1},
+        dict_composition={'12C': -6, '13C': 6, '14N': -1, '15N': 1},
     ),
     "01286": PsimodInfo(
         id="01286",
@@ -9509,7 +9509,7 @@ try:
         formula="[12C-6][13C6][14N-1][15N]",
         monoisotopic_mass=7.017164,
         average_mass=7.02,
-        dict_composition={'C': -6, '13C': 6, 'N': -1, '15N': 1},
+        dict_composition={'12C': -6, '13C': 6, '14N': -1, '15N': 1},
     ),
     "01287": PsimodInfo(
         id="01287",
@@ -9549,7 +9549,7 @@ try:
         formula="[12C-5][13C5]",
         monoisotopic_mass=5.016774,
         average_mass=5.02,
-        dict_composition={'C': -5, '13C': 5},
+        dict_composition={'12C': -5, '13C': 5},
     ),
     "01298": PsimodInfo(
         id="01298",
@@ -9653,7 +9653,7 @@ try:
         formula="C3[1H9]N",
         monoisotopic_mass=59.073499,
         average_mass=59.07,
-        dict_composition={'C': 3, 'H': 9, 'N': 1},
+        dict_composition={'C': 3, '1H': 9, 'N': 1},
     ),
     "01311": PsimodInfo(
         id="01311",
@@ -9661,7 +9661,7 @@ try:
         formula="C3[1H6][2H3]N",
         monoisotopic_mass=62.09233,
         average_mass=62.09,
-        dict_composition={'C': 3, 'H': 6, '2D': 3, 'N': 1},
+        dict_composition={'C': 3, '1H': 6, '2H': 3, 'N': 1},
     ),
     "01312": PsimodInfo(
         id="01312",
@@ -9669,7 +9669,7 @@ try:
         formula="C3[1H3][2H6]N",
         monoisotopic_mass=65.11116,
         average_mass=65.11,
-        dict_composition={'C': 3, 'H': 3, '2D': 6, 'N': 1},
+        dict_composition={'C': 3, '1H': 3, '2H': 6, 'N': 1},
     ),
     "01313": PsimodInfo(
         id="01313",
@@ -9677,7 +9677,7 @@ try:
         formula="C3[2H9]N",
         monoisotopic_mass=68.12999,
         average_mass=68.13,
-        dict_composition={'C': 3, '2D': 9, 'N': 1},
+        dict_composition={'C': 3, '2H': 9, 'N': 1},
     ),
     "01314": PsimodInfo(
         id="01314",
@@ -9685,7 +9685,7 @@ try:
         formula="[12C4][1H4]O3",
         monoisotopic_mass=100.016044,
         average_mass=100.02,
-        dict_composition={'C': 4, 'H': 4, 'O': 3},
+        dict_composition={'12C': 4, '1H': 4, 'O': 3},
     ),
     "01315": PsimodInfo(
         id="01315",
@@ -9693,7 +9693,7 @@ try:
         formula="C4[2H4]O3",
         monoisotopic_mass=104.041151,
         average_mass=104.04,
-        dict_composition={'C': 4, '2D': 4, 'O': 3},
+        dict_composition={'C': 4, '2H': 4, 'O': 3},
     ),
     "01316": PsimodInfo(
         id="01316",
@@ -9749,7 +9749,7 @@ try:
         formula="[12C-9][13C9]",
         monoisotopic_mass=9.030194,
         average_mass=9.03,
-        dict_composition={'C': -9, '13C': 9},
+        dict_composition={'12C': -9, '13C': 9},
     ),
     "01327": PsimodInfo(
         id="01327",
@@ -9757,7 +9757,7 @@ try:
         formula="[12C-9][13C9]",
         monoisotopic_mass=9.030194,
         average_mass=9.03,
-        dict_composition={'C': -9, '13C': 9},
+        dict_composition={'12C': -9, '13C': 9},
     ),
     "01328": PsimodInfo(
         id="01328",
@@ -9773,7 +9773,7 @@ try:
         formula="[12C-6][13C6]",
         monoisotopic_mass=6.020129,
         average_mass=6.02,
-        dict_composition={'C': -6, '13C': 6},
+        dict_composition={'12C': -6, '13C': 6},
     ),
     "01332": PsimodInfo(
         id="01332",
@@ -9781,7 +9781,7 @@ try:
         formula="[12C-6][13C6]",
         monoisotopic_mass=6.020129,
         average_mass=6.02,
-        dict_composition={'C': -6, '13C': 6},
+        dict_composition={'12C': -6, '13C': 6},
     ),
     "01333": PsimodInfo(
         id="01333",
@@ -9789,7 +9789,7 @@ try:
         formula="[12C-6][13C6]",
         monoisotopic_mass=6.020129,
         average_mass=6.02,
-        dict_composition={'C': -6, '13C': 6},
+        dict_composition={'12C': -6, '13C': 6},
     ),
     "01334": PsimodInfo(
         id="01334",
@@ -9797,7 +9797,7 @@ try:
         formula="[12C-6][13C6]",
         monoisotopic_mass=6.020129,
         average_mass=6.02,
-        dict_composition={'C': -6, '13C': 6},
+        dict_composition={'12C': -6, '13C': 6},
     ),
     "01335": PsimodInfo(
         id="01335",
@@ -9805,7 +9805,7 @@ try:
         formula="[12C][13C6]H5NO3S2",
         monoisotopic_mass=220.991214,
         average_mass=220.99,
-        dict_composition={'C': 1, '13C': 6, 'H': 5, 'N': 1, 'O': 3, 'S': 2},
+        dict_composition={'12C': 1, '13C': 6, 'H': 5, 'N': 1, 'O': 3, 'S': 2},
     ),
     "01337": PsimodInfo(
         id="01337",
@@ -9837,7 +9837,7 @@ try:
         formula="C16[1H16][2H10]N4O2S",
         monoisotopic_mass=348.240415,
         average_mass=348.24,
-        dict_composition={'C': 16, 'H': 16, '2D': 10, 'N': 4, 'O': 2, 'S': 1},
+        dict_composition={'C': 16, '1H': 16, '2H': 10, 'N': 4, 'O': 2, 'S': 1},
     ),
     "01341": PsimodInfo(
         id="01341",
@@ -9949,7 +9949,7 @@ try:
         formula="[13C2][2H4]",
         monoisotopic_mass=34.063117,
         average_mass=34.06,
-        dict_composition={'13C': 2, '2D': 4},
+        dict_composition={'13C': 2, '2H': 4},
     ),
     "01358": PsimodInfo(
         id="01358",
@@ -9957,7 +9957,7 @@ try:
         formula="C6[1H-1][2H4]NO",
         monoisotopic_mass=109.046571,
         average_mass=109.05,
-        dict_composition={'C': 6, 'H': -1, '2D': 4, 'N': 1, 'O': 1},
+        dict_composition={'C': 6, '1H': -1, '2H': 4, 'N': 1, 'O': 1},
     ),
     "01359": PsimodInfo(
         id="01359",
@@ -9965,7 +9965,7 @@ try:
         formula="C6[1H-1][2H4]NO",
         monoisotopic_mass=109.046571,
         average_mass=109.05,
-        dict_composition={'C': 6, 'H': -1, '2D': 4, 'N': 1, 'O': 1},
+        dict_composition={'C': 6, '1H': -1, '2H': 4, 'N': 1, 'O': 1},
     ),
     "01360": PsimodInfo(
         id="01360",
@@ -10053,7 +10053,7 @@ try:
         formula="[12C-6][13C6][14N-1][15N]",
         monoisotopic_mass=7.017164,
         average_mass=7.02,
-        dict_composition={'C': -6, '13C': 6, 'N': -1, '15N': 1},
+        dict_composition={'12C': -6, '13C': 6, '14N': -1, '15N': 1},
     ),
     "01372": PsimodInfo(
         id="01372",
@@ -10749,7 +10749,7 @@ try:
         formula="C2[2H4]",
         monoisotopic_mass=32.056407,
         average_mass=32.06,
-        dict_composition={'C': 2, '2D': 4},
+        dict_composition={'C': 2, '2H': 4},
     ),
     "01460": PsimodInfo(
         id="01460",
@@ -10957,7 +10957,7 @@ try:
         formula="[12C5][13C2]H12N2[18O]",
         monoisotopic_mass=144.105919,
         average_mass=144.11,
-        dict_composition={'C': 5, '13C': 2, 'H': 12, 'N': 2, '18O': 1},
+        dict_composition={'12C': 5, '13C': 2, 'H': 12, 'N': 2, '18O': 1},
     ),
     "01486": PsimodInfo(
         id="01486",
@@ -10965,7 +10965,7 @@ try:
         formula="[12C5][13C2]H12N2[18O]",
         monoisotopic_mass=144.105919,
         average_mass=144.11,
-        dict_composition={'C': 5, '13C': 2, 'H': 12, 'N': 2, '18O': 1},
+        dict_composition={'12C': 5, '13C': 2, 'H': 12, 'N': 2, '18O': 1},
     ),
     "01487": PsimodInfo(
         id="01487",
@@ -10973,7 +10973,7 @@ try:
         formula="[12C5][13C2]H12N2[18O]",
         monoisotopic_mass=144.105919,
         average_mass=144.11,
-        dict_composition={'C': 5, '13C': 2, 'H': 12, 'N': 2, '18O': 1},
+        dict_composition={'12C': 5, '13C': 2, 'H': 12, 'N': 2, '18O': 1},
     ),
     "01488": PsimodInfo(
         id="01488",
@@ -10981,7 +10981,7 @@ try:
         formula="[12C5][13C2]H12N2[18O]",
         monoisotopic_mass=144.105919,
         average_mass=144.11,
-        dict_composition={'C': 5, '13C': 2, 'H': 12, 'N': 2, '18O': 1},
+        dict_composition={'12C': 5, '13C': 2, 'H': 12, 'N': 2, '18O': 1},
     ),
     "01489": PsimodInfo(
         id="01489",
@@ -10989,7 +10989,7 @@ try:
         formula="[12C5][13C2]H12N2[18O]",
         monoisotopic_mass=144.105919,
         average_mass=144.11,
-        dict_composition={'C': 5, '13C': 2, 'H': 12, 'N': 2, '18O': 1},
+        dict_composition={'12C': 5, '13C': 2, 'H': 12, 'N': 2, '18O': 1},
     ),
     "01490": PsimodInfo(
         id="01490",
@@ -10997,7 +10997,7 @@ try:
         formula="[12C5][13C2]H12N2[18O]",
         monoisotopic_mass=144.105919,
         average_mass=144.11,
-        dict_composition={'C': 5, '13C': 2, 'H': 12, 'N': 2, '18O': 1},
+        dict_composition={'12C': 5, '13C': 2, 'H': 12, 'N': 2, '18O': 1},
     ),
     "01491": PsimodInfo(
         id="01491",
@@ -11005,7 +11005,7 @@ try:
         formula="[12C5][13C2]H12N2[18O]",
         monoisotopic_mass=144.105919,
         average_mass=144.11,
-        dict_composition={'C': 5, '13C': 2, 'H': 12, 'N': 2, '18O': 1},
+        dict_composition={'12C': 5, '13C': 2, 'H': 12, 'N': 2, '18O': 1},
     ),
     "01492": PsimodInfo(
         id="01492",
@@ -11013,7 +11013,7 @@ try:
         formula="[12C6][13C]H12[14N][15N][18O]",
         monoisotopic_mass=144.099599,
         average_mass=144.1,
-        dict_composition={'C': 6, '13C': 1, 'H': 12, 'N': 1, '15N': 1, '18O': 1},
+        dict_composition={'12C': 6, '13C': 1, 'H': 12, '14N': 1, '15N': 1, '18O': 1},
     ),
     "01493": PsimodInfo(
         id="01493",
@@ -11021,7 +11021,7 @@ try:
         formula="[12C6][13C]H12[14N][15N][18O]",
         monoisotopic_mass=144.099599,
         average_mass=144.1,
-        dict_composition={'C': 6, '13C': 1, 'H': 12, 'N': 1, '15N': 1, '18O': 1},
+        dict_composition={'12C': 6, '13C': 1, 'H': 12, '14N': 1, '15N': 1, '18O': 1},
     ),
     "01494": PsimodInfo(
         id="01494",
@@ -11029,7 +11029,7 @@ try:
         formula="[12C6][13C]H12[14N][15N][18O]",
         monoisotopic_mass=144.099599,
         average_mass=144.1,
-        dict_composition={'C': 6, '13C': 1, 'H': 12, 'N': 1, '15N': 1, '18O': 1},
+        dict_composition={'12C': 6, '13C': 1, 'H': 12, '14N': 1, '15N': 1, '18O': 1},
     ),
     "01495": PsimodInfo(
         id="01495",
@@ -11037,7 +11037,7 @@ try:
         formula="[12C6][13C]H12[14N][15N][18O]",
         monoisotopic_mass=144.099599,
         average_mass=144.1,
-        dict_composition={'C': 6, '13C': 1, 'H': 12, 'N': 1, '15N': 1, '18O': 1},
+        dict_composition={'12C': 6, '13C': 1, 'H': 12, '14N': 1, '15N': 1, '18O': 1},
     ),
     "01496": PsimodInfo(
         id="01496",
@@ -11045,7 +11045,7 @@ try:
         formula="[12C6][13C]H12[14N][15N][18O]",
         monoisotopic_mass=144.099599,
         average_mass=144.1,
-        dict_composition={'C': 6, '13C': 1, 'H': 12, 'N': 1, '15N': 1, '18O': 1},
+        dict_composition={'12C': 6, '13C': 1, 'H': 12, '14N': 1, '15N': 1, '18O': 1},
     ),
     "01497": PsimodInfo(
         id="01497",
@@ -11053,7 +11053,7 @@ try:
         formula="[12C6][13C]H12[14N][15N][18O]",
         monoisotopic_mass=144.099599,
         average_mass=144.1,
-        dict_composition={'C': 6, '13C': 1, 'H': 12, 'N': 1, '15N': 1, '18O': 1},
+        dict_composition={'12C': 6, '13C': 1, 'H': 12, '14N': 1, '15N': 1, '18O': 1},
     ),
     "01498": PsimodInfo(
         id="01498",
@@ -11061,7 +11061,7 @@ try:
         formula="[12C6][13C]H12[14N][15N][18O]",
         monoisotopic_mass=144.099599,
         average_mass=144.1,
-        dict_composition={'C': 6, '13C': 1, 'H': 12, 'N': 1, '15N': 1, '18O': 1},
+        dict_composition={'12C': 6, '13C': 1, 'H': 12, '14N': 1, '15N': 1, '18O': 1},
     ),
     "01499": PsimodInfo(
         id="01499",
@@ -11069,7 +11069,7 @@ try:
         formula="[12C4][13C3]H12[14N][15N][16O]",
         monoisotopic_mass=144.102062,
         average_mass=144.1,
-        dict_composition={'C': 4, '13C': 3, 'H': 12, 'N': 1, '15N': 1, 'O': 1},
+        dict_composition={'12C': 4, '13C': 3, 'H': 12, '14N': 1, '15N': 1, '16O': 1},
     ),
     "01500": PsimodInfo(
         id="01500",
@@ -11077,7 +11077,7 @@ try:
         formula="[12C4][13C3]H12[14N][15N][16O]",
         monoisotopic_mass=144.102062,
         average_mass=144.1,
-        dict_composition={'C': 4, '13C': 3, 'H': 12, 'N': 1, '15N': 1, 'O': 1},
+        dict_composition={'12C': 4, '13C': 3, 'H': 12, '14N': 1, '15N': 1, '16O': 1},
     ),
     "01501": PsimodInfo(
         id="01501",
@@ -11085,7 +11085,7 @@ try:
         formula="[12C4][13C3]H12[14N][15N][16O]",
         monoisotopic_mass=144.102062,
         average_mass=144.1,
-        dict_composition={'C': 4, '13C': 3, 'H': 12, 'N': 1, '15N': 1, 'O': 1},
+        dict_composition={'12C': 4, '13C': 3, 'H': 12, '14N': 1, '15N': 1, '16O': 1},
     ),
     "01502": PsimodInfo(
         id="01502",
@@ -11093,7 +11093,7 @@ try:
         formula="[12C4][13C3]H12[14N][15N][16O]",
         monoisotopic_mass=144.102062,
         average_mass=144.1,
-        dict_composition={'C': 4, '13C': 3, 'H': 12, 'N': 1, '15N': 1, 'O': 1},
+        dict_composition={'12C': 4, '13C': 3, 'H': 12, '14N': 1, '15N': 1, '16O': 1},
     ),
     "01503": PsimodInfo(
         id="01503",
@@ -11101,7 +11101,7 @@ try:
         formula="[12C4][13C3]H12[14N][15N][16O]",
         monoisotopic_mass=144.102062,
         average_mass=144.1,
-        dict_composition={'C': 4, '13C': 3, 'H': 12, 'N': 1, '15N': 1, 'O': 1},
+        dict_composition={'12C': 4, '13C': 3, 'H': 12, '14N': 1, '15N': 1, '16O': 1},
     ),
     "01504": PsimodInfo(
         id="01504",
@@ -11109,7 +11109,7 @@ try:
         formula="[12C4][13C3]H12[14N][15N][16O]",
         monoisotopic_mass=144.102062,
         average_mass=144.1,
-        dict_composition={'C': 4, '13C': 3, 'H': 12, 'N': 1, '15N': 1, 'O': 1},
+        dict_composition={'12C': 4, '13C': 3, 'H': 12, '14N': 1, '15N': 1, '16O': 1},
     ),
     "01505": PsimodInfo(
         id="01505",
@@ -11117,7 +11117,7 @@ try:
         formula="[12C4][13C3]H12[14N][15N][16O]",
         monoisotopic_mass=144.102062,
         average_mass=144.1,
-        dict_composition={'C': 4, '13C': 3, 'H': 12, 'N': 1, '15N': 1, 'O': 1},
+        dict_composition={'12C': 4, '13C': 3, 'H': 12, '14N': 1, '15N': 1, '16O': 1},
     ),
     "01506": PsimodInfo(
         id="01506",
@@ -11125,7 +11125,7 @@ try:
         formula="[12C4][13C3]H12[14N][15N][16O]",
         monoisotopic_mass=144.102062,
         average_mass=144.1,
-        dict_composition={'C': 4, '13C': 3, 'H': 12, 'N': 1, '15N': 1, 'O': 1},
+        dict_composition={'12C': 4, '13C': 3, 'H': 12, '14N': 1, '15N': 1, '16O': 1},
     ),
     "01507": PsimodInfo(
         id="01507",
@@ -11133,7 +11133,7 @@ try:
         formula="[12C4][13C3]H12[14N][15N][16O]",
         monoisotopic_mass=144.102062,
         average_mass=144.1,
-        dict_composition={'C': 4, '13C': 3, 'H': 12, 'N': 1, '15N': 1, 'O': 1},
+        dict_composition={'12C': 4, '13C': 3, 'H': 12, '14N': 1, '15N': 1, '16O': 1},
     ),
     "01508": PsimodInfo(
         id="01508",
@@ -11141,7 +11141,7 @@ try:
         formula="[12C4][13C3]H12[14N][15N][16O]",
         monoisotopic_mass=144.102062,
         average_mass=144.1,
-        dict_composition={'C': 4, '13C': 3, 'H': 12, 'N': 1, '15N': 1, 'O': 1},
+        dict_composition={'12C': 4, '13C': 3, 'H': 12, '14N': 1, '15N': 1, '16O': 1},
     ),
     "01509": PsimodInfo(
         id="01509",
@@ -11149,7 +11149,7 @@ try:
         formula="[12C4][13C3]H12[14N][15N][16O]",
         monoisotopic_mass=144.102062,
         average_mass=144.1,
-        dict_composition={'C': 4, '13C': 3, 'H': 12, 'N': 1, '15N': 1, 'O': 1},
+        dict_composition={'12C': 4, '13C': 3, 'H': 12, '14N': 1, '15N': 1, '16O': 1},
     ),
     "01510": PsimodInfo(
         id="01510",
@@ -11157,7 +11157,7 @@ try:
         formula="[12C4][13C3]H12[14N][15N][16O]",
         monoisotopic_mass=144.102062,
         average_mass=144.1,
-        dict_composition={'C': 4, '13C': 3, 'H': 12, 'N': 1, '15N': 1, 'O': 1},
+        dict_composition={'12C': 4, '13C': 3, 'H': 12, '14N': 1, '15N': 1, '16O': 1},
     ),
     "01511": PsimodInfo(
         id="01511",
@@ -11165,7 +11165,7 @@ try:
         formula="[12C4][13C3]H12[14N][15N][16O]",
         monoisotopic_mass=144.102062,
         average_mass=144.1,
-        dict_composition={'C': 4, '13C': 3, 'H': 12, 'N': 1, '15N': 1, 'O': 1},
+        dict_composition={'12C': 4, '13C': 3, 'H': 12, '14N': 1, '15N': 1, '16O': 1},
     ),
     "01512": PsimodInfo(
         id="01512",
@@ -11173,7 +11173,7 @@ try:
         formula="[12C4][13C3]H12[14N][15N][16O]",
         monoisotopic_mass=144.102062,
         average_mass=144.1,
-        dict_composition={'C': 4, '13C': 3, 'H': 12, 'N': 1, '15N': 1, 'O': 1},
+        dict_composition={'12C': 4, '13C': 3, 'H': 12, '14N': 1, '15N': 1, '16O': 1},
     ),
     "01513": PsimodInfo(
         id="01513",
@@ -11301,7 +11301,7 @@ try:
         formula="[12C7][13C7]H24[14N3][15N][16O3]",
         monoisotopic_mass=304.205359,
         average_mass=304.21,
-        dict_composition={'C': 7, '13C': 7, 'H': 24, 'N': 3, '15N': 1, 'O': 3},
+        dict_composition={'12C': 7, '13C': 7, 'H': 24, '14N': 3, '15N': 1, '16O': 3},
     ),
     "01529": PsimodInfo(
         id="01529",
@@ -11309,7 +11309,7 @@ try:
         formula="[12C7][13C7]H24[14N3][15N][16O3]",
         monoisotopic_mass=304.205359,
         average_mass=304.21,
-        dict_composition={'C': 7, '13C': 7, 'H': 24, 'N': 3, '15N': 1, 'O': 3},
+        dict_composition={'12C': 7, '13C': 7, 'H': 24, '14N': 3, '15N': 1, '16O': 3},
     ),
     "01530": PsimodInfo(
         id="01530",
@@ -11317,7 +11317,7 @@ try:
         formula="[12C7][13C7]H24[14N3][15N][16O3]",
         monoisotopic_mass=304.205359,
         average_mass=304.21,
-        dict_composition={'C': 7, '13C': 7, 'H': 24, 'N': 3, '15N': 1, 'O': 3},
+        dict_composition={'12C': 7, '13C': 7, 'H': 24, '14N': 3, '15N': 1, '16O': 3},
     ),
     "01531": PsimodInfo(
         id="01531",
@@ -11325,7 +11325,7 @@ try:
         formula="[12C7][13C7]H24[14N3][15N][16O3]",
         monoisotopic_mass=304.205359,
         average_mass=304.21,
-        dict_composition={'C': 7, '13C': 7, 'H': 24, 'N': 3, '15N': 1, 'O': 3},
+        dict_composition={'12C': 7, '13C': 7, 'H': 24, '14N': 3, '15N': 1, '16O': 3},
     ),
     "01532": PsimodInfo(
         id="01532",
@@ -11333,7 +11333,7 @@ try:
         formula="[12C7][13C7]H24[14N3][15N][16O3]",
         monoisotopic_mass=304.205359,
         average_mass=304.21,
-        dict_composition={'C': 7, '13C': 7, 'H': 24, 'N': 3, '15N': 1, 'O': 3},
+        dict_composition={'12C': 7, '13C': 7, 'H': 24, '14N': 3, '15N': 1, '16O': 3},
     ),
     "01533": PsimodInfo(
         id="01533",
@@ -11341,7 +11341,7 @@ try:
         formula="[12C7][13C7]H24[14N3][15N][16O3]",
         monoisotopic_mass=304.205359,
         average_mass=304.21,
-        dict_composition={'C': 7, '13C': 7, 'H': 24, 'N': 3, '15N': 1, 'O': 3},
+        dict_composition={'12C': 7, '13C': 7, 'H': 24, '14N': 3, '15N': 1, '16O': 3},
     ),
     "01534": PsimodInfo(
         id="01534",
@@ -11349,7 +11349,7 @@ try:
         formula="[12C7][13C7]H24[14N3][15N][16O3]",
         monoisotopic_mass=304.205359,
         average_mass=304.21,
-        dict_composition={'C': 7, '13C': 7, 'H': 24, 'N': 3, '15N': 1, 'O': 3},
+        dict_composition={'12C': 7, '13C': 7, 'H': 24, '14N': 3, '15N': 1, '16O': 3},
     ),
     "01535": PsimodInfo(
         id="01535",
@@ -11357,7 +11357,7 @@ try:
         formula="[12C7][13C7]H24[14N3][15N][16O3]",
         monoisotopic_mass=304.205359,
         average_mass=304.21,
-        dict_composition={'C': 7, '13C': 7, 'H': 24, 'N': 3, '15N': 1, 'O': 3},
+        dict_composition={'12C': 7, '13C': 7, 'H': 24, '14N': 3, '15N': 1, '16O': 3},
     ),
     "01536": PsimodInfo(
         id="01536",
@@ -11365,7 +11365,7 @@ try:
         formula="[12C7][13C7]H24[14N3][15N][16O3]",
         monoisotopic_mass=304.205359,
         average_mass=304.21,
-        dict_composition={'C': 7, '13C': 7, 'H': 24, 'N': 3, '15N': 1, 'O': 3},
+        dict_composition={'12C': 7, '13C': 7, 'H': 24, '14N': 3, '15N': 1, '16O': 3},
     ),
     "01537": PsimodInfo(
         id="01537",
@@ -11373,7 +11373,7 @@ try:
         formula="[12C7][13C7]H24[14N3][15N][16O3]",
         monoisotopic_mass=304.205359,
         average_mass=304.21,
-        dict_composition={'C': 7, '13C': 7, 'H': 24, 'N': 3, '15N': 1, 'O': 3},
+        dict_composition={'12C': 7, '13C': 7, 'H': 24, '14N': 3, '15N': 1, '16O': 3},
     ),
     "01538": PsimodInfo(
         id="01538",
@@ -11381,7 +11381,7 @@ try:
         formula="[12C7][13C7]H24[14N3][15N][16O3]",
         monoisotopic_mass=304.205359,
         average_mass=304.21,
-        dict_composition={'C': 7, '13C': 7, 'H': 24, 'N': 3, '15N': 1, 'O': 3},
+        dict_composition={'12C': 7, '13C': 7, 'H': 24, '14N': 3, '15N': 1, '16O': 3},
     ),
     "01539": PsimodInfo(
         id="01539",
@@ -11389,7 +11389,7 @@ try:
         formula="[12C7][13C7]H24[14N3][15N][16O3]",
         monoisotopic_mass=304.205359,
         average_mass=304.21,
-        dict_composition={'C': 7, '13C': 7, 'H': 24, 'N': 3, '15N': 1, 'O': 3},
+        dict_composition={'12C': 7, '13C': 7, 'H': 24, '14N': 3, '15N': 1, '16O': 3},
     ),
     "01540": PsimodInfo(
         id="01540",
@@ -11397,7 +11397,7 @@ try:
         formula="[12C7][13C7]H24[14N3][15N][16O3]",
         monoisotopic_mass=304.205359,
         average_mass=304.21,
-        dict_composition={'C': 7, '13C': 7, 'H': 24, 'N': 3, '15N': 1, 'O': 3},
+        dict_composition={'12C': 7, '13C': 7, 'H': 24, '14N': 3, '15N': 1, '16O': 3},
     ),
     "01541": PsimodInfo(
         id="01541",
@@ -11405,7 +11405,7 @@ try:
         formula="[12C7][13C7]H24[14N3][15N][16O3]",
         monoisotopic_mass=304.205359,
         average_mass=304.21,
-        dict_composition={'C': 7, '13C': 7, 'H': 24, 'N': 3, '15N': 1, 'O': 3},
+        dict_composition={'12C': 7, '13C': 7, 'H': 24, '14N': 3, '15N': 1, '16O': 3},
     ),
     "01542": PsimodInfo(
         id="01542",
@@ -11413,7 +11413,7 @@ try:
         formula="[12C8][13C6]H24[14N2][15N2][16O3]",
         monoisotopic_mass=304.199039,
         average_mass=304.2,
-        dict_composition={'C': 8, '13C': 6, 'H': 24, 'N': 2, '15N': 2, 'O': 3},
+        dict_composition={'12C': 8, '13C': 6, 'H': 24, '14N': 2, '15N': 2, '16O': 3},
     ),
     "01543": PsimodInfo(
         id="01543",
@@ -11421,7 +11421,7 @@ try:
         formula="[12C8][13C6]H24[14N2][15N2][16O3]",
         monoisotopic_mass=304.199039,
         average_mass=304.2,
-        dict_composition={'C': 8, '13C': 6, 'H': 24, 'N': 2, '15N': 2, 'O': 3},
+        dict_composition={'12C': 8, '13C': 6, 'H': 24, '14N': 2, '15N': 2, '16O': 3},
     ),
     "01544": PsimodInfo(
         id="01544",
@@ -11429,7 +11429,7 @@ try:
         formula="[12C8][13C6]H24[14N2][15N2][16O3]",
         monoisotopic_mass=304.199039,
         average_mass=304.2,
-        dict_composition={'C': 8, '13C': 6, 'H': 24, 'N': 2, '15N': 2, 'O': 3},
+        dict_composition={'12C': 8, '13C': 6, 'H': 24, '14N': 2, '15N': 2, '16O': 3},
     ),
     "01545": PsimodInfo(
         id="01545",
@@ -11437,7 +11437,7 @@ try:
         formula="[12C8][13C6]H24[14N2][15N2][16O3]",
         monoisotopic_mass=304.199039,
         average_mass=304.2,
-        dict_composition={'C': 8, '13C': 6, 'H': 24, 'N': 2, '15N': 2, 'O': 3},
+        dict_composition={'12C': 8, '13C': 6, 'H': 24, '14N': 2, '15N': 2, '16O': 3},
     ),
     "01546": PsimodInfo(
         id="01546",
@@ -11445,7 +11445,7 @@ try:
         formula="[12C8][13C6]H24[14N2][15N2][16O3]",
         monoisotopic_mass=304.199039,
         average_mass=304.2,
-        dict_composition={'C': 8, '13C': 6, 'H': 24, 'N': 2, '15N': 2, 'O': 3},
+        dict_composition={'12C': 8, '13C': 6, 'H': 24, '14N': 2, '15N': 2, '16O': 3},
     ),
     "01547": PsimodInfo(
         id="01547",
@@ -11453,7 +11453,7 @@ try:
         formula="[12C8][13C6]H24[14N2][15N2][16O3]",
         monoisotopic_mass=304.199039,
         average_mass=304.2,
-        dict_composition={'C': 8, '13C': 6, 'H': 24, 'N': 2, '15N': 2, 'O': 3},
+        dict_composition={'12C': 8, '13C': 6, 'H': 24, '14N': 2, '15N': 2, '16O': 3},
     ),
     "01548": PsimodInfo(
         id="01548",
@@ -11461,7 +11461,7 @@ try:
         formula="[12C8][13C6]H24[14N2][15N2][16O3]",
         monoisotopic_mass=304.199039,
         average_mass=304.2,
-        dict_composition={'C': 8, '13C': 6, 'H': 24, 'N': 2, '15N': 2, 'O': 3},
+        dict_composition={'12C': 8, '13C': 6, 'H': 24, '14N': 2, '15N': 2, '16O': 3},
     ),
     "01549": PsimodInfo(
         id="01549",
@@ -11469,7 +11469,7 @@ try:
         formula="[12C7][13C7]H24[14N3][15N][16O3]",
         monoisotopic_mass=304.205359,
         average_mass=304.21,
-        dict_composition={'C': 7, '13C': 7, 'H': 24, 'N': 3, '15N': 1, 'O': 3},
+        dict_composition={'12C': 7, '13C': 7, 'H': 24, '14N': 3, '15N': 1, '16O': 3},
     ),
     "01550": PsimodInfo(
         id="01550",
@@ -11477,7 +11477,7 @@ try:
         formula="[12C7][13C7]H24[14N3][15N][16O3]",
         monoisotopic_mass=304.205359,
         average_mass=304.21,
-        dict_composition={'C': 7, '13C': 7, 'H': 24, 'N': 3, '15N': 1, 'O': 3},
+        dict_composition={'12C': 7, '13C': 7, 'H': 24, '14N': 3, '15N': 1, '16O': 3},
     ),
     "01551": PsimodInfo(
         id="01551",
@@ -11485,7 +11485,7 @@ try:
         formula="[12C7][13C7]H24[14N3][15N][16O3]",
         monoisotopic_mass=304.205359,
         average_mass=304.21,
-        dict_composition={'C': 7, '13C': 7, 'H': 24, 'N': 3, '15N': 1, 'O': 3},
+        dict_composition={'12C': 7, '13C': 7, 'H': 24, '14N': 3, '15N': 1, '16O': 3},
     ),
     "01552": PsimodInfo(
         id="01552",
@@ -11493,7 +11493,7 @@ try:
         formula="[12C7][13C7]H24[14N3][15N][16O3]",
         monoisotopic_mass=304.205359,
         average_mass=304.21,
-        dict_composition={'C': 7, '13C': 7, 'H': 24, 'N': 3, '15N': 1, 'O': 3},
+        dict_composition={'12C': 7, '13C': 7, 'H': 24, '14N': 3, '15N': 1, '16O': 3},
     ),
     "01553": PsimodInfo(
         id="01553",
@@ -11501,7 +11501,7 @@ try:
         formula="[12C7][13C7]H24[14N3][15N][16O3]",
         monoisotopic_mass=304.205359,
         average_mass=304.21,
-        dict_composition={'C': 7, '13C': 7, 'H': 24, 'N': 3, '15N': 1, 'O': 3},
+        dict_composition={'12C': 7, '13C': 7, 'H': 24, '14N': 3, '15N': 1, '16O': 3},
     ),
     "01554": PsimodInfo(
         id="01554",
@@ -11509,7 +11509,7 @@ try:
         formula="[12C7][13C7]H24[14N3][15N][16O3]",
         monoisotopic_mass=304.205359,
         average_mass=304.21,
-        dict_composition={'C': 7, '13C': 7, 'H': 24, 'N': 3, '15N': 1, 'O': 3},
+        dict_composition={'12C': 7, '13C': 7, 'H': 24, '14N': 3, '15N': 1, '16O': 3},
     ),
     "01555": PsimodInfo(
         id="01555",
@@ -11517,7 +11517,7 @@ try:
         formula="[12C7][13C7]H24[14N3][15N][16O3]",
         monoisotopic_mass=304.205359,
         average_mass=304.21,
-        dict_composition={'C': 7, '13C': 7, 'H': 24, 'N': 3, '15N': 1, 'O': 3},
+        dict_composition={'12C': 7, '13C': 7, 'H': 24, '14N': 3, '15N': 1, '16O': 3},
     ),
     "01556": PsimodInfo(
         id="01556",
@@ -11525,7 +11525,7 @@ try:
         formula="[12C7][13C7]H24[14N3][15N][16O3]",
         monoisotopic_mass=304.205359,
         average_mass=304.21,
-        dict_composition={'C': 7, '13C': 7, 'H': 24, 'N': 3, '15N': 1, 'O': 3},
+        dict_composition={'12C': 7, '13C': 7, 'H': 24, '14N': 3, '15N': 1, '16O': 3},
     ),
     "01557": PsimodInfo(
         id="01557",
@@ -11533,7 +11533,7 @@ try:
         formula="[12C7][13C7]H24[14N3][15N][16O3]",
         monoisotopic_mass=304.205359,
         average_mass=304.21,
-        dict_composition={'C': 7, '13C': 7, 'H': 24, 'N': 3, '15N': 1, 'O': 3},
+        dict_composition={'12C': 7, '13C': 7, 'H': 24, '14N': 3, '15N': 1, '16O': 3},
     ),
     "01558": PsimodInfo(
         id="01558",
@@ -11541,7 +11541,7 @@ try:
         formula="[12C7][13C7]H24[14N3][15N][16O3]",
         monoisotopic_mass=304.205359,
         average_mass=304.21,
-        dict_composition={'C': 7, '13C': 7, 'H': 24, 'N': 3, '15N': 1, 'O': 3},
+        dict_composition={'12C': 7, '13C': 7, 'H': 24, '14N': 3, '15N': 1, '16O': 3},
     ),
     "01559": PsimodInfo(
         id="01559",
@@ -11549,7 +11549,7 @@ try:
         formula="[12C7][13C7]H24[14N3][15N][16O3]",
         monoisotopic_mass=304.205359,
         average_mass=304.21,
-        dict_composition={'C': 7, '13C': 7, 'H': 24, 'N': 3, '15N': 1, 'O': 3},
+        dict_composition={'12C': 7, '13C': 7, 'H': 24, '14N': 3, '15N': 1, '16O': 3},
     ),
     "01560": PsimodInfo(
         id="01560",
@@ -11557,7 +11557,7 @@ try:
         formula="[12C7][13C7]H24[14N3][15N][16O3]",
         monoisotopic_mass=304.205359,
         average_mass=304.21,
-        dict_composition={'C': 7, '13C': 7, 'H': 24, 'N': 3, '15N': 1, 'O': 3},
+        dict_composition={'12C': 7, '13C': 7, 'H': 24, '14N': 3, '15N': 1, '16O': 3},
     ),
     "01561": PsimodInfo(
         id="01561",
@@ -11565,7 +11565,7 @@ try:
         formula="[12C7][13C7]H24[14N3][15N][16O3]",
         monoisotopic_mass=304.205359,
         average_mass=304.21,
-        dict_composition={'C': 7, '13C': 7, 'H': 24, 'N': 3, '15N': 1, 'O': 3},
+        dict_composition={'12C': 7, '13C': 7, 'H': 24, '14N': 3, '15N': 1, '16O': 3},
     ),
     "01562": PsimodInfo(
         id="01562",
@@ -11573,7 +11573,7 @@ try:
         formula="[12C7][13C7]H24[14N3][15N][16O3]",
         monoisotopic_mass=304.205359,
         average_mass=304.21,
-        dict_composition={'C': 7, '13C': 7, 'H': 24, 'N': 3, '15N': 1, 'O': 3},
+        dict_composition={'12C': 7, '13C': 7, 'H': 24, '14N': 3, '15N': 1, '16O': 3},
     ),
     "01563": PsimodInfo(
         id="01563",
@@ -11581,7 +11581,7 @@ try:
         formula="[12C8][13C6]H24[14N2][15N2][16O3]",
         monoisotopic_mass=304.199039,
         average_mass=304.2,
-        dict_composition={'C': 8, '13C': 6, 'H': 24, 'N': 2, '15N': 2, 'O': 3},
+        dict_composition={'12C': 8, '13C': 6, 'H': 24, '14N': 2, '15N': 2, '16O': 3},
     ),
     "01564": PsimodInfo(
         id="01564",
@@ -11589,7 +11589,7 @@ try:
         formula="[12C8][13C6]H24[14N2][15N2][16O3]",
         monoisotopic_mass=304.199039,
         average_mass=304.2,
-        dict_composition={'C': 8, '13C': 6, 'H': 24, 'N': 2, '15N': 2, 'O': 3},
+        dict_composition={'12C': 8, '13C': 6, 'H': 24, '14N': 2, '15N': 2, '16O': 3},
     ),
     "01565": PsimodInfo(
         id="01565",
@@ -11597,7 +11597,7 @@ try:
         formula="[12C8][13C6]H24[14N2][15N2][16O3]",
         monoisotopic_mass=304.199039,
         average_mass=304.2,
-        dict_composition={'C': 8, '13C': 6, 'H': 24, 'N': 2, '15N': 2, 'O': 3},
+        dict_composition={'12C': 8, '13C': 6, 'H': 24, '14N': 2, '15N': 2, '16O': 3},
     ),
     "01566": PsimodInfo(
         id="01566",
@@ -11605,7 +11605,7 @@ try:
         formula="[12C8][13C6]H24[14N2][15N2][16O3]",
         monoisotopic_mass=304.199039,
         average_mass=304.2,
-        dict_composition={'C': 8, '13C': 6, 'H': 24, 'N': 2, '15N': 2, 'O': 3},
+        dict_composition={'12C': 8, '13C': 6, 'H': 24, '14N': 2, '15N': 2, '16O': 3},
     ),
     "01567": PsimodInfo(
         id="01567",
@@ -11613,7 +11613,7 @@ try:
         formula="[12C8][13C6]H24[14N2][15N2][16O3]",
         monoisotopic_mass=304.199039,
         average_mass=304.2,
-        dict_composition={'C': 8, '13C': 6, 'H': 24, 'N': 2, '15N': 2, 'O': 3},
+        dict_composition={'12C': 8, '13C': 6, 'H': 24, '14N': 2, '15N': 2, '16O': 3},
     ),
     "01568": PsimodInfo(
         id="01568",
@@ -11621,7 +11621,7 @@ try:
         formula="[12C8][13C6]H24[14N2][15N2][16O3]",
         monoisotopic_mass=304.199039,
         average_mass=304.2,
-        dict_composition={'C': 8, '13C': 6, 'H': 24, 'N': 2, '15N': 2, 'O': 3},
+        dict_composition={'12C': 8, '13C': 6, 'H': 24, '14N': 2, '15N': 2, '16O': 3},
     ),
     "01569": PsimodInfo(
         id="01569",
@@ -11629,7 +11629,7 @@ try:
         formula="[12C8][13C6]H24[14N2][15N2][16O3]",
         monoisotopic_mass=304.199039,
         average_mass=304.2,
-        dict_composition={'C': 8, '13C': 6, 'H': 24, 'N': 2, '15N': 2, 'O': 3},
+        dict_composition={'12C': 8, '13C': 6, 'H': 24, '14N': 2, '15N': 2, '16O': 3},
     ),
     "01570": PsimodInfo(
         id="01570",
@@ -11637,7 +11637,7 @@ try:
         formula="[12C8][13C6]H24[14N2][15N2][16O3]",
         monoisotopic_mass=304.199039,
         average_mass=304.2,
-        dict_composition={'C': 8, '13C': 6, 'H': 24, 'N': 2, '15N': 2, 'O': 3},
+        dict_composition={'12C': 8, '13C': 6, 'H': 24, '14N': 2, '15N': 2, '16O': 3},
     ),
     "01571": PsimodInfo(
         id="01571",
@@ -11645,7 +11645,7 @@ try:
         formula="[12C8][13C6]H24[14N2][15N2][16O3]",
         monoisotopic_mass=304.199039,
         average_mass=304.2,
-        dict_composition={'C': 8, '13C': 6, 'H': 24, 'N': 2, '15N': 2, 'O': 3},
+        dict_composition={'12C': 8, '13C': 6, 'H': 24, '14N': 2, '15N': 2, '16O': 3},
     ),
     "01572": PsimodInfo(
         id="01572",
@@ -11653,7 +11653,7 @@ try:
         formula="[12C8][13C6]H24[14N2][15N2][16O3]",
         monoisotopic_mass=304.199039,
         average_mass=304.2,
-        dict_composition={'C': 8, '13C': 6, 'H': 24, 'N': 2, '15N': 2, 'O': 3},
+        dict_composition={'12C': 8, '13C': 6, 'H': 24, '14N': 2, '15N': 2, '16O': 3},
     ),
     "01573": PsimodInfo(
         id="01573",
@@ -11661,7 +11661,7 @@ try:
         formula="[12C8][13C6]H24[14N2][15N2][16O3]",
         monoisotopic_mass=304.199039,
         average_mass=304.2,
-        dict_composition={'C': 8, '13C': 6, 'H': 24, 'N': 2, '15N': 2, 'O': 3},
+        dict_composition={'12C': 8, '13C': 6, 'H': 24, '14N': 2, '15N': 2, '16O': 3},
     ),
     "01574": PsimodInfo(
         id="01574",
@@ -11669,7 +11669,7 @@ try:
         formula="[12C8][13C6]H24[14N2][15N2][16O3]",
         monoisotopic_mass=304.199039,
         average_mass=304.2,
-        dict_composition={'C': 8, '13C': 6, 'H': 24, 'N': 2, '15N': 2, 'O': 3},
+        dict_composition={'12C': 8, '13C': 6, 'H': 24, '14N': 2, '15N': 2, '16O': 3},
     ),
     "01575": PsimodInfo(
         id="01575",
@@ -11677,7 +11677,7 @@ try:
         formula="[12C8][13C6]H24[14N2][15N2][16O3]",
         monoisotopic_mass=304.199039,
         average_mass=304.2,
-        dict_composition={'C': 8, '13C': 6, 'H': 24, 'N': 2, '15N': 2, 'O': 3},
+        dict_composition={'12C': 8, '13C': 6, 'H': 24, '14N': 2, '15N': 2, '16O': 3},
     ),
     "01576": PsimodInfo(
         id="01576",
@@ -11685,7 +11685,7 @@ try:
         formula="[12C8][13C6]H24[14N2][15N2][16O3]",
         monoisotopic_mass=304.199039,
         average_mass=304.2,
-        dict_composition={'C': 8, '13C': 6, 'H': 24, 'N': 2, '15N': 2, 'O': 3},
+        dict_composition={'12C': 8, '13C': 6, 'H': 24, '14N': 2, '15N': 2, '16O': 3},
     ),
     "01577": PsimodInfo(
         id="01577",
@@ -11693,7 +11693,7 @@ try:
         formula="[12C8][13C6]H24[14N2][15N2][16O3]",
         monoisotopic_mass=304.199039,
         average_mass=304.2,
-        dict_composition={'C': 8, '13C': 6, 'H': 24, 'N': 2, '15N': 2, 'O': 3},
+        dict_composition={'12C': 8, '13C': 6, 'H': 24, '14N': 2, '15N': 2, '16O': 3},
     ),
     "01578": PsimodInfo(
         id="01578",
@@ -11701,7 +11701,7 @@ try:
         formula="[12C8][13C6]H24[14N2][15N2][16O3]",
         monoisotopic_mass=304.199039,
         average_mass=304.2,
-        dict_composition={'C': 8, '13C': 6, 'H': 24, 'N': 2, '15N': 2, 'O': 3},
+        dict_composition={'12C': 8, '13C': 6, 'H': 24, '14N': 2, '15N': 2, '16O': 3},
     ),
     "01579": PsimodInfo(
         id="01579",
@@ -11709,7 +11709,7 @@ try:
         formula="[12C8][13C6]H24[14N2][15N2][16O3]",
         monoisotopic_mass=304.199039,
         average_mass=304.2,
-        dict_composition={'C': 8, '13C': 6, 'H': 24, 'N': 2, '15N': 2, 'O': 3},
+        dict_composition={'12C': 8, '13C': 6, 'H': 24, '14N': 2, '15N': 2, '16O': 3},
     ),
     "01580": PsimodInfo(
         id="01580",
@@ -11717,7 +11717,7 @@ try:
         formula="[12C8][13C6]H24[14N2][15N2][16O3]",
         monoisotopic_mass=304.199039,
         average_mass=304.2,
-        dict_composition={'C': 8, '13C': 6, 'H': 24, 'N': 2, '15N': 2, 'O': 3},
+        dict_composition={'12C': 8, '13C': 6, 'H': 24, '14N': 2, '15N': 2, '16O': 3},
     ),
     "01581": PsimodInfo(
         id="01581",
@@ -11725,7 +11725,7 @@ try:
         formula="[12C8][13C6]H24[14N2][15N2][16O3]",
         monoisotopic_mass=304.199039,
         average_mass=304.2,
-        dict_composition={'C': 8, '13C': 6, 'H': 24, 'N': 2, '15N': 2, 'O': 3},
+        dict_composition={'12C': 8, '13C': 6, 'H': 24, '14N': 2, '15N': 2, '16O': 3},
     ),
     "01582": PsimodInfo(
         id="01582",
@@ -11733,7 +11733,7 @@ try:
         formula="[12C8][13C6]H24[14N2][15N2][16O3]",
         monoisotopic_mass=304.199039,
         average_mass=304.2,
-        dict_composition={'C': 8, '13C': 6, 'H': 24, 'N': 2, '15N': 2, 'O': 3},
+        dict_composition={'12C': 8, '13C': 6, 'H': 24, '14N': 2, '15N': 2, '16O': 3},
     ),
     "01583": PsimodInfo(
         id="01583",
@@ -11741,7 +11741,7 @@ try:
         formula="[12C8][13C6]H24[14N2][15N2][16O3]",
         monoisotopic_mass=304.199039,
         average_mass=304.2,
-        dict_composition={'C': 8, '13C': 6, 'H': 24, 'N': 2, '15N': 2, 'O': 3},
+        dict_composition={'12C': 8, '13C': 6, 'H': 24, '14N': 2, '15N': 2, '16O': 3},
     ),
     "01584": PsimodInfo(
         id="01584",
@@ -11901,7 +11901,7 @@ try:
         formula="[14N-2][15N2]",
         monoisotopic_mass=1.99407,
         average_mass=1.99,
-        dict_composition={'N': -2, '15N': 2},
+        dict_composition={'14N': -2, '15N': 2},
     ),
     "01604": PsimodInfo(
         id="01604",
@@ -11909,7 +11909,7 @@ try:
         formula="[14N-4][15N4]",
         monoisotopic_mass=3.98814,
         average_mass=3.99,
-        dict_composition={'N': -4, '15N': 4},
+        dict_composition={'14N': -4, '15N': 4},
     ),
     "01605": PsimodInfo(
         id="01605",
@@ -12797,7 +12797,7 @@ try:
         formula="[12C8][13C4]H20[14N][15N]O2",
         monoisotopic_mass=229.162932,
         average_mass=229.16,
-        dict_composition={'C': 8, '13C': 4, 'H': 20, 'N': 1, '15N': 1, 'O': 2},
+        dict_composition={'12C': 8, '13C': 4, 'H': 20, '14N': 1, '15N': 1, 'O': 2},
     ),
     "01716": PsimodInfo(
         id="01716",
@@ -12837,7 +12837,7 @@ try:
         formula="[12C8][13C4]H20[14N][15N]O2",
         monoisotopic_mass=229.162932,
         average_mass=229.16,
-        dict_composition={'C': 8, '13C': 4, 'H': 20, 'N': 1, '15N': 1, 'O': 2},
+        dict_composition={'12C': 8, '13C': 4, 'H': 20, '14N': 1, '15N': 1, 'O': 2},
     ),
     "01721": PsimodInfo(
         id="01721",
@@ -12845,7 +12845,7 @@ try:
         formula="[12C8][13C4]H20[14N][15N]O2",
         monoisotopic_mass=229.162932,
         average_mass=229.16,
-        dict_composition={'C': 8, '13C': 4, 'H': 20, 'N': 1, '15N': 1, 'O': 2},
+        dict_composition={'12C': 8, '13C': 4, 'H': 20, '14N': 1, '15N': 1, 'O': 2},
     ),
     "01722": PsimodInfo(
         id="01722",
@@ -12853,7 +12853,7 @@ try:
         formula="[12C8][13C4]H20[14N][15N]O2",
         monoisotopic_mass=229.162932,
         average_mass=229.16,
-        dict_composition={'C': 8, '13C': 4, 'H': 20, 'N': 1, '15N': 1, 'O': 2},
+        dict_composition={'12C': 8, '13C': 4, 'H': 20, '14N': 1, '15N': 1, 'O': 2},
     ),
     "01723": PsimodInfo(
         id="01723",
@@ -12861,7 +12861,7 @@ try:
         formula="[12C8][13C4]H20[14N][15N]O2",
         monoisotopic_mass=229.162932,
         average_mass=229.16,
-        dict_composition={'C': 8, '13C': 4, 'H': 20, 'N': 1, '15N': 1, 'O': 2},
+        dict_composition={'12C': 8, '13C': 4, 'H': 20, '14N': 1, '15N': 1, 'O': 2},
     ),
     "01724": PsimodInfo(
         id="01724",
@@ -12869,7 +12869,7 @@ try:
         formula="[12C8][13C4]H20[14N][15N]O2",
         monoisotopic_mass=229.162932,
         average_mass=229.16,
-        dict_composition={'C': 8, '13C': 4, 'H': 20, 'N': 1, '15N': 1, 'O': 2},
+        dict_composition={'12C': 8, '13C': 4, 'H': 20, '14N': 1, '15N': 1, 'O': 2},
     ),
     "01725": PsimodInfo(
         id="01725",
@@ -12877,7 +12877,7 @@ try:
         formula="[12C8][13C4]H20[14N][15N]O2",
         monoisotopic_mass=229.162932,
         average_mass=229.16,
-        dict_composition={'C': 8, '13C': 4, 'H': 20, 'N': 1, '15N': 1, 'O': 2},
+        dict_composition={'12C': 8, '13C': 4, 'H': 20, '14N': 1, '15N': 1, 'O': 2},
     ),
     "01726": PsimodInfo(
         id="01726",
@@ -12885,7 +12885,7 @@ try:
         formula="[12C8][13C4]H20[14N][15N]O2",
         monoisotopic_mass=229.162932,
         average_mass=229.16,
-        dict_composition={'C': 8, '13C': 4, 'H': 20, 'N': 1, '15N': 1, 'O': 2},
+        dict_composition={'12C': 8, '13C': 4, 'H': 20, '14N': 1, '15N': 1, 'O': 2},
     ),
     "01727": PsimodInfo(
         id="01727",
@@ -12901,7 +12901,7 @@ try:
         formula="[12C8][13C4]H20[14N][15N]O2",
         monoisotopic_mass=229.162932,
         average_mass=229.16,
-        dict_composition={'C': 8, '13C': 4, 'H': 20, 'N': 1, '15N': 1, 'O': 2},
+        dict_composition={'12C': 8, '13C': 4, 'H': 20, '14N': 1, '15N': 1, 'O': 2},
     ),
     "01729": PsimodInfo(
         id="01729",
@@ -12909,7 +12909,7 @@ try:
         formula="[12C8][13C4]H20[14N][15N]O2",
         monoisotopic_mass=229.162932,
         average_mass=229.16,
-        dict_composition={'C': 8, '13C': 4, 'H': 20, 'N': 1, '15N': 1, 'O': 2},
+        dict_composition={'12C': 8, '13C': 4, 'H': 20, '14N': 1, '15N': 1, 'O': 2},
     ),
     "01730": PsimodInfo(
         id="01730",
@@ -12917,7 +12917,7 @@ try:
         formula="[12C8][13C4]H20[14N][15N]O2",
         monoisotopic_mass=229.162932,
         average_mass=229.16,
-        dict_composition={'C': 8, '13C': 4, 'H': 20, 'N': 1, '15N': 1, 'O': 2},
+        dict_composition={'12C': 8, '13C': 4, 'H': 20, '14N': 1, '15N': 1, 'O': 2},
     ),
     "01731": PsimodInfo(
         id="01731",
@@ -12925,7 +12925,7 @@ try:
         formula="[12C8][13C4]H20[14N][15N]O2",
         monoisotopic_mass=229.162932,
         average_mass=229.16,
-        dict_composition={'C': 8, '13C': 4, 'H': 20, 'N': 1, '15N': 1, 'O': 2},
+        dict_composition={'12C': 8, '13C': 4, 'H': 20, '14N': 1, '15N': 1, 'O': 2},
     ),
     "01732": PsimodInfo(
         id="01732",
@@ -12933,7 +12933,7 @@ try:
         formula="[12C8][13C4]H20[14N][15N]O2",
         monoisotopic_mass=229.162932,
         average_mass=229.16,
-        dict_composition={'C': 8, '13C': 4, 'H': 20, 'N': 1, '15N': 1, 'O': 2},
+        dict_composition={'12C': 8, '13C': 4, 'H': 20, '14N': 1, '15N': 1, 'O': 2},
     ),
     "01733": PsimodInfo(
         id="01733",
@@ -12941,7 +12941,7 @@ try:
         formula="[12C8][13C4]H20[14N][15N]O2",
         monoisotopic_mass=229.162932,
         average_mass=229.16,
-        dict_composition={'C': 8, '13C': 4, 'H': 20, 'N': 1, '15N': 1, 'O': 2},
+        dict_composition={'12C': 8, '13C': 4, 'H': 20, '14N': 1, '15N': 1, 'O': 2},
     ),
     "01734": PsimodInfo(
         id="01734",
@@ -12949,7 +12949,7 @@ try:
         formula="[12C8][13C4]H20[14N][15N]O2",
         monoisotopic_mass=229.162932,
         average_mass=229.16,
-        dict_composition={'C': 8, '13C': 4, 'H': 20, 'N': 1, '15N': 1, 'O': 2},
+        dict_composition={'12C': 8, '13C': 4, 'H': 20, '14N': 1, '15N': 1, 'O': 2},
     ),
     "01735": PsimodInfo(
         id="01735",
@@ -12965,7 +12965,7 @@ try:
         formula="[12C8][13C4]H20[14N][15N]O2",
         monoisotopic_mass=229.162932,
         average_mass=229.16,
-        dict_composition={'C': 8, '13C': 4, 'H': 20, 'N': 1, '15N': 1, 'O': 2},
+        dict_composition={'12C': 8, '13C': 4, 'H': 20, '14N': 1, '15N': 1, 'O': 2},
     ),
     "01737": PsimodInfo(
         id="01737",
@@ -12973,7 +12973,7 @@ try:
         formula="[12C8][13C4]H20[14N][15N]O2",
         monoisotopic_mass=229.162932,
         average_mass=229.16,
-        dict_composition={'C': 8, '13C': 4, 'H': 20, 'N': 1, '15N': 1, 'O': 2},
+        dict_composition={'12C': 8, '13C': 4, 'H': 20, '14N': 1, '15N': 1, 'O': 2},
     ),
     "01738": PsimodInfo(
         id="01738",
@@ -12981,7 +12981,7 @@ try:
         formula="[12C8][13C4]H20[14N][15N]O2",
         monoisotopic_mass=229.162932,
         average_mass=229.16,
-        dict_composition={'C': 8, '13C': 4, 'H': 20, 'N': 1, '15N': 1, 'O': 2},
+        dict_composition={'12C': 8, '13C': 4, 'H': 20, '14N': 1, '15N': 1, 'O': 2},
     ),
     "01739": PsimodInfo(
         id="01739",
@@ -12989,7 +12989,7 @@ try:
         formula="[12C8][13C4]H20[14N][15N]O2",
         monoisotopic_mass=229.162932,
         average_mass=229.16,
-        dict_composition={'C': 8, '13C': 4, 'H': 20, 'N': 1, '15N': 1, 'O': 2},
+        dict_composition={'12C': 8, '13C': 4, 'H': 20, '14N': 1, '15N': 1, 'O': 2},
     ),
     "01740": PsimodInfo(
         id="01740",
@@ -12997,7 +12997,7 @@ try:
         formula="[12C8][13C4]H20[14N][15N]O2",
         monoisotopic_mass=229.162932,
         average_mass=229.16,
-        dict_composition={'C': 8, '13C': 4, 'H': 20, 'N': 1, '15N': 1, 'O': 2},
+        dict_composition={'12C': 8, '13C': 4, 'H': 20, '14N': 1, '15N': 1, 'O': 2},
     ),
     "01741": PsimodInfo(
         id="01741",
@@ -13005,7 +13005,7 @@ try:
         formula="[12C8][13C4]H20[14N][15N]O2",
         monoisotopic_mass=229.162932,
         average_mass=229.16,
-        dict_composition={'C': 8, '13C': 4, 'H': 20, 'N': 1, '15N': 1, 'O': 2},
+        dict_composition={'12C': 8, '13C': 4, 'H': 20, '14N': 1, '15N': 1, 'O': 2},
     ),
     "01742": PsimodInfo(
         id="01742",
@@ -13013,7 +13013,7 @@ try:
         formula="[12C8][13C4]H20[14N][15N]O2",
         monoisotopic_mass=229.162932,
         average_mass=229.16,
-        dict_composition={'C': 8, '13C': 4, 'H': 20, 'N': 1, '15N': 1, 'O': 2},
+        dict_composition={'12C': 8, '13C': 4, 'H': 20, '14N': 1, '15N': 1, 'O': 2},
     ),
     "01743": PsimodInfo(
         id="01743",
@@ -13029,7 +13029,7 @@ try:
         formula="[12C8][13C4]H20[14N][15N]O2",
         monoisotopic_mass=229.162932,
         average_mass=229.16,
-        dict_composition={'C': 8, '13C': 4, 'H': 20, 'N': 1, '15N': 1, 'O': 2},
+        dict_composition={'12C': 8, '13C': 4, 'H': 20, '14N': 1, '15N': 1, 'O': 2},
     ),
     "01745": PsimodInfo(
         id="01745",
@@ -13037,7 +13037,7 @@ try:
         formula="[12C8][13C4]H20[14N][15N]O2",
         monoisotopic_mass=229.162932,
         average_mass=229.16,
-        dict_composition={'C': 8, '13C': 4, 'H': 20, 'N': 1, '15N': 1, 'O': 2},
+        dict_composition={'12C': 8, '13C': 4, 'H': 20, '14N': 1, '15N': 1, 'O': 2},
     ),
     "01746": PsimodInfo(
         id="01746",
@@ -13045,7 +13045,7 @@ try:
         formula="[12C8][13C4]H20[14N][15N]O2",
         monoisotopic_mass=229.162932,
         average_mass=229.16,
-        dict_composition={'C': 8, '13C': 4, 'H': 20, 'N': 1, '15N': 1, 'O': 2},
+        dict_composition={'12C': 8, '13C': 4, 'H': 20, '14N': 1, '15N': 1, 'O': 2},
     ),
     "01747": PsimodInfo(
         id="01747",
@@ -13053,7 +13053,7 @@ try:
         formula="[12C8][13C4]H20[14N][15N]O2",
         monoisotopic_mass=229.162932,
         average_mass=229.16,
-        dict_composition={'C': 8, '13C': 4, 'H': 20, 'N': 1, '15N': 1, 'O': 2},
+        dict_composition={'12C': 8, '13C': 4, 'H': 20, '14N': 1, '15N': 1, 'O': 2},
     ),
     "01748": PsimodInfo(
         id="01748",
@@ -13061,7 +13061,7 @@ try:
         formula="[12C8][13C4]H20[14N][15N]O2",
         monoisotopic_mass=229.162932,
         average_mass=229.16,
-        dict_composition={'C': 8, '13C': 4, 'H': 20, 'N': 1, '15N': 1, 'O': 2},
+        dict_composition={'12C': 8, '13C': 4, 'H': 20, '14N': 1, '15N': 1, 'O': 2},
     ),
     "01749": PsimodInfo(
         id="01749",
@@ -13069,7 +13069,7 @@ try:
         formula="[12C8][13C4]H20[14N][15N]O2",
         monoisotopic_mass=229.162932,
         average_mass=229.16,
-        dict_composition={'C': 8, '13C': 4, 'H': 20, 'N': 1, '15N': 1, 'O': 2},
+        dict_composition={'12C': 8, '13C': 4, 'H': 20, '14N': 1, '15N': 1, 'O': 2},
     ),
     "01750": PsimodInfo(
         id="01750",
@@ -13077,7 +13077,7 @@ try:
         formula="[12C8][13C4]H20[14N][15N]O2",
         monoisotopic_mass=229.162932,
         average_mass=229.16,
-        dict_composition={'C': 8, '13C': 4, 'H': 20, 'N': 1, '15N': 1, 'O': 2},
+        dict_composition={'12C': 8, '13C': 4, 'H': 20, '14N': 1, '15N': 1, 'O': 2},
     ),
     "01751": PsimodInfo(
         id="01751",
@@ -13093,7 +13093,7 @@ try:
         formula="[12C8][13C4]H20[14N][15N]O2",
         monoisotopic_mass=229.162932,
         average_mass=229.16,
-        dict_composition={'C': 8, '13C': 4, 'H': 20, 'N': 1, '15N': 1, 'O': 2},
+        dict_composition={'12C': 8, '13C': 4, 'H': 20, '14N': 1, '15N': 1, 'O': 2},
     ),
     "01753": PsimodInfo(
         id="01753",
@@ -13101,7 +13101,7 @@ try:
         formula="[12C8][13C4]H20[14N][15N]O2",
         monoisotopic_mass=229.162932,
         average_mass=229.16,
-        dict_composition={'C': 8, '13C': 4, 'H': 20, 'N': 1, '15N': 1, 'O': 2},
+        dict_composition={'12C': 8, '13C': 4, 'H': 20, '14N': 1, '15N': 1, 'O': 2},
     ),
     "01754": PsimodInfo(
         id="01754",
@@ -13109,7 +13109,7 @@ try:
         formula="[12C8][13C4]H20[14N][15N]O2",
         monoisotopic_mass=229.162932,
         average_mass=229.16,
-        dict_composition={'C': 8, '13C': 4, 'H': 20, 'N': 1, '15N': 1, 'O': 2},
+        dict_composition={'12C': 8, '13C': 4, 'H': 20, '14N': 1, '15N': 1, 'O': 2},
     ),
     "01755": PsimodInfo(
         id="01755",
@@ -13117,7 +13117,7 @@ try:
         formula="[12C8][13C4]H20[14N][15N]O2",
         monoisotopic_mass=229.162932,
         average_mass=229.16,
-        dict_composition={'C': 8, '13C': 4, 'H': 20, 'N': 1, '15N': 1, 'O': 2},
+        dict_composition={'12C': 8, '13C': 4, 'H': 20, '14N': 1, '15N': 1, 'O': 2},
     ),
     "01756": PsimodInfo(
         id="01756",
@@ -13125,7 +13125,7 @@ try:
         formula="[12C8][13C4]H20[14N][15N]O2",
         monoisotopic_mass=229.162932,
         average_mass=229.16,
-        dict_composition={'C': 8, '13C': 4, 'H': 20, 'N': 1, '15N': 1, 'O': 2},
+        dict_composition={'12C': 8, '13C': 4, 'H': 20, '14N': 1, '15N': 1, 'O': 2},
     ),
     "01757": PsimodInfo(
         id="01757",
@@ -13133,7 +13133,7 @@ try:
         formula="[12C8][13C4]H20[14N][15N]O2",
         monoisotopic_mass=229.162932,
         average_mass=229.16,
-        dict_composition={'C': 8, '13C': 4, 'H': 20, 'N': 1, '15N': 1, 'O': 2},
+        dict_composition={'12C': 8, '13C': 4, 'H': 20, '14N': 1, '15N': 1, 'O': 2},
     ),
     "01758": PsimodInfo(
         id="01758",
@@ -13141,7 +13141,7 @@ try:
         formula="[12C8][13C4]H20[14N][15N]O2",
         monoisotopic_mass=229.162932,
         average_mass=229.16,
-        dict_composition={'C': 8, '13C': 4, 'H': 20, 'N': 1, '15N': 1, 'O': 2},
+        dict_composition={'12C': 8, '13C': 4, 'H': 20, '14N': 1, '15N': 1, 'O': 2},
     ),
     "01759": PsimodInfo(
         id="01759",
@@ -13157,7 +13157,7 @@ try:
         formula="[12C8][13C4]H20[14N][15N]O2",
         monoisotopic_mass=229.162932,
         average_mass=229.16,
-        dict_composition={'C': 8, '13C': 4, 'H': 20, 'N': 1, '15N': 1, 'O': 2},
+        dict_composition={'12C': 8, '13C': 4, 'H': 20, '14N': 1, '15N': 1, 'O': 2},
     ),
     "01761": PsimodInfo(
         id="01761",
@@ -13165,7 +13165,7 @@ try:
         formula="[12C8][13C4]H20[14N][15N]O2",
         monoisotopic_mass=229.162932,
         average_mass=229.16,
-        dict_composition={'C': 8, '13C': 4, 'H': 20, 'N': 1, '15N': 1, 'O': 2},
+        dict_composition={'12C': 8, '13C': 4, 'H': 20, '14N': 1, '15N': 1, 'O': 2},
     ),
     "01762": PsimodInfo(
         id="01762",
@@ -13173,7 +13173,7 @@ try:
         formula="[12C8][13C4]H20[14N][15N]O2",
         monoisotopic_mass=229.162932,
         average_mass=229.16,
-        dict_composition={'C': 8, '13C': 4, 'H': 20, 'N': 1, '15N': 1, 'O': 2},
+        dict_composition={'12C': 8, '13C': 4, 'H': 20, '14N': 1, '15N': 1, 'O': 2},
     ),
     "01763": PsimodInfo(
         id="01763",
@@ -13181,7 +13181,7 @@ try:
         formula="[12C8][13C4]H20[14N][15N]O2",
         monoisotopic_mass=229.162932,
         average_mass=229.16,
-        dict_composition={'C': 8, '13C': 4, 'H': 20, 'N': 1, '15N': 1, 'O': 2},
+        dict_composition={'12C': 8, '13C': 4, 'H': 20, '14N': 1, '15N': 1, 'O': 2},
     ),
     "01764": PsimodInfo(
         id="01764",
@@ -13189,7 +13189,7 @@ try:
         formula="[12C8][13C4]H20[14N][15N]O2",
         monoisotopic_mass=229.162932,
         average_mass=229.16,
-        dict_composition={'C': 8, '13C': 4, 'H': 20, 'N': 1, '15N': 1, 'O': 2},
+        dict_composition={'12C': 8, '13C': 4, 'H': 20, '14N': 1, '15N': 1, 'O': 2},
     ),
     "01765": PsimodInfo(
         id="01765",
@@ -13197,7 +13197,7 @@ try:
         formula="[12C8][13C4]H20[14N][15N]O2",
         monoisotopic_mass=229.162932,
         average_mass=229.16,
-        dict_composition={'C': 8, '13C': 4, 'H': 20, 'N': 1, '15N': 1, 'O': 2},
+        dict_composition={'12C': 8, '13C': 4, 'H': 20, '14N': 1, '15N': 1, 'O': 2},
     ),
     "01766": PsimodInfo(
         id="01766",
@@ -13205,7 +13205,7 @@ try:
         formula="[12C8][13C4]H20[14N][15N]O2",
         monoisotopic_mass=229.162932,
         average_mass=229.16,
-        dict_composition={'C': 8, '13C': 4, 'H': 20, 'N': 1, '15N': 1, 'O': 2},
+        dict_composition={'12C': 8, '13C': 4, 'H': 20, '14N': 1, '15N': 1, 'O': 2},
     ),
     "01767": PsimodInfo(
         id="01767",
@@ -13429,7 +13429,7 @@ try:
         formula="[13C][1H-1][2H3]",
         monoisotopic_mass=18.037835,
         average_mass=18.04,
-        dict_composition={'13C': 1, 'H': -1, '2D': 3},
+        dict_composition={'13C': 1, '1H': -1, '2H': 3},
     ),
     "01795": PsimodInfo(
         id="01795",
@@ -13437,7 +13437,7 @@ try:
         formula="[12C-1][13C][1H-3][2H3]",
         monoisotopic_mass=4.022185,
         average_mass=4.02,
-        dict_composition={'C': -1, '13C': 1, 'H': -3, '2D': 3},
+        dict_composition={'12C': -1, '13C': 1, '1H': -3, '2H': 3},
     ),
     "01796": PsimodInfo(
         id="01796",
@@ -13445,7 +13445,7 @@ try:
         formula="[12C-1][13C][1H-3][2H3]O",
         monoisotopic_mass=20.0171,
         average_mass=20.02,
-        dict_composition={'C': -1, '13C': 1, 'H': -3, '2D': 3, 'O': 1},
+        dict_composition={'12C': -1, '13C': 1, '1H': -3, '2H': 3, 'O': 1},
     ),
     "01797": PsimodInfo(
         id="01797",
@@ -13549,7 +13549,7 @@ try:
         formula="[12C-5][13C5][14N-1][15N]",
         monoisotopic_mass=6.013809,
         average_mass=6.01,
-        dict_composition={'C': -5, '13C': 5, 'N': -1, '15N': 1},
+        dict_composition={'12C': -5, '13C': 5, '14N': -1, '15N': 1},
     ),
     "01810": PsimodInfo(
         id="01810",
@@ -13557,7 +13557,7 @@ try:
         formula="[12C-5][13C5][14N-1][15N]",
         monoisotopic_mass=6.013809,
         average_mass=6.01,
-        dict_composition={'C': -5, '13C': 5, 'N': -1, '15N': 1},
+        dict_composition={'12C': -5, '13C': 5, '14N': -1, '15N': 1},
     ),
     "01811": PsimodInfo(
         id="01811",
@@ -13565,7 +13565,7 @@ try:
         formula="[12C-5][13C5][14N-1][15N]",
         monoisotopic_mass=6.013809,
         average_mass=6.01,
-        dict_composition={'C': -5, '13C': 5, 'N': -1, '15N': 1},
+        dict_composition={'12C': -5, '13C': 5, '14N': -1, '15N': 1},
     ),
     "01812": PsimodInfo(
         id="01812",
@@ -13573,7 +13573,7 @@ try:
         formula="[12C-5][13C5][14N-1][15N]",
         monoisotopic_mass=6.013809,
         average_mass=6.01,
-        dict_composition={'C': -5, '13C': 5, 'N': -1, '15N': 1},
+        dict_composition={'12C': -5, '13C': 5, '14N': -1, '15N': 1},
     ),
     "01813": PsimodInfo(
         id="01813",
@@ -13653,7 +13653,7 @@ try:
         formula="[12C14]H25[14N3]O2S",
         monoisotopic_mass=299.166748,
         average_mass=299.17,
-        dict_composition={'C': 14, 'H': 25, 'N': 3, 'O': 2, 'S': 1},
+        dict_composition={'12C': 14, 'H': 25, '14N': 3, 'O': 2, 'S': 1},
     ),
     "01823": PsimodInfo(
         id="01823",
@@ -13661,7 +13661,7 @@ try:
         formula="[12C10][13C4]H25[14N2][15N]O2S",
         monoisotopic_mass=304.177202,
         average_mass=304.18,
-        dict_composition={'C': 10, '13C': 4, 'H': 25, 'N': 2, '15N': 1, 'O': 2, 'S': 1},
+        dict_composition={'12C': 10, '13C': 4, 'H': 25, '14N': 2, '15N': 1, 'O': 2, 'S': 1},
     ),
     "01824": PsimodInfo(
         id="01824",
@@ -13669,7 +13669,7 @@ try:
         formula="[12C10][13C4]H25[14N2][15N]O2S",
         monoisotopic_mass=304.177202,
         average_mass=304.18,
-        dict_composition={'C': 10, '13C': 4, 'H': 25, 'N': 2, '15N': 1, 'O': 2, 'S': 1},
+        dict_composition={'12C': 10, '13C': 4, 'H': 25, '14N': 2, '15N': 1, 'O': 2, 'S': 1},
     ),
     "01825": PsimodInfo(
         id="01825",
@@ -13677,7 +13677,7 @@ try:
         formula="[12C10][13C4]H25[14N2][15N]O2S",
         monoisotopic_mass=304.177202,
         average_mass=304.18,
-        dict_composition={'C': 10, '13C': 4, 'H': 25, 'N': 2, '15N': 1, 'O': 2, 'S': 1},
+        dict_composition={'12C': 10, '13C': 4, 'H': 25, '14N': 2, '15N': 1, 'O': 2, 'S': 1},
     ),
     "01826": PsimodInfo(
         id="01826",
@@ -13685,7 +13685,7 @@ try:
         formula="[12C10][13C4]H25[14N2][15N]O2S",
         monoisotopic_mass=304.177202,
         average_mass=304.18,
-        dict_composition={'C': 10, '13C': 4, 'H': 25, 'N': 2, '15N': 1, 'O': 2, 'S': 1},
+        dict_composition={'12C': 10, '13C': 4, 'H': 25, '14N': 2, '15N': 1, 'O': 2, 'S': 1},
     ),
     "01827": PsimodInfo(
         id="01827",
@@ -13693,7 +13693,7 @@ try:
         formula="[12C10][13C4]H25[14N2][15N]O2S",
         monoisotopic_mass=304.177202,
         average_mass=304.18,
-        dict_composition={'C': 10, '13C': 4, 'H': 25, 'N': 2, '15N': 1, 'O': 2, 'S': 1},
+        dict_composition={'12C': 10, '13C': 4, 'H': 25, '14N': 2, '15N': 1, 'O': 2, 'S': 1},
     ),
     "01828": PsimodInfo(
         id="01828",
@@ -13701,7 +13701,7 @@ try:
         formula="[12C10][13C4]H25[14N2][15N]O2S",
         monoisotopic_mass=304.177202,
         average_mass=304.18,
-        dict_composition={'C': 10, '13C': 4, 'H': 25, 'N': 2, '15N': 1, 'O': 2, 'S': 1},
+        dict_composition={'12C': 10, '13C': 4, 'H': 25, '14N': 2, '15N': 1, 'O': 2, 'S': 1},
     ),
     "01829": PsimodInfo(
         id="01829",
@@ -13733,7 +13733,7 @@ try:
         formula="[12C-5][13C5]",
         monoisotopic_mass=5.016774,
         average_mass=5.02,
-        dict_composition={'C': -5, '13C': 5},
+        dict_composition={'12C': -5, '13C': 5},
     ),
     "01833": PsimodInfo(
         id="01833",
@@ -13741,7 +13741,7 @@ try:
         formula="[12C-5][13C5]H0N0O0S0",
         monoisotopic_mass=5.016774,
         average_mass=5.02,
-        dict_composition={'C': -5, '13C': 5, 'H': 0, 'N': 0, 'O': 0, 'S': 0},
+        dict_composition={'12C': -5, '13C': 5, 'H': 0, 'N': 0, 'O': 0, 'S': 0},
     ),
     "01834": PsimodInfo(
         id="01834",
@@ -13749,7 +13749,7 @@ try:
         formula="[12C-5][13C5]H0N0O0S0",
         monoisotopic_mass=5.016774,
         average_mass=5.02,
-        dict_composition={'C': -5, '13C': 5, 'H': 0, 'N': 0, 'O': 0, 'S': 0},
+        dict_composition={'12C': -5, '13C': 5, 'H': 0, 'N': 0, 'O': 0, 'S': 0},
     ),
     "01835": PsimodInfo(
         id="01835",
@@ -13757,7 +13757,7 @@ try:
         formula="[12C-5][13C5]H0N0O0S0",
         monoisotopic_mass=5.016774,
         average_mass=5.02,
-        dict_composition={'C': -5, '13C': 5, 'H': 0, 'N': 0, 'O': 0, 'S': 0},
+        dict_composition={'12C': -5, '13C': 5, 'H': 0, 'N': 0, 'O': 0, 'S': 0},
     ),
     "01836": PsimodInfo(
         id="01836",
@@ -13989,7 +13989,7 @@ try:
         formula="[12C7]H12[14N2][16O]",
         monoisotopic_mass=140.094963,
         average_mass=140.09,
-        dict_composition={'C': 7, 'H': 12, 'N': 2, 'O': 1},
+        dict_composition={'12C': 7, 'H': 12, '14N': 2, '16O': 1},
     ),
     "01865": PsimodInfo(
         id="01865",
@@ -13997,7 +13997,7 @@ try:
         formula="[12C7]H12[14N2][16O]",
         monoisotopic_mass=140.094963,
         average_mass=140.09,
-        dict_composition={'C': 7, 'H': 12, 'N': 2, 'O': 1},
+        dict_composition={'12C': 7, 'H': 12, '14N': 2, '16O': 1},
     ),
     "01866": PsimodInfo(
         id="01866",
@@ -14005,7 +14005,7 @@ try:
         formula="[12C7]H12[14N2][16O]",
         monoisotopic_mass=140.094963,
         average_mass=140.09,
-        dict_composition={'C': 7, 'H': 12, 'N': 2, 'O': 1},
+        dict_composition={'12C': 7, 'H': 12, '14N': 2, '16O': 1},
     ),
     "01867": PsimodInfo(
         id="01867",
@@ -14013,7 +14013,7 @@ try:
         formula="[12C7]H12[14N2][16O]",
         monoisotopic_mass=140.094963,
         average_mass=140.09,
-        dict_composition={'C': 7, 'H': 12, 'N': 2, 'O': 1},
+        dict_composition={'12C': 7, 'H': 12, '14N': 2, '16O': 1},
     ),
     "01868": PsimodInfo(
         id="01868",
@@ -14229,7 +14229,7 @@ try:
         formula="[12C3]H4O",
         monoisotopic_mass=56.026215,
         average_mass=56.03,
-        dict_composition={'C': 3, 'H': 4, 'O': 1},
+        dict_composition={'12C': 3, 'H': 4, 'O': 1},
     ),
     "01896": PsimodInfo(
         id="01896",
@@ -14341,7 +14341,7 @@ try:
         formula="[12C][13C6]H5NO3S2",
         monoisotopic_mass=220.991214,
         average_mass=220.99,
-        dict_composition={'C': 1, '13C': 6, 'H': 5, 'N': 1, 'O': 3, 'S': 2},
+        dict_composition={'12C': 1, '13C': 6, 'H': 5, 'N': 1, 'O': 3, 'S': 2},
     ),
     "01910": PsimodInfo(
         id="01910",
@@ -14781,7 +14781,7 @@ try:
         formula="[13C2][1H-1][2H3]O",
         monoisotopic_mass=47.036105,
         average_mass=47.04,
-        dict_composition={'13C': 2, 'H': -1, '2D': 3, 'O': 1},
+        dict_composition={'13C': 2, '1H': -1, '2H': 3, 'O': 1},
     ),
     "01967": PsimodInfo(
         id="01967",

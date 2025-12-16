@@ -3,7 +3,6 @@ Tests for the ElementLookup class.
 """
 
 import pytest
-import warnings
 import peptacular as pt
 
 from peptacular.elements.lookup import _handle_key_input  # type: ignore
@@ -92,14 +91,14 @@ class TestElementLookupBasics:
         """Test looking up monoisotopic isotope by tuple with None"""
         carbon_mono = pt.ELEMENT_LOOKUP[("C", None)]
         assert carbon_mono.symbol == "C"
-        assert carbon_mono.mass_number == None
+        assert carbon_mono.mass_number is None
         assert carbon_mono.mass == pytest.approx(12.0, abs=0.1)  # type: ignore
 
     def test_lookup_by_string_symbol(self):
         """Test looking up by symbol string returns monoisotopic"""
         carbon = pt.ELEMENT_LOOKUP["C"]
         assert carbon.symbol == "C"
-        assert carbon.mass_number == None
+        assert carbon.mass_number is None
 
     def test_lookup_by_string_with_mass(self):
         """Test looking up by string with mass prefix like '13C'"""
@@ -272,7 +271,7 @@ class TestElementLookupSpecialCases:
         c12 = pt.ELEMENT_LOOKUP["12C"]
         assert c12.abundance is not None
         assert c12.abundance > 0.98  # C-12 is very abundant
-        
+
         c13 = pt.ELEMENT_LOOKUP["13C"]
         assert c13.abundance is not None
         assert 0.01 < c13.abundance < 0.02  # C-13 is about 1.1%
@@ -301,15 +300,15 @@ class TestElementLookupNeutronOffsetsAndAbundances:
     def test_carbon_neutron_offsets(self):
         """Test neutron offsets for carbon isotopes"""
         offsets = pt.ELEMENT_LOOKUP.get_neutron_offsets_and_abundances("C")
-        
+
         # Should have at least C-12 and C-13
         assert len(offsets) >= 2
-        
+
         # Check format is list of (offset, abundance) tuples
         for offset, abundance in offsets:
             assert isinstance(offset, int)
             assert isinstance(abundance, (float, type(None)))
-        
+
         # C-12 is monoisotopic, so should have offset 0
         offsets_dict = {off: abund for off, abund in offsets}
         assert 0 in offsets_dict  # C-12 offset
@@ -318,7 +317,7 @@ class TestElementLookupNeutronOffsetsAndAbundances:
     def test_hydrogen_neutron_offsets(self):
         """Test neutron offsets for hydrogen isotopes"""
         offsets = pt.ELEMENT_LOOKUP.get_neutron_offsets_and_abundances("H")
-        
+
         # H-1 (protium) is monoisotopic
         offsets_dict = {off: abund for off, abund in offsets}
         assert 0 in offsets_dict  # H-1
@@ -327,7 +326,7 @@ class TestElementLookupNeutronOffsetsAndAbundances:
     def test_nitrogen_neutron_offsets(self):
         """Test neutron offsets for nitrogen isotopes"""
         offsets = pt.ELEMENT_LOOKUP.get_neutron_offsets_and_abundances("N")
-        
+
         # N-14 is monoisotopic
         offsets_dict = {off: abund for off, abund in offsets}
         assert 0 in offsets_dict  # N-14
@@ -336,7 +335,7 @@ class TestElementLookupNeutronOffsetsAndAbundances:
     def test_oxygen_neutron_offsets(self):
         """Test neutron offsets for oxygen isotopes"""
         offsets = pt.ELEMENT_LOOKUP.get_neutron_offsets_and_abundances("O")
-        
+
         # O-16 is monoisotopic
         offsets_dict = {off: abund for off, abund in offsets}
         assert 0 in offsets_dict  # O-16
@@ -350,20 +349,20 @@ class TestElementLookupMassesAndAbundances:
     def test_carbon_masses_and_abundances(self):
         """Test masses and abundances for carbon"""
         masses = pt.ELEMENT_LOOKUP.get_masses_and_abundances("C")
-        
+
         # Should have at least C-12 and C-13
         assert len(masses) >= 2
-        
+
         # Check format is list of (mass, abundance) tuples
         for mass, abundance in masses:
             assert isinstance(mass, float)
             assert isinstance(abundance, (float, type(None)))
             assert mass > 0  # Mass should be positive
-        
+
         # Masses should be sorted
         mass_values = [m for m, _ in masses]
         assert mass_values == sorted(mass_values)
-        
+
         # C-12 should be around 12.0, C-13 around 13.003
         assert any(11.9 < m < 12.1 for m, _ in masses)  # C-12
         assert any(13.0 < m < 13.1 for m, _ in masses)  # C-13
@@ -371,10 +370,10 @@ class TestElementLookupMassesAndAbundances:
     def test_hydrogen_masses_and_abundances(self):
         """Test masses and abundances for hydrogen"""
         masses = pt.ELEMENT_LOOKUP.get_masses_and_abundances("H")
-        
+
         # Should have H-1, and H-2 (deuterium)
         assert len(masses) >= 2
-        
+
         # H-1 should be around 1.008
         mass_values = [m for m, _ in masses]
         assert any(1.0 < m < 1.01 for m in mass_values)  # H-1
@@ -385,14 +384,16 @@ class TestElementLookupMassesAndAbundances:
         # For elements with only natural isotopes, abundances should sum to ~1
         for element in ["C", "H", "N", "O"]:
             masses = pt.ELEMENT_LOOKUP.get_masses_and_abundances(element)
-            
+
             # Filter out radioactive isotopes (abundance=0)
             natural = [(m, a) for m, a in masses if a is not None and a > 0]
-            
+
             if natural:
                 total_abundance = sum(a for _, a in natural)
                 # Should be close to 1.0 (allowing some rounding errors)
-                assert 0.99 < total_abundance < 1.01, f"{element} abundances sum to {total_abundance}"
+                assert 0.99 < total_abundance < 1.01, (
+                    f"{element} abundances sum to {total_abundance}"
+                )
 
     def test_nonexistent_element_raises(self):
         """Test that nonexistent element raises KeyError"""
@@ -406,13 +407,13 @@ class TestParseComposition:
     def test_simple_composition(self):
         """Test parsing simple composition"""
         from peptacular.elements import parse_composition
-        
+
         comp_dict = {"C": 2, "H": 6}
         parsed = parse_composition(comp_dict)
-        
+
         # Should have 2 entries
         assert len(parsed) == 2
-        
+
         # Check that keys are ElementInfo objects
         for key, count in parsed.items():
             assert isinstance(key, pt.ElementInfo)
@@ -422,20 +423,21 @@ class TestParseComposition:
     def test_isotope_composition(self):
         """Test parsing composition with specific isotopes"""
         from peptacular.elements import parse_composition
-        
+
         comp_dict = {"13C": 2, "D": 4}
         parsed = parse_composition(comp_dict)
-        
+
         # Should have 2 entries
         assert len(parsed) == 2
-        
+
         # Check isotopes are correct
-        symbols_and_masses = {(elem.symbol, elem.mass_number): count 
-                             for elem, count in parsed.items()}
-        
+        symbols_and_masses = {
+            (elem.symbol, elem.mass_number): count for elem, count in parsed.items()
+        }
+
         assert ("C", 13) in symbols_and_masses
         assert symbols_and_masses[("C", 13)] == 2
-        
+
         # 2H is stored as H with mass number 2
         assert ("H", 2) in symbols_and_masses
         assert symbols_and_masses[("H", 2)] == 4
@@ -443,30 +445,30 @@ class TestParseComposition:
     def test_mixed_composition(self):
         """Test parsing composition with mix of regular and isotope-specific"""
         from peptacular.elements import parse_composition
-        
+
         comp_dict = {"C": 2, "13C": 1, "H": 3, "O": 1}
         parsed = parse_composition(comp_dict)
-        
+
         # Should have 4 entries (C, 13C, H, O)
         assert len(parsed) == 4
 
     def test_invalid_element_raises(self):
         """Test that invalid element key raises error"""
         from peptacular.elements import parse_composition
-        
+
         with pytest.raises(KeyError):
             parse_composition({"Xx": 1})
 
     def test_zero_count_allowed(self):
         """Test that zero counts are allowed"""
         from peptacular.elements import parse_composition
-        
+
         comp_dict = {"C": 0, "H": 2}
         parsed = parse_composition(comp_dict)
-        
+
         # Should have both entries even though C has count 0
         assert len(parsed) == 2
-        
+
         # Find the C entry
         c_count = next(count for elem, count in parsed.items() if elem.symbol == "C")
         assert c_count == 0
@@ -495,11 +497,11 @@ class TestElementLookupEdgeCases:
         # C-12 should be monoisotopic
         c12 = pt.ELEMENT_LOOKUP["12C"]
         assert c12.is_monoisotopic is True
-        
+
         # C-13 should not be monoisotopic
         c13 = pt.ELEMENT_LOOKUP["13C"]
         assert c13.is_monoisotopic is False
-        
+
         # When requesting by symbol only
         c = pt.ELEMENT_LOOKUP["C"]
         assert c.is_monoisotopic is None
@@ -509,7 +511,7 @@ class TestElementLookupEdgeCases:
         # C-14 is radioactive
         isotopes = pt.ELEMENT_LOOKUP.get_all_isotopes("C")
         c14 = next((iso for iso in isotopes if iso.mass_number == 14), None)
-        
+
         if c14 is not None:
             assert c14.is_radioactive is True
             assert c14.abundance == 0.0
@@ -517,23 +519,23 @@ class TestElementLookupEdgeCases:
     def test_element_properties(self):
         """Test ElementInfo properties"""
         c12 = pt.ELEMENT_LOOKUP["12C"]
-        
+
         # Check derived properties
         assert c12.proton_count == 6
         assert c12.neutron_count == 6
         assert c12.number == 6
-        
+
         # String representation
         assert "C" in str(c12)
 
     def test_get_mass_method(self):
         """Test ElementInfo.get_mass method"""
         c = pt.ELEMENT_LOOKUP["C"]
-        
+
         # Monoisotopic mass
         mono_mass = c.get_mass(monoisotopic=True)
         assert mono_mass == pytest.approx(12.0, abs=0.1)  # type: ignore
-        
+
         # Average mass (should be slightly higher due to C-13)
         avg_mass = c.get_mass(monoisotopic=False)
         assert avg_mass > mono_mass
@@ -546,17 +548,21 @@ class TestElementLookupComprehensive:
     def test_all_common_elements_accessible(self):
         """Test that all common biological elements are accessible"""
         common_elements = ["H", "C", "N", "O", "P", "S"]
-        
+
         for elem in common_elements:
             info = pt.ELEMENT_LOOKUP[elem]
-            assert info.symbol == elem or info.symbol in ["H", "D", "T"]  # Handle hydrogen isotopes
+            assert info.symbol == elem or info.symbol in [
+                "H",
+                "D",
+                "T",
+            ]  # Handle hydrogen isotopes
             assert info.mass > 0
             assert info.average_mass > 0
 
     def test_heavy_isotope_labeling_elements(self):
         """Test that common heavy isotope labels are accessible"""
         heavy_isotopes = ["13C", "15N", "18O", "2H", "34S"]
-        
+
         for iso in heavy_isotopes:
             info = pt.ELEMENT_LOOKUP[iso]
             assert info.mass > 0
@@ -575,7 +581,7 @@ class TestElementLookupComprehensive:
         for elem in pt.ELEMENT_LOOKUP:
             assert isinstance(elem, pt.ElementInfo)
             count += 1
-        
+
         # Should have many elements
         assert count > 100
 
@@ -584,7 +590,7 @@ class TestElementLookupComprehensive:
         # These should all return the same isotope
         c12_by_tuple = pt.ELEMENT_LOOKUP[("C", 12)]
         c12_by_string = pt.ELEMENT_LOOKUP["12C"]
-        
+
         assert c12_by_tuple.symbol == c12_by_string.symbol
         assert c12_by_tuple.mass_number == c12_by_string.mass_number
         assert c12_by_tuple.mass == c12_by_string.mass
@@ -595,7 +601,7 @@ class TestElementLookupComprehensive:
         # These should all return monoisotopic carbon (C-12)
         c_by_symbol = pt.ELEMENT_LOOKUP["C"]
         c_by_tuple = pt.ELEMENT_LOOKUP[("C", None)]
-        
+
         assert c_by_symbol.mass_number == c_by_tuple.mass_number
         assert c_by_symbol.mass == c_by_tuple.mass
 
@@ -603,10 +609,10 @@ class TestElementLookupComprehensive:
         """Test that mass method returns consistent values"""
         # Direct access
         c = pt.ELEMENT_LOOKUP["C"]
-        
+
         # Via mass method
         mass_via_method = pt.ELEMENT_LOOKUP.mass("C", monoisotopic=True)
-        
+
         assert c.mass == mass_via_method
 
     def test_common_element_atomic_numbers(self):
@@ -619,7 +625,7 @@ class TestElementLookupComprehensive:
             "P": 15,
             "S": 16,
         }
-        
+
         for symbol, expected_number in expected.items():
             elem = pt.ELEMENT_LOOKUP[symbol]
             assert elem.number == expected_number
@@ -628,7 +634,7 @@ class TestElementLookupComprehensive:
         """Test that isotope masses differ by approximately neutron mass"""
         c12 = pt.ELEMENT_LOOKUP["12C"]
         c13 = pt.ELEMENT_LOOKUP["13C"]
-        
+
         # Difference should be approximately 1 neutron mass
         mass_diff = c13.mass - c12.mass
         assert 1.0 < mass_diff < 1.1  # Approximately 1 Da
@@ -636,14 +642,14 @@ class TestElementLookupComprehensive:
     def test_deuterium_mass(self):
         """Test that deuterium has approximately correct mass"""
         d = pt.ELEMENT_LOOKUP["D"]
-        
+
         # Deuterium mass should be around 2.014
         assert 2.01 < d.mass < 2.02
 
     def test_elements_list_contains_biology_elements(self):
         """Test that get_elements includes all biology-relevant elements"""
         elements = pt.ELEMENT_LOOKUP.get_elements()
-        
+
         required = ["H", "C", "N", "O", "P", "S", "Se"]
         for elem in required:
             assert elem in elements
@@ -651,9 +657,9 @@ class TestElementLookupComprehensive:
     def test_to_dict_method(self):
         """Test ElementInfo.to_dict() conversion"""
         c12 = pt.ELEMENT_LOOKUP["12C"]
-        
+
         d = c12.to_dict()
-        
+
         assert isinstance(d, dict)
         assert "number" in d
         assert "symbol" in d
@@ -661,7 +667,7 @@ class TestElementLookupComprehensive:
         assert "mass" in d
         assert "abundance" in d
         assert "average_mass" in d
-        
+
         assert d["number"] == 6
         assert d["symbol"] == "C"
         assert d["mass_number"] == 12
@@ -669,16 +675,16 @@ class TestElementLookupComprehensive:
     def test_element_update_method(self):
         """Test ElementInfo.update() method"""
         c12 = pt.ELEMENT_LOOKUP["12C"]
-        
+
         # Update abundance
         updated = c12.update(abundance=0.5)
-        
+
         # Original should be unchanged
         assert c12.abundance != 0.5
-        
+
         # Updated should have new value
         assert updated.abundance == 0.5
-        
+
         # Other fields should be unchanged
         assert updated.symbol == c12.symbol
         assert updated.mass == c12.mass

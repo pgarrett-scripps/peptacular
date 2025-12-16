@@ -88,7 +88,7 @@ class FormulaElement(MassPropertyMixin):
     @staticmethod
     def from_element_info(elem_info: ElementInfo, occurance: int) -> "FormulaElement":
         s = f"{elem_info}{occurance if occurance != 1 else ''}"
-        if not elem_info.is_monoisotopic and elem_info.mass_number != 0:
+        if elem_info.mass_number is not None:
             s = f"[{s}]"
         return FormulaElement.from_string(s)
 
@@ -250,19 +250,15 @@ class ChargedFormula(MassPropertyMixin):
         combined_charge = None
         if self.charge is not None and other.charge is not None:
             combined_charge = self.charge + other.charge
-        return ChargedFormula.from_composition(
-            combined_comp, charge=combined_charge
-        )
-    
+        return ChargedFormula.from_composition(combined_comp, charge=combined_charge)
+
     def __sub__(self, other: ChargedFormula) -> ChargedFormula:
         """Subtract one ChargedFormula from another."""
         combined_comp = self.get_composition() - other.get_composition()
         combined_charge = None
         if self.charge is not None and other.charge is not None:
             combined_charge = self.charge - other.charge
-        return ChargedFormula.from_composition(
-            combined_comp, charge=combined_charge
-        )
+        return ChargedFormula.from_composition(combined_comp, charge=combined_charge)
 
 
 @dataclass(frozen=True, slots=True)
@@ -1138,7 +1134,7 @@ class PeptidoformIon(MassPropertyMixin):
     charge: GLOBAL_CHARGE_TYPE | None = None
 
     def get_mass(self, monoisotopic: bool = True) -> float:
-        raise NotImplementedError()
+        """
         mass = sum_masses(self.peptidoforms, monoisotopic=monoisotopic)
 
         if isinstance(self.charge, int) and self.charge != 0:
@@ -1148,9 +1144,12 @@ class PeptidoformIon(MassPropertyMixin):
             mass += sum_masses(self.charge, monoisotopic=monoisotopic)
 
         return mass
+        """
+        raise NotImplementedError()
+
 
     def get_composition(self) -> Counter[ElementInfo]:
-        raise NotImplementedError()
+        """
         comp: Counter[ElementInfo] = merge_compositions(self.peptidoforms)
 
         if isinstance(self.charge, int) and self.charge > 0:
@@ -1160,6 +1159,8 @@ class PeptidoformIon(MassPropertyMixin):
             comp += merge_compositions(self.charge)
 
         return comp
+        """
+        raise NotImplementedError()
 
     @staticmethod
     def from_string(s: str) -> "PeptidoformIon":

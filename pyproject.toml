@@ -33,3 +33,10 @@ addopts = "-v --strict-markers"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/peptacular"]
+
+[tool.ruff]
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F403", "F401"]
+"data.py" = ["E741"]
+"constants.py" = ["E741"]
+

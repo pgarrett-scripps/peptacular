@@ -8,7 +8,7 @@ from .coverage import *
 from .decoy import *
 from .digestion import *
 
-# from .fragmentation import *
+from .fragmentation import *
 from .mass_funcs import *
 from .mod_builder import *
 from .parrallel import *

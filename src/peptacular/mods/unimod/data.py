@@ -77,7 +77,7 @@ try:
         formula="H30[2H8]C22N4O6S",
         monoisotopic_mass=494.30142,
         average_mass=494.6746,
-        dict_composition={'H': 30, '2D': 8, 'C': 22, 'N': 4, 'O': 6, 'S': 1},
+        dict_composition={'H': 30, '2H': 8, 'C': 22, 'N': 4, 'O': 6, 'S': 1},
     ),
     "10": UnimodInfo(
         id="10",
@@ -101,7 +101,7 @@ try:
         formula="H26[2H8]C20N4O5S",
         monoisotopic_mass=450.275205,
         average_mass=450.6221,
-        dict_composition={'H': 26, '2D': 8, 'C': 20, 'N': 4, 'O': 5, 'S': 1},
+        dict_composition={'H': 26, '2H': 8, 'C': 20, 'N': 4, 'O': 5, 'S': 1},
     ),
     "13": UnimodInfo(
         id="13",
@@ -381,7 +381,7 @@ try:
         formula="H-1[2H3]C2O",
         monoisotopic_mass=45.029395,
         average_mass=45.0552,
-        dict_composition={'H': -1, '2D': 3, 'C': 2, 'O': 1},
+        dict_composition={'H': -1, '2H': 3, 'C': 2, 'O': 1},
     ),
     "58": UnimodInfo(
         id="58",
@@ -413,7 +413,7 @@ try:
         formula="H10[2H3]C7NO",
         monoisotopic_mass=130.118544,
         average_mass=130.2027,
-        dict_composition={'H': 10, '2D': 3, 'C': 7, 'N': 1, 'O': 1},
+        dict_composition={'H': 10, '2H': 3, 'C': 7, 'N': 1, 'O': 1},
     ),
     "62": UnimodInfo(
         id="62",
@@ -421,7 +421,7 @@ try:
         formula="H7[2H6]C7NO",
         monoisotopic_mass=133.137375,
         average_mass=133.2212,
-        dict_composition={'H': 7, '2D': 6, 'C': 7, 'N': 1, 'O': 1},
+        dict_composition={'H': 7, '2H': 6, 'C': 7, 'N': 1, 'O': 1},
     ),
     "63": UnimodInfo(
         id="63",
@@ -429,7 +429,7 @@ try:
         formula="H4[2H9]C7NO",
         monoisotopic_mass=136.156205,
         average_mass=136.2397,
-        dict_composition={'H': 4, '2D': 9, 'C': 7, 'N': 1, 'O': 1},
+        dict_composition={'H': 4, '2H': 9, 'C': 7, 'N': 1, 'O': 1},
     ),
     "64": UnimodInfo(
         id="64",
@@ -445,7 +445,7 @@ try:
         formula="[2H4]C4O3",
         monoisotopic_mass=104.041151,
         average_mass=104.0974,
-        dict_composition={'2D': 4, 'C': 4, 'O': 3},
+        dict_composition={'2H': 4, 'C': 4, 'O': 3},
     ),
     "66": UnimodInfo(
         id="66",
@@ -477,7 +477,7 @@ try:
         formula="H16[2H10]C16N4O2S",
         monoisotopic_mass=348.240414,
         average_mass=348.5299,
-        dict_composition={'H': 16, '2D': 10, 'C': 16, 'N': 4, 'O': 2, 'S': 1},
+        dict_composition={'H': 16, '2H': 10, 'C': 16, 'N': 4, 'O': 2, 'S': 1},
     ),
     "92": UnimodInfo(
         id="92",
@@ -509,7 +509,7 @@ try:
         formula="[2H4]C3N2",
         monoisotopic_mass=72.062555,
         average_mass=72.1019,
-        dict_composition={'2D': 4, 'C': 3, 'N': 2},
+        dict_composition={'2H': 4, 'C': 3, 'N': 2},
     ),
     "97": UnimodInfo(
         id="97",
@@ -517,7 +517,7 @@ try:
         formula="H2[2H3]C3NO",
         monoisotopic_mass=74.055944,
         average_mass=74.0964,
-        dict_composition={'H': 2, '2D': 3, 'C': 3, 'N': 1, 'O': 1},
+        dict_composition={'H': 2, '2H': 3, 'C': 3, 'N': 1, 'O': 1},
     ),
     "105": UnimodInfo(
         id="105",
@@ -1029,7 +1029,7 @@ try:
         formula="H16[2H3]C9N2O",
         monoisotopic_mass=174.168569,
         average_mass=174.2784,
-        dict_composition={'H': 16, '2D': 3, 'C': 9, 'N': 2, 'O': 1},
+        dict_composition={'H': 16, '2H': 3, 'C': 9, 'N': 2, 'O': 1},
     ),
     "197": UnimodInfo(
         id="197",
@@ -1045,7 +1045,7 @@ try:
         formula="H15[2H5]C10N2O",
         monoisotopic_mass=189.188947,
         average_mass=189.3094,
-        dict_composition={'H': 15, '2D': 5, 'C': 10, 'N': 2, 'O': 1},
+        dict_composition={'H': 15, '2H': 5, 'C': 10, 'N': 2, 'O': 1},
     ),
     "199": UnimodInfo(
         id="199",
@@ -1053,7 +1053,7 @@ try:
         formula="[2H4]C2",
         monoisotopic_mass=32.056407,
         average_mass=32.0778,
-        dict_composition={'2D': 4, 'C': 2},
+        dict_composition={'2H': 4, 'C': 2},
     ),
     "200": UnimodInfo(
         id="200",
@@ -1117,7 +1117,7 @@ try:
         formula="H2[2H5]C4NO",
         monoisotopic_mass=90.084148,
         average_mass=90.1353,
-        dict_composition={'H': 2, '2D': 5, 'C': 4, 'N': 1, 'O': 1},
+        dict_composition={'H': 2, '2H': 5, 'C': 4, 'N': 1, 'O': 1},
     ),
     "213": UnimodInfo(
         id="213",
@@ -1213,7 +1213,7 @@ try:
         formula="H-3[2H3]",
         monoisotopic_mass=3.01883,
         average_mass=3.0185,
-        dict_composition={'H': -3, '2D': 3},
+        dict_composition={'H': -3, '2H': 3},
     ),
     "264": UnimodInfo(
         id="264",
@@ -1317,7 +1317,7 @@ try:
         formula="[2H2]C",
         monoisotopic_mass=16.028204,
         average_mass=16.0389,
-        dict_composition={'2D': 2, 'C': 1},
+        dict_composition={'2H': 2, 'C': 1},
     ),
     "285": UnimodInfo(
         id="285",
@@ -1405,7 +1405,7 @@ try:
         formula="H-1[2H3]C",
         monoisotopic_mass=17.03448,
         average_mass=17.0451,
-        dict_composition={'H': -1, '2D': 3, 'C': 1},
+        dict_composition={'H': -1, '2H': 3, 'C': 1},
     ),
     "299": UnimodInfo(
         id="299",
@@ -1581,7 +1581,7 @@ try:
         formula="H-1[2H3][13C]",
         monoisotopic_mass=18.037835,
         average_mass=18.0377,
-        dict_composition={'H': -1, '2D': 3, '13C': 1},
+        dict_composition={'H': -1, '2H': 3, '13C': 1},
     ),
     "330": UnimodInfo(
         id="330",
@@ -1589,7 +1589,7 @@ try:
         formula="H-2[2H6][13C2]",
         monoisotopic_mass=36.07567,
         average_mass=36.0754,
-        dict_composition={'H': -2, '2D': 6, '13C': 2},
+        dict_composition={'H': -2, '2H': 6, '13C': 2},
     ),
     "332": UnimodInfo(
         id="332",
@@ -2085,7 +2085,7 @@ try:
         formula="[2H5]C7NO",
         monoisotopic_mass=124.068498,
         average_mass=124.1515,
-        dict_composition={'2D': 5, 'C': 7, 'N': 1, 'O': 1},
+        dict_composition={'2H': 5, 'C': 7, 'N': 1, 'O': 1},
     ),
     "413": UnimodInfo(
         id="413",
@@ -2429,7 +2429,7 @@ try:
         formula="H5[2H9]C7NO",
         monoisotopic_mass=137.16403,
         average_mass=137.2476,
-        dict_composition={'H': 5, '2D': 9, 'C': 7, 'N': 1, 'O': 1},
+        dict_composition={'H': 5, '2H': 9, 'C': 7, 'N': 1, 'O': 1},
     ),
     "478": UnimodInfo(
         id="478",
@@ -2445,7 +2445,7 @@ try:
         formula="H-4[2H4]",
         monoisotopic_mass=4.025107,
         average_mass=4.0246,
-        dict_composition={'H': -4, '2D': 4},
+        dict_composition={'H': -4, '2H': 4},
     ),
     "488": UnimodInfo(
         id="488",
@@ -2557,7 +2557,7 @@ try:
         formula="[2H4][13C2]",
         monoisotopic_mass=34.063117,
         average_mass=34.0631,
-        dict_composition={'2D': 4, '13C': 2},
+        dict_composition={'2H': 4, '13C': 2},
     ),
     "512": UnimodInfo(
         id="512",
@@ -3861,7 +3861,7 @@ try:
         formula="H-1[2H4]C6NO",
         monoisotopic_mass=109.046571,
         average_mass=109.1188,
-        dict_composition={'H': -1, '2D': 4, 'C': 6, 'N': 1, 'O': 1},
+        dict_composition={'H': -1, '2H': 4, 'C': 6, 'N': 1, 'O': 1},
     ),
     "695": UnimodInfo(
         id="695",
@@ -3877,7 +3877,7 @@ try:
         formula="H-9[2H9]C-6[13C6]N-2[15N2]",
         monoisotopic_mass=17.07069,
         average_mass=16.9982,
-        dict_composition={'H': -9, '2D': 9, 'C': -6, '13C': 6, 'N': -2, '15N': 2},
+        dict_composition={'H': -9, '2H': 9, 'C': -6, '13C': 6, 'N': -2, '15N': 2},
     ),
     "697": UnimodInfo(
         id="697",
@@ -3893,7 +3893,7 @@ try:
         formula="H[2H3]C6NO",
         monoisotopic_mass=109.048119,
         average_mass=109.1205,
-        dict_composition={'H': 1, '2D': 3, 'C': 6, 'N': 1, 'O': 1},
+        dict_composition={'H': 1, '2H': 3, 'C': 6, 'N': 1, 'O': 1},
     ),
     "720": UnimodInfo(
         id="720",
@@ -4117,7 +4117,7 @@ try:
         formula="H2[2H6]C4OS2",
         monoisotopic_mass=142.039317,
         average_mass=142.2727,
-        dict_composition={'H': 2, '2D': 6, 'C': 4, 'O': 1, 'S': 2},
+        dict_composition={'H': 2, '2H': 6, 'C': 4, 'O': 1, 'S': 2},
     ),
     "764": UnimodInfo(
         id="764",
@@ -4125,7 +4125,7 @@ try:
         formula="H2[2H6]C4O2S",
         monoisotopic_mass=126.062161,
         average_mass=126.2071,
-        dict_composition={'H': 2, '2D': 6, 'C': 4, 'O': 2, 'S': 1},
+        dict_composition={'H': 2, '2H': 6, 'C': 4, 'O': 2, 'S': 1},
     ),
     "765": UnimodInfo(
         id="765",
@@ -4157,7 +4157,7 @@ try:
         formula="H[2H3]C3O",
         monoisotopic_mass=59.045045,
         average_mass=59.0817,
-        dict_composition={'H': 1, '2D': 3, 'C': 3, 'O': 1},
+        dict_composition={'H': 1, '2H': 3, 'C': 3, 'O': 1},
     ),
     "771": UnimodInfo(
         id="771",
@@ -4205,7 +4205,7 @@ try:
         formula="H2[2H5]C6NO2",
         monoisotopic_mass=130.079062,
         average_mass=130.1561,
-        dict_composition={'H': 2, '2D': 5, 'C': 6, 'N': 1, 'O': 2},
+        dict_composition={'H': 2, '2H': 5, 'C': 6, 'N': 1, 'O': 2},
     ),
     "792": UnimodInfo(
         id="792",
@@ -4213,7 +4213,7 @@ try:
         formula="H[2H4]C2NO-1S",
         monoisotopic_mass=63.044462,
         average_mass=63.158,
-        dict_composition={'H': 1, '2D': 4, 'C': 2, 'N': 1, 'O': -1, 'S': 1},
+        dict_composition={'H': 1, '2H': 4, 'C': 2, 'N': 1, 'O': -1, 'S': 1},
     ),
     "793": UnimodInfo(
         id="793",
@@ -4309,7 +4309,7 @@ try:
         formula="H-2[2H4]C2O",
         monoisotopic_mass=46.035672,
         average_mass=46.0613,
-        dict_composition={'H': -2, '2D': 4, 'C': 2, 'O': 1},
+        dict_composition={'H': -2, '2H': 4, 'C': 2, 'O': 1},
     ),
     "835": UnimodInfo(
         id="835",
@@ -4373,7 +4373,7 @@ try:
         formula="H2[2H4]C4N2O2",
         monoisotopic_mass=118.068034,
         average_mass=118.1273,
-        dict_composition={'H': 2, '2D': 4, 'C': 4, 'N': 2, 'O': 2},
+        dict_composition={'H': 2, '2H': 4, 'C': 4, 'N': 2, 'O': 2},
     ),
     "859": UnimodInfo(
         id="859",
@@ -4405,7 +4405,7 @@ try:
         formula="H-3[2H3]C-1[13C]",
         monoisotopic_mass=4.022185,
         average_mass=4.0111,
-        dict_composition={'H': -3, '2D': 3, 'C': -1, '13C': 1},
+        dict_composition={'H': -3, '2H': 3, 'C': -1, '13C': 1},
     ),
     "864": UnimodInfo(
         id="864",
@@ -4421,7 +4421,7 @@ try:
         formula="H-1[2H4][13C6]NO",
         monoisotopic_mass=115.0667,
         average_mass=115.0747,
-        dict_composition={'H': -1, '2D': 4, '13C': 6, 'N': 1, 'O': 1},
+        dict_composition={'H': -1, '2H': 4, '13C': 6, 'N': 1, 'O': 1},
     ),
     "876": UnimodInfo(
         id="876",
@@ -4453,7 +4453,7 @@ try:
         formula="H-3[2H3]C-1[13C]O",
         monoisotopic_mass=20.0171,
         average_mass=20.0105,
-        dict_composition={'H': -3, '2D': 3, 'C': -1, '13C': 1, 'O': 1},
+        dict_composition={'H': -3, '2H': 3, 'C': -1, '13C': 1, 'O': 1},
     ),
     "886": UnimodInfo(
         id="886",
@@ -4789,7 +4789,7 @@ try:
         formula="H-9[2H9]N-2[15N2]",
         monoisotopic_mass=11.050561,
         average_mass=11.0423,
-        dict_composition={'H': -9, '2D': 9, 'N': -2, '15N': 2},
+        dict_composition={'H': -9, '2H': 9, 'N': -2, '15N': 2},
     ),
     "946": UnimodInfo(
         id="946",
@@ -5125,7 +5125,7 @@ try:
         formula="H-1[2H3]C-6[13C7]N-4[15N4]",
         monoisotopic_mass=28.046104,
         average_mass=27.9673,
-        dict_composition={'H': -1, '2D': 3, 'C': -6, '13C': 7, 'N': -4, '15N': 4},
+        dict_composition={'H': -1, '2H': 3, 'C': -6, '13C': 7, 'N': -4, '15N': 4},
     ),
     "1007": UnimodInfo(
         id="1007",
@@ -5133,7 +5133,7 @@ try:
         formula="H-2[2H6]C-6[13C8]N-4[15N4]",
         monoisotopic_mass=46.083939,
         average_mass=46.005,
-        dict_composition={'H': -2, '2D': 6, 'C': -6, '13C': 8, 'N': -4, '15N': 4},
+        dict_composition={'H': -2, '2H': 6, 'C': -6, '13C': 8, 'N': -4, '15N': 4},
     ),
     "1008": UnimodInfo(
         id="1008",
@@ -5205,7 +5205,7 @@ try:
         formula="H4[2H6]C8O2",
         monoisotopic_mass=144.10574,
         average_mass=144.2008,
-        dict_composition={'H': 4, '2D': 6, 'C': 8, 'O': 2},
+        dict_composition={'H': 4, '2H': 6, 'C': 8, 'O': 2},
     ),
     "1020": UnimodInfo(
         id="1020",
@@ -5293,7 +5293,7 @@ try:
         formula="H2[2H5]C6NO2S-1Se",
         monoisotopic_mass=178.023511,
         average_mass=177.0511,
-        dict_composition={'H': 2, '2D': 5, 'C': 6, 'N': 1, 'O': 2, 'S': -1, 'Se': 1},
+        dict_composition={'H': 2, '2H': 5, 'C': 6, 'N': 1, 'O': 2, 'S': -1, 'Se': 1},
     ),
     "1035": UnimodInfo(
         id="1035",
@@ -7237,7 +7237,7 @@ try:
         formula="H-2[2H6]C2",
         monoisotopic_mass=34.068961,
         average_mass=34.0901,
-        dict_composition={'H': -2, '2D': 6, 'C': 2},
+        dict_composition={'H': -2, '2H': 6, 'C': 2},
     ),
     "1292": UnimodInfo(
         id="1292",
@@ -7285,7 +7285,7 @@ try:
         formula="H-10[2H10]",
         monoisotopic_mass=10.062767,
         average_mass=10.0616,
-        dict_composition={'H': -10, '2D': 10},
+        dict_composition={'H': -10, '2H': 10},
     ),
     "1300": UnimodInfo(
         id="1300",
@@ -7293,7 +7293,7 @@ try:
         formula="H-4[2H4]C-1[13C]",
         monoisotopic_mass=5.028462,
         average_mass=5.0173,
-        dict_composition={'H': -4, '2D': 4, 'C': -1, '13C': 1},
+        dict_composition={'H': -4, '2H': 4, 'C': -1, '13C': 1},
     ),
     "1301": UnimodInfo(
         id="1301",
@@ -7341,7 +7341,7 @@ try:
         formula="[2H6]C3",
         monoisotopic_mass=48.084611,
         average_mass=48.1167,
-        dict_composition={'2D': 6, 'C': 3},
+        dict_composition={'2H': 6, 'C': 3},
     ),
     "1310": UnimodInfo(
         id="1310",
@@ -7413,7 +7413,7 @@ try:
         formula="H13[2H2]C8N[18O]",
         monoisotopic_mass=145.132163,
         average_mass=145.2229,
-        dict_composition={'H': 13, '2D': 2, 'C': 8, 'N': 1, '18O': 1},
+        dict_composition={'H': 13, '2H': 2, 'C': 8, 'N': 1, '18O': 1},
     ),
     "1323": UnimodInfo(
         id="1323",
@@ -7421,7 +7421,7 @@ try:
         formula="H13[2H2]C7[13C][15N]O",
         monoisotopic_mass=145.128307,
         average_mass=145.2092,
-        dict_composition={'H': 13, '2D': 2, 'C': 7, '13C': 1, '15N': 1, 'O': 1},
+        dict_composition={'H': 13, '2H': 2, 'C': 7, '13C': 1, '15N': 1, 'O': 1},
     ),
     "1324": UnimodInfo(
         id="1324",
@@ -7429,7 +7429,7 @@ try:
         formula="H11[2H4]C8NO",
         monoisotopic_mass=145.140471,
         average_mass=145.2354,
-        dict_composition={'H': 11, '2D': 4, 'C': 8, 'N': 1, 'O': 1},
+        dict_composition={'H': 11, '2H': 4, 'C': 8, 'N': 1, 'O': 1},
     ),
     "1326": UnimodInfo(
         id="1326",
@@ -7557,7 +7557,7 @@ try:
         formula="H4[2H5]C6NO3",
         monoisotopic_mass=148.089627,
         average_mass=148.1714,
-        dict_composition={'H': 4, '2D': 5, 'C': 6, 'N': 1, 'O': 3},
+        dict_composition={'H': 4, '2H': 5, 'C': 6, 'N': 1, 'O': 3},
     ),
     "1363": UnimodInfo(
         id="1363",
@@ -7597,7 +7597,7 @@ try:
         formula="H-2[2H6]C3O",
         monoisotopic_mass=62.063875,
         average_mass=62.1002,
-        dict_composition={'H': -2, '2D': 6, 'C': 3, 'O': 1},
+        dict_composition={'H': -2, '2H': 6, 'C': 3, 'O': 1},
     ),
     "1370": UnimodInfo(
         id="1370",
@@ -7605,7 +7605,7 @@ try:
         formula="H-3[2H3]O",
         monoisotopic_mass=19.013745,
         average_mass=19.0179,
-        dict_composition={'H': -3, '2D': 3, 'O': 1},
+        dict_composition={'H': -3, '2H': 3, 'O': 1},
     ),
     "1371": UnimodInfo(
         id="1371",
@@ -7613,7 +7613,7 @@ try:
         formula="H-3[2H9]C3",
         monoisotopic_mass=51.103441,
         average_mass=51.1352,
-        dict_composition={'H': -3, '2D': 9, 'C': 3},
+        dict_composition={'H': -3, '2H': 9, 'C': 3},
     ),
     "1372": UnimodInfo(
         id="1372",
@@ -7773,7 +7773,7 @@ try:
         formula="H18[2H2]C9[13C2]N[15N]O2",
         monoisotopic_mass=217.168776,
         average_mass=217.2797,
-        dict_composition={'H': 18, '2D': 2, 'C': 9, '13C': 2, 'N': 1, '15N': 1, 'O': 2},
+        dict_composition={'H': 18, '2H': 2, 'C': 9, '13C': 2, 'N': 1, '15N': 1, 'O': 2},
     ),
     "1395": UnimodInfo(
         id="1395",
@@ -7781,7 +7781,7 @@ try:
         formula="H18[2H2]C10[13C][15N2]O2",
         monoisotopic_mass=217.162456,
         average_mass=217.2805,
-        dict_composition={'H': 18, '2D': 2, 'C': 10, '13C': 1, '15N': 2, 'O': 2},
+        dict_composition={'H': 18, '2H': 2, 'C': 10, '13C': 1, '15N': 2, 'O': 2},
     ),
     "1396": UnimodInfo(
         id="1396",
@@ -7789,7 +7789,7 @@ try:
         formula="H18[2H2]C8[13C3]N2O2",
         monoisotopic_mass=217.175096,
         average_mass=217.279,
-        dict_composition={'H': 18, '2D': 2, 'C': 8, '13C': 3, 'N': 2, 'O': 2},
+        dict_composition={'H': 18, '2H': 2, 'C': 8, '13C': 3, 'N': 2, 'O': 2},
     ),
     "1397": UnimodInfo(
         id="1397",
@@ -7829,7 +7829,7 @@ try:
         formula="H-7[2H7]N-4[15N4]",
         monoisotopic_mass=11.032077,
         average_mass=11.0168,
-        dict_composition={'H': -7, '2D': 7, 'N': -4, '15N': 4},
+        dict_composition={'H': -7, '2H': 7, 'N': -4, '15N': 4},
     ),
     "1403": UnimodInfo(
         id="1403",
@@ -7837,7 +7837,7 @@ try:
         formula="H-6[2H6]N-1[15N]",
         monoisotopic_mass=7.034695,
         average_mass=7.0304,
-        dict_composition={'H': -6, '2D': 6, 'N': -1, '15N': 1},
+        dict_composition={'H': -6, '2H': 6, 'N': -1, '15N': 1},
     ),
     "1405": UnimodInfo(
         id="1405",
@@ -7909,7 +7909,7 @@ try:
         formula="H-3[2H9][13C3]",
         monoisotopic_mass=54.113505,
         average_mass=54.1132,
-        dict_composition={'H': -3, '2D': 9, '13C': 3},
+        dict_composition={'H': -3, '2H': 9, '13C': 3},
     ),
     "1419": UnimodInfo(
         id="1419",
@@ -10797,7 +10797,7 @@ try:
         formula="H-2[2H2][13C]O-1",
         monoisotopic_mass=-0.979006,
         average_mass=-0.9837,
-        dict_composition={'H': -2, '2D': 2, '13C': 1, 'O': -1},
+        dict_composition={'H': -2, '2H': 2, '13C': 1, 'O': -1},
     ),
     "1828": UnimodInfo(
         id="1828",

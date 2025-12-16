@@ -16,7 +16,6 @@ from typing import (
 
 from ..isotope import IsotopicData, isotopic_distribution
 from ..spans import Span
-from ..amino_acids.dclass import AminoAcidInfo
 
 from ..fragment import (
     IonType,
@@ -29,7 +28,7 @@ from ..fragment import (
 )
 from .utils import (
     Fragment,
-    _handle_charge_input_comp,
+    handle_charge_input_comp,
     adjust_comp,
     adjust_mass_mz,
     can_fragment_sequence,
@@ -158,11 +157,11 @@ def get_loss_combinations(
             combo_counter = Counter(combo)
             loss_combinations.add(frozenset(combo_counter.items()))
     # convert back to list of dicts
-    l: list[dict[NeutralDeltaInfo, int] | None] = [
+    str_comps: list[dict[NeutralDeltaInfo, int] | None] = [
         dict(combo) for combo in loss_combinations
     ]
-    l.append(None)  # add no loss option
-    return l
+    str_comps.append(None)  # add no loss option
+    return str_comps
 
 
 class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
@@ -3279,7 +3278,7 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
         if charge is None:
             charge_state = self.charge_state
         else:
-            _, charge_state = _handle_charge_input_comp(charge=charge)
+            _, charge_state = handle_charge_input_comp(charge=charge)
 
         return isotopic_distribution(
             chemical_formula=composition,

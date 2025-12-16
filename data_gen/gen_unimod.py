@@ -154,7 +154,7 @@ def _get_unimod_entries(
                 )
         if delta_average_mass is not None and comp_avg_mass is not None:
             if abs(float(delta_average_mass) - comp_avg_mass) > 0.2:
-                symbol = '🔴' if abs(float(delta_average_mass) - comp_avg_mass) > 1.0 else '⚠️'
+                symbol = '⚠️⚠️' if abs(float(delta_average_mass) - comp_avg_mass) > 1.0 else '⚠️'
                 warnings.warn(
                     f"\n  {symbol}  UNIMOD MASS MISMATCH [{term_id}] {term_name}\n"
                     f"      Average: calculated={comp_avg_mass:.6f}, reported={delta_average_mass}\n"

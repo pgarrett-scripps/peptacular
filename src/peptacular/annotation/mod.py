@@ -6,7 +6,6 @@ from collections import Counter
 from ..amino_acids.lookup import AA_LOOKUP
 from ..components.parsers import (
     parse_modification,
-    parse_modification_tag,
     parse_modification_tags,
 )
 from ..constants import ModType
@@ -186,60 +185,60 @@ class Mods(Generic[T], MassPropertyMixin):
 
     def serialize(self) -> str:
         """Serialize modifications to string format."""
-        l: list[str] = []
+        mod_str_comps: list[str] = []
 
         match self.mod_type:
             case ModType.ISOTOPE:
                 for mod_str, count in (self._mods or {}).items():
                     for _ in range(count):
-                        l.append(f"<{mod_str}>")
+                        mod_str_comps.append(f"<{mod_str}>")
             case ModType.STATIC:
                 for mod_str, count in (self._mods or {}).items():
                     for _ in range(count):
-                        l.append(f"<{mod_str}>")
+                        mod_str_comps.append(f"<{mod_str}>")
             case ModType.LABILE:
                 for mod_str, count in (self._mods or {}).items():
                     for _ in range(count):
-                        l.append(f"{{{mod_str}}}")
+                        mod_str_comps.append(f"{{{mod_str}}}")
             case ModType.UNKNOWN:
                 for mod_str, count in (self._mods or {}).items():
                     if count == 1:
-                        l.append(f"[{mod_str}]")
+                        mod_str_comps.append(f"[{mod_str}]")
                     else:
-                        l.append(f"[{mod_str}]^{count}")
+                        mod_str_comps.append(f"[{mod_str}]^{count}")
                 else:
-                    l.append("?")
+                    mod_str_comps.append("?")
             case ModType.NTERM:
                 for mod_str, count in (self._mods or {}).items():
                     for _ in range(count):
-                        l.append(f"[{mod_str}]")
+                        mod_str_comps.append(f"[{mod_str}]")
                 else:
-                    l.append("-")
+                    mod_str_comps.append("-")
             case ModType.CTERM:
                 prefix_added = False
                 for mod_str, count in (self._mods or {}).items():
                     if not prefix_added:
-                        l.append("-")
+                        mod_str_comps.append("-")
                         prefix_added = True
                     for _ in range(count):
-                        l.append(f"[{mod_str}]")
+                        mod_str_comps.append(f"[{mod_str}]")
             case ModType.CHARGE:
                 for mod_str, count in (self._mods or {}).items():
                     if count == 1:
-                        l.append(f"[{mod_str}]")
+                        mod_str_comps.append(f"[{mod_str}]")
                     else:
-                        l.append(f"[{mod_str}^{count}]")
+                        mod_str_comps.append(f"[{mod_str}^{count}]")
             case ModType.INTERNAL:
                 for mod_str, count in (self._mods or {}).items():
                     for _ in range(count):
-                        l.append(f"[{mod_str}]")
+                        mod_str_comps.append(f"[{mod_str}]")
             case ModType.INTERVAL:
                 for mod_str, count in (self._mods or {}).items():
                     for _ in range(count):
-                        l.append(f"[{mod_str}]")
+                        mod_str_comps.append(f"[{mod_str}]")
             case _:
                 raise ValueError(f"Unsupported mod_type: {self.mod_type}")
-        return "".join(l)
+        return "".join(mod_str_comps)
 
     def __str__(self) -> str:
         if not self._mods:
