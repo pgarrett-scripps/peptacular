@@ -83,15 +83,17 @@ def _get_monosaccharide_entries(
             # assert that they are equal within 0.01 Da
             if abs(float(delta_monoisotopic_mass) - comp_mass) > 0.01:
                 warnings.warn(
-                    f"[MONOSACCHARIDES] Monoisotopic mass mismatch for {term_id} {term_name}: "
-                    f"calculated {comp_mass}, reported {delta_monoisotopic_mass}"
+                    f"\n  ⚠️  MONOSACCHARIDE MASS MISMATCH [{term_id}] {term_name}\n"
+                    f"      Monoisotopic: calculated={comp_mass:.6f}, reported={delta_monoisotopic_mass}\n"
+                    f"      Formula: {delta_formula}"
                 )
         if delta_average_mass is not None and comp_avg_mass is not None:
             # assert that they are equal within 0.01 Da
             if abs(float(delta_average_mass) - comp_avg_mass) > 0.01:
                 warnings.warn(
-                    f"[MONOSACCHARIDES] Average mass mismatch for {term_id} {term_name}: "
-                    f"calculated {comp_avg_mass}, reported {delta_average_mass}"
+                    f"\n  ⚠️  MONOSACCHARIDE MASS MISMATCH [{term_id}] {term_name}\n"
+                    f"      Average: calculated={comp_avg_mass:.6f}, reported={delta_average_mass}\n"
+                    f"      Formula: {delta_formula}"
                 )
 
         if delta_monoisotopic_mass is None and comp_mass is not None:
@@ -109,19 +111,25 @@ def _get_monosaccharide_entries(
         )
         
 def run():
+    print("\n" + "="*60)
+    print("GENERATING MONOSACCHARIDE DATA")
+    print("="*60)
+    
+    print("  📖 Reading from: data_gen/data/monosaccharides.obo")
     with open("data_gen/data/monosaccharides.obo", "r") as f:
         data = read_obo(f)
 
+    print("  📖 Reading from: data_gen/data/additional_monosaccharides.obo")
     with open("data_gen/data/additional_monosaccharides.obo", "r") as f:
         additional_data = read_obo(f)
 
     data.extend(additional_data)
     
     monosaccharides = list(_get_monosaccharide_entries(data))
-    print(f"Found {len(monosaccharides)} monosaccharides")
+    print(f"  ✓ Parsed {len(monosaccharides)} monosaccharides")
     
     output_file = 'src/peptacular/mods/monosaccharide/data.py'
-    print(f"Writing to {output_file}...")
+    print(f"\n  📝 Writing to: {output_file}")
     
     # Generate the monosaccharide entries
     entries: list[str] = []

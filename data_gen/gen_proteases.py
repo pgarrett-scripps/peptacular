@@ -4,14 +4,19 @@ import json
 def gen_proteases() -> None:
     """Generate protease data file from JSON"""
     
+    print("\n" + "="*60)
+    print("GENERATING PROTEASE DATA")
+    print("="*60)
+    
+    print("  📖 Reading from: data_gen/data/proteases.json")
     with open("data_gen/data/proteases.json", "r") as f:
         data = json.load(f)
     
     proteases_data = data["proteases"]
-    print(f"Found {len(proteases_data)} proteases")
+    print(f"  ✓ Parsed {len(proteases_data)} proteases")
     
     output_file = 'src/peptacular/digestion/data.py'
-    print(f"Writing to {output_file}...")
+    print(f"\n  📝 Writing to: {output_file}")
     
     # Generate StrEnum entries
     enum_entries: list[str] = []

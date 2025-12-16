@@ -93,7 +93,9 @@ AA_THREE_LETTER: dict[str, str] = {
 def gen():
     """Generate the amino_acid_data.py file with calculated masses"""
     
-    print("Generating amino acid data...")
+    print("\n" + "="*60)
+    print("GENERATING AMINO ACID DATA")
+    print("="*60)
     
     # Calculate masses for each amino acid
     aa_data: dict[str, dict] = {}
@@ -140,7 +142,7 @@ def gen():
     
     # Generate the output file
     output_file = 'src/peptacular/amino_acids/data.py'
-    print(f"Writing to {output_file}...")
+    print(f"\n  📝 Writing to: {output_file}")
     
     # Build AminoAcidInfo entries
     info_entries: list[str] = []
@@ -183,7 +185,7 @@ AMINO_ACID_INFOS: dict[str, AminoAcidInfo] = {{
     with open(output_file, 'w') as f:
         f.write(content)
     
-    print(f"✅ Successfully generated {output_file}")
+    print(f"\n✅ Successfully generated {output_file}")
     print(f"   Total amino acids: {len(aa_data)}")
     
     # Print some statistics
@@ -193,7 +195,7 @@ AMINO_ACID_INFOS: dict[str, AminoAcidInfo] = {{
     print(f"   Without mass (ambiguous): {without_mass}")
     
     # Print a few examples
-    print("\n   Example masses:")
+    print("\n  📊 Example masses:")
     for aa_code in ["G", "A", "W", "U"]:
         if aa_code in aa_data:
             data = aa_data[aa_code]

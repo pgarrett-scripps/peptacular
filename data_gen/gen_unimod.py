@@ -87,9 +87,19 @@ def _get_unimod_entries(
 
                 if key == 'Sulf':
                     key = 'sulfate'
-
+                
                 if key == 'Ac':
-                    key = 'Acetyl'
+                    formuals_counts[i] = ('C2H2O', count)
+                    continue
+                    
+                if key == 'Kdn':
+                    formuals_counts[i] = ('C9H14O8', count)
+                    continue
+
+                if key == 'Me':
+                    formuals_counts[i] = ('CH2', count)
+                    continue
+
 
                 monossacharide = pt.MONOSACCHARIDE_LOOKUP.get(key)
                 if monossacharide is not None:
@@ -102,7 +112,6 @@ def _get_unimod_entries(
                 if formula_part[0].isdigit():
                     formula_part = f"[{formula_part}]"    
             
-
                 chem_formula = pt.ChargedFormula.from_string(f"Formula:{formula_part}", allow_zero=True)
                 
                 # Remove any elements with zero count from the composition
@@ -137,15 +146,19 @@ def _get_unimod_entries(
         # Validate masses if both calculated and reported are available
         if delta_monoisotopic_mass is not None and comp_mass is not None:
             if abs(float(delta_monoisotopic_mass) - comp_mass) > 0.01:
+                symbol = '🔴' if abs(float(delta_monoisotopic_mass) - comp_mass) > 1.0 else '⚠️'
                 warnings.warn(
-                    f"[UNIMOD] Monoisotopic mass mismatch for {term_id} {term_name}: "
-                    f"calculated {comp_mass}, reported {delta_monoisotopic_mass}"
+                    f"\n  {symbol}  UNIMOD MASS MISMATCH [{term_id}] {term_name}\n"
+                    f"      Monoisotopic: calculated={comp_mass:.6f}, reported={delta_monoisotopic_mass}\n"
+                    f"      Formula: {delta_composition}"
                 )
         if delta_average_mass is not None and comp_avg_mass is not None:
-            if abs(float(delta_average_mass) - comp_avg_mass) > 0.01:
+            if abs(float(delta_average_mass) - comp_avg_mass) > 0.2:
+                symbol = '🔴' if abs(float(delta_average_mass) - comp_avg_mass) > 1.0 else '⚠️'
                 warnings.warn(
-                    f"[UNIMOD] Average mass mismatch for {term_id} {term_name}: "
-                    f"calculated {comp_avg_mass}, reported {delta_average_mass}"
+                    f"\n  {symbol}  UNIMOD MASS MISMATCH [{term_id}] {term_name}\n"
+                    f"      Average: calculated={comp_avg_mass:.6f}, reported={delta_average_mass}\n"
+                    f"      Formula: {delta_composition}"
                 )
 
         # Use calculated masses if reported masses are missing
@@ -165,23 +178,33 @@ def _get_unimod_entries(
 
 
 def run():
+    print("\n" + "="*60)
+    print("GENERATING UNIMOD DATA")
+    print("="*60)
+    
+    print("  📖 Reading from: data_gen/data/unimod.obo")
     with open("data_gen/data/unimod.obo", "r") as f:
         data = read_obo(f)
     
     unimod_entries = list(_get_unimod_entries(data))
-    print(f"Found {len(unimod_entries)} Unimod entries")
+    print(f"  ✓ Parsed {len(unimod_entries)} Unimod entries")
 
-    # pritn stats on number of entries misssing mono avg or formula
+    # print stats on number of entries missing mono avg or formula
     missing_mono = sum(1 for mod in unimod_entries if mod.monoisotopic_mass is None)
     missing_avg = sum(1 for mod in unimod_entries if mod.average_mass is None)
     missing_formula = sum(1 for mod in unimod_entries if mod.formula is None)
-    print(f"  Entries missing monoisotopic mass: {missing_mono}")
-    print(f"  Entries missing average mass: {missing_avg}")
-    print(f"  Entries missing formula: {missing_formula}")
+    if missing_mono > 0 or missing_avg > 0 or missing_formula > 0:
+        print(f"\n  ⚠️  Data Completeness:")
+        if missing_mono > 0:
+            print(f"      Missing monoisotopic mass: {missing_mono}")
+        if missing_avg > 0:
+            print(f"      Missing average mass: {missing_avg}")
+        if missing_formula > 0:
+            print(f"      Missing formula: {missing_formula}")
 
     
     output_file = 'src/peptacular/mods/unimod/data.py'
-    print(f"Writing to {output_file}...")
+    print(f"\n  📝 Writing to: {output_file}")
     
     # Generate the Unimod entries
     entries: list[str] = []

@@ -254,20 +254,24 @@ def update_monoisotopic_flags(elements: list[pt.ElementInfo]) -> list[pt.Element
 def gen():
     """Generate the element_data.py file with hardcoded element data"""
     
+    print("\n" + "="*60)
+    print("GENERATING ELEMENT DATA")
+    print("="*60)
+    
     data_path = 'data_gen/data/elements.txt'
-    print(f"Reading element data from {data_path}...")
+    print(f"  📖 Reading from: {data_path}")
     
     # Load and process element data
     elements = get_element_info(data_path)
-    print(f"Loaded {len(elements)} isotopes")
+    print(f"  ✓ Loaded {len(elements)} isotopes")
 
     # Update monoisotopic flags
     elements = update_monoisotopic_flags(elements)
-    print("Updated monoisotopic flags")
+    print(f"  ✓ Updated monoisotopic flags")
     
     # Add average masses
     elements = add_average_masses(elements)
-    print("Calculated average masses")
+    print(f"  ✓ Calculated average masses")
     
     # Build lookup dictionary
     element_lookup: dict[tuple[str, int | None], pt.ElementInfo] = {}
@@ -288,7 +292,7 @@ def gen():
     
     # Generate the output file
     output_file = 'src/peptacular/elements/data.py'
-    print(f"Writing to {output_file}...")
+    print(f"\n  📝 Writing to: {output_file}")
     
     # Build element entries
     entries: list[str] = []

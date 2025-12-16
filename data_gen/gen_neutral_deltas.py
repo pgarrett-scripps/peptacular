@@ -23,12 +23,17 @@ def parse_formula_to_dict(formula: str) -> dict[str, int]:
 def gen_neutral_deltas() -> None:
     """Generate neutral delta data file from JSON"""
     
+    print("\n" + "="*60)
+    print("GENERATING NEUTRAL DELTA DATA")
+    print("="*60)
+    
+    print("  📖 Reading from: data_gen/data/neutral_losses.json")
     with open("data_gen/data/neutral_losses.json", "r") as f:
         data = json.load(f)
     
-    print(f"Found {len(data)} neutral deltas")
+    print(f"  ✓ Parsed {len(data)} neutral deltas")
     
-    print(f"Writing to {output_file}...")
+    print(f"\n  📝 Writing to: {output_file}")
     
     # Generate NeutralDelta enum entries
     enum_entries: list[str] = []

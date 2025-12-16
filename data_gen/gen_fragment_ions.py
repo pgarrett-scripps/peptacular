@@ -25,13 +25,18 @@ ID_TO_ION_TYPE = {
 def gen_fragment_ions() -> None:
     """Generate fragment ion data file from JSON"""
     
+    print("\n" + "="*60)
+    print("GENERATING FRAGMENT ION DATA")
+    print("="*60)
+    
+    print("  📖 Reading from: data_gen/data/fragment_ions.json")
     with open("data_gen/data/fragment_ions.json", "r") as f:
         data = json.load(f)
     
     fragment_ions = data["fragment_ions"]
-    print(f"Found {len(fragment_ions)} fragment ions")
+    print(f"  ✓ Parsed {len(fragment_ions)} fragment ions")
     
-    print(f"Writing to {output_file}...")
+    print(f"\n  📝 Writing to: {output_file}")
     
     # Generate IonType enum entries
     iontype_entries: list[str] = []

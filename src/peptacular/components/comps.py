@@ -244,6 +244,26 @@ class ChargedFormula(MassPropertyMixin):
             return formula
         raise ValueError("Invalid mzPAF format: must start with + or -")
 
+    def __add__(self, other: ChargedFormula) -> ChargedFormula:
+        """Add two ChargedFormulas together."""
+        combined_comp = self.get_composition() + other.get_composition()
+        combined_charge = None
+        if self.charge is not None and other.charge is not None:
+            combined_charge = self.charge + other.charge
+        return ChargedFormula.from_composition(
+            combined_comp, charge=combined_charge
+        )
+    
+    def __sub__(self, other: ChargedFormula) -> ChargedFormula:
+        """Subtract one ChargedFormula from another."""
+        combined_comp = self.get_composition() - other.get_composition()
+        combined_charge = None
+        if self.charge is not None and other.charge is not None:
+            combined_charge = self.charge - other.charge
+        return ChargedFormula.from_composition(
+            combined_comp, charge=combined_charge
+        )
+
 
 @dataclass(frozen=True, slots=True)
 class PositionRule:

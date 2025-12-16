@@ -68,6 +68,7 @@ def _get_psimod_entries(
         # Parse composition if available
         formula = None
         composition = None
+        parsed_formula = None
 
         if isinstance(delta_composition, str):
             delta_composition_parts = delta_composition.split()
@@ -119,7 +120,6 @@ def _get_psimod_entries(
                         formula_parts.append(f"{element}{count}")
             
             formula_str = ''.join(formula_parts)
-
             try:
                 parsed_formula = pt.ChargedFormula.from_string(f"Formula:{formula_str}", allow_zero=True)
                 formula = formula_str
@@ -144,6 +144,28 @@ def _get_psimod_entries(
             avg_mass = float(delta_average_mass)
         elif isinstance(delta_average_mass, float):
             avg_mass = delta_average_mass
+        
+        # Validate formula masses against provided masses
+        if parsed_formula is not None:
+            calc_mono = parsed_formula.get_mass(monoisotopic=True)
+            calc_avg = parsed_formula.get_mass(monoisotopic=False)
+            
+            if mono_mass is not None and abs(calc_mono - mono_mass) > 0.01:
+                # red sign if > 1.0 Da difference
+                symbol = '🔴' if abs(calc_mono - mono_mass) > 1.0 else '⚠️'
+                warnings.warn(
+                    f"\n  {symbol}  PSI-MOD MASS MISMATCH [{term_id}] {term_name}\n"
+                    f"      Monoisotopic: calculated={calc_mono:.6f}, reported={mono_mass:.6f}\n"
+                    f"      Formula: {str(formula).lstrip('Formula:')}"
+                )
+            
+            if avg_mass is not None and abs(calc_avg - avg_mass) > 0.2:
+                symbol = '🔴' if abs(calc_avg - avg_mass) > 1.0 else '⚠️'
+                warnings.warn(
+                    f"\n  {symbol}  PSI-MOD MASS MISMATCH [{term_id}] {term_name}\n"
+                    f"      Average: calculated={calc_avg:.6f}, reported={avg_mass:.6f}\n"
+                    f"      Formula: {str(formula).lstrip('Formula:')}"
+                )
 
         yield pt.PsimodInfo(
             id=term_id,
@@ -156,31 +178,40 @@ def _get_psimod_entries(
 
 
 def run():
+    print("\n" + "="*60)
+    print("GENERATING PSI-MOD DATA")
+    print("="*60)
+    
+    print("  📖 Reading from: data_gen/data/PSI-MOD.obo")
     with open("data_gen/data/PSI-MOD.obo", "r") as f:
         data = read_obo(f)
     
     unimod_entries = list(_get_psimod_entries(data))
-    print(f"Found {len(unimod_entries)} Unimod entries")
+    print(f"  ✓ Parsed {len(unimod_entries)} PSI-MOD entries")
 
-    # pritn stats on number of entries misssing mono avg or formula
+    # print stats on number of entries missing mono avg or formula
     missing_mono = sum(1 for mod in unimod_entries if mod.monoisotopic_mass is None)
     missing_avg = sum(1 for mod in unimod_entries if mod.average_mass is None)
     missing_formula = sum(1 for mod in unimod_entries if mod.formula is None)
-    print(f"  Entries missing monoisotopic mass: {missing_mono}")
-    print(f"  Entries missing average mass: {missing_avg}")
-    print(f"  Entries missing formula: {missing_formula}")
+    if missing_mono > 0 or missing_avg > 0 or missing_formula > 0:
+        print(f"\n  ⚠️  Data Completeness:")
+        if missing_mono > 0:
+            print(f"      Missing monoisotopic mass: {missing_mono}")
+        if missing_avg > 0:
+            print(f"      Missing average mass: {missing_avg}")
+        if missing_formula > 0:
+            print(f"      Missing formula: {missing_formula}")
 
     # write a file of missing entries
     missing_entries_file = 'data_gen/data/psimod_missing_entries.txt'
+    print(f"\n  📄 Writing missing entries to: {missing_entries_file}")
     with open(missing_entries_file, 'w') as f:
         for mod in unimod_entries:
             if mod.monoisotopic_mass is None or mod.average_mass is None or mod.formula is None:
                 f.write(f"{mod.id}\t{mod.name}\n")
-    print(f"Wrote missing entries to {missing_entries_file}")
-
     
     output_file = 'src/peptacular/mods/psimod/data.py'
-    print(f"Writing to {output_file}...")
+    print(f"\n  📝 Writing to: {output_file}")
     
     # Generate the Unimod entries
     entries: list[str] = []

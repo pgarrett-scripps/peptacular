@@ -9,6 +9,12 @@ from gen_refmol import gen_refmol
 from gen_neutral_deltas import gen_neutral_deltas
 
 def gen():
+    print("\n" + "#"*60)
+    print("#" + " "*58 + "#")
+    print("#" + "  PEPTACULAR DATA GENERATION".center(58) + "#")
+    print("#" + " "*58 + "#")
+    print("#"*60)
+    
     gen_elements()
     gen_monosachs()
     gen_unimod()
@@ -18,6 +24,12 @@ def gen():
     gen_proteases()
     gen_refmol()
     gen_neutral_deltas()
+    
+    print("\n" + "#"*60)
+    print("#" + " "*58 + "#")
+    print("#" + "  ✅ ALL DATA GENERATION COMPLETE".center(58) + "#")
+    print("#" + " "*58 + "#")
+    print("#"*60 + "\n")
     
 if __name__ == "__main__":
     gen()

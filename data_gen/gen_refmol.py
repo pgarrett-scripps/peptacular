@@ -9,12 +9,17 @@ output_file = 'src/peptacular/fragment/refmol/data.py'
 def gen_refmol() -> None:
     """Generate reference molecule data file from JSON"""
     
+    print("\n" + "="*60)
+    print("GENERATING REFERENCE MOLECULE DATA")
+    print("="*60)
+    
+    print("  📖 Reading from: data_gen/data/mzpaf_reference_molecules.json")
     with open("data_gen/data/mzpaf_reference_molecules.json", "r") as f:
         data = json.load(f)
     
-    print(f"Found {len(data)} reference molecules")
+    print(f"  ✓ Parsed {len(data)} reference molecules")
     
-    print(f"Writing to {output_file}...")
+    print(f"\n  📝 Writing to: {output_file}")
     
     # Generate enum entries and dictionary entries
     enum_entries: list[str] = []
@@ -65,9 +70,10 @@ def gen_refmol() -> None:
             provided_mass = info["neutral_mass"]
             if monoisotopic_mass != 0.0 and abs(provided_mass - monoisotopic_mass) > 0.01:
                 warnings.warn(
-                    f"Mass mismatch for {name}: calculated {monoisotopic_mass}, provided {provided_mass}"
+                    f"\n  ⚠️  REFMOL MASS MISMATCH: {name}\n"
+                    f"      Calculated: {monoisotopic_mass:.6f}, Provided: {provided_mass:.6f}\n"
+                    f"      Composition: {composition_dict}"
                 )
-                print(f"Composition: {composition_dict}")
             monoisotopic_mass = provided_mass
         elif "ion_mz" in info:
             # For ions, subtract proton mass to get neutral mass
@@ -75,9 +81,10 @@ def gen_refmol() -> None:
             neutral = provided_mz - 1.007276466812  # Proton mass
             if monoisotopic_mass != 0.0 and abs(neutral - monoisotopic_mass) > 0.01:
                 warnings.warn(
-                    f"Mass mismatch for {name}: calculated {monoisotopic_mass}, ion m/z {provided_mz} (neutral {neutral})"
+                    f"\n  ⚠️  REFMOL MASS MISMATCH: {name}\n"
+                    f"      Calculated: {monoisotopic_mass:.6f}, Ion m/z: {provided_mz:.6f} (neutral: {neutral:.6f})\n"
+                    f"      Composition: {composition_dict}"
                 )
-                print(f"Composition: {composition_dict}")
             monoisotopic_mass = neutral
         
         dict_entry = f'''RefMolID.{enum_name}: RefMolInfo(
