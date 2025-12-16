@@ -8,17 +8,19 @@ class ElementInfo:
     """
 
     number: int = field(compare=True)
-    mass_number: int = field(compare=True)
+    mass_number: int | None= field(compare=True)
     symbol: str = field(compare=False)
     mass: float = field(compare=False)
-    abundance: float = field(compare=False)
+    abundance: float | None = field(compare=False)
     average_mass: float = field(
         compare=False
     )  # Average mass for this element (all isotopes)
-    is_monoisotopic: bool = field(compare=False)
+    is_monoisotopic: bool | None = field(compare=False)
 
     @property
     def neutron_count(self) -> int:
+        if self.mass_number is None:
+            raise ValueError("Mass number is None, cannot calculate neutron count")
         return self.mass_number - self.number
 
     @property
@@ -30,7 +32,7 @@ class ElementInfo:
         return self.abundance == 0.0
 
     def __str__(self) -> str:
-        if self.is_monoisotopic:
+        if self.mass_number is None:
             return f"{self.symbol}"
         return f"{self.mass_number}{self.symbol}"
 
@@ -56,3 +58,17 @@ class ElementInfo:
             f"mass={self.mass}, abundance={self.abundance}, average_mass={self.average_mass}, "
             f"is_monoisotopic={self.is_monoisotopic})"
         )
+    
+    def update(self, **kwargs: object) -> "ElementInfo":
+        """Return a new ElementInfo with updated fields"""
+        # Since we use slots=True, we need to get fields manually
+        current_values: dict[str, object] = {
+            'number': self.number,
+            'symbol': self.symbol,
+            'mass_number': self.mass_number,
+            'mass': self.mass,
+            'abundance': self.abundance,
+            'average_mass': self.average_mass,
+            'is_monoisotopic': self.is_monoisotopic,
+        }
+        return self.__class__(**{**current_values, **kwargs})

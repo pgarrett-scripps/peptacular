@@ -1,6 +1,43 @@
 
 import peptacular as pt
 
+"""
+
+    3He
+    ('He', 3): ElementInfo(
+        number=2,
+        symbol='He',
+        mass_number=3,
+        mass=3.0160293201,
+        abundance=1.34e-06,
+        average_mass=3.0160293201,
+        is_monoisotopic=False,
+    ),
+    4He
+    ('He', 4): ElementInfo(
+        number=2,
+        symbol='He',
+        mass_number=4,
+        mass=4.00260325413,
+        abundance=0.99999866,
+        average_mass=4.00260325413,
+        is_monoisotopic=True,
+    ),
+
+    He
+    ('He', None): ElementInfo(
+        number=2,
+        symbol='He',
+        mass_number=4,
+        mass=4.00260325413,
+        abundance=0.99999866,
+        average_mass=4.002601932120929,
+        is_monoisotopic=None,
+    ),
+
+
+"""
+
 
 def construct_element_info(
     number: int | None,
@@ -23,6 +60,9 @@ def construct_element_info(
     if average_mass is None:
         # If not provided, use the isotope mass as fallback
         average_mass = mass
+
+    if symbol == 'D' or symbol == 'T':
+        symbol = 'H'  # Deuterium
 
     return pt.ElementInfo(
         number=number,
@@ -251,6 +291,27 @@ def update_monoisotopic_flags(elements: list[pt.ElementInfo]) -> list[pt.Element
 
     return new_elements
 
+def add_unspecified_isotope(elements: list[pt.ElementInfo]) -> list[pt.ElementInfo]:
+    # For every element group, add one which has an unspecified isotope
+    new_elems: list[pt.ElementInfo] = []
+
+    for elem in elements:
+        if elem.is_monoisotopic:
+            unspecified = pt.ElementInfo(
+                number=elem.number,
+                symbol=elem.symbol,
+                mass_number=None,
+                mass=elem.mass,
+                abundance=None,
+                average_mass=elem.average_mass,
+                is_monoisotopic=None
+            )
+            new_elems.append(unspecified)
+
+        new_elems.append(elem.update(average_mass=elem.mass))
+
+    return new_elems
+
 def gen():
     """Generate the element_data.py file with hardcoded element data"""
     
@@ -272,6 +333,9 @@ def gen():
     # Add average masses
     elements = add_average_masses(elements)
     print(f"  ✓ Calculated average masses")
+
+    # add unspecified isotopes and fix hydrogen
+    elements = add_unspecified_isotope(elements)
     
     # Build lookup dictionary
     element_lookup: dict[tuple[str, int | None], pt.ElementInfo] = {}
@@ -287,11 +351,12 @@ def gen():
     # Sort by atomic number, then mass number
     element_lookup = dict(sorted(
         element_lookup.items(), 
-        key=lambda x: (x[1].number, x[1].mass_number)
+        key=lambda x: (x[1].number, x[1].mass_number if x[1].mass_number is not None else 0)
     ))
     
     # Generate the output file
     output_file = 'src/peptacular/elements/data.py'
+    #output_file = 'temp_elements_data.py'  # for testing
     print(f"\n  📝 Writing to: {output_file}")
     
     # Build element entries
@@ -326,18 +391,6 @@ try:
 {entries_str}
     }}
 
-    # add explicit entries (num, None) for most abundant isotopes
-    for key, elem in list(ISOTOPES.items()):
-        if elem.is_monoisotopic:
-            ISOTOPES[(elem.symbol, None)] = elem
-
-    # fix hydrogen isotopes
-    ISOTOPES[('D', None)] = ISOTOPES[('D', 2)]
-    ISOTOPES[('T', None)] = ISOTOPES[('T', 3)]
-
-    ISOTOPES[('H', 2)] = ISOTOPES[('D', 2)]
-    ISOTOPES[('H', 3)] = ISOTOPES[('T', 3)]
-
 except Exception as e:
     warnings.warn(
         f"Exception in element_data: {{e}}. Using empty dictionaries.",
@@ -354,7 +407,7 @@ except Exception as e:
     print(f"   Total entries: {len(element_lookup)}")
     
     # Print some statistics
-    natural_isotopes = sum(1 for e in element_lookup.values() if e.abundance > 0)
+    natural_isotopes = sum(1 for e in element_lookup.values() if e.abundance is not None and e.abundance > 0)
     monoisotopic_entries = sum(1 for k in element_lookup.keys() if k[1] is None)
     print(f"   Natural isotopes: {natural_isotopes}")
     print(f"   Monoisotopic entries: {monoisotopic_entries}")

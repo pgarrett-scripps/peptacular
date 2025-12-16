@@ -410,11 +410,11 @@ def _calculate_elemental_distribution_slow(
     .. code-block:: python
 
         # Example usage
-        >>> _calculate_elemental_distribution('C', 2, False)
+        >>> _calculate_elemental_distribution_slow('C', 2, False)
         {24.0: (0.9787144899999999, 0), 25.00335483507: (0.02117102, 1), 26.00670967014: (0.00011448999999999998, 2)}
 
         # Example using neutron count
-        >>> _calculate_elemental_distribution('C', 2, True)
+        >>> _calculate_elemental_distribution_slow('C', 2, True)
         {0.0: (0.9787144899999999, 0), 1.0: (0.02117102, 1), 2.0: (0.00011448999999999998, 2)}
 
     """
@@ -452,7 +452,7 @@ def _calculate_elemental_distribution(
 
     elem_info = ELEMENT_LOOKUP[element]
 
-    if not elem_info.is_monoisotopic:
+    if elem_info.mass_number is not None:
         # Monoisotopic elements have only one isotope
         if use_neutron_count:
             return {0.0: (1.0, 0)}
