@@ -17,6 +17,8 @@ from typing import (
 from ..isotope import IsotopicData, isotopic_distribution
 from ..spans import Span
 
+from .randomizer import generate_random_proforma_annotation
+
 from ..fragment import (
     IonType,
     IonTypeLiteral,
@@ -209,7 +211,7 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
         self.set_cterm_mods(cterm_mods, inplace=True, validate=validate)
         self.set_internal_mods(internal_mods, inplace=True, validate=validate)
         self.set_intervals(intervals, inplace=True, validate=validate)
-        self.charge = charge  # use property setter to handle validation
+        self.set_charge(charge, inplace=True, validate=validate)
 
     @property
     def charge_type(self) -> ChargeType:
@@ -281,7 +283,7 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
         # ensure that intervals dont start/end out of bounds
         seq_len = len(self.sequence) if self._sequence is not None else 0
         for interval in intervals:
-            if interval.start < 1 or interval.end > seq_len:
+            if interval.start < 0 or interval.end > seq_len:
                 raise ValueError(
                     f"Interval {interval} is out of bounds for sequence length {seq_len}"
                 )
@@ -726,9 +728,13 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
         internal_mods: dict[int, dict[str, int]] = {}
         for pos, mods_dict in mods.items():
             internalmod = convert_moddict_input(mods_dict)
-            if internalmod is None:  # type: ignore
+            if internalmod is None or len(internalmod) == 0:
                 continue
             internal_mods[pos] = internalmod
+
+        if len(internal_mods) == 0:
+            self._internal_mods = None
+            return self
 
         self._internal_mods = internal_mods
         if validate:
@@ -748,6 +754,10 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
             return self.copy().set_intervals(intervals, inplace=True, validate=validate)
 
         if intervals is None:
+            self._intervals = None
+            return self
+        
+        if len(intervals) == 0:
             self._intervals = None
             return self
 
@@ -774,6 +784,12 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
 
         mods = convert_moddict_input(mods)
 
+        if len(mods) == 0:
+            # remove mod at index
+            if self._internal_mods is not None and index in self._internal_mods:
+                del self._internal_mods[index]
+            return self
+
         if validate:
             if not Mods[ModificationTags](
                 mod_type=ModType.INTERNAL, _mods=mods
@@ -782,6 +798,7 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
 
         if self._internal_mods is None:
             self._internal_mods = {}
+            
         self._internal_mods[index] = mods
         return self
 
@@ -796,20 +813,28 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
         if not inplace:
             return self.copy().set_charge(charge, inplace=True, validate=validate)
 
-        if charge == 0:
-            charge = None
-
-        if isinstance(charge, Mods):
+        if isinstance(charge, int):
+            if charge == 0:
+                charge = None
+        elif isinstance(charge, dict):
+            if len(charge) == 0:
+                charge = None
+            else:
+                charge = convert_moddict_input(charge)
+                if len(charge) == 0:
+                    charge = None
+        elif charge is None:
+            pass
+        elif isinstance(charge, Mods): # type: ignore
             charge = charge._mods  # type: ignore
-
-        if not charge:
-            self._charge = None
-            return self
-
+        
         self._charge = charge
+
         if validate:
             self.validate_charge()
+
         return self
+        
 
     def _set_name_generic(
         self,
@@ -852,6 +877,10 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
             return self
 
         converted_mods = convert_moddict_input(mods)
+        if len(converted_mods) == 0:
+            setattr(self, attr_name, None)
+            return self
+
         setattr(self, attr_name, converted_mods)
 
         if validate and validator_method_name:
@@ -1438,24 +1467,50 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
     Magic Methods
     """
 
+    def compare(self, other: Self) -> bool:
+        # check each attribute for equality
+        diffs = [] # hold the string values of differing attributes (ACTUALLY SHOW THE ATTRIBUTES)
+        for attr in [
+            "_sequence",
+            "_isotope_mods",
+            "_static_mods",
+            "_labile_mods",
+            "_unknown_mods",
+            "_nterm_mods",
+            "_cterm_mods",
+            "_internal_mods",
+            "_intervals",
+            "_charge",
+        ]:
+            if getattr(self, attr) != getattr(other, attr):
+                self_attribute = getattr(self, attr)
+                other_attribute = getattr(other, attr)
+                diffs.append(f"{attr} (self: {self_attribute}, other: {other_attribute})")
+        if diffs:
+            print(f"Differences found in attributes: {', '.join(diffs)}")
+            return False
+        return True
+
     def __len__(self) -> int:
         return len(self.stripped_sequence)
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, ProFormaAnnotation):
-            return NotImplemented
+            raise NotImplementedError(
+                f"Cannot compare ProFormaAnnotationBase with {type(other)}"
+            )
 
         return (
             self.sequence == other.sequence
-            and self.isotope_mods == other.isotope_mods
-            and self.static_mods == other.static_mods
-            and self.labile_mods == other.labile_mods
-            and self.unknown_mods == other.unknown_mods
-            and self.nterm_mods == other.nterm_mods
-            and self.cterm_mods == other.cterm_mods
-            and self.internal_mods == other.internal_mods
-            and self.intervals == other.intervals
-            and self.charge == other.charge
+            and self._isotope_mods == other._isotope_mods
+            and self._static_mods == other._static_mods
+            and self._labile_mods == other._labile_mods
+            and self._unknown_mods == other._unknown_mods
+            and self._nterm_mods == other._nterm_mods
+            and self._cterm_mods == other._cterm_mods
+            and self._internal_mods == other._internal_mods
+            and self._intervals == other._intervals
+            and self._charge == other._charge
         )
 
     def __repr__(self) -> str:
@@ -3289,3 +3344,10 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
             conv_min_abundance_threshold=conv_min_abundance_threshold,
             charge=charge_state,
         )
+
+
+    @staticmethod
+    def random() -> "ProFormaAnnotation":
+        """Generate a random ProFormaAnnotation for testing purposes."""
+        return generate_random_proforma_annotation()
+        

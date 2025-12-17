@@ -106,17 +106,45 @@ class ProFormaParser:
             compound_name = self._parse_header_name(">>>")
 
             if compound_name.startswith(">"):
-                raise ValueError("Invalid compound name: cannot start with '>'")
+                self._raise_parse_error("Invalid compound name: cannot start with '>'", self.cursor - len(compound_name) - 2)
 
             self.compound_name = compound_name
 
         # Check for Global Modifications <Mod>
+        # Two types: 
+        # 1. Isotope modifications: <13C>, <15N>
+        # 2. Static modifications: <[Thr->Xle]@V>
         while self.cursor < self.length and self.original_sequence[self.cursor] == "<":
-            mods = self._parse_bracket_content("<", ">", allow_multiplier=False)
-            for mod in mods:
-                if self.global_mods is None:
-                    self.global_mods = {}
-                self.global_mods[mod] = self.global_mods.get(mod, 0) + 1
+            mod_start = self.cursor
+            self.cursor += 1  # Skip 
+            
+            # Parse content until matching >
+            # Need to track nested brackets [ ] to handle <[...]@X>
+            depth = 0
+            content_start = self.cursor
+            
+            while self.cursor < self.length:
+                c = self.original_sequence[self.cursor]
+                if c == "[":
+                    depth += 1
+                elif c == "]":
+                    depth -= 1
+                elif c == ">" and depth == 0:
+                    # Found the closing > for the global mod
+                    break
+                self.cursor += 1
+            
+            if self.cursor >= self.length:
+                self._raise_parse_error("Unclosed global modification bracket", mod_start)
+            
+            content = self.original_sequence[content_start:self.cursor]
+            self.cursor += 1  # Skip closing >
+            
+            if self.global_mods is None:
+                self.global_mods = {}
+            
+            mod_key = sys.intern(content)
+            self.global_mods[mod_key] = self.global_mods.get(mod_key, 0) + 1
 
     def _parse_peptidoform_ion_group(self) -> List["ProFormaParser"]:
         """
@@ -168,7 +196,7 @@ class ProFormaParser:
             ion_name = self._parse_header_name(">>")
 
             if ion_name.startswith(">"):
-                raise ValueError("Invalid ion name: cannot start with '>'")
+                self._raise_parse_error("Invalid ion name: cannot start with '>'", self.cursor - len(ion_name) - 2)
 
             target.ion_name = ion_name
 
@@ -177,13 +205,13 @@ class ProFormaParser:
             peptide_name = self._parse_header_name(">")
 
             if peptide_name.startswith(">"):
-                raise ValueError("Invalid peptide name: cannot start with '>'")
+                self._raise_parse_error("Invalid peptide name: cannot start with '>'", self.cursor - len(peptide_name) - 2)
 
             target.peptide_name = peptide_name
 
         # Check for empty header ()
         if self._peek_startswith("()"):
-            raise ValueError("Expected 1-3 '>' characters")
+            self._raise_parse_error("Expected 1-3 '>' characters")
 
         # 3. Parse Prefix: Unlocalized Mods [?], Labile {}, N-Term [ ]-
         self._parse_sequence_prefixes(target)
@@ -294,8 +322,9 @@ class ProFormaParser:
                         target.unknown_mods[mod] = target.unknown_mods.get(mod, 0) + 1
                 else:
                     # If neither - nor ?, this might be an orphaned mod or error.
-                    raise ValueError(
-                        f"Modification at {start_pos} must be followed by '-' (N-term) or '?' (Unknown pos)"
+                    self._raise_parse_error(
+                        "Modification must be followed by '-' (N-term) or '?' (Unknown pos)",
+                        start_pos
                     )
 
             elif (
@@ -311,6 +340,30 @@ class ProFormaParser:
                     break
                 # It might be a format error or we reached valid sequence start
                 break
+
+    def _get_context_snippet(self, position: int, window: int = 20) -> str:
+        """Get a snippet of the sequence around the error position"""
+        start = max(0, position - window)
+        end = min(self.length, position + window)
+        snippet = self.original_sequence[start:end]
+        
+        # Calculate where the pointer should go
+        pointer_offset = position - start
+        pointer = " " * pointer_offset + "^"
+        
+        return f"{snippet}\n{pointer}"
+
+    def _raise_parse_error(self, message: str, position: Optional[int] = None) -> None:
+        """Raise a ValueError with position context"""
+        if position is None:
+            position = self.cursor
+        
+        context = self._get_context_snippet(position)
+        raise ValueError(
+            f"{message}\n"
+            f"Position {position}:\n"
+            f"{context}"
+        )
 
     def _parse_sequence_body(self, target: "ProFormaParser"):
         """Iterate over amino acids, intervals, and internal mods"""
@@ -335,9 +388,7 @@ class ProFormaParser:
                 self._parse_interval(target)
 
             else:
-                raise ValueError(
-                    f"Unexpected character '{char}' at position {self.cursor}"
-                )
+                self._raise_parse_error(f"Unexpected character '{char}'")
 
     def _parse_interval(self, target: "ProFormaParser"):
         """Parses (StartSeq-EndSeq), (Seq), or (?Seq)"""
@@ -363,12 +414,19 @@ class ProFormaParser:
                 self._parse_inline_mods(target, len(target.amino_acids) - 1)
             else:
                 # If we hit something invalid inside parens (that isn't a mod caught above)
-                raise ValueError(
-                    f"Unexpected character '{char}' inside interval at {self.cursor}"
+                self._raise_parse_error(
+                    f"Unexpected character '{char}' inside interval"
                 )
 
         if self.cursor >= self.length:
-            raise ValueError("Unclosed interval parenthesis")
+            interval_start = self.cursor
+            # Find the start of the interval for better error reporting
+            temp = start_pos
+            while temp > 0 and self.original_sequence[temp - 1] != '(':
+                temp -= 1
+            if temp > 0:
+                interval_start = temp - 1
+            self._raise_parse_error("Unclosed interval parenthesis", interval_start)
 
         self.cursor += 1  # Skip )
         end_pos = len(target.amino_acids)
@@ -439,7 +497,7 @@ class ProFormaParser:
                     self.cursor += 1
 
                 if depth > 0:
-                    raise ValueError("Unclosed adduct bracket")
+                    self._raise_parse_error("Unclosed adduct bracket", start)
 
                 # Content inside the brackets
                 content = self.original_sequence[start : self.cursor - 1]
@@ -447,9 +505,9 @@ class ProFormaParser:
                 # Check for forbidden suffixes
                 if self.cursor < self.length:
                     if self.original_sequence[self.cursor] == "^":
-                        raise ValueError("Adduct bracket cannot have a multiplier")
+                        self._raise_parse_error("Adduct bracket cannot have a multiplier")
                     if self.original_sequence[self.cursor] == "[":
-                        raise ValueError("Multiple adduct brackets are not allowed")
+                        self._raise_parse_error("Multiple adduct brackets are not allowed")
 
                 # Parse the content (comma separated, internal multipliers allowed)
                 # e.g. Na:z+1,H:z+1^2
@@ -487,7 +545,7 @@ class ProFormaParser:
                     self.cursor < self.length
                     and self.original_sequence[self.cursor] == "["
                 ):
-                    raise ValueError("Cannot have both charge state and adduct")
+                    self._raise_parse_error("Cannot have both charge state and adduct")
 
         return charge, adducts
 
@@ -497,17 +555,18 @@ class ProFormaParser:
 
     def _parse_header_name(self, prefix_str: str) -> str:
         """Parses (>Name) style headers. Assumes cursor is at (."""
+        start_pos = self.cursor
         # Skip the (>>> part
         self.cursor += 1 + len(prefix_str)
         content = self._read_until(")")
 
         if self.cursor >= self.length:
-            raise ValueError("Unmatched '(' for name")
+            self._raise_parse_error("Unmatched '(' for name", start_pos)
 
         self.cursor += 1  # Skip )
 
         if content.startswith(">"):
-            raise ValueError("Expected 1-3 '>' characters")
+            self._raise_parse_error("Expected 1-3 '>' characters", start_pos)
 
         return sys.intern(content)
 
@@ -540,20 +599,23 @@ class ProFormaParser:
             # Check for Multiplier ^N
             multiplier = 1
             if self.cursor < self.length and self.original_sequence[self.cursor] == "^":
-                self.cursor += 1
                 m_start = self.cursor
+                self.cursor += 1
                 while (
                     self.cursor < self.length
                     and self.original_sequence[self.cursor].isdigit()
                 ):
                     self.cursor += 1
-                if self.cursor > m_start:
-                    multiplier = int(self.original_sequence[m_start : self.cursor])
+                if self.cursor > m_start + 1:
+                    multiplier = int(self.original_sequence[m_start + 1 : self.cursor])
 
             interned = sys.intern(content)
 
             if not allow_multiplier and multiplier != 1:
-                raise ValueError("Multipliers not allowed for this bracketed content")
+                self._raise_parse_error(
+                    "Multipliers not allowed for this bracketed content",
+                    m_start  # Point to the ^ character
+                )
 
             for _ in range(multiplier):
                 items.append(interned)

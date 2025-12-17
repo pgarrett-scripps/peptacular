@@ -344,6 +344,14 @@ class ElementLookup:
         for iso in isotopes:
             result.append((iso.mass, iso.abundance))  # type: ignore
         return result
+    
+    def values(self) -> Iterable[ElementInfo]:
+        """Get an iterable of all ElementInfo values in the lookup."""
+        return self.element_data.values()
+    
+    def keys(self) -> Iterable[tuple[str, int | None]]:
+        """Get an iterable of all keys in the lookup."""
+        return self.element_data.keys()
 
 
 # Create the global lookup instance

@@ -5,10 +5,40 @@
 00005	O-glycosyl-L-threonine
 00006	N-glycosylated residue
 00009	natural residue
+00010	L-alanine residue
+00011	L-arginine residue
+00012	L-asparagine residue
+00013	L-aspartic acid residue
+00014	L-cysteine residue
+00015	L-glutamic acid residue
+00016	L-glutamine residue
+00017	glycine residue
+00018	L-histidine residue
+00019	L-isoleucine residue
+00020	L-leucine residue
+00021	L-lysine residue
+00022	L-methionine residue
+00023	L-phenylalanine residue
+00024	L-proline residue
+00025	L-serine residue
+00026	L-threonine residue
+00027	L-tryptophan residue
+00028	L-tyrosine residue
+00029	L-valine residue
+00030	N-formyl-L-methionine residue
+00031	L-selenocysteine residue
 00032	uncategorized protein modification
 00033	crosslinked residues
 00116	S-diacylglycerol-L-cysteine
 00160	N4-glycosyl-L-asparagine
+00198	D-alanine (Ala)
+00199	D-allo-isoleucine
+00200	D-methionine
+00201	D-phenylalanine
+00202	D-serine (Ser)
+00203	D-asparagine
+00204	D-leucine
+00205	D-tryptophan
 00206	L-isoglutamyl-polyglycine
 00207	L-isoglutamyl-polyglutamic acid
 00213	chondroitin sulfate D-glucuronosyl-D-galactosyl-D-galactosyl-D-xylosyl-L-serine
@@ -24,6 +54,7 @@
 00266	N-L-glutamyl-poly-L-glutamic acid
 00283	N6-propylamino-poly(propylmethylamino)-propyldimethylamine-L-lysine
 00300	L-glutamyl-5-poly(ADP-ribose)
+00306	residues isobaric at 113.084064 Da
 00328	O4'-(phospho-3'-DNA)-L-tyrosine
 00350	L-threonyl-pentaglycyl-murein peptidoglycan
 00388	L-alanyl-pentaglycyl-murein peptidoglycan
@@ -86,6 +117,7 @@
 00701	nucleotide or nucleic acid modified residue
 00702	isotope labeled residue
 00703	isoprenylated residue
+00705	D-valine
 00707	hydroxylated tyrosine
 00708	sulfur oxygenated L-cysteine
 00709	sulfur oxygenated L-methionine
@@ -149,6 +181,7 @@
 00860	sulfur containing modified residue
 00861	phosphorus containing modified residue
 00862	D-alanine
+00863	D-allo-threonine
 00868	natural, non-standard encoded residue
 00885	ester crosslinked residues
 00887	methylated aspartic acid
@@ -255,6 +288,7 @@
 01159	peptidoglycanated residue
 01168	dehydroalanine
 01169	L-3-oxoalanine
+01187	L-pyrrolysine residue
 01400	L-lysyl-poly(ADP-ribose)
 01410	hydroxylated leucine
 01414	hydroxylated isoleucine
@@ -353,6 +387,7 @@
 01808	N-methylated leucine
 01820	isotope tagged sufhydryl reagent modified cysteine
 01821	cysTMT6plex reporter+balance reagent cysteine disulfide
+01840	L-allo-isoleucine
 01850	S-(2-aminovinyl)-D-cysteine
 01851	S-(2-aminovinyl)-cysteine
 01853	L-lysinoalanine
@@ -371,6 +406,7 @@
 01884	4-aminobutylated residue
 01886	thiolated residue
 01905	5-hydroxy-3-methyl-L-proline
+01921	D-aspartic acid (Asp)
 01927	O-glycosyl-L-tyrosine
 01928	N-(L-isoaspartyl)-glycine
 01929	N6-(L-isoaspartyl)-L-lysine
@@ -392,6 +428,8 @@
 02005	S-acylated L-cysteine
 02027	urmylated lysine
 02028	iTRAQ4plex reporter+balance reagent acylated residue, average mass modification
+02029	cis-peptidyl-L-proline
+02030	trans-peptidyl-L-proline
 02039	aminated residue
 02040	crosslinked L-alanine residue
 02041	crosslinked L-arginine residue

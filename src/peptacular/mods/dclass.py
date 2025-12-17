@@ -1,9 +1,16 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from functools import cached_property
 from typing import Any, TypeVar, Self
+import typing
+
+from ..constants import CV
 
 from ..elements import ElementInfo, parse_composition
 
+
+# if type checking:
+if typing.TYPE_CHECKING:
+    from ..components import TagAccession, TagMass, TagName
 
 T = TypeVar("T", bound="OboEntity")
 
@@ -18,6 +25,7 @@ class OboEntity:
     monoisotopic_mass: float | None
     average_mass: float | None
     dict_composition: dict[str, int] | None
+    cv: CV | None = None
 
     def __str__(self) -> str:
         return f"{self.name} ({self.formula})"
@@ -65,21 +73,52 @@ class OboEntity:
             else None,
             "composition": self.dict_composition,
         }
+    
+
 
 
 class MonosaccharideInfo(OboEntity):
     """Class to store information about a monosaccharide"""
 
-    pass
 
+class ModEntity(OboEntity):
+    cv: CV
 
-class UnimodInfo(OboEntity):
+    def as_tag_mass(self, monoisotopic: bool = True, include_cv: bool = True) -> "TagMass":
+        from ..components import TagMass
+        mass = self.mass(monoisotopic=monoisotopic)
+        if mass is None:
+            raise ValueError("Mass is not defined for this modification.")
+        return TagMass(
+            mass=mass,
+            cv=self.cv if include_cv else None,
+        )
+    
+    def as_tag_accession(
+        self,
+    ) -> "TagAccession":
+        from ..components import TagAccession
+        return TagAccession(
+            accession=self.id,
+            cv=self.cv,
+        )
+    
+    def as_tag_name(
+        self,
+        include_cv: bool = True,
+    ) -> "TagName":
+        from ..components import TagName
+        return TagName(
+            name=self.name,
+            cv=self.cv if include_cv else None,
+        )
+
+@dataclass(frozen=True, slots=True)
+class UnimodInfo(ModEntity):
     """Class to store information about a Unimod modification"""
+    cv: CV = field(default=CV.UNIMOD)
 
-    pass
-
-
-class PsimodInfo(OboEntity):
+@dataclass(frozen=True, slots=True)
+class PsimodInfo(ModEntity):
     """Class to store information about a PSI-MOD modification"""
-
-    pass
+    cv: CV = field(default=CV.PSI_MOD)

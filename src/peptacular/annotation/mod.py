@@ -225,9 +225,10 @@ class Mods(Generic[T], MassPropertyMixin):
             case ModType.CHARGE:
                 for mod_str, count in (self._mods or {}).items():
                     if count == 1:
-                        mod_str_comps.append(f"[{mod_str}]")
+                        mod_str_comps.append(f"{mod_str}")
                     else:
-                        mod_str_comps.append(f"[{mod_str}^{count}]")
+                        mod_str_comps.append(f"{mod_str}^{count}")
+                return f'[{",".join(mod_str_comps)}]'
             case ModType.INTERNAL:
                 for mod_str, count in (self._mods or {}).items():
                     for _ in range(count):
@@ -364,6 +365,11 @@ class Interval:
         self._mods = None
         self.set_mods(mods, validate=validate)
 
+        if self._start < 0:
+            raise ValueError(f"Start position must be non-negative, got {self.start}")
+        if self._end <= self.start:
+            raise ValueError(f"End position must be >= start position, got {self.end} <= {self.start}")
+    
     @property
     def is_valid(self) -> bool:
         return self.validate() is None
@@ -400,6 +406,10 @@ class Interval:
             return
 
         converted_mods = convert_moddict_input(mods)
+
+        if len(converted_mods) == 0:
+            self._mods = None
+            return
 
         if validate:
             for mod_str in converted_mods.keys():

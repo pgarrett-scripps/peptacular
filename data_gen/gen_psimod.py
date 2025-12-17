@@ -104,6 +104,8 @@ def _get_psimod_entries(
                     # Format as "[13C6]" for isotope notation, with count inside brackets
                     if count == 1:
                         formula_parts.append(f"[{isotope}{element}]")
+                    elif count == 0:
+                        continue  # skip zero counts
                     else:
                         # All counts (positive, negative, -1) go inside brackets
                         formula_parts.append(f"[{isotope}{element}{count}]")
@@ -114,6 +116,8 @@ def _get_psimod_entries(
                         formula_parts.append(element)
                     elif count == -1:
                         formula_parts.append(f"{element}-1")
+                    elif count == 0:
+                        continue  # skip zero counts
                     elif count < 0:
                         formula_parts.append(f"{element}{count}")
                     else:

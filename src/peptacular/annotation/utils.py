@@ -2,6 +2,8 @@ from collections import Counter
 from dataclasses import dataclass
 from typing import Any, Literal, Sequence,TypeVar, overload
 
+from peptacular.annotation.mod import Mods
+
 from ..fragment.neutral_deltas.data import NeutralDelta, NeutralDeltaLiteral
 
 from ..fragment.ion_types.dclass import FragmentIonInfo, IonTypeProperty
@@ -285,9 +287,18 @@ class Fragment:
 
 
 def _handle_charge_input_mass(
-    charge: int | str | GlobalChargeCarrier | tuple[GlobalChargeCarrier | str, ...],
+    charge: int | str | GlobalChargeCarrier | tuple[GlobalChargeCarrier | str, ...] | Mods[GlobalChargeCarrier],
     monoisotopic: bool,
 ) -> tuple[float, int]:
+    
+    if isinstance(charge, Mods):
+        mass = charge.get_mass(monoisotopic=monoisotopic)
+        charge_state = charge.get_charge()
+
+        if charge_state is None:
+            raise ValueError("Charge is not defined for this modification.")
+        return mass, charge_state
+
     base_mass = 0.0
     if isinstance(charge, int):
         charge_value = charge
@@ -432,6 +443,8 @@ def adjust_mass_mz(
                 fragment_annotation_charge_adducts = tuple(
                     tmp_fragment_annotation_charge_adducts
                 )
+            case Mods():
+                fragment_annotation_charge_adducts = tuple(str(mod) for mod in charge._mods)  # type: ignore
             case _:
                 raise TypeError(f"Invalid charge type: {type(charge)}")
 
@@ -557,6 +570,8 @@ def adjust_comp(
                 fragment_annotation_charge_adducts = tuple(
                     tmp_fragment_annotation_charge_adducts
                 )
+            case Mods():
+                fragment_annotation_charge_adducts = tuple(str(mod) for mod in charge._mods)
             case _:
                 raise TypeError(f"Invalid charge type: {type(charge)}")
 

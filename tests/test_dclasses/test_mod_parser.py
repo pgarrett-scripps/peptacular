@@ -435,7 +435,7 @@ class TestStringConversion:
     def test_tag_mass_with_cv(self):
         """Test pt.TagMass with CV string conversion"""
         tag = pt.TagMass(mass=15.995, cv=pt.CV.UNIMOD)
-        assert str(tag) == "UNIMOD:+15.995"
+        assert str(tag) == "U:+15.995"
 
     def test_tag_info_to_string(self):
         """Test pt.TagInfo string conversion"""

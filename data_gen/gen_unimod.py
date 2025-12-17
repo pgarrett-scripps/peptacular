@@ -108,6 +108,10 @@ def _get_unimod_entries(
 
             composition: dict[pt.ElementInfo, int] = defaultdict(int)
             for formula_part, count in formuals_counts:
+
+                if count == 0:
+                    continue  # skip zero counts
+
                 # if formula_part starts with digit enclose in parentheses
                 if formula_part[0].isdigit():
                     formula_part = f"[{formula_part}]"    

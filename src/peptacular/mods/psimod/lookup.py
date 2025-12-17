@@ -1,6 +1,7 @@
 from typing import Iterable
 from .data import PSI_MODIFICATIONS
 from ..dclass import PsimodInfo
+from random import choice
 
 
 class PsimodLookup:
@@ -34,6 +35,23 @@ class PsimodLookup:
                 name = value
 
         return self.name_to_info.get(name.lower())
+    
+    def query_mass(self, mass: float, tolerance: float = 0.01, monoisotopic: bool = True) -> PsimodInfo | None:
+        """Query PSI-MOD modification by mass within a given tolerance."""
+        matches: list[PsimodInfo] = []
+        for info in self.id_to_info.values():
+            mod_mass = info.monoisotopic_mass if monoisotopic else info.average_mass
+            if mod_mass is not None and abs(mod_mass - mass) <= tolerance:
+                matches.append(info)
+        if len(matches) == 1:
+            return matches[0]
+        elif len(matches) > 1:
+            # if all have the same composition, return the first one
+            compositions = {tuple(sorted(m.dict_composition.items())) for m in matches}
+            if len(compositions) == 1:
+                return matches[0]
+            raise ValueError(f"Multiple PSI-MOD modifications found for mass {mass} within tolerance {tolerance}: {[(m.id, m.monoisotopic_mass, m.formula) for m in matches]}")
+        return None
 
     def __getitem__(self, key: str) -> PsimodInfo:
         info = self.query_name(key)
@@ -62,6 +80,20 @@ class PsimodLookup:
     def __iter__(self) -> Iterable[PsimodInfo]:
         """Iterator over all PsimodInfo entries in the lookup."""
         return iter(self.name_to_info.values())
+    
+
+    def values(self) -> Iterable[PsimodInfo]:
+        """Get all PsimodInfo entries in the lookup."""
+        return self.name_to_info.values()
+    
+    def keys(self) -> Iterable[str]:
+        """Get all keys (names) in the lookup."""
+        return self.name_to_info.keys()
+    
+
+    def choice(self) -> PsimodInfo:
+        """Get a random PsimodInfo from the lookup."""
+        return choice(list(self.name_to_info.values()))
 
 
 PSIMOD_LOOKUP = PsimodLookup(PSI_MODIFICATIONS)

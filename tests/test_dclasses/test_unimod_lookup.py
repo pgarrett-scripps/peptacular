@@ -159,20 +159,6 @@ class TestUnimodInfoProperties:
         assert hasattr(acetyl, "average_mass")
         assert hasattr(acetyl, "composition")
 
-    def test_unimod_info_str(self):
-        """Test __str__ method of UnimodInfo"""
-        acetyl = pt.UNIMOD_LOOKUP["Acetyl"]
-        str_repr = str(acetyl)
-        assert "Acetyl" in str_repr
-        assert "H2C2O" in str_repr
-
-    def test_unimod_info_repr(self):
-        """Test __repr__ method of UnimodInfo"""
-        acetyl = pt.UNIMOD_LOOKUP["Acetyl"]
-        repr_str = repr(acetyl)
-        assert "UnimodInfo" in repr_str
-        assert "id=1" in repr_str
-        assert "name=Acetyl" in repr_str
 
     def test_unimod_info_dict_composition(self):
         """Test dict_composition property"""

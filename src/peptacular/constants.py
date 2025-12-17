@@ -81,11 +81,11 @@ CV_TO_ACCESSION_PREFIX = {
 }
 
 CV_TO_MASS_PREFIX = {
-    CV.UNIMOD: "UNIMOD:",
-    CV.PSI_MOD: "MOD:",
-    CV.RESID: "RESID:",
-    CV.GNOME: "GNO:",
-    CV.XL_MOD: "XLMOD:",
+    CV.UNIMOD: "U:",
+    CV.PSI_MOD: "M:",
+    CV.RESID: "R:",
+    CV.GNOME: "G:",
+    CV.XL_MOD: "X:",
     CV.OBSERVED: "Obs:",
 }
 

@@ -372,7 +372,14 @@ class TagMass(MassPropertyMixin):
         return self.mass
 
     def get_composition(self) -> Counter[ElementInfo]:
-        raise ValueError(f"Unknown composition for mass modification: {self}")
+        match self.cv:
+            case CV.UNIMOD:
+                mod_info = UNIMOD_LOOKUP.query_mass(self.mass, monoisotopic=True, tolerance=0.005)
+            case CV.PSI_MOD:
+                mod_info = PSIMOD_LOOKUP.query_mass(self.mass, monoisotopic=True, tolerance=0.005)
+            case _:
+                raise ValueError(f"Modification lookup by mass not implemented for CV: {self.cv}")
+        return Counter(mod_info.composition) if mod_info and mod_info.composition else Counter()
 
     def get_charge(self) -> int | None:
         return None
