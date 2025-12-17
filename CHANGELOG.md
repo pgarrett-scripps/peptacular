@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ### TODO (Next Release?)
 - Take valid mod values from the respective dbs for randomizer
 - W/V/D iosn should pop the terminal mods if present? and/or internal mods on first/last aa?
+- ensure str values are properly handles with intern and that mod values are cached
 
 ## [3.0.0]
 - Major refactor / overhaul
