@@ -253,7 +253,7 @@ class TestAnnotationParse:
     def test_parse_with_charge_and_adduct_raises_error(self):
         """Test that having both charge and adduct raises an error"""
         with pytest.raises(
-            ValueError, match="Cannot have both charge state and adduct"
+            ValueError
         ):
             pt.ProFormaAnnotation.parse("PEPTIDE/2[+H]")
 

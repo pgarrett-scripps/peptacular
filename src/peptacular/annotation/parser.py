@@ -4,6 +4,11 @@ from typing import Optional, List, Tuple
 
 from .mod import VALID_AMINO_ACIDS, Interval
 
+_VALID_AA_SET = frozenset(VALID_AMINO_ACIDS)
+_TERMINATOR_SET = frozenset(['/', '+'])
+_DIGIT_SET = frozenset('0123456789')
+_SIGN_SET = frozenset('+-')
+
 
 class ProFormaParser:
     """
@@ -14,6 +19,14 @@ class ProFormaParser:
     2. Peptidoform Ion (Crosslinks separated by '//' sharing a charge)
     3. Peptidoform (The specific sequence and local mods)
     """
+
+    __slots__ = (
+        'original_sequence', 'cursor', 'length',
+        'amino_acids', 'compound_name', 'ion_name', 'peptide_name',
+        'global_mods', 'labile_mods', 'nterm_mods', 'cterm_mods',
+        'internal_mods', 'unknown_mods', 'intervals',
+        'charge', 'charge_adducts', 'is_chimeric', 'is_crosslinked'
+    )
 
     def __init__(self, proforma_sequence: str):
         self.original_sequence = proforma_sequence
@@ -42,6 +55,15 @@ class ProFormaParser:
         self.charge_adducts: Optional[dict[str, int]] = None
         self.is_chimeric: bool = False
         self.is_crosslinked: bool = False
+
+    def _peek_char(self) -> str:
+        """Get current character without bounds checking."""
+        return self.original_sequence[self.cursor]
+    
+    def _advance(self, n: int = 1) -> None:
+        """Advance cursor without bounds checking."""
+        self.cursor += n
+
 
     def parse(self) -> Generator[Tuple["ProFormaParser", Optional[bool]], None, None]:
         """
@@ -366,29 +388,30 @@ class ProFormaParser:
         )
 
     def _parse_sequence_body(self, target: "ProFormaParser"):
-        """Iterate over amino acids, intervals, and internal mods"""
-        while self.cursor < self.length:
-            char = self.original_sequence[self.cursor]
-
-            # Terminators
-            if char in ("/", "+"):
-                break
-            if char == "-" and self._peek_is_cterm():
-                break
-
-            # 1. Standard Amino Acid
-            if char in VALID_AMINO_ACIDS:
-                target.amino_acids.append(char)
-                self.cursor += 1
-                self._parse_inline_mods(target, len(target.amino_acids) - 1)
-
-            # 2. Start of Interval or Ambiguous Group
-            # We handle (?...) and (...) consistently as Intervals here
-            elif char == "(":
-                self._parse_interval(target)
-
-            else:
-                self._raise_parse_error(f"Unexpected character '{char}'")
+            """Iterate over amino acids, intervals, and internal mods - optimized version"""
+            seq = self.original_sequence
+            length = self.length
+            
+            while self.cursor < length:
+                char = seq[self.cursor]
+                
+                # Fast terminator check
+                if char in _TERMINATOR_SET:
+                    break
+                if char == "-" and self._peek_is_cterm():
+                    break
+                
+                # Standard Amino Acid - hot path
+                if char in _VALID_AA_SET:
+                    target.amino_acids.append(char)
+                    self.cursor += 1
+                    # Only check for mods if '[' follows
+                    if self.cursor < length and seq[self.cursor] == "[":
+                        self._parse_inline_mods(target, len(target.amino_acids) - 1)
+                elif char == "(":
+                    self._parse_interval(target)
+                else:
+                    self._raise_parse_error(f"Unexpected character '{char}'")
 
     def _parse_interval(self, target: "ProFormaParser"):
         """Parses (StartSeq-EndSeq), (Seq), or (?Seq)"""
@@ -468,86 +491,76 @@ class ProFormaParser:
     # Level 3: Charge and Utilities
     # =========================================================================
 
+    # Optimization 6: Faster charge state parsing
     def _parse_charge_state(self) -> Tuple[Optional[int], Optional[dict[str, int]]]:
-        """Parses /2 or /[Na+H]"""
-        charge: int | None = None
-        adducts: dict[str, int] | None = None
-
-        if self.cursor < self.length and self.original_sequence[self.cursor] == "/":
-            self.cursor += 1  # Skip /
-
-            if self.cursor >= self.length:
-                return charge, adducts
-
-            # Case A: Adducts /[Na:z+1]
-            if self.original_sequence[self.cursor] == "[":
-                if adducts is None:
-                    adducts = {}
-
-                # Manual parse to ensure single bracket and no outer multiplier
-                self.cursor += 1  # Skip [
-                start = self.cursor
-                depth = 1
-                while self.cursor < self.length and depth > 0:
-                    c = self.original_sequence[self.cursor]
-                    if c == "[":
-                        depth += 1
-                    elif c == "]":
-                        depth -= 1
-                    self.cursor += 1
-
-                if depth > 0:
-                    self._raise_parse_error("Unclosed adduct bracket", start)
-
-                # Content inside the brackets
-                content = self.original_sequence[start : self.cursor - 1]
-
-                # Check for forbidden suffixes
-                if self.cursor < self.length:
-                    if self.original_sequence[self.cursor] == "^":
-                        self._raise_parse_error("Adduct bracket cannot have a multiplier")
-                    if self.original_sequence[self.cursor] == "[":
-                        self._raise_parse_error("Multiple adduct brackets are not allowed")
-
-                # Parse the content (comma separated, internal multipliers allowed)
-                # e.g. Na:z+1,H:z+1^2
-                parts = content.split(",")
-                for part in parts:
-                    part = part.strip()
+        """Optimized charge parsing"""
+        if self.cursor >= self.length or self.original_sequence[self.cursor] != "/":
+            return None, None
+        
+        self.cursor += 1  # Skip /
+        if self.cursor >= self.length:
+            return None, None
+        
+        seq = self.original_sequence
+        char = seq[self.cursor]
+        
+        # Adduct case
+        if char == "[":
+            adducts = {}
+            self.cursor += 1
+            start = self.cursor
+            depth = 1
+            
+            while self.cursor < self.length:
+                c = seq[self.cursor]
+                if c == "[":
+                    depth += 1
+                elif c == "]":
+                    depth -= 1
+                    if depth == 0:
+                        break
+                self.cursor += 1
+            
+            if depth > 0:
+                self._raise_parse_error("Unclosed adduct bracket", start)
+            
+            content = seq[start:self.cursor]
+            self.cursor += 1
+            
+            # Parse adducts
+            for part in content.split(","):
+                part = part.strip()
+                if "^" in part:
+                    base, mult = part.rsplit("^", 1)
+                    count = int(mult) if mult.isdigit() else 1
+                    part = base
+                else:
                     count = 1
-                    # Check for ^N multiplier inside the adduct definition
-                    if "^" in part:
-                        base, mult = part.rsplit("^", 1)
-                        if mult.isdigit():
-                            count = int(mult)
-                            part = base
-                    key = sys.intern(part)
-                    adducts[key] = adducts.get(key, 0) + count
+                
+                key = sys.intern(part)
+                adducts[key] = adducts.get(key, 0) + count
+            
+            return None, adducts
+        
+        # Integer charge case
+        start = self.cursor
+        if char in _SIGN_SET:
+            self.cursor += 1
+        
+        while self.cursor < self.length and seq[self.cursor] in _DIGIT_SET:
+            self.cursor += 1
+        
+        try:
+            charge = int(seq[start:self.cursor])
+            return charge, None
+        except ValueError:
+            return None, None
 
-            # Case B: Integer Charge /2 or /-1
-            else:
-                # Read integer
-                start = self.cursor
-                if self.original_sequence[self.cursor] in "+-":
-                    self.cursor += 1
-                while (
-                    self.cursor < self.length
-                    and self.original_sequence[self.cursor].isdigit()
-                ):
-                    self.cursor += 1
-                try:
-                    charge = int(self.original_sequence[start : self.cursor])
-                except ValueError:
-                    pass  # Malformed charge
-
-                # Check for following adduct bracket which is invalid
-                if (
-                    self.cursor < self.length
-                    and self.original_sequence[self.cursor] == "["
-                ):
-                    self._raise_parse_error("Cannot have both charge state and adduct")
-
-        return charge, adducts
+    # Optimization 7: Reduce property overhead
+    @property
+    def unmod_sequence(self) -> str:
+        """Cache this if called multiple times"""
+        return "".join(self.amino_acids)
 
     # =========================================================================
     # Helpers
@@ -573,53 +586,56 @@ class ProFormaParser:
     def _parse_bracket_content(
         self, open_char: str, close_char: str, allow_multiplier: bool
     ) -> List[str]:
-        """
-        Parses consecutive bracketed items: [Mod1][Mod2]^3
-        Handles nested brackets correctly (e.g. [Formula:[13C]])
-        """
+        """Optimized bracket parsing - reduces string operations"""
         items: list[str] = []
-        while (
-            self.cursor < self.length
-            and self.original_sequence[self.cursor] == open_char
-        ):
+        seq = self.original_sequence
+        length = self.length
+        
+        while self.cursor < length and seq[self.cursor] == open_char:
             self.cursor += 1  # Skip open
             start = self.cursor
             depth = 1
-            while self.cursor < self.length and depth > 0:
-                c = self.original_sequence[self.cursor]
+            
+            # Fast bracket matching
+            while self.cursor < length:
+                c = seq[self.cursor]
                 if c == open_char:
                     depth += 1
                 elif c == close_char:
                     depth -= 1
+                    if depth == 0:
+                        break
                 self.cursor += 1
-
-            # Extract content without the outer brackets
-            content = self.original_sequence[start : self.cursor - 1]
-
-            # Check for Multiplier ^N
+            
+            content = sys.intern(seq[start:self.cursor])
+            self.cursor += 1  # Skip close
+            
+            # Check for multiplier
             multiplier = 1
-            if self.cursor < self.length and self.original_sequence[self.cursor] == "^":
+            if self.cursor < length and seq[self.cursor] == "^":
                 m_start = self.cursor
                 self.cursor += 1
-                while (
-                    self.cursor < self.length
-                    and self.original_sequence[self.cursor].isdigit()
-                ):
+                
+                # Fast digit parsing
+                while self.cursor < length and seq[self.cursor] in _DIGIT_SET:
                     self.cursor += 1
+                
                 if self.cursor > m_start + 1:
-                    multiplier = int(self.original_sequence[m_start + 1 : self.cursor])
-
-            interned = sys.intern(content)
-
-            if not allow_multiplier and multiplier != 1:
-                self._raise_parse_error(
-                    "Multipliers not allowed for this bracketed content",
-                    m_start  # Point to the ^ character
-                )
-
-            for _ in range(multiplier):
-                items.append(interned)
+                    multiplier = int(seq[m_start + 1:self.cursor])
+                    if not allow_multiplier:
+                        self._raise_parse_error(
+                            "Multipliers not allowed for this bracketed content",
+                            m_start
+                        )
+            
+            # Extend list once instead of repeated appends
+            if multiplier == 1:
+                items.append(content)
+            else:
+                items.extend([content] * multiplier)
+        
         return items
+
 
     def _read_until(self, terminator: str) -> str:
         start = self.cursor

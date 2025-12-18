@@ -66,7 +66,7 @@ def profile_mass_single():
     profiler = cProfile.Profile()
     profiler.enable()
 
-    proteins = [generate_random_protein(20) for _ in range(1)]
+    proteins = [generate_random_protein(20) for _ in range(10)]
 
     for protein in proteins:
         for i in range(500):

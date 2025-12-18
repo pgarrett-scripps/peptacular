@@ -1,0 +1,28 @@
+         1265060 function calls in 2.038 seconds
+
+   Ordered by: internal time
+   List reduced from 110 to 20 due to restriction <20>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+     5000    0.177    0.000    0.887    0.000 annotation.py:2001(base_mass)
+     5000    0.121    0.000    0.217    0.000 parser.py:390(_parse_sequence_body)
+    15000    0.093    0.000    0.189    0.000 typing.py:1136(__call__)
+    15000    0.086    0.000    0.104    0.000 parser.py:586(_parse_bracket_content)
+     5000    0.062    0.000    0.848    0.000 annotation.py:1812(parse)
+     5000    0.057    0.000    0.256    0.000 annotation.py:170(__init__)
+     5000    0.056    0.000    0.226    0.000 utils.py:359(adjust_mass_mz)
+    15000    0.055    0.000    0.195    0.000 mod.py:148(mods)
+     5000    0.053    0.000    0.125    0.000 annotation.py:442(labile_mods)
+    15000    0.053    0.000    0.053    0.000 <string>:2(__setattr__)
+     5000    0.051    0.000    0.128    0.000 annotation.py:508(internal_mods)
+    30000    0.051    0.000    0.133    0.000 mod.py:155(<genexpr>)
+   130000    0.046    0.000    0.046    0.000 {method 'append' of 'list' objects}
+    15000    0.043    0.000    0.059    0.000 mod.py:308(convert_moddict_input)
+     5000    0.042    0.000    0.377    0.000 parser.py:209(_parse_single_peptidoform_into)
+    80000    0.040    0.000    0.073    0.000 {built-in method builtins.isinstance}
+     5000    0.037    0.000    0.098    0.000 annotation.py:492(cterm_mods)
+     5000    0.035    0.000    0.429    0.000 parser.py:171(_parse_peptidoform_ion_group)
+     5000    0.032    0.000    0.055    0.000 dclass.py:38(ion_type)
+    10000    0.031    0.000    0.492    0.000 parser.py:68(parse)
+
+

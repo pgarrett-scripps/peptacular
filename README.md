@@ -1,6 +1,16 @@
 # Peptacular
 
-A Python package for peptide sequence analysis built around **ProForma 2.0 notation**. Calculate masses, generate fragments, predict isotopic patterns, and analyze physicochemical properties.
+<div align="center">
+  <img src="peptacular_logo.png" alt="Peptacular Logo" width="400"/>
+  
+  # Peptacular
+  
+  A Python package for peptide sequence analysis built around **ProForma 2.0 notation**. Calculate masses, generate fragments, predict isotopic patterns, and analyze physicochemical properties.
+  
+  [![PyPI version](https://badge.fury.io/py/peptacular.svg)](https://badge.fury.io/py/peptacular)
+  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+  
+</div>
 
 ## Features
 
@@ -44,36 +54,12 @@ for iso in iso_dist[:3]:
 # Fragment the peptide
 for frag in peptide.fragment(ion_types=['b', 'y'], charges=[1, 2]):
     print(f"{frag.ion_type}{frag.position}+{frag.charge}: {frag.mz:.3f}")
+
+# Digest
+protein = pt.parse("PEM[Oxidation]TRPEPTIDEKPEPTIDEIDE/2")
+for span in protein.digest(pt.Proteases.TRYPSIN):
+    print(f"  {protein[span].serialize()}")
 ```
-
-## Documentation by Example
-
-The examples directory contains working code for all major features:
-
-### Core Functionality
-
-- **[proforma_notation.py](examples/proforma_notation.py)** - ProForma 2.0 notation parsing and serialization
-- **[annotation.py](examples/annotation.py)** - Creating and manipulating peptide annotations
-- **[mass_mz_comp.py](examples/mass_mz_comp.py)** - Mass, m/z, and elemental composition
-
-### Analysis Tools
-
-- **[isotope_examples.py](examples/isotope_examples.py)** - Isotopic distribution calculations
-- **[fragment.py](examples/fragment.py)** - Fragment ion generation
-- **[digest.py](examples/digest.py)** - Protein digestion simulation
-- **[physiochemical_properties.py](examples/physiochemical_properties.py)** - Peptide property calculations
-
-### Utilities
-
-- **[converters.py](examples/converters.py)** - Format conversion between different tools
-- **[parrallel.py](examples/parrallel.py)** - Batch processing with parallelization
-
-Run all examples:
-```bash
-python examples/run_all_examples.py
-```
-
-## Common Use Cases
 
 ### Parse and Modify Sequences
 

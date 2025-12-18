@@ -1997,76 +1997,83 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
             raise ValueError("Fragment composition could not be calculated.")
 
         return frag.composition
-
+    
     def base_mass(self, monoisotopic: bool = True) -> float:
-        def add_mass(
-            item: MODIFICATION_TYPE | AminoAcidInfo, item_type: str, count: int = 1
-        ) -> float:
-            """Get mass of an item and raise if unavailable."""
-            mass = item.get_mass(monoisotopic=monoisotopic)
-            if mass is None:
-                raise ValueError(f"Mass not available for {item_type}: {item}")
-            return mass * count
-
+        """Optimized mass calculation with minimal overhead."""
         total_mass = 0.0
-
-        # Amino acids
+        
+        # Inline mass lookup to avoid function call overhead
+        # Amino acids - hot path, optimize heavily
+        aa_lookup = AA_LOOKUP.one_letter_to_info
         for aa in self.stripped_sequence:
-            aa_info = AA_LOOKUP.one_letter(aa)
-            total_mass += add_mass(aa_info, "amino acid")
-
-        # All modification types - process as (mod, count) pairs
-        mod_sources: list[tuple[MODIFICATION_TYPE, int, str]] = []
-
+            mass = aa_lookup[aa].get_mass(monoisotopic=monoisotopic)
+            if mass is None:
+                raise ValueError(f"Mass not available for amino acid: {aa}")
+            total_mass += mass
+        
+        # Process modifications directly without building intermediate lists
+        # This eliminates the mod_sources list entirely
+        
+        # Unknown mods
         if self.has_unknown_mods:
-            mod_sources.extend(
-                (mod, count, "unknown modification")
-                for mod, count in self.unknown_mods.parse_items()
-            )
-
+            for mod, count in self.unknown_mods.parse_items():
+                mass = mod.get_mass(monoisotopic=monoisotopic)
+                if mass is None:
+                    raise ValueError(f"Mass not available for unknown modification: {mod}")
+                total_mass += mass * count
+        
+        # Labile mods
         if self.has_labile_mods:
-            mod_sources.extend(
-                (mod, count, "labile modification")
-                for mod, count in self.labile_mods.parse_items()
-            )
-
+            for mod, count in self.labile_mods.parse_items():
+                mass = mod.get_mass(monoisotopic=monoisotopic)
+                if mass is None:
+                    raise ValueError(f"Mass not available for labile modification: {mod}")
+                total_mass += mass * count
+        
+        # N-terminal mods
         if self.has_nterm_mods:
-            mod_sources.extend(
-                (mod, count, "N-terminal modification")
-                for mod, count in self.nterm_mods.parse_items()
-            )
-
+            for mod, count in self.nterm_mods.parse_items():
+                mass = mod.get_mass(monoisotopic=monoisotopic)
+                if mass is None:
+                    raise ValueError(f"Mass not available for N-terminal modification: {mod}")
+                total_mass += mass * count
+        
+        # Internal mods
         if self.has_internal_mods:
             for mods in self.internal_mods.values():
-                mod_sources.extend(
-                    (mod, count, "internal modification")
-                    for mod, count in mods.parse_items()
-                )
-
+                for mod, count in mods.parse_items():
+                    mass = mod.get_mass(monoisotopic=monoisotopic)
+                    if mass is None:
+                        raise ValueError(f"Mass not available for internal modification: {mod}")
+                    total_mass += mass * count
+        
+        # Interval mods
         if self.has_intervals:
             for interval in self.intervals:
-                mod_sources.extend(
-                    (mod, count, "interval modification")
-                    for mod, count in interval.mods.parse_tuples()
-                )
-
+                for mod, count in interval.mods.parse_tuples():
+                    mass = mod.get_mass(monoisotopic=monoisotopic)
+                    if mass is None:
+                        raise ValueError(f"Mass not available for interval modification: {mod}")
+                    total_mass += mass * count
+        
+        # C-terminal mods
         if self.has_cterm_mods:
-            mod_sources.extend(
-                (mod, count, "C-terminal modification")
-                for mod, count in self.cterm_mods.parse_items()
-            )
-
+            for mod, count in self.cterm_mods.parse_items():
+                mass = mod.get_mass(monoisotopic=monoisotopic)
+                if mass is None:
+                    raise ValueError(f"Mass not available for C-terminal modification: {mod}")
+                total_mass += mass * count
+        
+        # Static mods
         if self.has_static_mods:
             static_mod_map = self.map_static_mods_to_indexes()
-            for _, mods in static_mod_map.items():
-                mod_sources.extend(
-                    (mod.value, mod.count, "static modification") for mod in mods
-                )
-
-        # Add all modification masses
-        for mod, count, mod_type in mod_sources:
-            total_mass += add_mass(mod, mod_type, count)
-
+            for mods in static_mod_map.values():
+                for mod in mods:
+                    mass = mod.value.get_mass(monoisotopic=monoisotopic)
+                    if mass is None:
+                        raise ValueError(f"Mass not available for static modification: {mod.value}")
+                    total_mass += mass * mod.count
+        
         return total_mass
 
     def _get_mass_vector(self, monoisotopic: bool = True) -> list[float]:

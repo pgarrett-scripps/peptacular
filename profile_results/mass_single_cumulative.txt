@@ -1,0 +1,48 @@
+         1265060 function calls in 2.038 seconds
+
+   Ordered by: cumulative time
+   List reduced from 110 to 40 due to restriction <40>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+     5000    0.014    0.000    2.159    0.000 profile_mass_adv.py:147(run_mass_single)
+     5000    0.014    0.000    2.146    0.000 mass_funcs.py:71(mass)
+     5000    0.016    0.000    2.085    0.000 mass_funcs.py:21(_mass_single)
+     5000    0.006    0.000    1.198    0.000 annotation.py:2118(mass)
+     5000    0.027    0.000    1.192    0.000 annotation.py:2138(frag)
+     5000    0.177    0.000    0.887    0.000 annotation.py:2001(base_mass)
+     5000    0.005    0.000    0.871    0.000 util.py:31(get_annotation_input)
+     5000    0.018    0.000    0.866    0.000 util.py:7(sequence_to_annotation)
+     5000    0.062    0.000    0.848    0.000 annotation.py:1812(parse)
+    10000    0.019    0.000    0.511    0.000 {built-in method builtins.next}
+    10000    0.031    0.000    0.492    0.000 parser.py:68(parse)
+     5000    0.035    0.000    0.429    0.000 parser.py:171(_parse_peptidoform_ion_group)
+     5000    0.042    0.000    0.377    0.000 parser.py:209(_parse_single_peptidoform_into)
+     5000    0.057    0.000    0.256    0.000 annotation.py:170(__init__)
+     5000    0.056    0.000    0.226    0.000 utils.py:359(adjust_mass_mz)
+    15000    0.023    0.000    0.218    0.000 mod.py:136(parse_items)
+     5000    0.121    0.000    0.217    0.000 parser.py:390(_parse_sequence_body)
+    15000    0.055    0.000    0.195    0.000 mod.py:148(mods)
+    15000    0.093    0.000    0.189    0.000 typing.py:1136(__call__)
+    30000    0.051    0.000    0.133    0.000 mod.py:155(<genexpr>)
+     5000    0.051    0.000    0.128    0.000 annotation.py:508(internal_mods)
+     5000    0.053    0.000    0.125    0.000 annotation.py:442(labile_mods)
+    15000    0.086    0.000    0.104    0.000 parser.py:586(_parse_bracket_content)
+     5000    0.037    0.000    0.098    0.000 annotation.py:492(cterm_mods)
+    30000    0.029    0.000    0.089    0.000 annotation.py:860(_set_mod_generic)
+    80000    0.040    0.000    0.073    0.000 {built-in method builtins.isinstance}
+    15000    0.020    0.000    0.070    0.000 comps.py:788(get_mass)
+     5000    0.021    0.000    0.063    0.000 parser.py:261(_parse_sequence_prefixes)
+    15000    0.043    0.000    0.059    0.000 mod.py:308(convert_moddict_input)
+     5000    0.032    0.000    0.055    0.000 dclass.py:38(ion_type)
+     5000    0.022    0.000    0.055    0.000 utils.py:649(process_losses)
+    15000    0.053    0.000    0.053    0.000 <string>:2(__setattr__)
+     5000    0.019    0.000    0.051    0.000 parser.py:477(_parse_inline_mods)
+    10000    0.007    0.000    0.049    0.000 comps.py:442(get_mass)
+   130000    0.046    0.000    0.046    0.000 {method 'append' of 'list' objects}
+     5000    0.003    0.000    0.045    0.000 annotation.py:664(set_labile_mods)
+     5000    0.029    0.000    0.045    0.000 utils.py:763(can_fragment_sequence)
+    10000    0.021    0.000    0.042    0.000 comps.py:422(_get_mod_info_by_name)
+    20000    0.020    0.000    0.037    0.000 parser.py:649(_peek_startswith)
+     5000    0.005    0.000    0.033    0.000 annotation.py:698(set_cterm_mods)
+
+
