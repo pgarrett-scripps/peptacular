@@ -59,8 +59,6 @@ def run_mass_single(protein):
         ion_type='p'
     )
     elapsed = time.time() - start_time
-    print(f"Calculated masses for peptides from 1 protein")
-    print(f"Took {elapsed*1000:.3f} ms")
     return masses
 
 def profile_mass_single():

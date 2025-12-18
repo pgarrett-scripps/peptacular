@@ -119,7 +119,6 @@ def run():
     iso_comp_str = {str(elem): count for elem, count in iso_comp.items()}
     print(f"Composition with global 13C: {iso_comp_str}")
 
-
     # will also apply isotopes to modifications where available 
     # Charge is applied after isotopes so will reflect in composition
     mod_iso_annot = pt.parse('<2H>PEPT[Phospho]IDE/2')

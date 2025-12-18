@@ -12,7 +12,7 @@ from ..constants import ParrallelMethod, ParrallelMethodLiteral
 T = TypeVar("T")
 
 # Global pool cache
-_pool_cache: dict[tuple[str, int], Pool | ThreadPool] = {}
+_pool_cache: dict[tuple[str, int], ThreadPool] = {}
 _pool_lock = mp.Lock()
 
 
@@ -53,7 +53,7 @@ def _apply_wrapper(item: Any, func: Callable[..., T], func_kwargs: dict[str, Any
 
 def _get_or_create_pool(
     method: ParrallelMethod, n_workers: int, reuse_pool: bool = True
-) -> Pool | ThreadPool:
+) -> ThreadPool:
     """
     Get an existing pool or create a new one.
 

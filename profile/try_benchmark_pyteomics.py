@@ -44,7 +44,7 @@ def benchmark_mass_calculation():
     """Benchmark: Calculate mass of random ProForma peptides"""
     
     iterations = 10
-    num_sequences = 10000
+    num_sequences = 1000
     
     # Generate random sequences
     print(f"Generating {num_sequences} random ProForma sequences...")
