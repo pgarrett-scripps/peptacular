@@ -4,6 +4,7 @@ from typing import overload
 from ..constants import ParrallelMethod, ParrallelMethodLiteral
 from .util import round_to_precision
 from ..annotation import ProFormaAnnotation
+
 from ..property.core import (
     aa_property_percentage as _aa_property_percentage,
 )
@@ -19,6 +20,10 @@ from ..property.core import (
 from ..property.core import (
     secondary_structure as _secondary_structure,
 )
+from ..property.core import (
+    generate_partitions as _property_partitions,
+)
+
 from ..property.data import (
     HPLCScale,
     HydrophobicityScale,
@@ -927,26 +932,6 @@ def charge_at_ph(
 ) -> float | list[float]:
     """
     Calculate the charge of a protein at given pH using the Henderson-Hasselbalch equation.
-
-    Uses updated amino acid pKa values with sequence-specific N-terminal and C-terminal pK values.
-    Supports parallel processing for lists of sequences.
-
-    :param sequence: The amino acid sequence, ProFormaAnnotation object, or list of sequences
-    :type sequence: str | ProFormaAnnotation | list[str | ProFormaAnnotation]
-    :param pH: The pH at which to calculate the charge (default: 7.0)
-    :type pH: float
-    :param precision: Number of decimal places to round to (default: None)
-    :type precision: Optional[float]
-    :param n_workers: Number of worker processes (only for lists). If None, uses CPU count.
-    :type n_workers: int | None
-    :param chunksize: Number of items per chunk (only for lists). If None, auto-calculated.
-    :type chunksize: int | None
-    :param method: 'process', 'thread', or None (auto-detect). Default is None.
-    :type method: Literal["process", "thread"] | None
-    :raises ValueError: If the input sequence contains multiple sequences
-    :raises ProFormaFormatError: If the proforma sequence is not valid
-    :return: The net charge at the given pH, or list of charges
-    :rtype: float | list[float]
     """
     if (
         isinstance(sequence, Sequence)
@@ -983,7 +968,6 @@ def _pi_single(
         max_: float = 12.0,
         tol_: float = 0.001,
     ) -> float:
-        """Recursive bisection method to find pI."""
         charge = _charge_at_ph(sequence=annotation.stripped_sequence, pH=ph)
         if max_ - min_ > tol_:
             if charge > 0.0:
@@ -1027,24 +1011,6 @@ def pi(
 ) -> float | list[float]:
     """
     Calculate the isoelectric point (pI) of a protein sequence.
-
-    Uses updated amino acid pKa values with sequence-specific N-terminal and C-terminal pK values.
-    Supports parallel processing for lists of sequences.
-
-    :param sequence: The amino acid sequence, ProFormaAnnotation object, or list of sequences
-    :type sequence: str | ProFormaAnnotation | list[str | ProFormaAnnotation]
-    :param precision: Number of decimal places to round to (default: None)
-    :type precision: Optional[float]
-    :param n_workers: Number of worker processes (only for lists). If None, uses CPU count.
-    :type n_workers: int | None
-    :param chunksize: Number of items per chunk (only for lists). If None, auto-calculated.
-    :type chunksize: int | None
-    :param method: 'process', 'thread', or None (auto-detect). Default is None.
-    :type method: Literal["process", "thread"] | None
-    :raises ValueError: If the input sequence contains multiple sequences
-    :raises ProFormaFormatError: If the proforma sequence is not valid
-    :return: The isoelectric point (pI) of the sequence, or list of pI values
-    :rtype: float | list[float]
     """
     if (
         isinstance(sequence, Sequence)
@@ -1268,7 +1234,6 @@ def _alpha_helix_percent_single(
     sequence: str | ProFormaAnnotation,
     precision: int | None = None,
 ) -> float:
-    """Calculate alpha helix percent for a single sequence"""
     d = _secondary_structure_single(
         sequence, scale=SecondaryStructureMethod.DELEAGE_ROUX, precision=precision
     )
@@ -1304,7 +1269,6 @@ def alpha_helix_percent(
 ) -> float | list[float]:
     """
     Calculate the propensity for alpha helix formation using the Deleage-Roux scale.
-    Supports parallel processing for lists of sequences.
     """
     if (
         isinstance(sequence, Sequence)
@@ -1330,7 +1294,6 @@ def _beta_sheet_percent_single(
     sequence: str | ProFormaAnnotation,
     precision: int | None = None,
 ) -> float:
-    """Calculate beta sheet percent for a single sequence"""
     d = _secondary_structure_single(
         sequence, scale=SecondaryStructureMethod.DELEAGE_ROUX, precision=precision
     )
@@ -1366,7 +1329,6 @@ def beta_sheet_percent(
 ) -> float | list[float]:
     """
     Calculate the propensity for beta sheet formation using the Deleage-Roux scale.
-    Supports parallel processing for lists of sequences.
     """
     if (
         isinstance(sequence, Sequence)
@@ -1510,3 +1472,147 @@ def coil_percent(
             sequence=sequence,
             precision=precision,
         )
+
+
+def _property_partitions_single(
+    sequence: str | ProFormaAnnotation,
+    scale: str | dict[str, float],
+    num_windows: int = 5,
+    aa_overlap: int = 0,
+    missing_aa_handling: (
+        MissingAAHandlingLiteral | MissingAAHandling
+    ) = MissingAAHandling.AVG,
+    aggregation_method: (
+        AggregationMethodLiteral | AggregationMethod
+    ) = AggregationMethod.AVG,
+    normalize: bool = False,
+    weighting_scheme: (
+        WeightingMethodsLiteral | WeightingMethods
+    ) = WeightingMethods.UNIFORM,
+    min_weight: float = 0.1,
+    max_weight: float = 1.0,
+) -> list[float]:   
+    annotation = get_annotation_input(sequence=sequence, copy=True)
+    return _property_partitions(
+        sequence=annotation.stripped_sequence,
+        scale=scale,
+        num_windows=num_windows,
+        aa_overlap=aa_overlap,
+        missing_aa_handling=missing_aa_handling,
+        aggregation_method=aggregation_method,
+        normalize=normalize,
+        weighting_scheme=weighting_scheme,
+        min_weight=min_weight,
+        max_weight=max_weight,
+    )
+
+
+@overload
+def property_partitions(
+    sequence: str | ProFormaAnnotation,
+    scale: str | dict[str, float],
+    num_windows: int = 5,
+    aa_overlap: int = 0,
+    missing_aa_handling: (
+        MissingAAHandlingLiteral | MissingAAHandling
+    ) = MissingAAHandling.AVG,
+    aggregation_method: (
+        AggregationMethodLiteral | AggregationMethod
+    ) = AggregationMethod.AVG,
+    normalize: bool = False,
+    weighting_scheme: (
+        WeightingMethodsLiteral | WeightingMethods
+    ) = WeightingMethods.UNIFORM,
+    min_weight: float = 0.1,
+    max_weight: float = 1.0,
+    n_workers: None = None,
+    chunksize: None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+) -> list[float]: ...
+
+
+@overload
+def property_partitions(
+    sequence: Sequence[str | ProFormaAnnotation],
+    scale: str | dict[str, float],
+    num_windows: int = 5,
+    aa_overlap: int = 0,
+    missing_aa_handling: (
+        MissingAAHandlingLiteral | MissingAAHandling
+    ) = MissingAAHandling.AVG,
+    aggregation_method: (
+        AggregationMethodLiteral | AggregationMethod
+    ) = AggregationMethod.AVG,
+    normalize: bool = False,
+    weighting_scheme: (
+        WeightingMethodsLiteral | WeightingMethods
+    ) = WeightingMethods.UNIFORM,
+    min_weight: float = 0.1,
+    max_weight: float = 1.0,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+) -> list[list[float]]: ...
+
+
+def property_partitions(
+    sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
+    scale: str | dict[str, float],
+    num_windows: int = 5,
+    aa_overlap: int = 0,
+    missing_aa_handling: (
+        MissingAAHandlingLiteral | MissingAAHandling
+    ) = MissingAAHandling.AVG,
+    aggregation_method: (
+        AggregationMethodLiteral | AggregationMethod
+    ) = AggregationMethod.AVG,
+    normalize: bool = False,
+    weighting_scheme: (
+        WeightingMethodsLiteral | WeightingMethods
+    ) = WeightingMethods.UNIFORM,
+    min_weight: float = 0.1,
+    max_weight: float = 1.0,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+) -> list[float] | list[list[float]]:
+    """Generate property values for N number of sliding windows across the sequence.
+
+    Divides the sequence into N overlapping windows and calculates property values
+    for each window. Useful for analyzing local variations in peptide properties.
+    """
+    if (
+        isinstance(sequence, Sequence)
+        and not isinstance(sequence, str)
+        and not isinstance(sequence, ProFormaAnnotation)
+    ):
+        return parallel_apply_internal(
+            _property_partitions_single,
+            sequence,
+            n_workers=n_workers,
+            chunksize=chunksize,
+            method=method,
+            scale=scale,
+            num_windows=num_windows,
+            aa_overlap=aa_overlap,
+            missing_aa_handling=missing_aa_handling,
+            aggregation_method=aggregation_method,
+            normalize=normalize,
+            weighting_scheme=weighting_scheme,
+            min_weight=min_weight,
+            max_weight=max_weight,
+        )
+    else:
+        return _property_partitions_single(
+            sequence=sequence,
+            scale=scale,
+            num_windows=num_windows,
+            aa_overlap=aa_overlap,
+            missing_aa_handling=missing_aa_handling,
+            aggregation_method=aggregation_method,
+            normalize=normalize,
+            weighting_scheme=weighting_scheme,
+            min_weight=min_weight,
+            max_weight=max_weight,
+        )
+

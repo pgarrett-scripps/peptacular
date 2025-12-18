@@ -4,18 +4,16 @@ from typing import Any, Callable, Generic, Iterable, Iterator, Self, TypeVar, ca
 from collections import Counter
 
 from ..amino_acids.lookup import AA_LOOKUP
-from ..components.parsers import (
+from ..proforma_components import (
     parse_modification,
     parse_modification_tags,
-)
-from ..constants import ModType
-from ..components.comps import (
     FixedModification,
     GlobalChargeCarrier,
     IsotopeReplacement,
     MassPropertyMixin,
     ModificationTags,
 )
+from ..constants import ModType
 from ..elements import ElementInfo
 
 # Define your modification types
@@ -228,7 +226,7 @@ class Mods(Generic[T], MassPropertyMixin):
                         mod_str_comps.append(f"{mod_str}")
                     else:
                         mod_str_comps.append(f"{mod_str}^{count}")
-                return f'[{",".join(mod_str_comps)}]'
+                return f"[{','.join(mod_str_comps)}]"
             case ModType.INTERNAL:
                 for mod_str, count in (self._mods or {}).items():
                     for _ in range(count):
@@ -368,8 +366,10 @@ class Interval:
         if self._start < 0:
             raise ValueError(f"Start position must be non-negative, got {self.start}")
         if self._end <= self.start:
-            raise ValueError(f"End position must be >= start position, got {self.end} <= {self.start}")
-    
+            raise ValueError(
+                f"End position must be >= start position, got {self.end} <= {self.start}"
+            )
+
     @property
     def is_valid(self) -> bool:
         return self.validate() is None

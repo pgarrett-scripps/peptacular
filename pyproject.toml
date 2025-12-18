@@ -4,22 +4,21 @@ version = "3.0.0"
 description = "A ProForma peptide sequence parser and annotation library"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = [
-    "pympler>=1.1",
-    "pyteomics>=4.7.5",
-    "ruff>=0.14.7",
-]
-
-[project.optional-dependencies]
-dev = [
-    "pytest>=8.0.0",
-    "pytest-cov>=4.0.0",
-]
+dependencies = []
 
 [dependency-groups]
 dev = [
     "pytest>=9.0.1",
     "pytest-cov>=6.0.0",
+    "pympler>=1.1",
+    "pyteomics>=4.7.5",
+    "ruff>=0.14.7",
+]
+
+docs = [
+    "sphinx>=7.0",
+    "sphinx-rtd-theme>=2.0",
+    "sphinx-autodoc-typehints>=1.25",
 ]
 
 [build-system]

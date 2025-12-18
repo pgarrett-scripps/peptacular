@@ -19,7 +19,7 @@ from .core import (
     calc_property,
     calc_window_property,
     charge_at_ph,
-    generate_sliding_window_features,
+    generate_partitions,
     secondary_structure,
 )
 
@@ -411,7 +411,7 @@ class SequencePropertyMixin:
         max_weight: float = 1.0,
     ) -> list[float]:
         """Generate sliding window features for the sequence."""
-        vals = generate_sliding_window_features(
+        vals = generate_partitions(
             sequence=self.stripped_sequence,
             scale=scale,
             num_windows=num_windows,

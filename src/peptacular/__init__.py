@@ -4,7 +4,7 @@ Peptacular: A ProForma peptide sequence parser and annotation library
 
 from .annotation import *
 from .amino_acids import *
-from .components import *
+from .proforma_components import *
 from .constants import *
 from .elements import *
 from .mods import *

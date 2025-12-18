@@ -5,9 +5,9 @@ from typing import Optional, List, Tuple
 from .mod import VALID_AMINO_ACIDS, Interval
 
 _VALID_AA_SET = frozenset(VALID_AMINO_ACIDS)
-_TERMINATOR_SET = frozenset(['/', '+'])
-_DIGIT_SET = frozenset('0123456789')
-_SIGN_SET = frozenset('+-')
+_TERMINATOR_SET = frozenset(["/", "+"])
+_DIGIT_SET = frozenset("0123456789")
+_SIGN_SET = frozenset("+-")
 
 
 class ProFormaParser:
@@ -21,11 +21,24 @@ class ProFormaParser:
     """
 
     __slots__ = (
-        'original_sequence', 'cursor', 'length',
-        'amino_acids', 'compound_name', 'ion_name', 'peptide_name',
-        'global_mods', 'labile_mods', 'nterm_mods', 'cterm_mods',
-        'internal_mods', 'unknown_mods', 'intervals',
-        'charge', 'charge_adducts', 'is_chimeric', 'is_crosslinked'
+        "original_sequence",
+        "cursor",
+        "length",
+        "amino_acids",
+        "compound_name",
+        "ion_name",
+        "peptide_name",
+        "global_mods",
+        "labile_mods",
+        "nterm_mods",
+        "cterm_mods",
+        "internal_mods",
+        "unknown_mods",
+        "intervals",
+        "charge",
+        "charge_adducts",
+        "is_chimeric",
+        "is_crosslinked",
     )
 
     def __init__(self, proforma_sequence: str):
@@ -59,11 +72,10 @@ class ProFormaParser:
     def _peek_char(self) -> str:
         """Get current character without bounds checking."""
         return self.original_sequence[self.cursor]
-    
+
     def _advance(self, n: int = 1) -> None:
         """Advance cursor without bounds checking."""
         self.cursor += n
-
 
     def parse(self) -> Generator[Tuple["ProFormaParser", Optional[bool]], None, None]:
         """
@@ -128,23 +140,26 @@ class ProFormaParser:
             compound_name = self._parse_header_name(">>>")
 
             if compound_name.startswith(">"):
-                self._raise_parse_error("Invalid compound name: cannot start with '>'", self.cursor - len(compound_name) - 2)
+                self._raise_parse_error(
+                    "Invalid compound name: cannot start with '>'",
+                    self.cursor - len(compound_name) - 2,
+                )
 
             self.compound_name = compound_name
 
         # Check for Global Modifications <Mod>
-        # Two types: 
+        # Two types:
         # 1. Isotope modifications: <13C>, <15N>
         # 2. Static modifications: <[Thr->Xle]@V>
         while self.cursor < self.length and self.original_sequence[self.cursor] == "<":
             mod_start = self.cursor
-            self.cursor += 1  # Skip 
-            
+            self.cursor += 1  # Skip
+
             # Parse content until matching >
             # Need to track nested brackets [ ] to handle <[...]@X>
             depth = 0
             content_start = self.cursor
-            
+
             while self.cursor < self.length:
                 c = self.original_sequence[self.cursor]
                 if c == "[":
@@ -155,16 +170,18 @@ class ProFormaParser:
                     # Found the closing > for the global mod
                     break
                 self.cursor += 1
-            
+
             if self.cursor >= self.length:
-                self._raise_parse_error("Unclosed global modification bracket", mod_start)
-            
-            content = self.original_sequence[content_start:self.cursor]
+                self._raise_parse_error(
+                    "Unclosed global modification bracket", mod_start
+                )
+
+            content = self.original_sequence[content_start : self.cursor]
             self.cursor += 1  # Skip closing >
-            
+
             if self.global_mods is None:
                 self.global_mods = {}
-            
+
             mod_key = sys.intern(content)
             self.global_mods[mod_key] = self.global_mods.get(mod_key, 0) + 1
 
@@ -218,7 +235,10 @@ class ProFormaParser:
             ion_name = self._parse_header_name(">>")
 
             if ion_name.startswith(">"):
-                self._raise_parse_error("Invalid ion name: cannot start with '>'", self.cursor - len(ion_name) - 2)
+                self._raise_parse_error(
+                    "Invalid ion name: cannot start with '>'",
+                    self.cursor - len(ion_name) - 2,
+                )
 
             target.ion_name = ion_name
 
@@ -227,7 +247,10 @@ class ProFormaParser:
             peptide_name = self._parse_header_name(">")
 
             if peptide_name.startswith(">"):
-                self._raise_parse_error("Invalid peptide name: cannot start with '>'", self.cursor - len(peptide_name) - 2)
+                self._raise_parse_error(
+                    "Invalid peptide name: cannot start with '>'",
+                    self.cursor - len(peptide_name) - 2,
+                )
 
             target.peptide_name = peptide_name
 
@@ -346,7 +369,7 @@ class ProFormaParser:
                     # If neither - nor ?, this might be an orphaned mod or error.
                     self._raise_parse_error(
                         "Modification must be followed by '-' (N-term) or '?' (Unknown pos)",
-                        start_pos
+                        start_pos,
                     )
 
             elif (
@@ -368,50 +391,46 @@ class ProFormaParser:
         start = max(0, position - window)
         end = min(self.length, position + window)
         snippet = self.original_sequence[start:end]
-        
+
         # Calculate where the pointer should go
         pointer_offset = position - start
         pointer = " " * pointer_offset + "^"
-        
+
         return f"{snippet}\n{pointer}"
 
     def _raise_parse_error(self, message: str, position: Optional[int] = None) -> None:
         """Raise a ValueError with position context"""
         if position is None:
             position = self.cursor
-        
+
         context = self._get_context_snippet(position)
-        raise ValueError(
-            f"{message}\n"
-            f"Position {position}:\n"
-            f"{context}"
-        )
+        raise ValueError(f"{message}\nPosition {position}:\n{context}")
 
     def _parse_sequence_body(self, target: "ProFormaParser"):
-            """Iterate over amino acids, intervals, and internal mods - optimized version"""
-            seq = self.original_sequence
-            length = self.length
-            
-            while self.cursor < length:
-                char = seq[self.cursor]
-                
-                # Fast terminator check
-                if char in _TERMINATOR_SET:
-                    break
-                if char == "-" and self._peek_is_cterm():
-                    break
-                
-                # Standard Amino Acid - hot path
-                if char in _VALID_AA_SET:
-                    target.amino_acids.append(char)
-                    self.cursor += 1
-                    # Only check for mods if '[' follows
-                    if self.cursor < length and seq[self.cursor] == "[":
-                        self._parse_inline_mods(target, len(target.amino_acids) - 1)
-                elif char == "(":
-                    self._parse_interval(target)
-                else:
-                    self._raise_parse_error(f"Unexpected character '{char}'")
+        """Iterate over amino acids, intervals, and internal mods - optimized version"""
+        seq = self.original_sequence
+        length = self.length
+
+        while self.cursor < length:
+            char = seq[self.cursor]
+
+            # Fast terminator check
+            if char in _TERMINATOR_SET:
+                break
+            if char == "-" and self._peek_is_cterm():
+                break
+
+            # Standard Amino Acid - hot path
+            if char in _VALID_AA_SET:
+                target.amino_acids.append(char)
+                self.cursor += 1
+                # Only check for mods if '[' follows
+                if self.cursor < length and seq[self.cursor] == "[":
+                    self._parse_inline_mods(target, len(target.amino_acids) - 1)
+            elif char == "(":
+                self._parse_interval(target)
+            else:
+                self._raise_parse_error(f"Unexpected character '{char}'")
 
     def _parse_interval(self, target: "ProFormaParser"):
         """Parses (StartSeq-EndSeq), (Seq), or (?Seq)"""
@@ -445,7 +464,7 @@ class ProFormaParser:
             interval_start = self.cursor
             # Find the start of the interval for better error reporting
             temp = start_pos
-            while temp > 0 and self.original_sequence[temp - 1] != '(':
+            while temp > 0 and self.original_sequence[temp - 1] != "(":
                 temp -= 1
             if temp > 0:
                 interval_start = temp - 1
@@ -496,21 +515,21 @@ class ProFormaParser:
         """Optimized charge parsing"""
         if self.cursor >= self.length or self.original_sequence[self.cursor] != "/":
             return None, None
-        
+
         self.cursor += 1  # Skip /
         if self.cursor >= self.length:
             return None, None
-        
+
         seq = self.original_sequence
         char = seq[self.cursor]
-        
+
         # Adduct case
         if char == "[":
             adducts = {}
             self.cursor += 1
             start = self.cursor
             depth = 1
-            
+
             while self.cursor < self.length:
                 c = seq[self.cursor]
                 if c == "[":
@@ -520,13 +539,13 @@ class ProFormaParser:
                     if depth == 0:
                         break
                 self.cursor += 1
-            
+
             if depth > 0:
                 self._raise_parse_error("Unclosed adduct bracket", start)
-            
-            content = seq[start:self.cursor]
+
+            content = seq[start : self.cursor]
             self.cursor += 1
-            
+
             # Parse adducts
             for part in content.split(","):
                 part = part.strip()
@@ -536,22 +555,22 @@ class ProFormaParser:
                     part = base
                 else:
                     count = 1
-                
+
                 key = sys.intern(part)
                 adducts[key] = adducts.get(key, 0) + count
-            
+
             return None, adducts
-        
+
         # Integer charge case
         start = self.cursor
         if char in _SIGN_SET:
             self.cursor += 1
-        
+
         while self.cursor < self.length and seq[self.cursor] in _DIGIT_SET:
             self.cursor += 1
-        
+
         try:
-            charge = int(seq[start:self.cursor])
+            charge = int(seq[start : self.cursor])
             return charge, None
         except ValueError:
             return None, None
@@ -590,12 +609,12 @@ class ProFormaParser:
         items: list[str] = []
         seq = self.original_sequence
         length = self.length
-        
+
         while self.cursor < length and seq[self.cursor] == open_char:
             self.cursor += 1  # Skip open
             start = self.cursor
             depth = 1
-            
+
             # Fast bracket matching
             while self.cursor < length:
                 c = seq[self.cursor]
@@ -606,36 +625,35 @@ class ProFormaParser:
                     if depth == 0:
                         break
                 self.cursor += 1
-            
-            content = sys.intern(seq[start:self.cursor])
+
+            content = sys.intern(seq[start : self.cursor])
             self.cursor += 1  # Skip close
-            
+
             # Check for multiplier
             multiplier = 1
             if self.cursor < length and seq[self.cursor] == "^":
                 m_start = self.cursor
                 self.cursor += 1
-                
+
                 # Fast digit parsing
                 while self.cursor < length and seq[self.cursor] in _DIGIT_SET:
                     self.cursor += 1
-                
+
                 if self.cursor > m_start + 1:
-                    multiplier = int(seq[m_start + 1:self.cursor])
+                    multiplier = int(seq[m_start + 1 : self.cursor])
                     if not allow_multiplier:
                         self._raise_parse_error(
                             "Multipliers not allowed for this bracketed content",
-                            m_start
+                            m_start,
                         )
-            
+
             # Extend list once instead of repeated appends
             if multiplier == 1:
                 items.append(content)
             else:
                 items.extend([content] * multiplier)
-        
-        return items
 
+        return items
 
     def _read_until(self, terminator: str) -> str:
         start = self.cursor

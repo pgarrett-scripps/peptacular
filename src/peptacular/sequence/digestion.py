@@ -10,7 +10,7 @@ from ..digestion.core import generate_regex
 from ..spans import Span
 from ..constants import ParrallelMethod, ParrallelMethodLiteral
 from ..annotation import ProFormaAnnotation
-from . import get_annotation_input
+from .util import get_annotation_input
 from .parrallel import parallel_apply_internal
 
 

@@ -39,7 +39,6 @@ modules = [pt.isotope, pt.regex_utils]
 modules.extend(get_all_modules(pt.sequence))
 modules.extend(get_all_modules(pt.annotation))
 modules.extend(get_all_modules(pt.digestion))
-modules.extend(get_all_modules(pt.properties))
 
 
 @pytest.mark.parametrize("module", modules)

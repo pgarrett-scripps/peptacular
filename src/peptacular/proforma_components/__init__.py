@@ -33,8 +33,8 @@ from .comps import (
     MODIFICATION_TYPE,
     GlycanTag,
     ModificationTags,
+    MassPropertyMixin,
 )
-
 from .parsers import parse_modification_tag, parse_modification_tags, parse_modification
 
 __all__ = [
@@ -68,4 +68,5 @@ __all__ = [
     "parse_modification",
     "GlycanTag",
     "ModificationTags",
+    "MassPropertyMixin",
 ]

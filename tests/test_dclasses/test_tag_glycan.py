@@ -14,7 +14,7 @@ class TestGlycanComposition:
         # assert that component is GlycanTag
         assert isinstance(result, pt.GlycanTag)
         res: pt.GlycanComponent = result.components[0]
-        assert res.monosaccharide == pt.MonosaccharideName.Hex
+        assert res.monosaccharide == pt.Monosaccharide.Hex
         assert res.occurance == 1
 
     def test_glycan_with_count(self):
@@ -22,7 +22,7 @@ class TestGlycanComposition:
         result = pt.parse_modification_tag("Glycan:Hex5")
         assert isinstance(result, pt.GlycanTag)
         res: pt.GlycanComponent = result.components[0]
-        assert res.monosaccharide == pt.MonosaccharideName.Hex
+        assert res.monosaccharide == pt.Monosaccharide.Hex
         assert res.occurance == 5
 
     def test_complex_glycan_composition(self):
@@ -33,9 +33,9 @@ class TestGlycanComposition:
         res1: pt.GlycanComponent = result.components[0]
         res2: pt.GlycanComponent = result.components[1]
 
-        assert res1.monosaccharide == pt.MonosaccharideName.Hex
+        assert res1.monosaccharide == pt.Monosaccharide.Hex
         assert res1.occurance == 5
-        assert res2.monosaccharide == pt.MonosaccharideName.HexNAc
+        assert res2.monosaccharide == pt.Monosaccharide.HexNAc
         assert res2.occurance == 4
 
     def test_various_monosaccharides(self):
@@ -52,30 +52,30 @@ class TestParseGlycan:
 
     def test_simple_glycan(self):
         """Test parsing simple glycan with prefix"""
-        from peptacular.components.parsers import parse_glycan
+        from peptacular.proforma_components.parsers import parse_glycan
 
         result = parse_glycan("Glycan:Hex5")
         assert len(result) == 1
-        assert result[0].monosaccharide == pt.MonosaccharideName.Hex
+        assert result[0].monosaccharide == pt.Monosaccharide.Hex
         assert result[0].occurance == 5
 
     def test_complex_glycan(self):
         """Test parsing complex glycan composition"""
-        from peptacular.components.parsers import parse_glycan
+        from peptacular.proforma_components.parsers import parse_glycan
 
         result = parse_glycan("Glycan:Hex5HexNAc4NeuAc2")
         assert isinstance(result, tuple)
         assert len(result) == 3
-        assert result[0].monosaccharide == pt.MonosaccharideName.Hex
+        assert result[0].monosaccharide == pt.Monosaccharide.Hex
         assert result[0].occurance == 5
-        assert result[1].monosaccharide == pt.MonosaccharideName.HexNAc
+        assert result[1].monosaccharide == pt.Monosaccharide.HexNAc
         assert result[1].occurance == 4
-        assert result[2].monosaccharide == pt.MonosaccharideName.NeuAc
+        assert result[2].monosaccharide == pt.Monosaccharide.NeuAc
         assert result[2].occurance == 2
 
     def test_case_insensitive_prefix(self):
         """Test that Glycan: prefix is case insensitive"""
-        from peptacular.components.parsers import parse_glycan
+        from peptacular.proforma_components.parsers import parse_glycan
 
         result1 = parse_glycan("Glycan:Hex")
         result2 = parse_glycan("glycan:Hex")
@@ -84,7 +84,7 @@ class TestParseGlycan:
 
     def test_missing_prefix_raises_error(self):
         """Test that missing Glycan: prefix raises ValueError"""
-        from peptacular.components.parsers import parse_glycan
+        from peptacular.proforma_components.parsers import parse_glycan
         import pytest
 
         with pytest.raises(ValueError, match="must start with 'Glycan:'"):
@@ -92,7 +92,7 @@ class TestParseGlycan:
 
     def test_empty_string_raises_error(self):
         """Test that empty string raises ValueError"""
-        from peptacular.components.parsers import parse_glycan
+        from peptacular.proforma_components.parsers import parse_glycan
         import pytest
 
         with pytest.raises(ValueError, match="Empty glycan string"):
@@ -100,7 +100,7 @@ class TestParseGlycan:
 
     def test_only_prefix_raises_error(self):
         """Test that only prefix without composition raises ValueError"""
-        from peptacular.components.parsers import parse_glycan
+        from peptacular.proforma_components.parsers import parse_glycan
         import pytest
 
         # This should fail during composition parsing

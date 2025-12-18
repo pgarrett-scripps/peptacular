@@ -1,8 +1,8 @@
 from collections import Counter
 from dataclasses import dataclass
-from typing import Any, Literal, Sequence,TypeVar, overload
+from typing import Any, Literal, Sequence, TypeVar, overload
 
-from peptacular.annotation.mod import Mods
+from ..annotation.mod import Mods
 
 from ..fragment.neutral_deltas.data import NeutralDelta, NeutralDeltaLiteral
 
@@ -21,7 +21,7 @@ from ..fragment.mzpaf import (
 from ..fragment.neutral_deltas.lookup import NEUTRAL_DELTA_LOOKUP
 
 from ..fragment import FRAGMENT_ION_LOOKUP
-from ..components.comps import ChargedFormula, GlobalChargeCarrier
+from ..proforma_components.comps import ChargedFormula, GlobalChargeCarrier
 from ..fragment import IonType, IonTypeLiteral
 from ..constants import C13_NEUTRON_MASS, ELECTRON_MASS, PROTON_MASS
 from ..elements.dclass import ElementInfo
@@ -105,7 +105,7 @@ class Fragment:
             case dict() as iso_dict:
                 result: dict[ElementInfo, int] = {}
                 for key, value in iso_dict.items():
-                    element = ELEMENT_LOOKUP[key] if isinstance(key, str) else key 
+                    element = ELEMENT_LOOKUP[key] if isinstance(key, str) else key
                     result[element] = value
                 return result
             case int() as iso_count:
@@ -287,10 +287,13 @@ class Fragment:
 
 
 def _handle_charge_input_mass(
-    charge: int | str | GlobalChargeCarrier | tuple[GlobalChargeCarrier | str, ...] | Mods[GlobalChargeCarrier],
+    charge: int
+    | str
+    | GlobalChargeCarrier
+    | tuple[GlobalChargeCarrier | str, ...]
+    | Mods[GlobalChargeCarrier],
     monoisotopic: bool,
 ) -> tuple[float, int]:
-    
     if isinstance(charge, Mods):
         mass = charge.get_mass(monoisotopic=monoisotopic)
         charge_state = charge.get_charge()
@@ -444,7 +447,9 @@ def adjust_mass_mz(
                     tmp_fragment_annotation_charge_adducts
                 )
             case Mods():
-                fragment_annotation_charge_adducts = tuple(str(mod) for mod in charge._mods)  # type: ignore
+                fragment_annotation_charge_adducts = tuple(
+                    str(mod) for mod in charge._mods
+                )  # type: ignore
             case _:
                 raise TypeError(f"Invalid charge type: {type(charge)}")
 
@@ -571,7 +576,9 @@ def adjust_comp(
                     tmp_fragment_annotation_charge_adducts
                 )
             case Mods():
-                fragment_annotation_charge_adducts = tuple(str(mod) for mod in charge._mods)
+                fragment_annotation_charge_adducts = tuple(
+                    str(mod) for mod in charge._mods
+                )
             case _:
                 raise TypeError(f"Invalid charge type: {type(charge)}")
 
@@ -674,7 +681,6 @@ def process_losses(
         for element, elem_count in loss_comp.items():
             total[element] += elem_count * count
     return total, float_losses
-
 
 
 T = TypeVar("T", float, Counter[Any])

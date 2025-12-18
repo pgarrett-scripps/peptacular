@@ -319,7 +319,7 @@ class TestGlycanComposition:
         assert isinstance(result, pt.GlycanTag)
         assert len(result) == 1
         res: pt.GlycanComponent = result[0]  # type: ignore
-        assert res.monosaccharide == pt.MonosaccharideName.Hex
+        assert res.monosaccharide == pt.Monosaccharide.Hex
         assert res.occurance == 1
 
     def test_glycan_with_count(self):
@@ -328,7 +328,7 @@ class TestGlycanComposition:
         assert isinstance(result, pt.GlycanTag)
         assert len(result) == 1
         res: pt.GlycanComponent = result[0]  # type: ignore
-        assert res.monosaccharide == pt.MonosaccharideName.Hex
+        assert res.monosaccharide == pt.Monosaccharide.Hex
         assert res.occurance == 5
 
     def test_complex_glycan_composition(self):
@@ -339,9 +339,9 @@ class TestGlycanComposition:
         res1: pt.GlycanComponent = result[0]  # type: ignore
         res2: pt.GlycanComponent = result[1]  # type: ignore
 
-        assert res1.monosaccharide == pt.MonosaccharideName.Hex
+        assert res1.monosaccharide == pt.Monosaccharide.Hex
         assert res1.occurance == 5
-        assert res2.monosaccharide == pt.MonosaccharideName.HexNAc
+        assert res2.monosaccharide == pt.Monosaccharide.HexNAc
         assert res2.occurance == 4
 
     def test_various_monosaccharides(self):
@@ -488,23 +488,23 @@ class TestStringConversion:
     def test_glycan_component_simple(self):
         """Test pt.GlycanComponent string conversion"""
         glycan = pt.GlycanComponent(
-            monosaccharide=pt.MonosaccharideName.Hex, occurance=1
+            monosaccharide=pt.Monosaccharide.Hex, occurance=1
         )
         assert str(glycan) == "Hex"
 
     def test_glycan_component_with_count(self):
         """Test pt.GlycanComponent with count"""
         glycan = pt.GlycanComponent(
-            monosaccharide=pt.MonosaccharideName.Hex, occurance=5
+            monosaccharide=pt.Monosaccharide.Hex, occurance=5
         )
         assert str(glycan) == "Hex5"
 
     def test_glycan_tuple_to_string(self):
         """Test tuple of pt.GlycanComponents"""
         glycan_tuple = (
-            pt.GlycanComponent(monosaccharide=pt.MonosaccharideName.Hex, occurance=5),
+            pt.GlycanComponent(monosaccharide=pt.Monosaccharide.Hex, occurance=5),
             pt.GlycanComponent(
-                monosaccharide=pt.MonosaccharideName.HexNAc, occurance=4
+                monosaccharide=pt.Monosaccharide.HexNAc, occurance=4
             ),
         )
         glycan_str = "Glycan:" + "".join(str(g) for g in glycan_tuple)

@@ -3,7 +3,6 @@ from typing import Iterable
 from ..annotation import (
     ProFormaAnnotation,
 )
-from .basic import count_residues
 from .util import get_annotation_input
 
 
@@ -11,23 +10,11 @@ def is_subsequence(
     subsequence: str | ProFormaAnnotation,
     sequence: str | ProFormaAnnotation,
     order: bool = True,
+    ignore_mods: bool = False,
 ) -> bool:
     """
     Checks if the input subsequence is a subsequence of the input sequence. If order is True, the subsequence must be in
     the same order as in the sequence. If order is False, the subsequence can be in any order.
-
-    :param subsequence: The sequence or ProFormaAnnotation object, representing the subsequence.
-    :type subsequence: Union[str, ProFormaAnnotation]
-    :param sequence: The sequence or ProFormaAnnotation object, representing the sequence.
-    :type sequence: Union[str, ProFormaAnnotation]
-    :param order: If True, the subsequence must be in the same order as in the sequence.
-    :type order: bool
-
-    :raises ValueError: If the input sequence contains multiple sequences.
-    :raises ProFormaFormatError: if the proforma sequence is not valid
-
-    :return: True if the subsequence is a subsequence of the sequence, False otherwise.
-    :rtype: bool
 
     .. code-block:: python
 
@@ -50,12 +37,18 @@ def is_subsequence(
         False
 
     """
+    from .basic import count_residues
 
     if order is True:
-        return len(find_subsequence_indices(sequence, subsequence)) != 0
+        return (
+            len(
+                find_subsequence_indices(sequence, subsequence, ignore_mods=ignore_mods)
+            )
+            != 0
+        )
 
-    subsequence_counts = count_residues(subsequence)
-    sequence_counts = count_residues(sequence)
+    subsequence_counts = count_residues(subsequence, include_mods=not ignore_mods)
+    sequence_counts = count_residues(sequence, include_mods=not ignore_mods)
     return all(
         subsequence_counts[aa] <= sequence_counts[aa] for aa in subsequence_counts
     )

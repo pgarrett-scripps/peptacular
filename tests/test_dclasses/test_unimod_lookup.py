@@ -159,7 +159,6 @@ class TestUnimodInfoProperties:
         assert hasattr(acetyl, "average_mass")
         assert hasattr(acetyl, "composition")
 
-
     def test_unimod_info_dict_composition(self):
         """Test dict_composition property"""
         acetyl = pt.UNIMOD_LOOKUP["Acetyl"]

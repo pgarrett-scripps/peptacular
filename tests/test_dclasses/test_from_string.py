@@ -167,14 +167,14 @@ class TestGlycanComponentFromString:
     def test_simple_glycan(self):
         """Test parsing simple glycan component"""
         component = pt.GlycanComponent.from_string("Hex")
-        assert component.monosaccharide == pt.MonosaccharideName.Hex
+        assert component.monosaccharide == pt.Monosaccharide.Hex
         assert component.occurance == 1
         assert str(component) == "Hex"
 
     def test_glycan_with_count(self):
         """Test parsing glycan component with count"""
         component = pt.GlycanComponent.from_string("HexNAc4")
-        assert component.monosaccharide == pt.MonosaccharideName.HexNAc
+        assert component.monosaccharide == pt.Monosaccharide.HexNAc
         assert component.occurance == 4
         assert str(component) == "HexNAc4"
 

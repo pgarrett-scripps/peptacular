@@ -1,4 +1,4 @@
-.PHONY: help install sync test test-v test-cov clean lint format
+.PHONY: help install install-dev install-docs install-all sync test test-v test-vv test-cov test-file test-watch clean lint format check all docs docs-clean docs-open
 
 help:  ## Show this help message
 	@echo "Available targets:"
@@ -6,6 +6,15 @@ help:  ## Show this help message
 
 install:  ## Install dependencies using uv
 	uv sync
+
+install-dev:  ## Install with dev dependencies
+	uv sync --group dev
+
+install-docs:  ## Install with docs dependencies
+	uv sync --group docs
+
+install-all:  ## Install with all dependency groups
+	uv sync --all-groups
 
 sync:  ## Sync dependencies (same as install)
 	uv sync
@@ -25,9 +34,6 @@ test-cov:  ## Run tests with coverage report
 test-file:  ## Run tests for a specific file (usage: make test-file FILE=test_mod_parser.py)
 	uv run pytest tests/$(FILE) -v
 
-test-watch:  ## Run tests in watch mode (requires pytest-watch)
-	uv run pytest-watch tests/
-
 clean:  ## Clean up cache files and build artifacts
 	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
 	find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
@@ -42,6 +48,16 @@ lint:  ## Run linter (if ruff is installed)
 
 format:  ## Format code (if ruff is installed)
 	uv run ruff format src/ tests/ || echo "Ruff not installed, skipping format"
+
+docs:  ## Build documentation with Sphinx
+	cd docs && uv run sphinx-build -b html . _build/html
+
+docs-clean:  ## Clean documentation build artifacts
+	rm -rf docs/_build
+
+docs-open:  ## Build and open documentation in browser
+	$(MAKE) docs
+	@python -c "import webbrowser; webbrowser.open('file://$(shell pwd)/docs/_build/html/index.html')"
 
 check:  ## Run linter and tests
 	$(MAKE) lint

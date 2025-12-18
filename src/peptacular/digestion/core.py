@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from typing import Generator, Sequence
 
-from peptacular.digestion.lookup import PROTEASE_LOOKUP
+from ..digestion.lookup import PROTEASE_LOOKUP
 
 from ..spans import (
     build_left_semi_spans,

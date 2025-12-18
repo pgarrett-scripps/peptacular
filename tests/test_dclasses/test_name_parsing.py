@@ -10,7 +10,7 @@ class TestNameParsing:
 
     def test_simple_peptidoform_name(self):
         """Test parsing a peptidoform with single > name"""
-        parser = pt.ProFormaParser("(>myPeptide)PEPTIDE")
+        parser = pt.annotation.parser.ProFormaParser("(>myPeptide)PEPTIDE")
         result = list(parser.parse())
 
         assert len(result) == 1
@@ -23,27 +23,27 @@ class TestNameParsing:
         """Test that invalid name formats raise errors"""
         # Missing '>'
         with pytest.raises(ValueError):
-            parser = pt.ProFormaParser("(myPeptide)PEPTIDE")
+            parser = pt.annotation.parser.ProFormaParser("(myPeptide)PEPTIDE")
             list(parser.parse())
 
         # Too many '>'
         with pytest.raises(ValueError):
-            parser = pt.ProFormaParser("(>>>>myPeptide)PEPTIDE")
+            parser = pt.annotation.parser.ProFormaParser("(>>>>myPeptide)PEPTIDE")
             list(parser.parse())
 
         # out of order names
         with pytest.raises(ValueError):
-            parser = pt.ProFormaParser("(>compound)(>>>ion)(>>peptide)PEPTIDE")
+            parser = pt.annotation.parser.ProFormaParser("(>compound)(>>>ion)(>>peptide)PEPTIDE")
             list(parser.parse())
 
         # multiple names of same type
         with pytest.raises(ValueError):
-            parser = pt.ProFormaParser("(>peptide1)(>peptide2)PEPTIDE")
+            parser = pt.annotation.parser.ProFormaParser("(>peptide1)(>peptide2)PEPTIDE")
             list(parser.parse())
 
     def test_peptidoform_ion_name(self):
         """Test parsing a peptidoform ion with >> name"""
-        parser = pt.ProFormaParser("(>>myIon)PEPTIDE")
+        parser = pt.annotation.parser.ProFormaParser("(>>myIon)PEPTIDE")
         result = list(parser.parse())
 
         assert len(result) == 1
@@ -54,7 +54,7 @@ class TestNameParsing:
 
     def test_compound_peptidoform_name(self):
         """Test parsing a compound peptidoform with >>> name"""
-        parser = pt.ProFormaParser("(>>>myCompound)PEPTIDE")
+        parser = pt.annotation.parser.ProFormaParser("(>>>myCompound)PEPTIDE")
         result = list(parser.parse())
 
         assert len(result) == 1
@@ -65,7 +65,7 @@ class TestNameParsing:
 
     def test_name_with_modifications(self):
         """Test name combined with modifications"""
-        parser = pt.ProFormaParser("(>named)[Acetyl]-PEM[Oxidation]TIDE")
+        parser = pt.annotation.parser.ProFormaParser("(>named)[Acetyl]-PEM[Oxidation]TIDE")
         result = list(parser.parse())
 
         assert len(result) == 1
@@ -80,7 +80,7 @@ class TestNameParsing:
 
     def test_name_with_labile_mods(self):
         """Test name with labile modifications"""
-        parser = pt.ProFormaParser("(>glyco){Glycan:Hex}PEPTIDE")
+        parser = pt.annotation.parser.ProFormaParser("(>glyco){Glycan:Hex}PEPTIDE")
         result = list(parser.parse())
 
         assert len(result) == 1
@@ -91,7 +91,7 @@ class TestNameParsing:
 
     def test_name_with_unknown_mods(self):
         """Test name with unknown position modifications"""
-        parser = pt.ProFormaParser("(>unknown)[Phospho]?PEPTIDE")
+        parser = pt.annotation.parser.ProFormaParser("(>unknown)[Phospho]?PEPTIDE")
         result = list(parser.parse())
 
         assert len(result) == 1
@@ -102,7 +102,7 @@ class TestNameParsing:
 
     def test_name_with_global_mods(self):
         """Test name with global modifications"""
-        parser = pt.ProFormaParser("<13C>(>isotope)PEPTIDE")
+        parser = pt.annotation.parser.ProFormaParser("<13C>(>isotope)PEPTIDE")
         result = list(parser.parse())
 
         assert len(result) == 1
@@ -113,7 +113,7 @@ class TestNameParsing:
 
     def test_name_with_charge(self):
         """Test name with charge state"""
-        parser = pt.ProFormaParser("(>charged)PEPTIDE/2")
+        parser = pt.annotation.parser.ProFormaParser("(>charged)PEPTIDE/2")
         result = list(parser.parse())
 
         assert len(result) == 1
@@ -123,7 +123,7 @@ class TestNameParsing:
 
     def test_name_with_special_characters(self):
         """Test name with various characters"""
-        parser = pt.ProFormaParser("(>my_peptide-123)PEPTIDE")
+        parser = pt.annotation.parser.ProFormaParser("(>my_peptide-123)PEPTIDE")
         result = list(parser.parse())
 
         assert len(result) == 1
@@ -132,7 +132,7 @@ class TestNameParsing:
 
     def test_name_with_spaces(self):
         """Test name with spaces"""
-        parser = pt.ProFormaParser("(>my peptide name)PEPTIDE")
+        parser = pt.annotation.parser.ProFormaParser("(>my peptide name)PEPTIDE")
         result = list(parser.parse())
 
         assert len(result) == 1
@@ -141,7 +141,7 @@ class TestNameParsing:
 
     def test_crosslinked_with_names(self):
         """Test crosslinked peptides with names"""
-        parser = pt.ProFormaParser("(>pep1)PEPTK[#XL1]IDE//(>pep2)SEQK[#XL1]UENCE")
+        parser = pt.annotation.parser.ProFormaParser("(>pep1)PEPTK[#XL1]IDE//(>pep2)SEQK[#XL1]UENCE")
 
         # Capture data from each segment as we iterate
         segments: list[dict[str, object]] = []
@@ -167,7 +167,7 @@ class TestNameParsing:
 
     def test_chimeric_with_names(self):
         """Test chimeric peptides with names"""
-        parser = pt.ProFormaParser("(>first)PEPTIDE+(>second)SEQUENCE")
+        parser = pt.annotation.parser.ProFormaParser("(>first)PEPTIDE+(>second)SEQUENCE")
 
         # Capture data from each segment as we iterate
         segments: list[dict[str, object]] = []
@@ -193,7 +193,7 @@ class TestNameParsing:
 
     def test_no_name(self):
         """Test that sequences without names work as before"""
-        parser = pt.ProFormaParser("PEPTIDE")
+        parser = pt.annotation.parser.ProFormaParser("PEPTIDE")
         result = list(parser.parse())
 
         assert len(result) == 1
@@ -219,23 +219,23 @@ class TestNameParsing:
         """Test that invalid arrow counts raise errors"""
         # Zero arrows
         with pytest.raises(ValueError, match="Expected 1-3 '>' characters"):
-            parser = pt.ProFormaParser("()PEPTIDE")
+            parser = pt.annotation.parser.ProFormaParser("()PEPTIDE")
             list(parser.parse())
 
         # Four arrows
         with pytest.raises(ValueError, match="Expected 1-3 '>' characters"):
-            parser = pt.ProFormaParser("(>>>>name)PEPTIDE")
+            parser = pt.annotation.parser.ProFormaParser("(>>>>name)PEPTIDE")
             list(parser.parse())
 
     def test_unclosed_name(self):
         """Test that unclosed name parenthesis raises error"""
         with pytest.raises(ValueError, match="Unmatched '\\(' for name"):
-            parser = pt.ProFormaParser("(>myName")
+            parser = pt.annotation.parser.ProFormaParser("(>myName")
             list(parser.parse())
 
     def test_empty_name(self):
         """Test that empty names are allowed"""
-        parser = pt.ProFormaParser("(>)PEPTIDE")
+        parser = pt.annotation.parser.ProFormaParser("(>)PEPTIDE")
         result = list(parser.parse())
 
         assert len(result) == 1

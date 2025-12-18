@@ -4,8 +4,8 @@ import random
 from collections.abc import Generator
 from typing import TYPE_CHECKING, Any, Callable, Sequence
 
-from peptacular.annotation.mod import Mods
-from peptacular.components.comps import ModificationTags
+from ..annotation.mod import Mods
+from ..proforma_components.comps import ModificationTags
 
 from .parser import Interval, ProFormaParser
 

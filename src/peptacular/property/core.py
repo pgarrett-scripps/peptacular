@@ -463,7 +463,7 @@ def secondary_structure(
     return d  # type: ignore
 
 
-def generate_sliding_window_features(
+def generate_partitions(
     sequence: str,
     scale: str | dict[str, float],
     num_windows: int = 5,

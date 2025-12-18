@@ -167,3 +167,6 @@ _ = AA_LOOKUP.ambiguous_amino_acids
 _ = AA_LOOKUP.mass_amino_acids
 _ = AA_LOOKUP.unambiguous_amino_acids
 _ = AA_LOOKUP.mass_unambiguous_amino_acids
+
+
+ORDERED_AMINO_ACIDS = [aa.id for aa in AA_LOOKUP.ordered_amino_acids]

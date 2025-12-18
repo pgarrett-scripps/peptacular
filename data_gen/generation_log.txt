@@ -47,138 +47,62 @@ GENERATING UNIMOD DATA
 GENERATING PSI-MOD DATA
 ============================================================
   📖 Reading from: data_gen/data/PSI-MOD.obo
-/home/patrick-garrett/Repos/peptacular/data_gen/gen_psimod.py:132: UserWarning: [PSI-MOD] Error parsing formula for 00010 L-alanine residue: C 0 H 0 N 0 O 0 -> , Invalid charged formula: 'Formula:'
-  warnings.warn(
-/home/patrick-garrett/Repos/peptacular/data_gen/gen_psimod.py:132: UserWarning: [PSI-MOD] Error parsing formula for 00011 L-arginine residue: C 0 H 0 N 0 O 0 -> , Invalid charged formula: 'Formula:'
-  warnings.warn(
-/home/patrick-garrett/Repos/peptacular/data_gen/gen_psimod.py:132: UserWarning: [PSI-MOD] Error parsing formula for 00012 L-asparagine residue: C 0 H 0 N 0 O 0 -> , Invalid charged formula: 'Formula:'
-  warnings.warn(
-/home/patrick-garrett/Repos/peptacular/data_gen/gen_psimod.py:132: UserWarning: [PSI-MOD] Error parsing formula for 00013 L-aspartic acid residue: C 0 H 0 N 0 O 0 -> , Invalid charged formula: 'Formula:'
-  warnings.warn(
-/home/patrick-garrett/Repos/peptacular/data_gen/gen_psimod.py:132: UserWarning: [PSI-MOD] Error parsing formula for 00014 L-cysteine residue: C 0 H 0 N 0 O 0 S 0 -> , Invalid charged formula: 'Formula:'
-  warnings.warn(
-/home/patrick-garrett/Repos/peptacular/data_gen/gen_psimod.py:132: UserWarning: [PSI-MOD] Error parsing formula for 00015 L-glutamic acid residue: C 0 H 0 N 0 O 0 -> , Invalid charged formula: 'Formula:'
-  warnings.warn(
-/home/patrick-garrett/Repos/peptacular/data_gen/gen_psimod.py:132: UserWarning: [PSI-MOD] Error parsing formula for 00016 L-glutamine residue: C 0 H 0 N 0 O 0 -> , Invalid charged formula: 'Formula:'
-  warnings.warn(
-/home/patrick-garrett/Repos/peptacular/data_gen/gen_psimod.py:132: UserWarning: [PSI-MOD] Error parsing formula for 00017 glycine residue: C 0 H 0 N 0 O 0 -> , Invalid charged formula: 'Formula:'
-  warnings.warn(
-/home/patrick-garrett/Repos/peptacular/data_gen/gen_psimod.py:132: UserWarning: [PSI-MOD] Error parsing formula for 00018 L-histidine residue: C 0 H 0 N 0 O 0 -> , Invalid charged formula: 'Formula:'
-  warnings.warn(
-/home/patrick-garrett/Repos/peptacular/data_gen/gen_psimod.py:132: UserWarning: [PSI-MOD] Error parsing formula for 00019 L-isoleucine residue: C 0 H 0 N 0 O 0 -> , Invalid charged formula: 'Formula:'
-  warnings.warn(
-/home/patrick-garrett/Repos/peptacular/data_gen/gen_psimod.py:132: UserWarning: [PSI-MOD] Error parsing formula for 00020 L-leucine residue: C 0 H 0 N 0 O 0 -> , Invalid charged formula: 'Formula:'
-  warnings.warn(
-/home/patrick-garrett/Repos/peptacular/data_gen/gen_psimod.py:132: UserWarning: [PSI-MOD] Error parsing formula for 00021 L-lysine residue: C 0 H 0 N 0 O 0 -> , Invalid charged formula: 'Formula:'
-  warnings.warn(
-/home/patrick-garrett/Repos/peptacular/data_gen/gen_psimod.py:132: UserWarning: [PSI-MOD] Error parsing formula for 00022 L-methionine residue: C 0 H 0 N 0 O 0 S 0 -> , Invalid charged formula: 'Formula:'
-  warnings.warn(
-/home/patrick-garrett/Repos/peptacular/data_gen/gen_psimod.py:132: UserWarning: [PSI-MOD] Error parsing formula for 00023 L-phenylalanine residue: C 0 H 0 N 0 O 0 -> , Invalid charged formula: 'Formula:'
-  warnings.warn(
-/home/patrick-garrett/Repos/peptacular/data_gen/gen_psimod.py:132: UserWarning: [PSI-MOD] Error parsing formula for 00024 L-proline residue: C 0 H 0 N 0 O 0 -> , Invalid charged formula: 'Formula:'
-  warnings.warn(
-/home/patrick-garrett/Repos/peptacular/data_gen/gen_psimod.py:132: UserWarning: [PSI-MOD] Error parsing formula for 00025 L-serine residue: C 0 H 0 N 0 O 0 -> , Invalid charged formula: 'Formula:'
-  warnings.warn(
-/home/patrick-garrett/Repos/peptacular/data_gen/gen_psimod.py:132: UserWarning: [PSI-MOD] Error parsing formula for 00026 L-threonine residue: C 0 H 0 N 0 O 0 -> , Invalid charged formula: 'Formula:'
-  warnings.warn(
-/home/patrick-garrett/Repos/peptacular/data_gen/gen_psimod.py:132: UserWarning: [PSI-MOD] Error parsing formula for 00027 L-tryptophan residue: C 0 H 0 N 0 O 0 -> , Invalid charged formula: 'Formula:'
-  warnings.warn(
-/home/patrick-garrett/Repos/peptacular/data_gen/gen_psimod.py:132: UserWarning: [PSI-MOD] Error parsing formula for 00028 L-tyrosine residue: C 0 H 0 N 0 O 0 -> , Invalid charged formula: 'Formula:'
-  warnings.warn(
-/home/patrick-garrett/Repos/peptacular/data_gen/gen_psimod.py:132: UserWarning: [PSI-MOD] Error parsing formula for 00029 L-valine residue: C 0 H 0 N 0 O 0 -> , Invalid charged formula: 'Formula:'
-  warnings.warn(
-/home/patrick-garrett/Repos/peptacular/data_gen/gen_psimod.py:132: UserWarning: [PSI-MOD] Error parsing formula for 00030 N-formyl-L-methionine residue: C 0 H 0 N 0 O 0 S 0 -> , Invalid charged formula: 'Formula:'
-  warnings.warn(
-/home/patrick-garrett/Repos/peptacular/data_gen/gen_psimod.py:132: UserWarning: [PSI-MOD] Error parsing formula for 00031 L-selenocysteine residue: C 0 H 0 N 0 O 0 Se 0 -> , Invalid charged formula: 'Formula:'
-  warnings.warn(
-/home/patrick-garrett/Repos/peptacular/data_gen/gen_psimod.py:132: UserWarning: [PSI-MOD] Error parsing formula for 00198 D-alanine (Ala): C 0 H 0 N 0 O 0 -> , Invalid charged formula: 'Formula:'
-  warnings.warn(
-/home/patrick-garrett/Repos/peptacular/data_gen/gen_psimod.py:132: UserWarning: [PSI-MOD] Error parsing formula for 00199 D-allo-isoleucine: C 0 H 0 N 0 O 0 -> , Invalid charged formula: 'Formula:'
-  warnings.warn(
-/home/patrick-garrett/Repos/peptacular/data_gen/gen_psimod.py:132: UserWarning: [PSI-MOD] Error parsing formula for 00200 D-methionine: C 0 H 0 N 0 O 0 S 0 -> , Invalid charged formula: 'Formula:'
-  warnings.warn(
-/home/patrick-garrett/Repos/peptacular/data_gen/gen_psimod.py:132: UserWarning: [PSI-MOD] Error parsing formula for 00201 D-phenylalanine: C 0 H 0 N 0 O 0 -> , Invalid charged formula: 'Formula:'
-  warnings.warn(
-/home/patrick-garrett/Repos/peptacular/data_gen/gen_psimod.py:132: UserWarning: [PSI-MOD] Error parsing formula for 00202 D-serine (Ser): C 0 H 0 N 0 O 0 -> , Invalid charged formula: 'Formula:'
-  warnings.warn(
-/home/patrick-garrett/Repos/peptacular/data_gen/gen_psimod.py:132: UserWarning: [PSI-MOD] Error parsing formula for 00203 D-asparagine: C 0 H 0 N 0 O 0 -> , Invalid charged formula: 'Formula:'
-  warnings.warn(
-/home/patrick-garrett/Repos/peptacular/data_gen/gen_psimod.py:132: UserWarning: [PSI-MOD] Error parsing formula for 00204 D-leucine: C 0 H 0 N 0 O 0 -> , Invalid charged formula: 'Formula:'
-  warnings.warn(
-/home/patrick-garrett/Repos/peptacular/data_gen/gen_psimod.py:132: UserWarning: [PSI-MOD] Error parsing formula for 00205 D-tryptophan: C 0 H 0 N 0 O 0 -> , Invalid charged formula: 'Formula:'
-  warnings.warn(
-/home/patrick-garrett/Repos/peptacular/data_gen/gen_psimod.py:132: UserWarning: [PSI-MOD] Error parsing formula for 00306 residues isobaric at 113.084064 Da: C 0 H 0 N 0 O 0 -> , Invalid charged formula: 'Formula:'
-  warnings.warn(
-/home/patrick-garrett/Repos/peptacular/data_gen/gen_psimod.py:168: UserWarning: 
+/home/ty/Repos/peptacular/data_gen/gen_psimod.py:173: UserWarning: 
   ⚠️  PSI-MOD MASS MISMATCH [00402] Gygi ICAT(TM) d8 modified cysteine
       Average: calculated=494.671785, reported=494.300000
       Formula: C22[1H30][2H8]N4O6S
   warnings.warn(
-/home/patrick-garrett/Repos/peptacular/data_gen/gen_psimod.py:168: UserWarning: 
+/home/ty/Repos/peptacular/data_gen/gen_psimod.py:173: UserWarning: 
   ⚠️  PSI-MOD MASS MISMATCH [00405] Applied Biosystems original ICAT(TM) d8 modified cysteine
       Average: calculated=450.619608, reported=450.280000
       Formula: C20[1H26][2H8]N4O5S
   warnings.warn(
-/home/patrick-garrett/Repos/peptacular/data_gen/gen_psimod.py:168: UserWarning: 
+/home/ty/Repos/peptacular/data_gen/gen_psimod.py:173: UserWarning: 
   ⚠️  PSI-MOD MASS MISMATCH [00406] Applied Biosystems original ICAT(TM) d0 modified cysteine
       Average: calculated=442.569394, reported=442.220000
       Formula: C20[1H34]N4O5S
   warnings.warn(
-/home/patrick-garrett/Repos/peptacular/data_gen/gen_psimod.py:168: UserWarning: 
+/home/ty/Repos/peptacular/data_gen/gen_psimod.py:173: UserWarning: 
   ⚠️  PSI-MOD MASS MISMATCH [00469] ESP-Tag heavy d10
       Average: calculated=348.528403, reported=348.240000
       Formula: C16[1H16][2H10]N4O2S
   warnings.warn(
-/home/patrick-garrett/Repos/peptacular/data_gen/gen_psimod.py:168: UserWarning: 
+/home/ty/Repos/peptacular/data_gen/gen_psimod.py:173: UserWarning: 
   ⚠️  PSI-MOD MASS MISMATCH [00495] N-iodoacetyl, p-chlorobenzyl-13C6-glucamine
       Average: calculated=351.635014, reported=351.120000
       Formula: [12C9][13C6]ClH20NO6
   warnings.warn(
-/home/patrick-garrett/Repos/peptacular/data_gen/gen_psimod.py:132: UserWarning: [PSI-MOD] Error parsing formula for 00705 D-valine: C 0 H 0 N 0 O 0 -> , Invalid charged formula: 'Formula:'
-  warnings.warn(
-/home/patrick-garrett/Repos/peptacular/data_gen/gen_psimod.py:132: UserWarning: [PSI-MOD] Error parsing formula for 00863 D-allo-threonine: C 0 H 0 N 0 O 0 -> , Invalid charged formula: 'Formula:'
-  warnings.warn(
-/home/patrick-garrett/Repos/peptacular/data_gen/gen_psimod.py:168: UserWarning: 
+/home/ty/Repos/peptacular/data_gen/gen_psimod.py:173: UserWarning: 
   ⚠️  PSI-MOD MASS MISMATCH [00880] 6x(13)C labeled 4-sulfophenyl isothiocyanate derivatized residue
       Average: calculated=221.194326, reported=220.990000
       Formula: [12C][13C6]H5NO3S2
   warnings.warn(
-/home/patrick-garrett/Repos/peptacular/data_gen/gen_psimod.py:168: UserWarning: 
+/home/ty/Repos/peptacular/data_gen/gen_psimod.py:173: UserWarning: 
   ⚠️⚠️  PSI-MOD MASS MISMATCH [00932] IDBEST tag for quantitation
       Average: calculated=299.025684, reported=298.020000
       Formula: Br[12C10][13C2]H13N2O2
   warnings.warn(
-/home/patrick-garrett/Repos/peptacular/data_gen/gen_psimod.py:132: UserWarning: [PSI-MOD] Error parsing formula for 01187 L-pyrrolysine residue: C 0 H 0 N 0 O 0 -> , Invalid charged formula: 'Formula:'
-  warnings.warn(
-/home/patrick-garrett/Repos/peptacular/data_gen/gen_psimod.py:168: UserWarning: 
+/home/ty/Repos/peptacular/data_gen/gen_psimod.py:173: UserWarning: 
   ⚠️  PSI-MOD MASS MISMATCH [01335] 6x(13)C labeled 4-sulfophenyl isothiocyanate derivatized lysine
       Average: calculated=221.194326, reported=220.990000
       Formula: [12C][13C6]H5NO3S2
   warnings.warn(
-/home/patrick-garrett/Repos/peptacular/data_gen/gen_psimod.py:168: UserWarning: 
+/home/ty/Repos/peptacular/data_gen/gen_psimod.py:173: UserWarning: 
   ⚠️  PSI-MOD MASS MISMATCH [01340] ESP-Tag heavy d10 - site K
       Average: calculated=348.528403, reported=348.240000
       Formula: C16[1H16][2H10]N4O2S
   warnings.warn(
-/home/patrick-garrett/Repos/peptacular/data_gen/gen_psimod.py:132: UserWarning: [PSI-MOD] Error parsing formula for 01840 L-allo-isoleucine: C 0 H 0 N 0 O 0 -> , Invalid charged formula: 'Formula:'
-  warnings.warn(
-/home/patrick-garrett/Repos/peptacular/data_gen/gen_psimod.py:168: UserWarning: 
+/home/ty/Repos/peptacular/data_gen/gen_psimod.py:173: UserWarning: 
   ⚠️  PSI-MOD MASS MISMATCH [01909] 6x(13)C labeled 4-sulfophenyl isothiocyanate alpha-amino derivatized residue
       Average: calculated=221.194326, reported=220.990000
       Formula: [12C][13C6]H5NO3S2
   warnings.warn(
-/home/patrick-garrett/Repos/peptacular/data_gen/gen_psimod.py:132: UserWarning: [PSI-MOD] Error parsing formula for 01921 D-aspartic acid (Asp): C 0 H 0 N 0 O 0 -> , Invalid charged formula: 'Formula:'
-  warnings.warn(
-/home/patrick-garrett/Repos/peptacular/data_gen/gen_psimod.py:132: UserWarning: [PSI-MOD] Error parsing formula for 02029 cis-peptidyl-L-proline: C 0 H 0 N 0 O 0 -> , Invalid charged formula: 'Formula:'
-  warnings.warn(
-/home/patrick-garrett/Repos/peptacular/data_gen/gen_psimod.py:132: UserWarning: [PSI-MOD] Error parsing formula for 02030 trans-peptidyl-L-proline: C 0 H 0 N 0 O 0 -> , Invalid charged formula: 'Formula:'
-  warnings.warn(
-/home/patrick-garrett/Repos/peptacular/data_gen/gen_psimod.py:160: UserWarning: 
+/home/ty/Repos/peptacular/data_gen/gen_psimod.py:165: UserWarning: 
   🔴  PSI-MOD MASS MISMATCH [02105] L-2,5-dihydroxyphenylalanine (Phe)
       Monoisotopic: calculated=15.994915, reported=31.989828
       Formula: O
   warnings.warn(
-/home/patrick-garrett/Repos/peptacular/data_gen/gen_psimod.py:168: UserWarning: 
+/home/ty/Repos/peptacular/data_gen/gen_psimod.py:173: UserWarning: 
   ⚠️⚠️  PSI-MOD MASS MISMATCH [02105] L-2,5-dihydroxyphenylalanine (Phe)
       Average: calculated=15.999405, reported=32.000000
       Formula: O
@@ -240,31 +164,31 @@ GENERATING REFERENCE MOLECULE DATA
   ✓ Parsed 71 reference molecules
 
   📝 Writing to: src/peptacular/fragment/refmol/data.py
-/home/patrick-garrett/Repos/peptacular/data_gen/gen_refmol.py:89: UserWarning: 
+/home/ty/Repos/peptacular/data_gen/gen_refmol.py:89: UserWarning: 
   🔴  REFMOL MASS MISMATCH: TMT127C-ETD | ION M/Z
       Calculated: 114.123804, Ion m/z: 113.120449
       Difference: 1.003356
       Composition: {'C': 6, '13C': 1, 'N': 1, 'H': 15}
   warnings.warn(
-/home/patrick-garrett/Repos/peptacular/data_gen/gen_refmol.py:89: UserWarning: 
+/home/ty/Repos/peptacular/data_gen/gen_refmol.py:89: UserWarning: 
   🔴  REFMOL MASS MISMATCH: TMT128N-ETD | ION M/Z
       Calculated: 115.120839, Ion m/z: 114.117484
       Difference: 1.003356
       Composition: {'C': 6, '13C': 1, '15N': 1, 'H': 15}
   warnings.warn(
-/home/patrick-garrett/Repos/peptacular/data_gen/gen_refmol.py:89: UserWarning: 
+/home/ty/Repos/peptacular/data_gen/gen_refmol.py:89: UserWarning: 
   🔴  REFMOL MASS MISMATCH: TMT129C-ETD | ION M/Z
       Calculated: 116.130514, Ion m/z: 115.127157
       Difference: 1.003357
       Composition: {'C': 4, '13C': 3, 'N': 1, 'H': 15}
   warnings.warn(
-/home/patrick-garrett/Repos/peptacular/data_gen/gen_refmol.py:89: UserWarning: 
+/home/ty/Repos/peptacular/data_gen/gen_refmol.py:89: UserWarning: 
   🔴  REFMOL MASS MISMATCH: TMT130N-ETD | ION M/Z
       Calculated: 117.127549, Ion m/z: 116.124192
       Difference: 1.003357
       Composition: {'C': 4, '13C': 3, '15N': 1, 'H': 15}
   warnings.warn(
-/home/patrick-garrett/Repos/peptacular/data_gen/gen_refmol.py:89: UserWarning: 
+/home/ty/Repos/peptacular/data_gen/gen_refmol.py:89: UserWarning: 
   🔴  REFMOL MASS MISMATCH: TMT131C-ETD | ION M/Z
       Calculated: 118.137224, Ion m/z: 117.133865
       Difference: 1.003359

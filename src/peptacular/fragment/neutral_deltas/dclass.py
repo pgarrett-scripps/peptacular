@@ -2,8 +2,7 @@ from collections import Counter
 from dataclasses import dataclass
 from functools import cached_property
 
-from peptacular.components.comps import ChargedFormula
-
+from ...proforma_components.comps import ChargedFormula
 from ...elements.dclass import ElementInfo
 from ...elements.lookup import parse_composition
 

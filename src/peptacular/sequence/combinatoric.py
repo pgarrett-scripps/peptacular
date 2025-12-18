@@ -15,7 +15,6 @@ def _permutations_single(
     sequence: str | ProFormaAnnotation,
     size: int | None = None,
 ) -> list[str]:
-    """Generate permutations for a single sequence"""
     annotation = get_annotation_input(sequence, copy=False)
     return [a.serialize() for a in annotation.permutations(size=size)]
 
@@ -50,27 +49,7 @@ def permutations(
     """
     Generates all permutations of the input sequence. Terminal sequence are kept in place.
 
-    Automatically uses parallel processing when a list of sequences is provided.
-    When method=None (default), automatically detects if GIL is disabled and uses
-    threading for better performance, otherwise uses multiprocessing.
-
-    :param sequence: The sequence to be permuted, or list of sequences.
-    :type sequence: str | ProFormaAnnotation | list[str | ProFormaAnnotation]
-    :param size: The size of the permutations.
-    :type size: int | None
-    :param include_plus: Whether to include the plus sign for positive mass modifications.
-    :type include_plus: bool
-    :param precision: The precision of the mass. Default is None.
-    :type precision: int | None
-    :param n_workers: Number of worker processes (only for lists). If None, uses CPU count.
-    :type n_workers: int | None
-    :param chunksize: Number of items per chunk (only for lists). If None, auto-calculated.
-    :type chunksize: int | None
-    :param method: 'process', 'thread', or None (auto-detect). Default is None.
-    :type method: Literal["process", "thread"] | None
-
-    :return: A list of all permutations of the input sequence, or list of lists for multiple sequences.
-    :rtype: list[str] | list[list[str]]
+    The size of the permutations. If None, uses the length of the sequence.
 
     .. code-block:: python
 
@@ -111,7 +90,6 @@ def _product_single(
     sequence: str | ProFormaAnnotation,
     repeat: int | None,
 ) -> list[str]:
-    """Generate cartesian products for a single sequence"""
     annotation = get_annotation_input(sequence=sequence, copy=False)
     return [a.serialize() for a in annotation.product(repeat=repeat)]
 
@@ -146,27 +124,7 @@ def product(
     """
     Generates all cartesian products of the input sequence of a given size. Terminal sequence are kept in place.
 
-    Automatically uses parallel processing when a list of sequences is provided.
-    When method=None (default), automatically detects if GIL is disabled and uses
-    threading for better performance, otherwise uses multiprocessing.
-
-    :param sequence: The sequence to be combined, or list of sequences.
-    :type sequence: str | ProFormaAnnotation | list[str | ProFormaAnnotation]
-    :param repeat: The size of the combinations to be generated.
-    :type repeat: int | None
-    :param include_plus: Whether to include the plus sign for positive mass modifications.
-    :type include_plus: bool
-    :param precision: The precision of the mass. Default is None.
-    :type precision: int | None
-    :param n_workers: Number of worker processes (only for lists). If None, uses CPU count.
-    :type n_workers: int | None
-    :param chunksize: Number of items per chunk (only for lists). If None, auto-calculated.
-    :type chunksize: int | None
-    :param method: 'process', 'thread', or None (auto-detect). Default is None.
-    :type method: Literal["process", "thread"] | None
-
-    :return: A list of all combinations of the input sequence of the given size, or list of lists.
-    :rtype: list[str] | list[list[str]]
+    The size of the combinations to be generated. If None, uses the length of the sequence.
 
     .. code-block:: python
 
@@ -207,7 +165,6 @@ def _combinations_single(
     sequence: str | ProFormaAnnotation,
     size: int | None,
 ) -> list[str]:
-    """Generate combinations for a single sequence"""
     annotation = get_annotation_input(sequence=sequence, copy=False)
     return [a.serialize() for a in annotation.combinations(r=size)]
 
@@ -242,27 +199,7 @@ def combinations(
     """
     Generates all combinations of the input sequence of a given size. Terminal sequence are kept in place.
 
-    Automatically uses parallel processing when a list of sequences is provided.
-    When method=None (default), automatically detects if GIL is disabled and uses
-    threading for better performance, otherwise uses multiprocessing.
-
-    :param sequence: The sequence to be combined, or list of sequences.
-    :type sequence: str | ProFormaAnnotation | list[str | ProFormaAnnotation]
-    :param size: The size of the combinations to be generated.
-    :type size: int | None
-    :param include_plus: Whether to include the plus sign for positive mass modifications.
-    :type include_plus: bool
-    :param precision: The precision of the mass. Default is None.
-    :type precision: int | None
-    :param n_workers: Number of worker processes (only for lists). If None, uses CPU count.
-    :type n_workers: int | None
-    :param chunksize: Number of items per chunk (only for lists). If None, auto-calculated.
-    :type chunksize: int | None
-    :param method: 'process', 'thread', or None (auto-detect). Default is None.
-    :type method: Literal["process", "thread"] | None
-
-    :return: A list of all combinations of the input sequence of the given size, or list of lists.
-    :rtype: list[str] | list[list[str]]
+    size: The size of the combinations to be generated. If None, uses the length of the sequence.
 
     .. code-block:: python
 
@@ -277,7 +214,6 @@ def combinations(
 
         >>> combinations('<13C>PET', 2)
         ['<13C>PE', '<13C>PT', '<13C>ET']
-
 
     """
     if (
@@ -304,7 +240,6 @@ def _combinations_with_replacement_single(
     sequence: str | ProFormaAnnotation,
     size: int | None,
 ) -> list[str]:
-    """Generate combinations with replacement for a single sequence"""
     annotation = get_annotation_input(sequence=sequence, copy=False)
     return [a.serialize() for a in annotation.combinations_with_replacement(r=size)]
 
@@ -340,27 +275,7 @@ def combinations_with_replacement(
     Generates all combinations with replacement of the input sequence of a given size. Terminal sequence are kept
     in place.
 
-    Automatically uses parallel processing when a list of sequences is provided.
-    When method=None (default), automatically detects if GIL is disabled and uses
-    threading for better performance, otherwise uses multiprocessing.
-
-    :param sequence: The sequence to be combined, or list of sequences.
-    :type sequence: str | ProFormaAnnotation | list[str | ProFormaAnnotation]
-    :param size: The size of the combinations to be generated.
-    :type size: int | None
-    :param include_plus: Whether to include the plus sign for positive mass modifications.
-    :type include_plus: bool
-    :param precision: The precision of the mass. Default is None.
-    :type precision: int | None
-    :param n_workers: Number of worker processes (only for lists). If None, uses CPU count.
-    :type n_workers: int | None
-    :param chunksize: Number of items per chunk (only for lists). If None, auto-calculated.
-    :type chunksize: int | None
-    :param method: 'process', 'thread', or None (auto-detect). Default is None.
-    :type method: Literal["process", "thread"] | None
-
-    :return: A list of all combinations of the input sequence of the given size, or list of lists.
-    :rtype: list[str] | list[list[str]]
+    size: The size of the combinations to be generated. If None, uses the length of the sequence.
 
     .. code-block:: python
 

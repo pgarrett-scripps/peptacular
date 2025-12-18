@@ -1,17 +1,172 @@
 """
 This module contains functions for generating and manipulating peptide sequences.
 """
+from .basic import (
+    parse,
+    serialize,
+    sequence_length,
+    is_ambiguous,
+    is_modified,
+    count_residues,
+    percent_residues,
+    annotate_ambiguity,
+)
+from .combinatoric import (
+    permutations,
+    combinations,
+    combinations_with_replacement,
+    product,
+)
+from .subseqs import (
+    is_subsequence,
+    find_subsequence_indices,
+    coverage,
+    percent_coverage,
+    modification_coverage,
+)
+from .digestion import (
+    left_semi_digest,
+    right_semi_digest,
+    semi_digest,
+    nonspecific_digest,
+    digest,
+    simple_digest,
+    cleavage_sites,
+    simple_cleavage_sites,
+)
+from .fragmentation import fragment
+from .mass_funcs import mass, mz, comp
+from .mod_builder import (
+    build_mods,
+    get_mods,
+    set_mods,
+    remove_mods,
+    pop_mods,
+    append_mods,
+    extend_mods,
+    condense_static_mods,
+    strip_mods,
+    filter_mods,
+    to_ms2_pip,
+    from_ms2_pip,
+    condense_to_peptidoform,
+)
+from .properties import (
+    calc_property,
+    hydrophobicity,
+    flexibility,
+    hydrophilicity,
+    surface_accessibility,
+    polarity,
+    mutability,
+    codons,
+    bulkiness,
+    recognition_factors,
+    transmembrane_tendency,
+    average_buried_area,
+    hplc,
+    refractivity,
+    calc_window_property,
+    charge_at_ph,
+    pi,
+    aa_property_percentage,
+    aromaticity,
+    secondary_structure,
+    alpha_helix_percent,
+    beta_sheet_percent,
+    beta_turn_percent,
+    coil_percent,
+    property_partitions,
+)
+from .transformations import reverse, shuffle, shift, split, span_to_sequence, sort, join
+from .converters import convert_ip2_sequence, convert_diann_sequence, convert_casanovo_sequence
 
-from .basic import *
-from .combinatoric import *
-from .coverage import *
-from .decoy import *
-from .digestion import *
-
-from .fragmentation import *
-from .mass_funcs import *
-from .mod_builder import *
-from .parrallel import *
-from .properties import *
-from .transformations import *
-from .converters import *
+__all__ = [
+    # basic
+    "parse",
+    "serialize",
+    "sequence_length",
+    "is_ambiguous",
+    "is_modified",
+    "count_residues",
+    "percent_residues",
+    "annotate_ambiguity",
+    # combinatoric
+    "permutations",
+    "combinations",
+    "combinations_with_replacement",
+    "product",
+    # subseqs
+    "is_subsequence",
+    "find_subsequence_indices",
+    "coverage",
+    "percent_coverage",
+    "modification_coverage",
+    # digestion
+    "left_semi_digest",
+    "right_semi_digest",
+    "semi_digest",
+    "nonspecific_digest",
+    "digest",
+    "simple_digest",
+    "cleavage_sites",
+    "simple_cleavage_sites",
+    # fragmentation
+    "fragment",
+    # mass_funcs
+    "mass",
+    "mz",
+    "comp",
+    # mod_builder
+    "build_mods",
+    "get_mods",
+    "set_mods",
+    "remove_mods",
+    "pop_mods",
+    "append_mods",
+    "extend_mods",
+    "condense_static_mods",
+    "strip_mods",
+    "filter_mods",
+    "to_ms2_pip",
+    "from_ms2_pip",
+    "condense_to_peptidoform",
+    # properties
+    "calc_property",
+    "hydrophobicity",
+    "flexibility",
+    "hydrophilicity",
+    "surface_accessibility",
+    "polarity",
+    "mutability",
+    "codons",
+    "bulkiness",
+    "recognition_factors",
+    "transmembrane_tendency",
+    "average_buried_area",
+    "hplc",
+    "refractivity",
+    "calc_window_property",
+    "charge_at_ph",
+    "pi",
+    "aa_property_percentage",
+    "aromaticity",
+    "secondary_structure",
+    "alpha_helix_percent",
+    "beta_sheet_percent",
+    "beta_turn_percent",
+    "coil_percent",
+    "property_partitions",
+    # transformations
+    "reverse",
+    "shuffle",
+    "shift",
+    "split",
+    "span_to_sequence",
+    "sort",
+    "join",
+    # converters
+    "convert_ip2_sequence",
+    "convert_diann_sequence",
+    "convert_casanovo_sequence",
+]

@@ -252,9 +252,7 @@ class TestAnnotationParse:
 
     def test_parse_with_charge_and_adduct_raises_error(self):
         """Test that having both charge and adduct raises an error"""
-        with pytest.raises(
-            ValueError
-        ):
+        with pytest.raises(ValueError):
             pt.ProFormaAnnotation.parse("PEPTIDE/2[+H]")
 
     def test_parse_with_bracket_multiplier(self):
@@ -290,59 +288,59 @@ class TestAnnotationParse:
         """Test parse -> serialize round trip for simple peptide"""
         original = "PEPTIDE"
         annot = pt.ProFormaAnnotation.parse(original)
-        result = pt.serialize_annotation(annot)
+        result = pt.annotation.serializer.serialize_annotation(annot)
         assert result == original
 
     def test_round_trip_with_modifications(self):
         """Test parse -> serialize round trip with modifications"""
         original = "[Acetyl]-PEM[Oxidation]TIDE-[Amidated]"
         annot = pt.ProFormaAnnotation.parse(original)
-        result = pt.serialize_annotation(annot)
+        result = pt.annotation.serializer.serialize_annotation(annot)
         assert result == original
 
     def test_round_trip_with_name(self):
         """Test parse -> serialize round trip with name"""
         original = "(>myPeptide)PEPTIDE"
         annot = pt.ProFormaAnnotation.parse(original)
-        result = pt.serialize_annotation(annot)
+        result = pt.annotation.serializer.serialize_annotation(annot)
         assert result == original
 
     def test_round_trip_with_charge(self):
         """Test parse -> serialize round trip with charge"""
         original = "PEPTIDE/2"
         annot = pt.ProFormaAnnotation.parse(original)
-        result = pt.serialize_annotation(annot)
+        result = pt.annotation.serializer.serialize_annotation(annot)
         assert result == original
 
     def test_round_trip_complex(self):
         """Test parse -> serialize round trip with complex annotation"""
         original = "(>>>complex)<13C>[Acetyl]-PEM[Oxidation]TIS[Phospho]DE-[Amidated]/2"
         annot = pt.ProFormaAnnotation.parse(original)
-        result = pt.serialize_annotation(annot)
+        result = pt.annotation.serializer.serialize_annotation(annot)
         assert result == original
 
     def test_round_trip_labile(self):
         """Test parse -> serialize round trip with labile modification"""
         original = "{Glycan:Hex}PEPTIDE"
         annot = pt.ProFormaAnnotation.parse(original)
-        result = pt.serialize_annotation(annot)
+        result = pt.annotation.serializer.serialize_annotation(annot)
         assert result == original
 
     def test_round_trip_unknown(self):
         """Test parse -> serialize round trip with unknown modification"""
         original = "[Phospho]?PEPTIDE"
         annot = pt.ProFormaAnnotation.parse(original)
-        result = pt.serialize_annotation(annot)
+        result = pt.annotation.serializer.serialize_annotation(annot)
         assert result == original
 
     def test_serialize_empty_annotation(self):
         """Test serializing empty annotation"""
         annot = pt.ProFormaAnnotation()
-        result = pt.serialize_annotation(annot)
+        result = pt.annotation.serializer.serialize_annotation(annot)
         assert result == ""
 
     def test_serialize_only_name(self):
         """Test serializing annotation with only name (no sequence)"""
         annot = pt.ProFormaAnnotation(peptide_name="test")
-        result = pt.serialize_annotation(annot)
+        result = pt.annotation.serializer.serialize_annotation(annot)
         assert result == "(>test)"

@@ -7,14 +7,16 @@ This module contains all serialization logic (ProForma notation output).
 import sys
 from functools import lru_cache
 from typing import TYPE_CHECKING
+from ..elements import Element
 
-from ..constants import (
-    Terminal,
-    MonosaccharideName,
+
+from ..constants import (    
     CV_TO_NAME_PREFIX,
     CV_TO_ACCESSION_PREFIX,
     CV_TO_MASS_PREFIX,
+    Terminal,
 )
+from ..mods.monosaccharide.data import Monosaccharide
 
 
 if TYPE_CHECKING:
@@ -253,7 +255,7 @@ def serialize_glycan_component(gc: "GlycanComponent") -> str:
     Returns:
         String representation like 'Hex5' or 'HexNAc4'
     """
-    if isinstance(gc.monosaccharide, MonosaccharideName):
+    if isinstance(gc.monosaccharide, Monosaccharide):
         mono_str = gc.monosaccharide.value
     else:
         # It's a ChargedFormula
@@ -293,7 +295,6 @@ def serialize_isotope_replacement(ir: "IsotopeReplacement") -> str:
     Returns:
         String representation like '13C', '15N', or 'D'
     """
-    from ..constants import Element
 
     # Special case: Deuterium can be written as D or 2H
     if ir.element == Element.H and ir.isotope == 2:

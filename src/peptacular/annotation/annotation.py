@@ -36,7 +36,7 @@ from .utils import (
     can_fragment_sequence,
 )
 
-from ..elements.dclass import ElementInfo
+from ..elements import ElementInfo, Element
 from .mod_builder import build_mods
 
 from .ambiguity import (
@@ -83,7 +83,7 @@ from .mod import (
     convert_moddict_input,
     convert_single_mod_input,
 )
-from ..components import (
+from ..proforma_components import (
     IsotopeReplacement,
     FixedModification,
     parse_modification_tag,
@@ -100,13 +100,11 @@ from ..components import (
 )
 
 
-from ..amino_acids import AA_LOOKUP, AminoAcidInfo
+from ..amino_acids import AA_LOOKUP, AminoAcid
 from ..constants import (
     ModType,
     ModTypeLiteral,
-    Element,
     Terminal,
-    AminoAcid,
 )
 
 from ..property import SequencePropertyMixin
@@ -756,7 +754,7 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
         if intervals is None:
             self._intervals = None
             return self
-        
+
         if len(intervals) == 0:
             self._intervals = None
             return self
@@ -798,7 +796,7 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
 
         if self._internal_mods is None:
             self._internal_mods = {}
-            
+
         self._internal_mods[index] = mods
         return self
 
@@ -825,16 +823,15 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
                     charge = None
         elif charge is None:
             pass
-        elif isinstance(charge, Mods): # type: ignore
+        elif isinstance(charge, Mods):  # type: ignore
             charge = charge._mods  # type: ignore
-        
+
         self._charge = charge
 
         if validate:
             self.validate_charge()
 
         return self
-        
 
     def _set_name_generic(
         self,
@@ -1469,7 +1466,7 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
 
     def compare(self, other: Self) -> bool:
         # check each attribute for equality
-        diffs = [] # hold the string values of differing attributes (ACTUALLY SHOW THE ATTRIBUTES)
+        diffs = []  # hold the string values of differing attributes (ACTUALLY SHOW THE ATTRIBUTES)
         for attr in [
             "_sequence",
             "_isotope_mods",
@@ -1485,7 +1482,9 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
             if getattr(self, attr) != getattr(other, attr):
                 self_attribute = getattr(self, attr)
                 other_attribute = getattr(other, attr)
-                diffs.append(f"{attr} (self: {self_attribute}, other: {other_attribute})")
+                diffs.append(
+                    f"{attr} (self: {self_attribute}, other: {other_attribute})"
+                )
         if diffs:
             print(f"Differences found in attributes: {', '.join(diffs)}")
             return False
@@ -1997,11 +1996,11 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
             raise ValueError("Fragment composition could not be calculated.")
 
         return frag.composition
-    
+
     def base_mass(self, monoisotopic: bool = True) -> float:
         """Optimized mass calculation with minimal overhead."""
         total_mass = 0.0
-        
+
         # Inline mass lookup to avoid function call overhead
         # Amino acids - hot path, optimize heavily
         aa_lookup = AA_LOOKUP.one_letter_to_info
@@ -2010,60 +2009,72 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
             if mass is None:
                 raise ValueError(f"Mass not available for amino acid: {aa}")
             total_mass += mass
-        
+
         # Process modifications directly without building intermediate lists
         # This eliminates the mod_sources list entirely
-        
+
         # Unknown mods
         if self.has_unknown_mods:
             for mod, count in self.unknown_mods.parse_items():
                 mass = mod.get_mass(monoisotopic=monoisotopic)
                 if mass is None:
-                    raise ValueError(f"Mass not available for unknown modification: {mod}")
+                    raise ValueError(
+                        f"Mass not available for unknown modification: {mod}"
+                    )
                 total_mass += mass * count
-        
+
         # Labile mods
         if self.has_labile_mods:
             for mod, count in self.labile_mods.parse_items():
                 mass = mod.get_mass(monoisotopic=monoisotopic)
                 if mass is None:
-                    raise ValueError(f"Mass not available for labile modification: {mod}")
+                    raise ValueError(
+                        f"Mass not available for labile modification: {mod}"
+                    )
                 total_mass += mass * count
-        
+
         # N-terminal mods
         if self.has_nterm_mods:
             for mod, count in self.nterm_mods.parse_items():
                 mass = mod.get_mass(monoisotopic=monoisotopic)
                 if mass is None:
-                    raise ValueError(f"Mass not available for N-terminal modification: {mod}")
+                    raise ValueError(
+                        f"Mass not available for N-terminal modification: {mod}"
+                    )
                 total_mass += mass * count
-        
+
         # Internal mods
         if self.has_internal_mods:
             for mods in self.internal_mods.values():
                 for mod, count in mods.parse_items():
                     mass = mod.get_mass(monoisotopic=monoisotopic)
                     if mass is None:
-                        raise ValueError(f"Mass not available for internal modification: {mod}")
+                        raise ValueError(
+                            f"Mass not available for internal modification: {mod}"
+                        )
                     total_mass += mass * count
-        
+
         # Interval mods
         if self.has_intervals:
             for interval in self.intervals:
                 for mod, count in interval.mods.parse_tuples():
                     mass = mod.get_mass(monoisotopic=monoisotopic)
                     if mass is None:
-                        raise ValueError(f"Mass not available for interval modification: {mod}")
+                        raise ValueError(
+                            f"Mass not available for interval modification: {mod}"
+                        )
                     total_mass += mass * count
-        
+
         # C-terminal mods
         if self.has_cterm_mods:
             for mod, count in self.cterm_mods.parse_items():
                 mass = mod.get_mass(monoisotopic=monoisotopic)
                 if mass is None:
-                    raise ValueError(f"Mass not available for C-terminal modification: {mod}")
+                    raise ValueError(
+                        f"Mass not available for C-terminal modification: {mod}"
+                    )
                 total_mass += mass * count
-        
+
         # Static mods
         if self.has_static_mods:
             static_mod_map = self.map_static_mods_to_indexes()
@@ -2071,9 +2082,11 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
                 for mod in mods:
                     mass = mod.value.get_mass(monoisotopic=monoisotopic)
                     if mass is None:
-                        raise ValueError(f"Mass not available for static modification: {mod.value}")
+                        raise ValueError(
+                            f"Mass not available for static modification: {mod.value}"
+                        )
                     total_mass += mass * mod.count
-        
+
         return total_mass
 
     def _get_mass_vector(self, monoisotopic: bool = True) -> list[float]:
@@ -2896,10 +2909,8 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
     def count_residues(self, include_mods: bool = True) -> dict[str, int]:
         return count_residues(self, include_mods=include_mods)
 
-    def percent_residues(
-        self, include_mods: bool = True, precision: int | None = None
-    ) -> dict[str, float]:
-        return percent_residues(self, include_mods=include_mods, precision=precision)
+    def percent_residues(self, include_mods: bool = True) -> dict[str, float]:
+        return percent_residues(self, include_mods=include_mods)
 
     def is_subsequence(
         self,
@@ -3352,9 +3363,7 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
             charge=charge_state,
         )
 
-
     @staticmethod
     def random() -> "ProFormaAnnotation":
         """Generate a random ProFormaAnnotation for testing purposes."""
         return generate_random_proforma_annotation()
-        

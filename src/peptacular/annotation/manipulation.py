@@ -4,6 +4,7 @@ import re
 from collections import Counter
 from typing import TYPE_CHECKING, Iterable
 
+
 if TYPE_CHECKING:
     from .annotation import ProFormaAnnotation
 
@@ -190,6 +191,7 @@ def count_residues(
     Returns:
         Dictionary mapping residue strings to their counts
     """
+
     if not include_mods:
         return dict(Counter(annotation.sequence))
 
@@ -200,7 +202,6 @@ def count_residues(
 def percent_residues(
     annotation: ProFormaAnnotation,
     include_mods: bool = True,
-    precision: int | None = None,
 ) -> dict[str, float]:
     """
     Calculate the percentage of each residue in the sequence.
@@ -223,9 +224,6 @@ def percent_residues(
         residue: (count / total_count) * 100
         for residue, count in residue_counts.items()
     }
-
-    if precision is not None:
-        percentages = {k: round(v, precision) for k, v in percentages.items()}
 
     return percentages
 

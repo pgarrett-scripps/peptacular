@@ -11,15 +11,15 @@ from typing import Iterable, Mapping, Protocol, runtime_checkable
 
 from ..mods.dclass import PsimodInfo, UnimodInfo
 from ..constants import (
-    Element,
     Terminal,
-    AminoAcid,
-    CV,
-    MonosaccharideName,
 )
-from ..elements import ElementInfo, ELEMENT_LOOKUP
+from ..elements import ElementInfo, ELEMENT_LOOKUP, Element
 from ..mods import UNIMOD_LOOKUP, PSIMOD_LOOKUP, MONOSACCHARIDE_LOOKUP
-from ..amino_acids import AA_LOOKUP
+from ..amino_acids import AA_LOOKUP, AminoAcid
+from ..constants import CV
+from ..mods.monosaccharide.data import Monosaccharide
+
+
 
 
 @runtime_checkable
@@ -98,12 +98,12 @@ class FormulaElement(MassPropertyMixin):
 
     @staticmethod
     def from_string(s: str, allow_zero: bool = False) -> "FormulaElement":
-        from ..components.parsers import parse_formula_element
+        from ..proforma_components.parsers import parse_formula_element
 
         return parse_formula_element(s, allow_zero=allow_zero)
 
     def serialize(self) -> str:
-        from ..components.serializers import serialize_formula_element
+        from ..proforma_components.serializers import serialize_formula_element
 
         return serialize_formula_element(self)
 
@@ -175,7 +175,7 @@ class ChargedFormula(MassPropertyMixin):
         require_formula_prefix: bool = True,
         sep: str = "",
     ) -> "ChargedFormula":
-        from ..components.parsers import parse_charged_formula
+        from ..proforma_components.parsers import parse_charged_formula
 
         return parse_charged_formula(
             s,
@@ -190,7 +190,7 @@ class ChargedFormula(MassPropertyMixin):
         hill_order: bool = False,
         include_formula_prefix: bool = True,
     ) -> str:
-        from ..components.serializers import serialize_charged_formula
+        from ..proforma_components.serializers import serialize_charged_formula
 
         return serialize_charged_formula(
             self,
@@ -268,12 +268,12 @@ class PositionRule:
 
     @staticmethod
     def from_string(s: str) -> "PositionRule":
-        from ..components.parsers import parse_position_rule
+        from ..proforma_components.parsers import parse_position_rule
 
         return parse_position_rule(s)
 
     def serialize(self) -> str:
-        from ..components.serializers import serialize_position_rule
+        from ..proforma_components.serializers import serialize_position_rule
 
         return serialize_position_rule(self)
 
@@ -337,12 +337,12 @@ class TagAccession(MassPropertyMixin):
 
     @staticmethod
     def from_string(s: str) -> "TagAccession":
-        from ..components.parsers import parse_tag_accession
+        from ..proforma_components.parsers import parse_tag_accession
 
         return parse_tag_accession(s)
 
     def serialize(self) -> str:
-        from ..components.serializers import serialize_tag_accession
+        from ..proforma_components.serializers import serialize_tag_accession
 
         return serialize_tag_accession(self)
 
@@ -374,24 +374,34 @@ class TagMass(MassPropertyMixin):
     def get_composition(self) -> Counter[ElementInfo]:
         match self.cv:
             case CV.UNIMOD:
-                mod_info = UNIMOD_LOOKUP.query_mass(self.mass, monoisotopic=True, tolerance=0.005)
+                mod_info = UNIMOD_LOOKUP.query_mass(
+                    self.mass, monoisotopic=True, tolerance=0.005
+                )
             case CV.PSI_MOD:
-                mod_info = PSIMOD_LOOKUP.query_mass(self.mass, monoisotopic=True, tolerance=0.005)
+                mod_info = PSIMOD_LOOKUP.query_mass(
+                    self.mass, monoisotopic=True, tolerance=0.005
+                )
             case _:
-                raise ValueError(f"Modification lookup by mass not implemented for CV: {self.cv}")
-        return Counter(mod_info.composition) if mod_info and mod_info.composition else Counter()
+                raise ValueError(
+                    f"Modification lookup by mass not implemented for CV: {self.cv}"
+                )
+        return (
+            Counter(mod_info.composition)
+            if mod_info and mod_info.composition
+            else Counter()
+        )
 
     def get_charge(self) -> int | None:
         return None
 
     @staticmethod
     def from_string(s: str) -> "TagMass":
-        from ..components.parsers import parse_tag_mass
+        from ..proforma_components.parsers import parse_tag_mass
 
         return parse_tag_mass(s)
 
     def serialize(self) -> str:
-        from ..components.serializers import serialize_tag_mass
+        from ..proforma_components.serializers import serialize_tag_mass
 
         return serialize_tag_mass(self)
 
@@ -462,12 +472,12 @@ class TagName(MassPropertyMixin):
 
     @staticmethod
     def from_string(s: str) -> "TagName":
-        from ..components.parsers import parse_tag_name
+        from ..proforma_components.parsers import parse_tag_name
 
         return parse_tag_name(s)
 
     def serialize(self) -> str:
-        from ..components.serializers import serialize_tag_name
+        from ..proforma_components.serializers import serialize_tag_name
 
         return serialize_tag_name(self)
 
@@ -499,12 +509,12 @@ class TagInfo(MassPropertyMixin):
 
     @staticmethod
     def from_string(s: str) -> "TagInfo":
-        from ..components.parsers import parse_tag_info
+        from ..proforma_components.parsers import parse_tag_info
 
         return parse_tag_info(s)
 
     def serialize(self) -> str:
-        from ..components.serializers import serialize_tag_info
+        from ..proforma_components.serializers import serialize_tag_info
 
         return serialize_tag_info(self)
 
@@ -536,12 +546,12 @@ class TagCustom(MassPropertyMixin):
 
     @staticmethod
     def from_string(s: str) -> "TagCustom":
-        from ..components.parsers import parse_tag_custom
+        from ..proforma_components.parsers import parse_tag_custom
 
         return parse_tag_custom(s)
 
     def serialize(self) -> str:
-        from ..components.serializers import serialize_tag_custom
+        from ..proforma_components.serializers import serialize_tag_custom
 
         return serialize_tag_custom(self)
 
@@ -553,7 +563,7 @@ class TagCustom(MassPropertyMixin):
 class GlycanComponent(MassPropertyMixin):
     """A single component of a glycan composition"""
 
-    monosaccharide: MonosaccharideName | ChargedFormula
+    monosaccharide: Monosaccharide | ChargedFormula
     occurance: int
 
     def get_mass(self, monoisotopic: bool = True) -> float:
@@ -588,12 +598,12 @@ class GlycanComponent(MassPropertyMixin):
 
     @staticmethod
     def from_string(s: str) -> "GlycanComponent":
-        from ..components.parsers import parse_glycan_component
+        from ..proforma_components.parsers import parse_glycan_component
 
         return parse_glycan_component(s)
 
     def serialize(self) -> str:
-        from ..components.serializers import serialize_glycan_component
+        from ..proforma_components.serializers import serialize_glycan_component
 
         return serialize_glycan_component(self)
 
@@ -637,12 +647,12 @@ class GlycanTag(MassPropertyMixin):
 
     @staticmethod
     def from_string(s: str) -> "GlycanTag":
-        from ..components.parsers import parse_glycan
+        from ..proforma_components.parsers import parse_glycan
 
         return GlycanTag(parse_glycan(s))
 
     def serialize(self) -> str:
-        from ..components.serializers import serialize_glycan_tag
+        from ..proforma_components.serializers import serialize_glycan_tag
 
         return serialize_glycan_tag(self)
 
@@ -670,12 +680,12 @@ class IsotopeReplacement(MassPropertyMixin):
 
     @staticmethod
     def from_string(s: str) -> "IsotopeReplacement":
-        from ..components.parsers import parse_isotope_replacement
+        from ..proforma_components.parsers import parse_isotope_replacement
 
         return parse_isotope_replacement(s)
 
     def serialize(self) -> str:
-        from ..components.serializers import serialize_isotope_replacement
+        from ..proforma_components.serializers import serialize_isotope_replacement
 
         return serialize_isotope_replacement(self)
 
@@ -729,7 +739,7 @@ class GlobalChargeCarrier(MassPropertyMixin):
 
     @staticmethod
     def from_string(s: str) -> "GlobalChargeCarrier":
-        from ..components.parsers import parse_global_charge_carrier
+        from ..proforma_components.parsers import parse_global_charge_carrier
 
         return parse_global_charge_carrier(s)
 
@@ -743,7 +753,7 @@ class GlobalChargeCarrier(MassPropertyMixin):
         return GlobalChargeCarrier(charged_formula=PROTON_FORMULA, occurance=charge)
 
     def serialize(self) -> str:
-        from ..components.serializers import serialize_global_charge_carrier
+        from ..proforma_components.serializers import serialize_global_charge_carrier
 
         return serialize_global_charge_carrier(self)
 
@@ -812,12 +822,12 @@ class ModificationTags(MassPropertyMixin):
 
     @staticmethod
     def from_string(s: str) -> "ModificationTags":
-        from ..components.parsers import parse_modification_tags
+        from ..proforma_components.parsers import parse_modification_tags
 
         return parse_modification_tags(s)
 
     def serialize(self) -> str:
-        from ..components.serializers import serialize_modification_tags
+        from ..proforma_components.serializers import serialize_modification_tags
 
         return serialize_modification_tags(self)
 
@@ -860,12 +870,12 @@ class ModificationAmbiguousPrimary(MassPropertyMixin):
 
     @staticmethod
     def from_string(s: str) -> "ModificationAmbiguousPrimary":
-        from ..components.parsers import parse_modification_ambiguous_primary
+        from ..proforma_components.parsers import parse_modification_ambiguous_primary
 
         return parse_modification_ambiguous_primary(s)
 
     def serialize(self) -> str:
-        from ..components.serializers import serialize_modification_ambiguous_primary
+        from ..proforma_components.serializers import serialize_modification_ambiguous_primary
 
         return serialize_modification_ambiguous_primary(self)
 
@@ -893,12 +903,12 @@ class ModificationAmbiguousSecondary(MassPropertyMixin):
 
     @staticmethod
     def from_string(s: str) -> "ModificationAmbiguousSecondary":
-        from ..components.parsers import parse_modification_ambiguous_secondary
+        from ..proforma_components.parsers import parse_modification_ambiguous_secondary
 
         return parse_modification_ambiguous_secondary(s)
 
     def serialize(self) -> str:
-        from ..components.serializers import serialize_modification_ambiguous_secondary
+        from ..proforma_components.serializers import serialize_modification_ambiguous_secondary
 
         return serialize_modification_ambiguous_secondary(self)
 
@@ -927,12 +937,12 @@ class ModificationCrossLinker(MassPropertyMixin):
 
     @staticmethod
     def from_string(s: str) -> "ModificationCrossLinker":
-        from ..components.parsers import parse_modification_cross_linker
+        from ..proforma_components.parsers import parse_modification_cross_linker
 
         return parse_modification_cross_linker(s)
 
     def serialize(self) -> str:
-        from ..components.serializers import serialize_modification_cross_linker
+        from ..proforma_components.serializers import serialize_modification_cross_linker
 
         return serialize_modification_cross_linker(self)
 
@@ -989,12 +999,12 @@ class FixedModification(MassPropertyMixin):
 
     @staticmethod
     def from_string(s: str) -> "FixedModification":
-        from ..components.parsers import parse_fixed_modification
+        from ..proforma_components.parsers import parse_fixed_modification
 
         return parse_fixed_modification(s)
 
     def serialize(self) -> str:
-        from ..components.serializers import serialize_fixed_modification
+        from ..proforma_components.serializers import serialize_fixed_modification
 
         return serialize_fixed_modification(self)
 
@@ -1040,12 +1050,12 @@ class SequenceElement(MassPropertyMixin):
 
     @staticmethod
     def from_string(s: str) -> "SequenceElement":
-        from ..components.parsers import parse_sequence_element
+        from ..proforma_components.parsers import parse_sequence_element
 
         return parse_sequence_element(s)
 
     def serialize(self) -> str:
-        from ..components.serializers import serialize_sequence_element
+        from ..proforma_components.serializers import serialize_sequence_element
 
         return serialize_sequence_element(self)
 
@@ -1068,12 +1078,12 @@ class SequenceRegion(MassPropertyMixin):
 
     @staticmethod
     def from_string(s: str) -> "SequenceRegion":
-        from ..components.parsers import parse_sequence_region
+        from ..proforma_components.parsers import parse_sequence_region
 
         return parse_sequence_region(s)
 
     def serialize(self) -> str:
-        from ..components.serializers import serialize_sequence_region
+        from ..proforma_components.serializers import serialize_sequence_region
 
         return serialize_sequence_region(self)
 
@@ -1119,12 +1129,12 @@ class Peptidoform(MassPropertyMixin):
 
     @staticmethod
     def from_string(s: str) -> "Peptidoform":
-        from ..components.parsers import parse_peptidoform
+        from ..proforma_components.parsers import parse_peptidoform
 
         return parse_peptidoform(s)
 
     def serialize(self) -> str:
-        from ..components.serializers import serialize_peptidoform
+        from ..proforma_components.serializers import serialize_peptidoform
 
         return serialize_peptidoform(self)
 
@@ -1154,7 +1164,6 @@ class PeptidoformIon(MassPropertyMixin):
         """
         raise NotImplementedError()
 
-
     def get_composition(self) -> Counter[ElementInfo]:
         """
         comp: Counter[ElementInfo] = merge_compositions(self.peptidoforms)
@@ -1171,12 +1180,12 @@ class PeptidoformIon(MassPropertyMixin):
 
     @staticmethod
     def from_string(s: str) -> "PeptidoformIon":
-        from ..components.parsers import parse_peptidoform_ion
+        from ..proforma_components.parsers import parse_peptidoform_ion
 
         return parse_peptidoform_ion(s)
 
     def serialize(self) -> str:
-        from ..components.serializers import serialize_peptidoform_ion
+        from ..proforma_components.serializers import serialize_peptidoform_ion
 
         return serialize_peptidoform_ion(self)
 
@@ -1221,12 +1230,12 @@ class CompoundPeptidoformIon(MassPropertyMixin):
 
     @staticmethod
     def from_string(s: str) -> "CompoundPeptidoformIon":
-        from ..components.parsers import parse_compound_peptidoform_ion
+        from ..proforma_components.parsers import parse_compound_peptidoform_ion
 
         return parse_compound_peptidoform_ion(s)
 
     def serialize(self) -> str:
-        from ..components.serializers import serialize_compound_peptidoform_ion
+        from ..proforma_components.serializers import serialize_compound_peptidoform_ion
 
         return serialize_compound_peptidoform_ion(self)
 

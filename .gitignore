@@ -9,4 +9,6 @@ wheels/
 # Virtual environments
 .venv
 
+docs/_build/*
+
 try*.py

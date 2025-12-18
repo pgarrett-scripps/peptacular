@@ -7,6 +7,9 @@ This module contains all parsing logic, independent of other modules.
 from typing import TYPE_CHECKING
 import re
 from functools import lru_cache
+from ..elements import Element
+from ..amino_acids import AminoAcid
+from ..mods.monosaccharide.data import Monosaccharide
 
 if TYPE_CHECKING:
     from .comps import (
@@ -121,7 +124,6 @@ def parse_formula_element(s: str, allow_zero: bool = False) -> "FormulaElement":
     Raises:
         ValueError: If the string cannot be parsed or is invalid
     """
-    from ..constants import Element
     from .comps import FormulaElement
 
     if not s:
@@ -442,14 +444,13 @@ def _parse_glycan_composition(glycan_str: str) -> tuple["GlycanComponent", ...]:
         "Hex5HexNAc4" -> (GlycanComponent(Hex, 5), GlycanComponent(HexNAc, 4))
         "Hex5HexNAc4NeuAc2" -> (GlycanComponent(Hex, 5), GlycanComponent(HexNAc, 4), GlycanComponent(NeuAc, 2))
     """
-    from ..constants import MonosaccharideName
 
     components: list["GlycanComponent"] = []
     i = 0
 
     # Sort by length (longest first) to match "HexNAc" before "Hex"
     monosaccharide_names = sorted(
-        [m.value for m in MonosaccharideName], key=len, reverse=True
+        [m.value for m in Monosaccharide], key=len, reverse=True
     )
 
     while i < len(glycan_str):
@@ -471,7 +472,7 @@ def _parse_glycan_composition(glycan_str: str) -> tuple["GlycanComponent", ...]:
                     count = 1
 
                 try:
-                    monosaccharide = MonosaccharideName(mono_name)
+                    monosaccharide = Monosaccharide(mono_name)
                 except ValueError:
                     raise ValueError(f"Unknown monosaccharide: {mono_name}")
 
@@ -556,7 +557,7 @@ def parse_position_rule(s: str) -> "PositionRule":
     Raises:
         ValueError: If the string cannot be parsed or is invalid
     """
-    from ..constants import Terminal, AminoAcid
+    from ..constants import Terminal
     from .comps import PositionRule
 
     if not s:
@@ -852,14 +853,13 @@ def parse_glycan_component(s: str) -> "GlycanComponent":
     Raises:
         ValueError: If the string cannot be parsed
     """
-    from ..constants import MonosaccharideName
     from .comps import GlycanComponent
 
     s = s.strip()
 
     # Try to match known monosaccharide names (longest first)
     monosaccharide_names = sorted(
-        [m.value for m in MonosaccharideName], key=len, reverse=True
+        [m.value for m in Monosaccharide], key=len, reverse=True
     )
 
     for mono_name in monosaccharide_names:
@@ -875,7 +875,7 @@ def parse_glycan_component(s: str) -> "GlycanComponent":
                 count = 1
 
             try:
-                monosaccharide = MonosaccharideName(mono_name)
+                monosaccharide = Monosaccharide(mono_name)
             except ValueError:
                 continue
 
@@ -912,7 +912,6 @@ def parse_isotope_replacement(s: str) -> "IsotopeReplacement":
     Raises:
         ValueError: If the string cannot be parsed
     """
-    from ..constants import Element
     from .comps import IsotopeReplacement
 
     s = s.strip()
@@ -1307,7 +1306,6 @@ def parse_sequence_element(s: str) -> "SequenceElement":
     Raises:
         ValueError: If the string cannot be parsed
     """
-    from ..constants import AminoAcid
     from .comps import SequenceElement
 
     if not s:

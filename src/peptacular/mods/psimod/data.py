@@ -77,7 +77,7 @@ try:
         formula=None,
         monoisotopic_mass=0.0,
         average_mass=0.0,
-        dict_composition=None,
+        dict_composition={},
     ),
     "00011": PsimodInfo(
         id="00011",
@@ -85,7 +85,7 @@ try:
         formula=None,
         monoisotopic_mass=0.0,
         average_mass=0.0,
-        dict_composition=None,
+        dict_composition={},
     ),
     "00012": PsimodInfo(
         id="00012",
@@ -93,7 +93,7 @@ try:
         formula=None,
         monoisotopic_mass=0.0,
         average_mass=0.0,
-        dict_composition=None,
+        dict_composition={},
     ),
     "00013": PsimodInfo(
         id="00013",
@@ -101,7 +101,7 @@ try:
         formula=None,
         monoisotopic_mass=0.0,
         average_mass=0.0,
-        dict_composition=None,
+        dict_composition={},
     ),
     "00014": PsimodInfo(
         id="00014",
@@ -109,7 +109,7 @@ try:
         formula=None,
         monoisotopic_mass=0.0,
         average_mass=0.0,
-        dict_composition=None,
+        dict_composition={},
     ),
     "00015": PsimodInfo(
         id="00015",
@@ -117,7 +117,7 @@ try:
         formula=None,
         monoisotopic_mass=0.0,
         average_mass=0.0,
-        dict_composition=None,
+        dict_composition={},
     ),
     "00016": PsimodInfo(
         id="00016",
@@ -125,7 +125,7 @@ try:
         formula=None,
         monoisotopic_mass=0.0,
         average_mass=0.0,
-        dict_composition=None,
+        dict_composition={},
     ),
     "00017": PsimodInfo(
         id="00017",
@@ -133,7 +133,7 @@ try:
         formula=None,
         monoisotopic_mass=0.0,
         average_mass=0.0,
-        dict_composition=None,
+        dict_composition={},
     ),
     "00018": PsimodInfo(
         id="00018",
@@ -141,7 +141,7 @@ try:
         formula=None,
         monoisotopic_mass=0.0,
         average_mass=0.0,
-        dict_composition=None,
+        dict_composition={},
     ),
     "00019": PsimodInfo(
         id="00019",
@@ -149,7 +149,7 @@ try:
         formula=None,
         monoisotopic_mass=0.0,
         average_mass=0.0,
-        dict_composition=None,
+        dict_composition={},
     ),
     "00020": PsimodInfo(
         id="00020",
@@ -157,7 +157,7 @@ try:
         formula=None,
         monoisotopic_mass=0.0,
         average_mass=0.0,
-        dict_composition=None,
+        dict_composition={},
     ),
     "00021": PsimodInfo(
         id="00021",
@@ -165,7 +165,7 @@ try:
         formula=None,
         monoisotopic_mass=0.0,
         average_mass=0.0,
-        dict_composition=None,
+        dict_composition={},
     ),
     "00022": PsimodInfo(
         id="00022",
@@ -173,7 +173,7 @@ try:
         formula=None,
         monoisotopic_mass=0.0,
         average_mass=0.0,
-        dict_composition=None,
+        dict_composition={},
     ),
     "00023": PsimodInfo(
         id="00023",
@@ -181,7 +181,7 @@ try:
         formula=None,
         monoisotopic_mass=0.0,
         average_mass=0.0,
-        dict_composition=None,
+        dict_composition={},
     ),
     "00024": PsimodInfo(
         id="00024",
@@ -189,7 +189,7 @@ try:
         formula=None,
         monoisotopic_mass=0.0,
         average_mass=0.0,
-        dict_composition=None,
+        dict_composition={},
     ),
     "00025": PsimodInfo(
         id="00025",
@@ -197,7 +197,7 @@ try:
         formula=None,
         monoisotopic_mass=0.0,
         average_mass=0.0,
-        dict_composition=None,
+        dict_composition={},
     ),
     "00026": PsimodInfo(
         id="00026",
@@ -205,7 +205,7 @@ try:
         formula=None,
         monoisotopic_mass=0.0,
         average_mass=0.0,
-        dict_composition=None,
+        dict_composition={},
     ),
     "00027": PsimodInfo(
         id="00027",
@@ -213,7 +213,7 @@ try:
         formula=None,
         monoisotopic_mass=0.0,
         average_mass=0.0,
-        dict_composition=None,
+        dict_composition={},
     ),
     "00028": PsimodInfo(
         id="00028",
@@ -221,7 +221,7 @@ try:
         formula=None,
         monoisotopic_mass=0.0,
         average_mass=0.0,
-        dict_composition=None,
+        dict_composition={},
     ),
     "00029": PsimodInfo(
         id="00029",
@@ -229,7 +229,7 @@ try:
         formula=None,
         monoisotopic_mass=0.0,
         average_mass=0.0,
-        dict_composition=None,
+        dict_composition={},
     ),
     "00030": PsimodInfo(
         id="00030",
@@ -237,7 +237,7 @@ try:
         formula=None,
         monoisotopic_mass=0.0,
         average_mass=0.0,
-        dict_composition=None,
+        dict_composition={},
     ),
     "00031": PsimodInfo(
         id="00031",
@@ -245,7 +245,7 @@ try:
         formula=None,
         monoisotopic_mass=0.0,
         average_mass=0.0,
-        dict_composition=None,
+        dict_composition={},
     ),
     "00032": PsimodInfo(
         id="00032",
@@ -1581,7 +1581,7 @@ try:
         formula=None,
         monoisotopic_mass=0.0,
         average_mass=0.0,
-        dict_composition=None,
+        dict_composition={},
     ),
     "00199": PsimodInfo(
         id="00199",
@@ -1589,7 +1589,7 @@ try:
         formula=None,
         monoisotopic_mass=0.0,
         average_mass=0.0,
-        dict_composition=None,
+        dict_composition={},
     ),
     "00200": PsimodInfo(
         id="00200",
@@ -1597,7 +1597,7 @@ try:
         formula=None,
         monoisotopic_mass=0.0,
         average_mass=0.0,
-        dict_composition=None,
+        dict_composition={},
     ),
     "00201": PsimodInfo(
         id="00201",
@@ -1605,7 +1605,7 @@ try:
         formula=None,
         monoisotopic_mass=0.0,
         average_mass=0.0,
-        dict_composition=None,
+        dict_composition={},
     ),
     "00202": PsimodInfo(
         id="00202",
@@ -1613,7 +1613,7 @@ try:
         formula=None,
         monoisotopic_mass=0.0,
         average_mass=0.0,
-        dict_composition=None,
+        dict_composition={},
     ),
     "00203": PsimodInfo(
         id="00203",
@@ -1621,7 +1621,7 @@ try:
         formula=None,
         monoisotopic_mass=0.0,
         average_mass=0.0,
-        dict_composition=None,
+        dict_composition={},
     ),
     "00204": PsimodInfo(
         id="00204",
@@ -1629,7 +1629,7 @@ try:
         formula=None,
         monoisotopic_mass=0.0,
         average_mass=0.0,
-        dict_composition=None,
+        dict_composition={},
     ),
     "00205": PsimodInfo(
         id="00205",
@@ -1637,7 +1637,7 @@ try:
         formula=None,
         monoisotopic_mass=0.0,
         average_mass=0.0,
-        dict_composition=None,
+        dict_composition={},
     ),
     "00206": PsimodInfo(
         id="00206",
@@ -2445,7 +2445,7 @@ try:
         formula=None,
         monoisotopic_mass=0.0,
         average_mass=0.0,
-        dict_composition=None,
+        dict_composition={},
     ),
     "00307": PsimodInfo(
         id="00307",
@@ -5373,7 +5373,7 @@ try:
         formula=None,
         monoisotopic_mass=0.0,
         average_mass=0.0,
-        dict_composition=None,
+        dict_composition={},
     ),
     "00706": PsimodInfo(
         id="00706",
@@ -6605,7 +6605,7 @@ try:
         formula=None,
         monoisotopic_mass=0.0,
         average_mass=0.0,
-        dict_composition=None,
+        dict_composition={},
     ),
     "00864": PsimodInfo(
         id="00864",
@@ -8885,7 +8885,7 @@ try:
         formula=None,
         monoisotopic_mass=0.0,
         average_mass=0.0,
-        dict_composition=None,
+        dict_composition={},
     ),
     "01188": PsimodInfo(
         id="01188",
@@ -13797,7 +13797,7 @@ try:
         formula=None,
         monoisotopic_mass=0.0,
         average_mass=0.0,
-        dict_composition=None,
+        dict_composition={},
     ),
     "01841": PsimodInfo(
         id="01841",
@@ -14437,7 +14437,7 @@ try:
         formula=None,
         monoisotopic_mass=0.0,
         average_mass=0.0,
-        dict_composition=None,
+        dict_composition={},
     ),
     "01922": PsimodInfo(
         id="01922",
@@ -15285,7 +15285,7 @@ try:
         formula=None,
         monoisotopic_mass=0.0,
         average_mass=0.0,
-        dict_composition=None,
+        dict_composition={},
     ),
     "02030": PsimodInfo(
         id="02030",
@@ -15293,7 +15293,7 @@ try:
         formula=None,
         monoisotopic_mass=0.0,
         average_mass=0.0,
-        dict_composition=None,
+        dict_composition={},
     ),
     "02031": PsimodInfo(
         id="02031",

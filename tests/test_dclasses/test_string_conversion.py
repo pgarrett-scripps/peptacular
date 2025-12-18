@@ -102,23 +102,23 @@ class TestGlycanStringConversion:
     def test_glycan_component_simple(self):
         """Test GlycanComponent string conversion"""
         glycan = pt.GlycanComponent(
-            monosaccharide=pt.MonosaccharideName.Hex, occurance=1
+            monosaccharide=pt.Monosaccharide.Hex, occurance=1
         )
         assert str(glycan) == "Hex"
 
     def test_glycan_component_with_count(self):
         """Test GlycanComponent with count"""
         glycan = pt.GlycanComponent(
-            monosaccharide=pt.MonosaccharideName.Hex, occurance=5
+            monosaccharide=pt.Monosaccharide.Hex, occurance=5
         )
         assert str(glycan) == "Hex5"
 
     def test_glycan_tuple_to_string(self):
         """Test tuple of GlycanComponents"""
         glycan_tuple = (
-            pt.GlycanComponent(monosaccharide=pt.MonosaccharideName.Hex, occurance=5),
+            pt.GlycanComponent(monosaccharide=pt.Monosaccharide.Hex, occurance=5),
             pt.GlycanComponent(
-                monosaccharide=pt.MonosaccharideName.HexNAc, occurance=4
+                monosaccharide=pt.Monosaccharide.HexNAc, occurance=4
             ),
         )
         glycan_str = "Glycan:" + "".join(str(g) for g in glycan_tuple)

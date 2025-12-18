@@ -124,16 +124,21 @@ def _get_psimod_entries(
                         formula_parts.append(f"{element}{count}")
             
             formula_str = ''.join(formula_parts)
-            try:
-                parsed_formula = pt.ChargedFormula.from_string(f"Formula:{formula_str}", allow_zero=True)
-                formula = formula_str
-                composition = parsed_formula.get_dict_composition()
-            except Exception as e:
-                warnings.warn(
-                    f"[PSI-MOD] Error parsing formula for {term_id} {term_name}: {delta_composition} -> {formula_str}, {e}"
-                )
-                formula = None
-                composition = None
+
+            if formula_str == "":
+                formula_str = ""
+                composition = {}
+            else:
+                try:
+                    parsed_formula = pt.ChargedFormula.from_string(f"Formula:{formula_str}", allow_zero=True)
+                    formula = formula_str
+                    composition = parsed_formula.get_dict_composition()
+                except Exception as e:
+                    warnings.warn(
+                        f"[PSI-MOD] Error parsing formula for {term_id} {term_name}: {delta_composition} -> {formula_str}, {e}"
+                    )
+                    formula = None
+                    composition = None
         
         # Convert mass strings to floats
         mono_mass: float | None = None

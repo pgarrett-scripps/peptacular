@@ -77,7 +77,7 @@ def _get_unimod_entries(
             for i, (key, count) in enumerate(formuals_counts):
 
                 if key == 'HexA':
-                    key = 'a-Hex'
+                    key = 'aHex'
 
                 if key == 'Pent':
                     key = 'Pen'
@@ -107,29 +107,34 @@ def _get_unimod_entries(
                     formuals_counts[i] = (glycan_formula, count)
 
             composition: dict[pt.ElementInfo, int] = defaultdict(int)
-            for formula_part, count in formuals_counts:
+            try:
+                for formula_part, count in formuals_counts:
 
-                if count == 0:
-                    continue  # skip zero counts
+                    if count == 0:
+                        continue  # skip zero counts
 
-                # if formula_part starts with digit enclose in parentheses
-                if formula_part[0].isdigit():
-                    formula_part = f"[{formula_part}]"    
+                    # if formula_part starts with digit enclose in parentheses
+                    if formula_part[0].isdigit():
+                        formula_part = f"[{formula_part}]"    
+                
+                    chem_formula = pt.ChargedFormula.from_string(f"Formula:{formula_part}", allow_zero=True)
+                    
+                    # Remove any elements with zero count from the composition
+                    elements = tuple(elem for elem in chem_formula.formula if elem.occurance != 0)
+                    
+                    # Check for non-zero charge
+                    if chem_formula.charge is not None:
+                        raise ValueError(
+                            f"Unimod {term_id} {term_name} has non-zero charge in formula {delta_composition}"
+                        )
             
-                chem_formula = pt.ChargedFormula.from_string(f"Formula:{formula_part}", allow_zero=True)
-                
-                # Remove any elements with zero count from the composition
-                elements = tuple(elem for elem in chem_formula.formula if elem.occurance != 0)
-                
-                # Check for non-zero charge
-                if chem_formula.charge is not None:
-                    raise ValueError(
-                        f"Unimod {term_id} {term_name} has non-zero charge in formula {delta_composition}"
-                    )
-        
-                comp_comp = pt.ChargedFormula(formula=elements, charge=chem_formula.charge).get_composition()
-                for elem, elem_count in comp_comp.items():
-                    composition[elem] += elem_count * count
+                    comp_comp = pt.ChargedFormula(formula=elements, charge=chem_formula.charge).get_composition()
+                    for elem, elem_count in comp_comp.items():
+                        composition[elem] += elem_count * count
+            except Exception as e:
+                raise ValueError(
+                    f"Error parsing composition for Unimod {term_id} {term_name} with formula {delta_composition}: {e}"
+                ) from e
 
             #print({term_name: {str(k): v for k, v in composition.items()}})
             merged_formula = pt.ChargedFormula.from_composition(composition)

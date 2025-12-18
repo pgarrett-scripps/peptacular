@@ -35,8 +35,10 @@ class UnimodLookup:
                 name = value
 
         return self.name_to_info.get(name.lower())
-    
-    def query_mass(self, mass: float, tolerance: float = 0.01, monoisotopic: bool = True) -> UnimodInfo | None:
+
+    def query_mass(
+        self, mass: float, tolerance: float = 0.01, monoisotopic: bool = True
+    ) -> UnimodInfo | None:
         """Query Unimod modification by mass within a given tolerance."""
         matches: list[UnimodInfo] = []
         for info in self.id_to_info.values():
@@ -50,9 +52,11 @@ class UnimodLookup:
             compositions = {tuple(sorted(m.dict_composition.items())) for m in matches}
             if len(compositions) == 1:
                 return matches[0]
-            raise ValueError(f"Multiple UNIMOD modifications found for mass {mass} within tolerance {tolerance}: {[(m.id, m.monoisotopic_mass, m.formula) for m in matches]}")
+            raise ValueError(
+                f"Multiple UNIMOD modifications found for mass {mass} within tolerance {tolerance}: {[(m.id, m.monoisotopic_mass, m.formula) for m in matches]}"
+            )
         return None
-    
+
     def __getitem__(self, key: str) -> UnimodInfo:
         info = self.query_name(key)
         if info is not None:
@@ -80,15 +84,15 @@ class UnimodLookup:
     def __iter__(self) -> Iterable[UnimodInfo]:
         """Iterator over all UnimodInfo entries in the lookup."""
         return iter(self.name_to_info.values())
-    
+
     def values(self) -> Iterable[UnimodInfo]:
         """Get all UnimodInfo entries in the lookup."""
         return self.name_to_info.values()
-    
+
     def keys(self) -> Iterable[str]:
         """Get all keys (names) in the lookup."""
         return self.name_to_info.keys()
-    
+
     def choice(self) -> UnimodInfo:
         """Get a random UnimodInfo from the lookup."""
         return choice(list(self.name_to_info.values()))

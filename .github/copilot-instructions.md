@@ -7,6 +7,48 @@
 1 - Never make summary documentation unles specifically asked.
 2 - check makfile for commands
 
+## Documentation & Comments
+
+### Docstring Format
+
+Use **Google-style docstrings** but keep them minimal - type hints handle the rest.
+
+**Simple function:**
+```python
+def calculate_mass(sequence: str, charge: int = 1) -> float:
+    """Calculate the mass-to-charge ratio of a peptide."""
+```
+
+**When you need more detail:**
+```python
+def find_isotopes(mz: float, tolerance: float = 0.01) -> list[Peak]:
+    """Find isotopic peaks within the tolerance window.
+    
+    Uses a greedy algorithm to identify the most intense peaks first,
+    then searches for their isotopic patterns.
+    """
+```
+
+**Classes:**
+```python
+class Peptide:
+    """Represents a peptide sequence with ProForma modifications."""
+```
+
+### What to Document
+
+- **One-line summary** for all public functions/classes
+- **Additional details** only when the implementation is non-obvious
+- **Don't repeat** what's already in type hints
+- **Private functions** (`_name`) can skip docstrings if obvious
+
+### Building Docs
+```bash
+cd docs
+make html
+# View at docs/_build/html/index.html
+```
+
 see **proforma.schema.json** for the full ProForma 2.0 json object specification.
 
 ## What is ProForma?
