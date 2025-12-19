@@ -1,7 +1,3 @@
-"""
-This module provides functions to generate permutations, combinations, and products of sequences.
-"""
-
 from collections.abc import Sequence
 from typing import overload
 

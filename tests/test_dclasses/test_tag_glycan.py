@@ -10,7 +10,7 @@ class TestGlycanComposition:
 
     def test_simple_glycan(self):
         """Test parsing simple glycan composition"""
-        result = pt.parse_modification_tag("Glycan:Hex")
+        result = pt.ModificationTags.from_string("Glycan:Hex").tags[0]
         # assert that component is GlycanTag
         assert isinstance(result, pt.GlycanTag)
         res: pt.GlycanComponent = result.components[0]
@@ -19,7 +19,7 @@ class TestGlycanComposition:
 
     def test_glycan_with_count(self):
         """Test parsing glycan with count"""
-        result = pt.parse_modification_tag("Glycan:Hex5")
+        result = pt.ModificationTags.from_string("Glycan:Hex5").tags[0]
         assert isinstance(result, pt.GlycanTag)
         res: pt.GlycanComponent = result.components[0]
         assert res.monosaccharide == pt.Monosaccharide.Hex
@@ -27,7 +27,7 @@ class TestGlycanComposition:
 
     def test_complex_glycan_composition(self):
         """Test parsing complex glycan composition"""
-        result = pt.parse_modification_tag("Glycan:Hex5HexNAc4")
+        result = pt.ModificationTags.from_string("Glycan:Hex5HexNAc4").tags[0]
         assert isinstance(result, pt.GlycanTag)
         assert len(result) == 2
         res1: pt.GlycanComponent = result.components[0]
@@ -42,7 +42,7 @@ class TestGlycanComposition:
         """Test parsing various monosaccharide types"""
         monosaccharides = ["Fuc", "Hep", "NeuGc", "dHex"]
         for mono in monosaccharides:
-            result = pt.parse_modification_tag(f"Glycan:{mono}")
+            result = pt.ModificationTags.from_string(f"Glycan:{mono}").tags[0]
             assert isinstance(result, pt.GlycanTag)
             assert len(result) == 1
 

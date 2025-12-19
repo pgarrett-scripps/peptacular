@@ -33,12 +33,16 @@ class TestNameParsing:
 
         # out of order names
         with pytest.raises(ValueError):
-            parser = pt.annotation.parser.ProFormaParser("(>compound)(>>>ion)(>>peptide)PEPTIDE")
+            parser = pt.annotation.parser.ProFormaParser(
+                "(>compound)(>>>ion)(>>peptide)PEPTIDE"
+            )
             list(parser.parse())
 
         # multiple names of same type
         with pytest.raises(ValueError):
-            parser = pt.annotation.parser.ProFormaParser("(>peptide1)(>peptide2)PEPTIDE")
+            parser = pt.annotation.parser.ProFormaParser(
+                "(>peptide1)(>peptide2)PEPTIDE"
+            )
             list(parser.parse())
 
     def test_peptidoform_ion_name(self):
@@ -65,7 +69,9 @@ class TestNameParsing:
 
     def test_name_with_modifications(self):
         """Test name combined with modifications"""
-        parser = pt.annotation.parser.ProFormaParser("(>named)[Acetyl]-PEM[Oxidation]TIDE")
+        parser = pt.annotation.parser.ProFormaParser(
+            "(>named)[Acetyl]-PEM[Oxidation]TIDE"
+        )
         result = list(parser.parse())
 
         assert len(result) == 1
@@ -141,7 +147,9 @@ class TestNameParsing:
 
     def test_crosslinked_with_names(self):
         """Test crosslinked peptides with names"""
-        parser = pt.annotation.parser.ProFormaParser("(>pep1)PEPTK[#XL1]IDE//(>pep2)SEQK[#XL1]UENCE")
+        parser = pt.annotation.parser.ProFormaParser(
+            "(>pep1)PEPTK[#XL1]IDE//(>pep2)SEQK[#XL1]UENCE"
+        )
 
         # Capture data from each segment as we iterate
         segments: list[dict[str, object]] = []
@@ -167,7 +175,9 @@ class TestNameParsing:
 
     def test_chimeric_with_names(self):
         """Test chimeric peptides with names"""
-        parser = pt.annotation.parser.ProFormaParser("(>first)PEPTIDE+(>second)SEQUENCE")
+        parser = pt.annotation.parser.ProFormaParser(
+            "(>first)PEPTIDE+(>second)SEQUENCE"
+        )
 
         # Capture data from each segment as we iterate
         segments: list[dict[str, object]] = []

@@ -1,8 +1,3 @@
-"""
-Digest.py contains functions for generating enzymatic and non-enzymatic peptides from a given sequence. All functions
-in this module are designed to work with both standard sequences and ProFormaAnnotations.
-"""
-
 from collections.abc import Sequence
 from typing import overload
 
@@ -19,7 +14,6 @@ def _left_semi_digest(
     min_len: int | None = None,
     max_len: int | None = None,
 ) -> list[tuple[str, Span]]:
-    """Get left semi-enzymatic sequences for a single sequence"""
     annot = get_annotation_input(sequence, copy=False)
     return [
         (annot[span].serialize(), span)
@@ -87,7 +81,6 @@ def _right_semi_digest(
     min_len: int | None = None,
     max_len: int | None = None,
 ) -> list[tuple[str, Span]]:
-    """Get right semi-enzymatic sequences for a single sequence"""
     annot = get_annotation_input(sequence, copy=False)
     return [
         (annot[span].serialize(), span)
@@ -155,7 +148,6 @@ def _semi_digest(
     min_len: int | None = None,
     max_len: int | None = None,
 ) -> list[tuple[str, Span]]:
-    """Get semi-enzymatic sequences for a single sequence"""
     annot = get_annotation_input(sequence, copy=False)
     return [
         (annot[span].serialize(), span)
@@ -227,7 +219,6 @@ def _nonspecific_digest(
     min_len: int | None = None,
     max_len: int | None = None,
 ) -> list[tuple[str, Span]]:
-    """Get non-enzymatic sequences for a single sequence"""
     annot = get_annotation_input(sequence, copy=False)
     return [
         (annot[span].serialize(), span)
@@ -294,7 +285,6 @@ def nonspecific_digest(
 
 
 def _cleavage_sites(sequence: str | ProFormaAnnotation, enzyme_regex: str) -> list[int]:
-    """Get cleavage sites for a single sequence"""
     return list(
         get_annotation_input(sequence, copy=False).cleavage_sites(enzyme=enzyme_regex)
     )
@@ -357,7 +347,6 @@ def _simple_cleavage_sites(
     restrict_after: str = "",
     cterminal: bool = True,
 ) -> list[int]:
-    """Get cleavage sites using simple amino acid rules for a single sequence"""
     enzyme_regex = generate_regex(
         cleave_on=cleave_on,
         restrict_before=restrict_before,
@@ -442,7 +431,6 @@ def _digest(
     min_len: int | None = None,
     max_len: int | None = None,
 ) -> list[tuple[str, Span]]:
-    """Digest by regex for a single sequence"""
     annot = get_annotation_input(sequence, copy=False)
     return [
         (annot[span].serialize(), span)
@@ -540,7 +528,6 @@ def _digest_single(
     min_len: int | None = None,
     max_len: int | None = None,
 ) -> list[tuple[str, Span]]:
-    """Digest for a single sequence"""
     annot = get_annotation_input(sequence, copy=False)
     return [
         (annot[span].serialize(), span)

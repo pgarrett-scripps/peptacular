@@ -9,31 +9,32 @@ import warnings
 
 class Monosaccharide(StrEnum):
     """Enumeration of monosaccharide names."""
-    Dec = "Dec"
-    Fuc = "Fuc"
-    Hep = "Hep"
+
+    Sug = "Sug"
+    Tri = "Tri"
+    Tet = "Tet"
+    Pen = "Pen"
     Hex = "Hex"
+    Hep = "Hep"
+    Oct = "Oct"
+    Non = "Non"
+    Dec = "Dec"
+    Sulfate = "Sulfate"
+    Phosphate = "Phosphate"
+    dHex = "dHex"
+    Fuc = "Fuc"
+    en_aHex = "en,aHex"
     HexN = "HexN"
+    aHex = "aHex"
     HexNAc = "HexNAc"
-    HexNAcS = "HexNAc(S)"
     HexNS = "HexNS"
-    HexP = "HexP"
     HexS = "HexS"
-    Kdn = "Kdn"
+    HexP = "HexP"
     Neu = "Neu"
+    HexNAcS = "HexNAcS"
     NeuAc = "NeuAc"
     NeuGc = "NeuGc"
-    Non = "Non"
-    Oct = "Oct"
-    Pen = "Pen"
-    Sug = "Sug"
-    Tet = "Tet"
-    Tri = "Tri"
-    aHex = "aHex"
-    dHex = "dHex"
-    en_aHex = "en,aHex"
-    Phosphate = "phosphate"
-    Sulfate = "sulfate"
+    Kdn = "Kdn"
 
     @classmethod
     def from_str(cls, name: str) -> "Monosaccharide":
@@ -43,212 +44,212 @@ class Monosaccharide(StrEnum):
 
 try:
     MONOSACCHARIDES: dict[Monosaccharide, MonosaccharideInfo] = {
-    Monosaccharide.Sug: MonosaccharideInfo(
-        id="0A2A057A",
-        name=Monosaccharide.Sug,
-        formula="C2H2O1",
-        monoisotopic_mass=42.0105646837,
-        average_mass=42.03675822590033,
-        dict_composition={'C': 2, 'H': 2, 'O': 1},
-    ),
-    Monosaccharide.Tri: MonosaccharideInfo(
-        id="6BAAE1B1",
-        name=Monosaccharide.Tri,
-        formula="C3H4O2",
-        monoisotopic_mass=72.0211293674,
-        average_mass=72.06278055506542,
-        dict_composition={'C': 3, 'H': 4, 'O': 2},
-    ),
-    Monosaccharide.Tet: MonosaccharideInfo(
-        id="2281E39B",
-        name=Monosaccharide.Tet,
-        formula="C4H6O3",
-        monoisotopic_mass=102.031694051,
-        average_mass=102.08880288423049,
-        dict_composition={'C': 4, 'H': 6, 'O': 3},
-    ),
-    Monosaccharide.Pen: MonosaccharideInfo(
-        id="1559E00E",
-        name=Monosaccharide.Pen,
-        formula="C5H8O4",
-        monoisotopic_mass=132.042258735,
-        average_mass=132.11482521339556,
-        dict_composition={'C': 5, 'H': 8, 'O': 4},
-    ),
-    Monosaccharide.Hex: MonosaccharideInfo(
-        id="7AB4EB73",
-        name=Monosaccharide.Hex,
-        formula="C6H10O5",
-        monoisotopic_mass=162.052823418,
-        average_mass=162.14084754256064,
-        dict_composition={'C': 6, 'H': 10, 'O': 5},
-    ),
-    Monosaccharide.Hep: MonosaccharideInfo(
-        id="077F5949",
-        name=Monosaccharide.Hep,
-        formula="C7H12O6",
-        monoisotopic_mass=192.063388102,
-        average_mass=192.16686987172574,
-        dict_composition={'C': 7, 'H': 12, 'O': 6},
-    ),
-    Monosaccharide.Oct: MonosaccharideInfo(
-        id="6FD0344F",
-        name=Monosaccharide.Oct,
-        formula="C8H14O7",
-        monoisotopic_mass=222.073952786,
-        average_mass=222.1928922008908,
-        dict_composition={'C': 8, 'H': 14, 'O': 7},
-    ),
-    Monosaccharide.Non: MonosaccharideInfo(
-        id="2CC56422",
-        name=Monosaccharide.Non,
-        formula="C9H16O8",
-        monoisotopic_mass=252.08451747,
-        average_mass=252.21891453005588,
-        dict_composition={'C': 9, 'H': 16, 'O': 8},
-    ),
-    Monosaccharide.Dec: MonosaccharideInfo(
-        id="2F3DD9C9",
-        name=Monosaccharide.Dec,
-        formula="C10H18O9",
-        monoisotopic_mass=282.095082153,
-        average_mass=282.24493685922096,
-        dict_composition={'C': 10, 'H': 18, 'O': 9},
-    ),
-    Monosaccharide.Sulfate: MonosaccharideInfo(
-        id="70565C17",
-        name=Monosaccharide.Sulfate,
-        formula="H0O3S1",
-        monoisotopic_mass=79.9568148587,
-        average_mass=80.0630021790819,
-        dict_composition={'O': 3, 'S': 1},
-    ),
-    Monosaccharide.Phosphate: MonosaccharideInfo(
-        id="095E7DD0",
-        name=Monosaccharide.Phosphate,
-        formula="H1O3P1",
-        monoisotopic_mass=79.9663305208,
-        average_mass=79.97991752543061,
-        dict_composition={'H': 1, 'O': 3, 'P': 1},
-    ),
-    Monosaccharide.dHex: MonosaccharideInfo(
-        id="0C4F1FA5",
-        name=Monosaccharide.dHex,
-        formula="C6H10O4",
-        monoisotopic_mass=146.057908799,
-        average_mass=146.14144261824237,
-        dict_composition={'C': 6, 'H': 10, 'O': 4},
-    ),
-    Monosaccharide.Fuc: MonosaccharideInfo(
-        id="61947BA4",
-        name=Monosaccharide.Fuc,
-        formula="C6H10O4",
-        monoisotopic_mass=146.057908799,
-        average_mass=146.14144261824237,
-        dict_composition={'C': 6, 'H': 10, 'O': 4},
-    ),
-    Monosaccharide.en_aHex: MonosaccharideInfo(
-        id="3E923C03",
-        name=Monosaccharide.en_aHex,
-        formula="C6H6O5",
-        monoisotopic_mass=158.02152329,
-        average_mass=158.10908452633754,
-        dict_composition={'C': 6, 'H': 6, 'O': 5},
-    ),
-    Monosaccharide.HexN: MonosaccharideInfo(
-        id="14908737",
-        name=Monosaccharide.HexN,
-        formula="C6H11N1O4",
-        monoisotopic_mass=161.068807836,
-        average_mass=161.15608658374396,
-        dict_composition={'C': 6, 'H': 11, 'N': 1, 'O': 4},
-    ),
-    Monosaccharide.aHex: MonosaccharideInfo(
-        id="0996D6B5",
-        name=Monosaccharide.aHex,
-        formula="C6H8O6",
-        monoisotopic_mass=176.032087974,
-        average_mass=176.12437095876737,
-        dict_composition={'C': 6, 'H': 8, 'O': 6},
-    ),
-    Monosaccharide.HexNAc: MonosaccharideInfo(
-        id="5E288A08",
-        name=Monosaccharide.HexNAc,
-        formula="C8H13N1O5",
-        monoisotopic_mass=203.07937252,
-        average_mass=203.19284480964427,
-        dict_composition={'C': 8, 'H': 13, 'N': 1, 'O': 5},
-    ),
-    Monosaccharide.HexNS: MonosaccharideInfo(
-        id="695E0092",
-        name=Monosaccharide.HexNS,
-        formula="C6H11N1O7S1",
-        monoisotopic_mass=241.025622694,
-        average_mass=241.21908876282586,
-        dict_composition={'C': 6, 'H': 11, 'N': 1, 'O': 7, 'S': 1},
-    ),
-    Monosaccharide.HexS: MonosaccharideInfo(
-        id="252FAE19",
-        name=Monosaccharide.HexS,
-        formula="C6H10O8S1",
-        monoisotopic_mass=242.009638277,
-        average_mass=242.20384972164254,
-        dict_composition={'C': 6, 'H': 10, 'O': 8, 'S': 1},
-    ),
-    Monosaccharide.HexP: MonosaccharideInfo(
-        id="27AA9097",
-        name=Monosaccharide.HexP,
-        formula="C6H11O8P1",
-        monoisotopic_mass=242.019153939,
-        average_mass=242.12076506799127,
-        dict_composition={'C': 6, 'H': 11, 'O': 8, 'P': 1},
-    ),
-    Monosaccharide.Neu: MonosaccharideInfo(
-        id="513BD0C1",
-        name=Monosaccharide.Neu,
-        formula="C9H15N1O7",
-        monoisotopic_mass=249.084851823,
-        average_mass=249.21827206312764,
-        dict_composition={'C': 9, 'H': 15, 'N': 1, 'O': 7},
-    ),
-    Monosaccharide.HexNAcS: MonosaccharideInfo(
-        id="2D673195",
-        name=Monosaccharide.HexNAcS,
-        formula="C8H13N1O8S1",
-        monoisotopic_mass=283.036187378,
-        average_mass=283.25584698872615,
-        dict_composition={'C': 8, 'H': 13, 'N': 1, 'O': 8, 'S': 1},
-    ),
-    Monosaccharide.NeuAc: MonosaccharideInfo(
-        id="2A76C372",
-        name=Monosaccharide.NeuAc,
-        formula="C11H17N1O8",
-        monoisotopic_mass=291.095416506,
-        average_mass=291.25503028902796,
-        dict_composition={'C': 11, 'H': 17, 'N': 1, 'O': 8},
-    ),
-    Monosaccharide.NeuGc: MonosaccharideInfo(
-        id="4DB3A9FC",
-        name=Monosaccharide.NeuGc,
-        formula="C11H17N1O9",
-        monoisotopic_mass=307.090331126,
-        average_mass=307.25443521334626,
-        dict_composition={'C': 11, 'H': 17, 'N': 1, 'O': 9},
-    ),
-    Monosaccharide.Kdn: MonosaccharideInfo(
-        id="995CFFA1",
-        name=Monosaccharide.Kdn,
-        formula="C9H14O8",
-        monoisotopic_mass=250.06886740778,
-        average_mass=250.20303302194432,
-        dict_composition={'C': 9, 'H': 14, 'O': 8},
-    ),
+        Monosaccharide.Sug: MonosaccharideInfo(
+            id="0A2A057A",
+            name=Monosaccharide.Sug,
+            formula="C2H2O1",
+            monoisotopic_mass=42.0105646837,
+            average_mass=42.03675822590033,
+            dict_composition={"C": 2, "H": 2, "O": 1},
+        ),
+        Monosaccharide.Tri: MonosaccharideInfo(
+            id="6BAAE1B1",
+            name=Monosaccharide.Tri,
+            formula="C3H4O2",
+            monoisotopic_mass=72.0211293674,
+            average_mass=72.06278055506542,
+            dict_composition={"C": 3, "H": 4, "O": 2},
+        ),
+        Monosaccharide.Tet: MonosaccharideInfo(
+            id="2281E39B",
+            name=Monosaccharide.Tet,
+            formula="C4H6O3",
+            monoisotopic_mass=102.031694051,
+            average_mass=102.08880288423049,
+            dict_composition={"C": 4, "H": 6, "O": 3},
+        ),
+        Monosaccharide.Pen: MonosaccharideInfo(
+            id="1559E00E",
+            name=Monosaccharide.Pen,
+            formula="C5H8O4",
+            monoisotopic_mass=132.042258735,
+            average_mass=132.11482521339556,
+            dict_composition={"C": 5, "H": 8, "O": 4},
+        ),
+        Monosaccharide.Hex: MonosaccharideInfo(
+            id="7AB4EB73",
+            name=Monosaccharide.Hex,
+            formula="C6H10O5",
+            monoisotopic_mass=162.052823418,
+            average_mass=162.14084754256064,
+            dict_composition={"C": 6, "H": 10, "O": 5},
+        ),
+        Monosaccharide.Hep: MonosaccharideInfo(
+            id="077F5949",
+            name=Monosaccharide.Hep,
+            formula="C7H12O6",
+            monoisotopic_mass=192.063388102,
+            average_mass=192.16686987172574,
+            dict_composition={"C": 7, "H": 12, "O": 6},
+        ),
+        Monosaccharide.Oct: MonosaccharideInfo(
+            id="6FD0344F",
+            name=Monosaccharide.Oct,
+            formula="C8H14O7",
+            monoisotopic_mass=222.073952786,
+            average_mass=222.1928922008908,
+            dict_composition={"C": 8, "H": 14, "O": 7},
+        ),
+        Monosaccharide.Non: MonosaccharideInfo(
+            id="2CC56422",
+            name=Monosaccharide.Non,
+            formula="C9H16O8",
+            monoisotopic_mass=252.08451747,
+            average_mass=252.21891453005588,
+            dict_composition={"C": 9, "H": 16, "O": 8},
+        ),
+        Monosaccharide.Dec: MonosaccharideInfo(
+            id="2F3DD9C9",
+            name=Monosaccharide.Dec,
+            formula="C10H18O9",
+            monoisotopic_mass=282.095082153,
+            average_mass=282.24493685922096,
+            dict_composition={"C": 10, "H": 18, "O": 9},
+        ),
+        Monosaccharide.Sulfate: MonosaccharideInfo(
+            id="70565C17",
+            name=Monosaccharide.Sulfate,
+            formula="H0O3S1",
+            monoisotopic_mass=79.9568148587,
+            average_mass=80.0630021790819,
+            dict_composition={"O": 3, "S": 1},
+        ),
+        Monosaccharide.Phosphate: MonosaccharideInfo(
+            id="095E7DD0",
+            name=Monosaccharide.Phosphate,
+            formula="H1O3P1",
+            monoisotopic_mass=79.9663305208,
+            average_mass=79.97991752543061,
+            dict_composition={"H": 1, "O": 3, "P": 1},
+        ),
+        Monosaccharide.dHex: MonosaccharideInfo(
+            id="0C4F1FA5",
+            name=Monosaccharide.dHex,
+            formula="C6H10O4",
+            monoisotopic_mass=146.057908799,
+            average_mass=146.14144261824237,
+            dict_composition={"C": 6, "H": 10, "O": 4},
+        ),
+        Monosaccharide.Fuc: MonosaccharideInfo(
+            id="61947BA4",
+            name=Monosaccharide.Fuc,
+            formula="C6H10O4",
+            monoisotopic_mass=146.057908799,
+            average_mass=146.14144261824237,
+            dict_composition={"C": 6, "H": 10, "O": 4},
+        ),
+        Monosaccharide.en_aHex: MonosaccharideInfo(
+            id="3E923C03",
+            name=Monosaccharide.en_aHex,
+            formula="C6H6O5",
+            monoisotopic_mass=158.02152329,
+            average_mass=158.10908452633754,
+            dict_composition={"C": 6, "H": 6, "O": 5},
+        ),
+        Monosaccharide.HexN: MonosaccharideInfo(
+            id="14908737",
+            name=Monosaccharide.HexN,
+            formula="C6H11N1O4",
+            monoisotopic_mass=161.068807836,
+            average_mass=161.15608658374396,
+            dict_composition={"C": 6, "H": 11, "N": 1, "O": 4},
+        ),
+        Monosaccharide.aHex: MonosaccharideInfo(
+            id="0996D6B5",
+            name=Monosaccharide.aHex,
+            formula="C6H8O6",
+            monoisotopic_mass=176.032087974,
+            average_mass=176.12437095876737,
+            dict_composition={"C": 6, "H": 8, "O": 6},
+        ),
+        Monosaccharide.HexNAc: MonosaccharideInfo(
+            id="5E288A08",
+            name=Monosaccharide.HexNAc,
+            formula="C8H13N1O5",
+            monoisotopic_mass=203.07937252,
+            average_mass=203.19284480964427,
+            dict_composition={"C": 8, "H": 13, "N": 1, "O": 5},
+        ),
+        Monosaccharide.HexNS: MonosaccharideInfo(
+            id="695E0092",
+            name=Monosaccharide.HexNS,
+            formula="C6H11N1O7S1",
+            monoisotopic_mass=241.025622694,
+            average_mass=241.21908876282586,
+            dict_composition={"C": 6, "H": 11, "N": 1, "O": 7, "S": 1},
+        ),
+        Monosaccharide.HexS: MonosaccharideInfo(
+            id="252FAE19",
+            name=Monosaccharide.HexS,
+            formula="C6H10O8S1",
+            monoisotopic_mass=242.009638277,
+            average_mass=242.20384972164254,
+            dict_composition={"C": 6, "H": 10, "O": 8, "S": 1},
+        ),
+        Monosaccharide.HexP: MonosaccharideInfo(
+            id="27AA9097",
+            name=Monosaccharide.HexP,
+            formula="C6H11O8P1",
+            monoisotopic_mass=242.019153939,
+            average_mass=242.12076506799127,
+            dict_composition={"C": 6, "H": 11, "O": 8, "P": 1},
+        ),
+        Monosaccharide.Neu: MonosaccharideInfo(
+            id="513BD0C1",
+            name=Monosaccharide.Neu,
+            formula="C9H15N1O7",
+            monoisotopic_mass=249.084851823,
+            average_mass=249.21827206312764,
+            dict_composition={"C": 9, "H": 15, "N": 1, "O": 7},
+        ),
+        Monosaccharide.HexNAcS: MonosaccharideInfo(
+            id="2D673195",
+            name=Monosaccharide.HexNAcS,
+            formula="C8H13N1O8S1",
+            monoisotopic_mass=283.036187378,
+            average_mass=283.25584698872615,
+            dict_composition={"C": 8, "H": 13, "N": 1, "O": 8, "S": 1},
+        ),
+        Monosaccharide.NeuAc: MonosaccharideInfo(
+            id="2A76C372",
+            name=Monosaccharide.NeuAc,
+            formula="C11H17N1O8",
+            monoisotopic_mass=291.095416506,
+            average_mass=291.25503028902796,
+            dict_composition={"C": 11, "H": 17, "N": 1, "O": 8},
+        ),
+        Monosaccharide.NeuGc: MonosaccharideInfo(
+            id="4DB3A9FC",
+            name=Monosaccharide.NeuGc,
+            formula="C11H17N1O9",
+            monoisotopic_mass=307.090331126,
+            average_mass=307.25443521334626,
+            dict_composition={"C": 11, "H": 17, "N": 1, "O": 9},
+        ),
+        Monosaccharide.Kdn: MonosaccharideInfo(
+            id="995CFFA1",
+            name=Monosaccharide.Kdn,
+            formula="C9H14O8",
+            monoisotopic_mass=250.06886740778,
+            average_mass=250.20303302194432,
+            dict_composition={"C": 9, "H": 14, "O": 8},
+        ),
     }
 
 except Exception as e:
     warnings.warn(
         f"Exception in monosaccharides_data: {e}. Using empty dictionaries.",
         UserWarning,
-        stacklevel=2
+        stacklevel=2,
     )
-    MONOSACCHARIDES: dict[Monosaccharide, MonosaccharideInfo] = {} # type: ignore
+    MONOSACCHARIDES: dict[Monosaccharide, MonosaccharideInfo] = {}  # type: ignore

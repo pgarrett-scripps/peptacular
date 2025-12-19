@@ -20,8 +20,6 @@ from ..constants import CV
 from ..mods.monosaccharide.data import Monosaccharide
 
 
-
-
 @runtime_checkable
 class HasMassComp(Protocol):
     """Protocol for objects that have mass and composition."""
@@ -875,7 +873,9 @@ class ModificationAmbiguousPrimary(MassPropertyMixin):
         return parse_modification_ambiguous_primary(s)
 
     def serialize(self) -> str:
-        from ..proforma_components.serializers import serialize_modification_ambiguous_primary
+        from ..proforma_components.serializers import (
+            serialize_modification_ambiguous_primary,
+        )
 
         return serialize_modification_ambiguous_primary(self)
 
@@ -908,7 +908,9 @@ class ModificationAmbiguousSecondary(MassPropertyMixin):
         return parse_modification_ambiguous_secondary(s)
 
     def serialize(self) -> str:
-        from ..proforma_components.serializers import serialize_modification_ambiguous_secondary
+        from ..proforma_components.serializers import (
+            serialize_modification_ambiguous_secondary,
+        )
 
         return serialize_modification_ambiguous_secondary(self)
 
@@ -942,7 +944,9 @@ class ModificationCrossLinker(MassPropertyMixin):
         return parse_modification_cross_linker(s)
 
     def serialize(self) -> str:
-        from ..proforma_components.serializers import serialize_modification_cross_linker
+        from ..proforma_components.serializers import (
+            serialize_modification_cross_linker,
+        )
 
         return serialize_modification_cross_linker(self)
 

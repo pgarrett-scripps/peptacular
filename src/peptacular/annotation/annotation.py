@@ -14,7 +14,26 @@ from typing import (
     cast,
 )
 
-from ..isotope import IsotopicData, isotopic_distribution
+from ..property.prop import AnnotationProperties
+
+from ..digestion.core import (
+    left_semi_spans,
+    right_semi_spans,
+    semi_spans,
+    nonspecific_spans,
+    sequential_digest_annotation,
+    digest_annotation_by_aa,
+    digest_annotation_by_regex,
+    get_cleavage_sites,
+    generate_regex,
+    EnzymeConfig,
+)
+
+from ..isotope import (
+    IsotopicData,
+    estimate_isotopic_distribution,
+    isotopic_distribution,
+)
 from ..spans import Span
 
 from .randomizer import generate_random_proforma_annotation
@@ -86,16 +105,13 @@ from .mod import (
 from ..proforma_components import (
     IsotopeReplacement,
     FixedModification,
-    parse_modification_tag,
     GlobalChargeCarrier,
     ModificationTags,
     ChargedFormula,
     MODIFICATION_TYPE,
     SequenceElement,
     SequenceRegion,
-    parse_modification,
     FormulaElement,
-    parse_modification_tags,
     PositionRule,
 )
 
@@ -107,8 +123,6 @@ from ..constants import (
     Terminal,
 )
 
-from ..property import SequencePropertyMixin
-from ..digestion import DigestionMixin
 from ..utils import get_mods
 from .mod import Mods
 
@@ -164,7 +178,7 @@ def get_loss_combinations(
     return str_comps
 
 
-class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
+class ProFormaAnnotation:
     def __init__(
         self,
         sequence: str | None = None,
@@ -299,6 +313,18 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
                 pass
             case _:
                 raise ValueError(f"Invalid charge type: {charge_type}")
+
+    def validate(self) -> None:
+        self.validate_sequence()
+        self.validate_isotope_mods()
+        self.validate_static_mods()
+        self.validate_labile_mods()
+        self.validate_unknown_mods()
+        self.validate_nterm_mods()
+        self.validate_cterm_mods()
+        self.validate_internal_mods()
+        self.validate_intervals()
+        self.validate_charge()
 
     @property
     def start_aa(self) -> str | None:
@@ -997,14 +1023,14 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
         self, mod: Any, inplace: bool = True, validate: bool | None = None
     ) -> Self:
         return self._append_mod_generic(
-            mod, "_labile_mods", parse_modification_tag, inplace, validate
+            mod, "_labile_mods", ModificationTags.from_string, inplace, validate
         )
 
     def append_unknown_mod(
         self, mod: Any, inplace: bool = True, validate: bool | None = None
     ) -> Self:
         return self._append_mod_generic(
-            mod, "_unknown_mods", parse_modification_tag, inplace, validate
+            mod, "_unknown_mods", ModificationTags.from_string, inplace, validate
         )
 
     def append_nterm_mod(
@@ -1018,7 +1044,7 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
             if self.start_aa != start_aa:
                 return self if inplace else self.copy()
         return self._append_mod_generic(
-            mod, "_nterm_mods", parse_modification_tag, inplace, validate
+            mod, "_nterm_mods", ModificationTags.from_string, inplace, validate
         )
 
     def append_cterm_mod(
@@ -1032,7 +1058,7 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
             if self.end_aa != end_aa:
                 return self if inplace else self.copy()
         return self._append_mod_generic(
-            mod, "_cterm_mods", parse_modification_tag, inplace, validate
+            mod, "_cterm_mods", ModificationTags.from_string, inplace, validate
         )
 
     def append_internal_mod_at_index(
@@ -1049,7 +1075,7 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
         mod_str, count = convert_single_mod_input(mod)
 
         if validate:
-            if not parse_modification_tag(mod_str).is_valid:
+            if not ModificationTags.from_string(mod_str).is_valid:
                 raise ValueError(f"Invalid modification: {mod_str}")
 
         if self._internal_mods is None:
@@ -2659,7 +2685,8 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
         # Parse the modifications at this index before removing
         mods_dict = self._internal_mods[index]
         mods = tuple(
-            (parse_modification(mod_str), count) for mod_str, count in mods_dict.items()
+            (ModificationTags.from_string(mod_str), count)
+            for mod_str, count in mods_dict.items()
         )
 
         # Remove the mod dict at this index
@@ -3065,7 +3092,8 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
                 )
             )
         fixed_mod = FixedModification(
-            modifications=parse_modification_tags(mod_str), position_rules=tuple(rules)
+            modifications=ModificationTags.from_string(mod_str),
+            position_rules=tuple(rules),
         )
 
         self.append_static_mod(fixed_mod, inplace=True)
@@ -3363,7 +3391,145 @@ class ProFormaAnnotation(SequencePropertyMixin, DigestionMixin):
             charge=charge_state,
         )
 
+    def estimate_isotopic_distribution(
+        self,
+        ion_type: ION_TYPE = IonType.PRECURSOR,
+        charge: CHARGE_TYPE | None = None,
+        isotopes: ISOTOPE_TYPE | None = None,
+        losses: dict[LOSS_TYPE, int] | None = None,
+        max_isotopes: int | None = 10,
+        min_abundance_threshold: float = 0.001,
+        distribution_resolution: int | None = 5,
+        use_neutron_count: bool = False,
+        conv_min_abundance_threshold: float = 10e-15,
+    ) -> list[IsotopicData]:
+        """Estimate isotopic distribution based on mass."""
+
+        mass = self.mass(
+            ion_type=ion_type, charge=charge, isotopes=isotopes, losses=losses
+        )
+
+        return estimate_isotopic_distribution(
+            neutral_mass=mass,
+            max_isotopes=max_isotopes,
+            min_abundance_threshold=min_abundance_threshold,
+            distribution_resolution=distribution_resolution,
+            use_neutron_count=use_neutron_count,
+            conv_min_abundance_threshold=conv_min_abundance_threshold,
+        )
+
     @staticmethod
     def random() -> "ProFormaAnnotation":
         """Generate a random ProFormaAnnotation for testing purposes."""
         return generate_random_proforma_annotation()
+
+    def left_semi_spans(
+        self,
+        min_len: int | None = None,
+        max_len: int | None = None,
+    ) -> Generator[Span, None, None]:
+        """Get left semi-enzymatic sequences (N-terminus fixed)."""
+        return left_semi_spans(self, min_len, max_len)
+
+    def right_semi_spans(
+        self,
+        min_len: int | None = None,
+        max_len: int | None = None,
+    ) -> Generator[Span, None, None]:
+        """Get right semi-enzymatic sequences (C-terminus fixed)."""
+        return right_semi_spans(self, min_len, max_len)
+
+    def semi_spans(
+        self,
+        min_len: int | None = None,
+        max_len: int | None = None,
+    ) -> Generator[Span, None, None]:
+        """Get all semi-enzymatic sequences."""
+        return semi_spans(self, min_len, max_len)
+
+    def nonspecific_spans(
+        self,
+        min_len: int | None = None,
+        max_len: int | None = None,
+    ) -> Generator[Span, None, None]:
+        """Get all non-enzymatic sequences (all possible subsequences)."""
+        return nonspecific_spans(self, min_len, max_len)
+
+    def cleavage_sites(
+        self,
+        enzyme: str | re.Pattern[str],
+    ) -> Generator[int, None, None]:
+        # Call the underlying function
+        return get_cleavage_sites(self, enzyme)
+
+    def simple_cleavage_sites(
+        self,
+        cleave_on: str,
+        restrict_before: str = "",
+        restrict_after: str = "",
+        cterminal: bool = True,
+    ) -> Generator[int, None, None]:
+        """Get cleavage sites using simple amino acid rules."""
+        enzyme_regex = generate_regex(
+            cleave_on=cleave_on,
+            restrict_before=restrict_before,
+            restrict_after=restrict_after,
+            cterminal=cterminal,
+        )
+        return self.cleavage_sites(enzyme_regex)
+
+    def digest(
+        self,
+        enzyme: str,
+        missed_cleavages: int = 0,
+        semi: bool = False,
+        min_len: int | None = None,
+        max_len: int | None = None,
+    ) -> Generator[Span, None, None]:
+        """Digest this annotation using a regex pattern."""
+        return digest_annotation_by_regex(
+            annotation=self,
+            enzyme_regex=enzyme,
+            missed_cleavages=missed_cleavages,
+            semi=semi,
+            min_len=min_len,
+            max_len=max_len,
+        )
+
+    def simple_digest(
+        self,
+        cleave_on: str,
+        restrict_before: str = "",
+        restrict_after: str = "",
+        cterminal: bool = True,
+        missed_cleavages: int = 0,
+        semi: bool = False,
+        min_len: int | None = None,
+        max_len: int | None = None,
+    ) -> Generator[Span, None, None]:
+        """Digest this annotation with specified enzyme parameters."""
+        return digest_annotation_by_aa(
+            annotation=self,
+            cleave_on=cleave_on,
+            restrict_before=restrict_before,
+            restrict_after=restrict_after,
+            cterminal=cterminal,
+            missed_cleavages=missed_cleavages,
+            semi=semi,
+            min_len=min_len,
+            max_len=max_len,
+        )
+
+    def sequential_digest(
+        self,
+        enzyme_configs: list[EnzymeConfig],
+        min_len: int | None = None,
+        max_len: int | None = None,
+    ) -> Generator[Span, None, None]:
+        """Perform sequential digestion with multiple enzymes."""
+        return sequential_digest_annotation(self, enzyme_configs, min_len, max_len)
+
+    @property
+    def prop(self) -> AnnotationProperties:
+        """Get the properties of this annotation."""
+        return AnnotationProperties(self.stripped_sequence)

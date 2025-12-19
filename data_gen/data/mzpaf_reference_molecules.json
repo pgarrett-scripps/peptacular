@@ -77,7 +77,6 @@
     "chemical_formula": "C2[13C6]N1H15",
     "ion_mz": 132.147855
   },
-
   "TMT133N": {
     "label_type": "TMT",
     "molecule_type": "reporter",
@@ -220,13 +219,13 @@
   "TMT127C-ETD": {
     "label_type": "TMT",
     "molecule_type": "reporter",
-    "chemical_formula": "C6[13C1]N1H15",
+    "chemical_formula": "C7N1H15",
     "ion_mz": 114.127725
   },
   "TMT128N-ETD": {
     "label_type": "TMT",
     "molecule_type": "reporter",
-    "chemical_formula": "C6[13C1][15N1]H15",
+    "chemical_formula": "C7[15N1]H15",
     "ion_mz": 115.12476
   },
   "TMT128C-ETD": {
@@ -244,13 +243,13 @@
   "TMT129C-ETD": {
     "label_type": "TMT",
     "molecule_type": "reporter",
-    "chemical_formula": "C4[13C3]N1H15",
+    "chemical_formula": "C5[13C2]N1H15",
     "ion_mz": 116.134433
   },
   "TMT130N-ETD": {
     "label_type": "TMT",
     "molecule_type": "reporter",
-    "chemical_formula": "C4[13C3][15N1]H15",
+    "chemical_formula": "C5[13C2][15N1]H15",
     "ion_mz": 117.131468
   },
   "TMT130C-ETD": {
@@ -268,7 +267,7 @@
   "TMT131C-ETD": {
     "label_type": "TMT",
     "molecule_type": "reporter",
-    "chemical_formula": "C2[13C5]N1H15",
+    "chemical_formula": "C3[13C4]N1H15",
     "ion_mz": 118.141141
   },
   "sidechain_A": {

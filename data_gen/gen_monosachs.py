@@ -137,30 +137,13 @@ def run():
     # Manual mapping of monosaccharide names to their enum member names
     name_to_enum: dict[str, str] = {
         "a-Hex": "aHex",
-        "Dec": "Dec",
         "d-Hex": "dHex",
         "en,a-Hex": "en_aHex",
-        "Fuc": "Fuc",
-        "Hep": "Hep",
-        "Hex": "Hex",
-        "HexN": "HexN",
-        "HexNAc": "HexNAc",
         "HexNAc(S)": "HexNAcS",
-        "HexNS": "HexNS",
-        "HexP": "HexP",
-        "HexS": "HexS",
-        "Neu": "Neu",
         "Neu5Ac": "NeuAc",
         "Neu5Gc": "NeuGc",
-        "Non": "Non",
-        "Oct": "Oct",
-        "Pen": "Pen",
         "phosphate": "Phosphate",
         "sulfate": "Sulfate",
-        "Sug": "Sug",
-        "Tet": "Tet",
-        "Tri": "Tri",
-        "Kdn": "Kdn",
     }
 
     
@@ -169,7 +152,10 @@ def run():
         formula_str = f'"{ms.formula}"' if ms.formula is not None else 'None'
         
         # Get enum name from mapping
-        enum_name = name_to_enum.get(ms.name, ms.name.replace(",", "_").replace("-", "_").replace("(", "_").replace(")", "_"))
+        enum_name = name_to_enum.get(ms.name, ms.name)
+
+        if enum_name is None:
+            raise ValueError(f"Monosaccharide name '{ms.name}' not found in name_to_enum mapping.")
         
         entry = f'''    Monosaccharide.{enum_name}: MonosaccharideInfo(
         id="{ms.id}",
@@ -183,42 +169,17 @@ def run():
     
     entries_str = '\n'.join(entries)
     
-    # Manual mapping of monosaccharide names to their enum member names
-    # This ensures consistency with the existing MonosaccharideName enum in constants.py
-    name_to_enum: dict[str, str] = {
-        "a-Hex": "aHex",
-        "Dec": "Dec",
-        "d-Hex": "dHex",
-        "en,a-Hex": "en_aHex",
-        "Fuc": "Fuc",
-        "Hep": "Hep",
-        "Hex": "Hex",
-        "HexN": "HexN",
-        "HexNAc": "HexNAc",
-        "HexNAc(S)": "HexNAcS",
-        "HexNS": "HexNS",
-        "HexP": "HexP",
-        "HexS": "HexS",
-        "Neu": "Neu",
-        "NeuAc": "NeuAc",
-        "NeuGc": "NeuGc",
-        "Non": "Non",
-        "Oct": "Oct",
-        "Pen": "Pen",
-        "phosphate": "Phosphate",
-        "sulfate": "Sulfate",
-        "Sug": "Sug",
-        "Tet": "Tet",
-        "Tri": "Tri",
-        "Kdn": "Kdn",  # Not in constants.py but in data
-    }
 
+    enum_to_profora_str: dict[str, str] = {
+        "en_aHex": "en,aHex"
+    }
     
     # Build Monosaccharide StrEnum entries
     enum_entries: list[str] = []
-    for name in sorted(set(ms.name for ms in monosaccharides)):
-        enum_name = name_to_enum.get(name, name.replace(",", "_").replace("-", "_").replace("(", "_").replace(")", "_"))
-        enum_entries.append(f'    {enum_name} = "{name}"')
+    for ms in monosaccharides:
+        enum_name = name_to_enum.get(ms.name, ms.name)
+        enum_str = enum_to_profora_str.get(enum_name, enum_name)
+        enum_entries.append(f'    {enum_name} = "{enum_str}"')
     
     enum_str = '\n'.join(enum_entries)
     
@@ -264,7 +225,4 @@ except Exception as e:
 
 
 if __name__ == "__main__":
-    #run()
-    """
-    Dont regenerate... current obo file has many naming inconsistencies with proforma
-    """
+    run()

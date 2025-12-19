@@ -6,8 +6,10 @@ from enum import StrEnum
 
 from .dclass import ProteaseInfo
 
+
 class Proteases(StrEnum):
     """Enum of protease IDs"""
+
     ARG_C = "arg_c"
     ASP_N = "asp_n"
     CHYMOTRYPSIN = "chymotrypsin"
@@ -27,6 +29,7 @@ class Proteases(StrEnum):
     THERMOLYSIN = "thermolysin"
     UNSPECIFIC = "unspecific"
     NO_ENZYME = "no_enzyme"
+
 
 PROTEASE_LITERALS = Literal[
     "arg_c",
@@ -52,118 +55,118 @@ PROTEASE_LITERALS = Literal[
 
 
 PROTEASES_DICT: dict[Proteases, ProteaseInfo] = {
-Proteases.ARG_C: ProteaseInfo(
-    id=Proteases.ARG_C,
-    name="Arg-C",
-    full_name="Clostripain",
-    regex='(?<=R)',
-),
-Proteases.ASP_N: ProteaseInfo(
-    id=Proteases.ASP_N,
-    name="Asp-N",
-    full_name="Peptidyl-Asp metalloendopeptidase",
-    regex='(?=D)',
-),
-Proteases.CHYMOTRYPSIN: ProteaseInfo(
-    id=Proteases.CHYMOTRYPSIN,
-    name="Chymotrypsin",
-    full_name="Chymotrypsin (high specificity)",
-    regex='(?<=[FWYL])(?!P)',
-),
-Proteases.CHYMOTRYPSIN_LOW: ProteaseInfo(
-    id=Proteases.CHYMOTRYPSIN_LOW,
-    name="Chymotrypsin (low specificity)",
-    full_name="Chymotrypsin without proline restriction",
-    regex='(?<=[FWYL])',
-),
-Proteases.CHYMOTRYPSIN_PROMEGA_HIGH: ProteaseInfo(
-    id=Proteases.CHYMOTRYPSIN_PROMEGA_HIGH,
-    name="Chymotrypsin (Promega, high specificity)",
-    full_name="Promega Chymotrypsin High Specificity",
-    regex='(?<=[YFW])',
-),
-Proteases.CHYMOTRYPSIN_PROMEGA_LOW: ProteaseInfo(
-    id=Proteases.CHYMOTRYPSIN_PROMEGA_LOW,
-    name="Chymotrypsin (Promega, low specificity)",
-    full_name="Promega Chymotrypsin Low Specificity",
-    regex='(?<=[YFWLM])',
-),
-Proteases.GLU_C: ProteaseInfo(
-    id=Proteases.GLU_C,
-    name="Glu-C",
-    full_name="Staphylococcus aureus V8 protease",
-    regex='(?<=E)',
-),
-Proteases.LYS_C: ProteaseInfo(
-    id=Proteases.LYS_C,
-    name="Lys-C",
-    full_name="Lysyl endopeptidase",
-    regex='(?<=K)',
-),
-Proteases.LYS_N: ProteaseInfo(
-    id=Proteases.LYS_N,
-    name="Lys-N",
-    full_name="Lysyl aminopeptidase",
-    regex='(?=K)',
-),
-Proteases.PROTEINASE_K: ProteaseInfo(
-    id=Proteases.PROTEINASE_K,
-    name="Proteinase K",
-    full_name="Tritirachium album proteinase K",
-    regex='(?<=[AEFILTVWY])',
-),
-Proteases.TRYPSIN: ProteaseInfo(
-    id=Proteases.TRYPSIN,
-    name="Trypsin",
-    full_name="Trypsin (no proline rule)",
-    regex='(?<=[KR])(?=[^P])',
-),
-Proteases.TRYPSIN_FULL: ProteaseInfo(
-    id=Proteases.TRYPSIN_FULL,
-    name="Trypsin (full cleavage)",
-    full_name="Trypsin without proline restriction",
-    regex='(?<=[KR])',
-),
-Proteases.PROALANASE: ProteaseInfo(
-    id=Proteases.PROALANASE,
-    name="Proalanase",
-    full_name="Proalanase (high specificity)",
-    regex='(?<=[PA])',
-),
-Proteases.PROALANASE_LOW: ProteaseInfo(
-    id=Proteases.PROALANASE_LOW,
-    name="Proalanase (low specificity)",
-    full_name="Proalanase Low Specificity",
-    regex='(?<=[PASG])',
-),
-Proteases.ELASTASE: ProteaseInfo(
-    id=Proteases.ELASTASE,
-    name="Elastase",
-    full_name="Pancreatic elastase",
-    regex='(?<=[AGSVLI])',
-),
-Proteases.PEPSIN: ProteaseInfo(
-    id=Proteases.PEPSIN,
-    name="Pepsin",
-    full_name="Pepsin A",
-    regex='(?<=[FLWY])',
-),
-Proteases.THERMOLYSIN: ProteaseInfo(
-    id=Proteases.THERMOLYSIN,
-    name="Thermolysin",
-    full_name="Bacillus thermoproteolyticus thermolysin",
-    regex='(?<=[LFIAVM])',
-),
-Proteases.UNSPECIFIC: ProteaseInfo(
-    id=Proteases.UNSPECIFIC,
-    name="Non-specific cleavage",
-    full_name="Non-specific protease",
-    regex='()',
-),
-Proteases.NO_ENZYME: ProteaseInfo(
-    id=Proteases.NO_ENZYME,
-    name="No cleavage",
-    full_name="No enzymatic digestion",
-    regex='_',
-),
+    Proteases.ARG_C: ProteaseInfo(
+        id=Proteases.ARG_C,
+        name="Arg-C",
+        full_name="Clostripain",
+        regex="(?<=R)",
+    ),
+    Proteases.ASP_N: ProteaseInfo(
+        id=Proteases.ASP_N,
+        name="Asp-N",
+        full_name="Peptidyl-Asp metalloendopeptidase",
+        regex="(?=D)",
+    ),
+    Proteases.CHYMOTRYPSIN: ProteaseInfo(
+        id=Proteases.CHYMOTRYPSIN,
+        name="Chymotrypsin",
+        full_name="Chymotrypsin (high specificity)",
+        regex="(?<=[FWYL])(?!P)",
+    ),
+    Proteases.CHYMOTRYPSIN_LOW: ProteaseInfo(
+        id=Proteases.CHYMOTRYPSIN_LOW,
+        name="Chymotrypsin (low specificity)",
+        full_name="Chymotrypsin without proline restriction",
+        regex="(?<=[FWYL])",
+    ),
+    Proteases.CHYMOTRYPSIN_PROMEGA_HIGH: ProteaseInfo(
+        id=Proteases.CHYMOTRYPSIN_PROMEGA_HIGH,
+        name="Chymotrypsin (Promega, high specificity)",
+        full_name="Promega Chymotrypsin High Specificity",
+        regex="(?<=[YFW])",
+    ),
+    Proteases.CHYMOTRYPSIN_PROMEGA_LOW: ProteaseInfo(
+        id=Proteases.CHYMOTRYPSIN_PROMEGA_LOW,
+        name="Chymotrypsin (Promega, low specificity)",
+        full_name="Promega Chymotrypsin Low Specificity",
+        regex="(?<=[YFWLM])",
+    ),
+    Proteases.GLU_C: ProteaseInfo(
+        id=Proteases.GLU_C,
+        name="Glu-C",
+        full_name="Staphylococcus aureus V8 protease",
+        regex="(?<=E)",
+    ),
+    Proteases.LYS_C: ProteaseInfo(
+        id=Proteases.LYS_C,
+        name="Lys-C",
+        full_name="Lysyl endopeptidase",
+        regex="(?<=K)",
+    ),
+    Proteases.LYS_N: ProteaseInfo(
+        id=Proteases.LYS_N,
+        name="Lys-N",
+        full_name="Lysyl aminopeptidase",
+        regex="(?=K)",
+    ),
+    Proteases.PROTEINASE_K: ProteaseInfo(
+        id=Proteases.PROTEINASE_K,
+        name="Proteinase K",
+        full_name="Tritirachium album proteinase K",
+        regex="(?<=[AEFILTVWY])",
+    ),
+    Proteases.TRYPSIN: ProteaseInfo(
+        id=Proteases.TRYPSIN,
+        name="Trypsin",
+        full_name="Trypsin (no proline rule)",
+        regex="(?<=[KR])(?=[^P])",
+    ),
+    Proteases.TRYPSIN_FULL: ProteaseInfo(
+        id=Proteases.TRYPSIN_FULL,
+        name="Trypsin (full cleavage)",
+        full_name="Trypsin without proline restriction",
+        regex="(?<=[KR])",
+    ),
+    Proteases.PROALANASE: ProteaseInfo(
+        id=Proteases.PROALANASE,
+        name="Proalanase",
+        full_name="Proalanase (high specificity)",
+        regex="(?<=[PA])",
+    ),
+    Proteases.PROALANASE_LOW: ProteaseInfo(
+        id=Proteases.PROALANASE_LOW,
+        name="Proalanase (low specificity)",
+        full_name="Proalanase Low Specificity",
+        regex="(?<=[PASG])",
+    ),
+    Proteases.ELASTASE: ProteaseInfo(
+        id=Proteases.ELASTASE,
+        name="Elastase",
+        full_name="Pancreatic elastase",
+        regex="(?<=[AGSVLI])",
+    ),
+    Proteases.PEPSIN: ProteaseInfo(
+        id=Proteases.PEPSIN,
+        name="Pepsin",
+        full_name="Pepsin A",
+        regex="(?<=[FLWY])",
+    ),
+    Proteases.THERMOLYSIN: ProteaseInfo(
+        id=Proteases.THERMOLYSIN,
+        name="Thermolysin",
+        full_name="Bacillus thermoproteolyticus thermolysin",
+        regex="(?<=[LFIAVM])",
+    ),
+    Proteases.UNSPECIFIC: ProteaseInfo(
+        id=Proteases.UNSPECIFIC,
+        name="Non-specific cleavage",
+        full_name="Non-specific protease",
+        regex="()",
+    ),
+    Proteases.NO_ENZYME: ProteaseInfo(
+        id=Proteases.NO_ENZYME,
+        name="No cleavage",
+        full_name="No enzymatic digestion",
+        regex="_",
+    ),
 }

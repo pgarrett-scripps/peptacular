@@ -101,25 +101,19 @@ class TestGlycanStringConversion:
 
     def test_glycan_component_simple(self):
         """Test GlycanComponent string conversion"""
-        glycan = pt.GlycanComponent(
-            monosaccharide=pt.Monosaccharide.Hex, occurance=1
-        )
+        glycan = pt.GlycanComponent(monosaccharide=pt.Monosaccharide.Hex, occurance=1)
         assert str(glycan) == "Hex"
 
     def test_glycan_component_with_count(self):
         """Test GlycanComponent with count"""
-        glycan = pt.GlycanComponent(
-            monosaccharide=pt.Monosaccharide.Hex, occurance=5
-        )
+        glycan = pt.GlycanComponent(monosaccharide=pt.Monosaccharide.Hex, occurance=5)
         assert str(glycan) == "Hex5"
 
     def test_glycan_tuple_to_string(self):
         """Test tuple of GlycanComponents"""
         glycan_tuple = (
             pt.GlycanComponent(monosaccharide=pt.Monosaccharide.Hex, occurance=5),
-            pt.GlycanComponent(
-                monosaccharide=pt.Monosaccharide.HexNAc, occurance=4
-            ),
+            pt.GlycanComponent(monosaccharide=pt.Monosaccharide.HexNAc, occurance=4),
         )
         glycan_str = "Glycan:" + "".join(str(g) for g in glycan_tuple)
         assert glycan_str == "Glycan:Hex5HexNAc4"
@@ -176,50 +170,19 @@ class TestModificationStringConversion:
         assert str(mod) == "#XL1"
 
 
-class TestCompoundStringConversion:
-    """Tests for converting compound objects to strings"""
-
-    def test_compound_peptidoform_ion_simple(self):
-        """Test CompoundPeptidoformIon string conversion"""
-        seq = (
-            pt.SequenceElement(amino_acid=pt.AminoAcid.P),
-            pt.SequenceElement(amino_acid=pt.AminoAcid.E),
-            pt.SequenceElement(amino_acid=pt.AminoAcid.P),
-        )
-        peptidoform = pt.Peptidoform(sequence=seq)
-        ion = pt.PeptidoformIon(peptidoforms=(peptidoform,))
-        compound = pt.CompoundPeptidoformIon(peptidoform_ions=(ion,))
-        assert str(compound) == "PEP"
-
-    def test_compound_peptidoform_ion_with_isotope(self):
-        """Test CompoundPeptidoformIon with isotope replacement"""
-        seq = (
-            pt.SequenceElement(amino_acid=pt.AminoAcid.P),
-            pt.SequenceElement(amino_acid=pt.AminoAcid.E),
-            pt.SequenceElement(amino_acid=pt.AminoAcid.P),
-        )
-        peptidoform = pt.Peptidoform(sequence=seq)
-        ion = pt.PeptidoformIon(peptidoforms=(peptidoform,))
-        iso = pt.IsotopeReplacement(element=pt.Element.C, isotope=13)
-        compound = pt.CompoundPeptidoformIon(
-            peptidoform_ions=(ion,), isotope_replacement=(iso,)
-        )
-        assert str(compound) == "<13C>PEP"
-
-
 class TestRoundTrip:
     """Tests for round-trip conversion: parse -> string -> parse"""
 
     def test_round_trip_simple_peptide(self):
         """Test round-trip: parse modification and convert back to string"""
         original = "Oxidation"
-        parsed = pt.parse_modification_tag(original)
+        parsed = pt.ModificationTags.from_string(original).tags[0]
         assert str(parsed) == original
 
     def test_round_trip_accession(self):
         """Test round-trip for accession"""
         original = "Unimod:35"
-        parsed = pt.parse_modification_tag(original)
+        parsed = pt.ModificationTags.from_string(original).tags[0]
         result_str = str(parsed)
         # Note: case might differ (UNIMOD vs Unimod)
         assert result_str.upper() == original.upper()
@@ -227,11 +190,11 @@ class TestRoundTrip:
     def test_round_trip_mass(self):
         """Test round-trip for mass"""
         original = "+15.995"
-        parsed = pt.parse_modification_tag(original)
+        parsed = pt.ModificationTags.from_string(original).tags[0]
         assert str(parsed) == original
 
     def test_round_trip_formula(self):
         """Test round-trip for formula"""
         original = "Formula:C2H6"
-        parsed = pt.parse_modification_tag(original)
+        parsed = pt.ModificationTags.from_string(original).tags[0]
         assert str(parsed) == original

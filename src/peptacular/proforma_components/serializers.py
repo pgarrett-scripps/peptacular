@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 from ..elements import Element
 
 
-from ..constants import (    
+from ..constants import (
     CV_TO_NAME_PREFIX,
     CV_TO_ACCESSION_PREFIX,
     CV_TO_MASS_PREFIX,

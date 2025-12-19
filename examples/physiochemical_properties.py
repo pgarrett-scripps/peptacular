@@ -21,15 +21,15 @@ def run():
 
     # These properties return single float values
     print(f"Sequence: {annot}")
-    print(f"Hydrophobicity: {annot.hydrophobicity:.3f}")
-    print(f"Flexibility: {annot.flexibility:.3f}")
-    print(f"Hydrophilicity: {annot.hydrophilicity:.3f}")
-    print(f"Surface accessibility: {annot.surface_accessibility:.3f}")
-    print(f"Polarity: {annot.polarity:.3f}")
-    print(f"Aromaticity: {annot.aromaticity:.3f}")
-    print(f"Isoelectric point (pI): {annot.pi:.2f}")
-    print(f"HPLC retention: {annot.hplc:.3f}")
-    print(f"Refractivity: {annot.refractivity:.3f}")
+    print(f"Hydrophobicity: {annot.prop.hydrophobicity:.3f}")
+    print(f"Flexibility: {annot.prop.flexibility:.3f}")
+    print(f"Hydrophilicity: {annot.prop.hydrophilicity:.3f}")
+    print(f"Surface accessibility: {annot.prop.surface_accessibility:.3f}")
+    print(f"Polarity: {annot.prop.polarity:.3f}")
+    print(f"Aromaticity: {annot.prop.aromaticity:.3f}")
+    print(f"Isoelectric point (pI): {annot.prop.pi:.2f}")
+    print(f"HPLC retention: {annot.prop.hplc:.3f}")
+    print(f"Refractivity: {annot.prop.refractivity:.3f}")
 
     # ============================================================================
     # STRUCTURAL PROPERTIES
@@ -40,13 +40,13 @@ def run():
     print("=" * 60)
 
     # Secondary structure percentages
-    print(f"Alpha helix: {annot.alpha_helix_percent:.1f}%")
-    print(f"Beta sheet: {annot.beta_sheet_percent:.1f}%")
-    print(f"Beta turn: {annot.beta_turn_percent:.1f}%")
-    print(f"Coil: {annot.coil_percent:.1f}%")
+    print(f"Alpha helix: {annot.prop.alpha_helix_percent:.1f}%")
+    print(f"Beta sheet: {annot.prop.beta_sheet_percent:.1f}%")
+    print(f"Beta turn: {annot.prop.beta_turn_percent:.1f}%")
+    print(f"Coil: {annot.prop.coil_percent:.1f}%")
 
     # Predicted secondary structure using different methods
-    ss_dr = annot.secondary_structure(pt.SecondaryStructureMethod.DELEAGE_ROUX)
+    ss_dr = annot.prop.secondary_structure(pt.SecondaryStructureMethod.DELEAGE_ROUX)
     print(f"\nSecondary structure (Deleage-Roux method):")
     print(f"  Alpha helix: {ss_dr['alpha_helix']:.1f}%")
     print(f"  Beta sheet: {ss_dr['beta_sheet']:.1f}%")
@@ -62,17 +62,17 @@ def run():
     print("=" * 60)
 
     # Amino acid composition
-    proline_pct = annot.aa_property_percentage('P')
-    acidic_pct = annot.aa_property_percentage('DE')  # D and E
-    basic_pct = annot.aa_property_percentage('KR')   # K and R
+    proline_pct = annot.prop.aa_property_percentage('P')
+    acidic_pct = annot.prop.aa_property_percentage('DE')  # D and E
+    basic_pct = annot.prop.aa_property_percentage('KR')   # K and R
     print(f"Proline content: {proline_pct:.1f}%")
     print(f"Acidic residues (D, E): {acidic_pct:.1f}%")
     print(f"Basic residues (K, R): {basic_pct:.1f}%")
 
     # Charge at different pH values
-    print(f"\nNet charge at pH 7.0: {annot.charge_at_ph(7.0):.2f}")
-    print(f"Net charge at pH 3.0: {annot.charge_at_ph(3.0):.2f}")
-    print(f"Net charge at pH 11.0: {annot.charge_at_ph(11.0):.2f}")
+    print(f"\nNet charge at pH 7.0: {annot.prop.charge_at_ph(7.0):.2f}")
+    print(f"Net charge at pH 3.0: {annot.prop.charge_at_ph(3.0):.2f}")
+    print(f"Net charge at pH 11.0: {annot.prop.charge_at_ph(11.0):.2f}")
 
     # ============================================================================
     # CUSTOM PROPERTY CALCULATIONS
@@ -83,7 +83,7 @@ def run():
     print("=" * 60)
 
     # --- Basic calculation with default options ---
-    prop = annot.calc_property(
+    prop = annot.prop.calc_property(
         scale=pt.HydrophobicityScale.ABRAHAM_LEO,
         missing_aa_handling=pt.MissingAAHandling.ERROR,  # default
         aggregation_method=pt.AggregationMethod.SUM,     # default
@@ -95,7 +95,7 @@ def run():
     print(f"Abraham-Leo hydrophobicity (sum): {prop:.2f}")
 
     # --- Using string identifiers ---
-    prop_avg = annot.calc_property(
+    prop_avg = annot.prop.calc_property(
         scale="deleage_roux_alpha_helix",
         missing_aa_handling="avg",
         aggregation_method="avg"
@@ -110,7 +110,7 @@ def run():
         'P': 13.0, 'Q': 14.0, 'R': 15.0, 'S': 16.0,
         'T': 17.0, 'V': 18.0, 'W': 19.0, 'Y': 20.0
     }
-    custom_prop = annot.calc_property(scale=custom_scale, missing_aa_handling="avg")
+    custom_prop = annot.prop.calc_property(scale=custom_scale, missing_aa_handling="avg")
     print(f"Custom scale (sum): {custom_prop:.2f}")
 
     # ============================================================================
@@ -167,7 +167,7 @@ def run():
     print("=" * 60)
 
     # Calculate property over sliding windows
-    windows = annot.property_windows(
+    windows = annot.prop.property_windows(
         scale=pt.HydrophobicityScale.ABRAHAM_LEO,
         window_size=4,
         missing_aa_handling=pt.MissingAAHandling.ERROR,
@@ -182,7 +182,7 @@ def run():
     print(f"  Number of windows: {len(windows)}")
 
     # Different window size
-    windows_large = annot.property_windows(
+    windows_large = annot.prop.property_windows(
         scale=pt.HydrophobicityScale.ABRAHAM_LEO,
         window_size=3
     )
@@ -198,7 +198,7 @@ def run():
     print("=" * 60)
 
     # Divide sequence into fixed number of non-overlapping partitions
-    partitions = annot.property_partitions(
+    partitions = annot.prop.property_partitions(
         scale=pt.HydrophobicityScale.ABRAHAM_LEO,
         num_windows=3,
         aa_overlap=0,
@@ -213,7 +213,7 @@ def run():
     print(f"  Values: {[f'{v:.2f}' for v in partitions]}")
 
     # With overlap between partitions
-    partitions_overlap = annot.property_partitions(
+    partitions_overlap = annot.prop.property_partitions(
         scale=pt.HydrophobicityScale.ABRAHAM_LEO,
         num_windows=3,
         aa_overlap=1
@@ -231,7 +231,7 @@ def run():
 
     # Example: Hydrophobicity profile for transmembrane prediction
     tm_peptide = pt.parse('LFGAIAGFIENGWEGMIDG')
-    tm_windows = tm_peptide.property_windows(
+    tm_windows = tm_peptide.prop.property_windows(
         scale=pt.HydrophobicityScale.KYTE_DOOLITTLE,
         window_size=9
     )
@@ -242,7 +242,7 @@ def run():
 
     # Example: Charge distribution analysis
     charged_peptide = pt.parse('PKDEPKDE')
-    charge_partitions = charged_peptide.property_partitions(
+    charge_partitions = charged_peptide.prop.property_partitions(
         scale={'K': 1, 'R': 1, 'D': -1, 'E': -1},  # Simple charge scale
         num_windows=4,
         aa_overlap=0,

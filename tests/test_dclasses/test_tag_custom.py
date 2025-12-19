@@ -48,6 +48,6 @@ class TestTagCustom:
 
     def test_via_modification_string(self):
         """Test parsing custom tag via parse_modification_string"""
-        result = pt.parse_modification_tag("C:MyCustomMod")
+        result = pt.ModificationTags.from_string("C:MyCustomMod").tags[0]
         assert isinstance(result, pt.TagCustom)
         assert result.name == "MyCustomMod"

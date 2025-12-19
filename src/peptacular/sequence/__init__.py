@@ -1,6 +1,17 @@
 """
-This module contains functions for generating and manipulating peptide sequences.
+The sequence module contains the functional API for peptacular.
+
+All sequence functions support a single sequence/annotation input or a list of sequences/annotations for batch processing.
+When multiple sequences/annotations are provided, a multiprocessing pool is used to parallelize the computations.
+
+Sequecnes are converted to a proforma annotation and then thier properties are computed. If the output is a sequence,
+it is converted back to a string representation via serialize.
+
+This is great for processing large datasets of sequences/annotations efficiently, especially if only a few operations are
+needed per sequence/annotation. If many operations are needed, it is more efficient to create a ProFormaAnnotation object once and
+call the methods directly on that object. This will avoid the overhead of converting back and forth between string and object representations.
 """
+
 from .basic import (
     parse,
     serialize,
@@ -10,6 +21,7 @@ from .basic import (
     count_residues,
     percent_residues,
     annotate_ambiguity,
+    validate,
 )
 from .combinatoric import (
     permutations,
@@ -78,8 +90,22 @@ from .properties import (
     coil_percent,
     property_partitions,
 )
-from .transformations import reverse, shuffle, shift, split, span_to_sequence, sort, join
-from .converters import convert_ip2_sequence, convert_diann_sequence, convert_casanovo_sequence
+from .transformations import (
+    reverse,
+    shuffle,
+    shift,
+    split,
+    span_to_sequence,
+    sort,
+    join,
+)
+from .converters import (
+    convert_ip2_sequence,
+    convert_diann_sequence,
+    convert_casanovo_sequence,
+)
+
+from .isotope import isotopic_distribution
 
 __all__ = [
     # basic
@@ -91,6 +117,7 @@ __all__ = [
     "count_residues",
     "percent_residues",
     "annotate_ambiguity",
+    "validate",
     # combinatoric
     "permutations",
     "combinations",
@@ -169,4 +196,6 @@ __all__ = [
     "convert_ip2_sequence",
     "convert_diann_sequence",
     "convert_casanovo_sequence",
+    # isotope
+    "isotopic_distribution",
 ]

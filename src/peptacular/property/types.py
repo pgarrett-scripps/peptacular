@@ -1,9 +1,7 @@
-"""Type definitions and enums for protein property calculations."""
-
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import Literal, Protocol
+from typing import Literal
 
 
 class MissingAAHandling(StrEnum):
@@ -49,15 +47,6 @@ class AggregationMethod(StrEnum):
 
 
 AggregationMethodLiteral = Literal["sum", "avg"]
-
-
-class SequenceProtocol(Protocol):
-    """Protocol defining the interface for objects with sequences"""
-
-    @property
-    def stripped_sequence(self) -> str:
-        """The sequence without modifications (for property calculations)"""
-        ...
 
 
 class WeightingMethods(StrEnum):

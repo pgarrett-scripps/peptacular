@@ -5,8 +5,6 @@ from collections import Counter
 
 from ..amino_acids.lookup import AA_LOOKUP
 from ..proforma_components import (
-    parse_modification,
-    parse_modification_tags,
     FixedModification,
     GlobalChargeCarrier,
     IsotopeReplacement,
@@ -85,13 +83,13 @@ class Mod(Generic[T]):
 _MOD_PARSERS: dict[ModType, Callable[[str], Any]] = {
     ModType.ISOTOPE: IsotopeReplacement.from_string,
     ModType.STATIC: FixedModification.from_string,
-    ModType.LABILE: parse_modification_tags,
-    ModType.UNKNOWN: parse_modification_tags,
-    ModType.NTERM: parse_modification_tags,
-    ModType.CTERM: parse_modification_tags,
+    ModType.LABILE: ModificationTags.from_string,
+    ModType.UNKNOWN: ModificationTags.from_string,
+    ModType.NTERM: ModificationTags.from_string,
+    ModType.CTERM: ModificationTags.from_string,
     ModType.CHARGE: GlobalChargeCarrier.from_string,
-    ModType.INTERNAL: parse_modification_tags,
-    ModType.INTERVAL: parse_modification_tags,
+    ModType.INTERNAL: ModificationTags.from_string,
+    ModType.INTERVAL: ModificationTags.from_string,
 }
 
 
@@ -413,7 +411,7 @@ class Interval:
 
         if validate:
             for mod_str in converted_mods.keys():
-                parse_modification(mod_str)
+                ModificationTags.from_string(mod_str)
 
         self._mods = converted_mods
 
@@ -441,7 +439,7 @@ class Interval:
             self._mods = {}
 
         if validate:
-            parse_modification(mod_str)
+            ModificationTags.from_string(mod_str)
 
         self._mods[mod_str] = self._mods.get(mod_str, 0) + count
 
@@ -456,7 +454,7 @@ class Interval:
 
         if validate:
             for mod_str in converted_mods.keys():
-                parse_modification(mod_str)
+                ModificationTags.from_string(mod_str)
 
         for mod_str, count in converted_mods.items():
             self._mods[mod_str] = self._mods.get(mod_str, 0) + count

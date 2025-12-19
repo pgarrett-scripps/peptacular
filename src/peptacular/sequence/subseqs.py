@@ -62,19 +62,6 @@ def find_subsequence_indices(
     """
     Retrieves all starting indexes of a given subsequence within a sequence.
 
-    :param sequence: The sequence or ProFormaAnnotation objectto look for the 'subsequence' in.
-    :type sequence: Union[str, ProFormaAnnotation]
-    :param subsequence: The sequence or ProFormaAnnotation object to be found within 'sequence'.
-    :type subsequence: Union[str, ProFormaAnnotation]
-    :param ignore_mods: Whether to ignore modifications.
-    :type ignore_mods: bool
-
-    :raises ValueError: If the input sequence contains multiple sequences.
-    :raises ProFormaFormatError: if the proforma sequence is not valid
-
-    :return: A list of starting indexes of the subsequence within the sequence.
-    :rtype: List[int]
-
     .. code-block:: python
 
         # Find the starting indexes of a subsequence
@@ -126,26 +113,6 @@ def coverage(
     The coverage is represented as a binary list where each position in the protein sequence is marked as 1 if it
     is covered by at least one peptide and 0 otherwise.
 
-    :param sequence: The sequence or ProFormaAnnotation object to be covered.
-    :type sequence: Union[str, ProFormaAnnotation]
-    :param subsequences: The sequence's or ProFormaAnnotation object's subsequences to be used for coverage.
-    :type subsequences: List[Union[str, ProFormaAnnotation]]
-    :param accumulate: If True, the coverage array will be accumulated, i.e. if a position is covered by more than
-                        one subsequence, it will be marked as the sum of the number of subsequences covering it.
-                        If False, the coverage array will be binary, i.e. if a position is covered by more than one
-                        subsequence, it will be marked as 1.
-    :type accumulate: bool
-    :param ignore_mods: Whether to ignore modifications when calcualting the coverage.
-    :type ignore_mods: bool
-    :param ignore_ambiguity: Whether to ignore ambiguity codes when calculating the coverage.
-    :type ignore_ambiguity: bool
-
-    :raises ValueError: If the input sequence contains multiple sequences.
-    :raises ProFormaFormatError: if the proforma sequence is not valid
-
-    :return: The sequence coverage array.
-    :rtype: List[int]
-
     .. code-block:: python
 
         >>> coverage("PEPTIDE", ["PEP"])
@@ -187,27 +154,18 @@ def percent_coverage(
     """
     Calculates the coverage given a list of subsequences.
 
-    :param sequence: The sequence or ProFormaAnnotation object to be covered.
-    :type sequence: Union[str, ProFormaAnnotation]
-    :param subsequences: The sequence's or ProFormaAnnotation object's subsequences to be used for coverage.
-    :type subsequences: List[Union[str, ProFormaAnnotation]]
-    :param ignore_mods: Whether to ignore modifications when calcualting the coverage.
-    :type ignore_mods: bool
-    :param accumulate: If True, the coverage array will be accumulated
-    :param accumulate: bool
-    :param ignore_ambiguity: Whether to ignore ambiguity codes when calculating the coverage.
-    :type ignore_ambiguity: bool
-
-    :raises ValueError: If the input sequence contains multiple sequences.
-    :raises ProFormaFormatError: if the proforma sequence is not valid
-
-    :return: The percent coverage.
-    :rtype: float
+    if accumulate is True, overlapping indecies will be accumulated.
+    if ignore_mods is True, modifications will be ignored when calculating coverage (only the amino acid sequence will be considered).
+    if ignore_ambiguity is True, ambiguous regions will not be counted towards coverage.
 
     .. code-block:: python
 
         >>> round(percent_coverage("PEPTIDE", ["PEP"]), 3)
         0.429
+
+        # ambiguity does not add to coverage by default
+        >>> round(percent_coverage("PEPTIDE", ["P(?EP)"]), 3)
+        0.143
 
         >>> round(percent_coverage("PEPTIDE", ["PEP", "EPT"]), 3)
         0.571
@@ -242,20 +200,6 @@ def modification_coverage(
     subsequences. It returns a dictionary where each key is a modification position/type
     (matching the format from get_mods) and each value is the number of subsequences
     that cover that modification.
-
-    :param sequence: The sequence or ProFormaAnnotation object representing the protein.
-    :type sequence: Union[str, ProFormaAnnotation]
-    :param subsequences: The sequence's or ProFormaAnnotation object's subsequences (peptides) to be used for coverage.
-    :type subsequences: List[Union[str, ProFormaAnnotation]]
-    :param accumulate: If True, the count will accumulate for each subsequence covering the modification.
-                       If False, the count will be binary (1 if covered, 0 if not).
-    :type accumulate: bool
-
-    :raises ValueError: If the input sequence contains multiple sequences.
-    :raises ProFormaFormatError: if the proforma sequence is not valid
-
-    :return: Dictionary mapping modification positions/types to coverage counts.
-    :rtype: Dict[Union[int, str], int]
 
     .. code-block:: python
 

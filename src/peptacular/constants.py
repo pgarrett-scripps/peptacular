@@ -24,7 +24,6 @@ class CV(StrEnum):
     OBSERVED = "OBSERVED"
 
 
-
 CV_TO_NAME_PREFIX: Final[dict[CV, str]] = {
     CV.UNIMOD: "",
     CV.PSI_MOD: "",
@@ -51,35 +50,6 @@ CV_TO_MASS_PREFIX: Final[dict[CV, str]] = {
     CV.OBSERVED: "Obs:",
 }
 
-"""
-class MonosaccharideName(StrEnum):
-
-    aHex = "aHex"
-    Dec = "Dec"
-    dHex = "dHex"
-    en_aHex = "en,aHex"
-    Fuc = "Fuc"
-    Hep = "Hep"
-    Hex = "Hex"
-    HexN = "HexN"
-    HexNAc = "HexNAc"
-    HexNAcS = "HexNAcS"
-    HexNS = "HexNS"
-    HexP = "HexP"
-    HexS = "HexS"
-    Neu = "Neu"
-    NeuAc = "NeuAc"
-    NeuGc = "NeuGc"
-    Non = "Non"
-    Oct = "Oct"
-    Pen = "Pen"
-    Phosphate = "Phosphate"
-    S = "S"
-    Sug = "Sug"
-    Sulfate = "Sulfate"
-    Tet = "Tet"
-    Tri = "Tri"
-"""
 
 class Terminal(StrEnum):
     """Terminal position specification"""

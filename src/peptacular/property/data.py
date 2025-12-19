@@ -6,6 +6,7 @@
 """Indices to be used with ProtParam."""
 
 from enum import StrEnum
+from typing import Final
 
 
 class _AA(StrEnum):
@@ -40,12 +41,12 @@ class _AA(StrEnum):
 # J. Mol. Biol. 157:105-132(1982).
 # "KyteDoolittle"
 
-NEGATIVE_AMINO_ACIDS: set[str] = {_AA.D, _AA.E, _AA.C, _AA.Y}
-POSITIVE_AMINO_ACIDS: set[str] = {_AA.R, _AA.H, _AA.K}
-CHARGED_AMINO_ACIDS: set[str] = {_AA.K, _AA.R, _AA.H, _AA.D, _AA.E, _AA.C, _AA.Y}
-AROMATIC_AMINO_ACIDS: set[str] = {_AA.F, _AA.W, _AA.Y}
+NEGATIVE_AMINO_ACIDS: Final[set[str]] = {_AA.D, _AA.E, _AA.C, _AA.Y}
+POSITIVE_AMINO_ACIDS: Final[set[str]] = {_AA.R, _AA.H, _AA.K}
+CHARGED_AMINO_ACIDS: Final[set[str]] = {_AA.K, _AA.R, _AA.H, _AA.D, _AA.E, _AA.C, _AA.Y}
+AROMATIC_AMINO_ACIDS: Final[set[str]] = {_AA.F, _AA.W, _AA.Y}
 
-hphob_kyte_doolittle: dict[str, float] = {_AA.A: 1.8, _AA.R: -4.5, _AA.N: -3.5, _AA.D: -3.5, _AA.C: 2.5,
+hphob_kyte_doolittle: Final[dict[str, float]] = {_AA.A: 1.8, _AA.R: -4.5, _AA.N: -3.5, _AA.D: -3.5, _AA.C: 2.5,
       _AA.Q: -3.5, _AA.E: -3.5, _AA.G: -0.4, _AA.H: -3.2, _AA.I: 4.5,
       _AA.L: 3.8, _AA.K: -3.9, _AA.M: 1.9, _AA.F: 2.8, _AA.P: -1.6,
       _AA.S: -0.8, _AA.T: -0.7, _AA.W: -0.9, _AA.Y: -1.3, _AA.V: 4.2}
@@ -53,7 +54,7 @@ hphob_kyte_doolittle: dict[str, float] = {_AA.A: 1.8, _AA.R: -4.5, _AA.N: -3.5, 
 # Aboderin hydrophobicity index
 # International J. of Biochemistry, 2(11), 537-544.
 # "Aboderin"
-hphob_adoberin: dict[str, float] = {_AA.A: 5.1, _AA.R: 2.0, _AA.N: 0.6, _AA.D: 0.7, _AA.C: 0.0,
+hphob_adoberin: Final[dict[str, float]] = {_AA.A: 5.1, _AA.R: 2.0, _AA.N: 0.6, _AA.D: 0.7, _AA.C: 0.0,
       _AA.Q: 1.4, _AA.E: 1.8, _AA.G: 4.1, _AA.H: 1.6, _AA.I: 9.3,
       _AA.L: 10.0, _AA.K: 1.3, _AA.M: 8.7, _AA.F: 9.6, _AA.P: 4.9,
       _AA.S: 3.1, _AA.T: 3.5, _AA.W: 9.2, _AA.Y: 8.0, _AA.V: 8.5}
@@ -61,7 +62,7 @@ hphob_adoberin: dict[str, float] = {_AA.A: 5.1, _AA.R: 2.0, _AA.N: 0.6, _AA.D: 0
 # Abraham & Leo hydrophobicity index
 # Proteins: Structure, Function and Genetics 2:130-152(1987).
 # "AbrahamLeo"
-hphob_abraham_leo: dict[str, float] = {_AA.A: 0.44, _AA.R: -2.42, _AA.N: -1.32, _AA.D: -0.31, _AA.C: 0.58,
+hphob_abraham_leo: Final[dict[str, float]] = {_AA.A: 0.44, _AA.R: -2.42, _AA.N: -1.32, _AA.D: -0.31, _AA.C: 0.58,
       _AA.Q: -0.71, _AA.E: -0.34, _AA.G: 0.0, _AA.H: -0.01, _AA.I: 2.46,
       _AA.L: 2.46, _AA.K: -2.45, _AA.M: 1.1, _AA.F: 2.54, _AA.P: 1.29,
       _AA.S: -0.84, _AA.T: -0.41, _AA.W: 2.56, _AA.Y: 1.63, _AA.V: 1.73}
@@ -69,7 +70,7 @@ hphob_abraham_leo: dict[str, float] = {_AA.A: 0.44, _AA.R: -2.42, _AA.N: -1.32, 
 # Argos hydrophobicity index
 # European Journal of Biochemistry, 128(2-3), 565-575.
 # "Argos"
-hphob_agros: dict[str, float] = {_AA.A: 0.61, _AA.R: 0.6, _AA.N: 0.06, _AA.D: 0.46, _AA.C: 1.07,
+hphob_agros: Final[dict[str, float]] = {_AA.A: 0.61, _AA.R: 0.6, _AA.N: 0.06, _AA.D: 0.46, _AA.C: 1.07,
       _AA.Q: 0.0, _AA.E: 0.47, _AA.G: 0.07, _AA.H: 0.61, _AA.I: 2.22,
       _AA.L: 1.53, _AA.K: 1.15, _AA.M: 1.18, _AA.F: 2.02, _AA.P: 1.95,
       _AA.S: 0.05, _AA.T: 0.05, _AA.W: 2.65, _AA.Y: 1.88, _AA.V: 1.32}
@@ -81,7 +82,7 @@ Rao M.J.K., Argos P.
 Reference: Biochim. Biophys. Acta 869:197-214(1986).
 https://web.expasy.org/protscale/pscale/Hphob.Argos.html
 """
-hphob_rao_argos: dict[str, float] = {_AA.A: 1.360, _AA.R: 0.150, _AA.N: 0.330, _AA.D: 0.110, _AA.C: 1.270,
+hphob_rao_argos: Final[dict[str, float]] = {_AA.A: 1.360, _AA.R: 0.150, _AA.N: 0.330, _AA.D: 0.110, _AA.C: 1.270,
       _AA.Q: 0.330, _AA.E: 0.250, _AA.G: 1.090, _AA.H: 0.680, _AA.I: 1.440,
       _AA.L: 1.470, _AA.K: 0.090, _AA.M: 1.420, _AA.F: 1.570, _AA.P: 0.540,
       _AA.S: 0.970, _AA.T: 1.080, _AA.W: 1.000, _AA.Y: 0.830, _AA.V: 1.370}
@@ -89,7 +90,7 @@ hphob_rao_argos: dict[str, float] = {_AA.A: 1.360, _AA.R: 0.150, _AA.N: 0.330, _
 # Black & Mould hydrophobicity index
 # Anal. Biochem. 193:72-82(1991).
 # "BlackMould"
-hphob_black_mould: dict[str, float] = {_AA.A: 0.616, _AA.R: 0.0, _AA.N: 0.236, _AA.D: 0.028, _AA.C: 0.68,
+hphob_black_mould: Final[dict[str, float]] = {_AA.A: 0.616, _AA.R: 0.0, _AA.N: 0.236, _AA.D: 0.028, _AA.C: 0.68,
       _AA.Q: 0.251, _AA.E: 0.043, _AA.G: 0.501, _AA.H: 0.165, _AA.I: 0.943,
       _AA.L: 0.943, _AA.K: 0.283, _AA.M: 0.738, _AA.F: 1.0, _AA.P: 0.711,
       _AA.S: 0.359, _AA.T: 0.45, _AA.W: 0.878, _AA.Y: 0.88, _AA.V: 0.825}
@@ -97,7 +98,7 @@ hphob_black_mould: dict[str, float] = {_AA.A: 0.616, _AA.R: 0.0, _AA.N: 0.236, _
 # Bull & Breese hydrophobicity index
 # Arch. Biochem. Biophys. 161:665-670(1974)
 # "BullBreese"
-hphob_bull_breese: dict[str, float] = {_AA.A: 0.61, _AA.R: 0.69, _AA.N: 0.89, _AA.D: 0.61, _AA.C: 0.36,
+hphob_bull_breese: Final[dict[str, float]] = {_AA.A: 0.61, _AA.R: 0.69, _AA.N: 0.89, _AA.D: 0.61, _AA.C: 0.36,
       _AA.Q: 0.97, _AA.E: 0.51, _AA.G: 0.81, _AA.H: 0.69, _AA.I: -1.45,
       _AA.L: -1.65, _AA.K: 0.46, _AA.M: -0.66, _AA.F: -1.52, _AA.P: -0.17,
       _AA.S: 0.42, _AA.T: 0.29, _AA.W: -1.2, _AA.Y: -1.43, _AA.V: -0.75}
@@ -105,7 +106,7 @@ hphob_bull_breese: dict[str, float] = {_AA.A: 0.61, _AA.R: 0.69, _AA.N: 0.89, _A
 # Casari & Sippl hydrophobic potential
 # Journal of molecular biology, 224(3), 725-732.
 # "Casari"
-hphob_casari_sippl: dict[str, float] = {_AA.A: 0.2, _AA.R: -0.7, _AA.N: -0.5, _AA.D: -1.4, _AA.C: 1.9,
+hphob_casari_sippl: Final[dict[str, float]] = {_AA.A: 0.2, _AA.R: -0.7, _AA.N: -0.5, _AA.D: -1.4, _AA.C: 1.9,
       _AA.Q: -1.1, _AA.E: -1.3, _AA.G: -0.1, _AA.H: 0.4, _AA.I: 1.4,
       _AA.L: 0.5, _AA.K: -1.6, _AA.M: 0.5, _AA.F: 1.0, _AA.P: -1.0,
       _AA.S: -0.7, _AA.T: -0.4, _AA.W: 1.6, _AA.Y: 0.5, _AA.V: 0.7}
@@ -113,7 +114,7 @@ hphob_casari_sippl: dict[str, float] = {_AA.A: 0.2, _AA.R: -0.7, _AA.N: -0.5, _A
 # Cid hydrophobicity index
 # Protein engineering, 5(5), 373-375.
 # "Cid"
-hphob_cid: dict[str, float] = {_AA.A: 0.02, _AA.R: -0.42, _AA.N: -0.77, _AA.D: -1.04, _AA.C: 0.77,
+hphob_cid: Final[dict[str, float]] = {_AA.A: 0.02, _AA.R: -0.42, _AA.N: -0.77, _AA.D: -1.04, _AA.C: 0.77,
       _AA.Q: -1.1, _AA.E: -1.14, _AA.G: -0.8, _AA.H: 0.26, _AA.I: 1.81,
       _AA.L: 1.14, _AA.K: -0.41, _AA.M: 1.0, _AA.F: 1.35, _AA.P: -0.09,
       _AA.S: -0.97, _AA.T: -0.77, _AA.W: 1.71, _AA.Y: 1.11, _AA.V: 1.13}
@@ -121,7 +122,7 @@ hphob_cid: dict[str, float] = {_AA.A: 0.02, _AA.R: -0.42, _AA.N: -0.77, _AA.D: -
 # Cowan hydrophobicity indices at ph 3.4 and 7.5
 # Peptide Research 3:75-80(1990).
 # "Cowan3.4" "Conwan7.5"
-_hphob_cowan: dict[float, dict[str, float]] = {3.4 : {_AA.A: 0.42, _AA.R: -1.56, _AA.N: -1.03, _AA.D: -0.51, _AA.C: 0.84,
+_hphob_cowan: dict[float, Final[dict[str, float]]] = {3.4 : {_AA.A: 0.42, _AA.R: -1.56, _AA.N: -1.03, _AA.D: -0.51, _AA.C: 0.84,
              _AA.Q: -0.96, _AA.E: -0.37, _AA.G: 0.0, _AA.H: -2.28, _AA.I: 1.81,
              _AA.L: 1.8, _AA.K: -2.03, _AA.M: 1.18, _AA.F: 1.74, _AA.P: 0.86,
              _AA.S: -0.64, _AA.T: -0.26, _AA.W: 1.46, _AA.Y: 0.51, _AA.V: 1.34},
@@ -137,7 +138,7 @@ hphob_cowan_7_5 = _hphob_cowan[7.5]
 # Eisenberg Normalized consensus hydrophobicity scale
 # J. Mol. Biol. 179:125-142(1984)
 # "Eisenberg"
-hphob_eisenberg: dict[str, float] = {_AA.A: 0.62, _AA.R: -2.53, _AA.N: -0.78, _AA.D: -0.9, _AA.C: 0.29,
+hphob_eisenberg: Final[dict[str, float]] = {_AA.A: 0.62, _AA.R: -2.53, _AA.N: -0.78, _AA.D: -0.9, _AA.C: 0.29,
       _AA.Q: -0.85, _AA.E: -0.74, _AA.G: 0.48, _AA.H: -0.4, _AA.I: 1.38,
       _AA.L: 1.06, _AA.K: -1.5, _AA.M: 0.64, _AA.F: 1.19, _AA.P: 0.12,
       _AA.S: -0.18, _AA.T: -0.05, _AA.W: 0.81, _AA.Y: 0.26, _AA.V: 1.08}
@@ -145,7 +146,7 @@ hphob_eisenberg: dict[str, float] = {_AA.A: 0.62, _AA.R: -2.53, _AA.N: -0.78, _A
 # Engelman Hydrophobic Transfer Free Energies
 # Annual review of biophysics and biophysical chemistry, 15(1), 321-353.
 # "Engelman"
-hphob_engelman: dict[str, float] = {_AA.A: -1.6, _AA.R: 12.3, _AA.N: 4.8, _AA.D: 9.2, _AA.C: -2,
+hphob_engelman: Final[dict[str, float]] = {_AA.A: -1.6, _AA.R: 12.3, _AA.N: 4.8, _AA.D: 9.2, _AA.C: -2,
       _AA.Q: 4.1, _AA.E: 8.2, _AA.G: -1, _AA.H: 3, _AA.I: -3.1,
       _AA.L: -2.8, _AA.K: 8.8, _AA.M: -3.4, _AA.F: -3.7, _AA.P: 0.2,
       _AA.S: -0.6, _AA.T: -1.2, _AA.W: -1.9, _AA.Y: 0.7, _AA.V: -2.6}
@@ -153,7 +154,7 @@ hphob_engelman: dict[str, float] = {_AA.A: -1.6, _AA.R: 12.3, _AA.N: 4.8, _AA.D:
 # Fasman hydrophobicity index
 # (1989). Prediction of protein structure and the principles of protein conformation. Springer.
 # "Fasman"
-hphob_fasman: dict[str, float] = {_AA.A: -0.21, _AA.R: 2.11, _AA.N: 0.96, _AA.D: 1.36, _AA.C: -6.04,
+hphob_fasman: Final[dict[str, float]] = {_AA.A: -0.21, _AA.R: 2.11, _AA.N: 0.96, _AA.D: 1.36, _AA.C: -6.04,
       _AA.Q: 1.52, _AA.E: 2.3, _AA.G: 0, _AA.H: -1.23, _AA.I: -4.81,
       _AA.L: -4.68, _AA.K: 3.88, _AA.M: -3.66, _AA.F: -4.65, _AA.P: 0.75,
       _AA.S: 1.74, _AA.T: 0.78, _AA.W: -3.32, _AA.Y: -1.01, _AA.V: -3.5}
@@ -161,7 +162,7 @@ hphob_fasman: dict[str, float] = {_AA.A: -0.21, _AA.R: 2.11, _AA.N: 0.96, _AA.D:
 # Fauchere Hydrophobicity scale
 # Eur. J. Med. Chem. 18:369-375(1983).
 # "Fauchere"
-hphob_fauchere: dict[str, float] = {_AA.A: 0.31, _AA.R: -1.01, _AA.N: -0.6, _AA.D: -0.77, _AA.C: 1.54,
+hphob_fauchere: Final[dict[str, float]] = {_AA.A: 0.31, _AA.R: -1.01, _AA.N: -0.6, _AA.D: -0.77, _AA.C: 1.54,
       _AA.Q: -0.22, _AA.E: -0.64, _AA.G: 0, _AA.H: 0.13, _AA.I: 1.8,
       _AA.L: 1.7, _AA.K: -0.99, _AA.M: 1.23, _AA.F: 1.79, _AA.P: 0.72,
       _AA.S: -0.04, _AA.T: 0.26, _AA.W: 2.25, _AA.Y: 0.96, _AA.V: 1.22}
@@ -169,7 +170,7 @@ hphob_fauchere: dict[str, float] = {_AA.A: 0.31, _AA.R: -1.01, _AA.N: -0.6, _AA.
 # Goldsack & Chalifoux Free Energy of Mixing of the Hydrophobic Side Chains
 # Journal of theoretical biology, 39(3), 645-651.
 # "Goldsack"
-hphob_goldsack: dict[str, float] = {_AA.A: 0.75, _AA.R: 0.75, _AA.N: 0.69, _AA.D: 0, _AA.C: 1,
+hphob_goldsack: Final[dict[str, float]] = {_AA.A: 0.75, _AA.R: 0.75, _AA.N: 0.69, _AA.D: 0, _AA.C: 1,
       _AA.Q: 0.59, _AA.E: 0, _AA.G: 0, _AA.H: 0, _AA.I: 2.95,
       _AA.L: 2.4, _AA.K: 1.5, _AA.M: 1.3, _AA.F: 2.65, _AA.P: 2.6,
       _AA.S: 0, _AA.T: 0.45, _AA.W: 3, _AA.Y: 2.85, _AA.V: 1.7}
@@ -177,7 +178,7 @@ hphob_goldsack: dict[str, float] = {_AA.A: 0.75, _AA.R: 0.75, _AA.N: 0.69, _AA.D
 # Guy Hydrophobicity scale based on free energy of transfer (kcal/mole).
 # Biophys J. 47:61-70(1985)
 # "Guy"
-hphob_guy: dict[str, float] = {_AA.A: 0.1, _AA.R: 1.91, _AA.N: 0.48, _AA.D: 0.78, _AA.C: -1.42,
+hphob_guy: Final[dict[str, float]] = {_AA.A: 0.1, _AA.R: 1.91, _AA.N: 0.48, _AA.D: 0.78, _AA.C: -1.42,
       _AA.Q: 0.95, _AA.E: 0.83, _AA.G: 0.33, _AA.H: -0.5, _AA.I: -1.13,
       _AA.L: -1.18, _AA.K: 1.4, _AA.M: -1.59, _AA.F: -2.12, _AA.P: 0.73,
       _AA.S: 0.52, _AA.T: 0.07, _AA.W: -0.51, _AA.Y: -0.21, _AA.V: -1.27}
@@ -185,7 +186,7 @@ hphob_guy: dict[str, float] = {_AA.A: 0.1, _AA.R: 1.91, _AA.N: 0.48, _AA.D: 0.78
 # Jones Hydrophobicity scale
 # Journal of theoretical biology, 50(1), 167-183.
 # "Jones"
-hphob_jones: dict[str, float] = {_AA.A: 0.87, _AA.R: 0.85, _AA.N: 0.09, _AA.D: 0.66, _AA.C: 1.52,
+hphob_jones: Final[dict[str, float]] = {_AA.A: 0.87, _AA.R: 0.85, _AA.N: 0.09, _AA.D: 0.66, _AA.C: 1.52,
       _AA.Q: 0, _AA.E: 0.67, _AA.G: 0.1, _AA.H: 0.87, _AA.I: 3.15,
       _AA.L: 2.17, _AA.K: 1.64, _AA.M: 1.67, _AA.F: 2.87, _AA.P: 2.77,
       _AA.S: 0.07, _AA.T: 0.07, _AA.W: 3.77, _AA.Y: 2.67, _AA.V: 1.87}
@@ -193,7 +194,7 @@ hphob_jones: dict[str, float] = {_AA.A: 0.87, _AA.R: 0.85, _AA.N: 0.09, _AA.D: 0
 # Juretic Hydrophobicity scale
 # Theoretical and computational chemistry, 5, 405-445.
 # "Juretic"
-hphob_juretic: dict[str, float] = {_AA.A: 1.1, _AA.R: -5.1, _AA.N: -3.5, _AA.D: -3.6, _AA.C: 2.5,
+hphob_juretic: Final[dict[str, float]] = {_AA.A: 1.1, _AA.R: -5.1, _AA.N: -3.5, _AA.D: -3.6, _AA.C: 2.5,
       _AA.Q: -3.68, _AA.E: -3.2, _AA.G: -0.64, _AA.H: -3.2, _AA.I: 4.5,
       _AA.L: 3.8, _AA.K: -4.11, _AA.M: 1.9, _AA.F: 2.8, _AA.P: -1.9,
       _AA.S: -0.5, _AA.T: -0.7, _AA.W: -0.46, _AA.Y: -1.3, _AA.V: 4.2}
@@ -201,7 +202,7 @@ hphob_juretic: dict[str, float] = {_AA.A: 1.1, _AA.R: -5.1, _AA.N: -3.5, _AA.D: 
 # Kidera Hydrophobicity Factors
 # Journal of Protein Chemistry, 4(1), 23-55.
 # "Kidera"
-hphob_kidera: dict[str, float] = {_AA.A: -0.27, _AA.R: 1.87, _AA.N: 0.81, _AA.D: 0.81, _AA.C: -1.05,
+hphob_kidera: Final[dict[str, float]] = {_AA.A: -0.27, _AA.R: 1.87, _AA.N: 0.81, _AA.D: 0.81, _AA.C: -1.05,
       _AA.Q: 1.1, _AA.E: 1.17, _AA.G: -0.16, _AA.H: 0.28, _AA.I: -0.77,
       _AA.L: -1.1, _AA.K: 1.7, _AA.M: -0.73, _AA.F: -1.43, _AA.P: -0.75,
       _AA.S: 0.42, _AA.T: 0.63, _AA.W: -1.57, _AA.Y: -0.56, _AA.V: -0.4}
@@ -209,7 +210,7 @@ hphob_kidera: dict[str, float] = {_AA.A: -0.27, _AA.R: 1.87, _AA.N: 0.81, _AA.D:
 # Miyazawa Hydrophobicity scale (contact energy derived from 3D data)
 # Macromolecules 18:534-552(1985)
 # "Miyazawa"
-hphob_miyazawa: dict[str, float] = {_AA.A: 5.33, _AA.R: 4.18, _AA.N: 3.71, _AA.D: 3.59, _AA.C: 7.93,
+hphob_miyazawa: Final[dict[str, float]] = {_AA.A: 5.33, _AA.R: 4.18, _AA.N: 3.71, _AA.D: 3.59, _AA.C: 7.93,
       _AA.Q: 3.87, _AA.E: 3.65, _AA.G: 4.48, _AA.H: 5.1, _AA.I: 8.83,
       _AA.L: 8.47, _AA.K: 2.95, _AA.M: 8.95, _AA.F: 9.03, _AA.P: 3.87,
       _AA.S: 4.09, _AA.T: 4.49, _AA.W: 7.66, _AA.Y: 5.89, _AA.V: 7.63}
@@ -217,7 +218,7 @@ hphob_miyazawa: dict[str, float] = {_AA.A: 5.33, _AA.R: 4.18, _AA.N: 3.71, _AA.D
 # Parker Hydrophilicity scale derived from HPLC peptide retention times
 # Biochemistry 25:5425-5431(1986)
 # "Parker"
-hphob_parker: dict[str, float] = {_AA.A: 2.1, _AA.R: 4.2, _AA.N: 7, _AA.D: 10, _AA.C: 1.4,
+hphob_parker: Final[dict[str, float]] = {_AA.A: 2.1, _AA.R: 4.2, _AA.N: 7, _AA.D: 10, _AA.C: 1.4,
       _AA.Q: 6, _AA.E: 7.8, _AA.G: 5.7, _AA.H: 2.1, _AA.I: -8,
       _AA.L: -9.2, _AA.K: 5.7, _AA.M: -4.2, _AA.F: -9.2, _AA.P: 2.1,
       _AA.S: 6.5, _AA.T: 5.2, _AA.W: -10, _AA.Y: -1.9, _AA.V: -3.7}
@@ -225,7 +226,7 @@ hphob_parker: dict[str, float] = {_AA.A: 2.1, _AA.R: 4.2, _AA.N: 7, _AA.D: 10, _
 # Ponnuswamy Hydrophobic characteristics of folded proteins
 # Progress in biophysics and molecular biology, 59(1), 57-103.
 # "Ponnuswamy"
-hphob_ponnuswamy: dict[str, float] = {_AA.A: 0.85, _AA.R: 0.2, _AA.N: -0.48, _AA.D: -1.1, _AA.C: 2.1,
+hphob_ponnuswamy: Final[dict[str, float]] = {_AA.A: 0.85, _AA.R: 0.2, _AA.N: -0.48, _AA.D: -1.1, _AA.C: 2.1,
       _AA.Q: -0.42, _AA.E: -0.79, _AA.G: 0, _AA.H: 0.22, _AA.I: 3.14,
       _AA.L: 1.99, _AA.K: -1.19, _AA.M: 1.42, _AA.F: 1.69, _AA.P: -1.14,
       _AA.S: -0.52, _AA.T: -0.08, _AA.W: 1.76, _AA.Y: 1.37, _AA.V: 2.53}
@@ -237,7 +238,7 @@ Manavalan P., Ponnuswamy P.K.
 Reference: Nature 275:673-674(1978).
 https://web.expasy.org/protscale/pscale/Hphob.Manavalan.html
 """
-hphob_manavalan: dict[str, float] = {_AA.A: 12.97, _AA.R: 11.72, _AA.N: 11.42, _AA.D: 10.85, _AA.C: 14.63,
+hphob_manavalan: Final[dict[str, float]] = {_AA.A: 12.97, _AA.R: 11.72, _AA.N: 11.42, _AA.D: 10.85, _AA.C: 14.63,
       _AA.Q: 11.76, _AA.E: 11.89, _AA.G: 12.43, _AA.H: 12.16, _AA.I: 15.67,
       _AA.L: 14.9, _AA.K: 11.36, _AA.M: 14.39, _AA.F: 14.0, _AA.P: 11.37,
       _AA.S: 11.23, _AA.T: 11.69, _AA.W: 13.93, _AA.Y: 13.42, _AA.V: 15.71}
@@ -245,7 +246,7 @@ hphob_manavalan: dict[str, float] = {_AA.A: 12.97, _AA.R: 11.72, _AA.N: 11.42, _
 # Rose Hydrophobicity scale
 # Science 229:834-838(1985)
 # "Rose"
-hphob_rose: dict[str, float] = {_AA.A: 0.74, _AA.R: 0.64, _AA.N: 0.63, _AA.D: 0.62, _AA.C: 0.91,
+hphob_rose: Final[dict[str, float]] = {_AA.A: 0.74, _AA.R: 0.64, _AA.N: 0.63, _AA.D: 0.62, _AA.C: 0.91,
       _AA.Q: 0.62, _AA.E: 0.62, _AA.G: 0.72, _AA.H: 0.78, _AA.I: 0.88,
       _AA.L: 0.85, _AA.K: 0.52, _AA.M: 0.85, _AA.F: 0.88, _AA.P: 0.64,
       _AA.S: 0.66, _AA.T: 0.7, _AA.W: 0.85, _AA.Y: 0.76, _AA.V: 0.86}
@@ -253,7 +254,7 @@ hphob_rose: dict[str, float] = {_AA.A: 0.74, _AA.R: 0.64, _AA.N: 0.63, _AA.D: 0.
 # Roseman Hydrophobicity scale
 # J. Mol. Biol. 200:513-522(1988)
 # "Roseman"
-hphob_roseman: dict[str, float] = {_AA.A: 0.39, _AA.R: -3.95, _AA.N: -1.91, _AA.D: -3.81, _AA.C: 0.25,
+hphob_roseman: Final[dict[str, float]] = {_AA.A: 0.39, _AA.R: -3.95, _AA.N: -1.91, _AA.D: -3.81, _AA.C: 0.25,
       _AA.Q: -1.3, _AA.E: -2.91, _AA.G: 0, _AA.H: -0.64, _AA.I: 1.82,
       _AA.L: 1.82, _AA.K: -2.77, _AA.M: 0.96, _AA.F: 2.27, _AA.P: 0.99,
       _AA.S: -1.24, _AA.T: -1, _AA.W: 2.13, _AA.Y: 1.47, _AA.V: 1.3}
@@ -261,7 +262,7 @@ hphob_roseman: dict[str, float] = {_AA.A: 0.39, _AA.R: -3.95, _AA.N: -1.91, _AA.
 # Sweet Optimized Matchig Hydrophobicity (OMH)
 # J. Mol. Biol. 171:479-488(1983).
 # "Sweet
-hphob_sweet: dict[str, float] = {_AA.A: -0.4, _AA.R: -0.59, _AA.N: -0.92, _AA.D: -1.31, _AA.C: 0.17,
+hphob_sweet: Final[dict[str, float]] = {_AA.A: -0.4, _AA.R: -0.59, _AA.N: -0.92, _AA.D: -1.31, _AA.C: 0.17,
       _AA.Q: -0.91, _AA.E: -1.22, _AA.G: -0.67, _AA.H: -0.64, _AA.I: 1.25,
       _AA.L: 1.22, _AA.K: -0.67, _AA.M: 1.02, _AA.F: 1.92, _AA.P: -0.49,
       _AA.S: -0.55, _AA.T: -0.28, _AA.W: 0.5, _AA.Y: 1.67, _AA.V: 0.91}
@@ -269,7 +270,7 @@ hphob_sweet: dict[str, float] = {_AA.A: -0.4, _AA.R: -0.59, _AA.N: -0.92, _AA.D:
 # Tanford Hydrophobicity scale
 # J. Am. Chem. Soc. 84:4240-4274(1962)
 # "Tanford"
-hphob_tanford: dict[str, float] = {_AA.A: 0.62, _AA.R: -2.53, _AA.N: -0.78, _AA.D: -0.09, _AA.C: 0.29,
+hphob_tanford: Final[dict[str, float]] = {_AA.A: 0.62, _AA.R: -2.53, _AA.N: -0.78, _AA.D: -0.09, _AA.C: 0.29,
       _AA.Q: -0.85, _AA.E: -0.74, _AA.G: 0.48, _AA.H: -0.4, _AA.I: 1.38,
       _AA.L: 1.53, _AA.K: -1.5, _AA.M: 0.64, _AA.F: 1.19, _AA.P: 0.12,
       _AA.S: -0.18, _AA.T: -0.05, _AA.W: 0.81, _AA.Y: 0.26, _AA.V: 1.8}
@@ -277,7 +278,7 @@ hphob_tanford: dict[str, float] = {_AA.A: 0.62, _AA.R: -2.53, _AA.N: -0.78, _AA.
 # Wilson Hydrophobic constants derived from HPLC peptide retention times
 # Biochem. J. 199:31-41(1981)
 # "Wilson"
-hphob_wilson: dict[str, float] = {_AA.A: -0.3, _AA.R: -1.1, _AA.N: -0.2, _AA.D: -1.4, _AA.C: 6.3,
+hphob_wilson: Final[dict[str, float]] = {_AA.A: -0.3, _AA.R: -1.1, _AA.N: -0.2, _AA.D: -1.4, _AA.C: 6.3,
       _AA.Q: -0.2, _AA.E: 0, _AA.G: 1.2, _AA.H: -1.3, _AA.I: 4.3,
       _AA.L: 6.6, _AA.K: -3.6, _AA.M: 2.5, _AA.F: 7.5, _AA.P: 2.2,
       _AA.S: -0.6, _AA.T: -2.2, _AA.W: 7.9, _AA.Y: 7.1, _AA.V: 5.9}
@@ -285,7 +286,7 @@ hphob_wilson: dict[str, float] = {_AA.A: -0.3, _AA.R: -1.1, _AA.N: -0.2, _AA.D: 
 # Zimmerman Hydrophobicity scale
 # Journal of theoretical biology, 21(2), 170-201.
 # "Zimmerman"
-hphob_zimmerman: dict[str, float] = {_AA.A: 0.83, _AA.R: 0.83, _AA.N: 0.09, _AA.D: 0.64, _AA.C: 1.48,
+hphob_zimmerman: Final[dict[str, float]] = {_AA.A: 0.83, _AA.R: 0.83, _AA.N: 0.09, _AA.D: 0.64, _AA.C: 1.48,
       _AA.Q: 0, _AA.E: 0.65, _AA.G: 0.1, _AA.H: 1.1, _AA.I: 3.07,
       _AA.L: 2.52, _AA.K: 1.6, _AA.M: 1.4, _AA.F: 2.75, _AA.P: 2.7,
       _AA.S: 0.14, _AA.T: 0.54, _AA.W: 0.31, _AA.Y: 2.97, _AA.V: 1.79}
@@ -298,7 +299,7 @@ Reference: J. Mol. Biol. 105:1-14(1976).
 https://web.expasy.org/cgi-bin/protscale/protscale.pl
 """
 
-hphob_chothia: dict[str, float] = {_AA.A: 0.38, _AA.R: 0.01, _AA.N: 0.12, _AA.D: 0.15, _AA.C: 0.5,
+hphob_chothia: Final[dict[str, float]] = {_AA.A: 0.38, _AA.R: 0.01, _AA.N: 0.12, _AA.D: 0.15, _AA.C: 0.5,
       _AA.Q: 0.07, _AA.E: 0.18, _AA.G: 0.36, _AA.H: 0.17, _AA.I: 0.6,
       _AA.L: 0.45, _AA.K: 0.03, _AA.M: 0.4, _AA.F: 0.5, _AA.P: 0.18,
       _AA.S: 0.22, _AA.T: 0.23, _AA.W: 0.27, _AA.Y: 0.15, _AA.V: 0.54}
@@ -312,7 +313,7 @@ Reference: Nature 277:491-492(1979).
 https://web.expasy.org/protscale/pscale/Hphob.Janin.html
 """
 
-hphob_janin: dict[str, float] = {_AA.A: 0.3, _AA.R: -1.4, _AA.N: -0.5, _AA.D: -0.6, _AA.C: 0.9,
+hphob_janin: Final[dict[str, float]] = {_AA.A: 0.3, _AA.R: -1.4, _AA.N: -0.5, _AA.D: -0.6, _AA.C: 0.9,
       _AA.Q: -0.7, _AA.E: -0.7, _AA.G: 0.3, _AA.H: -0.1, _AA.I: 0.7,
       _AA.L: 0.5, _AA.K: -1.8, _AA.M: 0.4, _AA.F: 0.5, _AA.P: -0.3,
       _AA.S: -0.1, _AA.T: -0.2, _AA.W: 0.3, _AA.Y: -0.4, _AA.V: 0.6}
@@ -325,7 +326,7 @@ Reference: Biochemistry 20:849-855(1981).
 https://web.expasy.org/protscale/pscale/Hphob.Wolfenden.html
 """
 
-hphob_wolfenden: dict[str, float] = {_AA.A: 1.940, _AA.R: -19.920, _AA.N: -9.680, _AA.D: -10.950, _AA.C: -1.240,
+hphob_wolfenden: Final[dict[str, float]] = {_AA.A: 1.940, _AA.R: -19.920, _AA.N: -9.680, _AA.D: -10.950, _AA.C: -1.240,
       _AA.Q: -9.380, _AA.E: -10.200, _AA.G: 2.390, _AA.H: -10.270, _AA.I: 2.150,
       _AA.L: 2.280, _AA.K: -9.520, _AA.M: -1.480, _AA.F: -0.760, _AA.P: 0.000,
       _AA.S: -5.060, _AA.T: -4.880, _AA.W: -5.880, _AA.Y: -6.110, _AA.V: 1.990}
@@ -341,7 +342,7 @@ https://web.expasy.org/protscale/pscale/Hphob.Welling.html
 """
 
 # Welling antigenicity scale
-hphob_welling: dict[str, float] = {_AA.A: 1.150, _AA.R: 0.580, _AA.N: -0.770, _AA.D: 0.650, _AA.C: -1.200,
+hphob_welling: Final[dict[str, float]] = {_AA.A: 1.150, _AA.R: 0.580, _AA.N: -0.770, _AA.D: 0.650, _AA.C: -1.200,
       _AA.Q: -0.110, _AA.E: -0.710, _AA.G: -1.840, _AA.H: 3.120, _AA.I: -2.920,
       _AA.L: 0.750, _AA.K: 2.060, _AA.M: -3.850, _AA.F: -1.410, _AA.P: -0.530,
       _AA.S: -0.260, _AA.T: -0.450, _AA.W: -1.140, _AA.Y: 0.130, _AA.V: -0.130}
@@ -350,7 +351,7 @@ hphob_welling: dict[str, float] = {_AA.A: 1.150, _AA.R: 0.580, _AA.N: -0.770, _A
 # Flexibility
 # Normalized flexibility parameters (B-values), average
 # Vihinen M., Torkkila E., Riikonen P. Proteins. 19(2):141-9(1994).
-flexibility_vihinen: dict[str, float] = {_AA.A: 0.984, _AA.C: 0.906, _AA.E: 1.094, _AA.D: 1.068,
+flexibility_vihinen: Final[dict[str, float]] = {_AA.A: 0.984, _AA.C: 0.906, _AA.E: 1.094, _AA.D: 1.068,
         _AA.G: 1.031, _AA.F: 0.915, _AA.I: 0.927, _AA.H: 0.950,
         _AA.K: 1.102, _AA.M: 0.952, _AA.L: 0.935, _AA.N: 1.048,
         _AA.Q: 1.037, _AA.P: 1.049, _AA.S: 1.046, _AA.R: 1.008,
@@ -359,7 +360,7 @@ flexibility_vihinen: dict[str, float] = {_AA.A: 0.984, _AA.C: 0.906, _AA.E: 1.09
 # Hydrophilicity
 # 1 Hopp & Wood
 # Proc. Natl. Acad. Sci. U.S.A. 78:3824-3828(1981).
-hydrophilicity_hopp_wood: dict[str, float] = {_AA.A: -0.5, _AA.R: 3.0, _AA.N: 0.2, _AA.D: 3.0, _AA.C: -1.0,
+hydrophilicity_hopp_wood: Final[dict[str, float]] = {_AA.A: -0.5, _AA.R: 3.0, _AA.N: 0.2, _AA.D: 3.0, _AA.C: -1.0,
       _AA.Q: 0.2, _AA.E: 3.0, _AA.G: 0.0, _AA.H: -0.5, _AA.I: -1.8,
       _AA.L: -1.8, _AA.K: 3.0, _AA.M: -1.3, _AA.F: -2.5, _AA.P: 0.0,
       _AA.S: 0.3, _AA.T: -0.4, _AA.W: -3.4, _AA.Y: -2.3, _AA.V: -1.5}
@@ -368,13 +369,13 @@ hydrophilicity_hopp_wood: dict[str, float] = {_AA.A: -0.5, _AA.R: 3.0, _AA.N: 0.
 # Vergoten G & Theophanides T, Biomolecular Structure and Dynamics,
 # pg.138 (1997).
 # 1 Emini Surface fractional probability
-surface_accessibility_vergoten: dict[str, float] = {_AA.A: 0.815, _AA.R: 1.475, _AA.N: 1.296, _AA.D: 1.283, _AA.C: 0.394,
+surface_accessibility_vergoten: Final[dict[str, float]] = {_AA.A: 0.815, _AA.R: 1.475, _AA.N: 1.296, _AA.D: 1.283, _AA.C: 0.394,
       _AA.Q: 1.348, _AA.E: 1.445, _AA.G: 0.714, _AA.H: 1.180, _AA.I: 0.603,
       _AA.L: 0.603, _AA.K: 1.545, _AA.M: 0.714, _AA.F: 0.695, _AA.P: 1.236,
       _AA.S: 1.115, _AA.T: 1.184, _AA.W: 0.808, _AA.Y: 1.089, _AA.V: 0.606}
 
 # 2 Janin Interior to surface transfer energy scale
-surface_accessiblility_janin: dict[str, float] = {_AA.A: 0.28, _AA.R: -1.14, _AA.N: -0.55, _AA.D: -0.52, _AA.C: 0.97,
+surface_accessiblility_janin: Final[dict[str, float]] = {_AA.A: 0.28, _AA.R: -1.14, _AA.N: -0.55, _AA.D: -0.52, _AA.C: 0.97,
       _AA.Q: -0.69, _AA.E: -1.01, _AA.G: 0.43, _AA.H: -0.31, _AA.I: 0.60,
       _AA.L: 0.60, _AA.K: -1.62, _AA.M: 0.43, _AA.F: 0.46, _AA.P: -0.42,
       _AA.S: -0.19, _AA.T: -0.32, _AA.W: 0.29, _AA.Y: -0.15, _AA.V: 0.60}
@@ -384,7 +385,8 @@ surface_accessiblility_janin: dict[str, float] = {_AA.A: 0.28, _AA.R: -1.14, _AA
 # Guruprasad K., Reddy B.V.B., Pandit M.W. Protein Engineering 4:155-161(1990).
 # It is based on dipeptide values; therefore, the value for the dipeptide DG
 # is DIWV['D']['G'].
-DIWV: dict[_AA, dict[str, float]] = {_AA.A: {_AA.A: 1.0, _AA.C: 44.94, _AA.E: 1.0, _AA.D: -7.49,
+DIWV: Final[dict[_AA, dict[str, float]]] = {
+        _AA.A: {_AA.A: 1.0, _AA.C: 44.94, _AA.E: 1.0, _AA.D: -7.49,
               _AA.G: 1.0, _AA.F: 1.0, _AA.I: 1.0, _AA.H: -7.49,
               _AA.K: 1.0, _AA.M: 1.0, _AA.L: 1.0, _AA.N: 1.0,
               _AA.Q: 1.0, _AA.P: 20.26, _AA.S: 1.0, _AA.R: 1.0,
@@ -492,20 +494,20 @@ DIWV: dict[_AA, dict[str, float]] = {_AA.A: {_AA.A: 1.0, _AA.C: 44.94, _AA.E: 1.
 https://www.peptideweb.com/images/pdf/pKa-and-pI-values-of-amino-acids.pdf
 """
 
-pk_nterminal: dict[str, float] = { 
+pk_nterminal: Final[dict[str, float]] = { 
       _AA.A: 9.69, _AA.R: 9.04, _AA.N: 8.80, _AA.D: 9.82, _AA.C: 10.78,
       _AA.Q: 9.13, _AA.E: 9.67, _AA.G: 9.60, _AA.H: 9.17, _AA.I: 9.60, 
       _AA.L: 9.60, _AA.K: 8.95, _AA.M: 9.21, _AA.F: 9.13, _AA.P: 10.60, 
       _AA.S: 9.15, _AA.T: 9.10, _AA.W: 9.44, _AA.Y: 9.11, _AA.V: 9.62
 }
-pk_cterminal: dict[str, float] = {
+pk_cterminal: Final[dict[str, float]] = {
       _AA.A: 2.34, _AA.R: 2.17, _AA.N: 2.02, _AA.D: 2.09, _AA.C: 1.71,
       _AA.Q: 2.19, _AA.E: 2.17, _AA.G: 2.34, _AA.H: 1.82, _AA.I: 2.36,
       _AA.L: 2.36, _AA.K: 2.18, _AA.M: 2.28, _AA.F: 1.83, _AA.P: 1.99,
       _AA.S: 2.21, _AA.T: 2.09, _AA.W: 2.43, _AA.Y: 2.20, _AA.V: 2.32
 }
 
-pk_sidechain: dict[str, float] = {
+pk_sidechain: Final[dict[str, float]] = {
       _AA.A: 0.0, _AA.R: 12.48, _AA.N: 0.0, _AA.D: 3.86, _AA.C: 8.33,
       _AA.Q: 0.0, _AA.E: 4.25, _AA.G: 0.0, _AA.H: 6.00, _AA.I: 0.0,
       _AA.L: 0.0, _AA.K: 10.79, _AA.M: 0.0, _AA.F: 0.0, _AA.P: 0.0,
@@ -521,7 +523,7 @@ Reference: Protein Engineering 1:289-294(1987).
 https://web.expasy.org/protscale/pscale/alpha-helixRoux.html
 """
 
-deleage_roux_alpha_helix: dict[str, float] = {
+deleage_roux_alpha_helix: Final[dict[str, float]] = {
     _AA.A: 1.489, _AA.R: 1.224, _AA.N: 0.772, _AA.D: 0.924, _AA.C: 0.966,
     _AA.Q: 1.164, _AA.E: 1.504, _AA.G: 0.510, _AA.H: 1.003, _AA.I: 1.003,
     _AA.L: 1.236, _AA.K: 1.172, _AA.M: 1.363, _AA.F: 1.195, _AA.P: 0.492,
@@ -536,7 +538,7 @@ Reference: Protein Engineering 1:289-294(1987).
 https://web.expasy.org/protscale/pscale/beta-sheetRoux.html
 """
 
-deleage_roux_beta_sheet: dict[str, float] = {
+deleage_roux_beta_sheet: Final[dict[str, float]] = {
     _AA.A: 0.709, _AA.R: 0.920, _AA.N: 0.604, _AA.D: 0.541, _AA.C: 1.191,
     _AA.Q: 0.840, _AA.E: 0.567, _AA.G: 0.657, _AA.H: 0.863, _AA.I: 1.799,
     _AA.L: 1.261, _AA.K: 0.721, _AA.M: 1.210, _AA.F: 1.393, _AA.P: 0.354,
@@ -551,7 +553,7 @@ Reference: Protein Engineering 1:289-294(1987).
 https://web.expasy.org/protscale/pscale/beta-turnRoux.html
 """
 
-deleage_roux_beta_turn: dict[str, float] = {
+deleage_roux_beta_turn: Final[dict[str, float]] = {
     _AA.A: 0.788, _AA.R: 0.912, _AA.N: 1.572, _AA.D: 1.197, _AA.C: 0.965,
     _AA.Q: 0.997, _AA.E: 1.149, _AA.G: 1.860, _AA.H: 0.970, _AA.I: 0.240,
     _AA.L: 0.670, _AA.K: 1.302, _AA.M: 0.436, _AA.F: 0.624, _AA.P: 1.415,
@@ -566,7 +568,7 @@ Reference: Protein Engineering 1:289-294(1987).
 https://web.expasy.org/protscale/pscale/CoilRoux.html
 """
 
-deleage_roux_coil: dict[str, float] = {
+deleage_roux_coil: Final[dict[str, float]] = {
     _AA.A: 0.824, _AA.R: 0.893, _AA.N: 1.167, _AA.D: 1.197, _AA.C: 0.953,
     _AA.Q: 0.947, _AA.E: 0.761, _AA.G: 1.251, _AA.H: 1.068, _AA.I: 0.886,
     _AA.L: 0.810, _AA.K: 0.897, _AA.M: 0.810, _AA.F: 0.797, _AA.P: 1.540,
@@ -582,7 +584,7 @@ Reference: Biochemistry 17:4277-4285(1978).
 https://web.expasy.org/protscale/pscale/alpha-helixLevitt.html
 """
 
-levitt_alpha_helix: dict[str, float] = {
+levitt_alpha_helix: Final[dict[str, float]] = {
     _AA.A: 1.290, _AA.R: 0.960, _AA.N: 0.900, _AA.D: 1.040, _AA.C: 1.110,
     _AA.Q: 1.270, _AA.E: 1.440, _AA.G: 0.560, _AA.H: 1.220, _AA.I: 0.970,
     _AA.L: 1.300, _AA.K: 1.230, _AA.M: 1.470, _AA.F: 1.070, _AA.P: 0.520,
@@ -597,7 +599,7 @@ Reference: Biochemistry 17:4277-4285(1978).
 https://web.expasy.org/protscale/pscale/beta-sheetLevitt.html
 """
 
-levitt_beta_sheet: dict[str, float] = {
+levitt_beta_sheet: Final[dict[str, float]] = {
     _AA.A: 0.900, _AA.R: 0.990, _AA.N: 0.760, _AA.D: 0.720, _AA.C: 0.740,
     _AA.Q: 0.800, _AA.E: 0.750, _AA.G: 0.920, _AA.H: 1.080, _AA.I: 1.450,
     _AA.L: 1.020, _AA.K: 0.770, _AA.M: 0.970, _AA.F: 1.320, _AA.P: 0.640,
@@ -612,7 +614,7 @@ Reference: Biochemistry 17:4277-4285(1978).
 https://web.expasy.org/protscale/pscale/beta-turnLevitt.html
 """
 
-levitt_beta_turn: dict[str, float] = {
+levitt_beta_turn: Final[dict[str, float]] = {
     _AA.A: 0.770, _AA.R: 0.880, _AA.N: 1.280, _AA.D: 1.410, _AA.C: 0.810,
     _AA.Q: 0.980, _AA.E: 0.990, _AA.G: 1.640, _AA.H: 0.680, _AA.I: 0.510,
     _AA.L: 0.580, _AA.K: 0.960, _AA.M: 0.410, _AA.F: 0.590, _AA.P: 1.910,
@@ -627,7 +629,7 @@ Reference: Adv. Enzym. 47:45-148(1978).
 https://web.expasy.org/protscale/pscale/alpha-helixFasman.html
 """
 
-chou_fasman_alpha_helix: dict[str, float] = {
+chou_fasman_alpha_helix: Final[dict[str, float]] = {
     _AA.A: 1.420, _AA.R: 0.980, _AA.N: 0.670, _AA.D: 1.010, _AA.C: 0.700,
     _AA.Q: 1.110, _AA.E: 1.510, _AA.G: 0.570, _AA.H: 1.000, _AA.I: 1.080,
     _AA.L: 1.210, _AA.K: 1.160, _AA.M: 1.450, _AA.F: 1.130, _AA.P: 0.570,
@@ -642,7 +644,7 @@ Reference: Adv. Enzym. 47:45-148(1978).
   https://web.expasy.org/protscale/pscale/beta-sheetFasman.html
 """
 
-chou_fasman_beta_sheet: dict[str, float] = {
+chou_fasman_beta_sheet: Final[dict[str, float]] = {
     _AA.A: 0.830, _AA.R: 0.930, _AA.N: 0.890, _AA.D: 0.540, _AA.C: 1.190,
     _AA.Q: 1.100, _AA.E: 0.370, _AA.G: 0.750, _AA.H: 0.870, _AA.I: 1.600,
     _AA.L: 1.300, _AA.K: 0.740, _AA.M: 1.050, _AA.F: 1.380, _AA.P: 0.550,
@@ -657,7 +659,7 @@ Reference: Adv. Enzym. 47:45-148(1978).
 https://web.expasy.org/protscale/pscale/beta-turnFasman.html
 """
 
-chou_fasman_beta_turn: dict[str, float] = {
+chou_fasman_beta_turn: Final[dict[str, float]] = {
     _AA.A: 0.660, _AA.R: 0.950, _AA.N: 1.560, _AA.D: 1.460, _AA.C: 1.190,
     _AA.Q: 0.980, _AA.E: 0.740, _AA.G: 1.560, _AA.H: 0.950, _AA.I: 0.470,
     _AA.L: 0.590, _AA.K: 1.010, _AA.M: 0.600, _AA.F: 0.600, _AA.P: 1.520,
@@ -676,7 +678,7 @@ Reference: Nature 282:109-111(1979).
 https://web.expasy.org/protscale/pscale/Parallelbeta-strand.html
 """
 
-beta_strand_parallel: dict[str, float] = {
+beta_strand_parallel: Final[dict[str, float]] = {
     _AA.A: 1.000, _AA.R: 0.680, _AA.N: 0.540, _AA.D: 0.500, _AA.C: 0.910,
     _AA.Q: 0.280, _AA.E: 0.590, _AA.G: 0.790, _AA.H: 0.380, _AA.I: 2.600,
     _AA.L: 1.420, _AA.K: 0.590, _AA.M: 1.490, _AA.F: 1.300, _AA.P: 0.350,
@@ -691,7 +693,7 @@ Reference: Nature 282:109-111(1979).
 https://web.expasy.org/protscale/pscale/Antiparallelbeta-strand.html
 """
 
-beta_strand_antiparallel: dict[str, float] = {
+beta_strand_antiparallel: Final[dict[str, float]] = {
     _AA.A: 0.900, _AA.R: 1.020, _AA.N: 0.620, _AA.D: 0.470, _AA.C: 1.240,
     _AA.Q: 1.180, _AA.E: 0.620, _AA.G: 0.560, _AA.H: 1.120, _AA.I: 1.540,
     _AA.L: 1.260, _AA.K: 0.740, _AA.M: 1.090, _AA.F: 1.230, _AA.P: 0.420,
@@ -706,7 +708,7 @@ Reference: Nature 282:109-111(1979).
 https://web.expasy.org/protscale/pscale/Totalbeta-strand.html
 """
 
-beta_strand_total: dict[str, float] = {
+beta_strand_total: Final[dict[str, float]] = {
     _AA.A: 0.920, _AA.R: 0.930, _AA.N: 0.600, _AA.D: 0.480, _AA.C: 1.160,
     _AA.Q: 0.950, _AA.E: 0.610, _AA.G: 0.610, _AA.H: 0.930, _AA.I: 1.810,
     _AA.L: 1.300, _AA.K: 0.700, _AA.M: 1.190, _AA.F: 1.250, _AA.P: 0.400,
@@ -721,7 +723,7 @@ Reference: Science 185:862-864(1974).
 https://web.expasy.org/protscale/pscale/Ratioside.html
 """
 
-ratioside: dict[str, float] = {
+ratioside: Final[dict[str, float]] = {
     _AA.A: 0.000, _AA.R: 0.650, _AA.N: 1.330, _AA.D: 1.380, _AA.C: 2.750,
     _AA.Q: 0.890, _AA.E: 0.920, _AA.G: 0.740, _AA.H: 0.580, _AA.I: 0.000,
     _AA.L: 0.000, _AA.K: 0.330, _AA.M: 0.000, _AA.F: 0.000, _AA.P: 0.390,
@@ -737,7 +739,7 @@ Reference: Science 185:862-864(1974).
 https://web.expasy.org/protscale/pscale/PolarityGrantham.html
 """
 
-polarity_grantham: dict[str, float] = {
+polarity_grantham: Final[dict[str, float]] = {
       _AA.A: 8.100, _AA.R: 10.500, _AA.N: 11.600, _AA.D: 13.000, _AA.C: 5.500,
       _AA.Q: 10.500, _AA.E: 12.300, _AA.G: 9.000, _AA.H: 10.400, _AA.I: 5.200,
       _AA.L: 4.900, _AA.K: 11.300, _AA.M: 5.700, _AA.F: 5.200, _AA.P: 8.000,
@@ -752,14 +754,14 @@ Reference: J. Theor. Biol. 21:170-201(1968).
 https://web.expasy.org/protscale/pscale/PolarityZimmerman.html
 """
 
-polarity_zimmerman: dict[str, float] = {
+polarity_zimmerman: Final[dict[str, float]] = {
     _AA.A: 0.000, _AA.R: 52.000, _AA.N: 3.380, _AA.D: 49.700, _AA.C: 1.480,
     _AA.Q: 3.530, _AA.E: 49.900, _AA.G: 0.000, _AA.H: 51.600, _AA.I: 0.130,
     _AA.L: 0.130, _AA.K: 49.500, _AA.M: 1.430, _AA.F: 0.350, _AA.P: 1.580,
     _AA.S: 1.670, _AA.T: 1.660, _AA.W: 2.100, _AA.Y: 1.610, _AA.V: 0.130
 }
 
-polarity_scales: dict[str, dict[str, float]] = {
+POLARITY_SCALES: Final[dict[str, dict[str, float]]] = {
     "Grantham": polarity_grantham,
     "Zimmerman": polarity_zimmerman
 }
@@ -772,7 +774,7 @@ Reference: In "Atlas of Protein Sequence and Structure", Vol.5, Suppl.3 (1978).
 https://web.expasy.org/protscale/pscale/Relativemutability.html
 """
 
-mutability: dict[str, float] = {
+mutability: Final[dict[str, float]] = {
       _AA.A: 100.000, _AA.R: 65.000, _AA.N: 134.000, _AA.D: 106.000, _AA.C: 20.000,
       _AA.Q: 93.000, _AA.E: 102.000, _AA.G: 49.000, _AA.H: 66.000, _AA.I: 96.000,
       _AA.L: 40.000, _AA.K: 56.000, _AA.M: 94.000, _AA.F: 41.000, _AA.P: 56.000,
@@ -787,7 +789,7 @@ Reference: Most textbooks.
 https://web.expasy.org/protscale/pscale/Numbercodons.html
 """
 
-codons: dict[str, float] = {
+codons: Final[dict[str, float]] = {
     _AA.A: 4.0, _AA.R: 6.0, _AA.N: 2.0, _AA.D: 2.0, _AA.C: 1.0,
     _AA.Q: 2.0, _AA.E: 2.0, _AA.G: 4.0, _AA.H: 2.0, _AA.I: 3.0,
     _AA.L: 6.0, _AA.K: 2.0, _AA.M: 1.0, _AA.F: 2.0, _AA.P: 4.0,
@@ -802,7 +804,7 @@ Reference: J. Theor. Biol. 50:167-184(1975).
 https://web.expasy.org/protscale/pscale/Refractivity.html
 """
 
-refractivity: dict[str, float] = {
+refractivity: Final[dict[str, float]] = {
     _AA.A: 4.340, _AA.R: 26.660, _AA.N: 13.280, _AA.D: 12.000, _AA.C: 35.770,
     _AA.Q: 17.560, _AA.E: 17.260, _AA.G: 0.000, _AA.H: 21.810, _AA.I: 19.060,
     _AA.L: 18.780, _AA.K: 21.290, _AA.M: 21.640, _AA.F: 29.400, _AA.P: 10.930,
@@ -818,7 +820,7 @@ Reference: J. Theor. Biol. 21:170-201(1968).
 https://web.expasy.org/protscale/pscale/Bulkiness.html 
 """
 
-bulkiness: dict[str, float] = {
+bulkiness: Final[dict[str, float]] = {
     _AA.A: 11.500, _AA.R: 14.280, _AA.N: 12.820, _AA.D: 11.680, _AA.C: 13.460,
     _AA.Q: 14.450, _AA.E: 13.570, _AA.G: 3.400, _AA.H: 13.690, _AA.I: 21.400,
     _AA.L: 21.400, _AA.K: 15.710, _AA.M: 16.250, _AA.F: 19.800, _AA.P: 17.430,
@@ -833,7 +835,7 @@ Reference: Can. J. Chem. 60:2606-2610(1982).
 https://web.expasy.org/protscale/pscale/Recognitionfactors.html
 """
 
-recognition_factors: dict[str, float] = {
+recognition_factors: Final[dict[str, float]] = {
     _AA.A: 78.000, _AA.R: 95.000, _AA.N: 94.000, _AA.D: 81.000, _AA.C: 89.000,
     _AA.Q: 87.000, _AA.E: 78.000, _AA.G: 84.000, _AA.H: 84.000, _AA.I: 88.000,
     _AA.L: 85.000, _AA.K: 87.000, _AA.M: 80.000, _AA.F: 81.000, _AA.P: 91.000,
@@ -848,7 +850,7 @@ Reference: Proteins: Structure, Function and Genetics 4:99-122(1988).
 https://web.expasy.org/protscale/pscale/A.A.composition.html
 """
 
-aa_composition_mccaldron: dict[str, float] = {
+aa_composition_mccaldron: Final[dict[str, float]] = {
       _AA.A: 8.300, _AA.R: 5.700, _AA.N: 4.400, _AA.D: 5.300, _AA.C: 1.700,
       _AA.Q: 4.000, _AA.E: 6.200, _AA.G: 7.200, _AA.H: 2.200, _AA.I: 5.200,
       _AA.L: 9.000, _AA.K: 5.700, _AA.M: 2.400, _AA.F: 3.900, _AA.P: 5.100,
@@ -863,14 +865,14 @@ Reference: Release notes for UniProtKB/Swiss-Prot release 2013_04 - April 2013.
 https://web.expasy.org/protscale/pscale/A.A.Swiss-Prot.html 
 """
 
-aa_composition_swissprot: dict[str, float] = {
+aa_composition_swissprot: Final[dict[str, float]] = {
     _AA.A: 8.25, _AA.R: 5.53, _AA.N: 4.06, _AA.D: 5.45, _AA.C: 1.37,
     _AA.Q: 3.93, _AA.E: 6.75, _AA.G: 7.07, _AA.H: 2.27, _AA.I: 5.96,
     _AA.L: 9.66, _AA.K: 5.84, _AA.M: 2.42, _AA.F: 3.86, _AA.P: 4.70,
     _AA.S: 6.56, _AA.T: 5.34, _AA.W: 1.08, _AA.Y: 2.92, _AA.V: 6.87
 }
 
-aa_composition_scales: dict[str, dict[str, float]] = {
+aa_composition_scales: Final[dict[str, dict[str, float]]] = {
     "McCaldron": aa_composition_mccaldron,
     "Swiss-Prot": aa_composition_swissprot
 }
@@ -883,7 +885,7 @@ Reference: Protein Sci. 15:1987-2001(2006).
 https://web.expasy.org/protscale/pscale/Transmembranetendency.html
 """
 
-transmembrane_tendency: dict[str, float] = {
+transmembrane_tendency: Final[dict[str, float]] = {
     _AA.A: 0.380, _AA.R: -2.570, _AA.N: -1.620, _AA.D: -3.270, _AA.C: -0.300,
     _AA.Q: -1.840, _AA.E: -2.900, _AA.G: -0.190, _AA.H: -1.440, _AA.I: 1.970,
     _AA.L: 1.820, _AA.K: -3.460, _AA.M: 1.400, _AA.F: 1.980, _AA.P: -1.440,
@@ -898,7 +900,7 @@ Reference: Nature 277:491-492(1979).
 https://web.expasy.org/protscale/pscale/accessibleresidues.html
 """
 
-accessible_residues: dict[str, float] = {
+accessible_residues: Final[dict[str, float]] = {
     _AA.A: 6.600, _AA.R: 4.500, _AA.N: 6.700, _AA.D: 7.700, _AA.C: 0.900,
     _AA.Q: 5.200, _AA.E: 5.700, _AA.G: 6.700, _AA.H: 2.500, _AA.I: 2.800,
     _AA.L: 4.800, _AA.K: 10.300, _AA.M: 1.000, _AA.F: 2.400, _AA.P: 4.800,
@@ -913,7 +915,7 @@ Reference: Science 229:834-838(1985).
 https://web.expasy.org/protscale/pscale/Averageburied.html
 """
 
-average_buried_area: dict[str, float] = {
+average_buried_area: Final[dict[str, float]] = {
     _AA.A: 86.600, _AA.R: 162.200, _AA.N: 103.300, _AA.D: 97.800, _AA.C: 132.300,
     _AA.Q: 119.200, _AA.E: 113.900, _AA.G: 62.900, _AA.H: 155.800, _AA.I: 158.000,
     _AA.L: 164.100, _AA.K: 115.500, _AA.M: 172.900, _AA.F: 194.100, _AA.P: 92.900,
@@ -928,7 +930,7 @@ Reference: Most textbooks.
 https://web.expasy.org/protscale/pscale/Molecularweight.html
 """
 
-molecular_weights: dict[str, float] = {
+molecular_weights: Final[dict[str, float]] = {
     _AA.A: 89.000, _AA.R: 174.000, _AA.N: 132.000, _AA.D: 133.000, _AA.C: 121.000,
     _AA.Q: 146.000, _AA.E: 147.000, _AA.G: 75.000, _AA.H: 155.000, _AA.I: 131.000,
     _AA.L: 131.000, _AA.K: 146.000, _AA.M: 149.000, _AA.F: 165.000, _AA.P: 115.000,
@@ -943,7 +945,7 @@ Reference: Proc. Natl. Acad. Sci. USA 77:1632-1636(1980).
 https://web.expasy.org/protscale/pscale/HPLC2.1.html
 """
 
-hplc_meek_2_1: dict[str, float] = {
+hplc_meek_2_1: Final[dict[str, float]] = {
     _AA.A: -0.100, _AA.R: -4.500, _AA.N: -1.600, _AA.D: -2.800, _AA.C: -2.200,
     _AA.Q: -2.500, _AA.E: -7.500, _AA.G: -0.500, _AA.H: 0.800, _AA.I: 11.800,
     _AA.L: 10.000, _AA.K: -3.200, _AA.M: 7.100, _AA.F: 13.900, _AA.P: 8.000,
@@ -959,7 +961,7 @@ https://web.expasy.org/protscale/pscale/HPLCHFBA.html
 
 """
 
-hplc_browne: dict[str, float] = {
+hplc_browne: Final[dict[str, float]] = {
     _AA.A: 3.900, _AA.R: 3.200, _AA.N: -2.800, _AA.D: -2.800, _AA.C: -14.300,
     _AA.Q: 1.800, _AA.E: -7.500, _AA.G: -2.300, _AA.H: 2.000, _AA.I: 11.000,
     _AA.L: 15.000, _AA.K: -2.500, _AA.M: 4.100, _AA.F: 14.700, _AA.P: 5.600,
@@ -974,7 +976,7 @@ Reference: Proc. Natl. Acad. Sci. USA 77:1632-1636(1980).
 https://web.expasy.org/protscale/pscale/HPLC7.4.html
 """
 
-hplc_meek_7_4: dict[str, float] = {
+hplc_meek_7_4: Final[dict[str, float]] = {
     _AA.A: 0.500, _AA.R: 0.800, _AA.N: 0.800, _AA.D: -8.200, _AA.C: -6.800,
     _AA.Q: -4.800, _AA.E: -16.900, _AA.G: 0.000, _AA.H: -3.500, _AA.I: 13.900,
     _AA.L: 8.800, _AA.K: 0.100, _AA.M: 4.800, _AA.F: 13.200, _AA.P: 6.100,
@@ -989,7 +991,7 @@ Reference: Anal. Biochem. 124:201-208(1982).
 https://web.expasy.org/protscale/pscale/HPLCTFA.html
 """
 
-hplc_browne_tfa: dict[str, float] = {
+hplc_browne_tfa: Final[dict[str, float]] = {
     _AA.A: 7.300, _AA.R: -3.600, _AA.N: -5.700, _AA.D: -2.900, _AA.C: -9.200,
     _AA.Q: -0.300, _AA.E: -7.100, _AA.G: -1.200, _AA.H: -2.100, _AA.I: 6.600,
     _AA.L: 20.000, _AA.K: -3.700, _AA.M: 5.600, _AA.F: 19.200, _AA.P: 5.100,
@@ -1172,7 +1174,8 @@ secondary_structure_scales_by_name: dict[str, dict[str, dict[str, float]]] = {
 }
 
 
-all_property_scales: dict[str, dict[str, float]] = {
+
+PROPERTY_SCALES: Final[dict[str, dict[str, float]]] = {
     # Hydrophobicity scales
     HydrophobicityScale.KYTE_DOOLITTLE: hphob_kyte_doolittle,
     HydrophobicityScale.ADOBERIN: hphob_adoberin,
@@ -1256,7 +1259,7 @@ all_property_scales: dict[str, dict[str, float]] = {
     CompositionScale.SWISSPROT: aa_composition_swissprot,
 }
 
-hydrophobicity_scales: dict[str, dict[str, float]] = {
+HYDROPHOBICITY_SCALES: Final[dict[str, dict[str, float]]] = {
     HydrophobicityScale.KYTE_DOOLITTLE: hphob_kyte_doolittle,
     HydrophobicityScale.ADOBERIN: hphob_adoberin,
     HydrophobicityScale.ABRAHAM_LEO: hphob_abraham_leo,
@@ -1295,7 +1298,7 @@ hydrophobicity_scales: dict[str, dict[str, float]] = {
 
 
 # Surface accessibility scales
-surface_accessibility_scales: dict[str, dict[str, float]] = {
+SURFACE_ACCESSIBILITY_SCALES: Final[dict[str, dict[str, float]]] = {
     SurfaceAccessibilityScale.VERGOTEN: surface_accessibility_vergoten,
     SurfaceAccessibilityScale.JANIN: surface_accessiblility_janin,
     SurfaceAccessibilityScale.ACCESSIBLE_RESIDUES: accessible_residues,
@@ -1303,7 +1306,7 @@ surface_accessibility_scales: dict[str, dict[str, float]] = {
 }
 
 
-hplc_scales: dict[str, dict[str, float]] = {
+HPLC_SCALES: Final[dict[str, dict[str, float]]] = {
     HPLCScale.MEEK_2_1: hplc_meek_2_1,
     HPLCScale.BROWNE: hplc_browne,
     HPLCScale.MEEK_7_4: hplc_meek_7_4,
@@ -1312,29 +1315,29 @@ hplc_scales: dict[str, dict[str, float]] = {
 
 
 # Hydrophilicity scales
-hydrophilicity_scales: dict[str, dict[str, float]] = {
+HYDROPHILICITY_SCALES: Final[dict[str, dict[str, float]]] = {
     PhysicalPropertyScale.HYDROPHILICITY_HOP_WOOD: hydrophilicity_hopp_wood
 }
 
 # Flexibility scales
-flexibility_scales: dict[str, dict[str, float]] = {
+FLIXIBILITY_SCALES: Final[dict[str, dict[str, float]]] = {
     PhysicalPropertyScale.FLEXIBILITY_VIHINEN: flexibility_vihinen
 }
 
 # Polarity scales (enum-keyed)
-polarity_scales: dict[str, dict[str, float]] = {
+POLARITY_SCALES: Final[dict[str, dict[str, float]]] = {
     PolarityScale.GRANTHAM: polarity_grantham,
     PolarityScale.ZIMMERMAN: polarity_zimmerman,
 }
 
 # Composition scales (enum-keyed)
-composition_scales: dict[str, dict[str, float]] = {
+COMPOSITION_SCALES: Final[dict[str, dict[str, float]]] = {
     CompositionScale.MCCALDRON: aa_composition_mccaldron,
     CompositionScale.SWISSPROT: aa_composition_swissprot,
 }
 
 # Physical property scales — exhaustive mapping using PhysicalPropertyScale
-physical_property_scales: dict[str, dict[str, float]] = {
+PHYSICAL_PROPERTY_SCALES: Final[dict[str, dict[str, float]]] = {
     PhysicalPropertyScale.MOLECULAR_WEIGHTS: molecular_weights,
     PhysicalPropertyScale.BULKINESS: bulkiness,
     PhysicalPropertyScale.REFRACTIVITY: refractivity,

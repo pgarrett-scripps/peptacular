@@ -99,45 +99,7 @@ def build_mods(
     """
     Build modified sequences by applying static and variable modifications to a sequence or list of sequences.
 
-    Automatically uses parallel processing when a list of sequences is provided.
-    When method=None (default), automatically detects if GIL is disabled and uses
-    threading for better performance, otherwise uses multiprocessing.
-
-    :param sequence: The sequence to modify, ProFormaAnnotation, or list of sequences.
-    :type sequence: ProFormaAnnotation | str | list[ProFormaAnnotation | str]
-    :param nterm_static: Static N-terminal modifications.
-    :type nterm_static: MOD_BUILDER_INPUT_TYPE | None
-    :param cterm_static: Static C-terminal modifications.
-    :type cterm_static: MOD_BUILDER_INPUT_TYPE | None
-    :param internal_static: Static internal modifications.
-    :type internal_static: MOD_BUILDER_INPUT_TYPE | None
-    :param labile_static: Static labile modifications.
-    :type labile_static: MOD_BUILDER_INPUT_TYPE | None
-    :param nterm_variable: Variable N-terminal modifications.
-    :type nterm_variable: MOD_BUILDER_INPUT_TYPE | None
-    :param cterm_variable: Variable C-terminal modifications.
-    :type cterm_variable: MOD_BUILDER_INPUT_TYPE | None
-    :param internal_variable: Variable internal modifications.
-    :type internal_variable: MOD_BUILDER_INPUT_TYPE | None
-    :param labile_variable: Variable labile modifications.
-    :type labile_variable: MOD_BUILDER_INPUT_TYPE | None
-    :param max_variable_mods: Maximum number of variable modifications per sequence.
-    :type max_variable_mods: int
-    :param use_regex: Whether to use regex for modification matching.
-    :type use_regex: bool
-    :param precision: Number of decimal places for mass values.
-    :type precision: int | None
-    :param include_plus: Whether to include plus signs for positive modifications.
-    :type include_plus: bool
-    :param n_workers: Number of worker processes (only for lists). If None, uses CPU count.
-    :type n_workers: int | None
-    :param chunksize: Number of items per chunk (only for lists). If None, auto-calculated.
-    :type chunksize: int | None
-    :param method: 'process', 'thread', or None (auto-detect). Default is None.
-    :type method: Literal["process", "thread"] | None
-
-    :return: List of modified sequences as strings, or list of lists for multiple input sequences.
-    :rtype: list[str] | list[list[str]]
+    Modifications are specified as dictionaries where keys represent the residue or terminus type and values are iterables of modifications.
 
     .. code-block:: python
 
@@ -197,8 +159,7 @@ def get_mods(
     mods: ModType | Iterable[ModType] | ModTypeLiteral | None = None,
 ) -> dict[str, Any]:
     """
-    Parses a sequence with modifications and returns a dictionary where keys represent the position/type of the
-    modifications.
+    Parses a sequence with modifications and returns a dictionary where keys represent the position/type of the modifications.
     """
 
     return get_annotation_input(sequence, copy=True).get_mods(mods)
@@ -243,15 +204,6 @@ def condense_static_mods(
     """
     Condenses static modifications into internal modifications.
 
-    :param sequence: The sequence or ProFormaAnnotation object.
-    :type sequence: Union[str, ProFormaAnnotation]
-
-    :raises ValueError: If the input sequence contains multiple sequences.
-    :raises ProFormaFormatError: if the proforma sequence is not valid
-
-    :return: The peptide sequence with condensed static modifications.
-    :rtype: str
-
     .. code-block:: python
 
         # Condenses static modifications to specified internal modifications
@@ -291,15 +243,6 @@ def pop_mods(
     Removes all modifications from the given sequence, returning the unmodified sequence and a dictionary of the
     removed modifications.
 
-    :param sequence: The sequence or ProFormaAnnotation object.
-    :type sequence: Union[str, ProFormaAnnotation]
-
-    :raises ValueError: If the input sequence contains multiple sequences.
-    :raises ProFormaFormatError: if the proforma sequence is not valid
-
-    :return: A tuple containing the unmodified sequence and a dictionary of the removed modifications.
-    :rtype: Tuple[str, ModDict]
-
     .. code-block:: python
 
         # Simply combines the functionality of strip_modifications and get_modifications
@@ -329,53 +272,7 @@ def _strip_mods(
     sequence: str | ProFormaAnnotation,
     mods: ModType | Iterable[ModType] | None = None,
 ) -> str:
-    """
-    Strips all modifications from the given sequence, returning the unmodified sequence.
-
-    :param sequence: The sequence or ProFormaAnnotation object.
-    :type sequence: Union[str, ProFormaAnnotation]
-
-    :raises ValueError: If the input sequence contains multiple sequences.
-    :raises ProFormaFormatError: if the proforma sequence is not valid
-
-    :return: The stripped sequence
-    :rtype: str
-
-    .. code-block:: python
-
-        # Removes internal modifications:
-        >>> strip_mods('PEP[phospho]TIDE')
-        'PEPTIDE'
-
-        # Also removes N and C terminal modifications:
-        >>> strip_mods('[Acetyl]-PEPTIDE[1.234]-[Amide]')
-        'PEPTIDE'
-
-        # Also remove labile modifications:
-        >>> strip_mods('{1.0}[Acetyl]-PEPTIDE[1.234]-[Amide]')
-        'PEPTIDE'
-
-        # Also remove isotope notations:
-        >>> strip_mods('<C13>[Acetyl]-PEPTIDE[1.234]-[Amide]')
-        'PEPTIDE'
-
-        # Using a sequence without modifications will return the same sequence:
-        >>> strip_mods('PEPTIDE')
-        'PEPTIDE'
-
-        >>> strip_mods('PEP[Formula:[13C]H12]TIDE')
-        'PEPTIDE'
-
-        >>> strip_mods('(?DQ)NGTWEM[Oxidation]ESNENFEGYM[Oxidation]K')
-        'DQNGTWEMESNENFEGYMK'
-
-        >>> strip_mods('[1][2]^2?[100]-PEP[1]TIDE')
-        'PEPTIDE'
-
-    """
-
     annotation = get_annotation_input(sequence=sequence, copy=True)
-
     return annotation.clear_mods(mods=mods, inplace=True).serialize()
 
 
@@ -400,23 +297,11 @@ def strip_mods(
     """
     Strips all modifications from the given sequence or list of sequences, returning the unmodified sequence(s).
 
-    Automatically uses parallel processing when a list of sequences is provided.
-    When method=None (default), automatically detects if GIL is disabled and uses
-    threading for better performance, otherwise uses multiprocessing.
+    .. code-block:: python
 
-    :param sequence: The sequence or ProFormaAnnotation object, or list of sequences.
-    :type sequence: Union[str, ProFormaAnnotation, list[str | ProFormaAnnotation]]
-    :param mods: The modifications to remove. If None, all modifications will be removed.
-    :type mods: Optional[Union[str, List[str]]]
-    :param include_plus: If True, the modifications will be serialized with a '+' sign for positive values.
-    :type include_plus: bool
-
-    :raises ValueError: If the input sequence contains multiple sequences.
-    :raises ProFormaFormatError: if the proforma sequence is not valid
-
-    :return: The stripped sequence(s).
-    :rtype: str | list[str]
-
+        # Removes internal modifications:
+        >>> strip_mods('PEP[phospho]TIDE')
+        'PEPTIDE'
     """
 
     if (
@@ -443,40 +328,11 @@ def filter_mods(
     """
     Keeps only the specified modifications in the sequence, removing all others.
 
-    :param sequence: The sequence or ProFormaAnnotation object.
-    :type sequence: Union[str, ProFormaAnnotation]
-    :param mods: The modifications to keep. If None, all modifications will be kept.
-    :type mods: Optional[Union[str, List[str]]]
-    :param include_plus: If True, the modifications will be serialized with a '+' sign for positive values.
-    :type include_plus: bool
-
-    :raises ValueError: If the input sequence contains multiple sequences.
-    :raises ProFormaFormatError: if the proforma sequence is not valid
-
-    :return: The sequence with only the specified modifications kept.
-    :rtype: str
-
     .. code-block:: python
 
         # Keeps only internal modifications:
         >>> filter_mods('PEP[phospho]TIDE', mods='internal')
         'PEP[phospho]TIDE'
-
-        # Keeps only N and C terminal modifications:
-        >>> filter_mods('[Acetyl]-PEPTIDE[1.234]-[Amide]', mods=['nterm', 'cterm'])
-        '[Acetyl]-PEPTIDE-[Amide]'
-
-        # Keeps only labile modifications:
-        >>> filter_mods('{1.0}[Acetyl]-PEPTIDE[1.234]-[Amide]', mods='labile')
-        '{1.0}PEPTIDE'
-
-        # Keeps only isotope notations:
-        >>> filter_mods('<C13>[Acetyl]-PEPTIDE[1.234]-[Amide]', mods='isotope')
-        '<C13>PEPTIDE'
-
-        # Using a sequence without modifications will return the same sequence:
-        >>> filter_mods('PEPTIDE')
-        'PEPTIDE'
 
     """
     return (
@@ -489,7 +345,6 @@ def filter_mods(
 def _to_ms2_pip_single(
     sequence: ProFormaAnnotation | str,
 ) -> tuple[str, str]:
-    """Convert a single peptide sequence to MS2PIP format"""
     annot = get_annotation_input(sequence=sequence, copy=True)
     return annot.to_ms2_pip(inplace=True)
 
@@ -520,28 +375,6 @@ def to_ms2_pip(
 ) -> tuple[str, str] | list[tuple[str, str]]:
     """
     Convert a peptide sequence to MS2PIP format by condensing modifications.
-
-    Automatically uses parallel processing when a list of sequences is provided.
-    When method=None (default), automatically detects if GIL is disabled and uses
-    threading for better performance, otherwise uses multiprocessing.
-
-    modifications: MS2PIP-style formatted modifications: Every modification is
-    listed as location|name, separated by a pipe (|) between the location, the name,
-    and other modifications. location is an integer counted starting at 1 for the first AA.
-    0 is reserved for N-terminal modifications, -1 for C-terminal modifications. name has to
-    correspond to a Unimod (PSI-MS) name.
-
-    :param sequence: The sequence or ProFormaAnnotation object, or list of sequences.
-    :type sequence: Union[str, ProFormaAnnotation, list[str | ProFormaAnnotation]]
-    :param n_workers: Number of worker processes (only for lists). If None, uses CPU count.
-    :type n_workers: int | None
-    :param chunksize: Number of items per chunk (only for lists). If None, auto-calculated.
-    :type chunksize: int | None
-    :param method: 'process', 'thread', or None (auto-detect). Default is None.
-    :type method: Literal["process", "thread"] | None
-
-    :return: Tuple of (unmodified_sequence, modification_string) or list of tuples.
-    :rtype: tuple[str, str] | list[tuple[str, str]]
 
     .. code-block:: python
 
@@ -575,7 +408,6 @@ def _from_ms2_pip_single(
     item: tuple[str, str],
     static_mods: Mapping[str, float] | None = None,
 ) -> str:
-    """Convert a single MS2PIP format to ProForma string"""
     sequence, modifications = item
     return ProFormaAnnotation.from_ms2_pip(
         sequence=sequence,
@@ -613,29 +445,6 @@ def from_ms2_pip(
 ) -> str | list[str]:
     """
     Convert MS2PIP format to ProForma string(s).
-    Automatically uses parallel processing when a list is provided.
-    When method=None (default), automatically detects if GIL is disabled and uses
-    threading for better performance, otherwise uses multiprocessing.
-
-    MS2PIP modifications format: Every modification is listed as location|name,
-    separated by a pipe (|) between the location, the name, and other modifications.
-    Location is an integer counted starting at 1 for the first AA. 0 is reserved for
-    N-terminal modifications, -1 for C-terminal modifications.
-
-    :param sequence: Tuple of (sequence, modifications) or list of such tuples.
-    :type sequence: tuple[str, str] | list[tuple[str, str]]
-    :param n_workers: Number of worker processes (only for lists). If None, uses CPU count.
-    :type n_workers: int | None
-    :param chunksize: Number of items per chunk (only for lists). If None, auto-calculated.
-    :type chunksize: int | None
-    :param include_plus: Whether to include '+' prefix for positive modifications.
-    :type include_plus: bool
-    :param precision: Number of decimal places for floating point modifications.
-    :type precision: int | None
-    :param method: 'process', 'thread', or None (auto-detect). Default is None.
-    :type method: Literal["process", "thread"] | None
-    :return: ProForma string or list of ProForma strings.
-    :rtype: str | list[str]
 
     .. code-block:: python
 
@@ -684,20 +493,6 @@ def from_ms2_pip(
 def _condense_to_peptidoform(
     sequence: str | ProFormaAnnotation,
 ) -> str:
-    """
-    Condenses all modifications into a peptidoform representation.
-
-    :param sequence: The sequence or ProFormaAnnotation object.
-    :type sequence: Union[str, ProFormaAnnotation]
-
-    :raises ValueError: If the input sequence contains multiple sequences.
-    :raises ProFormaFormatError: if the proforma sequence is not valid
-
-    :return: The peptide sequence in peptidoform representation.
-    :rtype: str
-
-    """
-
     return (
         get_annotation_input(sequence=sequence, copy=True)
         .condense_to_peptidoform(inplace=False)
@@ -726,22 +521,6 @@ def condense_to_peptidoform(
 ) -> str | list[str]:
     """
     Condenses all modifications into a peptidoform representation for a sequence or list of sequences.
-
-    Automatically uses parallel processing when a list of sequences is provided.
-    When method=None (default), automatically detects if GIL is disabled and uses
-    threading for better performance, otherwise uses multiprocessing.
-
-    :param sequence: The sequence or ProFormaAnnotation object, or list of sequences.
-    :type sequence: Union[str, ProFormaAnnotation, list[str | ProFormaAnnotation]]
-    :param include_plus: If True, the modifications will be serialized with a '+' sign for positive values.
-    :type include_plus: bool
-
-    :raises ValueError: If the input sequence contains multiple sequences.
-    :raises ProFormaFormatError: if the proforma sequence is not valid
-
-    :return: The peptide sequence(s) in peptidoform representation.
-    :rtype: str | list[str]
-
     """
 
     if (

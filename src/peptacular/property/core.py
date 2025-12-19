@@ -1,5 +1,3 @@
-"""Core property calculation functions."""
-
 from __future__ import annotations
 
 import math
@@ -11,7 +9,7 @@ from .data import (
     POSITIVE_AMINO_ACIDS,
     ChargeScale,
     SecondaryStructureMethod,
-    all_property_scales,
+    PROPERTY_SCALES,
     secondary_structure_scales_by_name,
 )
 from .types import (
@@ -236,11 +234,11 @@ def calc_property(
     )
 
     if isinstance(scale, str):
-        if scale not in all_property_scales:
+        if scale not in PROPERTY_SCALES:
             raise ValueError(
-                f"Scale '{scale}' not found in available property scales: {list(all_property_scales.keys())}"
+                f"Scale '{scale}' not found in available property scales: {list(PROPERTY_SCALES.keys())}"
             )
-        aa_data = all_property_scales[scale]
+        aa_data = PROPERTY_SCALES[scale]
     else:
         aa_data = scale
 
@@ -361,7 +359,7 @@ def charge_at_ph(sequence: str, pH: float = 7.0) -> float:
     # N-terminal charge
     nterm_pK = _get_aa_value(
         aa=nterm,
-        aa_data=all_property_scales[ChargeScale.PK_NTERMINAL],
+        aa_data=PROPERTY_SCALES[ChargeScale.PK_NTERMINAL],
         missing_aa_handling=MissingAAHandling.ERROR,
     )
 
@@ -379,7 +377,7 @@ def charge_at_ph(sequence: str, pH: float = 7.0) -> float:
         if count > 0:
             pK = _get_aa_value(
                 aa=aa,
-                aa_data=all_property_scales[ChargeScale.PK_SIDECHAIN],
+                aa_data=PROPERTY_SCALES[ChargeScale.PK_SIDECHAIN],
                 missing_aa_handling=MissingAAHandling.ERROR,
             )
 
@@ -397,7 +395,7 @@ def charge_at_ph(sequence: str, pH: float = 7.0) -> float:
     # C-terminal charge
     cterm_pK = _get_aa_value(
         aa=cterm,
-        aa_data=all_property_scales[ChargeScale.PK_CTERMINAL],
+        aa_data=PROPERTY_SCALES[ChargeScale.PK_CTERMINAL],
         missing_aa_handling=MissingAAHandling.ERROR,
     )
 
@@ -415,7 +413,7 @@ def charge_at_ph(sequence: str, pH: float = 7.0) -> float:
         if count > 0:
             pK = _get_aa_value(
                 aa=aa,
-                aa_data=all_property_scales[ChargeScale.PK_SIDECHAIN],
+                aa_data=PROPERTY_SCALES[ChargeScale.PK_SIDECHAIN],
                 missing_aa_handling=MissingAAHandling.ERROR,
             )
 

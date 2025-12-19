@@ -145,8 +145,6 @@ def calc_property(
 ) -> float | list[float]:
     """
     Calculate a physicochemical property for a sequence or list of sequences.
-
-    Automatically uses parallel processing when a list of sequences is provided.
     """
     if (
         isinstance(sequence, Sequence)
@@ -188,7 +186,6 @@ def _simple_property_single(
     scale: str | dict[str, float],
     precision: int | None = None,
 ) -> float:
-    """Calculate a simple property for a single sequence"""
     annotation = get_annotation_input(sequence=sequence, copy=True)
     val = _calc_property(
         sequence=annotation.stripped_sequence,
@@ -228,7 +225,6 @@ def hydrophobicity(
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float | list[float]:
-    """Calculate hydrophobicity. Supports parallel processing for lists."""
     if (
         isinstance(sequence, Sequence)
         and not isinstance(sequence, str)
@@ -278,7 +274,6 @@ def flexibility(
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float | list[float]:
-    """Calculate flexibility. Supports parallel processing for lists."""
     if (
         isinstance(sequence, Sequence)
         and not isinstance(sequence, str)
@@ -328,7 +323,6 @@ def hydrophilicity(
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float | list[float]:
-    """Calculate hydrophilicity. Supports parallel processing for lists."""
     if (
         isinstance(sequence, Sequence)
         and not isinstance(sequence, str)
@@ -378,7 +372,6 @@ def surface_accessibility(
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float | list[float]:
-    """Calculate surface accessibility. Supports parallel processing for lists."""
     if (
         isinstance(sequence, Sequence)
         and not isinstance(sequence, str)
@@ -428,7 +421,6 @@ def polarity(
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float | list[float]:
-    """Calculate polarity. Supports parallel processing for lists."""
     if (
         isinstance(sequence, Sequence)
         and not isinstance(sequence, str)
@@ -478,7 +470,6 @@ def mutability(
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float | list[float]:
-    """Calculate mutability. Supports parallel processing for lists."""
     if (
         isinstance(sequence, Sequence)
         and not isinstance(sequence, str)
@@ -528,7 +519,6 @@ def codons(
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float | list[float]:
-    """Calculate codons. Supports parallel processing for lists."""
     if (
         isinstance(sequence, Sequence)
         and not isinstance(sequence, str)
@@ -578,7 +568,6 @@ def bulkiness(
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float | list[float]:
-    """Calculate bulkiness. Supports parallel processing for lists."""
     if (
         isinstance(sequence, Sequence)
         and not isinstance(sequence, str)
@@ -628,7 +617,6 @@ def recognition_factors(
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float | list[float]:
-    """Calculate recognition factors. Supports parallel processing for lists."""
     if (
         isinstance(sequence, Sequence)
         and not isinstance(sequence, str)
@@ -678,7 +666,6 @@ def transmembrane_tendency(
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float | list[float]:
-    """Calculate transmembrane tendency. Supports parallel processing for lists."""
     if (
         isinstance(sequence, Sequence)
         and not isinstance(sequence, str)
@@ -728,7 +715,6 @@ def average_buried_area(
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float | list[float]:
-    """Calculate average buried area. Supports parallel processing for lists."""
     if (
         isinstance(sequence, Sequence)
         and not isinstance(sequence, str)
@@ -778,7 +764,6 @@ def hplc(
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float | list[float]:
-    """Calculate HPLC retention. Supports parallel processing for lists."""
     if (
         isinstance(sequence, Sequence)
         and not isinstance(sequence, str)
@@ -828,7 +813,6 @@ def refractivity(
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float | list[float]:
-    """Calculate refractivity. Supports parallel processing for lists."""
     if (
         isinstance(sequence, Sequence)
         and not isinstance(sequence, str)
@@ -891,7 +875,6 @@ def _charge_at_ph_single(
     pH: float = 7.0,
     precision: int | None = None,
 ) -> float:
-    """Calculate charge at pH for a single sequence"""
     annotation = get_annotation_input(sequence=sequence, copy=False)
     val = _charge_at_ph(
         sequence=annotation.stripped_sequence,
@@ -930,9 +913,6 @@ def charge_at_ph(
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float | list[float]:
-    """
-    Calculate the charge of a protein at given pH using the Henderson-Hasselbalch equation.
-    """
     if (
         isinstance(sequence, Sequence)
         and not isinstance(sequence, str)
@@ -959,7 +939,6 @@ def _pi_single(
     sequence: str | ProFormaAnnotation,
     precision: int | None = None,
 ) -> float:
-    """Calculate pI for a single sequence"""
     annotation = get_annotation_input(sequence=sequence, copy=False)
 
     def _calculate_pi(
@@ -1009,9 +988,6 @@ def pi(
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float | list[float]:
-    """
-    Calculate the isoelectric point (pI) of a protein sequence.
-    """
     if (
         isinstance(sequence, Sequence)
         and not isinstance(sequence, str)
@@ -1037,7 +1013,6 @@ def _aa_property_percentage_single(
     residues: list[str],
     precision: int | None = None,
 ) -> float:
-    """Calculate AA percentage for a single sequence"""
     annotation = get_annotation_input(sequence=sequence, copy=False)
     val = _aa_property_percentage(
         sequence=annotation.stripped_sequence,
@@ -1076,10 +1051,6 @@ def aa_property_percentage(
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float | list[float]:
-    """
-    Calculate the percentage of specified amino acid residues in a sequence.
-    Supports parallel processing for lists of sequences.
-    """
     if (
         isinstance(sequence, Sequence)
         and not isinstance(sequence, str)
@@ -1132,10 +1103,6 @@ def aromaticity(
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float | list[float]:
-    """
-    Calculate the aromaticity value of a protein according to Lobry, 1994.
-    Supports parallel processing for lists of sequences.
-    """
     if (
         isinstance(sequence, Sequence)
         and not isinstance(sequence, str)
@@ -1163,7 +1130,6 @@ def _secondary_structure_single(
     scale: str = SecondaryStructureMethod.DELEAGE_ROUX,
     precision: int | None = None,
 ) -> dict[str, float]:
-    """Calculate secondary structure for a single sequence"""
     annotation = get_annotation_input(sequence=sequence, copy=True)
     d = _secondary_structure(
         sequence=annotation.stripped_sequence,
@@ -1204,10 +1170,6 @@ def secondary_structure(
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> dict[str, float] | list[dict[str, float]]:
-    """
-    Calculate the secondary structure propensity of a peptide sequence.
-    Supports parallel processing for lists of sequences.
-    """
     if (
         isinstance(sequence, Sequence)
         and not isinstance(sequence, str)
@@ -1267,9 +1229,6 @@ def alpha_helix_percent(
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float | list[float]:
-    """
-    Calculate the propensity for alpha helix formation using the Deleage-Roux scale.
-    """
     if (
         isinstance(sequence, Sequence)
         and not isinstance(sequence, str)
@@ -1327,9 +1286,6 @@ def beta_sheet_percent(
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float | list[float]:
-    """
-    Calculate the propensity for beta sheet formation using the Deleage-Roux scale.
-    """
     if (
         isinstance(sequence, Sequence)
         and not isinstance(sequence, str)
@@ -1354,7 +1310,6 @@ def _beta_turn_percent_single(
     sequence: str | ProFormaAnnotation,
     precision: int | None = None,
 ) -> float:
-    """Calculate beta turn percent for a single sequence"""
     d = _secondary_structure_single(
         sequence, scale=SecondaryStructureMethod.DELEAGE_ROUX, precision=precision
     )
@@ -1388,10 +1343,6 @@ def beta_turn_percent(
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float | list[float]:
-    """
-    Calculate the propensity for beta turn formation using the Deleage-Roux scale.
-    Supports parallel processing for lists of sequences.
-    """
     if (
         isinstance(sequence, Sequence)
         and not isinstance(sequence, str)
@@ -1416,7 +1367,6 @@ def _coil_percent_single(
     sequence: str | ProFormaAnnotation,
     precision: int | None = None,
 ) -> float:
-    """Calculate coil percent for a single sequence"""
     d = _secondary_structure_single(
         sequence, scale=SecondaryStructureMethod.DELEAGE_ROUX, precision=precision
     )
@@ -1450,10 +1400,6 @@ def coil_percent(
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> float | list[float]:
-    """
-    Calculate the propensity for coil formation using the Deleage-Roux scale.
-    Supports parallel processing for lists of sequences.
-    """
     if (
         isinstance(sequence, Sequence)
         and not isinstance(sequence, str)
@@ -1491,7 +1437,7 @@ def _property_partitions_single(
     ) = WeightingMethods.UNIFORM,
     min_weight: float = 0.1,
     max_weight: float = 1.0,
-) -> list[float]:   
+) -> list[float]:
     annotation = get_annotation_input(sequence=sequence, copy=True)
     return _property_partitions(
         sequence=annotation.stripped_sequence,
@@ -1615,4 +1561,3 @@ def property_partitions(
             min_weight=min_weight,
             max_weight=max_weight,
         )
-

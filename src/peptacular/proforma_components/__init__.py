@@ -1,8 +1,5 @@
 """
-Components package for peptacular.
-
-This package contains the core data structures (comps), parsing logic (parsers),
-and serialization logic (serializers).
+This module contains components for representing and manipulating ProForma annotations. As well as thier serialization and parsing.
 """
 
 from .comps import (
@@ -21,13 +18,10 @@ from .comps import (
     ModificationAmbiguousSecondary,
     ModificationCrossLinker,
     FixedModification,
-    Peptidoform,
     SequenceElement,
     SequenceRegion,
     SEQUENCE_TYPE,
     GLOBAL_CHARGE_TYPE,
-    PeptidoformIon,
-    CompoundPeptidoformIon,
     MODIFICATION_TAG_TYPE,
     MODIFICATION_AMBIGUOUS_TYPE,
     MODIFICATION_TYPE,
@@ -35,7 +29,6 @@ from .comps import (
     ModificationTags,
     MassPropertyMixin,
 )
-from .parsers import parse_modification_tag, parse_modification_tags, parse_modification
 
 __all__ = [
     "FormulaElement",
@@ -55,17 +48,11 @@ __all__ = [
     "FixedModification",
     "SequenceElement",
     "SequenceRegion",
-    "parse_modification_tag",
-    "parse_modification_tags",
     "SEQUENCE_TYPE",
     "GLOBAL_CHARGE_TYPE",
-    "PeptidoformIon",
-    "CompoundPeptidoformIon",
     "MODIFICATION_TAG_TYPE",
     "MODIFICATION_AMBIGUOUS_TYPE",
     "MODIFICATION_TYPE",
-    "Peptidoform",
-    "parse_modification",
     "GlycanTag",
     "ModificationTags",
     "MassPropertyMixin",

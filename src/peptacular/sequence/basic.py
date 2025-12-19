@@ -1,7 +1,3 @@
-"""
-Sequence.py - A module for manipulating peptide sequences with modifications.
-"""
-
 from typing import Any, Sequence, overload
 
 from ..constants import ParrallelMethod, ParrallelMethodLiteral
@@ -13,7 +9,6 @@ from .util import get_annotation_input
 
 
 def _parse_single(s: str, validate: bool = False) -> ProFormaAnnotation:
-    """Parse a ProForma string into a ProFormaAnnotation object."""
     return ProFormaAnnotation.parse(s, validate=validate)
 
 
@@ -451,3 +446,56 @@ def annotate_ambiguity(
         annot.condense_ambiguity_to_xnotation(inplace=True)
 
     return annot.serialize()
+
+
+def _validate_single(
+    sequence: str | ProFormaAnnotation,
+) -> bool:
+    try:
+        get_annotation_input(sequence, copy=False).validate()
+    except ValueError:
+        return False
+    return True
+
+
+@overload
+def validate(
+    sequence: str | ProFormaAnnotation,
+    n_workers: None = None,
+    chunksize: None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+) -> bool: ...
+
+
+@overload
+def validate(
+    sequence: Sequence[str | ProFormaAnnotation],
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+) -> list[bool]: ...
+
+
+def validate(
+    sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+) -> bool | list[bool]:
+    """
+    Checks if the input sequence is a valid ProForma sequence.
+    """
+    if (
+        isinstance(sequence, Sequence)
+        and not isinstance(sequence, str)
+        and not isinstance(sequence, ProFormaAnnotation)
+    ):
+        return parallel_apply_internal(
+            _validate_single,
+            sequence,
+            n_workers=n_workers,
+            chunksize=chunksize,
+            method=method,
+        )
+    else:
+        return _validate_single(sequence)

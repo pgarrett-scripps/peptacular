@@ -26,7 +26,6 @@ def _mass_single(
     isotopes: ISOTOPE_TYPE | None = None,
     losses: dict[LOSS_TYPE, int] | None = None,
 ) -> float:
-    """Calculate mass for a single sequence"""
     annotation = get_annotation_input(sequence=sequence, copy=False)
     return annotation.mass(
         ion_type=ion_type,
@@ -37,7 +36,6 @@ def _mass_single(
     )
 
 
-# Type hints for single sequence
 @overload
 def mass(
     sequence: str | ProFormaAnnotation,
@@ -52,7 +50,6 @@ def mass(
 ) -> float: ...
 
 
-# Type hints for list of sequences
 @overload
 def mass(
     sequence: Sequence[str | ProFormaAnnotation],
@@ -67,7 +64,6 @@ def mass(
 ) -> list[float]: ...
 
 
-# Implementation
 def mass(
     sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
     ion_type: ION_TYPE = IonType.PRECURSOR,
@@ -82,13 +78,11 @@ def mass(
     """
     Calculate the mass of an amino acid 'sequence'.
     """
-    # Check if input is a list
     if (
         isinstance(sequence, Sequence)
         and not isinstance(sequence, str)
         and not isinstance(sequence, ProFormaAnnotation)
     ):
-        # Parallel processing for lists
         return parallel_apply_internal(
             _mass_single,
             sequence,
@@ -102,7 +96,6 @@ def mass(
             losses=losses,
         )
     else:
-        # Single sequence processing
         return _mass_single(
             sequence=sequence,
             charge=charge,
@@ -113,7 +106,6 @@ def mass(
         )
 
 
-# Single sequence implementation for mz
 def _mz_single(
     sequence: str | ProFormaAnnotation,
     ion_type: ION_TYPE = IonType.PRECURSOR,
@@ -122,7 +114,6 @@ def _mz_single(
     isotopes: ISOTOPE_TYPE | None = None,
     losses: dict[LOSS_TYPE, int] | None = None,
 ) -> float:
-    """Calculate m/z for a single sequence"""
     annotation = get_annotation_input(sequence=sequence, copy=False)
     return annotation.mz(
         ion_type=ion_type,
@@ -133,7 +124,6 @@ def _mz_single(
     )
 
 
-# Type hints for mz
 @overload
 def mz(
     sequence: str | ProFormaAnnotation,
@@ -211,7 +201,6 @@ def _comp_single(
     isotopes: ISOTOPE_TYPE | None = None,
     losses: dict[LOSS_TYPE, int] | None = None,
 ) -> Counter[ElementInfo]:
-    """Calculate composition for a single sequence"""
     annotation = get_annotation_input(sequence=sequence, copy=True)
 
     return annotation.comp(

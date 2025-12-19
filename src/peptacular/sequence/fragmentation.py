@@ -1,7 +1,3 @@
-"""
-fragmentation.py contains functions for fragmenting peptides
-"""
-
 from collections.abc import Sequence
 from typing import overload
 
@@ -30,7 +26,6 @@ def _fragment_single(
     include_sequence: bool = False,
     max_losses: int = 1,
 ) -> list[Fragment]:
-    """Fragment a single sequence"""
     annotation = get_annotation_input(sequence=sequence, copy=False)
 
     return annotation.fragment(

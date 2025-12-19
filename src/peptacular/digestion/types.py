@@ -1,10 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import StrEnum
-from typing import Generator, Literal, Protocol, Self, TypeAlias, Union
-
-from ..spans import Span
+from typing import Protocol, Self
 
 
 @dataclass
@@ -15,14 +12,6 @@ class EnzymeConfig:
     missed_cleavages: int = 0
     semi_enzymatic: bool = False
     complete_digestion: bool = True
-
-
-class DigestReturnType(StrEnum):
-    STR = "str"
-    ANNOTATION = "annotation"
-    SPAN = "span"
-    STR_SPAN = "str-span"
-    ANNOTATION_SPAN = "annotation-span"
 
 
 class DigestProtocol(Protocol):
@@ -51,23 +40,3 @@ class DigestProtocol(Protocol):
     def has_mods(self) -> bool:
         """Return True if the sequence has modifications."""
         ...
-
-
-DigestResult: TypeAlias = Union[
-    str,
-    DigestProtocol,
-    Span,
-    tuple[str, Span],
-    tuple[DigestProtocol, Span],
-]
-
-DigestGenerator: TypeAlias = Generator[DigestResult, None, None]
-
-DigestReturnTypeLiterals = Literal[
-    "str", "span", "annotation", "str-span", "annotation-span"
-]
-DigestReturnTypeStrLiteral = Literal["str"]
-DigestReturnTypeSpanLiteral = Literal["span"]
-DigestReturnTypeAnnotationLiteral = Literal["annotation"]
-DigestReturnTypeStrSpanLiteral = Literal["str-span"]
-DigestReturnTypeAnnotationSpanLiteral = Literal["annotation-span"]

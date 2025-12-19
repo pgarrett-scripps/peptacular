@@ -1,11 +1,68 @@
 """Protein property calculation module."""
 
-from .mixin import SequencePropertyMixin
+from .prop import AnnotationProperties
+from .data import (
+    SecondaryStructureMethod,
+    SecondaryStructureType,
+    PropertyScale,
+    HydrophobicityScale,
+    SecondaryStructureScale,
+    SurfaceAccessibilityScale,
+    ChargeScale,
+    PolarityScale,
+    HPLCScale,
+    BetaStrandScale,
+    PhysicalPropertyScale,
+    CompositionScale,
+    PROPERTY_SCALES,
+    HYDROPHOBICITY_SCALES,
+    SURFACE_ACCESSIBILITY_SCALES,
+    HPLC_SCALES,
+    HYDROPHILICITY_SCALES,
+    FLIXIBILITY_SCALES,
+    POLARITY_SCALES,
+    COMPOSITION_SCALES,
+    PHYSICAL_PROPERTY_SCALES,
+)
 from .types import (
-    SequenceProtocol,
+    MissingAAHandling,
+    MissingAAHandlingLiteral,
+    AggregationMethod,
+    AggregationMethodLiteral,
+    WeightingMethods,
+    WeightingMethodsLiteral,
 )
 
 __all__ = [
-    "SequenceProtocol",
-    "SequencePropertyMixin",
+    # main class
+    "AnnotationProperties",
+    # data
+    "SecondaryStructureMethod",
+    "SecondaryStructureType",
+    "PropertyScale",
+    "HydrophobicityScale",
+    "SecondaryStructureScale",
+    "SurfaceAccessibilityScale",
+    "ChargeScale",
+    "PolarityScale",
+    "HPLCScale",
+    "BetaStrandScale",
+    "PhysicalPropertyScale",
+    "CompositionScale",
+    "PROPERTY_SCALES",
+    "HYDROPHOBICITY_SCALES",
+    "SURFACE_ACCESSIBILITY_SCALES",
+    "HPLC_SCALES",
+    "HYDROPHILICITY_SCALES",
+    "FLIXIBILITY_SCALES",
+    "POLARITY_SCALES",
+    "COMPOSITION_SCALES",
+    "PHYSICAL_PROPERTY_SCALES",
+    # types
+    "MissingAAHandling",
+    "MissingAAHandlingLiteral",
+    "AggregationMethod",
+    "AggregationMethodLiteral",
+    "WeightingMethods",
+    "WeightingMethodsLiteral",
 ]

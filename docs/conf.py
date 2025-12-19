@@ -3,8 +3,8 @@ import sys
 sys.path.insert(0, os.path.abspath('..'))
 
 project = 'Peptacular'
-copyright = '2024, Ty'
-author = 'Ty'
+copyright = '2024, Patrick Tyler Garrett'
+author = 'Patrick Tyler Garrett'
 
 extensions = [
     'sphinx.ext.autodoc',
@@ -22,9 +22,10 @@ html_static_path = ['_static']
 # Autodoc settings
 autodoc_default_options = {
     'members': True,
-    'undoc-members': True,
+    'inherited-members': False,
     'show-inheritance': True,
 }
+
 autodoc_typehints = 'description'  # Or 'signature' to put types in signature
 napoleon_google_docstring = True
 napoleon_numpy_docstring = True

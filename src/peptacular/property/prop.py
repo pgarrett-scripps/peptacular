@@ -1,8 +1,6 @@
-"""Mixin class providing property calculation methods for sequences."""
-
 from __future__ import annotations
 from typing import Iterable, Sequence
-
+from dataclasses import dataclass
 
 from .data import (
     AROMATIC_AMINO_ACIDS,
@@ -28,19 +26,19 @@ from .types import (
     AggregationMethodLiteral,
     MissingAAHandling,
     MissingAAHandlingLiteral,
-    SequenceProtocol,
     WeightingMethods,
     WeightingMethodsLiteral,
 )
 
 
-class SequencePropertyMixin:
+@dataclass(frozen=True, slots=True)
+class AnnotationProperties:
     """Mixin providing named property calculation methods"""
 
-    __slots__ = ()
+    stripped_sequence: str
 
     def calc_property(
-        self: SequenceProtocol,
+        self,
         scale: str | dict[str, float],
         missing_aa_handling: (
             MissingAAHandlingLiteral | MissingAAHandling
@@ -67,7 +65,7 @@ class SequencePropertyMixin:
         )
 
     @property
-    def hydrophobicity(self: SequenceProtocol) -> float:
+    def hydrophobicity(self) -> float:
         val = calc_property(
             sequence=self.stripped_sequence,
             scale=HydrophobicityScale.KYTE_DOOLITTLE,
@@ -80,7 +78,7 @@ class SequencePropertyMixin:
 
     @property
     def flexibility(
-        self: SequenceProtocol,
+        self,
     ) -> float:
         val = calc_property(
             sequence=self.stripped_sequence,
@@ -94,7 +92,7 @@ class SequencePropertyMixin:
 
     @property
     def hydrophilicity(
-        self: SequenceProtocol,
+        self,
     ) -> float:
         val = calc_property(
             sequence=self.stripped_sequence,
@@ -108,7 +106,7 @@ class SequencePropertyMixin:
 
     @property
     def surface_accessibility(
-        self: SequenceProtocol,
+        self,
     ) -> float:
         val = calc_property(
             sequence=self.stripped_sequence,
@@ -122,7 +120,7 @@ class SequencePropertyMixin:
 
     @property
     def polarity(
-        self: SequenceProtocol,
+        self,
     ) -> float:
         val = calc_property(
             sequence=self.stripped_sequence,
@@ -136,7 +134,7 @@ class SequencePropertyMixin:
 
     @property
     def mutability(
-        self: SequenceProtocol,
+        self,
     ) -> float:
         val = calc_property(
             sequence=self.stripped_sequence,
@@ -150,7 +148,7 @@ class SequencePropertyMixin:
 
     @property
     def codons(
-        self: SequenceProtocol,
+        self,
     ) -> float:
         val = calc_property(
             sequence=self.stripped_sequence,
@@ -164,7 +162,7 @@ class SequencePropertyMixin:
 
     @property
     def bulkiness(
-        self: SequenceProtocol,
+        self,
     ) -> float:
         val = calc_property(
             sequence=self.stripped_sequence,
@@ -178,7 +176,7 @@ class SequencePropertyMixin:
 
     @property
     def recognition_factors(
-        self: SequenceProtocol,
+        self,
     ) -> float:
         val = calc_property(
             sequence=self.stripped_sequence,
@@ -192,7 +190,7 @@ class SequencePropertyMixin:
 
     @property
     def transmembrane_tendency(
-        self: SequenceProtocol,
+        self,
     ) -> float:
         val = calc_property(
             sequence=self.stripped_sequence,
@@ -206,7 +204,7 @@ class SequencePropertyMixin:
 
     @property
     def average_buried_area(
-        self: SequenceProtocol,
+        self,
     ) -> float:
         val = calc_property(
             sequence=self.stripped_sequence,
@@ -220,7 +218,7 @@ class SequencePropertyMixin:
 
     @property
     def hplc(
-        self: SequenceProtocol,
+        self,
     ) -> float:
         val = calc_property(
             sequence=self.stripped_sequence,
@@ -234,7 +232,7 @@ class SequencePropertyMixin:
 
     @property
     def refractivity(
-        self: SequenceProtocol,
+        self,
     ) -> float:
         val = calc_property(
             sequence=self.stripped_sequence,
@@ -248,7 +246,7 @@ class SequencePropertyMixin:
 
     @property
     def aromaticity(
-        self: SequenceProtocol,
+        self,
         aromatic_residues: Iterable[str] = AROMATIC_AMINO_ACIDS,
     ) -> float:
         """
@@ -260,7 +258,7 @@ class SequencePropertyMixin:
         )
 
     def property_windows(
-        self: SequenceProtocol,
+        self,
         scale: str | dict[str, float],
         window_size: int = 9,
         missing_aa_handling: (
@@ -291,7 +289,7 @@ class SequencePropertyMixin:
         return vals
 
     def aa_property_percentage(
-        self: SequenceProtocol,
+        self,
         residues: Iterable[str],
     ) -> float:
         """
@@ -303,7 +301,7 @@ class SequencePropertyMixin:
         )
 
     def charge_at_ph(
-        self: SequenceProtocol,
+        self,
         pH: float = 7.0,
     ) -> float:
         """Calculate net charge at given pH"""
@@ -314,7 +312,7 @@ class SequencePropertyMixin:
         )
 
     @property
-    def pi(self: SequenceProtocol) -> float:
+    def pi(self) -> float:
         """Calculate isoelectric point using bisection method"""
 
         def _calculate_pi(
@@ -338,7 +336,7 @@ class SequencePropertyMixin:
         return isoelectric_point
 
     def secondary_structure(
-        self: SequenceProtocol,
+        self,
         scale: str = SecondaryStructureMethod.DELEAGE_ROUX,
     ) -> dict[str, float]:
         """Calculate secondary structure propensities"""
@@ -349,7 +347,7 @@ class SequencePropertyMixin:
         )
 
     @property
-    def alpha_helix_percent(self: SequenceProtocol) -> float:
+    def alpha_helix_percent(self) -> float:
         """
         Calculate the propensity for alpha helix formation using the Deleage-Roux scale.
         """
@@ -360,7 +358,7 @@ class SequencePropertyMixin:
         return d[SecondaryStructureType.ALPHA_HELIX]
 
     @property
-    def beta_sheet_percent(self: SequenceProtocol) -> float:
+    def beta_sheet_percent(self) -> float:
         """
         Calculate the propensity for beta sheet formation using the Deleage-Roux scale.
         """
@@ -371,7 +369,7 @@ class SequencePropertyMixin:
         return d[SecondaryStructureType.BETA_SHEET]
 
     @property
-    def beta_turn_percent(self: SequenceProtocol) -> float:
+    def beta_turn_percent(self) -> float:
         """
         Calculate the propensity for beta turn formation using the Deleage-Roux scale.
         """
@@ -382,7 +380,7 @@ class SequencePropertyMixin:
         return d[SecondaryStructureType.BETA_TURN]
 
     @property
-    def coil_percent(self: SequenceProtocol) -> float:
+    def coil_percent(self) -> float:
         """
         Calculate the propensity for coil formation using the Deleage-Roux scale.
         """
@@ -393,7 +391,7 @@ class SequencePropertyMixin:
         return d[SecondaryStructureType.COIL]
 
     def property_partitions(
-        self: SequenceProtocol,
+        self,
         scale: str | dict[str, float],
         num_windows: int = 5,
         normalize: bool = False,

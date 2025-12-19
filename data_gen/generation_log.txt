@@ -164,36 +164,6 @@ GENERATING REFERENCE MOLECULE DATA
   ✓ Parsed 71 reference molecules
 
   📝 Writing to: src/peptacular/fragment/refmol/data.py
-/home/ty/Repos/peptacular/data_gen/gen_refmol.py:89: UserWarning: 
-  🔴  REFMOL MASS MISMATCH: TMT127C-ETD | ION M/Z
-      Calculated: 114.123804, Ion m/z: 113.120449
-      Difference: 1.003356
-      Composition: {'C': 6, '13C': 1, 'N': 1, 'H': 15}
-  warnings.warn(
-/home/ty/Repos/peptacular/data_gen/gen_refmol.py:89: UserWarning: 
-  🔴  REFMOL MASS MISMATCH: TMT128N-ETD | ION M/Z
-      Calculated: 115.120839, Ion m/z: 114.117484
-      Difference: 1.003356
-      Composition: {'C': 6, '13C': 1, '15N': 1, 'H': 15}
-  warnings.warn(
-/home/ty/Repos/peptacular/data_gen/gen_refmol.py:89: UserWarning: 
-  🔴  REFMOL MASS MISMATCH: TMT129C-ETD | ION M/Z
-      Calculated: 116.130514, Ion m/z: 115.127157
-      Difference: 1.003357
-      Composition: {'C': 4, '13C': 3, 'N': 1, 'H': 15}
-  warnings.warn(
-/home/ty/Repos/peptacular/data_gen/gen_refmol.py:89: UserWarning: 
-  🔴  REFMOL MASS MISMATCH: TMT130N-ETD | ION M/Z
-      Calculated: 117.127549, Ion m/z: 116.124192
-      Difference: 1.003357
-      Composition: {'C': 4, '13C': 3, '15N': 1, 'H': 15}
-  warnings.warn(
-/home/ty/Repos/peptacular/data_gen/gen_refmol.py:89: UserWarning: 
-  🔴  REFMOL MASS MISMATCH: TMT131C-ETD | ION M/Z
-      Calculated: 118.137224, Ion m/z: 117.133865
-      Difference: 1.003359
-      Composition: {'C': 2, '13C': 5, 'N': 1, 'H': 15}
-  warnings.warn(
 ✅ Successfully generated src/peptacular/fragment/refmol/data.py
    Total entries: 71
 

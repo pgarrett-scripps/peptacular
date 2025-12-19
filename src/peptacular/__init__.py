@@ -13,6 +13,6 @@ from .digestion import *
 from .fragment import *
 from .isotope import *
 from .regex_utils import *
-
+from .property import *
 
 __version__ = "3.0.0"

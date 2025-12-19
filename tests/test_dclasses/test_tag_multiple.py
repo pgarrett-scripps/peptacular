@@ -7,17 +7,17 @@ import peptacular as pt
 
 
 class TestParseModificationTags:
-    """Tests for parse_modification_tags function"""
+    """Tests for ModificationTags.from_string function"""
 
     def test_returns_tuple(self):
-        """Test that parse_modification_tags returns a tuple"""
-        result = pt.parse_modification_tags("Oxidation")
+        """Test that ModificationTags.from_string returns a tuple"""
+        result = pt.ModificationTags.from_string("Oxidation")
         assert isinstance(result, pt.ModificationTags)
         assert len(result) == 1
 
     def test_contains_correct_tag(self):
         """Test that tuple contains the correct tag"""
-        result = pt.parse_modification_tags("UNIMOD:35")
+        result = pt.ModificationTags.from_string("UNIMOD:35")
         assert len(result) == 1
         first_tag = result[0]
         assert isinstance(first_tag, pt.TagAccession)
@@ -29,7 +29,7 @@ class TestMultipleTags:
 
     def test_two_tags_name_and_accession(self):
         """Test parsing two tags: name and accession"""
-        result = pt.parse_modification_tags("Oxidation|UNIMOD:35")
+        result = pt.ModificationTags.from_string("Oxidation|UNIMOD:35")
         assert isinstance(result, pt.ModificationTags)
         assert len(result) == 2
         first_tag = result[0]
@@ -42,7 +42,7 @@ class TestMultipleTags:
 
     def test_two_tags_accession_and_mass(self):
         """Test parsing accession and mass"""
-        result = pt.parse_modification_tags("UNIMOD:35|+15.995")
+        result = pt.ModificationTags.from_string("UNIMOD:35|+15.995")
         assert len(result) == 2
         first_tag = result[0]
         second_tag = result[1]
@@ -53,7 +53,7 @@ class TestMultipleTags:
 
     def test_three_tags_name_accession_mass(self):
         """Test parsing three tags: name, accession, and mass"""
-        result = pt.parse_modification_tags("Oxidation|UNIMOD:35|+15.995")
+        result = pt.ModificationTags.from_string("Oxidation|UNIMOD:35|+15.995")
         assert len(result) == 3
         assert isinstance(result[0], pt.TagName)
         assert result[0].name == "Oxidation"
@@ -64,7 +64,9 @@ class TestMultipleTags:
 
     def test_four_tags_complete_oxidation(self):
         """Test parsing all four ways to represent oxidation"""
-        result = pt.parse_modification_tags("Oxidation|UNIMOD:35|+15.995|Formula:O")
+        result = pt.ModificationTags.from_string(
+            "Oxidation|UNIMOD:35|+15.995|Formula:O"
+        )
         assert len(result) == 4
         assert isinstance(result[0], pt.TagName)
         assert isinstance(result[1], pt.TagAccession)
@@ -74,7 +76,7 @@ class TestMultipleTags:
 
     def test_name_and_info(self):
         """Test parsing name with INFO tag"""
-        result = pt.parse_modification_tags("Phospho|INFO:probable")
+        result = pt.ModificationTags.from_string("Phospho|INFO:probable")
         assert len(result) == 2
         assert isinstance(result[0], pt.TagName)
         assert result[0].name == "Phospho"
@@ -83,7 +85,7 @@ class TestMultipleTags:
 
     def test_accession_and_info(self):
         """Test parsing accession with INFO tag"""
-        result = pt.parse_modification_tags("MOD:00046|INFO:confident")
+        result = pt.ModificationTags.from_string("MOD:00046|INFO:confident")
         assert len(result) == 2
         assert isinstance(result[0], pt.TagAccession)
         assert result[0].cv == pt.CV.PSI_MOD
@@ -92,7 +94,7 @@ class TestMultipleTags:
 
     def test_shorthand_with_mass(self):
         """Test parsing shorthand named mod with mass (Rule 4 + Rule 2)"""
-        result = pt.parse_modification_tags("U:Oxidation|+15.995")
+        result = pt.ModificationTags.from_string("U:Oxidation|+15.995")
         assert len(result) == 2
         assert isinstance(result[0], pt.TagName)
         assert result[0].cv == pt.CV.UNIMOD
@@ -102,14 +104,14 @@ class TestMultipleTags:
 
     def test_formula_with_mass(self):
         """Test parsing formula with mass"""
-        result = pt.parse_modification_tags("Formula:H-2O-1|+79.966")
+        result = pt.ModificationTags.from_string("Formula:H-2O-1|+79.966")
         assert len(result) == 2
         assert isinstance(result[0], pt.ChargedFormula)
         assert isinstance(result[1], pt.TagMass)
 
     def test_whitespace_handling(self):
         """Test that whitespace around pipe is handled correctly"""
-        result = pt.parse_modification_tags("Oxidation | UNIMOD:35 | +15.995")
+        result = pt.ModificationTags.from_string("Oxidation | UNIMOD:35 | +15.995")
         assert len(result) == 3
         assert isinstance(result[0], pt.TagName)
         assert result[0].name == "Oxidation"
@@ -121,11 +123,11 @@ class TestMultipleTags:
     def test_empty_parts_ignored(self):
         """Test that empty parts from consecutive pipes throw error"""
         with pytest.raises(ValueError, match="Empty modification string"):
-            _ = pt.parse_modification_tags("Oxidation||UNIMOD:35")
+            _ = pt.ModificationTags.from_string("Oxidation||UNIMOD:35")
 
     def test_complex_real_world_example(self):
         """Test complex real-world example with multiple tags"""
-        result = pt.parse_modification_tags(
+        result = pt.ModificationTags.from_string(
             "Phosphorylation|MOD:00046|M:Phospho|+79.966|Formula:H P O3|INFO:high confidence"
         )
         assert len(result) == 6
@@ -142,7 +144,7 @@ class TestMultipleTags:
 
     def test_glycan_with_info(self):
         """Test glycan composition with INFO tag"""
-        result = pt.parse_modification_tags("Glycan:Hex5HexNAc4|INFO:N-glycan")
+        result = pt.ModificationTags.from_string("Glycan:Hex5HexNAc4|INFO:N-glycan")
         assert len(result) == 2
         # First tag should be GlycanTag
         assert isinstance(result[0], pt.GlycanTag)
@@ -152,7 +154,7 @@ class TestMultipleTags:
 
     def test_multiple_accessions_different_cvs(self):
         """Test multiple accessions from different CVs"""
-        result = pt.parse_modification_tags("UNIMOD:35|MOD:00719|RESID:AA0037")
+        result = pt.ModificationTags.from_string("UNIMOD:35|MOD:00719|RESID:AA0037")
         assert len(result) == 3
         assert isinstance(result[0], pt.TagAccession)
         assert result[0].cv == pt.CV.UNIMOD
@@ -163,7 +165,7 @@ class TestMultipleTags:
 
     def test_mixed_shorthand_and_full(self):
         """Test mixing shorthand named mods and full accessions"""
-        result = pt.parse_modification_tags("U:Oxidation|MOD:00719|M:Phospho")
+        result = pt.ModificationTags.from_string("U:Oxidation|MOD:00719|M:Phospho")
         assert len(result) == 3
         assert isinstance(result[0], pt.TagName)
         assert result[0].cv == pt.CV.UNIMOD

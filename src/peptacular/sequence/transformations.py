@@ -14,7 +14,6 @@ def _reverse_single(
     keep_nterm: int = 0,
     keep_cterm: int = 0,
 ) -> str:
-    """Internal function for reversing a single sequence."""
     return (
         get_annotation_input(sequence=sequence, copy=True)
         .reverse(inplace=True, keep_nterm=keep_nterm, keep_cterm=keep_cterm)
@@ -258,7 +257,6 @@ def _span_to_sequence_single(
     sequence: str | ProFormaAnnotation,
     span: tuple[int, int, int],
 ) -> str:
-    """Internal function for extracting span from a single sequence."""
     return (
         get_annotation_input(sequence=sequence, copy=True)
         .slice(span[0], span[1], inplace=True)
@@ -386,7 +384,6 @@ def _sort_single(
     key: Callable[[str], Any] | None = None,
     reverse: bool = False,
 ) -> str:
-    """Internal function for sorting a single sequence."""
     return (
         get_annotation_input(sequence=sequence, copy=True)
         .sort(inplace=True, key=key, reverse=reverse)
@@ -458,9 +455,9 @@ def sort(
 def _join_single(
     annotations: Sequence[ProFormaAnnotation | str],
 ) -> str:
-    """Internal function for joining a list of annotations into a single annotation."""
     annotations = [get_annotation_input(a, copy=False) for a in annotations]
     return ProFormaAnnotation.join(annotations).serialize()
+
 
 @overload
 def join(
@@ -469,6 +466,7 @@ def join(
     chunksize: None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> str: ...
+
 
 @overload
 def join(
@@ -480,7 +478,8 @@ def join(
 
 
 def join(
-    annotations: Sequence[ProFormaAnnotation | str] | Sequence[Sequence[ProFormaAnnotation | str]],
+    annotations: Sequence[ProFormaAnnotation | str]
+    | Sequence[Sequence[ProFormaAnnotation | str]],
     n_workers: int | None = None,
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,

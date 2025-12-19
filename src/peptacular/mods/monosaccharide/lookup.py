@@ -1,8 +1,6 @@
 from typing import Iterable
 from ..dclass import MonosaccharideInfo
 from .data import MONOSACCHARIDES
-import warnings
-
 
 
 class MonosaccharideLookup:

@@ -13,7 +13,7 @@ class TestTagName:
 
     def test_simple_name(self):
         """Test parsing a simple modification name"""
-        result = pt.parse_modification_tag("Oxidation")
+        result = pt.ModificationTags.from_string("Oxidation").tags[0]
         assert isinstance(result, pt.TagName)
         assert result.name == "Oxidation"
         assert result.cv is None
@@ -22,17 +22,17 @@ class TestTagName:
         """Test parsing various modification names"""
         names = ["Phospho", "Acetyl", "Amidated", "Methylation"]
         for name in names:
-            result = pt.parse_modification_tag(name)
+            result = pt.ModificationTags.from_string(name).tags[0]
             assert isinstance(result, pt.TagName)
             assert result.name == name
 
     def test_case_sensitive_name(self):
         """Test that modification names are case-sensitive"""
-        result1 = pt.parse_modification_tag("Phospho")
+        result1 = pt.ModificationTags.from_string("Phospho").tags[0]
         assert isinstance(result1, pt.TagName)
         assert result1.name == "Phospho"
 
-        result2 = pt.parse_modification_tag("phospho")
+        result2 = pt.ModificationTags.from_string("phospho").tags[0]
         assert isinstance(result2, pt.TagName)
         assert result2.name == "phospho"
 
@@ -42,48 +42,48 @@ class TestTagAccession:
 
     def test_unimod_accession(self):
         """Test parsing UNIMOD accession"""
-        result = pt.parse_modification_tag("UNIMOD:35")
+        result = pt.ModificationTags.from_string("UNIMOD:35").tags[0]
         assert isinstance(result, pt.TagAccession)
         assert result.accession == "35"
         assert result.cv == pt.CV.UNIMOD
 
     def test_unimod_case_insensitive(self):
         """Test that UNIMOD is case-insensitive"""
-        result = pt.parse_modification_tag("unimod:35")
+        result = pt.ModificationTags.from_string("unimod:35").tags[0]
         assert isinstance(result, pt.TagAccession)
         assert result.cv == pt.CV.UNIMOD
 
     def test_psi_mod_accession(self):
         """Test parsing PSI-MOD accession"""
-        result = pt.parse_modification_tag("MOD:00719")
+        result = pt.ModificationTags.from_string("MOD:00719").tags[0]
         assert isinstance(result, pt.TagAccession)
         assert result.accession == "00719"
         assert result.cv == pt.CV.PSI_MOD
 
     def test_resid_accession(self):
         """Test parsing RESID accession"""
-        result = pt.parse_modification_tag("RESID:AA0037")
+        result = pt.ModificationTags.from_string("RESID:AA0037").tags[0]
         assert isinstance(result, pt.TagAccession)
         assert result.accession == "AA0037"
         assert result.cv == pt.CV.RESID
 
     def test_gnome_accession(self):
         """Test parsing GNO accession (use GNO:)"""
-        result = pt.parse_modification_tag("GNO:G12345")
+        result = pt.ModificationTags.from_string("GNO:G12345").tags[0]
         assert isinstance(result, pt.TagAccession)
         assert result.accession == "G12345"
         assert result.cv == pt.CV.GNOME
 
     def test_xlmod_accession(self):
         """Test parsing XL-MOD accession"""
-        result = pt.parse_modification_tag("XLMOD:02001")
+        result = pt.ModificationTags.from_string("XLMOD:02001").tags[0]
         assert isinstance(result, pt.TagAccession)
         assert result.accession == "02001"
         assert result.cv == pt.CV.XL_MOD
 
     def test_xlmod_short_form(self):
         """Test parsing XLMOD (without hyphen) accession"""
-        result = pt.parse_modification_tag("XLMOD:02001")
+        result = pt.ModificationTags.from_string("XLMOD:02001").tags[0]
         assert isinstance(result, pt.TagAccession)
         assert result.accession == "02001"
         assert result.cv == pt.CV.XL_MOD
@@ -94,70 +94,70 @@ class TestShorthandForNamedMods:
 
     def test_unimod_shorthand(self):
         """Test parsing UNIMOD shorthand U:Oxidation"""
-        result = pt.parse_modification_tag("U:Oxidation")
+        result = pt.ModificationTags.from_string("U:Oxidation").tags[0]
         assert isinstance(result, pt.TagName)
         assert result.name == "Oxidation"
         assert result.cv == pt.CV.UNIMOD
 
     def test_unimod_shorthand_lowercase(self):
         """Test parsing UNIMOD shorthand u:Phospho (case-insensitive)"""
-        result = pt.parse_modification_tag("u:Phospho")
+        result = pt.ModificationTags.from_string("u:Phospho").tags[0]
         assert isinstance(result, pt.TagName)
         assert result.name == "Phospho"
         assert result.cv == pt.CV.UNIMOD
 
     def test_psi_mod_shorthand(self):
         """Test parsing PSI-MOD shorthand M:Phospho"""
-        result = pt.parse_modification_tag("M:Phospho")
+        result = pt.ModificationTags.from_string("M:Phospho").tags[0]
         assert isinstance(result, pt.TagName)
         assert result.name == "Phospho"
         assert result.cv == pt.CV.PSI_MOD
 
     def test_psi_mod_shorthand_lowercase(self):
         """Test parsing PSI-MOD shorthand m:Acetyl (case-insensitive)"""
-        result = pt.parse_modification_tag("m:Acetyl")
+        result = pt.ModificationTags.from_string("m:Acetyl").tags[0]
         assert isinstance(result, pt.TagName)
         assert result.name == "Acetyl"
         assert result.cv == pt.CV.PSI_MOD
 
     def test_resid_shorthand(self):
         """Test parsing RESID shorthand R:Methylation"""
-        result = pt.parse_modification_tag("R:Methylation")
+        result = pt.ModificationTags.from_string("R:Methylation").tags[0]
         assert isinstance(result, pt.TagName)
         assert result.name == "Methylation"
         assert result.cv == pt.CV.RESID
 
     def test_resid_shorthand_lowercase(self):
         """Test parsing RESID shorthand r:Biotinylation (case-insensitive)"""
-        result = pt.parse_modification_tag("r:Biotinylation")
+        result = pt.ModificationTags.from_string("r:Biotinylation").tags[0]
         assert isinstance(result, pt.TagName)
         assert result.name == "Biotinylation"
         assert result.cv == pt.CV.RESID
 
     def test_gnome_shorthand(self):
         """Test parsing GNO shorthand G:Glycosylation"""
-        result = pt.parse_modification_tag("G:Glycosylation")
+        result = pt.ModificationTags.from_string("G:Glycosylation").tags[0]
         assert isinstance(result, pt.TagName)
         assert result.name == "Glycosylation"
         assert result.cv == pt.CV.GNOME
 
     def test_gnome_shorthand_lowercase(self):
         """Test parsing GNO shorthand g:Mannosylation (case-insensitive)"""
-        result = pt.parse_modification_tag("g:Mannosylation")
+        result = pt.ModificationTags.from_string("g:Mannosylation").tags[0]
         assert isinstance(result, pt.TagName)
         assert result.name == "Mannosylation"
         assert result.cv == pt.CV.GNOME
 
     def test_xlmod_shorthand(self):
         """Test parsing XLMOD shorthand X:DSS"""
-        result = pt.parse_modification_tag("X:DSS")
+        result = pt.ModificationTags.from_string("X:DSS").tags[0]
         assert isinstance(result, pt.TagName)
         assert result.name == "DSS"
         assert result.cv == pt.CV.XL_MOD
 
     def test_xlmod_shorthand_lowercase(self):
         """Test parsing XLMOD shorthand x:BS3 (case-insensitive)"""
-        result = pt.parse_modification_tag("x:BS3")
+        result = pt.ModificationTags.from_string("x:BS3").tags[0]
         assert isinstance(result, pt.TagName)
         assert result.name == "BS3"
         assert result.cv == pt.CV.XL_MOD
@@ -168,27 +168,27 @@ class TestTagMass:
 
     def test_positive_mass(self):
         """Test parsing positive mass delta"""
-        result = pt.parse_modification_tag("+15.995")
+        result = pt.ModificationTags.from_string("+15.995").tags[0]
         assert isinstance(result, pt.TagMass)
         assert result.mass == pytest.approx(15.995)  # type: ignore
         assert result.cv is None
 
     def test_negative_mass(self):
         """Test parsing negative mass delta"""
-        result = pt.parse_modification_tag("-18.010")
+        result = pt.ModificationTags.from_string("-18.010").tags[0]
         assert isinstance(result, pt.TagMass)
         assert result.mass == pytest.approx(-18.010)  # type: ignore
 
     def test_mass_without_sign_invalid(self):
         """Test that mass without sign is treated as a name (not valid ProForma)"""
-        result = pt.parse_modification_tag("42.010")
+        result = pt.ModificationTags.from_string("42.010").tags[0]
         # Without a sign, it's not recognized as a mass, so it becomes a pt.TagName
         assert isinstance(result, pt.TagName)
         assert result.name == "42.010"
 
     def test_integer_mass(self):
         """Test parsing integer mass with required sign"""
-        result = pt.parse_modification_tag("+16")
+        result = pt.ModificationTags.from_string("+16").tags[0]
         assert isinstance(result, pt.TagMass)
         assert result.mass == 16.0
 
@@ -198,7 +198,7 @@ class TestChargedFormula:
 
     def test_simple_formula(self):
         """Test parsing simple formula"""
-        result = pt.parse_modification_tag("Formula:C2H6")
+        result = pt.ModificationTags.from_string("Formula:C2H6").tags[0]
         assert isinstance(result, pt.ChargedFormula)
         assert len(result.formula) == 2
         assert result.formula[0].element == pt.Element.C
@@ -209,7 +209,7 @@ class TestChargedFormula:
 
     def test_single_element(self):
         """Test parsing single element formula"""
-        result = pt.parse_modification_tag("Formula:O")
+        result = pt.ModificationTags.from_string("Formula:O").tags[0]
         assert isinstance(result, pt.ChargedFormula)
         assert len(result.formula) == 1
         assert result.formula[0].element == pt.Element.O
@@ -217,7 +217,7 @@ class TestChargedFormula:
 
     def test_formula_with_negative_count(self):
         """Test parsing formula with negative element counts"""
-        result = pt.parse_modification_tag("Formula:H-2O-1")
+        result = pt.ModificationTags.from_string("Formula:H-2O-1").tags[0]
         assert isinstance(result, pt.ChargedFormula)
         assert len(result.formula) == 2
         assert result.formula[0].element == pt.Element.H
@@ -227,20 +227,20 @@ class TestChargedFormula:
 
     def test_formula_with_charge(self):
         """Test parsing formula with charge state"""
-        result = pt.parse_modification_tag("Formula:C2H6:z+2")
+        result = pt.ModificationTags.from_string("Formula:C2H6:z+2").tags[0]
         assert isinstance(result, pt.ChargedFormula)
         assert len(result.formula) == 2
         assert result.charge == 2
 
     def test_formula_with_negative_charge(self):
         """Test parsing formula with negative charge"""
-        result = pt.parse_modification_tag("Formula:O:z-1")
+        result = pt.ModificationTags.from_string("Formula:O:z-1").tags[0]
         assert isinstance(result, pt.ChargedFormula)
         assert result.charge == -1
 
     def test_complex_formula(self):
         """Test parsing complex formula"""
-        result = pt.parse_modification_tag("Formula:C10H15N3O6S")
+        result = pt.ModificationTags.from_string("Formula:C10H15N3O6S").tags[0]
         assert isinstance(result, pt.ChargedFormula)
         assert len(result.formula) == 5
         # Check carbon
@@ -249,7 +249,7 @@ class TestChargedFormula:
 
     def test_formula_with_spaces(self):
         """Test parsing formula with spaces between element pairs (ProForma Rule 1)"""
-        result = pt.parse_modification_tag("Formula:C12 H20 O2")
+        result = pt.ModificationTags.from_string("Formula:C12 H20 O2").tags[0]
         assert isinstance(result, pt.ChargedFormula)
         assert len(result.formula) == 3
         assert result.formula[0].element == pt.Element.C
@@ -261,7 +261,7 @@ class TestChargedFormula:
 
     def test_formula_isotope_prefix_notation(self):
         """Test parsing formula with isotope prefix notation [13C2] (ProForma Rule 3)"""
-        result = pt.parse_modification_tag("Formula:[13C2]H6")
+        result = pt.ModificationTags.from_string("Formula:[13C2]H6").tags[0]
         assert isinstance(result, pt.ChargedFormula)
         assert len(result.formula) == 2
         assert result.formula[0].element == pt.Element.C
@@ -272,7 +272,7 @@ class TestChargedFormula:
 
     def test_formula_multiple_isotopes(self):
         """Test parsing formula with multiple isotope specifications [13C2][12C-2]H2N"""
-        result = pt.parse_modification_tag("Formula:[13C2][12C-2]H2N")
+        result = pt.ModificationTags.from_string("Formula:[13C2][12C-2]H2N").tags[0]
         assert isinstance(result, pt.ChargedFormula)
         assert len(result.formula) == 4
         # First carbon: 13C with count 2
@@ -292,7 +292,7 @@ class TestChargedFormula:
 
     def test_formula_isotope_replacement_example(self):
         """Test ProForma spec example: [13C2]C-2H2N (2 12C replaced by 2 13C)"""
-        result = pt.parse_modification_tag("Formula:[13C2]C-2H2N")
+        result = pt.ModificationTags.from_string("Formula:[13C2]C-2H2N").tags[0]
         assert isinstance(result, pt.ChargedFormula)
         assert len(result.formula) == 4
         # 13C with count 2
@@ -307,7 +307,7 @@ class TestChargedFormula:
     def test_formula_zero_cardinality_not_allowed(self):
         """Test that zero cardinality raises error (ProForma Rule 2)"""
         with pytest.raises(ValueError, match="Zero cardinality not allowed"):
-            pt.parse_modification_tag("Formula:C0H2")
+            pt.ModificationTags.from_string("Formula:C0H2")
 
 
 class TestGlycanComposition:
@@ -315,7 +315,7 @@ class TestGlycanComposition:
 
     def test_simple_glycan(self):
         """Test parsing simple glycan composition"""
-        result = pt.parse_modification_tag("Glycan:Hex")
+        result = pt.ModificationTags.from_string("Glycan:Hex").tags[0]
         assert isinstance(result, pt.GlycanTag)
         assert len(result) == 1
         res: pt.GlycanComponent = result[0]  # type: ignore
@@ -324,7 +324,7 @@ class TestGlycanComposition:
 
     def test_glycan_with_count(self):
         """Test parsing glycan with count"""
-        result = pt.parse_modification_tag("Glycan:Hex5")
+        result = pt.ModificationTags.from_string("Glycan:Hex5").tags[0]
         assert isinstance(result, pt.GlycanTag)
         assert len(result) == 1
         res: pt.GlycanComponent = result[0]  # type: ignore
@@ -333,7 +333,7 @@ class TestGlycanComposition:
 
     def test_complex_glycan_composition(self):
         """Test parsing complex glycan composition"""
-        result = pt.parse_modification_tag("Glycan:Hex5HexNAc4")
+        result = pt.ModificationTags.from_string("Glycan:Hex5HexNAc4").tags[0]
         assert isinstance(result, pt.GlycanTag)
         assert len(result) == 2
         res1: pt.GlycanComponent = result[0]  # type: ignore
@@ -348,7 +348,7 @@ class TestGlycanComposition:
         """Test parsing various monosaccharide types"""
         monosaccharides = ["Fuc", "Hep", "NeuGc", "dHex"]
         for mono in monosaccharides:
-            result = pt.parse_modification_tag(f"Glycan:{mono}")
+            result = pt.ModificationTags.from_string(f"Glycan:{mono}").tags[0]
             assert isinstance(result, pt.GlycanTag)
             assert len(result) == 1
 
@@ -358,13 +358,15 @@ class TestTagInfo:
 
     def test_simple_info(self):
         """Test parsing simple INFO tag"""
-        result = pt.parse_modification_tag("INFO:custom annotation")
+        result = pt.ModificationTags.from_string("INFO:custom annotation").tags[0]
         assert isinstance(result, pt.TagInfo)
         assert result.info == "custom annotation"
 
     def test_info_with_special_chars(self):
         """Test parsing INFO tag with special characters"""
-        result = pt.parse_modification_tag("INFO:annotation-with_special.chars")
+        result = pt.ModificationTags.from_string(
+            "INFO:annotation-with_special.chars"
+        ).tags[0]
         assert isinstance(result, pt.TagInfo)
         assert result.info == "annotation-with_special.chars"
 
@@ -375,28 +377,28 @@ class TestEdgeCases:
     def test_empty_string(self):
         """Test parsing empty string raises error"""
         with pytest.raises(ValueError, match="Empty modification string"):
-            pt.parse_modification_tag("")
+            pt.ModificationTags.from_string("")
 
     def test_whitespace_only(self):
         """Test parsing whitespace-only string raises error"""
         with pytest.raises(ValueError, match="Empty modification string"):
-            pt.parse_modification_tag("   ")
+            pt.ModificationTags.from_string("   ")
 
     def test_unknown_cv_prefix_treated_as_name(self):
         """Test that unknown CV prefix is treated as a name"""
-        result = pt.parse_modification_tag("UNKNOWN:123")
+        result = pt.ModificationTags.from_string("UNKNOWN:123").tags[0]
         assert isinstance(result, pt.TagName)
         assert result.name == "UNKNOWN:123"
 
     def test_invalid_formula_element(self):
         """Test parsing formula with invalid element"""
         with pytest.raises(ValueError, match="Unknown element symbol"):
-            pt.parse_modification_tag("Formula:Zz")
+            pt.ModificationTags.from_string("Formula:Zz")
 
     def test_invalid_glycan_composition(self):
         """Test parsing invalid glycan composition"""
         with pytest.raises(ValueError, match="Could not parse glycan composition"):
-            pt.parse_modification_tag("Glycan:InvalidMono")
+            pt.ModificationTags.from_string("Glycan:InvalidMono")
 
 
 class TestStringConversion:
@@ -487,25 +489,19 @@ class TestStringConversion:
 
     def test_glycan_component_simple(self):
         """Test pt.GlycanComponent string conversion"""
-        glycan = pt.GlycanComponent(
-            monosaccharide=pt.Monosaccharide.Hex, occurance=1
-        )
+        glycan = pt.GlycanComponent(monosaccharide=pt.Monosaccharide.Hex, occurance=1)
         assert str(glycan) == "Hex"
 
     def test_glycan_component_with_count(self):
         """Test pt.GlycanComponent with count"""
-        glycan = pt.GlycanComponent(
-            monosaccharide=pt.Monosaccharide.Hex, occurance=5
-        )
+        glycan = pt.GlycanComponent(monosaccharide=pt.Monosaccharide.Hex, occurance=5)
         assert str(glycan) == "Hex5"
 
     def test_glycan_tuple_to_string(self):
         """Test tuple of pt.GlycanComponents"""
         glycan_tuple = (
             pt.GlycanComponent(monosaccharide=pt.Monosaccharide.Hex, occurance=5),
-            pt.GlycanComponent(
-                monosaccharide=pt.Monosaccharide.HexNAc, occurance=4
-            ),
+            pt.GlycanComponent(monosaccharide=pt.Monosaccharide.HexNAc, occurance=4),
         )
         glycan_str = "Glycan:" + "".join(str(g) for g in glycan_tuple)
         assert glycan_str == "Glycan:Hex5HexNAc4"
@@ -560,13 +556,13 @@ class TestStringConversion:
     def test_round_trip_simple_peptide(self):
         """Test round-trip: parse modification and convert back to string"""
         original = "Oxidation"
-        parsed = pt.parse_modification_tag(original)
+        parsed = pt.ModificationTags.from_string(original)
         assert str(parsed) == original
 
     def test_round_trip_accession(self):
         """Test round-trip for accession"""
         original = "Unimod:35"
-        parsed = pt.parse_modification_tag(original)
+        parsed = pt.ModificationTags.from_string(original)
         result_str = str(parsed)
         # Note: case might differ (UNIMOD vs Unimod)
         assert result_str.upper() == original.upper()
@@ -574,11 +570,11 @@ class TestStringConversion:
     def test_round_trip_mass(self):
         """Test round-trip for mass"""
         original = "+15.995"
-        parsed = pt.parse_modification_tag(original)
+        parsed = pt.ModificationTags.from_string(original)
         assert str(parsed) == original
 
     def test_round_trip_formula(self):
         """Test round-trip for formula"""
         original = "Formula:C2H6"
-        parsed = pt.parse_modification_tag(original)
+        parsed = pt.ModificationTags.from_string(original)
         assert str(parsed) == original
