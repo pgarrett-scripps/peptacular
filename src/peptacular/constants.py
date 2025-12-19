@@ -1,10 +1,6 @@
 from enum import StrEnum
 from typing import Final, Literal
 
-# ============================================================================
-# Enums
-# ============================================================================
-
 PROTON_MASS: Final[float] = 1.00727646688
 ELECTRON_MASS: Final[float] = 0.00054857990946
 NEUTRON_MASS: Final[float] = 1.00866491597
@@ -69,7 +65,6 @@ class Terminal(StrEnum):
         raise ValueError(f"Unknown terminal type: {term}")
 
 
-# str enum
 class ModType(StrEnum):
     NTERM = "nterm"
     CTERM = "cterm"

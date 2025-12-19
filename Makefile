@@ -1,40 +1,40 @@
 .PHONY: help install install-dev install-docs install-all sync test test-v test-vv test-cov test-file test-watch clean lint format check all docs docs-clean docs-open
 
-help:  ## Show this help message
+help: 
 	@echo "Available targets:"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
 
-install:  ## Install dependencies using uv
+install: 
 	uv sync
 
-install-dev:  ## Install with dev dependencies
+install-dev:
 	uv sync --group dev
 
-install-docs:  ## Install with docs dependencies
+install-docs:
 	uv sync --group docs
 
-install-all:  ## Install with all dependency groups
+install-all:
 	uv sync --all-groups
 
-sync:  ## Sync dependencies (same as install)
+sync:
 	uv sync
 
-test:  ## Run tests with pytest
+test:
 	uv run pytest tests/
 
-test-v:  ## Run tests with verbose output
+test-v
 	uv run pytest tests/ -v
 
-test-vv:  ## Run tests with very verbose output
+test-vv:
 	uv run pytest tests/ -vv
 
-test-cov:  ## Run tests with coverage report
+test-cov:
 	uv run pytest tests/ --cov=src/peptacular --cov-report=term-missing
 
-test-file:  ## Run tests for a specific file (usage: make test-file FILE=test_mod_parser.py)
+test-file:
 	uv run pytest tests/$(FILE) -v
 
-clean:  ## Clean up cache files and build artifacts
+clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
 	find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
 	find . -type d -name ".ruff_cache" -exec rm -rf {} + 2>/dev/null || true
@@ -43,24 +43,24 @@ clean:  ## Clean up cache files and build artifacts
 	find . -type f -name "*.pyo" -delete
 	find . -type f -name ".coverage" -delete
 
-lint:  ## Run linter (if ruff is installed)
+lint: 
 	uv run ruff check src/ tests/ || echo "Ruff not installed, skipping lint"
 
-format:  ## Format code (if ruff is installed)
+format:
 	uv run ruff format src/ tests/ || echo "Ruff not installed, skipping format"
 
-docs:  ## Build documentation with Sphinx
+docs:
 	cd docs && uv run sphinx-build -b html . _build/html
 
-docs-clean:  ## Clean documentation build artifacts
+docs-clean:
 	rm -rf docs/_build
 
-docs-open:  ## Build and open documentation in browser
+docs-open:
 	$(MAKE) docs
 	@python -c "import webbrowser; webbrowser.open('file://$(shell pwd)/docs/_build/html/index.html')"
 
-check:  ## Run linter and tests
+check:
 	$(MAKE) lint
 	$(MAKE) test
 
-all: clean install test  ## Clean, install dependencies, and run tests
+all: clean install test

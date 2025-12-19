@@ -1,7 +1,3 @@
-"""
-Isotope.py - A module for calculating isotopic distributions of molecules.
-"""
-
 from collections import Counter
 from dataclasses import dataclass
 from typing import Final
@@ -32,8 +28,6 @@ AVERAGE_AVERAGINE_MASS: float = sum(
 
 @dataclass(frozen=True, slots=True)
 class IsotopicData:
-    """Represents a single isotope peak with mass, neutron count, and relative abundance."""
-
     mass: float
     neutron_count: int
     abundance: float
@@ -175,8 +169,6 @@ def isotopic_distribution(
         delta_mass = prior_mass - post_mass
 
     if delta_mass != 0.0:
-        # raise a warning if rounding changes mass significantly
-
         warnings.warn(
             f"Rounding chemical formula changed mass by {delta_mass:.4f} Da.",
             UserWarning,
