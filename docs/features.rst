@@ -56,11 +56,10 @@ Fragment Generation
 Create theoretical fragment ions for MS/MS analysis.
 
 - b, y, a, x, c, z ion types
-- Internal fragments (ax, by, etc.)
-- Multiple charge states
+- Internal fragments (ax, by, etc.) & Immonium ions
+- Multiple charge states / adducts
 - Neutral losses (H2O, NH3, custom)
-- Isotope labeling support
-- Immonium ions
+- Isotopes
 
 Property Calculations
 ~~~~~~~~~~~~~~~~~~~~~
@@ -102,11 +101,11 @@ Design Principles
 -----------------
 
 Lazy Loading / Caching
-~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
 
 Modifications are stored as strings and only parsed when needed for calculations. 
 This minimizes overhead and improves performance for operations that don't require 
-full modification resolution.
+mass and composition data.
 
 .. code-block:: python
 
@@ -124,12 +123,20 @@ full modification resolution.
 
 **Validation**
 
-By default, parsing does not validate modification strings. If you need strict validation:
+By default, parsing does not validate inputs. This allows for users to potenitally create annotations
+with invalid modifications/sequences. If you need strict validation:
 
 .. code-block:: python
 
    import peptacular as pt
    
    # Strict validation
-   _ = pt.parse('PEPTIDE', validate=True)
-   _ = pt.ProformaAnnotation(sequence='PEPTIDE', validate=True)
+   a = pt.parse('PEPTIDE', validate=True)
+   a.static_mods = 'INVALID_MOD'  # Raises ValueError
+
+   a.validate = False  # Disable validation
+   a.static_mods = 'INVALID_MOD'  # Works without error
+
+   # get validation status
+   print(a.validate)
+

@@ -690,7 +690,3 @@ class ProFormaParser:
         if c == "(":
             return True  # Range or Ambiguous
         return False
-
-    @property
-    def unmod_sequence(self) -> str:
-        return "".join(self.amino_acids)

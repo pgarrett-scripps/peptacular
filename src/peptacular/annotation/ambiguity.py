@@ -90,7 +90,7 @@ def annotate_ambiguity(
     )
 
     intervals = [
-        Interval(start, end + 1, True, None, validate=annotation.validate)
+        Interval(start, end + 1, True, None, validate=annotation._validate)
         for start, end in ambiguity_intervals
     ]
 
@@ -372,7 +372,7 @@ def _apply_mass_shift(
             mass_shift_interval[1] + 1,
             False,
             None,
-            validate=annotation.validate,
+            validate=annotation._validate,
         )
         annotation.append_interval(mod_interval)
 

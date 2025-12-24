@@ -15,7 +15,7 @@ def _parse_single(s: str, validate: bool = False) -> ProFormaAnnotation:
 @overload
 def parse(
     s: str,
-    validate: bool = True,
+    validate: bool = False,
     n_workers: int | None = None,
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
@@ -26,7 +26,7 @@ def parse(
 @overload
 def parse(
     s: Sequence[str],
-    validate: bool = True,
+    validate: bool = False,
     n_workers: int | None = None,
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
@@ -36,7 +36,7 @@ def parse(
 
 def parse(
     s: str | Sequence[str],
-    validate: bool = True,
+    validate: bool = False,
     n_workers: int | None = None,
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
@@ -452,7 +452,7 @@ def _validate_single(
     sequence: str | ProFormaAnnotation,
 ) -> bool:
     try:
-        get_annotation_input(sequence, copy=False).validate()
+        get_annotation_input(sequence, copy=False)._validate()
     except ValueError:
         return False
     return True

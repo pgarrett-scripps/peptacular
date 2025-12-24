@@ -61,7 +61,7 @@ def get_random_mod_dict(mod_probability: float) -> dict[str, int]:
 
 
 elem_infos = ELEMENT_LOOKUP.values()
-specific_isotopes = [elem for elem in elem_infos if elem.is_monoisotopic == False]
+specific_isotopes = [elem for elem in elem_infos if not elem.is_monoisotopic]
 
 
 def generate_random_isotop_mod() -> str:

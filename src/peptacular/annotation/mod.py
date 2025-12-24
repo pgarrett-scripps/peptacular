@@ -239,27 +239,15 @@ class Mods(Generic[T], MassPropertyMixin):
 
     def __str__(self) -> str:
         if not self._mods:
-            return f"<Empty {self.mod_type.value}>"
+            return f"Mods@{self.mod_type.value.capitalize()}()"
 
-        # Show first few modifications
-        mod_strs = [
-            f"{mod_str}(×{count})" if count > 1 else f"{mod_str}"
-            for mod_str, count in self._mods.items()
-        ]
-
-        if len(mod_strs) == 1:
-            mods_display = f"({mod_strs[0]},)"
-        elif len(mod_strs) <= 3:
-            mods_display = f"({', '.join(mod_strs)})"
-        else:
-            # Truncate if too many
-            mods_display = (
-                ", ".join(mod_strs[:3]) + f", ... (+{len(mod_strs) - 3} more)"
-            )
-
-        return f"{self.mod_type.value.upper()}: {mods_display}" + (
-            f" [Total Mods: {len(self)}]" if len(self) > 3 else ""
+        # Show all modifications in compact form
+        mods_repr = (
+            "["
+            + ", ".join(f"{k}^{v}" if v > 1 else f"{k}" for k, v in self._mods.items())
+            + "]"
         )
+        return f"Mods@{self.mod_type.value.capitalize()}({mods_repr})"
 
     def __repr__(self) -> str:
         if not self._mods:

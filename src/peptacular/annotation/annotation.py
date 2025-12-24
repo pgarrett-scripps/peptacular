@@ -209,7 +209,7 @@ class ProFormaAnnotation:
         self._internal_mods: dict[int, dict[str, int]] | None = None
         self._intervals: list[Interval] | None = None
         self._charge: int | dict[str, int] | None = None
-        self.validate = validate
+        self._validate = validate
 
         self.set_sequence(sequence, inplace=True, validate=validate)
         self.set_compound_name(compound_name, inplace=True, validate=validate)
@@ -314,7 +314,7 @@ class ProFormaAnnotation:
             case _:
                 raise ValueError(f"Invalid charge type: {charge_type}")
 
-    def validate(self) -> None:
+    def validate_annotation(self) -> None:
         self.validate_sequence()
         self.validate_isotope_mods()
         self.validate_static_mods()
@@ -383,7 +383,7 @@ class ProFormaAnnotation:
 
     @sequence.setter
     def sequence(self, value: str | None) -> None:
-        self.set_sequence(value, inplace=True, validate=self.validate)
+        self.set_sequence(value, inplace=True, validate=self._validate)
 
     @property
     def compound_name(self) -> str:
@@ -391,7 +391,7 @@ class ProFormaAnnotation:
 
     @compound_name.setter
     def compound_name(self, value: Any | None) -> None:
-        self.set_compound_name(value, inplace=True, validate=self.validate)
+        self.set_compound_name(value, inplace=True, validate=self._validate)
 
     @property
     def compound_name_str(self) -> str:
@@ -405,7 +405,7 @@ class ProFormaAnnotation:
 
     @ion_name.setter
     def ion_name(self, value: Any | None) -> None:
-        self.set_ion_name(value, inplace=True, validate=self.validate)
+        self.set_ion_name(value, inplace=True, validate=self._validate)
 
     @property
     def ion_name_str(self) -> str:
@@ -419,7 +419,7 @@ class ProFormaAnnotation:
 
     @peptide_name.setter
     def peptide_name(self, value: Any | None) -> None:
-        self.set_peptide_name(value, inplace=True, validate=self.validate)
+        self.set_peptide_name(value, inplace=True, validate=self._validate)
 
     @property
     def peptide_name_str(self) -> str:
@@ -438,7 +438,7 @@ class ProFormaAnnotation:
 
     @isotope_mods.setter
     def isotope_mods(self, value: Any) -> None:
-        self.set_isotope_mods(value, inplace=True, validate=self.validate)
+        self.set_isotope_mods(value, inplace=True, validate=self._validate)
 
     @property
     def isotope_mods_str(self) -> str:
@@ -455,7 +455,7 @@ class ProFormaAnnotation:
 
     @static_mods.setter
     def static_mods(self, value: Any) -> None:
-        self.set_static_mods(value, inplace=True, validate=self.validate)
+        self.set_static_mods(value, inplace=True, validate=self._validate)
 
     @property
     def static_mods_str(self) -> str:
@@ -471,7 +471,7 @@ class ProFormaAnnotation:
 
     @labile_mods.setter
     def labile_mods(self, value: Any) -> None:
-        self.set_labile_mods(value, inplace=True, validate=self.validate)
+        self.set_labile_mods(value, inplace=True, validate=self._validate)
 
     @property
     def labile_mods_str(self) -> str:
@@ -489,7 +489,7 @@ class ProFormaAnnotation:
 
     @unknown_mods.setter
     def unknown_mods(self, value: Any) -> None:
-        self.set_unknown_mods(value, inplace=True, validate=self.validate)
+        self.set_unknown_mods(value, inplace=True, validate=self._validate)
 
     @property
     def unknown_mods_str(self) -> str:
@@ -505,7 +505,7 @@ class ProFormaAnnotation:
 
     @nterm_mods.setter
     def nterm_mods(self, value: Any) -> None:
-        self.set_nterm_mods(value, inplace=True, validate=self.validate)
+        self.set_nterm_mods(value, inplace=True, validate=self._validate)
 
     @property
     def nterm_mods_str(self) -> str:
@@ -521,7 +521,7 @@ class ProFormaAnnotation:
 
     @cterm_mods.setter
     def cterm_mods(self, value: Any) -> None:
-        self.set_cterm_mods(value, inplace=True, validate=self.validate)
+        self.set_cterm_mods(value, inplace=True, validate=self._validate)
 
     @property
     def cterm_mods_str(self) -> str:
@@ -542,7 +542,18 @@ class ProFormaAnnotation:
 
     @internal_mods.setter
     def internal_mods(self, value: dict[int, Any] | None) -> None:
-        self.set_internal_mods(value, inplace=True, validate=self.validate)
+        self.set_internal_mods(value, inplace=True, validate=self._validate)
+
+    @property
+    def validate(self) -> bool:
+        return self._validate
+
+    @validate.setter
+    def validate(self, value: bool) -> None:
+        self._validate = value
+        if self.has_intervals:
+            for interval in self.intervals:
+                interval._validate = value  # type: ignore
 
     def has_internal_mods_at_index(self, position: int) -> bool:
         """Check if there are any modifications at a specific position in the sequence."""
@@ -583,7 +594,7 @@ class ProFormaAnnotation:
 
     @intervals.setter
     def intervals(self, value: list[Interval] | None) -> None:
-        self.set_intervals(value, inplace=True, validate=self.validate)
+        self.set_intervals(value, inplace=True, validate=self._validate)
 
     @property
     def charge(self) -> int | Mods[GlobalChargeCarrier] | None:
@@ -602,7 +613,7 @@ class ProFormaAnnotation:
     def charge(
         self, value: int | dict[str, int] | Mods[GlobalChargeCarrier] | None
     ) -> None:
-        self.set_charge(value, inplace=True, validate=self.validate)
+        self.set_charge(value, inplace=True, validate=self._validate)
 
     @property
     def charge_state(self) -> int:
@@ -642,7 +653,7 @@ class ProFormaAnnotation:
         self, sequence: str | None, inplace: bool = True, validate: bool | None = None
     ) -> Self:
         if validate is None:
-            validate = self.validate
+            validate = self._validate
         if not inplace:
             return self.copy().set_sequence(sequence, inplace=True, validate=validate)
         self._sequence = sequence
@@ -740,7 +751,7 @@ class ProFormaAnnotation:
         validate: bool | None = None,
     ) -> Self:
         if validate is None:
-            validate = self.validate
+            validate = self._validate
 
         if not inplace:
             return self.copy().set_internal_mods(mods, inplace=True, validate=validate)
@@ -772,7 +783,7 @@ class ProFormaAnnotation:
         validate: bool | None = None,
     ) -> Self:
         if validate is None:
-            validate = self.validate
+            validate = self._validate
 
         if not inplace:
             return self.copy().set_intervals(intervals, inplace=True, validate=validate)
@@ -785,7 +796,7 @@ class ProFormaAnnotation:
             self._intervals = None
             return self
 
-        self._intervals = intervals
+        self._intervals = intervals.copy()
         if validate:
             self.validate_intervals()
         return self
@@ -794,7 +805,7 @@ class ProFormaAnnotation:
         self, index: int, mods: Any, inplace: bool = True, validate: bool | None = None
     ) -> Self:
         if validate is None:
-            validate = self.validate
+            validate = self._validate
         if not inplace:
             return self.copy().set_internal_mods_at_index(
                 index, mods, inplace=True, validate=validate
@@ -833,7 +844,7 @@ class ProFormaAnnotation:
         validate: bool | None = None,
     ) -> Self:
         if validate is None:
-            validate = self.validate
+            validate = self._validate
         if not inplace:
             return self.copy().set_charge(charge, inplace=True, validate=validate)
 
@@ -867,7 +878,7 @@ class ProFormaAnnotation:
         validate: bool | None = None,
     ) -> Self:
         if validate is None:
-            validate = self.validate
+            validate = self._validate
         if not inplace:
             return self.copy()._set_name_generic(
                 name, attr_name, inplace=True, validate=validate
@@ -889,7 +900,7 @@ class ProFormaAnnotation:
         validate: bool | None = None,
     ) -> Self:
         if validate is None:
-            validate = self.validate
+            validate = self._validate
         if not inplace:
             return self.copy()._set_mod_generic(
                 mods, attr_name, validator_method_name, inplace=True, validate=validate
@@ -980,7 +991,7 @@ class ProFormaAnnotation:
         validate: bool | None = None,
     ) -> Self:
         if validate is None:
-            validate = self.validate
+            validate = self._validate
 
         if not inplace:
             return self.copy()._append_mod_generic(
@@ -1065,7 +1076,7 @@ class ProFormaAnnotation:
         self, index: int, mod: Any, inplace: bool = True, validate: bool | None = None
     ) -> Self:
         if validate is None:
-            validate = self.validate
+            validate = self._validate
 
         if not inplace:
             return self.copy().append_internal_mod_at_index(
@@ -1098,7 +1109,7 @@ class ProFormaAnnotation:
         validate: bool | None = None,
     ) -> Self:
         if validate is None:
-            validate = self.validate
+            validate = self._validate
         if not inplace:
             return self.copy().append_interval(
                 interval, inplace=True, validate=validate
@@ -1108,8 +1119,15 @@ class ProFormaAnnotation:
             start, end, ambiguous, mods_input = interval
             mods_converted = convert_moddict_input(mods_input)
             interval = Interval(
-                start=start, end=end, ambiguous=ambiguous, mods=mods_converted
+                start=start,
+                end=end,
+                ambiguous=ambiguous,
+                mods=mods_converted,
+                validate=validate,  # type: ignore
             )
+        else:
+            interval = interval.copy()
+            interval._validate = validate  # type: ignore
 
         if validate:
             if not isinstance(interval, Interval):  # type: ignore
@@ -1200,7 +1218,7 @@ class ProFormaAnnotation:
         validate: bool | None = None,
     ) -> Self:
         if validate is None:
-            validate = self.validate
+            validate = self._validate
         if not inplace:
             return self.copy()._extend_generic(
                 mods, append_method, inplace=True, validate=validate
@@ -1238,7 +1256,7 @@ class ProFormaAnnotation:
         start_aa: str | None = None,
     ) -> Self:
         if validate is None:
-            validate = self.validate
+            validate = self._validate
         if not inplace:
             return self.copy().extend_nterm_mods(
                 mods, inplace=True, validate=validate, start_aa=start_aa
@@ -1261,7 +1279,7 @@ class ProFormaAnnotation:
         end_aa: str | None = None,
     ) -> Self:
         if validate is None:
-            validate = self.validate
+            validate = self._validate
         if not inplace:
             return self.copy().extend_cterm_mods(
                 mods, inplace=True, validate=validate, end_aa=end_aa
@@ -1280,7 +1298,7 @@ class ProFormaAnnotation:
         self, index: int, mods: Any, inplace: bool = True, validate: bool | None = None
     ) -> Self:
         if validate is None:
-            validate = self.validate
+            validate = self._validate
         if not inplace:
             return self.copy().extend_internal_mods_at_index(
                 index, mods, inplace=True, validate=validate
@@ -1305,7 +1323,7 @@ class ProFormaAnnotation:
         validate: bool | None = None,
     ) -> Self:
         if validate is None:
-            validate = self.validate
+            validate = self._validate
         if not inplace:
             return self.copy()._extend_by_type(
                 value, mod_type, inplace=True, validate=validate
@@ -1345,7 +1363,7 @@ class ProFormaAnnotation:
         validate: bool | None = None,
     ) -> Self:
         if validate is None:
-            validate = self.validate
+            validate = self._validate
         if not inplace:
             return self.copy().extend_mods(mods, inplace=True, validate=validate)
 
@@ -1539,32 +1557,35 @@ class ProFormaAnnotation:
         )
 
     def __repr__(self) -> str:
-        """
-        Only shows non-None types
-        """
-        seq = f"ProFormaAnnotationBase(sequence={self.sequence}"
+        seq = f"ProFormaAnnot(sequence={self.sequence}"
 
         if self.has_isotope_mods:
-            seq += f", {ModType.ISOTOPE}={self.isotope_mods}"
+            seq += f", {ModType.ISOTOPE.value}={self.isotope_mods}"
         if self.has_static_mods:
-            seq += f", {ModType.STATIC}={self.static_mods}"
+            seq += f", {ModType.STATIC.value}={self.static_mods}"
         if self.has_labile_mods:
-            seq += f", {ModType.LABILE}={self.labile_mods}"
+            seq += f", {ModType.LABILE.value}={self.labile_mods}"
         if self.has_unknown_mods:
-            seq += f", {ModType.UNKNOWN}={self.unknown_mods}"
+            seq += f", {ModType.UNKNOWN.value}={self.unknown_mods}"
         if self.has_nterm_mods:
-            seq += f", {ModType.NTERM}={self.nterm_mods}"
+            seq += f", {ModType.NTERM.value}={self.nterm_mods}"
         if self.has_cterm_mods:
-            seq += f", {ModType.CTERM}={self.cterm_mods}"
+            seq += f", {ModType.CTERM.value}={self.cterm_mods}"
         if self.has_internal_mods:
-            seq += f", {ModType.INTERNAL}={self.internal_mods}"
+            internal_mod_items = ", ".join(
+                f"{pos}: {mods}" for pos, mods in sorted(self.internal_mods.items())
+            )
+            seq += f", {ModType.INTERNAL.value}={{{internal_mod_items}}}"
         if self.has_intervals:
-            seq += f", {ModType.INTERVAL}={self.intervals}"
+            seq += f", {ModType.INTERVAL.value}={self.intervals}"
         if self.has_charge:
-            seq += f", {ModType.CHARGE}={self.charge}"
+            seq += f", {ModType.CHARGE.value}={self.charge}"
         seq += ")"
 
         return seq
+
+    def __str__(self) -> str:
+        return self.serialize()
 
     def __hash__(self):
         return hash(
@@ -1618,7 +1639,7 @@ class ProFormaAnnotation:
             else None,
             intervals=self._intervals.copy() if self._intervals is not None else None,
             charge=self._charge,
-            validate=self.validate,
+            validate=self._validate,
         )
 
     def update(self, other: Self) -> None:
@@ -1967,13 +1988,11 @@ class ProFormaAnnotation:
 
         total_composition = self.get_sequence_composition()
 
-        # Helper to add mods to composition
         def add_mods(mods: Iterable[tuple[MODIFICATION_TYPE, int]], mod_type: str):
             for mod, count in mods:
                 for element, elem_count in get_comp(mod, mod_type).items():
                     total_composition[element] += elem_count * count
 
-        # All simple modification types
         if self.has_unknown_mods:
             add_mods(self.unknown_mods.parse_tuples(), "unknown modification")
         if self.has_labile_mods:

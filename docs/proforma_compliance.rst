@@ -153,18 +153,14 @@ Glycan Compositions
    N[Glycan:Hex5HexNAc4]K
    N[Glycan:Hex5HexNAc4Neu5Ac2]K
 
-Not Yet Supported
------------------
+Partially Supported
+-------------------
 
-The following ProForma 2.0 features are not yet implemented:
+The following features are partially implemented, and will not
+result in a parsing error unless validation is enabled. Although, any 
+method or function which requires calculating the mass/compisition of these 
+features will raise an error.
 
-Cross-linking
-~~~~~~~~~~~~~
-
-.. code-block:: text
-
-   # XL-MOD notation, branch points
-   PEPTK[XLMOD:02001#XL1]IDE//SEQK[#XL1]
 
 Position Sets with Groups
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -185,17 +181,31 @@ Alternative Vocabularies
 
 .. code-block:: text
 
-   # RESID and GNO modifications not yet supported
+   # RESID / GNO / XLMOD modifications not yet supported
    PEM[RESID:AA0581]TIDE
    N[GNO:G00001]K
+   PEPTK[XLMOD:02001]IDE
+
+Unsupported
+-----------
+
+The following features are Unsupported and will raise parsing errors.
 
 Chimeric Spectra
-~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~  
 
 .. code-block:: text
 
    # Multiple co-fragmented peptides
    PEPTIDE+SEQUENCE
+
+Cross-linking
+~~~~~~~~~~~~~
+
+.. code-block:: text
+
+   # XL-MOD notation, branch points
+   PEPTK[XLMOD:02001#XL1]IDE//SEQK[#XL1]
 
 For More Information
 --------------------

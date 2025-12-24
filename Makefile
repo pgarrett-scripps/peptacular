@@ -1,4 +1,4 @@
-.PHONY: help install install-dev install-docs install-all sync test test-v test-vv test-cov test-file test-watch clean lint format check all docs docs-clean docs-open
+.PHONY: help install install-dev install-docs install-all sync test test-v test-vv test-cov test-file test-watch clean lint format check all docs docs-clean docs-open paper
 
 help: 
 	@echo "Available targets:"
@@ -22,7 +22,7 @@ sync:
 test:
 	uv run pytest tests/
 
-test-v
+test-v:
 	uv run pytest tests/ -v
 
 test-vv:
@@ -58,6 +58,13 @@ docs-clean:
 docs-open:
 	$(MAKE) docs
 	@python -c "import webbrowser; webbrowser.open('file://$(shell pwd)/docs/_build/html/index.html')"
+
+paper:
+	docker run --rm \
+		--volume $(PWD)/paper:/data \
+		--user $(shell id -u):$(shell id -g) \
+		--env JOURNAL=joss \
+		openjournals/inara
 
 check:
 	$(MAKE) lint

@@ -13,7 +13,7 @@ Install Peptacular using pip:
 Basic Usage
 -----------
 
-Parse and Calculate
+Parse/Serialize
 ~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
@@ -22,18 +22,9 @@ Parse and Calculate
 
    # Parse a ProForma sequence
    peptide = pt.parse("PEM[Oxidation]TIDE/2")
+   print(peptide.charge_state)  # 2
+   print(peptide.serialize())  # PEM[Oxidation]TIDE/2
 
-   # Calculate mass and m/z
-   mass = peptide.mass()
-   mz = peptide.mz()
-
-   # Get elemental composition
-   comp = peptide.comp()
-
-   # Generate isotopic distribution
-   iso_dist = peptide.isotopic_distribution()
-   for iso in iso_dist[:3]:
-       print(f"m/z: {iso.mass:.3f}, abundance: {iso.abundance:.3f}")
 
 Fragment Generation
 ~~~~~~~~~~~~~~~~~~~
@@ -133,26 +124,6 @@ Digestion
    for span in protein.digest(pt.Proteases.TRYPSIN, semi=True):
        print(protein[span].serialize())
 
-Fragment Ion Generation
-~~~~~~~~~~~~~~~~~~~~~~~
-
-.. code-block:: python
-
-   # Generate b and y ions
-   for frag in peptide.fragment(ion_types=['b', 'y']):
-       print(f"{frag.annotation}: {frag.mz:.3f}")
-
-   # With multiple charge states and losses
-   for frag in peptide.fragment(
-       ion_types=['b', 'y'],
-       charges=[1, 2],
-       losses=[pt.NeutralDelta.WATER, pt.NeutralDelta.AMMONIA]
-   ):
-       print(f"{frag.annotation}: {frag.mz:.3f}")
-
-   # Internal fragments
-   for frag in peptide.fragment(ion_types=['ax'], min_len=3, max_len=5):
-       print(f"{frag.annotation}: {frag.mz:.3f}")
 
 Physicochemical Properties
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~

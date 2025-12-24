@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 
 FASTA_INPUT_TYPE = str | pathlib.Path | io.IOBase
 
+
 @runtime_checkable
 class ReadableProtocol(Protocol):
     def read(self) -> str | bytes: ...
