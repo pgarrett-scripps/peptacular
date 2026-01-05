@@ -1,12 +1,11 @@
 from collections import Counter
 from dataclasses import dataclass
-from typing import Final
+from typing import Final, Mapping
 import warnings
 
-from .elements.dclass import ElementInfo
+from .elements import ElementInfo
 from . import constants
 from .elements import ELEMENT_LOOKUP
-from .utils import chem_mass
 
 AVERAGINE_RATIOS: Final[dict[str, float]] = {
     "C": 4.9384,
@@ -26,6 +25,16 @@ AVERAGE_AVERAGINE_MASS: float = sum(
 )
 
 
+def _chem_mass(
+    formula: Mapping[str, int | float],
+    monoisotopic: bool = True,
+) -> float:
+    m: float = 0.0
+    for element, count in formula.items():
+        m += ELEMENT_LOOKUP[element].get_mass(monoisotopic=monoisotopic) * count
+    return m
+
+
 @dataclass(frozen=True, slots=True)
 class IsotopicData:
     mass: float
@@ -33,28 +42,46 @@ class IsotopicData:
     abundance: float
 
 
-def estimate_comp(neutral_mass: float) -> dict[str, float]:
+def estimate_averagine_comp(neutral_mass: float) -> dict[str | ElementInfo, float]:
     """
     Estimate elemental composition from molecular mass using the averagine model.
 
     .. code-block:: python
 
         # Example usage
-        >>> round(estimate_comp(1000)['C'], 3)
+        >>> round(estimate_averagine_comp(1000)['C'], 3)
         44.468
 
     """
 
     composition = {
-        atom: ratio * neutral_mass / ISOTOPIC_AVERAGINE_MASS
+        ELEMENT_LOOKUP[atom]: ratio * neutral_mass / ISOTOPIC_AVERAGINE_MASS
         for atom, ratio in AVERAGINE_RATIOS.items()
     }
 
     return composition
 
 
+def averagine_comp(neutral_mass: float) -> Counter[ElementInfo]:
+    comp: dict[str | ElementInfo, int | float] = estimate_averagine_comp(neutral_mass)
+    composition: Counter[ElementInfo] = Counter()
+    for element, count in comp.items():
+        if isinstance(element, str):
+            elem_info = ELEMENT_LOOKUP[element]
+        else:
+            elem_info = element
+        composition[elem_info] = int(round(count))
+
+    # pop zeros
+    for elem in list(composition.keys()):
+        if composition[elem] == 0:
+            del composition[elem]
+
+    return composition
+
+
 def isotopic_distribution(
-    chemical_formula: dict[str, int | float] | Counter[ElementInfo],
+    chemical_formula: Mapping[str | ElementInfo, int | float],
     max_isotopes: int | None = 10,
     min_abundance_threshold: float = 0.001,  # based on the most abundant peak
     distribution_resolution: int | None = 5,
@@ -141,10 +168,12 @@ def isotopic_distribution(
 
     """
 
-    if isinstance(chemical_formula, Counter):
-        chemical_formula = {
-            str(elem): count for elem, count in chemical_formula.items()
-        }
+    composition: dict[str, float | int] = {}
+    for key, value in chemical_formula.items():
+        if isinstance(key, str):
+            composition[key] = value
+        else:
+            composition[str(key)] = value
 
     # Just use these to correct mass
     if charge == 0 or charge is None:
@@ -153,19 +182,19 @@ def isotopic_distribution(
         particle_mass_offset = -charge * constants.ELECTRON_MASS
 
     # check if any values are negative:
-    if any(v < 0 for v in chemical_formula.values()):
+    if any(v < 0 for v in composition.values()):
         raise ValueError("Negative values are not allowed in the chemical formula.")
 
     # Remove 0 values from the chemical formula
-    for elem in list(chemical_formula.keys()):
-        if chemical_formula[elem] == 0:
-            del chemical_formula[elem]
+    for elem in list(composition.keys()):
+        if composition[elem] == 0:
+            del composition[elem]
 
     delta_mass = 0.0
-    if not all(isinstance(v, int) for v in chemical_formula.values()):
-        prior_mass = chem_mass(chemical_formula)
-        chemical_formula = {k: int(round(v)) for k, v in chemical_formula.items()}
-        post_mass = chem_mass(chemical_formula)
+    if not all(isinstance(v, int) for v in composition.values()):
+        prior_mass = _chem_mass(composition)
+        composition = {k: int(round(v)) for k, v in composition.items()}
+        post_mass = _chem_mass(composition)
         delta_mass = prior_mass - post_mass
 
     if delta_mass != 0.0:
@@ -177,7 +206,7 @@ def isotopic_distribution(
     total_distribution = {
         0.0: (1.0, 0)
     }  # Start with a base distribution (mass/offset: (abundance, neutron_count))
-    for element, count in chemical_formula.items():
+    for element, count in composition.items():
         elemental_distribution = _calculate_elemental_distribution(
             element,
             int(count),
@@ -265,7 +294,7 @@ def merge_isotopic_distributions(
 
 def estimate_isotopic_distribution(
     neutral_mass: float,
-    max_isotopes: int = 10,
+    max_isotopes: int | None = 10,
     min_abundance_threshold: float = 0.001,
     distribution_resolution: int | None = 5,
     use_neutron_count: bool = False,
@@ -304,7 +333,7 @@ def estimate_isotopic_distribution(
 
     """
     # Calculate the total number of each atom in the molecule based on its molecular mass
-    total_atoms = estimate_comp(neutral_mass)
+    total_atoms = estimate_averagine_comp(neutral_mass)
 
     return isotopic_distribution(
         total_atoms,
@@ -434,7 +463,7 @@ def _calculate_elemental_distribution_slow(
 
 
 def _calculate_elemental_distribution(
-    element: str,
+    element: str | ElementInfo,
     count: int,
     use_neutron_count: bool,
     min_abundance_threshold: float = 10e-15,
@@ -442,7 +471,10 @@ def _calculate_elemental_distribution(
 ) -> dict[float, tuple[float, int]]:
     """Calculate elemental isotopic distribution using binary exponentiation for efficiency."""
 
-    elem_info = ELEMENT_LOOKUP[element]
+    if not isinstance(element, ElementInfo):
+        elem_info = ELEMENT_LOOKUP[element]
+    else:
+        elem_info = element
 
     if elem_info.mass_number is not None:
         # Monoisotopic elements have only one isotope

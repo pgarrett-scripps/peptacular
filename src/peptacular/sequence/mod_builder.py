@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import Any, Iterable, Mapping, overload
+from typing import Any, Iterable, Mapping, overload, cast
 
 from ..constants import ModType, ModTypeLiteral, ParrallelMethod, ParrallelMethodLiteral
 from ..annotation import ProFormaAnnotation
@@ -157,7 +157,7 @@ def build_mods(
 def get_mods(
     sequence: str | ProFormaAnnotation,
     mods: ModType | Iterable[ModType] | ModTypeLiteral | None = None,
-) -> dict[str, Any]:
+) -> dict[ModType, Any]:
     """
     Parses a sequence with modifications and returns a dictionary where keys represent the position/type of the modifications.
     """
@@ -238,7 +238,7 @@ def condense_static_mods(
 def pop_mods(
     sequence: str | ProFormaAnnotation,
     mods: ModType | Iterable[ModType] | None = None,
-) -> tuple[ModType, Any]:
+) -> tuple[str, dict[ModType, Any]]:
     """
     Removes all modifications from the given sequence, returning the unmodified sequence and a dictionary of the
     removed modifications.
@@ -251,8 +251,8 @@ def pop_mods(
         'PEPTIDE'
 
     """
-    annotation = get_annotation_input(sequence=sequence, copy=True)
-    mod_dict = annotation.pop_mods(mod_types=mods)
+    annotation: ProFormaAnnotation = get_annotation_input(sequence=sequence, copy=True)
+    mod_dict: dict[ModType, Any] = annotation.pop_mods(mod_types=mods)
     return (
         annotation.serialize(),
         mod_dict,
@@ -484,8 +484,9 @@ def from_ms2_pip(
                 "sequence must be a tuple of (sequence, modifications) for single processing"
             )
 
+        item = cast(tuple[str, str], sequence)
         return _from_ms2_pip_single(
-            item=sequence,
+            item=item,
             static_mods=static_mods,
         )
 

@@ -362,10 +362,14 @@ class mzPAFParser:
         # Parse mass error
         mass_error = None
         if groups.get("mass_error"):
-            unit = groups.get("mass_error_unit") or "da"
-            if unit not in ("da", "ppm"):
+            unit = groups.get("mass_error_unit")
+            if unit == "ppm":
+                mass_error = MassError(float(groups["mass_error"]), "ppm")
+            elif unit is None:
+                # default to daltons if unit not specified
+                mass_error = MassError(float(groups["mass_error"]), "da")
+            else:
                 raise ValueError(f"Unknown mass error unit: {unit}")
-            mass_error = MassError(float(groups["mass_error"]), unit)
 
         # Parse charge
         charge = int(groups["charge"]) if groups.get("charge") else 1

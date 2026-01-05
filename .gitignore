@@ -12,3 +12,4 @@ wheels/
 docs/_build/*
 
 try*.py
+.coverage

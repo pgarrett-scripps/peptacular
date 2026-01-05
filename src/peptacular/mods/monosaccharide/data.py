@@ -41,6 +41,11 @@ class Monosaccharide(StrEnum):
         """Get Monosaccharide enum from string"""
         return cls(name)
 
+    @classmethod
+    def to_list(cls) -> list[str]:
+        """Get list of all Monosaccharide names as strings"""
+        return [member.value for member in cls]
+
 
 try:
     MONOSACCHARIDES: dict[Monosaccharide, MonosaccharideInfo] = {

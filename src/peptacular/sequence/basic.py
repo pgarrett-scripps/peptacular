@@ -452,7 +452,7 @@ def _validate_single(
     sequence: str | ProFormaAnnotation,
 ) -> bool:
     try:
-        get_annotation_input(sequence, copy=False)._validate()
+        get_annotation_input(sequence, copy=False).validate_annotation()
     except ValueError:
         return False
     return True
@@ -499,3 +499,187 @@ def validate(
         )
     else:
         return _validate_single(sequence)
+
+
+def _generate_random_single(
+    _item: Any = None,  # Dummy parameter for parallel processing
+    min_length: int = 6,
+    max_length: int = 20,
+    mod_probability: float = 0.05,
+    include_internal_mods: bool = True,
+    include_nterm_mods: bool = True,
+    include_cterm_mods: bool = True,
+    include_labile_mods: bool = True,
+    include_unknown_mods: bool = True,
+    include_isotopic_mods: bool = True,
+    include_static_mods: bool = True,
+    generate_intervals: bool = True,
+    include_charge: bool = True,
+    require_composition: bool = True,
+) -> ProFormaAnnotation:
+    return ProFormaAnnotation.random(
+        min_length=min_length,
+        max_length=max_length,
+        mod_probability=mod_probability,
+        include_internal_mods=include_internal_mods,
+        include_nterm_mods=include_nterm_mods,
+        include_cterm_mods=include_cterm_mods,
+        include_labile_mods=include_labile_mods,
+        include_unknown_mods=include_unknown_mods,
+        include_isotopic_mods=include_isotopic_mods,
+        include_static_mods=include_static_mods,
+        generate_intervals=generate_intervals,
+        include_charge=include_charge,
+        require_composition=require_composition,
+    )
+
+
+@overload
+def generate_random(
+    count: None = None,
+    min_length: int = 6,
+    max_length: int = 20,
+    mod_probability: float = 0.05,
+    include_internal_mods: bool = True,
+    include_nterm_mods: bool = True,
+    include_cterm_mods: bool = True,
+    include_labile_mods: bool = True,
+    include_unknown_mods: bool = True,
+    include_isotopic_mods: bool = True,
+    include_static_mods: bool = True,
+    generate_intervals: bool = True,
+    include_charge: bool = True,
+    require_composition: bool = True,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+) -> ProFormaAnnotation: ...
+
+
+@overload
+def generate_random(
+    count: int,
+    min_length: int = 6,
+    max_length: int = 20,
+    mod_probability: float = 0.05,
+    include_internal_mods: bool = True,
+    include_nterm_mods: bool = True,
+    include_cterm_mods: bool = True,
+    include_labile_mods: bool = True,
+    include_unknown_mods: bool = True,
+    include_isotopic_mods: bool = True,
+    include_static_mods: bool = True,
+    generate_intervals: bool = True,
+    include_charge: bool = True,
+    require_composition: bool = True,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+) -> list[ProFormaAnnotation]: ...
+
+
+def generate_random(
+    count: int | None = None,
+    min_length: int = 6,
+    max_length: int = 20,
+    mod_probability: float = 0.05,
+    include_internal_mods: bool = True,
+    include_nterm_mods: bool = True,
+    include_cterm_mods: bool = True,
+    include_labile_mods: bool = True,
+    include_unknown_mods: bool = True,
+    include_isotopic_mods: bool = True,
+    include_static_mods: bool = True,
+    generate_intervals: bool = True,
+    include_charge: bool = True,
+    require_composition: bool = True,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+) -> ProFormaAnnotation | list[ProFormaAnnotation]:
+    """Generate random ProForma annotation(s) with configurable features.
+    
+    Args:
+        count: Number of random sequences to generate. If None, generates a single sequence.
+        min_length: Minimum sequence length
+        max_length: Maximum sequence length
+        mod_probability: Probability of adding modifications (0.0 to 1.0)
+        include_internal_mods: Whether to generate internal modifications
+        include_nterm_mods: Whether to generate N-terminal modifications
+        include_cterm_mods: Whether to generate C-terminal modifications
+        include_labile_mods: Whether to generate labile modifications
+        include_unknown_mods: Whether to generate unknown position modifications
+        include_isotopic_mods: Whether to generate isotopic modifications
+        include_static_mods: Whether to generate static modifications
+        generate_intervals: Whether to generate intervals
+        include_charge: Whether to generate charge state or adduct
+        require_composition: If True, only modifications with composition are allowed (no mass-only)
+        n_workers: Number of parallel workers (only used when count > 1)
+        chunksize: Size of chunks for parallel processing
+        method: Parallel processing method ('process', 'thread', or 'sequential')
+        
+    Returns:
+        A single ProFormaAnnotation if count is None, otherwise a list of ProFormaAnnotations
+        
+    .. code-block:: python
+    
+        # Generate a single random sequence
+        >>> seq = generate_random()
+        >>> isinstance(seq, ProFormaAnnotation)
+        True
+        
+        # Generate multiple random sequences
+        >>> seqs = generate_random(count=10)
+        >>> len(seqs)
+        10
+        
+        # Generate without modifications
+        >>> seq = generate_random(mod_probability=0.0)
+        
+        # Generate with only internal modifications
+        >>> seq = generate_random(
+        ...     include_nterm_mods=False,
+        ...     include_cterm_mods=False,
+        ...     include_labile_mods=False
+        ... )
+    """
+    if count is None:
+        return _generate_random_single(
+            min_length=min_length,
+            max_length=max_length,
+            mod_probability=mod_probability,
+            include_internal_mods=include_internal_mods,
+            include_nterm_mods=include_nterm_mods,
+            include_cterm_mods=include_cterm_mods,
+            include_labile_mods=include_labile_mods,
+            include_unknown_mods=include_unknown_mods,
+            include_isotopic_mods=include_isotopic_mods,
+            include_static_mods=include_static_mods,
+            generate_intervals=generate_intervals,
+            include_charge=include_charge,
+            require_composition=require_composition,
+        )
+    else:
+        # Generate count number of items
+        items = [None] * count
+        return parallel_apply_internal(
+            _generate_random_single,
+            items,
+            min_length=min_length,
+            max_length=max_length,
+            mod_probability=mod_probability,
+            include_internal_mods=include_internal_mods,
+            include_nterm_mods=include_nterm_mods,
+            include_cterm_mods=include_cterm_mods,
+            include_labile_mods=include_labile_mods,
+            include_unknown_mods=include_unknown_mods,
+            include_isotopic_mods=include_isotopic_mods,
+            include_static_mods=include_static_mods,
+            generate_intervals=generate_intervals,
+            include_charge=include_charge,
+            require_composition=require_composition,
+            n_workers=n_workers,
+            chunksize=chunksize,
+            method=method,
+        )
+

@@ -18,7 +18,7 @@ class Span(NamedTuple):
     end: int
     missed_cleavages: int
 
-    def __len__(self) -> int:
+    def span_len(self) -> int:
         return self.end - self.start
 
 

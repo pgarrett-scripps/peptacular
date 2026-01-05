@@ -14,5 +14,7 @@ from .fragment import *
 from .isotope import *
 from .regex_utils import *
 from .property import *
+from .chem import *
+from .utils import *
 
 __version__ = "3.0.0"

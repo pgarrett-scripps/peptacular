@@ -3438,9 +3438,36 @@ class ProFormaAnnotation:
         )
 
     @staticmethod
-    def random() -> "ProFormaAnnotation":
+    def random(    
+        min_length: int = 6,
+        max_length: int = 20,
+        mod_probability: float = 0.05,
+        include_internal_mods: bool = True,
+        include_nterm_mods: bool = True,
+        include_cterm_mods: bool = True,
+        include_labile_mods: bool = True,
+        include_unknown_mods: bool = True,
+        include_isotopic_mods: bool = True,
+        include_static_mods: bool = True,
+        generate_intervals: bool = True,
+        include_charge: bool = True,
+        require_composition: bool = True) -> "ProFormaAnnotation":
         """Generate a random ProFormaAnnotation for testing purposes."""
-        return generate_random_proforma_annotation()
+        return generate_random_proforma_annotation(
+            min_length=min_length,
+            max_length=max_length,
+            mod_probability=mod_probability,
+            include_internal_mods=include_internal_mods,
+            include_nterm_mods=include_nterm_mods,
+            include_cterm_mods=include_cterm_mods,
+            include_labile_mods=include_labile_mods,
+            include_unknown_mods=include_unknown_mods,
+            include_isotopic_mods=include_isotopic_mods,
+            include_static_mods=include_static_mods,
+            generate_intervals=generate_intervals,
+            include_charge=include_charge,
+            require_composition=require_composition,
+        )
 
     def left_semi_spans(
         self,

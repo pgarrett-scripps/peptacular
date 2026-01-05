@@ -1,21 +1,57 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 
-@dataclass(frozen=True, slots=True, order=True)
+@dataclass(frozen=True, slots=True)
 class ElementInfo:
     """
     Class to store information about an element isotope
     """
 
-    number: int = field(compare=True)
-    mass_number: int | None = field(compare=True)
-    symbol: str = field(compare=False)
-    mass: float = field(compare=False)
-    abundance: float | None = field(compare=False)
-    average_mass: float = field(
-        compare=False
-    )  # Average mass for this element (all isotopes)
-    is_monoisotopic: bool | None = field(compare=False)
+    number: int
+    mass_number: int | None
+    symbol: str
+    mass: float
+    abundance: float | None
+    average_mass: float
+    is_monoisotopic: bool | None
+
+    def __hash__(self) -> int:
+        return hash(str(self))
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, str):
+            return str(self) == other
+        if isinstance(other, ElementInfo):
+            return (self.number, self.mass_number) == (other.number, other.mass_number)
+        return NotImplemented
+
+    def __lt__(self, other: object) -> bool:
+        if not isinstance(other, ElementInfo):
+            return NotImplemented
+        mn = self.mass_number if self.mass_number is not None else 0
+        on = other.mass_number if other.mass_number is not None else 0
+        return (self.number, mn) < (other.number, on)
+
+    def __le__(self, other: object) -> bool:
+        if not isinstance(other, ElementInfo):
+            return NotImplemented
+        mn = self.mass_number if self.mass_number is not None else 0
+        on = other.mass_number if other.mass_number is not None else 0
+        return (self.number, mn) <= (other.number, on)
+
+    def __gt__(self, other: object) -> bool:
+        if not isinstance(other, ElementInfo):
+            return NotImplemented
+        mn = self.mass_number if self.mass_number is not None else 0
+        on = other.mass_number if other.mass_number is not None else 0
+        return (self.number, mn) > (other.number, on)
+
+    def __ge__(self, other: object) -> bool:
+        if not isinstance(other, ElementInfo):
+            return NotImplemented
+        mn = self.mass_number if self.mass_number is not None else 0
+        on = other.mass_number if other.mass_number is not None else 0
+        return (self.number, mn) >= (other.number, on)
 
     @property
     def neutron_count(self) -> int:
@@ -70,4 +106,4 @@ class ElementInfo:
             "average_mass": self.average_mass,
             "is_monoisotopic": self.is_monoisotopic,
         }
-        return self.__class__(**{**current_values, **kwargs})
+        return self.__class__(**{**current_values, **kwargs})  # type: ignore

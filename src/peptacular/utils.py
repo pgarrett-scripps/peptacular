@@ -1,8 +1,7 @@
 import sys
-from typing import Iterable, Mapping, Protocol, runtime_checkable
+from typing import Iterable, Protocol, runtime_checkable
 
 from .constants import ModType, ModTypeLiteral
-from .elements import ELEMENT_LOOKUP
 
 
 @runtime_checkable
@@ -56,7 +55,7 @@ def get_mods(
         return [mod_type for mod_type in ModType]
     elif isinstance(mods, (str, ModType)):
         # Single modification type
-        return [get_mod_type(mods)]
+        return [get_mod_type(mods)]  # type: ignore
     elif isinstance(mods, Iterable):  # type: ignore
         # List of modification types
         return [get_mod_type(mod) for mod in mods]
@@ -66,58 +65,30 @@ def get_mods(
     )
 
 
-def chem_mass(
-    formula: Mapping[str, int | float],
-    monoisotopic: bool = True,
-) -> float:
+
+def ppm_error(theo: float, expt: float) -> float:
     """
-    Calculate the mass of a chemical formula or composition.
-
-    :param formula: The chemical formula or composition.
-    :type formula: Mapping[str, int | float] | str
-    :param monoisotopic: Whether to use monoisotopic masses. Default is True.
-    :type monoisotopic: bool
-    :param precision: The number of decimal places to round the mass to. Default is None.
-    :type precision: int | None
-    :param sep: The separator to use between element and counts. Default is ''.
-    :type sep: str
-
-    :raises UnknownElementError: If the chemical formula contains an unknown element.
-
-    :return: The mass of the chemical formula.
-    :rtype: float
 
     .. code-block:: python
 
-        # Calculate the mass of a chemical formula.
-        >>> chem_mass({'C': 6, 'H': 12, 'O': 6}, precision=3)
-        180.063
-
-        >>> chem_mass({'13C': 6, 'H': 12, 'O': 6}, precision=3)
-        186.084
-
-        >>> chem_mass({'C': 6, 'H': 12, 'O': 6}, monoisotopic=False, precision=3)
-        180.156
-
-        # Use average masses for all elements except for iosotopes.
-        >>> chem_mass({'13C': 6, 'H': 12, 'O': 6}, monoisotopic=False, precision=3)
-        186.112
-
-        # Use average masses for all elements except for iosotopes.
-        >>> chem_mass({'13C': 6, 'D': 12, 'O': 6}, monoisotopic=False, precision=3)
-        198.186
-
-        # Complex example using floats and particles
-        >>> chem_mass('C4.45N8.22H59.99[13C34]S0.04e-16.33', monoisotopic=False, precision=3)
-        672.437
-
-        # Example Error
-        >>> chem_mass("C6X2", precision=3)
-        Traceback (most recent call last):
-        peptacular.errors.InvalidChemFormulaError: Error parsing chem formula: "{'C': 6, 'X': 2}". Unknown element: "X"!
+        # Calculate the parts per million error between two values.
+        >>> ppm_error(100.0, 100.1, 2)
+        1000.0
 
     """
-    m: float = 0.0
-    for element, count in formula.items():
-        m += ELEMENT_LOOKUP[element].get_mass(monoisotopic=monoisotopic) * count
-    return m
+    return ((expt - theo) / theo) * 1e6
+
+
+def dalton_error(theo: float, expt: float) -> float:
+    """
+    Calculate the Dalton error between two values.
+
+    .. code-block:: python
+
+        # Calculate the Dalton error between two values.
+        >>> dalton_error(100.0, 100.1, 2)
+        0.1
+
+    """
+
+    return expt - theo

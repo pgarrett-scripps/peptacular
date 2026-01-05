@@ -327,8 +327,13 @@ class ElementLookup:
         """Iterator over all ElementInfo entries in the lookup."""
         return iter(self.element_data.values())
 
-    def get_neutron_offsets_and_abundances(self, key: str) -> list[tuple[int, float]]:
+    def get_neutron_offsets_and_abundances(
+        self, key: str | ElementInfo
+    ) -> list[tuple[int, float]]:
         # get the element info
+        if isinstance(key, ElementInfo):
+            key = key.symbol
+
         isotopes = self.get_all_isotopes(key)
         mono_isotope = self.get_monoisotopic(key)
         result: list[tuple[int, float]] = []
@@ -337,8 +342,14 @@ class ElementLookup:
             result.append((neutron_offset, iso.abundance))  # type: ignore
         return result
 
-    def get_masses_and_abundances(self, key: str) -> list[tuple[float, float]]:
+    def get_masses_and_abundances(
+        self, key: str | ElementInfo
+    ) -> list[tuple[float, float]]:
         # get the element info
+
+        if isinstance(key, ElementInfo):
+            key = key.symbol
+
         isotopes = self.get_all_isotopes(key)
         result: list[tuple[float, float]] = []
         for iso in isotopes:

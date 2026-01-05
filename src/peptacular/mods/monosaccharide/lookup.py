@@ -1,17 +1,16 @@
 from typing import Iterable
 from ..dclass import MonosaccharideInfo
-from .data import MONOSACCHARIDES
+from .data import MONOSACCHARIDES, Monosaccharide
 
 
 class MonosaccharideLookup:
     def __init__(self, monosaccharide_data: dict[str, MonosaccharideInfo]) -> None:
-        self.proforma_to_monosaccharide = monosaccharide_data
-        self.proforma_to_monosaccharide = {
-            k.lower(): v for k, v in self.proforma_to_monosaccharide.items()
+        self.proforma_to_monosaccharide: dict[str, MonosaccharideInfo] = {
+            k.lower(): v for k, v in monosaccharide_data.items()
         }
 
-    def __getitem__(self, key: str) -> MonosaccharideInfo:
-        info = self._query_proforma(key)
+    def __getitem__(self, key: str | Monosaccharide) -> MonosaccharideInfo:
+        info: MonosaccharideInfo | None = self._query_proforma(key)
         if info is not None:
             return info
 
@@ -24,7 +23,7 @@ class MonosaccharideLookup:
         except KeyError:
             return False
 
-    def get(self, key: str) -> MonosaccharideInfo | None:
+    def get(self, key: str | Monosaccharide) -> MonosaccharideInfo | None:
         try:
             return self[key]
         except KeyError:
@@ -34,22 +33,20 @@ class MonosaccharideLookup:
         return self.proforma_to_monosaccharide.get(name.lower())
 
     def proforma(self, name: str) -> MonosaccharideInfo:
-        val = self._query_proforma(name)
+        val: MonosaccharideInfo | None = self._query_proforma(name)
         if val is None:
             raise KeyError(f"Monosaccharide '{name}' not found by ProForma name.")
         return val
 
-    def obo(self, name: str) -> MonosaccharideInfo:
-        val = self._query_obo(name)
-        if val is None:
-            raise KeyError(f"Monosaccharide '{name}' not found by OBO name.")
-        return val
-
     def __iter__(self) -> Iterable[MonosaccharideInfo]:
         """Iterator over all MonosaccharideInfo entries in the lookup."""
-        return iter(self.obo_name_to_monosaccharide.values())
+        return iter(self.proforma_to_monosaccharide.values())
 
+
+monos: dict[str, MonosaccharideInfo] = {
+    str(mono): info for mono, info in MONOSACCHARIDES.items()
+}
 
 MONOSACCHARIDE_LOOKUP = MonosaccharideLookup(
-    monosaccharide_data=MONOSACCHARIDES,
+    monosaccharide_data=monos,
 )

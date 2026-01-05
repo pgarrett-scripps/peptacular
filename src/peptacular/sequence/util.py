@@ -57,7 +57,7 @@ def override_annotation_properties(
     else:
         pass
 
-    if annotation.has_charge_adducts and charge_adducts is not None:
+    if annotation.has_charge and charge_adducts is not None:
         # warning
         warnings.warn(
             "Both 'annotation.charge_adducts' and 'charge_adducts' are provided. Using user provided 'charge_adducts'.",

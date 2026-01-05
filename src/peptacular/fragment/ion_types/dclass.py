@@ -1,7 +1,8 @@
 from dataclasses import dataclass
 from enum import Flag, auto
 from functools import cached_property
-from typing import Counter, Mapping
+from typing import Mapping
+from collections import Counter
 import typing
 
 from ...elements import ElementInfo, parse_composition
@@ -90,7 +91,8 @@ class FragmentIonInfo:
         if self.dict_composition is None:
             raise ValueError("Composition is not available for this ion type")
 
-        return Counter(parse_composition(dict(self.dict_composition)))
+        comp: dict[ElementInfo, int] = parse_composition(dict(self.dict_composition))
+        return Counter(comp)
 
     def to_dict(self, float_precision: int = 6) -> dict[str, object]:
         """Convert the FragmentIonInfo to a dictionary"""

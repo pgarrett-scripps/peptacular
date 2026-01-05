@@ -22,6 +22,7 @@ from .basic import (
     percent_residues,
     annotate_ambiguity,
     validate,
+    generate_random,
 )
 from .combinatoric import (
     permutations,
@@ -118,6 +119,7 @@ __all__ = [
     "percent_residues",
     "annotate_ambiguity",
     "validate",
+    "generate_random",
     # combinatoric
     "permutations",
     "combinations",

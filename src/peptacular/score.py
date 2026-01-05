@@ -60,10 +60,8 @@ def get_matched_indices(
     if not mz_spectrum1 or not mz_spectrum2:
         return [None] * len(mz_spectrum1)
 
-    # Convert to list for faster indexing if needed
-    mz2_list = (
-        list(mz_spectrum2) if not isinstance(mz_spectrum2, list) else mz_spectrum2
-    )
+    # Convert to list for faster indexing if needed (ensure elements are float)
+    mz2_list: list[float] = [float(x) for x in mz_spectrum2]
 
     def _binary_search_left(arr: list[float], target: float) -> int:
         """Find leftmost position where target could be inserted to keep array sorted."""

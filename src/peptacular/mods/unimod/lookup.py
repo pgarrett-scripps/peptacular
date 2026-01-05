@@ -1,6 +1,7 @@
 from typing import Iterable
+from functools import cached_property
 from .data import UNIMOD_MODIFICATIONS
-from ..dclass import UnimodInfo
+from ..dclass import UnimodInfo, filter_infos
 from random import choice
 
 
@@ -93,9 +94,51 @@ class UnimodLookup:
         """Get all keys (names) in the lookup."""
         return self.name_to_info.keys()
 
-    def choice(self) -> UnimodInfo:
+    @cached_property
+    def _all_infos_tuple(self) -> tuple[UnimodInfo, ...]:
+        """Cached tuple of all UnimodInfo entries."""
+        return tuple(self.name_to_info.values())
+
+    @cached_property
+    def _infos_with_mass_tuple(self) -> tuple[UnimodInfo, ...]:
+        """Cached tuple of UnimodInfo entries with monoisotopic mass."""
+        return tuple(filter_infos(
+            list(self.name_to_info.values()),
+            has_monoisotopic_mass=True
+        ))
+
+    @cached_property
+    def _infos_with_composition_tuple(self) -> tuple[UnimodInfo, ...]:
+        """Cached tuple of UnimodInfo entries with composition."""
+        return tuple(filter_infos(
+            list(self.name_to_info.values()),
+            has_composition=True
+        ))
+
+    @cached_property
+    def _infos_with_mass_and_composition_tuple(self) -> tuple[UnimodInfo, ...]:
+        """Cached tuple of UnimodInfo entries with both mass and composition."""
+        return tuple(filter_infos(
+            list(self.name_to_info.values()),
+            has_monoisotopic_mass=True,
+            has_composition=True
+        ))
+
+    def choice(self, require_monoisotopic_mass: bool = True, require_composition: bool = True) -> UnimodInfo:
         """Get a random UnimodInfo from the lookup."""
-        return choice(list(self.name_to_info.values()))
+        if require_monoisotopic_mass and require_composition:
+            valid_infos = self._infos_with_mass_and_composition_tuple
+        elif require_monoisotopic_mass:
+            valid_infos = self._infos_with_mass_tuple
+        elif require_composition:
+            valid_infos = self._infos_with_composition_tuple
+        else:
+            valid_infos = self._all_infos_tuple
+
+        if not valid_infos:
+            raise ValueError("No valid UnimodInfo entries found matching the criteria.")
+
+        return choice(valid_infos)
 
 
 UNIMOD_LOOKUP = UnimodLookup(UNIMOD_MODIFICATIONS)

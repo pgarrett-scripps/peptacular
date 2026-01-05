@@ -49,7 +49,7 @@ def parse_fasta(input_data: FASTA_INPUT_TYPE) -> list[FastaSequence]:
         text: str = ""
 
         if isinstance(input_data, ReadableProtocol) or hasattr(input_data, "read"):
-            content = input_data.read()
+            content = input_data.read()  # type: ignore
             text = (
                 content.decode("utf-8") if isinstance(content, bytes) else str(content)
             )

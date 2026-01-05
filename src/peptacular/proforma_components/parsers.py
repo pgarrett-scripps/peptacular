@@ -39,6 +39,9 @@ if TYPE_CHECKING:
     )
 
 
+# Try to match known monosaccharide names (longest first)
+monosaccharide_names: list[str] = sorted(Monosaccharide.to_list(), key=len, reverse=True) # type: ignore
+
 # ============================================================================
 # Regex Patterns for Modification Types
 # ============================================================================
@@ -46,23 +49,22 @@ if TYPE_CHECKING:
 # Accession patterns: MUST use full CV name (UNIMOD, MOD, RESID, GNO, XLMOD)
 # Rule 1: Full CV name with colon, MUST NOT be followed with +/-
 # e.g., "UNIMOD:35", "MOD:00719", "RESID:1234", "GNO:5678", "XLMOD:91011"
-PATTERN_ACCESSION = re.compile(r"^(UNIMOD|MOD|RESID|GNO|XLMOD):(\w+)$", re.IGNORECASE)
+PATTERN_ACCESSION: re.Pattern[str] = re.compile(r"^(UNIMOD|MOD|RESID|GNO|XLMOD):(\w+)$", re.IGNORECASE)
 
 # Custom pattern: Rule 3: MUST use shorthand "C:"
 # e.g., "C:some custom data"
-PATTERN_CUSTOM = re.compile(r"^C:(.+)$", re.IGNORECASE)
-
+PATTERN_CUSTOM: re.Pattern[str] = re.compile(r"^C:(.+)$", re.IGNORECASE)
 # Mass pattern: Rule 2: MUST include sign (+/-), can optionally use CV single letter prefix
 # Format: [single-letter-CV:]?[Obs:]?<sign><number>[.number]
 # e.g., "+15.995", "-18.010", "U:+15.995", "M:-18.010", "Obs:+17.05685", "U:Obs:+15.995"
-PATTERN_MASS = re.compile(
+PATTERN_MASS: re.Pattern[str] = re.compile(
     r"^(?:([UMRXGumrxg]):)?(?:(Obs):)?([+-]\d+(?:\.\d+)?)$", re.IGNORECASE
 )
 
 # Named modification pattern: Rule 4: Can optionally use shorthand CVs (including C: for custom), MUST NOT be followed with +/-
 # Format: [single-letter-CV:]?<name>
 # e.g., "Oxidation", "Phospho", "U:Oxidation", "M:Phospho", "R:Acetyl", "C:CustomMod"
-PATTERN_NAMED_MOD = re.compile(
+PATTERN_NAMED_MOD: re.Pattern[str] = re.compile(
     r"^(?:([UMRXGCumrxgc]):)?([A-Za-z][A-Za-z0-9]*)$", re.IGNORECASE
 )
 
@@ -72,7 +74,7 @@ PATTERN_NAMED_MOD = re.compile(
 # 1. [isotope Element count]  (e.g., [13C2], [13C-2], [2H4])
 #    Note: When isotope is specified, count MUST be inside the bracket
 # 2. Element count            (e.g., C2, H, Ca3, N-1)
-_FORMULA_ELEMENT_PATTERN = re.compile(
+_FORMULA_ELEMENT_PATTERN: re.Pattern[str] = re.compile(
     r"^"
     r"(?:\[(\d+)([A-Z][a-z]?)([+-]?\d+)?\])|"  # Format 1: [isotope Element count]
     r"(?:([A-Z][a-z]?)([+-]?\d+)?)"  # Format 2: Element count
@@ -82,7 +84,7 @@ _FORMULA_ELEMENT_PATTERN = re.compile(
 
 # Regex pattern for parsing charged formulas
 # Matches: Formula:C2H6 or Formula:C2H6:z+2
-_CHARGED_FORMULA_PATTERN = re.compile(
+_CHARGED_FORMULA_PATTERN: re.Pattern[str] = re.compile(
     r"^Formula:(.+?)(?::z([+-]?\d+))?$", re.IGNORECASE
 )
 
@@ -448,10 +450,6 @@ def _parse_glycan_composition(glycan_str: str) -> tuple["GlycanComponent", ...]:
     components: list["GlycanComponent"] = []
     i = 0
 
-    # Sort by length (longest first) to match "HexNAc" before "Hex"
-    monosaccharide_names = sorted(
-        [m.value for m in Monosaccharide], key=len, reverse=True
-    )
 
     while i < len(glycan_str):
         # Try to match a monosaccharide name
@@ -856,11 +854,6 @@ def parse_glycan_component(s: str) -> "GlycanComponent":
     from .comps import GlycanComponent
 
     s = s.strip()
-
-    # Try to match known monosaccharide names (longest first)
-    monosaccharide_names = sorted(
-        [m.value for m in Monosaccharide], key=len, reverse=True
-    )
 
     for mono_name in monosaccharide_names:
         if s.startswith(mono_name):

@@ -1,8 +1,7 @@
 import multiprocessing as mp
 import sys
 from functools import partial
-from multiprocessing import Pool
-from multiprocessing.pool import ThreadPool
+from multiprocessing.pool import Pool, ThreadPool
 from typing import Any, Callable, Literal, Sequence, TypeVar
 import atexit
 
@@ -12,7 +11,7 @@ from ..constants import ParrallelMethod, ParrallelMethodLiteral
 T = TypeVar("T")
 
 # Global pool cache
-_pool_cache: dict[tuple[str, int], ThreadPool] = {}
+_pool_cache: dict[tuple[str, int], Pool | ThreadPool] = {}
 _pool_lock = mp.Lock()
 
 
@@ -53,7 +52,7 @@ def _apply_wrapper(item: Any, func: Callable[..., T], func_kwargs: dict[str, Any
 
 def _get_or_create_pool(
     method: ParrallelMethod, n_workers: int, reuse_pool: bool = True
-) -> ThreadPool:
+) -> Pool | ThreadPool:
     """
     Get an existing pool or create a new one.
 
@@ -63,15 +62,19 @@ def _get_or_create_pool(
     :return: Pool instance
     """
     if not reuse_pool:
-        PoolClass = ThreadPool if method == ParrallelMethod.THREAD else Pool
-        return PoolClass(processes=n_workers)
+        if method == ParrallelMethod.THREAD:
+            return ThreadPool(processes=n_workers)
+        else:
+            return Pool(processes=n_workers)
 
     pool_key = (method.value, n_workers)
 
     with _pool_lock:
         if pool_key not in _pool_cache:
-            PoolClass = ThreadPool if method == ParrallelMethod.THREAD else Pool
-            _pool_cache[pool_key] = PoolClass(processes=n_workers)
+            if method == ParrallelMethod.THREAD:
+                _pool_cache[pool_key] = ThreadPool(processes=n_workers)
+            else:
+                _pool_cache[pool_key] = Pool(processes=n_workers)
 
         return _pool_cache[pool_key]
 

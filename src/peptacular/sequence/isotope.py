@@ -20,7 +20,7 @@ def _isotopic_distribution_single(
     distribution_resolution: int | None = 5,
     use_neutron_count: bool = False,
     conv_min_abundance_threshold: float = 10e-15,
-) -> IsotopicData:
+) -> list[IsotopicData]:
     return get_annotation_input(annotation).isotopic_distribution(
         ion_type=ion_type,
         charge=charge,
@@ -49,7 +49,7 @@ def isotopic_distribution(
     n_workers: int | None = None,
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
-) -> list[IsotopicData]: ...
+) -> list[list[IsotopicData]]: ...
 
 
 @overload
@@ -67,7 +67,7 @@ def isotopic_distribution(
     n_workers: int | None = None,
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
-) -> IsotopicData: ...
+) -> list[IsotopicData]: ...
 
 
 def isotopic_distribution(
@@ -84,7 +84,7 @@ def isotopic_distribution(
     n_workers: int | None = None,
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
-) -> IsotopicData | list[IsotopicData]:
+) -> list[IsotopicData] | list[list[IsotopicData]]:
     if isinstance(annotations, Sequence) and not isinstance(
         annotations, (str, ProFormaAnnotation)
     ):
@@ -130,7 +130,7 @@ def _estimate_isotopic_distribution_single(
     distribution_resolution: int | None = 5,
     use_neutron_count: bool = False,
     conv_min_abundance_threshold: float = 10e-15,
-) -> IsotopicData:
+) -> list[IsotopicData]:
     return get_annotation_input(annotation).estimate_isotopic_distribution(
         ion_type=ion_type,
         charge=charge,
@@ -159,7 +159,7 @@ def estimate_isotopic_distribution(
     n_workers: int | None = None,
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
-) -> list[IsotopicData]: ...
+) -> list[list[IsotopicData]]: ...
 
 
 @overload
@@ -177,7 +177,7 @@ def estimate_isotopic_distribution(
     n_workers: int | None = None,
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
-) -> IsotopicData: ...
+) -> list[IsotopicData]: ...
 
 
 def estimate_isotopic_distribution(
@@ -194,7 +194,7 @@ def estimate_isotopic_distribution(
     n_workers: int | None = None,
     chunksize: int | None = None,
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
-) -> IsotopicData | list[IsotopicData]:
+) -> list[IsotopicData] | list[list[IsotopicData]]:
     if isinstance(annotations, Sequence) and not isinstance(
         annotations, (str, ProFormaAnnotation)
     ):

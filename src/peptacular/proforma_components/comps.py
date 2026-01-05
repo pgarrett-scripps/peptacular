@@ -157,10 +157,13 @@ class ChargedFormula(MassPropertyMixin):
 
     @staticmethod
     def from_composition(
-        composition: Mapping[ElementInfo, int], charge: int | None = None
+        composition: Mapping[ElementInfo | str, int] | Counter[ElementInfo],
+        charge: int | None = None,
     ) -> ChargedFormula:
         formula_elements: list[FormulaElement] = []
         for elem_info, occurance in composition.items():
+            if isinstance(elem_info, str):
+                elem_info = ELEMENT_LOOKUP[elem_info]
             formula_elements.append(
                 FormulaElement.from_element_info(elem_info, occurance)
             )
@@ -184,7 +187,7 @@ class ChargedFormula(MassPropertyMixin):
 
     def serialize(
         self,
-        space: str = "",
+        sep: str = "",
         hill_order: bool = False,
         include_formula_prefix: bool = True,
     ) -> str:
@@ -192,7 +195,7 @@ class ChargedFormula(MassPropertyMixin):
 
         return serialize_charged_formula(
             self,
-            space=space,
+            space=sep,
             hill_order=hill_order,
             include_formula_prefix=include_formula_prefix,
         )
@@ -244,7 +247,9 @@ class ChargedFormula(MassPropertyMixin):
 
     def __add__(self, other: ChargedFormula) -> ChargedFormula:
         """Add two ChargedFormulas together."""
-        combined_comp = self.get_composition() + other.get_composition()
+        combined_comp: Counter[ElementInfo] = (
+            self.get_composition() + other.get_composition()
+        )
         combined_charge = None
         if self.charge is not None and other.charge is not None:
             combined_charge = self.charge + other.charge
@@ -252,7 +257,9 @@ class ChargedFormula(MassPropertyMixin):
 
     def __sub__(self, other: ChargedFormula) -> ChargedFormula:
         """Subtract one ChargedFormula from another."""
-        combined_comp = self.get_composition() - other.get_composition()
+        combined_comp: Counter[ElementInfo] = (
+            self.get_composition() - other.get_composition()
+        )
         combined_charge = None
         if self.charge is not None and other.charge is not None:
             combined_charge = self.charge - other.charge
@@ -329,9 +336,9 @@ class TagAccession(MassPropertyMixin):
         if mod_info is not None:
             comp = mod_info.composition
             if comp is None:
-                raise ValueError(f"Unknown composition for modification: {self}")
+                raise ValueError(f"Unknown composition for modification: {repr(self)}")
             return Counter(comp)
-        raise ValueError(f"Unknown composition for modification: {self}")
+        raise ValueError(f"Unknown modification: {repr(self)}")
 
     @staticmethod
     def from_string(s: str) -> "TagAccession":

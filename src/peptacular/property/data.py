@@ -122,7 +122,7 @@ hphob_cid: Final[dict[str, float]] = {_AA.A: 0.02, _AA.R: -0.42, _AA.N: -0.77, _
 # Cowan hydrophobicity indices at ph 3.4 and 7.5
 # Peptide Research 3:75-80(1990).
 # "Cowan3.4" "Conwan7.5"
-_hphob_cowan: dict[float, Final[dict[str, float]]] = {3.4 : {_AA.A: 0.42, _AA.R: -1.56, _AA.N: -1.03, _AA.D: -0.51, _AA.C: 0.84,
+_hphob_cowan: Final[dict[float, dict[str, float]]] = {3.4 : {_AA.A: 0.42, _AA.R: -1.56, _AA.N: -1.03, _AA.D: -0.51, _AA.C: 0.84,
              _AA.Q: -0.96, _AA.E: -0.37, _AA.G: 0.0, _AA.H: -2.28, _AA.I: 1.81,
              _AA.L: 1.8, _AA.K: -2.03, _AA.M: 1.18, _AA.F: 1.74, _AA.P: 0.86,
              _AA.S: -0.64, _AA.T: -0.26, _AA.W: 1.46, _AA.Y: 0.51, _AA.V: 1.34},
@@ -132,8 +132,8 @@ _hphob_cowan: dict[float, Final[dict[str, float]]] = {3.4 : {_AA.A: 0.42, _AA.R:
              _AA.S: -0.63, _AA.T: -0.27, _AA.W: 1.35, _AA.Y: 0.39, _AA.V: 1.32}
       }
 
-hphob_cowan_3_4 = _hphob_cowan[3.4]
-hphob_cowan_7_5 = _hphob_cowan[7.5]
+hphob_cowan_3_4: Final[dict[str, int | float]] = _hphob_cowan[3.4]
+hphob_cowan_7_5: Final[dict[str, int | float]] = _hphob_cowan[7.5]
 
 # Eisenberg Normalized consensus hydrophobicity scale
 # J. Mol. Biol. 179:125-142(1984)
