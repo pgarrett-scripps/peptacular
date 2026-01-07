@@ -197,12 +197,6 @@ def isotopic_distribution(
         post_mass = _chem_mass(composition)
         delta_mass = prior_mass - post_mass
 
-    if delta_mass != 0.0:
-        warnings.warn(
-            f"Rounding chemical formula changed mass by {delta_mass:.4f} Da.",
-            UserWarning,
-        )
-
     total_distribution = {
         0.0: (1.0, 0)
     }  # Start with a base distribution (mass/offset: (abundance, neutron_count))
