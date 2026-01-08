@@ -1,5 +1,5 @@
 from functools import cache, cached_property
-from typing import Iterable
+from collections.abc import Iterable
 from .dclass import AminoAcidInfo
 from .data import AMINO_ACID_INFOS
 from ..elements import ElementInfo
@@ -151,8 +151,7 @@ class AALookup:
 
     def __iter__(self) -> Iterable[AminoAcidInfo]:
         """Iterator over all amino acids in order of one-letter codes A-Z"""
-        for aa in self.ordered_amino_acids:
-            yield aa
+        yield from self.ordered_amino_acids
 
 
 AA_LOOKUP = AALookup(AMINO_ACID_INFOS)

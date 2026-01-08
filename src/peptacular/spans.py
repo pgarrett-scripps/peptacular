@@ -10,7 +10,8 @@ Working with spans can be a more efficient way of processing the data, since a p
 
 from collections.abc import Generator
 from itertools import groupby
-from typing import Iterable, NamedTuple
+from typing import NamedTuple
+from collections.abc import Iterable
 
 
 class Span(NamedTuple):

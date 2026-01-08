@@ -47,25 +47,25 @@ class ProFormaParser:
         self.length = len(proforma_sequence)
 
         # --- Current Parse State Attributes ---
-        self.amino_acids: List[str] = []
+        self.amino_acids: list[str] = []
 
         # Identifiers
-        self.compound_name: Optional[str] = None  # (>>>Name)
-        self.ion_name: Optional[str] = None  # (>>Name)
-        self.peptide_name: Optional[str] = None  # (>Name)
+        self.compound_name: str | None = None  # (>>>Name)
+        self.ion_name: str | None = None  # (>>Name)
+        self.peptide_name: str | None = None  # (>Name)
 
         # Modifications
-        self.global_mods: Optional[dict[str, int]] = None  # <Mod>
-        self.labile_mods: Optional[dict[str, int]] = None  # {Mod}
-        self.nterm_mods: Optional[dict[str, int]] = None  # [Mod]-
-        self.cterm_mods: Optional[dict[str, int]] = None  # -[Mod]
-        self.internal_mods: Optional[dict[int, dict[str, int]]] = None  # S[Mod]
-        self.unknown_mods: Optional[dict[str, int]] = None  # [Mod]?
-        self.intervals: List[Interval] = []
+        self.global_mods: dict[str, int] | None = None  # <Mod>
+        self.labile_mods: dict[str, int] | None = None  # {Mod}
+        self.nterm_mods: dict[str, int] | None = None  # [Mod]-
+        self.cterm_mods: dict[str, int] | None = None  # -[Mod]
+        self.internal_mods: dict[int, dict[str, int]] | None = None  # S[Mod]
+        self.unknown_mods: dict[str, int] | None = None  # [Mod]?
+        self.intervals: list[Interval] = []
 
         # Properties
-        self.charge: Optional[int] = None
-        self.charge_adducts: Optional[dict[str, int]] = None
+        self.charge: int | None = None
+        self.charge_adducts: dict[str, int] | None = None
         self.is_chimeric: bool = False
         self.is_crosslinked: bool = False
 
@@ -77,7 +77,7 @@ class ProFormaParser:
         """Advance cursor without bounds checking."""
         self.cursor += n
 
-    def parse(self) -> Generator[Tuple["ProFormaParser", Optional[bool]], None, None]:
+    def parse(self) -> Generator[tuple["ProFormaParser", bool | None], None, None]:
         """
         Main Entry Point.
         Parses a Compound Peptidoform Ion string.
@@ -185,13 +185,13 @@ class ProFormaParser:
             mod_key = sys.intern(content)
             self.global_mods[mod_key] = self.global_mods.get(mod_key, 0) + 1
 
-    def _parse_peptidoform_ion_group(self) -> List["ProFormaParser"]:
+    def _parse_peptidoform_ion_group(self) -> list["ProFormaParser"]:
         """
         Parses a group of peptides connected by // (Crosslinks).
         Handles the shared charge state at the end.
         Returns a list of populated parser objects.
         """
-        group: List[ProFormaParser] = []
+        group: list[ProFormaParser] = []
 
         # 1. Parse Peptides separated by //
         while True:
@@ -398,7 +398,7 @@ class ProFormaParser:
 
         return f"{snippet}\n{pointer}"
 
-    def _raise_parse_error(self, message: str, position: Optional[int] = None) -> None:
+    def _raise_parse_error(self, message: str, position: int | None = None) -> None:
         """Raise a ValueError with position context"""
         if position is None:
             position = self.cursor
@@ -511,7 +511,7 @@ class ProFormaParser:
     # =========================================================================
 
     # Optimization 6: Faster charge state parsing
-    def _parse_charge_state(self) -> Tuple[Optional[int], Optional[dict[str, int]]]:
+    def _parse_charge_state(self) -> tuple[int | None, dict[str, int] | None]:
         """Optimized charge parsing"""
         if self.cursor >= self.length or self.original_sequence[self.cursor] != "/":
             return None, None
@@ -604,7 +604,7 @@ class ProFormaParser:
 
     def _parse_bracket_content(
         self, open_char: str, close_char: str, allow_multiplier: bool
-    ) -> List[str]:
+    ) -> list[str]:
         """Optimized bracket parsing - reduces string operations"""
         items: list[str] = []
         seq = self.original_sequence

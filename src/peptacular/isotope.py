@@ -1,6 +1,7 @@
 from collections import Counter
 from dataclasses import dataclass
-from typing import Final, Mapping
+from typing import Final
+from collections.abc import Mapping
 import warnings
 
 from .elements import ElementInfo

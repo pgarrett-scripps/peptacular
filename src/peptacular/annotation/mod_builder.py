@@ -3,7 +3,8 @@ from __future__ import annotations
 import itertools
 import re
 import warnings
-from typing import TYPE_CHECKING, Any, Generator, Iterable, Mapping
+from typing import TYPE_CHECKING, Any
+from collections.abc import Generator, Iterable, Mapping
 
 
 if TYPE_CHECKING:
@@ -136,7 +137,7 @@ def build_mods(
     use_static_notation: bool = False,
     unique_peptidoforms: bool = False,
     inplace: bool = False,
-) -> Generator[ProFormaAnnotation, None, None]:
+) -> Generator[ProFormaAnnotation]:
     """
     Generate all possible combinations of modifications for a peptide.
 

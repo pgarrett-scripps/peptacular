@@ -1,5 +1,6 @@
 from collections import Counter
-from typing import Mapping, Sequence, overload
+from typing import overload
+from collections.abc import Mapping, Sequence
 
 from peptacular.elements.lookup import ELEMENT_LOOKUP
 from .elements import ElementInfo

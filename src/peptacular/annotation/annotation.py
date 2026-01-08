@@ -5,14 +5,10 @@ from itertools import combinations_with_replacement
 import re
 from typing import (
     Any,
-    Callable,
-    Generator,
-    Iterable,
-    Mapping,
     Self,
-    Sequence,
     cast,
 )
+from collections.abc import Callable, Generator, Iterable, Mapping, Sequence
 
 from ..property.prop import AnnotationProperties
 

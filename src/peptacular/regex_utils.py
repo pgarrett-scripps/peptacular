@@ -1,6 +1,6 @@
 import re
 import warnings
-from typing import Generator
+from collections.abc import Generator
 
 
 def get_regex_match_indices(

@@ -1,4 +1,5 @@
-from typing import Any, Callable, Sequence, overload
+from typing import Any, overload
+from collections.abc import Callable, Sequence
 
 from ..spans import Span
 from ..constants import ParrallelMethod, ParrallelMethodLiteral

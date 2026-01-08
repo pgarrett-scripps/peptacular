@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import random
 from collections.abc import Generator
-from typing import TYPE_CHECKING, Any, Callable, Sequence
+from typing import TYPE_CHECKING, Any
+from collections.abc import Callable, Sequence
 
 from ..annotation.mod import Mods
 from ..proforma_components.comps import ModificationTags
@@ -588,7 +589,7 @@ def generate_sliding_windows(
     annotation: ProFormaAnnotation,
     window_size: int,
     reverse: bool = False,
-) -> Generator[ProFormaAnnotation, None, None]:
+) -> Generator[ProFormaAnnotation]:
     """
     Generate sliding windows of the annotation with a specified size.
 

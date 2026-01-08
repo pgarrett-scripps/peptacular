@@ -1,6 +1,7 @@
 from collections import Counter
 from dataclasses import dataclass
-from typing import Any, Literal, Sequence, TypeVar, overload
+from typing import Any, Literal, TypeVar, overload
+from collections.abc import Sequence
 
 from ..annotation.mod import Mods
 

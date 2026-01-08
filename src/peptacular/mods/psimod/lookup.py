@@ -1,4 +1,4 @@
-from typing import Iterable
+from collections.abc import Iterable
 from functools import cached_property
 from .data import PSI_MODIFICATIONS
 from ..dclass import PsimodInfo, filter_infos

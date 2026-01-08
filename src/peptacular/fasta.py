@@ -31,7 +31,7 @@ def _detect_file_encoding(file_path: str | pathlib.Path) -> str:
                 with file_path.open("r", encoding=encoding) as f:
                     f.read(1024)
             else:
-                with open(file_path, "r", encoding=encoding) as f:
+                with open(file_path, encoding=encoding) as f:
                     f.read(1024)
             return encoding
         except UnicodeDecodeError:
@@ -57,7 +57,7 @@ def parse_fasta(input_data: FASTA_INPUT_TYPE) -> list[FastaSequence]:
         elif isinstance(input_data, str):
             if not input_data.lstrip().startswith(">") and "\n" not in input_data[:100]:
                 encoding = _detect_file_encoding(input_data)
-                with open(input_data, "r", encoding=encoding) as f:
+                with open(input_data, encoding=encoding) as f:
                     text = f.read()
             else:
                 text = input_data

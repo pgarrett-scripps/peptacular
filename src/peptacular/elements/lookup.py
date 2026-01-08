@@ -1,4 +1,4 @@
-from typing import Iterable
+from collections.abc import Iterable
 from .dclass import ElementInfo
 from .data import ISOTOPES
 
@@ -191,7 +191,7 @@ class ElementLookup:
 
     def __repr__(self) -> str:
         """String representation of the lookup."""
-        n_elements = len(set(sym for sym, _ in self.element_data.keys()))
+        n_elements = len({sym for sym, _ in self.element_data.keys()})
         return f"ElementLookup({len(self.element_data)} entries, {n_elements} elements)"
 
     def get_monoisotopic(self, symbol: str) -> ElementInfo:
@@ -280,7 +280,7 @@ class ElementLookup:
             >>> lookup.get_elements()[:5]
             ['H', 'D', 'T', 'He', 'Li']
         """
-        return sorted(set(sym for sym, _ in self.element_data.keys()))  # type: ignore
+        return sorted({sym for sym, _ in self.element_data.keys()})  # type: ignore
 
     def mass(
         self, key: tuple[str, int | None] | str, monoisotopic: bool = True

@@ -1,4 +1,5 @@
-from typing import Any, Sequence, overload
+from typing import Any, overload
+from collections.abc import Sequence
 
 from ..constants import ParrallelMethod, ParrallelMethodLiteral
 from ..annotation import (

@@ -7,7 +7,8 @@ This module contains the basic NamedTuple definitions without any circular depen
 from __future__ import annotations
 from collections import Counter
 from dataclasses import dataclass
-from typing import Iterable, Mapping, Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
+from collections.abc import Iterable, Mapping
 
 from ..mods.dclass import PsimodInfo, UnimodInfo
 from ..constants import (
@@ -84,7 +85,7 @@ class FormulaElement(MassPropertyMixin):
         return (ELEMENT_LOOKUP[(self.element, self.isotope)], self.occurance)
 
     @staticmethod
-    def from_element_info(elem_info: ElementInfo, occurance: int) -> "FormulaElement":
+    def from_element_info(elem_info: ElementInfo, occurance: int) -> FormulaElement:
         s = f"{elem_info}{occurance if occurance != 1 else ''}"
         if elem_info.mass_number is not None:
             s = f"[{s}]"
@@ -95,7 +96,7 @@ class FormulaElement(MassPropertyMixin):
         return Counter({elem_info: occurance})
 
     @staticmethod
-    def from_string(s: str, allow_zero: bool = False) -> "FormulaElement":
+    def from_string(s: str, allow_zero: bool = False) -> FormulaElement:
         from ..proforma_components.parsers import parse_formula_element
 
         return parse_formula_element(s, allow_zero=allow_zero)
@@ -175,7 +176,7 @@ class ChargedFormula(MassPropertyMixin):
         allow_zero: bool = False,
         require_formula_prefix: bool = True,
         sep: str = "",
-    ) -> "ChargedFormula":
+    ) -> ChargedFormula:
         from ..proforma_components.parsers import parse_charged_formula
 
         return parse_charged_formula(
@@ -221,7 +222,7 @@ class ChargedFormula(MassPropertyMixin):
         raise ValueError("Cannot convert to mzPAF: no elements present")
 
     @staticmethod
-    def from_mz_paf(s: str) -> "ChargedFormula":
+    def from_mz_paf(s: str) -> ChargedFormula:
         """Parse from mzPAF format string."""
         # split on + and -
         if s.startswith("+"):
@@ -272,7 +273,7 @@ class PositionRule:
     amino_acid: AminoAcid | None = None
 
     @staticmethod
-    def from_string(s: str) -> "PositionRule":
+    def from_string(s: str) -> PositionRule:
         from ..proforma_components.parsers import parse_position_rule
 
         return parse_position_rule(s)
@@ -341,7 +342,7 @@ class TagAccession(MassPropertyMixin):
         raise ValueError(f"Unknown modification: {repr(self)}")
 
     @staticmethod
-    def from_string(s: str) -> "TagAccession":
+    def from_string(s: str) -> TagAccession:
         from ..proforma_components.parsers import parse_tag_accession
 
         return parse_tag_accession(s)
@@ -400,7 +401,7 @@ class TagMass(MassPropertyMixin):
         return None
 
     @staticmethod
-    def from_string(s: str) -> "TagMass":
+    def from_string(s: str) -> TagMass:
         from ..proforma_components.parsers import parse_tag_mass
 
         return parse_tag_mass(s)
@@ -476,7 +477,7 @@ class TagName(MassPropertyMixin):
         return None
 
     @staticmethod
-    def from_string(s: str) -> "TagName":
+    def from_string(s: str) -> TagName:
         from ..proforma_components.parsers import parse_tag_name
 
         return parse_tag_name(s)
@@ -513,7 +514,7 @@ class TagInfo(MassPropertyMixin):
         return None
 
     @staticmethod
-    def from_string(s: str) -> "TagInfo":
+    def from_string(s: str) -> TagInfo:
         from ..proforma_components.parsers import parse_tag_info
 
         return parse_tag_info(s)
@@ -550,7 +551,7 @@ class TagCustom(MassPropertyMixin):
         return None
 
     @staticmethod
-    def from_string(s: str) -> "TagCustom":
+    def from_string(s: str) -> TagCustom:
         from ..proforma_components.parsers import parse_tag_custom
 
         return parse_tag_custom(s)
@@ -602,7 +603,7 @@ class GlycanComponent(MassPropertyMixin):
         return None
 
     @staticmethod
-    def from_string(s: str) -> "GlycanComponent":
+    def from_string(s: str) -> GlycanComponent:
         from ..proforma_components.parsers import parse_glycan_component
 
         return parse_glycan_component(s)
@@ -651,7 +652,7 @@ class GlycanTag(MassPropertyMixin):
         return self.components[index]
 
     @staticmethod
-    def from_string(s: str) -> "GlycanTag":
+    def from_string(s: str) -> GlycanTag:
         from ..proforma_components.parsers import parse_glycan
 
         return GlycanTag(parse_glycan(s))
@@ -684,7 +685,7 @@ class IsotopeReplacement(MassPropertyMixin):
             return str(e)
 
     @staticmethod
-    def from_string(s: str) -> "IsotopeReplacement":
+    def from_string(s: str) -> IsotopeReplacement:
         from ..proforma_components.parsers import parse_isotope_replacement
 
         return parse_isotope_replacement(s)
@@ -743,13 +744,13 @@ class GlobalChargeCarrier(MassPropertyMixin):
         return composition
 
     @staticmethod
-    def from_string(s: str) -> "GlobalChargeCarrier":
+    def from_string(s: str) -> GlobalChargeCarrier:
         from ..proforma_components.parsers import parse_global_charge_carrier
 
         return parse_global_charge_carrier(s)
 
     @staticmethod
-    def charged_proton(charge: int = 1) -> "GlobalChargeCarrier":
+    def charged_proton(charge: int = 1) -> GlobalChargeCarrier:
         """Create a GlobalChargeCarrier representing protons."""
 
         if charge <= 0:
@@ -826,7 +827,7 @@ class ModificationTags(MassPropertyMixin):
         return self.tags[index]
 
     @staticmethod
-    def from_string(s: str) -> "ModificationTags":
+    def from_string(s: str) -> ModificationTags:
         from ..proforma_components.parsers import parse_modification_tags
 
         return parse_modification_tags(s)
@@ -874,7 +875,7 @@ class ModificationAmbiguousPrimary(MassPropertyMixin):
         return len(self.tags)
 
     @staticmethod
-    def from_string(s: str) -> "ModificationAmbiguousPrimary":
+    def from_string(s: str) -> ModificationAmbiguousPrimary:
         from ..proforma_components.parsers import parse_modification_ambiguous_primary
 
         return parse_modification_ambiguous_primary(s)
@@ -909,7 +910,7 @@ class ModificationAmbiguousSecondary(MassPropertyMixin):
         raise NotImplementedError()
 
     @staticmethod
-    def from_string(s: str) -> "ModificationAmbiguousSecondary":
+    def from_string(s: str) -> ModificationAmbiguousSecondary:
         from ..proforma_components.parsers import parse_modification_ambiguous_secondary
 
         return parse_modification_ambiguous_secondary(s)
@@ -945,7 +946,7 @@ class ModificationCrossLinker(MassPropertyMixin):
         return len(self.tags)
 
     @staticmethod
-    def from_string(s: str) -> "ModificationCrossLinker":
+    def from_string(s: str) -> ModificationCrossLinker:
         from ..proforma_components.parsers import parse_modification_cross_linker
 
         return parse_modification_cross_linker(s)
@@ -1009,7 +1010,7 @@ class FixedModification(MassPropertyMixin):
         return indexes
 
     @staticmethod
-    def from_string(s: str) -> "FixedModification":
+    def from_string(s: str) -> FixedModification:
         from ..proforma_components.parsers import parse_fixed_modification
 
         return parse_fixed_modification(s)
@@ -1060,7 +1061,7 @@ class SequenceElement(MassPropertyMixin):
         return total_composition
 
     @staticmethod
-    def from_string(s: str) -> "SequenceElement":
+    def from_string(s: str) -> SequenceElement:
         from ..proforma_components.parsers import parse_sequence_element
 
         return parse_sequence_element(s)
@@ -1088,7 +1089,7 @@ class SequenceRegion(MassPropertyMixin):
         return merge_compositions(self.sequence + self.modifications)
 
     @staticmethod
-    def from_string(s: str) -> "SequenceRegion":
+    def from_string(s: str) -> SequenceRegion:
         from ..proforma_components.parsers import parse_sequence_region
 
         return parse_sequence_region(s)
@@ -1139,7 +1140,7 @@ class Peptidoform(MassPropertyMixin):
         )
 
     @staticmethod
-    def from_string(s: str) -> "Peptidoform":
+    def from_string(s: str) -> Peptidoform:
         from ..proforma_components.parsers import parse_peptidoform
 
         return parse_peptidoform(s)
@@ -1190,7 +1191,7 @@ class PeptidoformIon(MassPropertyMixin):
         raise NotImplementedError()
 
     @staticmethod
-    def from_string(s: str) -> "PeptidoformIon":
+    def from_string(s: str) -> PeptidoformIon:
         from ..proforma_components.parsers import parse_peptidoform_ion
 
         return parse_peptidoform_ion(s)
@@ -1240,7 +1241,7 @@ class CompoundPeptidoformIon(MassPropertyMixin):
         return total_composition
 
     @staticmethod
-    def from_string(s: str) -> "CompoundPeptidoformIon":
+    def from_string(s: str) -> CompoundPeptidoformIon:
         from ..proforma_components.parsers import parse_compound_peptidoform_ion
 
         return parse_compound_peptidoform_ion(s)

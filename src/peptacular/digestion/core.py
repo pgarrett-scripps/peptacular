@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from typing import Generator, Sequence
+from collections.abc import Generator, Sequence
 
 from ..digestion.lookup import PROTEASE_LOOKUP
 
@@ -23,7 +23,7 @@ def left_semi_spans(
     annotation: DigestProtocol,
     min_len: int | None = None,
     max_len: int | None = None,
-) -> Generator[Span, None, None]:
+) -> Generator[Span]:
     """Get left semi-enzymatic sequences from a ProForma annotation."""
     span = Span(0, len(annotation), 0)
     return build_left_semi_spans(span=span, min_len=min_len, max_len=max_len)
@@ -33,7 +33,7 @@ def right_semi_spans(
     annotation: DigestProtocol,
     min_len: int | None = None,
     max_len: int | None = None,
-) -> Generator[Span, None, None]:
+) -> Generator[Span]:
     """Get right semi-enzymatic sequences from a ProForma annotation."""
     span = Span(0, len(annotation), 0)
     return build_right_semi_spans(span=span, min_len=min_len, max_len=max_len)
@@ -43,7 +43,7 @@ def semi_spans(
     annotation: DigestProtocol,
     min_len: int | None = None,
     max_len: int | None = None,
-) -> Generator[Span, None, None]:
+) -> Generator[Span]:
     """Get both left and right semi-enzymatic sequences from a ProForma annotation."""
     yield from left_semi_spans(annotation, min_len=min_len, max_len=max_len)
     yield from right_semi_spans(annotation, min_len=min_len, max_len=max_len)
@@ -53,7 +53,7 @@ def nonspecific_spans(
     annotation: DigestProtocol,
     min_len: int | None = None,
     max_len: int | None = None,
-) -> Generator[Span, None, None]:
+) -> Generator[Span]:
     """Get non-enzymatic sequences from a ProForma annotation."""
     span = Span(0, len(annotation), 0)
     return build_non_enzymatic_spans(span=span, min_len=min_len, max_len=max_len)
@@ -61,7 +61,7 @@ def nonspecific_spans(
 
 def get_cleavage_sites(
     annotation: DigestProtocol, enzyme: str | re.Pattern[str]
-) -> Generator[int, None, None]:
+) -> Generator[int]:
     """Get cleavage sites for a given enzyme (name, regex string, or compiled pattern)."""
 
     # Normalize to compiled pattern
@@ -192,7 +192,7 @@ def digest_annotation_by_aa(
     max_len: int | None = None,
     complete_digestion: bool = True,
     sort_output: bool = True,
-) -> Generator[Span, None, None]:
+) -> Generator[Span]:
     """Digest annotation by amino acid cleavage rules."""
     return digest_annotation_by_regex(
         annotation=annotation,
@@ -221,7 +221,7 @@ def digest_annotation_by_regex(
     *,
     complete_digestion: bool = True,
     sort_output: bool = True,
-) -> Generator[Span, None, None]:
+) -> Generator[Span]:
     """Digest annotation using a regex pattern."""
     all_spans: set[Span] = set()
     if not complete_digestion:
@@ -253,7 +253,7 @@ def sequential_digest_annotation(
     enzyme_configs: Sequence[EnzymeConfig],
     min_len: int | None = None,
     max_len: int | None = None,
-) -> Generator[Span, None, None]:
+) -> Generator[Span]:
     """Perform sequential digestion with multiple enzymes."""
     digested_spans: list[Span] = []
 

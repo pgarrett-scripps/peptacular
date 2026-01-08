@@ -1,5 +1,6 @@
 from collections.abc import Sequence
-from typing import Counter, overload
+from typing import overload
+from collections import Counter
 
 from ..constants import (
     ParrallelMethod,

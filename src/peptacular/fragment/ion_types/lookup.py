@@ -1,4 +1,4 @@
-from typing import Iterable
+from collections.abc import Iterable
 from .dclass import FragmentIonInfo
 from .data import ION_TYPE_DICT, IonType
 

@@ -11,7 +11,7 @@ def sequence_to_annotation(sequence: str) -> ProFormaAnnotation:
     return ProFormaAnnotation.parse(sequence)
 
 
-def round_to_precision(value: float, precision: Optional[int] = None) -> float:
+def round_to_precision(value: float, precision: int | None = None) -> float:
     """
     Round a float to a specified number of decimal places.
 
@@ -41,9 +41,9 @@ def get_annotation_input(
 
 def override_annotation_properties(
     annotation: ProFormaAnnotation,
-    charge: Optional[int] = None,
-    charge_adducts: Optional[Union[str | int | float, List[str | int | float]]] = None,
-    isotope_mods: Optional[Union[str | int | float, List[str | int | float]]] = None,
+    charge: int | None = None,
+    charge_adducts: str | int | float | list[str | int | float] | None = None,
+    isotope_mods: str | int | float | list[str | int | float] | None = None,
 ):
     if annotation.has_charge and charge is not None:
         # warning
@@ -74,7 +74,7 @@ def override_annotation_properties(
         annotation.isotope_mods = isotope_mods  # type: ignore
 
 
-def is_sequence_valid(sequence: Union[str, ProFormaAnnotation]) -> bool:
+def is_sequence_valid(sequence: str | ProFormaAnnotation) -> bool:
     """
     Checks if the input sequence is a valid ProForma sequence.
 

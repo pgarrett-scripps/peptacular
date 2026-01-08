@@ -168,7 +168,7 @@ def _generate_string_sliding_windows(
     sequence: str,
     window_size: int,
     reverse: bool = False,
-) -> Generator[str, None, None]:
+) -> Generator[str]:
     """
     Generate sliding windows of a plain amino acid sequence.
 

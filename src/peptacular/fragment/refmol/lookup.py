@@ -1,4 +1,4 @@
-from typing import Iterable
+from collections.abc import Iterable
 from .dclass import RefMolInfo
 from .data import REFMOL_DICT, RefMolID
 

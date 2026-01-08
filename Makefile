@@ -71,3 +71,9 @@ check:
 	$(MAKE) test
 
 all: clean install test
+
+
+upgrade:
+	@echo "Upgrading Python syntax to 3.12+..."
+	@find src tests -name "*.py" -type f -exec uv run --python-preference managed pyupgrade --py312-plus {} +
+	@echo "Python syntax upgraded to 3.12+"

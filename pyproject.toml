@@ -13,6 +13,7 @@ dev = [
     "pympler>=1.1",
     "pyteomics>=4.7.5",
     "ruff>=0.14.7",
+    "pyupgrade>=3.21.0",
 ]
 
 docs = [

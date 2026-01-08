@@ -26,7 +26,7 @@ class TestDigest(unittest.TestCase):
             max_len=100,
             semi=False,
         )
-        peptides = set(annotation[span].serialize() for span in spans)
+        peptides = {annotation[span].serialize() for span in spans}
         expected = {
             "TIDER",
             "TIDERTIDEK",
@@ -47,7 +47,7 @@ class TestDigest(unittest.TestCase):
             max_len=100,
             semi=False,
         )
-        peptides = set(annotation[span].serialize() for span in spans)
+        peptides = {annotation[span].serialize() for span in spans}
         expected = {"TIDER", "TIDERTIDEK", "TIDEK", "TIDEKTIDE", "TIDE"}
         self.assertEqual(peptides, expected)
 
@@ -61,7 +61,7 @@ class TestDigest(unittest.TestCase):
             max_len=100,
             semi=False,
         )
-        peptides = set(annotation[span].serialize() for span in spans)
+        peptides = {annotation[span].serialize() for span in spans}
         expected = {"K", "KTIDER", "TIDER", "TIDERTIDEK", "TIDEK", "TIDEKTIDE", "TIDE"}
         self.assertEqual(peptides, expected)
 
@@ -75,7 +75,7 @@ class TestDigest(unittest.TestCase):
             max_len=100,
             semi=False,
         )
-        peptides = set(annotation[span].serialize() for span in spans)
+        peptides = {annotation[span].serialize() for span in spans}
         expected = {"TIDER", "TIDERTIDEK", "TIDEK", "TIDEKTIDEK", "TIDEK"}
         self.assertEqual(peptides, expected)
 
@@ -89,7 +89,7 @@ class TestDigest(unittest.TestCase):
             max_len=100,
             semi=False,
         )
-        peptides = set(annotation[span].serialize() for span in spans)
+        peptides = {annotation[span].serialize() for span in spans}
         expected = {"TIDER", "TIDERTIDEK", "TIDEK", "TIDEKK", "K", "KTIDE", "TIDE"}
         self.assertEqual(peptides, expected)
 
@@ -103,7 +103,7 @@ class TestDigest(unittest.TestCase):
             max_len=100,
             semi=False,
         )
-        peptides = set(annotation[span].serialize() for span in spans)
+        peptides = {annotation[span].serialize() for span in spans}
         expected = {"TIDER", "TIDEK", "TIDE"}
         self.assertEqual(peptides, expected)
 
@@ -117,7 +117,7 @@ class TestDigest(unittest.TestCase):
             max_len=100,
             semi=False,
         )
-        peptides = set(annotation[span].serialize() for span in spans)
+        peptides = {annotation[span].serialize() for span in spans}
         expected = {
             "TIDER",
             "TIDERTIDEK",
@@ -132,7 +132,7 @@ class TestDigest(unittest.TestCase):
         """Test semi-enzymatic sequences with min_len=3, max_len=5."""
         annotation = pt.ProFormaAnnotation.parse("PEPTIDE")
         spans = annotation.semi_spans(min_len=3, max_len=5)
-        sequences = set(annotation[span].serialize() for span in spans)
+        sequences = {annotation[span].serialize() for span in spans}
         expected = {"TIDE", "PTIDE", "PEPT", "PEPTI", "IDE", "PEP"}
         self.assertEqual(sequences, expected)
 
@@ -140,7 +140,7 @@ class TestDigest(unittest.TestCase):
         """Test semi-enzymatic sequences with min_len=2, max_len=5."""
         annotation = pt.ProFormaAnnotation.parse("PEPTIDE")
         spans = annotation.semi_spans(min_len=2, max_len=5)
-        sequences = set(annotation[span].serialize() for span in spans)
+        sequences = {annotation[span].serialize() for span in spans}
         expected = {"TIDE", "PTIDE", "PEPT", "PEPTI", "IDE", "PEP", "PE", "DE"}
         self.assertEqual(sequences, expected)
 
@@ -148,7 +148,7 @@ class TestDigest(unittest.TestCase):
         """Test semi-enzymatic sequences with min_len=2, max_len=100."""
         annotation = pt.ProFormaAnnotation.parse("PEPTIDE")
         spans = annotation.semi_spans(min_len=2, max_len=100)
-        sequences = set(annotation[span].serialize() for span in spans)
+        sequences = {annotation[span].serialize() for span in spans}
         expected = {
             "TIDE",
             "PTIDE",
@@ -167,7 +167,7 @@ class TestDigest(unittest.TestCase):
         """Test semi-enzymatic sequences with no length limits."""
         annotation = pt.ProFormaAnnotation.parse("PEPTIDE")
         spans = annotation.semi_spans(min_len=None, max_len=None)
-        sequences = set(annotation[span].serialize() for span in spans)
+        sequences = {annotation[span].serialize() for span in spans}
         expected = {
             "P",
             "E",
@@ -188,7 +188,7 @@ class TestDigest(unittest.TestCase):
         """Test left semi-enzymatic sequences with no length limits."""
         annotation = pt.ProFormaAnnotation.parse("PEPTIDE")
         spans = annotation.left_semi_spans(None, None)
-        sequences = set(annotation[span].serialize() for span in spans)
+        sequences = {annotation[span].serialize() for span in spans}
         expected = {"P", "PE", "PEP", "PEPT", "PEPTI", "PEPTID"}
         self.assertEqual(sequences, expected)
 
@@ -196,7 +196,7 @@ class TestDigest(unittest.TestCase):
         """Test left semi-enzymatic sequences with min_len=3."""
         annotation = pt.ProFormaAnnotation.parse("PEPTIDE")
         spans = annotation.left_semi_spans(3, None)
-        sequences = set(annotation[span].serialize() for span in spans)
+        sequences = {annotation[span].serialize() for span in spans}
         expected = {"PEP", "PEPT", "PEPTI", "PEPTID"}
         self.assertEqual(sequences, expected)
 
@@ -204,7 +204,7 @@ class TestDigest(unittest.TestCase):
         """Test left semi-enzymatic sequences with max_len=5."""
         annotation = pt.ProFormaAnnotation.parse("PEPTIDE")
         spans = annotation.left_semi_spans(None, 5)
-        sequences = set(annotation[span].serialize() for span in spans)
+        sequences = {annotation[span].serialize() for span in spans}
         expected = {"P", "PE", "PEP", "PEPT", "PEPTI"}
         self.assertEqual(sequences, expected)
 
@@ -212,7 +212,7 @@ class TestDigest(unittest.TestCase):
         """Test left semi-enzymatic sequences with min_len=3, max_len=4."""
         annotation = pt.ProFormaAnnotation.parse("PEPTIDE")
         spans = annotation.left_semi_spans(3, 4)
-        sequences = set(annotation[span].serialize() for span in spans)
+        sequences = {annotation[span].serialize() for span in spans}
         expected = {"PEP", "PEPT"}
         self.assertEqual(sequences, expected)
 
@@ -220,7 +220,7 @@ class TestDigest(unittest.TestCase):
         """Test right semi-enzymatic sequences with no length limits."""
         annotation = pt.ProFormaAnnotation.parse("PEPTIDE")
         spans = annotation.right_semi_spans(None, None)
-        sequences = set(annotation[span].serialize() for span in spans)
+        sequences = {annotation[span].serialize() for span in spans}
         expected = {"EPTIDE", "PTIDE", "TIDE", "IDE", "DE", "E"}
         self.assertEqual(sequences, expected)
 
@@ -228,7 +228,7 @@ class TestDigest(unittest.TestCase):
         """Test right semi-enzymatic sequences with min_len=3."""
         annotation = pt.ProFormaAnnotation.parse("PEPTIDE")
         spans = annotation.right_semi_spans(3, None)
-        sequences = set(annotation[span].serialize() for span in spans)
+        sequences = {annotation[span].serialize() for span in spans}
         expected = {"EPTIDE", "PTIDE", "TIDE", "IDE"}
         self.assertEqual(sequences, expected)
 
@@ -236,7 +236,7 @@ class TestDigest(unittest.TestCase):
         """Test right semi-enzymatic sequences with max_len=5."""
         annotation = pt.ProFormaAnnotation.parse("PEPTIDE")
         spans = annotation.right_semi_spans(None, 5)
-        sequences = set(annotation[span].serialize() for span in spans)
+        sequences = {annotation[span].serialize() for span in spans}
         expected = {"PTIDE", "TIDE", "IDE", "DE", "E"}
         self.assertEqual(sequences, expected)
 
@@ -244,7 +244,7 @@ class TestDigest(unittest.TestCase):
         """Test right semi-enzymatic sequences with min_len=3, max_len=4."""
         annotation = pt.ProFormaAnnotation.parse("PEPTIDE")
         spans = annotation.right_semi_spans(3, 4)
-        sequences = set(annotation[span].serialize() for span in spans)
+        sequences = {annotation[span].serialize() for span in spans}
         expected = {"TIDE", "IDE"}
         self.assertEqual(sequences, expected)
 
@@ -252,7 +252,7 @@ class TestDigest(unittest.TestCase):
         """Test non-enzymatic sequences with no length limits."""
         annotation = pt.ProFormaAnnotation.parse("PEPT")
         spans = annotation.nonspecific_spans()
-        sequences = set(annotation[span].serialize() for span in spans)
+        sequences = {annotation[span].serialize() for span in spans}
         expected = {"P", "E", "P", "T", "PE", "EP", "PT", "PEP", "EPT"}
         self.assertEqual(sequences, expected)
 
@@ -260,7 +260,7 @@ class TestDigest(unittest.TestCase):
         """Test non-enzymatic sequences with min_len=1, max_len=2."""
         annotation = pt.ProFormaAnnotation.parse("PEPT")
         spans = annotation.nonspecific_spans(min_len=1, max_len=2)
-        sequences = set(annotation[span].serialize() for span in spans)
+        sequences = {annotation[span].serialize() for span in spans}
         expected = {"P", "E", "P", "T", "PE", "EP", "PT"}
         self.assertEqual(sequences, expected)
 
@@ -268,7 +268,7 @@ class TestDigest(unittest.TestCase):
         """Test non-enzymatic sequences with min_len=2, max_len=4."""
         annotation = pt.ProFormaAnnotation.parse("PEPT")
         spans = annotation.nonspecific_spans(min_len=2, max_len=4)
-        sequences = set(annotation[span].serialize() for span in spans)
+        sequences = {annotation[span].serialize() for span in spans}
         expected = {"PT", "EP", "EPT", "PE", "PEP"}
         self.assertEqual(sequences, expected)
 
@@ -278,7 +278,7 @@ class TestDigest(unittest.TestCase):
         annotation = pt.ProFormaAnnotation.parse(modified_seq)
 
         spans = annotation.digest(enzyme="([KR])", missed_cleavages=1)
-        peptides = set(annotation[span].serialize() for span in spans)
+        peptides = {annotation[span].serialize() for span in spans}
         expected = {
             "[Acetyl]-PEPTIDER[Phospho]",
             "[Acetyl]-PEPTIDER[Phospho]TIDEM[Oxidation]K",
@@ -292,7 +292,7 @@ class TestDigest(unittest.TestCase):
         annotation = pt.ProFormaAnnotation.parse(modified_seq)
 
         spans = annotation.digest(enzyme="([KR])", missed_cleavages=0)
-        peptides = set(annotation[span].serialize() for span in spans)
+        peptides = {annotation[span].serialize() for span in spans}
         expected = {"[Acetyl]-PEPTIDER[Phospho]", "TIDEM[Oxidation]K"}
         self.assertEqual(peptides, expected)
 
@@ -382,7 +382,7 @@ class TestDigest(unittest.TestCase):
 
         annotation = pt.ProFormaAnnotation.parse("PDEREKPKP")
         spans = annotation.sequential_digest(enzyme_configs=[trypsin, asp_n])
-        peptides = set(annotation[span].serialize() for span in spans)
+        peptides = {annotation[span].serialize() for span in spans}
 
         expected = {"P", "DER", "EK", "PK", "P"}
         self.assertEqual(peptides, expected)
@@ -407,7 +407,7 @@ class TestDigest(unittest.TestCase):
         spans = annotation.sequential_digest(
             enzyme_configs=[partial_trypsin, partial_asp_n]
         )
-        peptides = set(annotation[span].serialize() for span in spans)
+        peptides = {annotation[span].serialize() for span in spans}
 
         expected = {"PEPR", "DK", "PEPRDK"}
         self.assertEqual(peptides, expected)
@@ -430,7 +430,7 @@ class TestDigest(unittest.TestCase):
 
         annotation = pt.ProFormaAnnotation.parse("PEP[Phospho]RDK")
         spans = annotation.sequential_digest(enzyme_configs=[trypsin, asp_n])
-        peptides = set(annotation[span].serialize() for span in spans)
+        peptides = {annotation[span].serialize() for span in spans}
         expected = {"PEP[Phospho]R", "DK"}
         self.assertEqual(peptides, expected)
 

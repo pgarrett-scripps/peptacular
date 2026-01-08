@@ -1,5 +1,6 @@
 from collections.abc import Sequence
-from typing import Any, Iterable, Mapping, overload, cast
+from typing import Any, overload, cast
+from collections.abc import Iterable, Mapping
 
 from ..constants import ModType, ModTypeLiteral, ParrallelMethod, ParrallelMethodLiteral
 from ..annotation import ProFormaAnnotation

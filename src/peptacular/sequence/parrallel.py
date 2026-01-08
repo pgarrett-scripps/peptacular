@@ -2,7 +2,8 @@ import multiprocessing as mp
 import sys
 from functools import partial
 from multiprocessing.pool import Pool, ThreadPool
-from typing import Any, Callable, Literal, Sequence, TypeVar
+from typing import Any, Literal, TypeVar
+from collections.abc import Callable, Sequence
 import atexit
 
 from ..constants import ParrallelMethod, ParrallelMethodLiteral

@@ -1,4 +1,5 @@
-from typing import Sequence, overload
+from typing import overload
+from collections.abc import Sequence
 
 from ..isotope import IsotopicData
 from ..annotation.annotation import CHARGE_TYPE, ION_TYPE, ISOTOPE_TYPE, LOSS_TYPE

@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import itertools
-from typing import TYPE_CHECKING, Any, Generator
+from typing import TYPE_CHECKING, Any
+from collections.abc import Generator
 
 from ..constants import ModType
 
@@ -12,7 +13,7 @@ if TYPE_CHECKING:
 
 def generate_permutations(
     annotation: ProFormaAnnotation, size: int | None = None
-) -> Generator[ProFormaAnnotation, None, None]:
+) -> Generator[ProFormaAnnotation]:
     """
     Generate all permutations of the annotation sequence.
 
@@ -48,7 +49,7 @@ def generate_permutations(
 
 def generate_product(
     annotation: ProFormaAnnotation, repeat: int | None = None
-) -> Generator[ProFormaAnnotation, None, None]:
+) -> Generator[ProFormaAnnotation]:
     """
     Generate the Cartesian product of the annotation sequence with itself.
 
@@ -81,7 +82,7 @@ def generate_product(
 
 def generate_combinations(
     annotation: ProFormaAnnotation, r: int | None = None
-) -> Generator[ProFormaAnnotation, None, None]:
+) -> Generator[ProFormaAnnotation]:
     """
     Generate all combinations of the annotation sequence.
 
@@ -113,7 +114,7 @@ def generate_combinations(
 
 def generate_combinations_with_replacement(
     annotation: ProFormaAnnotation, r: int | None = None
-) -> Generator[ProFormaAnnotation, None, None]:
+) -> Generator[ProFormaAnnotation]:
     """
     Generate all combinations of the annotation sequence with replacement.
 

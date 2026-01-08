@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 import sys
-from typing import Any, Callable, Generic, Iterable, Iterator, Self, TypeVar, cast
+from typing import Any, Generic, Self, TypeVar, cast
+from collections.abc import Callable, Iterable, Iterator
 from collections import Counter
 
 from ..amino_acids.lookup import AA_LOOKUP
