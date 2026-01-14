@@ -1,6 +1,6 @@
-from .data import NeutralDelta, NeutralDeltaLiteral, NEUTRAL_DELTA_DICT
+from .data import NEUTRAL_DELTA_DICT, NeutralDelta, NeutralDeltaLiteral
 from .dclass import NeutralDeltaInfo
-from .lookup import NeutralDeltaLookup, NEUTRAL_DELTA_LOOKUP
+from .lookup import NEUTRAL_DELTA_LOOKUP, NeutralDeltaLookup
 
 __all__ = [
     "NeutralDelta",

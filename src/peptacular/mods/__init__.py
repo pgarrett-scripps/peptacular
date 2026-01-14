@@ -1,7 +1,7 @@
-from .dclass import OboEntity, MonosaccharideInfo, UnimodInfo, PsimodInfo
-from .monosaccharide import MONOSACCHARIDE_LOOKUP, MonosaccharideLookup, Monosaccharide
-from .unimod import UNIMOD_LOOKUP, UnimodLookup
+from .dclass import MonosaccharideInfo, OboEntity, PsimodInfo, UnimodInfo
+from .monosaccharide import MONOSACCHARIDE_LOOKUP, Monosaccharide, MonosaccharideLookup
 from .psimod import PSIMOD_LOOKUP, PsimodLookup
+from .unimod import UNIMOD_LOOKUP, UnimodLookup
 
 __all__ = [
     "OboEntity",

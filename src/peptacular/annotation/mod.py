@@ -1,10 +1,12 @@
-from dataclasses import dataclass
 import sys
-from typing import Any, Generic, Self, TypeVar, cast
-from collections.abc import Callable, Iterable, Iterator
 from collections import Counter
+from collections.abc import Callable, Iterable, Iterator
+from dataclasses import dataclass
+from typing import Any, Generic, Protocol, Self, TypeVar, cast
 
 from ..amino_acids.lookup import AA_LOOKUP
+from ..constants import ModType
+from ..elements import ElementInfo
 from ..proforma_components import (
     FixedModification,
     GlobalChargeCarrier,
@@ -12,17 +14,27 @@ from ..proforma_components import (
     MassPropertyMixin,
     ModificationTags,
 )
-from ..constants import ModType
-from ..elements import ElementInfo
 
 # Define your modification types
 ModValue = (
     IsotopeReplacement | FixedModification | GlobalChargeCarrier | ModificationTags
 )
 
-T = TypeVar(
-    "T", IsotopeReplacement, FixedModification, GlobalChargeCarrier, ModificationTags
-)
+
+class ModificationProtocol(Protocol):
+    """Protocol defining the interface all modifications must implement."""
+
+    def get_mass(self, monoisotopic: bool = True) -> float: ...
+
+    def get_composition(self) -> Counter[ElementInfo]: ...
+
+    def get_charge(self) -> int | None: ...
+
+    def validate(self) -> str | None: ...
+
+
+# Use bound instead of constraints
+T = TypeVar("T", bound=ModificationProtocol)
 
 
 @dataclass(frozen=True, slots=True)
@@ -45,18 +57,18 @@ class Mod(Generic[T]):
             return f"Count must be non-negative, got {self.count}"
 
         if hasattr(self.value, "validate"):
-            return self.value.validate()  # type: ignore
+            return self.value.validate()
 
         return None
 
     def get_mass(self, monoisotopic: bool = True) -> float:
         """Get total mass for this modification occurrence."""
-        mass = self.value.get_mass(monoisotopic)
+        mass: int | float = self.value.get_mass(monoisotopic)
         return mass * self.count
 
     def get_composition(self) -> Counter[ElementInfo]:
         """Get total composition for this modification occurrence."""
-        base_composition = self.value.get_composition()
+        base_composition: Counter[ElementInfo] = self.value.get_composition()
         total_composition: Counter[ElementInfo] = Counter()
         for elem, cnt in base_composition.items():
             total_composition[elem] = cnt * self.count
@@ -64,10 +76,11 @@ class Mod(Generic[T]):
 
     def get_charge(self) -> int:
         """Get total charge for this modification occurrence."""
-        charge = self.value.get_charge()
-        if charge is not None:
-            return charge * self.count
-        return 0
+        charge: int | None = self.value.get_charge()
+        if charge is None:
+            return 0
+
+        return charge * self.count
 
     def as_tuple(self) -> tuple[T, int]:
         """Return the modification as a (value, count) tuple."""
@@ -160,7 +173,7 @@ class Mods(Generic[T], MassPropertyMixin):
 
     def get_composition(self) -> Counter[ElementInfo]:
         """Get total composition for all modifications."""
-        return sum((mod.get_composition() for mod in self.mods), Counter())  # type: ignore
+        return sum((mod.get_composition() for mod in self.mods), Counter())
 
     def get_charge(self) -> int | None:
         """Get total charge for all modifications."""
@@ -295,9 +308,9 @@ def convert_moddict_input(mod: Any) -> dict[str, int]:
     d: dict[str, int] = {}
     if isinstance(mod, dict) or isinstance(mod, Counter):
         # if value is not string, convert to string
-        d = {sys.intern(str(k)): v for k, v in mod.items()}  # type: ignore
+        d = {sys.intern(str(k)): v for k, v in mod.items()}
     elif isinstance(mod, Mods):
-        return convert_moddict_input(mod._mods)  # type: ignore
+        return convert_moddict_input(mod._mods)
     elif isinstance(mod, str):
         d = {sys.intern(str(mod)): 1}
     elif isinstance(mod, (int, float)):
@@ -321,12 +334,12 @@ def convert_single_mod_input(mod: Any) -> tuple[str, int]:
     elif isinstance(mod, (int, float)):
         # ensure it has +/- in front of number
         return sys.intern(f"{mod:+}"), 1
-    elif isinstance(mod, tuple) and len(mod) == 2:  # type: ignore
-        return sys.intern(str(mod[0])), int(mod[1])  # type: ignore
+    elif isinstance(mod, tuple) and len(mod) == 2:
+        return sys.intern(str(mod[0])), int(mod[1])
     elif isinstance(mod, Mod):
-        return sys.intern(str(mod.value)), mod.count  # type: ignore
+        return sys.intern(str(mod.value)), mod.count
     else:
-        return sys.intern(str(mod)), 1  # type: ignore
+        return sys.intern(str(mod)), 1
 
 
 EMPTYP_INTERVAL_MODS = Mods[ModificationTags](mod_type=ModType.INTERVAL, _mods=None)
@@ -386,7 +399,7 @@ class Interval:
             validate = self._validate
 
         if isinstance(mods, Mods):
-            mods = mods._mods  # type: ignore
+            mods = mods._mods
 
         if mods is None:
             self._mods = None

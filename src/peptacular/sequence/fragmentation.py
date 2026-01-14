@@ -1,18 +1,18 @@
 from collections.abc import Sequence
 from typing import overload
 
-from ..constants import ParrallelMethod, ParrallelMethodLiteral
 from ..annotation import ProFormaAnnotation
 from ..annotation.annotation import (
-    ION_TYPE,
     CHARGE_TYPE,
+    ION_TYPE,
     ISOTOPE_TYPE,
     LOSS_TYPE,
 )
 from ..annotation.utils import Fragment
+from ..constants import ParrallelMethod, ParrallelMethodLiteral
 from ..fragment import IonType
-from .util import get_annotation_input
 from .parrallel import parallel_apply_internal
+from .util import get_annotation_input
 
 
 def _fragment_single(

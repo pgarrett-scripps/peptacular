@@ -84,24 +84,27 @@ class TestParseGlycan:
 
     def test_missing_prefix_raises_error(self):
         """Test that missing Glycan: prefix raises ValueError"""
-        from peptacular.proforma_components.parsers import parse_glycan
         import pytest
+
+        from peptacular.proforma_components.parsers import parse_glycan
 
         with pytest.raises(ValueError, match="must start with 'Glycan:'"):
             parse_glycan("Hex5HexNAc4")
 
     def test_empty_string_raises_error(self):
         """Test that empty string raises ValueError"""
-        from peptacular.proforma_components.parsers import parse_glycan
         import pytest
+
+        from peptacular.proforma_components.parsers import parse_glycan
 
         with pytest.raises(ValueError, match="Empty glycan string"):
             parse_glycan("")
 
     def test_only_prefix_raises_error(self):
         """Test that only prefix without composition raises ValueError"""
-        from peptacular.proforma_components.parsers import parse_glycan
         import pytest
+
+        from peptacular.proforma_components.parsers import parse_glycan
 
         # This should fail during composition parsing
         with pytest.raises(ValueError):

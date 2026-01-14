@@ -1,10 +1,8 @@
 from collections.abc import Sequence
 from typing import overload
 
-from ..constants import ParrallelMethod, ParrallelMethodLiteral
-from .util import round_to_precision
 from ..annotation import ProFormaAnnotation
-
+from ..constants import ParrallelMethod, ParrallelMethodLiteral
 from ..property.core import (
     aa_property_percentage as _aa_property_percentage,
 )
@@ -18,12 +16,11 @@ from ..property.core import (
     charge_at_ph as _charge_at_ph,
 )
 from ..property.core import (
-    secondary_structure as _secondary_structure,
-)
-from ..property.core import (
     generate_partitions as _property_partitions,
 )
-
+from ..property.core import (
+    secondary_structure as _secondary_structure,
+)
 from ..property.data import (
     HPLCScale,
     HydrophobicityScale,
@@ -42,7 +39,7 @@ from ..property.types import (
     WeightingMethodsLiteral,
 )
 from .parrallel import parallel_apply_internal
-from .util import get_annotation_input
+from .util import get_annotation_input, round_to_precision
 
 
 def _calc_property_single(

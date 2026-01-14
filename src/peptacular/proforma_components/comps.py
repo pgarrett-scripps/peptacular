@@ -5,19 +5,21 @@ This module contains the basic NamedTuple definitions without any circular depen
 """
 
 from __future__ import annotations
+
+from abc import ABC, abstractmethod
 from collections import Counter
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from typing import Protocol, runtime_checkable
-from collections.abc import Iterable, Mapping
 
-from ..mods.dclass import PsimodInfo, UnimodInfo
+from ..amino_acids import AA_LOOKUP, AminoAcid
 from ..constants import (
+    CV,
     Terminal,
 )
-from ..elements import ElementInfo, ELEMENT_LOOKUP, Element
-from ..mods import UNIMOD_LOOKUP, PSIMOD_LOOKUP, MONOSACCHARIDE_LOOKUP
-from ..amino_acids import AA_LOOKUP, AminoAcid
-from ..constants import CV
+from ..elements import ELEMENT_LOOKUP, Element, ElementInfo
+from ..mods import MONOSACCHARIDE_LOOKUP, PSIMOD_LOOKUP, UNIMOD_LOOKUP
+from ..mods.dclass import PsimodInfo, UnimodInfo
 from ..mods.monosaccharide.data import Monosaccharide
 
 
@@ -30,16 +32,28 @@ class HasMassComp(Protocol):
     def get_composition(self) -> Counter[ElementInfo]: ...
 
 
-class MassPropertyMixin:
+class MassPropertyMixin(ABC):
     """Mixin to add mass properties to classes that implement get_mass()"""
+
+    @abstractmethod
+    def get_mass(self, monoisotopic: bool = True) -> float:
+        """Get the mass of this component.
+
+        Args:
+            monoisotopic: If True, return monoisotopic mass; otherwise average mass.
+
+        Returns:
+            Mass in Daltons.
+        """
+        ...
 
     @property
     def monoisotopic_mass(self) -> float:
-        return self.get_mass(monoisotopic=True)  # type: ignore
+        return self.get_mass(monoisotopic=True)
 
     @property
     def average_mass(self) -> float:
-        return self.get_mass(monoisotopic=False)  # type: ignore
+        return self.get_mass(monoisotopic=False)
 
 
 def sum_masses(components: Iterable[HasMassComp], monoisotopic: bool = True) -> float:
@@ -49,7 +63,7 @@ def sum_masses(components: Iterable[HasMassComp], monoisotopic: bool = True) -> 
 
 def merge_compositions(components: Iterable[HasMassComp]) -> Counter[ElementInfo]:
     """Merge compositions from multiple components."""
-    return sum((comp.get_composition() for comp in components), Counter())  # type: ignore
+    return sum((comp.get_composition() for comp in components), Counter())
 
 
 @dataclass(frozen=True, slots=True)
@@ -795,7 +809,7 @@ class ModificationTags(MassPropertyMixin):
 
         for tag in tags_to_check:
             if hasattr(tag, "validate"):
-                error = tag.validate()  # type: ignore
+                error = tag.validate()
                 if error is not None:
                     return error
 

@@ -1,12 +1,12 @@
 from collections.abc import Sequence
 from typing import overload
 
+from ..annotation import ProFormaAnnotation
+from ..constants import ParrallelMethod, ParrallelMethodLiteral
 from ..digestion.core import generate_regex
 from ..spans import Span
-from ..constants import ParrallelMethod, ParrallelMethodLiteral
-from ..annotation import ProFormaAnnotation
-from .util import get_annotation_input
 from .parrallel import parallel_apply_internal
+from .util import get_annotation_input
 
 
 def _left_semi_digest(

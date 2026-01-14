@@ -3,6 +3,7 @@
 
 from enum import StrEnum
 from typing import Literal
+
 from .dclass import FragmentIonInfo, IonTypeProperty
 
 

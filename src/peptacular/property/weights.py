@@ -1,6 +1,6 @@
 import math
-from typing import Any
 from collections.abc import Sequence
+from typing import Any
 
 from .types import WeightingMethods
 
@@ -290,7 +290,7 @@ def get_weights(
             case _:
                 raise ValueError(f"Unsupported weights type: {weights}")
     else:
-        if not isinstance(weights, Sequence):  # type: ignore
+        if not isinstance(weights, Sequence):
             raise TypeError(
                 "weights must be a sequence of floats or a valid WeightingMethod enum."
             )

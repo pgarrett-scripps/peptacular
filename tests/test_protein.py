@@ -1,6 +1,6 @@
-from peptacular import coverage, find_subsequence_indices, percent_coverage
-
 import unittest
+
+from peptacular import coverage, find_subsequence_indices, percent_coverage
 
 
 class TestProtein(unittest.TestCase):

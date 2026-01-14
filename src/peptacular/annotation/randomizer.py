@@ -2,19 +2,16 @@
 Randomizer for ProForma annotations.
 """
 
-import re
-
-from random import choice, randint, random
 from functools import lru_cache
-
-from ..elements.lookup import ELEMENT_LOOKUP
-
-from ..mods import PSIMOD_LOOKUP, UNIMOD_LOOKUP
+from random import choice, randint, random
 from typing import TYPE_CHECKING
 
+from ..elements.lookup import ELEMENT_LOOKUP
+from ..mods import PSIMOD_LOOKUP, UNIMOD_LOOKUP
+
 if TYPE_CHECKING:
-    from .annotation import ProFormaAnnotation, Interval
     from ..mods import PsimodInfo, UnimodInfo
+    from .annotation import Interval, ProFormaAnnotation
 
 # Constants
 AMINO_ACIDS = "ACDEFGHIKLMNPQRSTVWY"

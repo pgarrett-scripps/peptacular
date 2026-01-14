@@ -1,6 +1,7 @@
 """Tests for ProFormaAnnotation.from_ms2_pip method"""
 
 import unittest
+
 from src.peptacular.annotation import ProFormaAnnotation
 
 

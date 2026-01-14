@@ -1,5 +1,5 @@
-from types import GeneratorType
 import unittest
+from types import GeneratorType
 
 import peptacular as pt
 

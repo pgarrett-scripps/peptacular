@@ -1,6 +1,6 @@
 from .data import IonType, IonTypeLiteral
 from .dclass import FragmentIonInfo
-from .lookup import FragmentIonLookup, FRAGMENT_ION_LOOKUP
+from .lookup import FRAGMENT_ION_LOOKUP, FragmentIonLookup
 
 __all__ = [
     "IonType",

@@ -7,9 +7,9 @@ from collections.abc import Generator, Iterable, Mapping, Sequence
 from .data import (
     NEGATIVE_AMINO_ACIDS,
     POSITIVE_AMINO_ACIDS,
+    PROPERTY_SCALES,
     ChargeScale,
     SecondaryStructureMethod,
-    PROPERTY_SCALES,
     secondary_structure_scales_by_name,
 )
 from .types import (
@@ -458,7 +458,7 @@ def secondary_structure(
         for key in d:
             d[key] /= total
 
-    return d  # type: ignore
+    return d
 
 
 def generate_partitions(

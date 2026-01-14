@@ -3,6 +3,7 @@ Tests for parsing formula modification tags.
 """
 
 import pytest
+
 import peptacular as pt
 
 

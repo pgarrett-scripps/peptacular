@@ -3,9 +3,8 @@ from __future__ import annotations
 import itertools
 import re
 import warnings
-from typing import TYPE_CHECKING, Any
 from collections.abc import Generator, Iterable, Mapping
-
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from .annotation import ProFormaAnnotation
@@ -65,7 +64,7 @@ def ensure_single_static_mod(mods: dict[int, list[Any]]) -> None:
 
 
 def apply_mods(
-    annotation: ProFormaAnnotation | str,
+    annotation: ProFormaAnnotation,
     nterm: Mapping[str, Iterable[Any]] | None = None,
     cterm: Mapping[str, Iterable[Any]] | None = None,
     internal: Mapping[str, Iterable[Any]] | None = None,

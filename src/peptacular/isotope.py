@@ -1,12 +1,10 @@
 from collections import Counter
+from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Final
-from collections.abc import Mapping
-import warnings
 
-from .elements import ElementInfo
 from . import constants
-from .elements import ELEMENT_LOOKUP
+from .elements import ELEMENT_LOOKUP, ElementInfo
 
 AVERAGINE_RATIOS: Final[dict[str, float]] = {
     "C": 4.9384,

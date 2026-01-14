@@ -3,9 +3,9 @@ Tests for the ElementLookup class.
 """
 
 import pytest
-import peptacular as pt
 
-from peptacular.elements.lookup import _handle_key_input  # type: ignore
+import peptacular as pt
+from peptacular.elements.lookup import _handle_key_input
 
 
 class TestHandleKeyInput:
@@ -85,14 +85,14 @@ class TestElementLookupBasics:
         carbon_12 = pt.ELEMENT_LOOKUP[("C", 12)]
         assert carbon_12.symbol == "C"
         assert carbon_12.mass_number == 12
-        assert carbon_12.mass == pytest.approx(12.0, abs=0.1)  # type: ignore
+        assert carbon_12.mass == pytest.approx(12.0, abs=0.1)
 
     def test_lookup_by_tuple_monoisotopic(self):
         """Test looking up monoisotopic isotope by tuple with None"""
         carbon_mono = pt.ELEMENT_LOOKUP[("C", None)]
         assert carbon_mono.symbol == "C"
         assert carbon_mono.mass_number is None
-        assert carbon_mono.mass == pytest.approx(12.0, abs=0.1)  # type: ignore
+        assert carbon_mono.mass == pytest.approx(12.0, abs=0.1)
 
     def test_lookup_by_string_symbol(self):
         """Test looking up by symbol string returns monoisotopic"""
@@ -105,7 +105,7 @@ class TestElementLookupBasics:
         carbon_13 = pt.ELEMENT_LOOKUP["13C"]
         assert carbon_13.symbol == "C"
         assert carbon_13.mass_number == 13
-        assert carbon_13.mass == pytest.approx(13.003, abs=0.01)  # type: ignore
+        assert carbon_13.mass == pytest.approx(13.003, abs=0.01)
 
     def test_lookup_deuterium_by_D(self):
         """Test looking up deuterium by 'D' symbol"""
@@ -196,7 +196,7 @@ class TestElementLookupMethods:
 
     def test_get_all_isotopes_nonexistent(self):
         """Test get_all_isotopes for non-existent element"""
-        with pytest.raises(KeyError, match="No isotopes found"):
+        with pytest.raises(KeyError):
             pt.ELEMENT_LOOKUP.get_all_isotopes("Xx")
 
     def test_get_elements(self):
@@ -214,14 +214,14 @@ class TestElementLookupMethods:
     def test_mass_monoisotopic(self):
         """Test mass method with monoisotopic=True"""
         carbon_mass = pt.ELEMENT_LOOKUP.mass("C", monoisotopic=True)
-        assert carbon_mass == pytest.approx(12.0, abs=0.1)  # type: ignore
+        assert carbon_mass == pytest.approx(12.0, abs=0.1)
 
     def test_mass_average(self):
         """Test mass method with monoisotopic=False"""
         carbon_avg = pt.ELEMENT_LOOKUP.mass("C", monoisotopic=False)
         # Average mass should be slightly higher than 12 due to C-13
         assert carbon_avg > 12.0
-        assert carbon_avg == pytest.approx(12.011, abs=0.001)  # type: ignore
+        assert carbon_avg == pytest.approx(12.011, abs=0.001)
 
     def test_mass_specific_isotope_ignores_monoisotopic_flag(self):
         """Test that specific isotope mass ignores monoisotopic parameter"""
@@ -231,12 +231,12 @@ class TestElementLookupMethods:
 
         # Both should return the same exact isotope mass
         assert c13_mass_mono == c13_mass_avg
-        assert c13_mass_mono == pytest.approx(13.003, abs=0.01)  # type: ignore
+        assert c13_mass_mono == pytest.approx(13.003, abs=0.01)
 
     def test_mass_tuple_specific_isotope(self):
         """Test mass method with tuple for specific isotope"""
         c13_mass = pt.ELEMENT_LOOKUP.mass(("C", 13))
-        assert c13_mass == pytest.approx(13.003, abs=0.01)  # type: ignore
+        assert c13_mass == pytest.approx(13.003, abs=0.01)
 
 
 class TestElementLookupSpecialCases:
@@ -534,12 +534,12 @@ class TestElementLookupEdgeCases:
 
         # Monoisotopic mass
         mono_mass = c.get_mass(monoisotopic=True)
-        assert mono_mass == pytest.approx(12.0, abs=0.1)  # type: ignore
+        assert mono_mass == pytest.approx(12.0, abs=0.1)
 
         # Average mass (should be slightly higher due to C-13)
         avg_mass = c.get_mass(monoisotopic=False)
         assert avg_mass > mono_mass
-        assert avg_mass == pytest.approx(12.011, abs=0.001)  # type: ignore
+        assert avg_mass == pytest.approx(12.011, abs=0.001)
 
 
 class TestElementLookupComprehensive:

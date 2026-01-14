@@ -8,10 +8,9 @@ Working with spans can be a more efficient way of processing the data, since a p
 3 ints.
 """
 
-from collections.abc import Generator
+from collections.abc import Generator, Iterable
 from itertools import groupby
 from typing import NamedTuple
-from collections.abc import Iterable
 
 
 class Span(NamedTuple):

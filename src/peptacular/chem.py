@@ -1,14 +1,15 @@
 from collections import Counter
-from typing import overload
 from collections.abc import Mapping, Sequence
+from typing import overload
 
 from peptacular.elements.lookup import ELEMENT_LOOKUP
+
 from .elements import ElementInfo
 from .proforma_components import ChargedFormula
 from .sequence.parrallel import (
-    parallel_apply_internal,
     ParrallelMethod,
     ParrallelMethodLiteral,
+    parallel_apply_internal,
 )
 
 
@@ -193,7 +194,7 @@ def _chem_formula_single(
     """Generate a chemical formula string from an elemental composition."""
     if isinstance(comp, str):
         comp: Counter[ElementInfo] = _parse_formula_single(comp, sep=sep)
-    return ChargedFormula.from_composition(comp, charge=None).serialize(  # type: ignore
+    return ChargedFormula.from_composition(comp, charge=None).serialize(
         hill_order=hill_order, sep=sep, include_formula_prefix=include_formula_prefix
     )
 

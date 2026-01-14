@@ -3,6 +3,7 @@ Tests for parsing ambiguous modifications and cross-linkers.
 """
 
 import pytest
+
 import peptacular as pt
 
 

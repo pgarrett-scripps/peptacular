@@ -1,5 +1,6 @@
-from collections import Counter
 import unittest
+from collections import Counter
+
 import peptacular as pt
 
 

@@ -1,9 +1,8 @@
-from collections.abc import Sequence
-from typing import Any, overload, cast
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable, Mapping, Sequence
+from typing import Any, cast, overload
 
-from ..constants import ModType, ModTypeLiteral, ParrallelMethod, ParrallelMethodLiteral
 from ..annotation import ProFormaAnnotation
+from ..constants import ModType, ModTypeLiteral, ParrallelMethod, ParrallelMethodLiteral
 from .parrallel import parallel_apply_internal
 from .util import get_annotation_input
 

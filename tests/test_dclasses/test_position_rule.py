@@ -3,6 +3,7 @@ Tests for parsing position rules.
 """
 
 import pytest
+
 import peptacular as pt
 
 

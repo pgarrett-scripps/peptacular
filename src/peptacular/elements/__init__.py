@@ -1,6 +1,6 @@
-from .dclass import ElementInfo
 from .data import Element
-from .lookup import ElementLookup, ELEMENT_LOOKUP, parse_composition
+from .dclass import ElementInfo
+from .lookup import ELEMENT_LOOKUP, ElementLookup, parse_composition
 
 __all__ = [
     "ElementInfo",

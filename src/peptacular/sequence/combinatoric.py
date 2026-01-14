@@ -1,8 +1,8 @@
 from collections.abc import Sequence
 from typing import overload
 
-from ..constants import ParrallelMethod, ParrallelMethodLiteral
 from ..annotation import ProFormaAnnotation
+from ..constants import ParrallelMethod, ParrallelMethodLiteral
 from .parrallel import parallel_apply_internal
 from .util import get_annotation_input
 

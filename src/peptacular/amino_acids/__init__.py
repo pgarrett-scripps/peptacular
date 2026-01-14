@@ -1,6 +1,6 @@
 from .data import AMINO_ACID_INFOS, AminoAcid
 from .dclass import AminoAcidInfo
-from .lookup import AALookup, AA_LOOKUP, ORDERED_AMINO_ACIDS
+from .lookup import AA_LOOKUP, ORDERED_AMINO_ACIDS, AALookup
 
 __all__ = [
     "AMINO_ACID_INFOS",

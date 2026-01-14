@@ -4,38 +4,39 @@ Parser functions for converting strings to component objects.
 This module contains all parsing logic, independent of other modules.
 """
 
-from typing import TYPE_CHECKING
 import re
 from functools import lru_cache
-from ..elements import Element
+from typing import TYPE_CHECKING
+
 from ..amino_acids import AminoAcid
+from ..elements import Element
 from ..mods.monosaccharide.data import Monosaccharide
 
 if TYPE_CHECKING:
     from .comps import (
-        FormulaElement,
+        MODIFICATION_TAG_TYPE,
+        MODIFICATION_TYPE,
         ChargedFormula,
-        PositionRule,
-        TagAccession,
-        TagMass,
-        TagName,
-        TagInfo,
-        TagCustom,
+        CompoundPeptidoformIon,
+        FixedModification,
+        FormulaElement,
+        GlobalChargeCarrier,
         GlycanComponent,
         IsotopeReplacement,
-        GlobalChargeCarrier,
         ModificationAmbiguousPrimary,
         ModificationAmbiguousSecondary,
         ModificationCrossLinker,
-        FixedModification,
-        SequenceElement,
-        SequenceRegion,
         ModificationTags,
         Peptidoform,
         PeptidoformIon,
-        CompoundPeptidoformIon,
-        MODIFICATION_TAG_TYPE,
-        MODIFICATION_TYPE,
+        PositionRule,
+        SequenceElement,
+        SequenceRegion,
+        TagAccession,
+        TagCustom,
+        TagInfo,
+        TagMass,
+        TagName,
     )
 
 
@@ -351,7 +352,7 @@ def parse_modification_tag(mod_str: str) -> "MODIFICATION_TAG_TYPE":
     Raises:
         ValueError: If the modification string cannot be parsed
     """
-    from .comps import TagName, GlycanTag
+    from .comps import GlycanTag, TagName
 
     mod_str = mod_str.strip()
     mod_str_lower = mod_str.lower()

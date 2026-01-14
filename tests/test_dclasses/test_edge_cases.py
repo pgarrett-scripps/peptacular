@@ -3,6 +3,7 @@ Tests for edge cases and error conditions.
 """
 
 import pytest
+
 import peptacular as pt
 
 

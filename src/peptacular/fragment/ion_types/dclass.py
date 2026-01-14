@@ -1,9 +1,9 @@
+import typing
+from collections import Counter
+from collections.abc import Mapping
 from dataclasses import dataclass
 from enum import Flag, auto
 from functools import cached_property
-from collections.abc import Mapping
-from collections import Counter
-import typing
 
 from ...elements import ElementInfo, parse_composition
 

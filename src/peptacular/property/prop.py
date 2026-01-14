@@ -1,7 +1,16 @@
 from __future__ import annotations
+
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 
+from .core import (
+    aa_property_percentage,
+    calc_property,
+    calc_window_property,
+    charge_at_ph,
+    generate_partitions,
+    secondary_structure,
+)
 from .data import (
     AROMATIC_AMINO_ACIDS,
     HPLCScale,
@@ -12,15 +21,6 @@ from .data import (
     SecondaryStructureType,
     SurfaceAccessibilityScale,
 )
-from .core import (
-    aa_property_percentage,
-    calc_property,
-    calc_window_property,
-    charge_at_ph,
-    generate_partitions,
-    secondary_structure,
-)
-
 from .types import (
     AggregationMethod,
     AggregationMethodLiteral,

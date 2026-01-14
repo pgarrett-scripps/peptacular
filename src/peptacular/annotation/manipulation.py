@@ -2,9 +2,8 @@ from __future__ import annotations
 
 import re
 from collections import Counter
-from typing import TYPE_CHECKING
 from collections.abc import Iterable
-
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .annotation import ProFormaAnnotation

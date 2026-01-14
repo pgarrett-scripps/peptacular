@@ -2,8 +2,8 @@ from collections import Counter
 from dataclasses import dataclass
 from functools import cached_property
 
-from ..elements.lookup import parse_composition
 from ..elements import ElementInfo
+from ..elements.lookup import parse_composition
 
 
 @dataclass(frozen=True)

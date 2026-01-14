@@ -4,7 +4,6 @@ Tests for the UnimodLookup class.
 
 import pytest
 
-
 import peptacular as pt
 
 

@@ -1,6 +1,7 @@
 from collections.abc import Iterable
-from .dclass import RefMolInfo
+
 from .data import REFMOL_DICT, RefMolID
+from .dclass import RefMolInfo
 
 
 class RefMolLookup:

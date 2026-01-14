@@ -1,7 +1,7 @@
 from peptacular import (
-    convert_ip2_sequence,
-    convert_diann_sequence,
     convert_casanovo_sequence,
+    convert_diann_sequence,
+    convert_ip2_sequence,
 )
 
 

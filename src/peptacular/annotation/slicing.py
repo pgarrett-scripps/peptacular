@@ -1,13 +1,11 @@
 from __future__ import annotations
 
 import random
-from collections.abc import Generator
+from collections.abc import Callable, Generator, Sequence
 from typing import TYPE_CHECKING, Any
-from collections.abc import Callable, Sequence
 
 from ..annotation.mod import Mods
 from ..proforma_components.comps import ModificationTags
-
 from .parser import Interval, ProFormaParser
 
 if TYPE_CHECKING:
@@ -57,20 +55,26 @@ def slice_annotation(
         return annotation
 
     # Adjust internal modifications
+    new_internal_mods = None
     if annotation.has_internal_mods:
+        if annotation._internal_mods is None:
+            raise RuntimeError(
+                "Annotation internal_mods are None despite has_internal_mods being True."
+            )
         new_internal_mods = _adjust_internal_mods(
             annotation._internal_mods,
             start,
-            stop,  # type: ignore
+            stop,
         )
-    else:
-        new_internal_mods = None
 
     # Adjust intervals
+    new_intervals = None
     if annotation.has_intervals:
-        new_intervals = _adjust_intervals(annotation._intervals, start, stop)  # type: ignore
-    else:
-        new_intervals = None
+        if annotation._intervals is None:
+            raise RuntimeError(
+                "Annotation intervals are None despite has_intervals being True."
+            )
+        new_intervals = _adjust_intervals(annotation._intervals, start, stop)
 
     # Handle terminal modifications
     if start > 0:

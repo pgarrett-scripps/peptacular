@@ -1,6 +1,6 @@
 import sys
-from typing import Protocol, runtime_checkable
 from collections.abc import Iterable
+from typing import Protocol, runtime_checkable
 
 from .constants import ModType, ModTypeLiteral
 
@@ -24,12 +24,12 @@ def handle_number_and_intern_mod(mod: SupportsStr | float | int) -> str:
     return sys.intern(mod_str)
 
 
-def get_mod_type(mod: ModTypeLiteral | ModType) -> ModType:
+def get_mod_type(mod: ModTypeLiteral | ModType | str) -> ModType:
     # return ModType Enum for the given mod string
     if isinstance(mod, ModType):
         return mod
 
-    if isinstance(mod, str):  # type: ignore
+    if isinstance(mod, str):
         for mod_type in ModType:
             if mod_type.value == mod:
                 return mod_type
@@ -56,8 +56,8 @@ def get_mods(
         return [mod_type for mod_type in ModType]
     elif isinstance(mods, (str, ModType)):
         # Single modification type
-        return [get_mod_type(mods)]  # type: ignore
-    elif isinstance(mods, Iterable):  # type: ignore
+        return [get_mod_type(mods)]
+    elif isinstance(mods, Iterable):
         # List of modification types
         return [get_mod_type(mod) for mod in mods]
 

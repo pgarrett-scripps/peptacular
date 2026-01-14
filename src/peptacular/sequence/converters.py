@@ -1,7 +1,8 @@
 from typing import overload
+
+from ..annotation import ProFormaAnnotation
 from ..constants import ParrallelMethod, ParrallelMethodLiteral
 from .parrallel import parallel_apply_internal
-from ..annotation import ProFormaAnnotation
 
 
 def _convert_ip2_sequence_single(sequence: str) -> str:

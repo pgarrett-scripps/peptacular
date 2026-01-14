@@ -1,6 +1,7 @@
 from collections.abc import Iterable
-from .dclass import FragmentIonInfo
+
 from .data import ION_TYPE_DICT, IonType
+from .dclass import FragmentIonInfo
 
 
 class FragmentIonLookup:

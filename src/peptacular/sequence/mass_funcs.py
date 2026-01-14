@@ -1,22 +1,22 @@
+from collections import Counter
 from collections.abc import Sequence
 from typing import overload
-from collections import Counter
 
+from ..annotation import ProFormaAnnotation
+from ..annotation.annotation import (
+    CHARGE_TYPE,
+    ION_TYPE,
+    ISOTOPE_TYPE,
+    LOSS_TYPE,
+)
 from ..constants import (
     ParrallelMethod,
     ParrallelMethodLiteral,
 )
+from ..elements import ElementInfo
 from ..fragment import IonType
-from ..annotation import ProFormaAnnotation
-from ..annotation.annotation import (
-    ION_TYPE,
-    CHARGE_TYPE,
-    ISOTOPE_TYPE,
-    LOSS_TYPE,
-)
 from .parrallel import parallel_apply_internal
 from .util import get_annotation_input
-from ..elements import ElementInfo
 
 
 def _mass_single(

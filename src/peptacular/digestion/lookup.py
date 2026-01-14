@@ -1,4 +1,5 @@
 from collections.abc import Iterable
+
 from .data import PROTEASES_DICT, Proteases
 from .dclass import ProteaseInfo
 

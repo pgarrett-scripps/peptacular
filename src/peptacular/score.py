@@ -1,8 +1,7 @@
-from dataclasses import dataclass
 import math
 from collections.abc import Sequence
+from dataclasses import dataclass
 from enum import StrEnum
-
 
 from .annotation import Fragment
 
@@ -273,7 +272,7 @@ def get_fragment_matches(
     fragments = sorted(fragments, key=lambda x: x.mz)
     fragment_spectrum = [f.mz for f in fragments]
 
-    mz_spectra, intensity_spectra = zip(  # type: ignore
+    mz_spectra, intensity_spectra = zip(
         *sorted(zip(mz_spectra, intensity_spectra), key=lambda x: x[0])
     )
 

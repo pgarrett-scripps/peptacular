@@ -4,15 +4,14 @@ import re
 from collections.abc import Generator, Sequence
 
 from ..digestion.lookup import PROTEASE_LOOKUP
-
+from ..regex_utils import get_regex_match_indices
 from ..spans import (
+    Span,
     build_left_semi_spans,
     build_non_enzymatic_spans,
     build_right_semi_spans,
     build_spans,
-    Span,
 )
-from ..regex_utils import get_regex_match_indices
 from .types import (
     DigestProtocol,
     EnzymeConfig,

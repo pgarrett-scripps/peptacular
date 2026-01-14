@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import itertools
-from typing import TYPE_CHECKING, Any
 from collections.abc import Generator
+from typing import TYPE_CHECKING, Any
 
 from ..constants import ModType
 

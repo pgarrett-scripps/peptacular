@@ -1,11 +1,11 @@
-from typing import Any, overload
 from collections.abc import Callable, Sequence
+from typing import Any, overload
 
-from ..spans import Span
-from ..constants import ParrallelMethod, ParrallelMethodLiteral
 from ..annotation import (
     ProFormaAnnotation,
 )
+from ..constants import ParrallelMethod, ParrallelMethodLiteral
+from ..spans import Span
 from .parrallel import parallel_apply_internal
 from .util import get_annotation_input
 
@@ -497,10 +497,8 @@ def join(
     """
     if (
         isinstance(annotations, Sequence)
-        and len(annotations) > 0
         and isinstance(annotations[0], Sequence)
-        and not isinstance(annotations[0], str)
-        and not isinstance(annotations[0], ProFormaAnnotation)
+        and not isinstance(annotations[0], (str, ProFormaAnnotation))
     ):
         return parallel_apply_internal(
             _join_single,
@@ -510,4 +508,4 @@ def join(
             method=method,
         )
     else:
-        return _join_single(annotations)
+        return _join_single(annotations)  # type: ignore

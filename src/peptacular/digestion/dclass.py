@@ -1,6 +1,6 @@
+import re
 from dataclasses import dataclass
 from functools import cached_property
-import re
 
 
 @dataclass(frozen=True)  # Cannot use slots and cached_property together

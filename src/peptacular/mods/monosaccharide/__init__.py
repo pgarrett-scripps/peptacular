@@ -1,5 +1,5 @@
-from .lookup import MonosaccharideLookup, MONOSACCHARIDE_LOOKUP
 from .data import Monosaccharide, MonosaccharideInfo
+from .lookup import MONOSACCHARIDE_LOOKUP, MonosaccharideLookup
 
 __all__ = [
     "MonosaccharideLookup",

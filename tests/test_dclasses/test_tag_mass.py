@@ -3,6 +3,7 @@ Tests for parsing mass delta modification tags.
 """
 
 import pytest
+
 import peptacular as pt
 
 

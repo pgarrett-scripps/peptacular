@@ -1,8 +1,9 @@
 from collections.abc import Iterable
 from functools import cached_property
-from .data import PSI_MODIFICATIONS
-from ..dclass import PsimodInfo, filter_infos
 from random import choice
+
+from ..dclass import PsimodInfo, filter_infos
+from .data import PSI_MODIFICATIONS
 
 
 class PsimodLookup:
@@ -50,7 +51,16 @@ class PsimodLookup:
             return matches[0]
         elif len(matches) > 1:
             # if all have the same composition, return the first one
-            compositions = {tuple(sorted(m.dict_composition.items())) for m in matches}
+            compositions = {
+                tuple(
+                    sorted(
+                        m.dict_composition.items()
+                        if m.dict_composition is not None
+                        else []
+                    )
+                )
+                for m in matches
+            }
             if len(compositions) == 1:
                 return matches[0]
             raise ValueError(

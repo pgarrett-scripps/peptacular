@@ -7,44 +7,42 @@ This module contains all serialization logic (ProForma notation output).
 import sys
 from functools import lru_cache
 from typing import TYPE_CHECKING
-from ..elements import Element
-
 
 from ..constants import (
-    CV_TO_NAME_PREFIX,
     CV_TO_ACCESSION_PREFIX,
     CV_TO_MASS_PREFIX,
+    CV_TO_NAME_PREFIX,
     Terminal,
 )
+from ..elements import Element
 from ..mods.monosaccharide.data import Monosaccharide
-
 
 if TYPE_CHECKING:
     from .comps import (
-        FormulaElement,
+        MODIFICATION_TAG_TYPE,
+        MODIFICATION_TYPE,
         ChargedFormula,
-        PositionRule,
-        TagAccession,
-        TagMass,
-        TagName,
-        TagInfo,
-        TagCustom,
+        CompoundPeptidoformIon,
+        FixedModification,
+        FormulaElement,
+        GlobalChargeCarrier,
         GlycanComponent,
         GlycanTag,
         IsotopeReplacement,
-        GlobalChargeCarrier,
         ModificationAmbiguousPrimary,
         ModificationAmbiguousSecondary,
         ModificationCrossLinker,
-        FixedModification,
-        SequenceElement,
-        SequenceRegion,
         ModificationTags,
         Peptidoform,
         PeptidoformIon,
-        CompoundPeptidoformIon,
-        MODIFICATION_TAG_TYPE,
-        MODIFICATION_TYPE,
+        PositionRule,
+        SequenceElement,
+        SequenceRegion,
+        TagAccession,
+        TagCustom,
+        TagInfo,
+        TagMass,
+        TagName,
     )
 
 
@@ -441,13 +439,13 @@ def serialize_modification_tag(tag: "MODIFICATION_TAG_TYPE") -> str:
     """Serialize a single modification tag."""
     # Import here to avoid circular dependency at module level
     from .comps import (
-        TagAccession,
-        TagMass,
-        TagName,
-        TagInfo,
-        TagCustom,
         ChargedFormula,
         GlycanTag,
+        TagAccession,
+        TagCustom,
+        TagInfo,
+        TagMass,
+        TagName,
     )
 
     match tag:
@@ -479,8 +477,8 @@ def serialize_modification(mod: "MODIFICATION_TYPE") -> str:
     # Import here to avoid circular dependency at module level
     from .comps import (
         ModificationAmbiguousPrimary,
-        ModificationCrossLinker,
         ModificationAmbiguousSecondary,
+        ModificationCrossLinker,
         ModificationTags,
     )
 

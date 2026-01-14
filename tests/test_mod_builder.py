@@ -1,15 +1,15 @@
 import unittest
 import warnings
-import peptacular as pt
 
+import peptacular as pt
 from peptacular.annotation.mod_builder import (
+    apply_mods,
+    apply_static_mods_infront,
+    build_mods,
+    ensure_single_static_mod,
     get_mod_index_from_aa,
     get_mod_index_from_regex,
     get_sites,
-    ensure_single_static_mod,
-    apply_mods,
-    build_mods,
-    apply_static_mods_infront,
 )
 
 

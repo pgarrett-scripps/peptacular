@@ -1,75 +1,73 @@
+import re
 from collections import Counter
-
+from collections.abc import Callable, Generator, Iterable, Mapping, Sequence
 from enum import StrEnum
 from itertools import combinations_with_replacement
-import re
 from typing import (
     Any,
     Self,
     cast,
 )
-from collections.abc import Callable, Generator, Iterable, Mapping, Sequence
 
-from ..property.prop import AnnotationProperties
-
+from ..amino_acids import AA_LOOKUP, AminoAcid
+from ..constants import (
+    ModType,
+    ModTypeLiteral,
+    Terminal,
+)
 from ..digestion.core import (
-    left_semi_spans,
-    right_semi_spans,
-    semi_spans,
-    nonspecific_spans,
-    sequential_digest_annotation,
+    EnzymeConfig,
     digest_annotation_by_aa,
     digest_annotation_by_regex,
-    get_cleavage_sites,
     generate_regex,
-    EnzymeConfig,
+    get_cleavage_sites,
+    left_semi_spans,
+    nonspecific_spans,
+    right_semi_spans,
+    semi_spans,
+    sequential_digest_annotation,
 )
-
+from ..elements import Element, ElementInfo
+from ..fragment import (
+    FRAGMENT_ION_LOOKUP,
+    NEUTRAL_DELTA_LOOKUP,
+    IonType,
+    IonTypeLiteral,
+    NeutralDelta,
+    NeutralDeltaInfo,
+    NeutralDeltaLiteral,
+)
 from ..isotope import (
     IsotopicData,
     estimate_isotopic_distribution,
     isotopic_distribution,
 )
+from ..proforma_components import (
+    MODIFICATION_TYPE,
+    ChargedFormula,
+    FixedModification,
+    FormulaElement,
+    GlobalChargeCarrier,
+    IsotopeReplacement,
+    ModificationTags,
+    PositionRule,
+    SequenceElement,
+    SequenceRegion,
+)
+from ..property.prop import AnnotationProperties
 from ..spans import Span
-
-from .randomizer import generate_random_proforma_annotation
-
-from ..fragment import (
-    IonType,
-    IonTypeLiteral,
-    NeutralDeltaInfo,
-    NeutralDelta,
-    NEUTRAL_DELTA_LOOKUP,
-    NeutralDeltaLiteral,
-    FRAGMENT_ION_LOOKUP,
-)
-from .utils import (
-    Fragment,
-    handle_charge_input_comp,
-    adjust_comp,
-    adjust_mass_mz,
-    can_fragment_sequence,
-)
-
-from ..elements import ElementInfo, Element
-from .mod_builder import build_mods
-
+from ..utils import get_mods
 from .ambiguity import (
     annotate_ambiguity,
     condense_ambiguity_to_xnotation,
     group_by_ambiguity,
     unique_fragments,
 )
-
-from .slicing import (
-    generate_sliding_windows,
-    join_annotations,
-    reverse_annotation,
-    shift_annotation,
-    shuffle_annotation,
-    slice_annotation,
-    sort_annotation,
-    split_annotation,
+from .combinatorics import (
+    generate_combinations,
+    generate_combinations_with_replacement,
+    generate_permutations,
+    generate_product,
 )
 from .manipulation import (
     condense_mods_to_intervals,
@@ -83,45 +81,34 @@ from .manipulation import (
     percent_coverage,
     percent_residues,
 )
-from .combinatorics import (
-    generate_combinations,
-    generate_combinations_with_replacement,
-    generate_permutations,
-    generate_product,
-)
-from .serializer import serialize_annotation, serialize_charge
-from .parser import ProFormaParser
-
 from .mod import (
     Interval,
     Mod,
+    Mods,
     convert_moddict_input,
     convert_single_mod_input,
 )
-from ..proforma_components import (
-    IsotopeReplacement,
-    FixedModification,
-    GlobalChargeCarrier,
-    ModificationTags,
-    ChargedFormula,
-    MODIFICATION_TYPE,
-    SequenceElement,
-    SequenceRegion,
-    FormulaElement,
-    PositionRule,
+from .mod_builder import build_mods
+from .parser import ProFormaParser
+from .randomizer import generate_random_proforma_annotation
+from .serializer import serialize_annotation, serialize_charge
+from .slicing import (
+    generate_sliding_windows,
+    join_annotations,
+    reverse_annotation,
+    shift_annotation,
+    shuffle_annotation,
+    slice_annotation,
+    sort_annotation,
+    split_annotation,
 )
-
-
-from ..amino_acids import AA_LOOKUP, AminoAcid
-from ..constants import (
-    ModType,
-    ModTypeLiteral,
-    Terminal,
+from .utils import (
+    Fragment,
+    adjust_comp,
+    adjust_mass_mz,
+    can_fragment_sequence,
+    handle_charge_input_comp,
 )
-
-from ..utils import get_mods
-from .mod import Mods
-
 
 fe = FormulaElement(element=Element.H, occurance=1)
 H_CHARGE_FORMULA = ChargedFormula(formula=(fe,), charge=1)
@@ -358,7 +345,7 @@ class ProFormaAnnotation:
 
         sequence_elements = self.sequence_elements
         sequence_regions: list[SequenceRegion] = []
-        for interval in self.intervals:  # type: ignore
+        for interval in self.intervals:
             region_elements = sequence_elements[interval.start : interval.end]
 
             mods: list[MODIFICATION_TYPE] = []
@@ -549,7 +536,7 @@ class ProFormaAnnotation:
         self._validate = value
         if self.has_intervals:
             for interval in self.intervals:
-                interval._validate = value  # type: ignore
+                interval._validate = value
 
     def has_internal_mods_at_index(self, position: int) -> bool:
         """Check if there are any modifications at a specific position in the sequence."""
@@ -856,8 +843,13 @@ class ProFormaAnnotation:
                     charge = None
         elif charge is None:
             pass
-        elif isinstance(charge, Mods):  # type: ignore
-            charge = charge._mods  # type: ignore
+        elif isinstance(charge, Mods):
+            charge = charge._mods
+
+        if isinstance(charge, Mods):  # For type checker
+            raise RuntimeError(
+                "Internal error: Mods should have been converted to dict"
+            )
 
         self._charge = charge
 
@@ -1119,14 +1111,14 @@ class ProFormaAnnotation:
                 end=end,
                 ambiguous=ambiguous,
                 mods=mods_converted,
-                validate=validate,  # type: ignore
+                validate=validate,
             )
         else:
             interval = interval.copy()
-            interval._validate = validate  # type: ignore
+            interval._validate = validate
 
         if validate:
-            if not isinstance(interval, Interval):  # type: ignore
+            if not isinstance(interval, Interval):
                 raise TypeError(f"Expected Interval object, got {type(interval)}")
             if not interval.is_valid:
                 raise ValueError(f"Invalid interval: {interval}")
@@ -1679,7 +1671,7 @@ class ProFormaAnnotation:
             if step is not None and step != 1:
                 raise ValueError("Step slicing not supported")
             return self.slice(start, stop, inplace=False)
-        elif isinstance(key, int):  # type: ignore
+        elif isinstance(key, int):
             raise NotImplementedError(
                 "Single index access not supported for ProFormaAnnotation"
             )
@@ -2206,19 +2198,33 @@ class ProFormaAnnotation:
         can_fragment_sequence(self.sequence, ion_type)
 
         # all_losses = combine_loss_types(self.sequence, losses, custom_losses)
-        neutral_deltas: dict[ChargedFormula, int] = {}
+        neutral_deltas: dict[ChargedFormula, int] = {}  # ✅ Use dict
         for loss, count in (losses or {}).items():
+            if not isinstance(count, int) or count < 1:
+                raise ValueError(f"Loss count must be a positive integer: {count}")
+
             if isinstance(loss, NeutralDeltaInfo):
-                neutral_deltas[loss.charged_formula] = count
+                neutral_deltas[loss.charged_formula] = count  # ✅ Can mutate dict
             else:
                 neutral_deltas[NEUTRAL_DELTA_LOOKUP[loss].charged_formula] = count
 
         # handle user specified charge
         has_user_charge = charge is not None
         has_annot_charge = self._charge is not None
-        effective_charge: Any | None = charge  # take user charge
+        effective_charge: CHARGE_TYPE | None = charge  # take user charge
         if not has_user_charge and has_annot_charge:
-            effective_charge = self.charge  # take annotation charge
+            annot_charge = self.charge
+            if annot_charge is None:
+                effective_charge = None
+            elif isinstance(annot_charge, int):
+                effective_charge = annot_charge
+            elif isinstance(annot_charge, Mods):
+                # Extract the values from Mod objects
+                effective_charge = tuple(mod.value for mod in annot_charge.mods)
+            else:
+                raise RuntimeError(
+                    f"Unsupported charge type in annotation: {type(annot_charge)}"
+                )
 
         if self.has_isotope_mods or calculate_composition:
             return adjust_comp(
@@ -2227,7 +2233,9 @@ class ProFormaAnnotation:
                 ion_type=ion_type,
                 monoisotopic=monoisotopic,
                 isotopes=isotopes,
-                neutral_deltas=neutral_deltas,
+                neutral_deltas=cast(
+                    Mapping[str | ChargedFormula | float, int], neutral_deltas
+                ),
                 inplace=True,
                 isotope_map=self._map_isotopes() if self.has_isotope_mods else None,
                 position=position,
@@ -2240,7 +2248,9 @@ class ProFormaAnnotation:
             monoisotopic=monoisotopic,
             ion_type=ion_type,
             isotopes=isotopes,
-            neutral_deltas=neutral_deltas,
+            neutral_deltas=cast(
+                Mapping[str | ChargedFormula | float, int], neutral_deltas
+            ),
             position=position,
             parent_sequence=self.serialize() if include_sequence else None,
         )
@@ -3387,7 +3397,7 @@ class ProFormaAnnotation:
         use_neutron_count: bool = False,
         conv_min_abundance_threshold: float = 10e-15,
     ) -> list[IsotopicData]:
-        composition = self.comp(
+        composition: Counter[ElementInfo] = self.comp(
             ion_type=ion_type, charge=charge, isotopes=isotopes, losses=losses
         )
 
@@ -3398,7 +3408,7 @@ class ProFormaAnnotation:
             _, charge_state = handle_charge_input_comp(charge=charge)
 
         return isotopic_distribution(
-            chemical_formula=composition,
+            chemical_formula=cast(Mapping[str | ElementInfo, int | float], composition),
             max_isotopes=max_isotopes,
             min_abundance_threshold=min_abundance_threshold,
             distribution_resolution=distribution_resolution,

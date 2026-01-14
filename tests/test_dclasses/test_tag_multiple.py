@@ -3,6 +3,7 @@ Tests for parsing modification strings with multiple tags (pipe-separated).
 """
 
 import pytest
+
 import peptacular as pt
 
 

@@ -1,6 +1,5 @@
 import sys
 from collections.abc import Generator
-from typing import Optional, List, Tuple
 
 from .mod import VALID_AMINO_ACIDS, Interval
 
@@ -481,7 +480,7 @@ class ProFormaParser:
             for mod in mods:
                 if interval_mods is None:
                     interval_mods = {}
-                interval_mods[mod] = interval_mods.get(mod, 0) + 1  # type: ignore
+                interval_mods[mod] = interval_mods.get(mod, 0) + 1
 
         # Note: Some ProForma versions allow '?' at the end for unlocalized ranges
         # If encountered here, we mark the interval as ambiguous

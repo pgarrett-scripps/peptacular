@@ -1,10 +1,10 @@
+import typing
 from dataclasses import dataclass, field
 from functools import cached_property
-from typing import Any, TypeVar, Self
-import typing
+from typing import Any, Self, TypeVar
 
-from ..elements import ElementInfo, parse_composition
 from ..constants import CV
+from ..elements import ElementInfo, parse_composition
 
 # if type checking:
 if typing.TYPE_CHECKING:

@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from .data import PROTEASES_DICT, Proteases, PROTEASE_LITERALS
+from .data import PROTEASE_LITERALS, PROTEASES_DICT, Proteases
 from .dclass import ProteaseInfo
-from .types import DigestProtocol, EnzymeConfig
 from .lookup import PROTEASE_LOOKUP
+from .types import DigestProtocol, EnzymeConfig
 
 __all__ = [
     "PROTEASES_DICT",

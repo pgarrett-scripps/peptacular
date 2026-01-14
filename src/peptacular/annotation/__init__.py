@@ -5,11 +5,10 @@ All methods/properties are available on the ProFormaAnnotation class. The one ex
 which is accessible via the annot.prop attribute.
 """
 
-from .parser import Interval
-from .annotation import ProFormaAnnotation, AnnotationProperties
+from .annotation import AnnotationProperties, ProFormaAnnotation
 from .mod import Mod, Mods
+from .parser import Interval
 from .utils import Fragment
-
 
 __all__ = [
     "Interval",

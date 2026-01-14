@@ -6,9 +6,8 @@ Based on mzPAF specification v1.0 with extended internal fragment support
 
 import re
 from dataclasses import dataclass
-from typing import Literal
 from enum import Enum
-
+from typing import Literal
 
 # Table from the specification showing differences from yb
 INTERNAL_MASS_DIFFS: dict[tuple[str, str], None | str] = {

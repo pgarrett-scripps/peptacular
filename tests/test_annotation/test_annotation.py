@@ -1,6 +1,7 @@
 """Tests for the ProFormaAnnotation class"""
 
 import pytest
+
 import peptacular as pt
 
 

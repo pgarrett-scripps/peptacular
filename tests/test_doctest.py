@@ -1,7 +1,9 @@
-import pytest
 import doctest
-import pkgutil
 import importlib
+import pkgutil
+
+import pytest
+
 import peptacular as pt
 
 

@@ -1,6 +1,7 @@
 from collections.abc import Iterable
-from .dclass import NeutralDeltaInfo
+
 from .data import NEUTRAL_DELTA_DICT, NeutralDelta
+from .dclass import NeutralDeltaInfo
 
 
 class NeutralDeltaLookup:

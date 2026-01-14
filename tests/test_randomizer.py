@@ -3,21 +3,22 @@ Tests for the randomizer module.
 """
 
 import pytest
+
 import peptacular as pt
 from peptacular.annotation import ProFormaAnnotation
 from peptacular.annotation.randomizer import (
-    get_random_psimod,
-    get_random_unimod,
-    get_random_mod_component,
-    get_random_mod_dict,
-    generate_random_isotope_mod,
     generate_isotope_mod_dict,
+    generate_random_intervals,
+    generate_random_isotope_mod,
+    generate_random_proforma_annotation,
     generate_static_mod,
     generate_static_mods_dict,
-    generate_random_intervals,
-    random_charge_state,
+    get_random_mod_component,
+    get_random_mod_dict,
+    get_random_psimod,
+    get_random_unimod,
     random_charge_adduct,
-    generate_random_proforma_annotation,
+    random_charge_state,
 )
 
 

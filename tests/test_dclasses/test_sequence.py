@@ -1,6 +1,7 @@
 """Tests for pt.SequenceElement and pt.SequenceRegion"""
 
 import unittest
+
 import peptacular as pt
 
 

@@ -5,6 +5,7 @@ Tests the conversion of ProForma modification strings into structured tag object
 """
 
 import pytest
+
 import peptacular as pt
 
 

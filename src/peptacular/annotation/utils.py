@@ -1,12 +1,13 @@
 from collections import Counter
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any, Literal, TypeVar, overload
-from collections.abc import Sequence
 
 from ..annotation.mod import Mods
-
-from ..fragment.neutral_deltas.data import NeutralDelta, NeutralDeltaLiteral
-
+from ..constants import C13_NEUTRON_MASS, ELECTRON_MASS, PROTON_MASS
+from ..elements.dclass import ElementInfo
+from ..elements.lookup import ELEMENT_LOOKUP
+from ..fragment import FRAGMENT_ION_LOOKUP, IonType, IonTypeLiteral
 from ..fragment.ion_types.dclass import FragmentIonInfo, IonTypeProperty
 from ..fragment.mzpaf import (
     INTERNAL_MASS_DIFFS,
@@ -18,15 +19,9 @@ from ..fragment.mzpaf import (
     PeptideIon,
     PrecursorIon,
 )
-
+from ..fragment.neutral_deltas.data import NeutralDelta, NeutralDeltaLiteral
 from ..fragment.neutral_deltas.lookup import NEUTRAL_DELTA_LOOKUP
-
-from ..fragment import FRAGMENT_ION_LOOKUP
 from ..proforma_components.comps import ChargedFormula, GlobalChargeCarrier
-from ..fragment import IonType, IonTypeLiteral
-from ..constants import C13_NEUTRON_MASS, ELECTRON_MASS, PROTON_MASS
-from ..elements.dclass import ElementInfo
-from ..elements.lookup import ELEMENT_LOOKUP
 
 H_ELEMENT_INFO = ELEMENT_LOOKUP["H"]
 
@@ -72,7 +67,7 @@ class Fragment:
         if charge_adducts is not None:
             for adduct in charge_adducts:
                 m = adduct.get_mass(monoisotopic=self.monoisotopic)
-                if m is None:  # type: ignore
+                if m is None:
                     raise ValueError(f"Mass not available for charge carrier: {adduct}")
                 adduct_mass += m
         neutral_mass = self.mass - adduct_mass
@@ -197,7 +192,7 @@ class Fragment:
                         raise ValueError(
                             f"Internal ion type {ion_info.ion_type} not supported in mzPAF."
                         )
-                    internal_loss = INTERNAL_MASS_DIFFS[internal_ion_key]  # type: ignore
+                    internal_loss = INTERNAL_MASS_DIFFS[internal_ion_key]
 
                     ion = InternalFragment(
                         start_position=start,
@@ -224,7 +219,10 @@ class Fragment:
         match self._isotopes:
             case dict():
                 iso: list[IsotopeSpecification] = []
-                for element, count in self.isotopes.items():
+                isotopes = self.isotopes
+                if isotopes is None:
+                    raise ValueError("Isotopes property is None despite dict type.")
+                for element, count in isotopes.items():
                     iso.append(IsotopeSpecification(element=str(element), count=count))
             case int() as iso_count:
                 iso: list[IsotopeSpecification] = [
@@ -262,10 +260,15 @@ class Fragment:
 
         if self._charge_adducts is None:
             charge_state = self.charge_state
-            adducts = None
+            pzpaf_adducts = None
         else:
             charge_state = self.charge_state
-            adducts = [a.to_mz_paf() for a in self.charge_adducts]
+            _adducts = self.charge_adducts
+            if _adducts is None:
+                raise RuntimeError(
+                    "Charge adducts is None despite _charge_adducts being set."
+                )
+            pzpaf_adducts = [a.to_mz_paf() for a in _adducts]
 
         mz_paf_mass_error = None
         if mass_error is not None:
@@ -275,7 +278,7 @@ class Fragment:
             ion_type=ion,
             neutral_losses=loss,
             isotope=iso,
-            adducts=adducts,
+            adducts=pzpaf_adducts,
             charge=charge_state,
             mass_error=mz_paf_mass_error,
             confidence=confidence,
@@ -313,7 +316,7 @@ def _handle_charge_input_mass(
         m = charge.get_mass(monoisotopic=monoisotopic)
         base_mass += m
         charge_value = charge.get_charge()
-    elif isinstance(charge, tuple):  # type: ignore
+    elif isinstance(charge, tuple):
         charge_value = 0
         for global_charge_carrier in charge:
             if isinstance(global_charge_carrier, str):
@@ -345,7 +348,7 @@ def handle_charge_input_comp(
         for element, elem_count in comp.items():
             base_comp[element] += elem_count
         total_charge = charge.get_charge()
-    elif isinstance(charge, tuple):  # type: ignore
+    elif isinstance(charge, tuple):
         for global_charge_carrier in charge:
             if isinstance(global_charge_carrier, str):
                 global_charge_carrier = GlobalChargeCarrier.from_string(
@@ -370,7 +373,11 @@ def adjust_mass_mz(
     ion_type: IonType | IonTypeLiteral | FragmentIonInfo = IonType.PRECURSOR,
     monoisotopic: bool = True,
     isotopes: int | dict[str | ElementInfo, int] | None = None,
-    neutral_deltas: dict[ChargedFormula, int] | None = None,
+    neutral_deltas: str
+    | ChargedFormula
+    | float
+    | Mapping[str | ChargedFormula | float, int]
+    | None = None,
     position: int | tuple[int, int] | str | None = None,
     parent_sequence: str | None = None,
 ) -> Fragment:
@@ -450,7 +457,7 @@ def adjust_mass_mz(
             case Mods():
                 fragment_annotation_charge_adducts = tuple(
                     str(mod) for mod in charge._mods
-                )  # type: ignore
+                )
             case _:
                 raise TypeError(f"Invalid charge type: {type(charge)}")
 
@@ -483,7 +490,11 @@ def adjust_comp(
     ion_type: IonType | IonTypeLiteral | FragmentIonInfo = IonType.PRECURSOR,
     monoisotopic: bool = True,
     isotopes: int | dict[str | ElementInfo, int] | None = None,
-    neutral_deltas: dict[ChargedFormula, int] | None = None,
+    neutral_deltas: str
+    | ChargedFormula
+    | float
+    | Mapping[str | ChargedFormula | float, int]
+    | None = None,
     inplace: bool = True,
     isotope_map: dict[ElementInfo, ElementInfo] | None = None,
     position: int | tuple[int, int] | str | None = None,
@@ -655,7 +666,7 @@ def process_isotopes(
 
 
 def process_losses(
-    losses: str | ChargedFormula | float | dict[str | ChargedFormula | float, int],
+    losses: str | ChargedFormula | float | Mapping[str | ChargedFormula | float, int],
 ) -> tuple[Counter[ElementInfo], dict[float, int]]:
     """Convert loss input to composition counter."""
     if isinstance(losses, str):
@@ -665,12 +676,21 @@ def process_losses(
     if isinstance(losses, float):
         return Counter(), {losses: 1}
 
+    if not isinstance(losses, dict):
+        raise TypeError(f"Invalid losses type: {type(losses)}")
+
     # dict case
     total: Counter[ElementInfo] = Counter()
     float_losses: dict[float, int] = {}
     for key, count in losses.items():
         if isinstance(key, str):
-            loss_comp = NEUTRAL_DELTA_LOOKUP[key].composition
+            try:
+                loss_comp = NEUTRAL_DELTA_LOOKUP[key].composition
+            except KeyError:
+                formula = ChargedFormula.from_string(key, require_formula_prefix=False)
+                if formula.charge:
+                    raise ValueError(f"Loss formula cannot have charge: {key}")
+                loss_comp = formula.get_composition()
         elif isinstance(key, ChargedFormula):
             loss_comp = key.get_composition()
         elif isinstance(key, float):
@@ -823,8 +843,8 @@ def combine_loss_types(
 
     if losses is not None:
         if isinstance(losses, (NeutralDelta, str)):
-            losses = [losses]
-        for loss in losses:
+            _losses: list[str] = [losses]
+        for loss in _losses:
             loss_info = NEUTRAL_DELTA_LOOKUP[loss]
             loss_sites = loss_info.calculate_loss_sites(sequence)
             if loss_sites != 0:

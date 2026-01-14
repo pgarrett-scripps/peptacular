@@ -3,6 +3,7 @@ Tests for parsing isotope replacements and global modifications.
 """
 
 import pytest
+
 import peptacular as pt
 
 

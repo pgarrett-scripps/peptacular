@@ -1,13 +1,15 @@
-from functools import cache, cached_property
 from collections.abc import Iterable
-from .dclass import AminoAcidInfo
-from .data import AMINO_ACID_INFOS
+from functools import cache, cached_property
+
 from ..elements import ElementInfo
+from .data import AMINO_ACID_INFOS, AminoAcid
+from .dclass import AminoAcidInfo
 
 
 class AALookup:
-    def __init__(self, data: dict[str, AminoAcidInfo]):
-        self.one_letter_to_info = data
+    def __init__(self, data: dict[AminoAcid, AminoAcidInfo]):
+        # Convert all keys to their string representation for one-letter codes
+        self.one_letter_to_info = {str(aa): info for aa, info in data.items()}
         self.three_letter_to_info = {
             info.three_letter_code.lower(): info for info in data.values()
         }

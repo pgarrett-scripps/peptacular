@@ -1,11 +1,11 @@
-from typing import overload
 from collections.abc import Sequence
+from typing import overload
 
-from ..isotope import IsotopicData
-from ..annotation.annotation import CHARGE_TYPE, ION_TYPE, ISOTOPE_TYPE, LOSS_TYPE
-from ..fragment.ion_types.data import IonType
-from ..constants import ParrallelMethod, ParrallelMethodLiteral
 from ..annotation import ProFormaAnnotation
+from ..annotation.annotation import CHARGE_TYPE, ION_TYPE, ISOTOPE_TYPE, LOSS_TYPE
+from ..constants import ParrallelMethod, ParrallelMethodLiteral
+from ..fragment.ion_types.data import IonType
+from ..isotope import IsotopicData
 from .parrallel import parallel_apply_internal
 from .util import get_annotation_input
 

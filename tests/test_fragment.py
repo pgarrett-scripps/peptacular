@@ -1,6 +1,6 @@
-import peptacular as pt
-
 import unittest
+
+import peptacular as pt
 
 
 class TestFragment(unittest.TestCase):

@@ -1,8 +1,9 @@
 """Reference molecule information dataclass"""
 
+from collections import Counter
 from dataclasses import dataclass
 from functools import cached_property
-from collections import Counter
+
 from ...elements import ElementInfo, parse_composition
 
 

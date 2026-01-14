@@ -3,6 +3,7 @@ Tests for parsing custom modification tags.
 """
 
 import pytest
+
 import peptacular as pt
 
 
