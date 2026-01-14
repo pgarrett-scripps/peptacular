@@ -46,6 +46,7 @@ def _build_mods_single(
 @overload
 def build_mods(
     sequence: ProFormaAnnotation | str,
+    *,  # force keyword arguments
     nterm_static: MOD_BUILDER_INPUT_TYPE | None = None,
     cterm_static: MOD_BUILDER_INPUT_TYPE | None = None,
     internal_static: MOD_BUILDER_INPUT_TYPE | None = None,
@@ -65,6 +66,7 @@ def build_mods(
 @overload
 def build_mods(
     sequence: Sequence[ProFormaAnnotation | str],
+    *,  # force keyword arguments
     nterm_static: MOD_BUILDER_INPUT_TYPE | None = None,
     cterm_static: MOD_BUILDER_INPUT_TYPE | None = None,
     internal_static: MOD_BUILDER_INPUT_TYPE | None = None,
@@ -83,6 +85,7 @@ def build_mods(
 
 def build_mods(
     sequence: ProFormaAnnotation | str | Sequence[ProFormaAnnotation | str],
+    *,  # force keyword arguments
     nterm_static: MOD_BUILDER_INPUT_TYPE | None = None,
     cterm_static: MOD_BUILDER_INPUT_TYPE | None = None,
     internal_static: MOD_BUILDER_INPUT_TYPE | None = None,

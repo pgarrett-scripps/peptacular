@@ -32,7 +32,9 @@ class OboEntity:
     def composition(self) -> dict[ElementInfo, int] | None:
         """Get the composition as a dict of element symbols to counts"""
         return (
-            parse_composition(self.dict_composition) if self.dict_composition is not None else None
+            parse_composition(self.dict_composition)
+            if self.dict_composition is not None
+            else None
         )
 
     def __repr__(self) -> str:
@@ -133,27 +135,27 @@ def filter_infos(
     infos: list[T],
     has_monoisotopic_mass: bool | None = None,
     has_composition: bool | None = None,
-    **criteria: Any
+    **criteria: Any,
 ) -> list[T]:
     """Filter a list of OboEntity or its subclasses based on criteria."""
     filtered: list[T] = []
     for info in infos:
         match = True
-        
+
         # Check monoisotopic mass requirement
         if has_monoisotopic_mass is not None:
             if has_monoisotopic_mass and info.monoisotopic_mass is None:
                 match = False
             elif not has_monoisotopic_mass and info.monoisotopic_mass is not None:
                 match = False
-        
+
         # Check composition requirement
         if match and has_composition is not None:
             if has_composition and info.dict_composition is None:
                 match = False
             elif not has_composition and info.dict_composition is not None:
                 match = False
-        
+
         # Check other criteria
         if match:
             for key, value in criteria.items():

@@ -102,29 +102,31 @@ class PsimodLookup:
     @cached_property
     def _infos_with_mass_tuple(self) -> tuple[PsimodInfo, ...]:
         """Cached tuple of PsimodInfo entries with monoisotopic mass."""
-        return tuple(filter_infos(
-            list(self.name_to_info.values()),
-            has_monoisotopic_mass=True
-        ))
+        return tuple(
+            filter_infos(list(self.name_to_info.values()), has_monoisotopic_mass=True)
+        )
 
     @cached_property
     def _infos_with_composition_tuple(self) -> tuple[PsimodInfo, ...]:
         """Cached tuple of PsimodInfo entries with composition."""
-        return tuple(filter_infos(
-            list(self.name_to_info.values()),
-            has_composition=True
-        ))
+        return tuple(
+            filter_infos(list(self.name_to_info.values()), has_composition=True)
+        )
 
     @cached_property
     def _infos_with_mass_and_composition_tuple(self) -> tuple[PsimodInfo, ...]:
         """Cached tuple of PsimodInfo entries with both mass and composition."""
-        return tuple(filter_infos(
-            list(self.name_to_info.values()),
-            has_monoisotopic_mass=True,
-            has_composition=True
-        ))
+        return tuple(
+            filter_infos(
+                list(self.name_to_info.values()),
+                has_monoisotopic_mass=True,
+                has_composition=True,
+            )
+        )
 
-    def choice(self, require_monoisotopic_mass: bool = True, require_composition: bool = True) -> PsimodInfo:
+    def choice(
+        self, require_monoisotopic_mass: bool = True, require_composition: bool = True
+    ) -> PsimodInfo:
         """Get a random PsimodInfo from the lookup."""
         if require_monoisotopic_mass and require_composition:
             valid_infos = self._infos_with_mass_and_composition_tuple
@@ -139,8 +141,6 @@ class PsimodLookup:
             raise ValueError("No valid PsimodInfo entries found matching the criteria.")
 
         return choice(valid_infos)
-
-
 
 
 PSIMOD_LOOKUP = PsimodLookup(PSI_MODIFICATIONS)

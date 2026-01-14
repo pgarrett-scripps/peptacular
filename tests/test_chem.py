@@ -249,15 +249,15 @@ class TestChemIntegration:
     def test_workflow_multiple_formulas(self):
         """Test complete workflow with multiple formulas."""
         formulas = ["H2O", "CO2", "NH3"]
-        
+
         # Parse all formulas
         comps = pt.parse_formula(formulas)
         assert len(comps) == 3
-        
+
         # Calculate masses
         masses = pt.chem_mass(formulas, monoisotopic=True)
         assert len(masses) == 3
-        
+
         # Generate formula strings from compositions
         regenerated = pt.chem_formula(comps, hill_order=True)
         assert regenerated[0] == "H2O"
@@ -268,12 +268,12 @@ class TestChemIntegration:
         """Test that compositions can be combined."""
         comp1 = pt.parse_formula("H2O")
         comp2 = pt.parse_formula("CO2")
-        
+
         # Add compositions together
         combined = comp1 + comp2
         formula = pt.chem_formula(combined, hill_order=True)
         assert formula == "CH2O3"
-        
+
         # Calculate combined mass
         mass = pt.chem_mass(combined, monoisotopic=True)
         expected = pt.chem_mass("H2O") + pt.chem_mass("CO2")
@@ -282,10 +282,10 @@ class TestChemIntegration:
     def test_element_info_consistency(self):
         """Test that ElementInfo objects are used consistently."""
         comp = pt.parse_formula("C6H12O6")
-        
+
         # All keys should be ElementInfo instances
         assert all(isinstance(k, ElementInfo) for k in comp.keys())
-        
+
         # Should be able to look up by string
         assert comp[ELEMENT_LOOKUP["C"]] == 6
 

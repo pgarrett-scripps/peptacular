@@ -102,29 +102,31 @@ class UnimodLookup:
     @cached_property
     def _infos_with_mass_tuple(self) -> tuple[UnimodInfo, ...]:
         """Cached tuple of UnimodInfo entries with monoisotopic mass."""
-        return tuple(filter_infos(
-            list(self.name_to_info.values()),
-            has_monoisotopic_mass=True
-        ))
+        return tuple(
+            filter_infos(list(self.name_to_info.values()), has_monoisotopic_mass=True)
+        )
 
     @cached_property
     def _infos_with_composition_tuple(self) -> tuple[UnimodInfo, ...]:
         """Cached tuple of UnimodInfo entries with composition."""
-        return tuple(filter_infos(
-            list(self.name_to_info.values()),
-            has_composition=True
-        ))
+        return tuple(
+            filter_infos(list(self.name_to_info.values()), has_composition=True)
+        )
 
     @cached_property
     def _infos_with_mass_and_composition_tuple(self) -> tuple[UnimodInfo, ...]:
         """Cached tuple of UnimodInfo entries with both mass and composition."""
-        return tuple(filter_infos(
-            list(self.name_to_info.values()),
-            has_monoisotopic_mass=True,
-            has_composition=True
-        ))
+        return tuple(
+            filter_infos(
+                list(self.name_to_info.values()),
+                has_monoisotopic_mass=True,
+                has_composition=True,
+            )
+        )
 
-    def choice(self, require_monoisotopic_mass: bool = True, require_composition: bool = True) -> UnimodInfo:
+    def choice(
+        self, require_monoisotopic_mass: bool = True, require_composition: bool = True
+    ) -> UnimodInfo:
         """Get a random UnimodInfo from the lookup."""
         if require_monoisotopic_mass and require_composition:
             valid_infos = self._infos_with_mass_and_composition_tuple

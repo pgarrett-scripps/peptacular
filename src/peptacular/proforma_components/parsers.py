@@ -40,7 +40,9 @@ if TYPE_CHECKING:
 
 
 # Try to match known monosaccharide names (longest first)
-monosaccharide_names: list[str] = sorted(Monosaccharide.to_list(), key=len, reverse=True) # type: ignore
+monosaccharide_names: list[str] = sorted(
+    Monosaccharide.to_list(), key=len, reverse=True
+)  # type: ignore
 
 # ============================================================================
 # Regex Patterns for Modification Types
@@ -49,7 +51,9 @@ monosaccharide_names: list[str] = sorted(Monosaccharide.to_list(), key=len, reve
 # Accession patterns: MUST use full CV name (UNIMOD, MOD, RESID, GNO, XLMOD)
 # Rule 1: Full CV name with colon, MUST NOT be followed with +/-
 # e.g., "UNIMOD:35", "MOD:00719", "RESID:1234", "GNO:5678", "XLMOD:91011"
-PATTERN_ACCESSION: re.Pattern[str] = re.compile(r"^(UNIMOD|MOD|RESID|GNO|XLMOD):(\w+)$", re.IGNORECASE)
+PATTERN_ACCESSION: re.Pattern[str] = re.compile(
+    r"^(UNIMOD|MOD|RESID|GNO|XLMOD):(\w+)$", re.IGNORECASE
+)
 
 # Custom pattern: Rule 3: MUST use shorthand "C:"
 # e.g., "C:some custom data"
@@ -449,7 +453,6 @@ def _parse_glycan_composition(glycan_str: str) -> tuple["GlycanComponent", ...]:
 
     components: list["GlycanComponent"] = []
     i = 0
-
 
     while i < len(glycan_str):
         # Try to match a monosaccharide name

@@ -16,5 +16,6 @@ from .regex_utils import *
 from .property import *
 from .chem import *
 from .utils import *
+from .spans import *
 
 __version__ = "3.0.0"

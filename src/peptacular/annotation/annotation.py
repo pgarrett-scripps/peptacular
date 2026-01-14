@@ -3040,6 +3040,7 @@ class ProFormaAnnotation:
 
     def build_mods(
         self,
+        *,
         nterm_static: Mapping[str, Iterable[Any]] | None = None,
         cterm_static: Mapping[str, Iterable[Any]] | None = None,
         internal_static: Mapping[str, Iterable[Any]] | None = None,
@@ -3434,7 +3435,7 @@ class ProFormaAnnotation:
         )
 
     @staticmethod
-    def random(    
+    def random(
         min_length: int = 6,
         max_length: int = 20,
         mod_probability: float = 0.05,
@@ -3447,7 +3448,8 @@ class ProFormaAnnotation:
         include_static_mods: bool = True,
         generate_intervals: bool = True,
         include_charge: bool = True,
-        require_composition: bool = True) -> "ProFormaAnnotation":
+        require_composition: bool = True,
+    ) -> "ProFormaAnnotation":
         """Generate a random ProFormaAnnotation for testing purposes."""
         return generate_random_proforma_annotation(
             min_length=min_length,

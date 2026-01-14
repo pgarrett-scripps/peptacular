@@ -599,7 +599,7 @@ def generate_random(
     method: ParrallelMethod | ParrallelMethodLiteral | None = None,
 ) -> ProFormaAnnotation | list[ProFormaAnnotation]:
     """Generate random ProForma annotation(s) with configurable features.
-    
+
     Args:
         count: Number of random sequences to generate. If None, generates a single sequence.
         min_length: Minimum sequence length
@@ -618,25 +618,25 @@ def generate_random(
         n_workers: Number of parallel workers (only used when count > 1)
         chunksize: Size of chunks for parallel processing
         method: Parallel processing method ('process', 'thread', or 'sequential')
-        
+
     Returns:
         A single ProFormaAnnotation if count is None, otherwise a list of ProFormaAnnotations
-        
+
     .. code-block:: python
-    
+
         # Generate a single random sequence
         >>> seq = generate_random()
         >>> isinstance(seq, ProFormaAnnotation)
         True
-        
+
         # Generate multiple random sequences
         >>> seqs = generate_random(count=10)
         >>> len(seqs)
         10
-        
+
         # Generate without modifications
         >>> seq = generate_random(mod_probability=0.0)
-        
+
         # Generate with only internal modifications
         >>> seq = generate_random(
         ...     include_nterm_mods=False,
@@ -683,4 +683,3 @@ def generate_random(
             chunksize=chunksize,
             method=method,
         )
-

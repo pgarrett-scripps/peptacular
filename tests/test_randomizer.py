@@ -138,17 +138,14 @@ class TestIntervals:
         """Test generating random intervals."""
         intervals = generate_random_intervals(seq_length=10, interval_probability=0.3)
         assert isinstance(intervals, list)
-        
+
         # Check non-overlapping
         for i, interval in enumerate(intervals):
             assert interval.start < interval.end
             for j, other in enumerate(intervals):
                 if i != j:
                     # Intervals should not overlap
-                    assert (
-                        interval.end <= other.start or 
-                        interval.start >= other.end
-                    )
+                    assert interval.end <= other.start or interval.start >= other.end
 
     def test_generate_random_intervals_short_sequence(self):
         """Test intervals with short sequence."""
@@ -247,8 +244,7 @@ class TestProFormaAnnotationGeneration:
     def test_generate_random_proforma_annotation_with_composition(self):
         """Test that require_composition is respected."""
         annot = generate_random_proforma_annotation(
-            mod_probability=0.3,
-            require_composition=True
+            mod_probability=0.3, require_composition=True
         )
         # Should be able to calculate composition without errors
         comp = annot.comp()
@@ -264,8 +260,7 @@ class TestProFormaAnnotationGeneration:
     def test_generate_random_proforma_annotation_parseable(self):
         """Test that generated annotation can be parsed back."""
         annot = generate_random_proforma_annotation(
-            mod_probability=0.2,
-            require_composition=True
+            mod_probability=0.2, require_composition=True
         )
         proforma_str = annot.serialize()
         parsed = ProFormaAnnotation.parse(proforma_str)
@@ -292,10 +287,7 @@ class TestFunctionalAPI:
     def test_generate_random_with_params(self):
         """Test generating with custom parameters."""
         seq = pt.generate_random(
-            min_length=10,
-            max_length=15,
-            mod_probability=0.1,
-            include_charge=False
+            min_length=10, max_length=15, mod_probability=0.1, include_charge=False
         )
         assert 10 <= len(seq.sequence) <= 15
         assert seq.charge is None
@@ -309,10 +301,7 @@ class TestFunctionalAPI:
 
     def test_generate_random_no_composition(self):
         """Test generating without composition requirement."""
-        seq = pt.generate_random(
-            mod_probability=0.3,
-            require_composition=False
-        )
+        seq = pt.generate_random(mod_probability=0.3, require_composition=False)
         assert isinstance(seq, ProFormaAnnotation)
 
 
@@ -323,12 +312,11 @@ class TestRandomizerStability:
         """Test that multiple generations all produce valid annotations."""
         for _ in range(20):
             annot = generate_random_proforma_annotation(
-                mod_probability=0.2,
-                require_composition=True
+                mod_probability=0.2, require_composition=True
             )
             assert annot.sequence is not None
             assert all(c in "ACDEFGHIKLMNPQRSTVWY" for c in annot.sequence)
-            
+
             # Should be serializable and parseable
             proforma_str = annot.serialize()
             parsed = ProFormaAnnotation.parse(proforma_str)
@@ -338,8 +326,7 @@ class TestRandomizerStability:
         """Test that generated annotations can calculate mass."""
         for _ in range(10):
             annot = generate_random_proforma_annotation(
-                mod_probability=0.2,
-                require_composition=True
+                mod_probability=0.2, require_composition=True
             )
             mass = annot.mass()
             assert isinstance(mass, float)
@@ -349,8 +336,7 @@ class TestRandomizerStability:
         """Test that generated annotations can calculate composition."""
         for _ in range(10):
             annot = generate_random_proforma_annotation(
-                mod_probability=0.2,
-                require_composition=True
+                mod_probability=0.2, require_composition=True
             )
             comp = annot.comp()
             assert comp is not None

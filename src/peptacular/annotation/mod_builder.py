@@ -65,7 +65,7 @@ def ensure_single_static_mod(mods: dict[int, list[Any]]) -> None:
 
 
 def apply_mods(
-    annotation: ProFormaAnnotation,
+    annotation: ProFormaAnnotation | str,
     nterm: Mapping[str, Iterable[Any]] | None = None,
     cterm: Mapping[str, Iterable[Any]] | None = None,
     internal: Mapping[str, Iterable[Any]] | None = None,
