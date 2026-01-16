@@ -151,7 +151,7 @@ def sequence_length(
 
 
 def _is_ambiguous_single(sequence: str | ProFormaAnnotation) -> bool:
-    return get_annotation_input(sequence, copy=False).contains_sequence_ambiguity()
+    return get_annotation_input(sequence, copy=False).has_sequence_ambiguity
 
 
 @overload

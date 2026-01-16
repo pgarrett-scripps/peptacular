@@ -1,5 +1,9 @@
 # ProForma Parser Implementation Checklist
 
+[x]: Full compatibility
+[-]: Parser only (mass/composition... will cause error) 
+[ ]: Not compatible 
+
 ## 5.3.1 Base-ProForma Compliance
 
 - [x] **Amino acids (+UO)** - `AAHCFKUOT` (§6.1)
@@ -22,36 +26,36 @@
 - [x] **Formulas** - `PEM[Formula:O]AT`, `PEM[Formula:[17O1]]AT` (§7.4)
 - [x] **Mass with interpretation** - `PEM[+15.995|Oxidation]AT` (§7.5)
 - [x] **Unknown mod position** - `[Oxidation]?PEMAT` (§7.6.1)
-- [] **Set of positions** - `PEP[Oxidation#1]M[#1]AT` (§7.6.2)
+- [-] **Set of positions** - `PEP[Oxidation#1]M[#1]AT` (§7.6.2)
 - [x] **Range of positions** - `PRT(ESFRMS)[+19.0523]ISK` (§7.6.3)
-- [] **Position scores** - `PEP[Oxidation#1(0.95)]M[#1(0.05)]AT` (§7.6.4)
-- [] **Range position scores** - `(PEP)[Oxidation#1(0.95)]M[#1(0.05)]AT` (§7.6.5)
+- [-] **Position scores** - `PEP[Oxidation#1(0.95)]M[#1(0.05)]AT` (§7.6.4)
+- [-] **Range position scores** - `(PEP)[Oxidation#1(0.95)]M[#1(0.05)]AT` (§7.6.5)
 - [x] **Amino acid ambiguity** - `(?VCH)AT` (§7.7)
 - [x] **Modification prefixes** - `PEPM[U:Oxidation]AS[M:O-phospho-L-serine]` (§7.8)
 
 ## 5.3.3 Level 2-ProForma + Top-Down
 
-- [] **RESID modifications** - `EM[R:L-methionine sulfone]EM[RESID:AA0581]` (§8.1)
-- [] **Names** - `(>Heavy chain)EVQLVESG` (§8.2)
+- [-] **RESID modifications** - `EM[R:L-methionine sulfone]EM[RESID:AA0581]` (§8.1)
+- [x] **Names** - `(>Heavy chain)EVQLVESG` (§8.2)
 
 ## 5.3.4 Level 2-ProForma + Cross-Linking
 
-- [ ] **XL-MOD modifications** - `EVTK[X:Aryl azide]LEK[XLMOD:00114]SEFD` (§9.1)
-- [ ] **Cross-linkers (intrachain)** - `EVTK[X:Aryl azide#XL1]LEK[#XL1]SEFD` (§9.2.1)
+- [-] **XL-MOD modifications** - `EVTK[X:Aryl azide]LEK[XLMOD:00114]SEFD` (§9.1)
+- [-] **Cross-linkers (intrachain)** - `EVTK[X:Aryl azide#XL1]LEK[#XL1]SEFD` (§9.2.1)
 - [ ] **Cross-linkers (interchain)** - `EVTK[X:Aryl azide#XL1]L//EK[#XL1]SEFD` (§9.2.2)
 - [ ] **Branches** - `ED[MOD:00093#BRANCH]//D[#BRANCH]ATR` (§9.3)
 
 ## 5.3.5 Level 2-ProForma + Glycans
 
-- [] **GNO modifications** - `NEEYN[GNO:G59626AS]K` (§10.1)
-- [] **Glycan compositions** - `NEEYN[Glycan:Hex5HexNAc4NeuAc1]K` (§10.2)
+- [-] **GNO modifications** - `NEEYN[GNO:G59626AS]K` (§10.1)
+- [x] **Glycan compositions** - `NEEYN[Glycan:Hex5HexNAc4NeuAc1]K` (§10.2)
 
 ## 5.3.6 Level 2-ProForma + Advanced Complexity
 
 - [x] **Charged formulas** - `SEQUEN[Formula:Zn1:z+2]CE` (§11.1)
-- [] **Controlling placement** - `PTI(MERMERME)[+32|Position:E]PTIDE` (§11.2)
+- [-] **Controlling placement** - `PTI(MERMERME)[+32|Position:E]PTIDE` (§11.2)
 - [x] **Global isotope** - `<13C>CARBON` (§11.3.1)
 - [x] **Fixed modifications** - `<[Oxidation]@M>ATPEMILTCMGCLK` (§11.3.2)
-- [] **Chimeric spectra** - `NEEYN+SEQUEN` (§11.4)
+- [ ] **Chimeric spectra** - `NEEYN+SEQUEN` (§11.4)
 - [x] **Charges** - `SEQUEN/2`, `SEQUEN/[Na:z+1,H:z+1]` (§11.5)
-- [] **Ion notation** - `SEQUEN-[b-type-ion]` (§11.6)
+- [ ] **Ion notation** - `SEQUEN-[b-type-ion]` (§11.6)

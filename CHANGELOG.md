@@ -23,6 +23,7 @@ All notable changes to this project will be documented in this file.
 - Mod objects are frozen and cached
 - Proforma components dataclasses
 - Removed custom errors
+- Removed score / spectra (will make a seperate apckage termed spextacular)
 
 ## [2.5.1]
 - added ambiguity support to coverage funcs

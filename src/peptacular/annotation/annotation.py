@@ -117,7 +117,7 @@ H_CHARGE_FORMULA = ChargedFormula(formula=(fe,), charge=1)
 ION_TYPE = IonTypeLiteral | IonType
 CHARGE_TYPE = int | str | GlobalChargeCarrier | tuple[GlobalChargeCarrier | str, ...]
 ISOTOPE_TYPE = int | dict[str | ElementInfo, int]
-LOSS_TYPE = NeutralDelta | NeutralDeltaLiteral | NeutralDeltaInfo
+LOSS_TYPE = NeutralDelta | NeutralDeltaLiteral | NeutralDeltaInfo | str
 CUSTOM_LOSS_TYPE = (
     str | ChargedFormula | float | dict[str | ChargedFormula | float, int]
 )
@@ -1790,19 +1790,24 @@ class ProFormaAnnotation:
         mod_enums = get_mods(mod_types)
         return any(self._has_mods_by_type(mod_enum) for mod_enum in mod_enums)
 
-    def contains_sequence_ambiguity(self) -> bool:
+    @property
+    def has_sequence_ambiguity(self) -> bool:
         return self.has_intervals or self.has_unknown_mods
 
-    def contains_residue_ambiguity(self) -> bool:
-        return len(self.get_residue_ambiguity_residues()) > 0
+    @property
+    def has_residue_ambiguity(self) -> bool:
+        return len(self.ambiguous_residues) > 0
 
-    def get_residue_ambiguity_residues(self) -> tuple[str, ...]:
+    @property
+    def ambiguous_residues(self) -> tuple[str, ...]:
         return tuple(aa for aa in self.stripped_sequence if AA_LOOKUP.is_ambiguous(aa))
 
-    def contains_mass_ambiguity(self) -> bool:
-        return len(self.get_mass_ambiguity_residues()) > 0
+    @property
+    def has_mass_ambiguity(self) -> bool:
+        return len(self.mass_ambiguous_residues) > 0
 
-    def get_mass_ambiguity_residues(self) -> tuple[str, ...]:
+    @property
+    def mass_ambiguous_residues(self) -> tuple[str, ...]:
         return tuple(
             aa for aa in self.stripped_sequence if AA_LOOKUP.is_mass_ambiguous(aa)
         )
