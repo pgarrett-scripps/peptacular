@@ -15,8 +15,8 @@ class TestUnimodLookupBasics:
         acetyl = pt.UNIMOD_LOOKUP["Acetyl"]
         assert acetyl.name == "Acetyl"
         assert acetyl.id == "1"
-        assert acetyl.formula == "H2C2O"
-        assert acetyl.monoisotopic_mass == pytest.approx(42.010565, abs=0.0001)  # type: ignore
+        assert acetyl.formula == "C2H2O"
+        assert acetyl.monoisotopic_mass == pytest.approx(42.010565, abs=0.0001)
 
     def test_lookup_by_id_string(self):
         """Test looking up modification by ID as string"""
@@ -35,15 +35,15 @@ class TestUnimodLookupBasics:
         amidated = pt.UNIMOD_LOOKUP["Amidated"]
         assert amidated.id == "2"
         assert amidated.formula == "HNO-1"
-        assert amidated.monoisotopic_mass == pytest.approx(-0.984016, abs=0.0001)  # type: ignore
-        assert amidated.average_mass == pytest.approx(-0.9848, abs=0.0001)  # type: ignore
+        assert amidated.monoisotopic_mass == pytest.approx(-0.984016, abs=0.0001)
+        assert amidated.average_mass == pytest.approx(-0.9848, abs=0.0001)
 
     def test_lookup_biotin(self):
         """Test looking up Biotin modification"""
         biotin = pt.UNIMOD_LOOKUP["Biotin"]
         assert biotin.id == "3"
-        assert biotin.formula == "H14C10N2O2S"
-        assert biotin.monoisotopic_mass == pytest.approx(226.077598, abs=0.0001)  # type: ignore
+        assert biotin.formula == "C10H14N2O2S"
+        assert biotin.monoisotopic_mass == pytest.approx(226.077598, abs=0.0001)
 
     def test_lookup_nonexistent_name(self):
         """Test looking up non-existent modification name raises KeyError"""
@@ -243,21 +243,21 @@ class TestUnimodLookupCommonModifications:
             assert oxidation.formula is not None
             assert "O" in oxidation.formula
             assert oxidation.monoisotopic_mass is not None
-            assert oxidation.monoisotopic_mass == pytest.approx(15.994915, abs=0.001)  # type: ignore
+            assert oxidation.monoisotopic_mass == pytest.approx(15.994915, abs=0.001)
 
     def test_carbamidomethyl(self):
         """Test carbamidomethyl modification (common cysteine mod)"""
         cam = pt.UNIMOD_LOOKUP.query_name("Carbamidomethyl")
         if cam is not None:
             assert cam.monoisotopic_mass is not None
-            assert cam.monoisotopic_mass == pytest.approx(57.021464, abs=0.001)  # type: ignore
+            assert cam.monoisotopic_mass == pytest.approx(57.021464, abs=0.001)
 
     def test_methylation(self):
         """Test methylation modification"""
         methyl = pt.UNIMOD_LOOKUP.query_name("Methyl")
         if methyl is not None:
             assert methyl.monoisotopic_mass is not None
-            assert methyl.monoisotopic_mass == pytest.approx(14.015650, abs=0.001)  # type: ignore
+            assert methyl.monoisotopic_mass == pytest.approx(14.015650, abs=0.001)
 
 
 class TestUnimodLookupEdgeCases:

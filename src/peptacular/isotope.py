@@ -3,8 +3,9 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Final
 
+from tacular import ELEMENT_LOOKUP, ElementInfo
+
 from . import constants
-from .elements import ELEMENT_LOOKUP, ElementInfo
 
 AVERAGINE_RATIOS: Final[dict[str, float]] = {
     "C": 4.9384,

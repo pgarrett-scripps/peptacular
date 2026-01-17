@@ -2,6 +2,8 @@ from collections import Counter
 from collections.abc import Sequence
 from typing import overload
 
+from tacular import ElementInfo, IonType
+
 from ..annotation import ProFormaAnnotation
 from ..annotation.annotation import (
     CHARGE_TYPE,
@@ -13,8 +15,6 @@ from ..constants import (
     ParrallelMethod,
     ParrallelMethodLiteral,
 )
-from ..elements import ElementInfo
-from ..fragment import IonType
 from .parrallel import parallel_apply_internal
 from .util import get_annotation_input
 

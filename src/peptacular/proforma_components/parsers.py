@@ -8,9 +8,9 @@ import re
 from functools import lru_cache
 from typing import TYPE_CHECKING
 
-from ..amino_acids import AminoAcid
-from ..elements import Element
-from ..mods.monosaccharide.data import Monosaccharide
+from tacular import AminoAcid, Element, Monosaccharide
+
+from ..constants import CV
 
 if TYPE_CHECKING:
     from .comps import (
@@ -41,9 +41,7 @@ if TYPE_CHECKING:
 
 
 # Try to match known monosaccharide names (longest first)
-monosaccharide_names: list[str] = sorted(
-    Monosaccharide.to_list(), key=len, reverse=True
-)  # type: ignore
+monosaccharide_names: list[str] = sorted(list(Monosaccharide), key=len, reverse=True)  # type: ignore
 
 # ============================================================================
 # Regex Patterns for Modification Types
@@ -624,7 +622,7 @@ def parse_tag_accession(s: str) -> "TagAccession":
     Raises:
         ValueError: If the string is not a valid accession format
     """
-    from ..constants import CV
+
     from .comps import TagAccession
 
     s = s.strip()
@@ -694,7 +692,6 @@ def parse_tag_mass(s: str) -> "TagMass":
     Raises:
         ValueError: If the string cannot be parsed or lacks required sign
     """
-    from ..constants import CV
     from .comps import TagMass
 
     s = s.strip()
@@ -760,7 +757,6 @@ def parse_tag_name(s: str) -> "TagName":
     Raises:
         ValueError: If the string contains +/- or is invalid
     """
-    from ..constants import CV
     from .comps import TagName
 
     s = s.strip()

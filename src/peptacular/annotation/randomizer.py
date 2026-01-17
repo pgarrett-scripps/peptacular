@@ -6,11 +6,20 @@ from functools import lru_cache
 from random import choice, randint, random
 from typing import TYPE_CHECKING
 
-from ..elements.lookup import ELEMENT_LOOKUP
-from ..mods import PSIMOD_LOOKUP, UNIMOD_LOOKUP
+from tacular import (
+    ELEMENT_LOOKUP,
+    PSIMOD_LOOKUP,
+    UNIMOD_LOOKUP,
+    OboEntity,
+    PsimodInfo,
+    UnimodInfo,
+)
+
+from ..constants import CV
+from ..proforma_components import TagAccession, TagMass, TagName
 
 if TYPE_CHECKING:
-    from ..mods import PsimodInfo, UnimodInfo
+    #     from ..mods import PsimodInfo, UnimodInfo
     from .annotation import Interval, ProFormaAnnotation
 
 # Constants
@@ -19,6 +28,44 @@ DEFAULT_MOD_PROBABILITY = 0.05
 DEFAULT_INTERVAL_PROBABILITY = 0.3
 MULTIPLE_MOD_THRESHOLD = 0.97  # 97% chance of single mod, 3% chance of multiple
 MULTIPLE_AA_THRESHOLD = 0.9  # 90% chance of single AA in static mod
+
+
+def as_cv(mod: OboEntity) -> CV:
+    if isinstance(mod, PsimodInfo):
+        return CV.PSI_MOD
+    elif isinstance(mod, UnimodInfo):
+        return CV.UNIMOD
+    else:
+        raise ValueError(f"Unknown CV for modification: {mod}")
+
+
+def as_tag_accession(mod: OboEntity) -> TagAccession:
+    return TagAccession(mod.id, as_cv(mod))
+
+
+def as_tag_name(mod: OboEntity, include_cv: bool = False) -> TagName:
+    return TagName(
+        mod.name,
+        as_cv(mod) if include_cv else None,
+    )
+
+
+def as_tag_mass(
+    mod: OboEntity, monoisotopic: bool = True, include_cv: bool = False
+) -> TagMass:
+    mass = (
+        mod.monoisotopic_mass
+        if monoisotopic and mod.monoisotopic_mass is not None
+        else mod.average_mass
+    )
+
+    if mass is None:
+        raise ValueError(f"Mass not available for modification: {mod}")
+
+    return TagMass(
+        mass=mass,
+        cv=as_cv(mod) if include_cv else None,
+    )
 
 
 def get_random_psimod() -> "PsimodInfo":
@@ -52,12 +99,12 @@ def get_random_mod_component(require_composition: bool = True) -> str:
 
     match mod_type:
         case "name":
-            return m.as_tag_name(include_cv=choice([True, False])).serialize()
+            return as_tag_name(m, include_cv=choice([True, False])).serialize()
         case "accession":
-            return m.as_tag_accession().serialize()
+            return as_tag_accession(m).serialize()
         case "mass":
-            return m.as_tag_mass(
-                monoisotopic=True, include_cv=choice([True, False])
+            return as_tag_mass(
+                m, monoisotopic=True, include_cv=choice([True, False])
             ).serialize()
         case _:
             raise ValueError(f"Invalid mod type: {mod_type}")

@@ -3,10 +3,9 @@ Tests for chem.py module functions.
 """
 
 import pytest
+from tacular import ELEMENT_LOOKUP, ElementInfo
 
 import peptacular as pt
-from peptacular.elements import ElementInfo
-from peptacular.elements.lookup import ELEMENT_LOOKUP
 
 
 class TestParseFormula:

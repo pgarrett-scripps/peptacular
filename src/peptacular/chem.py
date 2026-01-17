@@ -2,9 +2,8 @@ from collections import Counter
 from collections.abc import Mapping, Sequence
 from typing import overload
 
-from peptacular.elements.lookup import ELEMENT_LOOKUP
+from tacular import ELEMENT_LOOKUP, ElementInfo
 
-from .elements import ElementInfo
 from .proforma_components import ChargedFormula
 from .sequence.parrallel import (
     ParrallelMethod,

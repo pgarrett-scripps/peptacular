@@ -12,15 +12,21 @@ from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from typing import Protocol, runtime_checkable
 
-from ..amino_acids import AA_LOOKUP, AminoAcid
-from ..constants import (
-    CV,
-    Terminal,
+from tacular import (
+    AA_LOOKUP,
+    ELEMENT_LOOKUP,
+    MONOSACCHARIDE_LOOKUP,
+    PSIMOD_LOOKUP,
+    UNIMOD_LOOKUP,
+    AminoAcid,
+    Element,
+    ElementInfo,
+    Monosaccharide,
+    PsimodInfo,
+    UnimodInfo,
 )
-from ..elements import ELEMENT_LOOKUP, Element, ElementInfo
-from ..mods import MONOSACCHARIDE_LOOKUP, PSIMOD_LOOKUP, UNIMOD_LOOKUP
-from ..mods.dclass import PsimodInfo, UnimodInfo
-from ..mods.monosaccharide.data import Monosaccharide
+
+from ..constants import CV, Terminal
 
 
 @runtime_checkable

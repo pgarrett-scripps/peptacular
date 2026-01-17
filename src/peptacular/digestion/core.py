@@ -3,7 +3,8 @@ from __future__ import annotations
 import re
 from collections.abc import Generator, Sequence
 
-from ..digestion.lookup import PROTEASE_LOOKUP
+from tacular import PROTEASE_LOOKUP
+
 from ..regex_utils import get_regex_match_indices
 from ..spans import (
     Span,

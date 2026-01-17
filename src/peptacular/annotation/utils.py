@@ -2,14 +2,20 @@ from collections import Counter
 from collections.abc import Mapping, Sequence
 from typing import Any, TypeVar, overload
 
+from tacular import (
+    ELEMENT_LOOKUP,
+    FRAGMENT_ION_LOOKUP,
+    NEUTRAL_DELTA_LOOKUP,
+    ElementInfo,
+    FragmentIonInfo,
+    IonType,
+    IonTypeLiteral,
+    NeutralDelta,
+    NeutralDeltaLiteral,
+)
+
 from ..annotation.mod import Mods
 from ..constants import C13_NEUTRON_MASS, ELECTRON_MASS, PROTON_MASS
-from ..elements.dclass import ElementInfo
-from ..elements.lookup import ELEMENT_LOOKUP
-from ..fragment import FRAGMENT_ION_LOOKUP, IonType, IonTypeLiteral
-from ..fragment.ion_types.dclass import FragmentIonInfo
-from ..fragment.neutral_deltas.data import NeutralDelta, NeutralDeltaLiteral
-from ..fragment.neutral_deltas.lookup import NEUTRAL_DELTA_LOOKUP
 from ..proforma_components.comps import ChargedFormula, GlobalChargeCarrier
 from .frag import Fragment
 

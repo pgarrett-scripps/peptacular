@@ -4,7 +4,7 @@ version = "3.0.0"
 description = "A ProForma peptide sequence parser and annotation library"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = ["tacular"]
 
 [dependency-groups]
 dev = [
@@ -15,6 +15,7 @@ dev = [
     "ruff>=0.14.7",
     "pyupgrade>=3.21.0",
     "ty>=0.0.11",
+    "tacular"
 ]
 
 docs = [
@@ -41,3 +42,5 @@ packages = ["src/peptacular"]
 "data.py" = ["E741"]
 "constants.py" = ["E741"]
 
+[tool.uv.sources]
+tacular = { path = "../tacular", editable = true }

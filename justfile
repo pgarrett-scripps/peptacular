@@ -16,6 +16,7 @@ sync:
 
 # Run tests
 test:
+    uv run python --version
     uv run pytest tests/
 
 # Run tests with coverage

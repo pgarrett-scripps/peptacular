@@ -8,14 +8,17 @@ import sys
 from functools import lru_cache
 from typing import TYPE_CHECKING
 
+from tacular import (
+    Element,
+    Monosaccharide,
+)
+
 from ..constants import (
     CV_TO_ACCESSION_PREFIX,
     CV_TO_MASS_PREFIX,
     CV_TO_NAME_PREFIX,
     Terminal,
 )
-from ..elements import Element
-from ..mods.monosaccharide.data import Monosaccharide
 
 if TYPE_CHECKING:
     from .comps import (

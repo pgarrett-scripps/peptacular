@@ -4,9 +4,9 @@ from collections.abc import Callable, Iterable, Iterator
 from dataclasses import dataclass
 from typing import Any, Generic, Protocol, Self, TypeVar, cast
 
-from ..amino_acids.lookup import AA_LOOKUP
+from tacular import AA_LOOKUP, ElementInfo
+
 from ..constants import ModType
-from ..elements import ElementInfo
 from ..proforma_components import (
     FixedModification,
     GlobalChargeCarrier,

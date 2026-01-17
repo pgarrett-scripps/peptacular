@@ -1,10 +1,11 @@
 from collections.abc import Sequence
 from typing import overload
 
+from tacular import IonType
+
 from ..annotation import ProFormaAnnotation
 from ..annotation.annotation import CHARGE_TYPE, ION_TYPE, ISOTOPE_TYPE, LOSS_TYPE
 from ..constants import ParrallelMethod, ParrallelMethodLiteral
-from ..fragment.ion_types.data import IonType
 from ..isotope import IsotopicData
 from .parrallel import parallel_apply_internal
 from .util import get_annotation_input

@@ -4,9 +4,10 @@ import itertools
 from collections.abc import Iterable
 from typing import TYPE_CHECKING, Any
 
+from tacular import IonType
+
 from ..annotation.parser import Interval
 from ..constants import ModType
-from ..fragment import IonType
 
 if TYPE_CHECKING:
     from .annotation import ProFormaAnnotation

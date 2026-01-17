@@ -9,7 +9,20 @@ from typing import (
     cast,
 )
 
-from ..amino_acids import AA_LOOKUP, AminoAcid
+from tacular import (
+    AA_LOOKUP,
+    FRAGMENT_ION_LOOKUP,
+    NEUTRAL_DELTA_LOOKUP,
+    AminoAcid,
+    Element,
+    ElementInfo,
+    IonType,
+    IonTypeLiteral,
+    NeutralDelta,
+    NeutralDeltaInfo,
+    NeutralDeltaLiteral,
+)
+
 from ..constants import (
     ModType,
     ModTypeLiteral,
@@ -26,16 +39,6 @@ from ..digestion.core import (
     right_semi_spans,
     semi_spans,
     sequential_digest_annotation,
-)
-from ..elements import Element, ElementInfo
-from ..fragment import (
-    FRAGMENT_ION_LOOKUP,
-    NEUTRAL_DELTA_LOOKUP,
-    IonType,
-    IonTypeLiteral,
-    NeutralDelta,
-    NeutralDeltaInfo,
-    NeutralDeltaLiteral,
 )
 from ..isotope import (
     IsotopicData,
@@ -2209,9 +2212,13 @@ class ProFormaAnnotation:
                 raise ValueError(f"Loss count must be a positive integer: {count}")
 
             if isinstance(loss, NeutralDeltaInfo):
-                neutral_deltas[loss.charged_formula] = count  # ✅ Can mutate dict
+                neutral_deltas[ChargedFormula.from_string(loss.formula)] = (
+                    count  # ✅ Can mutate dict
+                )
             else:
-                neutral_deltas[NEUTRAL_DELTA_LOOKUP[loss].charged_formula] = count
+                neutral_deltas[
+                    ChargedFormula.from_string(NEUTRAL_DELTA_LOOKUP[loss].formula)
+                ] = count
 
         # handle user specified charge
         has_user_charge = charge is not None
