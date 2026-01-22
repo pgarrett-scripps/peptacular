@@ -2,7 +2,7 @@ import re
 from collections import Counter
 from collections.abc import Callable, Generator, Iterable, Mapping, Sequence
 from enum import StrEnum
-from itertools import combinations_with_replacement
+from itertools import product
 from typing import (
     Any,
     Self,
@@ -16,6 +16,7 @@ from tacular import (
     AminoAcid,
     Element,
     ElementInfo,
+    FragmentIonInfo,
     IonType,
     IonTypeLiteral,
     NeutralDelta,
@@ -23,11 +24,7 @@ from tacular import (
     NeutralDeltaLiteral,
 )
 
-from ..constants import (
-    ModType,
-    ModTypeLiteral,
-    Terminal,
-)
+from ..constants import ELECTRON_MASS, ModType, ModTypeLiteral, Terminal
 from ..digestion.core import (
     EnzymeConfig,
     digest_annotation_by_aa,
@@ -66,6 +63,7 @@ from .ambiguity import (
     group_by_ambiguity,
     unique_fragments,
 )
+from .cached_comps import ChargeCarrierInfo, DeltaInfo, IsotopeInfo
 from .combinatorics import (
     generate_combinations,
     generate_combinations_with_replacement,
@@ -144,24 +142,46 @@ class ChargeType(StrEnum):
 
 def get_loss_combinations(
     losses: dict[NeutralDeltaInfo, int], max_losses: int
-) -> list[dict[NeutralDeltaInfo, int] | None]:
+) -> list[DeltaInfo]:
     """Generate all combinations of losses up to max_losses."""
-    # losses is a dict which maps the loss to the number of times it can occur (already capped at max_losses)
-    # I want to return a list of dicts which contains all possibel combinations of losses with thier counts summin gup to at most max_losses
-    loss_list: list[NeutralDeltaInfo] = []
-    for loss, count in losses.items():
-        loss_list.extend([loss] * count)
-    loss_combinations: set[frozenset[tuple[NeutralDeltaInfo, int]]] = set()
-    for r in range(1, max_losses + 1):
-        for combo in combinations_with_replacement(loss_list, r):
-            combo_counter = Counter(combo)
-            loss_combinations.add(frozenset(combo_counter.items()))
-    # convert back to list of dicts
-    str_comps: list[dict[NeutralDeltaInfo, int] | None] = [
-        dict(combo) for combo in loss_combinations
-    ]
-    str_comps.append(None)  # add no loss option
-    return str_comps
+    if not losses:
+        return [DeltaInfo.from_input(None)]
+
+    # Generate all possible count combinations for each loss
+    loss_items = list(losses.items())
+    count_ranges = [range(count + 1) for _, count in loss_items]
+
+    loss_combinations: list[dict[NeutralDeltaInfo, int] | None] = [None]
+
+    for counts in product(*count_ranges):
+        total_losses = sum(counts)
+        # Skip if no losses or exceeds max
+        if total_losses == 0 or total_losses > max_losses:
+            continue
+
+        # Build combination dict
+        combo = {}
+        for (loss, _), count in zip(loss_items, counts):
+            if count > 0:
+                combo[loss] = count
+
+        loss_combinations.append(combo)
+
+    # Convert to DeltaInfo
+    delta_combinations: list[DeltaInfo] = []
+    for loss_combo in loss_combinations:
+        if loss_combo is None:
+            delta_combinations.append(DeltaInfo.from_input(None))
+        else:
+            formula_dict: dict[ChargedFormula, int] = {}
+            for nd, count in loss_combo.items():
+                nd_formula: ChargedFormula = ChargedFormula.from_composition(
+                    nd.composition
+                )
+                formula_dict[nd_formula] = count
+            delta_combinations.append(DeltaInfo.from_input(formula_dict))  # type: ignore
+
+    return delta_combinations
 
 
 class ProFormaAnnotation:
@@ -2020,7 +2040,7 @@ class ProFormaAnnotation:
         charge: CHARGE_TYPE | None = None,
         *,
         isotopes: ISOTOPE_TYPE | None = None,
-        losses: dict[LOSS_TYPE, int] | None = None,
+        deltas: CUSTOM_LOSS_TYPE | None = None,
     ) -> Counter[ElementInfo]:
         """Calculate composition, preferring user charge over annotation charge."""
 
@@ -2029,7 +2049,7 @@ class ProFormaAnnotation:
             charge=charge,
             monoisotopic=True,
             isotopes=isotopes,
-            losses=losses,
+            deltas=deltas,
             calculate_composition=True,
         )
 
@@ -2176,7 +2196,8 @@ class ProFormaAnnotation:
         monoisotopic: bool = True,
         *,
         isotopes: ISOTOPE_TYPE | None = None,
-        losses: dict[LOSS_TYPE, int] | None = None,
+        deltas: CUSTOM_LOSS_TYPE | None = None,
+        calculate_with_composition: bool = False,
     ) -> float:
         """Calculate mass, preferring user charge over annotation charge."""
 
@@ -2185,9 +2206,51 @@ class ProFormaAnnotation:
             charge=charge,
             monoisotopic=monoisotopic,
             isotopes=isotopes,
-            losses=losses,
+            deltas=deltas,
+            calculate_composition=calculate_with_composition,
         )
         return f.mass
+
+    def _frag(
+        self,
+        ion_type: IonType,
+        charge: ChargeCarrierInfo,
+        monoisotopic: bool,
+        isotope: IsotopeInfo,
+        delta: DeltaInfo,
+        calculate_composition: bool,
+        include_sequence: bool,
+        position: POSITION_TYPE | None,
+    ) -> Fragment:
+        if self.has_isotope_mods or calculate_composition:
+            return adjust_comp(
+                base_comp=self.base_comp(),
+                charge=charge,
+                ion_type=ion_type,
+                monoisotopic=monoisotopic,
+                isotope=isotope,
+                delta=delta,
+                inplace=True,
+                isotope_map=self._map_isotopes() if self.has_isotope_mods else None,
+                position=position,
+                # serialzie without charge mods
+                parent_sequence=self.filter_mods(
+                    ["charge"], keep=False, inplace=False
+                ).serialize()
+                if include_sequence
+                else None,
+            )
+
+        return adjust_mass_mz(
+            base=self.base_mass(monoisotopic=monoisotopic),
+            charge=charge,
+            monoisotopic=monoisotopic,
+            ion_type=ion_type,
+            isotope=isotope,
+            delta=delta,
+            position=position,
+            parent_sequence=self.serialize() if include_sequence else None,
+        )
 
     def frag(
         self,
@@ -2196,7 +2259,7 @@ class ProFormaAnnotation:
         monoisotopic: bool = True,
         *,
         isotopes: ISOTOPE_TYPE | None = None,
-        losses: dict[LOSS_TYPE, int] | None = None,
+        deltas: CUSTOM_LOSS_TYPE | None = None,
         calculate_composition: bool = False,
         include_sequence: bool = False,
         position: POSITION_TYPE | None = None,
@@ -2204,67 +2267,40 @@ class ProFormaAnnotation:
         """Calculate mass, preferring user charge over annotation charge."""
 
         can_fragment_sequence(self.sequence, ion_type)
-
-        # all_losses = combine_loss_types(self.sequence, losses, custom_losses)
-        neutral_deltas: dict[ChargedFormula, int] = {}  # ✅ Use dict
-        for loss, count in (losses or {}).items():
-            if not isinstance(count, int) or count < 1:
-                raise ValueError(f"Loss count must be a positive integer: {count}")
-
-            if isinstance(loss, NeutralDeltaInfo):
-                neutral_deltas[ChargedFormula.from_string(loss.formula)] = (
-                    count  # ✅ Can mutate dict
-                )
-            else:
-                neutral_deltas[
-                    ChargedFormula.from_string(NEUTRAL_DELTA_LOOKUP[loss].formula)
-                ] = count
+        delta_info = DeltaInfo.from_input(deltas)
 
         # handle user specified charge
         has_user_charge = charge is not None
         has_annot_charge = self._charge is not None
-        effective_charge: CHARGE_TYPE | None = charge  # take user charge
+
+        charge_info: ChargeCarrierInfo = ChargeCarrierInfo.from_input(charge)
         if not has_user_charge and has_annot_charge:
-            annot_charge = self.charge
+            annot_charge: int | Mods[GlobalChargeCarrier] | None = self.charge
             if annot_charge is None:
-                effective_charge = None
+                charge_info = ChargeCarrierInfo.from_input(annot_charge)
             elif isinstance(annot_charge, int):
-                effective_charge = annot_charge
+                charge_info = ChargeCarrierInfo.from_input(annot_charge)
             elif isinstance(annot_charge, Mods):
                 # Extract the values from Mod objects
-                effective_charge = tuple(mod.value for mod in annot_charge.mods)
+                charge_info = ChargeCarrierInfo.from_input(
+                    tuple(mod.value for mod in annot_charge.mods)
+                )
             else:
                 raise RuntimeError(
                     f"Unsupported charge type in annotation: {type(annot_charge)}"
                 )
 
-        if self.has_isotope_mods or calculate_composition:
-            return adjust_comp(
-                base_comp=self.base_comp(),
-                charge=effective_charge,
-                ion_type=ion_type,
-                monoisotopic=monoisotopic,
-                isotopes=isotopes,
-                neutral_deltas=cast(
-                    Mapping[str | ChargedFormula | float, int], neutral_deltas
-                ),
-                inplace=True,
-                isotope_map=self._map_isotopes() if self.has_isotope_mods else None,
-                position=position,
-                parent_sequence=self.serialize() if include_sequence else None,
-            )
+        iso_info = IsotopeInfo.from_input(isotopes)
 
-        return adjust_mass_mz(
-            base=self.base_mass(monoisotopic=monoisotopic),
-            charge=effective_charge,
+        return self._frag(
+            ion_type=IonType(ion_type),
+            charge=charge_info,
             monoisotopic=monoisotopic,
-            ion_type=ion_type,
-            isotopes=isotopes,
-            neutral_deltas=cast(
-                Mapping[str | ChargedFormula | float, int], neutral_deltas
-            ),
+            isotope=iso_info,
+            delta=delta_info,
+            calculate_composition=calculate_composition,
+            include_sequence=include_sequence,
             position=position,
-            parent_sequence=self.serialize() if include_sequence else None,
         )
 
     def mz(
@@ -2274,7 +2310,8 @@ class ProFormaAnnotation:
         monoisotopic: bool = True,
         *,
         isotopes: ISOTOPE_TYPE | None = None,
-        losses: dict[LOSS_TYPE, int] | None = None,
+        deltas: CUSTOM_LOSS_TYPE | None = None,
+        calculate_with_composition: bool = False,
     ) -> float:
         """Calculate m/z, preferring user charge over annotation charge."""
 
@@ -2283,27 +2320,127 @@ class ProFormaAnnotation:
             charge=charge,
             monoisotopic=monoisotopic,
             isotopes=isotopes,
-            losses=losses,
+            deltas=deltas,
+            calculate_composition=calculate_with_composition,
         )
         return f.mz
 
-    def _fragment(
+    def _fast_fragment(
         self,
-        ion_type: ION_TYPE,
-        charges: list[CHARGE_TYPE | None],
+        mass_vector: list[float],
+        ion_type: IonType,
+        charges: list[ChargeCarrierInfo],
         monoisotopic: bool = True,
         *,
-        isotopes: list[ISOTOPE_TYPE | None],
-        losses: list[NeutralDeltaInfo],
-        calculate_composition: bool = False,
-        include_sequence: bool = False,
-        max_losses: int = 1,
         min_length: int | None = None,
         max_length: int | None = None,
     ) -> Generator[Fragment, None, None]:
+        if not mass_vector:
+            return
+
+        ion_info: FragmentIonInfo = FRAGMENT_ION_LOOKUP[ion_type]
+
+        # Helper to yield fragments
+        def yield_frags(
+            pos: Any, mass_val: float, seq_len: int
+        ) -> Generator[Fragment, None, None]:
+            if min_length is not None and seq_len < min_length:
+                return
+            if max_length is not None and seq_len > max_length:
+                return
+
+            for charge_info in charges:
+                yield Fragment(
+                    ion_type=ion_type,
+                    position=pos,
+                    mass=mass_val
+                    + ion_info.get_mass(monoisotopic=monoisotopic)
+                    + charge_info.get_mass(monoisotopic=monoisotopic)
+                    + (ELECTRON_MASS * -charge_info.charge),
+                    monoisotopic=monoisotopic,
+                    charge_state=charge_info.charge,
+                    charge_adducts=charge_info.to_fragment_mapping(),
+                    sequence=None,
+                    composition=None,
+                )
+
+        # Forward
+        if ion_info.is_forward:
+            current_sum = 0.0
+            for i, val in enumerate(mass_vector):
+                current_sum += val
+                cnt = i + 1
+                base = current_sum
+                yield from yield_frags(cnt, base, cnt)
+
+        # Backward
+        elif ion_info.is_backward:
+            current_sum = 0.0
+            # mass_vector is 0..N-1.
+            # reversed iterator
+            for i, val in enumerate(reversed(mass_vector)):
+                current_sum += val
+                cnt = i + 1
+                base = current_sum
+                yield from yield_frags(cnt, base, cnt)
+
+        # Intact
+        elif ion_info.is_intact:
+            total = sum(mass_vector)
+            cnt = len(mass_vector)
+            base = total
+            yield from yield_frags(cnt, base, cnt)
+
+        # Internal
+        elif ion_info.is_internal:
+            P = [0.0] * (len(mass_vector) + 1)
+            acc = 0.0
+            for i, v in enumerate(mass_vector):
+                acc += v
+                P[i + 1] = acc
+
+            if ion_info.ion_type == IonType.IMMONIUM:
+                for i in range(len(mass_vector)):
+                    val = mass_vector[i]
+                    # Try to get sequence label, safe fallback
+                    # TODO: Update to not repeat amino acids
+                    if self.sequence:
+                        pos_label = self.sequence[i]
+                    else:
+                        pos_label = i
+                    yield from yield_frags(pos_label, val, 1)
+
+            else:
+                n = len(mass_vector)
+                for start in range(n):
+                    for end in range(start + 1, n + 1):
+                        if end - start == n:
+                            continue
+
+                        length = end - start
+                        base_sum = P[end] - P[start]
+                        base = base_sum
+                        yield from yield_frags((start, end), base, length)
+
+    def _fragment(
+        self,
+        ion_type: IonType,
+        charges: list[ChargeCarrierInfo],
+        monoisotopic: bool = True,
+        *,
+        isotopes: list[IsotopeInfo],
+        deltas: list[DeltaInfo],
+        neutral_deltas: list[NeutralDeltaInfo],
+        calculate_composition: bool,
+        include_sequence: bool,
+        max_deltas: int,
+        min_length: int | None,
+        max_length: int | None,
+    ) -> Generator[Fragment, None, None]:
         if self.has_unknown_mods or self.has_intervals:
             raise ValueError(
-                "Fragmentation not supported for sequences with unknown modifications or intervals."
+                "Fragmentation not supported for sequences with unknown modifications or intervals: "
+                f"{str(self)}"
             )
 
         # check for fragments wa/wb and da/db, then return both
@@ -2315,10 +2452,11 @@ class ProFormaAnnotation:
                     charges,
                     monoisotopic,
                     isotopes=isotopes,
-                    losses=losses,
+                    deltas=deltas,
+                    neutral_deltas=neutral_deltas,
                     calculate_composition=calculate_composition,
                     include_sequence=include_sequence,
-                    max_losses=max_losses,
+                    max_deltas=max_deltas,
                     min_length=min_length,
                     max_length=max_length,
                 )
@@ -2327,10 +2465,11 @@ class ProFormaAnnotation:
                     charges,
                     monoisotopic,
                     isotopes=isotopes,
-                    losses=losses,
+                    deltas=deltas,
+                    neutral_deltas=neutral_deltas,
                     calculate_composition=calculate_composition,
                     include_sequence=include_sequence,
-                    max_losses=max_losses,
+                    max_deltas=max_deltas,
                     min_length=min_length,
                     max_length=max_length,
                 )
@@ -2342,10 +2481,11 @@ class ProFormaAnnotation:
                     charges,
                     monoisotopic,
                     isotopes=isotopes,
-                    losses=losses,
+                    deltas=deltas,
+                    neutral_deltas=neutral_deltas,
                     calculate_composition=calculate_composition,
                     include_sequence=include_sequence,
-                    max_losses=max_losses,
+                    max_deltas=max_deltas,
                     min_length=min_length,
                     max_length=max_length,
                 )
@@ -2354,10 +2494,11 @@ class ProFormaAnnotation:
                     charges,
                     monoisotopic,
                     isotopes=isotopes,
-                    losses=losses,
+                    deltas=deltas,
+                    neutral_deltas=neutral_deltas,
                     calculate_composition=calculate_composition,
                     include_sequence=include_sequence,
-                    max_losses=max_losses,
+                    max_deltas=max_deltas,
                     min_length=min_length,
                     max_length=max_length,
                 )
@@ -2365,90 +2506,95 @@ class ProFormaAnnotation:
             case _:
                 pass
 
-        ion_info = FRAGMENT_ION_LOOKUP[ion_type]
+        ion_info: FragmentIonInfo = FRAGMENT_ION_LOOKUP[ion_type]
 
         loss_dict: dict[NeutralDeltaInfo, int] = {}
         # Forward ions: b1, b2, b3, ... (cumulative from N-terminus)
         if ion_info.is_forward:
-            for i in range(
-                1, len(self) + 1
-            ):  # Changed: iterate through fragment lengths
+            for i in range(1, len(self) + 1):
                 if min_length is not None and i < min_length:
                     continue
 
                 if max_length is not None and i > max_length:
                     break
 
-                sub_annot = self.slice(0, i, inplace=False)  # Changed: slice from start
+                sub_annot = self.slice(0, i, inplace=False)
 
                 try:
                     ion_type = can_fragment_sequence(sub_annot.sequence, ion_type)
                 except ValueError:
                     continue
 
-                if losses:
+                if neutral_deltas:
                     loss_dict.clear()
-                    for nd in losses:
+                    for nd in neutral_deltas:
                         loss_dict[nd] = min(
-                            nd.calculate_loss_sites(sub_annot.sequence), max_losses
+                            nd.calculate_loss_sites(sub_annot.sequence), max_deltas
                         )
 
-                loss_combinations = get_loss_combinations(loss_dict, max_losses)
+                neutral_delta_combinations: list[DeltaInfo] = get_loss_combinations(
+                    loss_dict, max_deltas
+                )
 
                 for charge in charges:
                     for isotope in isotopes:
-                        for loss in loss_combinations:
-                            yield sub_annot.frag(
-                                ion_type=ion_type,
-                                charge=charge,
-                                monoisotopic=monoisotopic,
-                                isotopes=isotope,
-                                losses=loss,  # type: ignore
-                                calculate_composition=calculate_composition,
-                                include_sequence=include_sequence,
-                                position=i,  # Changed: position is the cleavage site
-                            )
+                        for delta in deltas:
+                            for ndelta in neutral_delta_combinations:
+                                combined_delta = delta + ndelta
+                                yield sub_annot._frag(
+                                    ion_type=ion_type,
+                                    charge=charge,
+                                    monoisotopic=monoisotopic,
+                                    isotope=isotope,
+                                    delta=combined_delta,
+                                    calculate_composition=calculate_composition,
+                                    include_sequence=include_sequence,
+                                    position=i,  # Changed: position is the cleavage site
+                                )
 
         # Backward ions: y1, y2, y3, ... (cumulative from C-terminus)
         elif ion_info.is_backward:
-            for i in range(
-                1, len(self) + 1
-            ):  # Changed: iterate through fragment lengths
+            for i in range(1, len(self) + 1):
                 if min_length is not None and i < min_length:
                     continue
 
                 if max_length is not None and i > max_length:
                     break
 
-                sub_annot = self[len(self) - i : len(self)]  # Changed: slice from end
+                sub_annot = self[len(self) - i : len(self)]
 
                 try:
                     ion_type = can_fragment_sequence(sub_annot.sequence, ion_type)
                 except ValueError:
                     continue
 
-                if losses:
+                if neutral_deltas:
                     loss_dict.clear()
-                    for nd in losses:
+                    for nd in neutral_deltas:
                         loss_dict[nd] = min(
-                            nd.calculate_loss_sites(sub_annot.sequence), max_losses
+                            nd.calculate_loss_sites(sub_annot.sequence), max_deltas
                         )
 
-                loss_combinations = get_loss_combinations(loss_dict, max_losses)
+                neutral_delta_combinations = get_loss_combinations(
+                    loss_dict, max_deltas
+                )
 
                 for charge in charges:
                     for isotope in isotopes:
-                        for loss in loss_combinations:
-                            yield sub_annot.frag(
-                                ion_type=ion_type,
-                                charge=charge,
-                                monoisotopic=monoisotopic,
-                                isotopes=isotope,
-                                losses=loss,  # type: ignore
-                                calculate_composition=calculate_composition,
-                                include_sequence=include_sequence,
-                                position=i,  # Changed: position in the ion series
-                            )
+                        for delta in deltas:
+                            for ndelta in neutral_delta_combinations:
+                                combined_delta = delta + ndelta
+
+                                yield sub_annot._frag(
+                                    ion_type=ion_type,
+                                    charge=charge,
+                                    monoisotopic=monoisotopic,
+                                    isotope=isotope,
+                                    delta=combined_delta,
+                                    calculate_composition=calculate_composition,
+                                    include_sequence=include_sequence,
+                                    position=i,
+                                )
 
         elif ion_info.is_intact:
             if min_length is not None and len(self) < min_length:
@@ -2457,28 +2603,30 @@ class ProFormaAnnotation:
             if max_length is not None and len(self) > max_length:
                 return
 
-            if losses:
+            if neutral_deltas:
                 loss_dict.clear()
-                for nd in losses:
+                for nd in neutral_deltas:
                     loss_dict[nd] = min(
-                        nd.calculate_loss_sites(self.sequence), max_losses
+                        nd.calculate_loss_sites(self.sequence), max_deltas
                     )
 
-            loss_combinations = get_loss_combinations(loss_dict, max_losses)
+            neutral_delta_combinations = get_loss_combinations(loss_dict, max_deltas)
 
             for charge in charges:
                 for isotope in isotopes:
-                    for loss in loss_combinations:
-                        yield self.frag(
-                            ion_type=ion_type,
-                            charge=charge,
-                            monoisotopic=monoisotopic,
-                            isotopes=isotope,
-                            losses=loss,  # type: ignore
-                            calculate_composition=calculate_composition,
-                            include_sequence=include_sequence,
-                            position=len(self),  # Precursor position
-                        )
+                    for delta in deltas:
+                        for ndelta in neutral_delta_combinations:
+                            combined_delta = delta + ndelta
+                            yield self._frag(
+                                ion_type=ion_type,
+                                charge=charge,
+                                monoisotopic=monoisotopic,
+                                isotope=isotope,
+                                delta=combined_delta,
+                                calculate_composition=calculate_composition,
+                                include_sequence=include_sequence,
+                                position=len(self),  # Precursor position
+                            )
         elif ion_info.is_internal:
             if ion_info.ion_type == IonType.IMMONIUM:
                 # Immonium ions are single residue fragments
@@ -2491,28 +2639,32 @@ class ProFormaAnnotation:
 
                     sub_annot = self.slice(i, i + 1, inplace=False)
 
-                    if losses:
+                    if neutral_deltas:
                         loss_dict.clear()
-                        for nd in losses:
+                        for nd in neutral_deltas:
                             loss_dict[nd] = min(
-                                nd.calculate_loss_sites(self.sequence), max_losses
+                                nd.calculate_loss_sites(self.sequence), max_deltas
                             )
 
-                    loss_combinations = get_loss_combinations(loss_dict, max_losses)
+                    neutral_delta_combinations = get_loss_combinations(
+                        loss_dict, max_deltas
+                    )
 
                     for charge in charges:
                         for isotope in isotopes:
-                            for loss in loss_combinations:
-                                yield sub_annot.frag(
-                                    ion_type=ion_type,
-                                    charge=charge,
-                                    monoisotopic=monoisotopic,
-                                    isotopes=isotope,
-                                    losses=loss,  # type: ignore
-                                    calculate_composition=calculate_composition,
-                                    include_sequence=include_sequence,
-                                    position=sub_annot.sequence,  # Position is the residue index
-                                )
+                            for delta in deltas:
+                                for ndelta in neutral_delta_combinations:
+                                    combined_delta = delta + ndelta
+                                    yield sub_annot._frag(
+                                        ion_type=ion_type,
+                                        charge=charge,
+                                        monoisotopic=monoisotopic,
+                                        isotope=isotope,
+                                        delta=combined_delta,
+                                        calculate_composition=calculate_composition,
+                                        include_sequence=include_sequence,
+                                        position=sub_annot.sequence,  # Position is the residue index
+                                    )
             else:
                 # gen all internal fragmetns from 1 to n-1
                 for start in range(len(self)):
@@ -2528,40 +2680,45 @@ class ProFormaAnnotation:
 
                         sub_annot = self.slice(start, end, inplace=False)
 
-                        if losses:
+                        if neutral_deltas:
                             loss_dict.clear()
-                            for nd in losses:
+                            for nd in neutral_deltas:
                                 loss_dict[nd] = min(
-                                    nd.calculate_loss_sites(self.sequence), max_losses
+                                    nd.calculate_loss_sites(self.sequence), max_deltas
                                 )
 
-                        loss_combinations = get_loss_combinations(loss_dict, max_losses)
+                        neutral_delta_combinations = get_loss_combinations(
+                            loss_dict, max_deltas
+                        )
 
                         for charge in charges:
                             for isotope in isotopes:
-                                for loss in loss_combinations:
-                                    yield sub_annot.frag(
-                                        ion_type=ion_type,
-                                        charge=charge,
-                                        monoisotopic=monoisotopic,
-                                        isotopes=isotope,
-                                        losses=loss,  # type: ignore
-                                        calculate_composition=calculate_composition,
-                                        include_sequence=include_sequence,
-                                        position=(
-                                            start,
-                                            end,
-                                        ),  # Position is the start index + 1
-                                    )
+                                for delta in deltas:
+                                    for ndelta in neutral_delta_combinations:
+                                        combined_delta = delta + ndelta
+                                        yield sub_annot._frag(
+                                            ion_type=ion_type,
+                                            charge=charge,
+                                            monoisotopic=monoisotopic,
+                                            isotope=isotope,
+                                            delta=combined_delta,
+                                            calculate_composition=calculate_composition,
+                                            include_sequence=include_sequence,
+                                            position=(
+                                                start,
+                                                end,
+                                            ),
+                                        )
 
     def fragment(
         self,
         ion_types: Sequence[ION_TYPE] = (IonType.B, IonType.Y),
-        charges: Sequence[CHARGE_TYPE] | None = None,
+        charges: Sequence[CHARGE_TYPE] = (1,),
         monoisotopic: bool = True,
         *,
-        isotopes: Sequence[ISOTOPE_TYPE] | None = None,
-        losses: Sequence[LOSS_TYPE] | None = None,
+        isotopes: Sequence[ISOTOPE_TYPE | None] = (0,),
+        deltas: Sequence[CUSTOM_LOSS_TYPE | None] = (None,),
+        neutral_deltas: Sequence[LOSS_TYPE] = (),
         calculate_composition: bool = False,
         include_sequence: bool = False,
         max_losses: int = 1,
@@ -2570,29 +2727,41 @@ class ProFormaAnnotation:
     ) -> list[Fragment]:
         """Generate fragment annotation for given ion type."""
 
-        charge_list = list(charges) if charges is not None else [None]
-        iso_list = list(isotopes) if isotopes is not None else [None]
-        loss_list: list[NeutralDeltaInfo] = []
-        if losses is not None:
-            for loss in losses:
+        charge_infos: list[ChargeCarrierInfo] = [
+            ChargeCarrierInfo.from_input(charge) for charge in charges
+        ]
+
+        isotope_infos: list[IsotopeInfo] = [
+            IsotopeInfo.from_input(isotope) for isotope in isotopes
+        ]
+
+        neutral_deltas_infos: list[NeutralDeltaInfo] = []
+        if neutral_deltas_infos is not None:
+            for loss in neutral_deltas:
+                if loss is None:
+                    continue
                 if isinstance(loss, NeutralDeltaInfo):
-                    loss_list.append(loss)
+                    neutral_deltas_infos.append(loss)
                 else:
-                    loss_list.append(NEUTRAL_DELTA_LOOKUP[loss])
+                    nd: NeutralDeltaInfo = NEUTRAL_DELTA_LOOKUP[loss]
+                    neutral_deltas_infos.append(nd)
+
+        delta_infos = [DeltaInfo.from_input(loss) for loss in deltas]
 
         fragments: list[Fragment] = []
         for ion in ion_types:
             fragments.extend(
                 list(
                     self._fragment(
-                        ion_type=ion,
-                        charges=charge_list,  # type: ignore
+                        ion_type=IonType(ion),
+                        charges=charge_infos,
                         monoisotopic=monoisotopic,
-                        isotopes=iso_list,  # type: ignore
-                        losses=loss_list,
+                        isotopes=isotope_infos,
+                        deltas=delta_infos,
+                        neutral_deltas=neutral_deltas_infos,
                         calculate_composition=calculate_composition,
                         include_sequence=include_sequence,
-                        max_losses=max_losses,
+                        max_deltas=max_losses,
                         min_length=min_length,
                         max_length=max_length,
                     )
@@ -2782,11 +2951,20 @@ class ProFormaAnnotation:
             ModTypeLiteral | ModType | Iterable[ModTypeLiteral | ModType] | None
         ) = None,
         inplace: bool = True,
+        keep: bool = True,
     ) -> Self:
         if inplace is False:
             return self.copy().filter_mods(mods=mods, inplace=True)
 
-        mod_types_to_remove = {mod_type for mod_type in ModType} - set(get_mods(mods))
+        if keep:
+            # Keep only specified mods
+            mod_types_to_keep = set(get_mods(mods))
+
+            all_mod_types = {mod_type for mod_type in ModType}
+            mod_types_to_remove = all_mod_types - mod_types_to_keep
+        else:
+            # Remove only specified mods
+            mod_types_to_remove = get_mods(mods)
 
         if len(mod_types_to_remove) == 0:
             # If no mods to remove, return the annotation as is
@@ -3402,15 +3580,17 @@ class ProFormaAnnotation:
         ion_type: ION_TYPE = IonType.PRECURSOR,
         charge: CHARGE_TYPE | None = None,
         isotopes: ISOTOPE_TYPE | None = None,
-        losses: dict[LOSS_TYPE, int] | None = None,
+        deltas: CUSTOM_LOSS_TYPE | None = None,
         max_isotopes: int | None = 10,
         min_abundance_threshold: float = 0.001,  # based on the most abundant peak
         distribution_resolution: int | None = 5,
         use_neutron_count: bool = False,
         conv_min_abundance_threshold: float = 10e-15,
     ) -> list[IsotopicData]:
+        # check if any deltas provided are float?
+
         composition: Counter[ElementInfo] = self.comp(
-            ion_type=ion_type, charge=charge, isotopes=isotopes, losses=losses
+            ion_type=ion_type, charge=charge, isotopes=isotopes, deltas=deltas
         )
 
         # get charge state
@@ -3434,7 +3614,7 @@ class ProFormaAnnotation:
         ion_type: ION_TYPE = IonType.PRECURSOR,
         charge: CHARGE_TYPE | None = None,
         isotopes: ISOTOPE_TYPE | None = None,
-        losses: dict[LOSS_TYPE, int] | None = None,
+        deltas: CUSTOM_LOSS_TYPE | None = None,
         max_isotopes: int | None = 10,
         min_abundance_threshold: float = 0.001,
         distribution_resolution: int | None = 5,
@@ -3444,7 +3624,7 @@ class ProFormaAnnotation:
         """Estimate isotopic distribution based on mass."""
 
         mass = self.mass(
-            ion_type=ion_type, charge=charge, isotopes=isotopes, losses=losses
+            ion_type=ion_type, charge=charge, isotopes=isotopes, deltas=deltas
         )
 
         return estimate_isotopic_distribution(
@@ -3468,7 +3648,7 @@ class ProFormaAnnotation:
         include_unknown_mods: bool = True,
         include_isotopic_mods: bool = True,
         include_static_mods: bool = True,
-        generate_intervals: bool = True,
+        include_intervals: bool = True,
         include_charge: bool = True,
         require_composition: bool = True,
     ) -> "ProFormaAnnotation":
@@ -3484,7 +3664,7 @@ class ProFormaAnnotation:
             include_unknown_mods=include_unknown_mods,
             include_isotopic_mods=include_isotopic_mods,
             include_static_mods=include_static_mods,
-            generate_intervals=generate_intervals,
+            include_intervals=include_intervals,
             include_charge=include_charge,
             require_composition=require_composition,
         )

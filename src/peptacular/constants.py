@@ -90,10 +90,10 @@ ModTypeLiteral = Literal[
 ]
 
 
-class ParrallelMethod(StrEnum):
+class parallelMethod(StrEnum):
     PROCESS = "process"
     THREAD = "thread"
     SEQUENTIAL = "sequential"
 
 
-ParrallelMethodLiteral = Literal["process", "thread", "sequential"]
+parallelMethodLiteral = Literal["process", "thread", "sequential"]

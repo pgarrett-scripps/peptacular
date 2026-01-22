@@ -15,15 +15,21 @@ from typing import Protocol, runtime_checkable
 from tacular import (
     AA_LOOKUP,
     ELEMENT_LOOKUP,
+    GNO_LOOKUP,
     MONOSACCHARIDE_LOOKUP,
     PSIMOD_LOOKUP,
+    RESID_LOOKUP,
     UNIMOD_LOOKUP,
+    XLMOD_LOOKUP,
     AminoAcid,
     Element,
     ElementInfo,
+    GnoInfo,
     Monosaccharide,
     PsimodInfo,
+    ResidInfo,
     UnimodInfo,
+    XlModInfo,
 )
 
 from ..constants import CV, Terminal
@@ -129,6 +135,12 @@ class FormulaElement(MassPropertyMixin):
     def __str__(self) -> str:
         return self.serialize()
 
+    def abs(self) -> FormulaElement:
+        """Get a FormulaElement with absolute occurance."""
+        return FormulaElement(
+            element=self.element, occurance=abs(self.occurance), isotope=self.isotope
+        )
+
 
 @dataclass(frozen=True, slots=True)
 class ChargedFormula(MassPropertyMixin):
@@ -226,8 +238,8 @@ class ChargedFormula(MassPropertyMixin):
 
     def to_mz_paf(self) -> str:
         """Convert to mzPAF format string."""
-        pos_parts = [str(fe) for fe in self.formula if fe.occurance > 0]
-        neg_parts = [str(fe) for fe in self.formula if fe.occurance < 0]
+        pos_parts = [str(fe.abs()) for fe in self.formula if fe.occurance > 0]
+        neg_parts = [str(fe.abs()) for fe in self.formula if fe.occurance < 0]
 
         if pos_parts and neg_parts:
             raise ValueError(
@@ -286,6 +298,16 @@ class ChargedFormula(MassPropertyMixin):
             combined_charge = self.charge - other.charge
         return ChargedFormula.from_composition(combined_comp, charge=combined_charge)
 
+    @property
+    def is_neutral(self) -> bool:
+        """Check if the formula is neutral (charge == 0 or None)."""
+        return self.charge is None or self.charge == 0
+
+    @property
+    def is_charged(self) -> bool:
+        """Check if the formula is charged (charge != 0 and not None)."""
+        return self.charge is not None and self.charge != 0
+
 
 @dataclass(frozen=True, slots=True)
 class PositionRule:
@@ -327,12 +349,20 @@ class TagAccession(MassPropertyMixin):
         except Exception as e:
             return str(e)
 
-    def _get_mod_info_by_accession(self) -> UnimodInfo | PsimodInfo | None:
+    def _get_mod_info_by_accession(
+        self,
+    ) -> UnimodInfo | PsimodInfo | ResidInfo | GnoInfo | XlModInfo | None:
         match self.cv:
             case CV.UNIMOD:
                 return UNIMOD_LOOKUP.query_id(self.accession)
             case CV.PSI_MOD:
                 return PSIMOD_LOOKUP.query_id(self.accession)
+            case CV.RESID:
+                return RESID_LOOKUP.query_id(self.accession)
+            case CV.GNOME:
+                return GNO_LOOKUP.query_id(self.accession)
+            case CV.XL_MOD:
+                return XLMOD_LOOKUP.query_id(self.accession)
             case _:
                 raise ValueError(
                     f"Modification lookup by accession not implemented for CV: {self.cv}"
@@ -407,6 +437,18 @@ class TagMass(MassPropertyMixin):
                 mod_info = PSIMOD_LOOKUP.query_mass(
                     self.mass, monoisotopic=True, tolerance=0.005
                 )
+            case CV.RESID:
+                mod_info = RESID_LOOKUP.query_mass(
+                    self.mass, monoisotopic=True, tolerance=0.005
+                )
+            case CV.GNOME:
+                mod_info = GNO_LOOKUP.query_mass(
+                    self.mass, monoisotopic=True, tolerance=0.005
+                )
+            case CV.XL_MOD:
+                mod_info = XLMOD_LOOKUP.query_mass(
+                    self.mass, monoisotopic=True, tolerance=0.005
+                )
             case _:
                 raise ValueError(
                     f"Modification lookup by mass not implemented for CV: {self.cv}"
@@ -455,12 +497,20 @@ class TagName(MassPropertyMixin):
         except Exception as e:
             return str(e)
 
-    def _get_mod_info_by_name(self) -> UnimodInfo | PsimodInfo | None:
+    def _get_mod_info_by_name(
+        self,
+    ) -> UnimodInfo | PsimodInfo | ResidInfo | GnoInfo | XlModInfo | None:
         match self.cv:
             case CV.UNIMOD:
                 return UNIMOD_LOOKUP.query_name(self.name)
             case CV.PSI_MOD:
                 return PSIMOD_LOOKUP.query_name(self.name)
+            case CV.RESID:
+                return RESID_LOOKUP.query_name(self.name)
+            case CV.GNOME:
+                return GNO_LOOKUP.query_name(self.name)
+            case CV.XL_MOD:
+                return XLMOD_LOOKUP.query_name(self.name)
             case None:
                 unimod = UNIMOD_LOOKUP.query_name(self.name)
                 if unimod is not None:
@@ -739,7 +789,7 @@ class GlobalChargeCarrier(MassPropertyMixin):
     """A charge carrier specification like 'Formula:Na:z+1' or 'Formula:H:z+1^2'"""
 
     charged_formula: ChargedFormula
-    occurance: float
+    occurance: int
 
     @property
     def is_valid(self) -> bool:
@@ -770,12 +820,8 @@ class GlobalChargeCarrier(MassPropertyMixin):
         return parse_global_charge_carrier(s)
 
     @staticmethod
-    def charged_proton(charge: int = 1) -> GlobalChargeCarrier:
+    def charged_proton(charge: int) -> GlobalChargeCarrier:
         """Create a GlobalChargeCarrier representing protons."""
-
-        if charge <= 0:
-            raise ValueError("Charge must be positive")
-
         return GlobalChargeCarrier(charged_formula=PROTON_FORMULA, occurance=charge)
 
     def serialize(self) -> str:

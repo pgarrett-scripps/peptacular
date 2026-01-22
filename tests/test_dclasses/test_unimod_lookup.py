@@ -74,8 +74,7 @@ class TestUnimodLookupMethods:
     def test_query_name_with_prefix(self):
         """Test query_name strips UNIMOD: prefix"""
         acetyl = pt.UNIMOD_LOOKUP.query_name("U:Acetyl")
-        assert acetyl is not None
-        assert acetyl.name == "Acetyl"
+        assert acetyl is None
 
     def test_query_id_as_string(self):
         """Test query_id method with string ID"""

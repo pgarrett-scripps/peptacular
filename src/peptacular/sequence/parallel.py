@@ -6,13 +6,51 @@ from functools import partial
 from multiprocessing.pool import Pool, ThreadPool
 from typing import Any, Literal, TypeVar
 
-from ..constants import ParrallelMethod, ParrallelMethodLiteral
+from ..constants import parallelMethod, parallelMethodLiteral
 
 T = TypeVar("T")
 
 # Global pool cache
 _pool_cache: dict[tuple[str, int], Pool | ThreadPool] = {}
 _pool_lock = mp.Lock()
+
+
+def set_start_method(method: Literal["fork", "spawn", "forkserver"] | None = None):
+    """
+    Set the multiprocessing start method.
+
+    :param method: 'fork', 'spawn', or 'forkserver'. If None, uses platform default.
+
+    Notes:
+        - fork: Fast but unsafe with threads/some libraries (Unix only)
+        - spawn: Slow but safest (all platforms)
+        - forkserver: Balanced (Unix only)
+
+    Must be called before creating any pools.
+    """
+    if method is not None:
+        try:
+            mp.set_start_method(method, force=True)
+        except RuntimeError as e:
+            print(f"Warning: Could not set start method to '{method}': {e}")
+
+
+def get_start_method() -> str:
+    """
+    Get the current multiprocessing start method.
+
+    :return: Current start method ('fork', 'spawn', or 'forkserver')
+    """
+    return mp.get_start_method()
+
+
+def get_available_start_methods() -> list[str]:
+    """
+    Get all available start methods on this platform.
+
+    :return: List of available methods
+    """
+    return mp.get_all_start_methods()
 
 
 def _is_gil_disabled() -> bool:
@@ -51,7 +89,7 @@ def _apply_wrapper(item: Any, func: Callable[..., T], func_kwargs: dict[str, Any
 
 
 def _get_or_create_pool(
-    method: ParrallelMethod, n_workers: int, reuse_pool: bool = True
+    method: parallelMethod, n_workers: int, reuse_pool: bool = True
 ) -> Pool | ThreadPool:
     """
     Get an existing pool or create a new one.
@@ -62,7 +100,7 @@ def _get_or_create_pool(
     :return: Pool instance
     """
     if not reuse_pool:
-        if method == ParrallelMethod.THREAD:
+        if method == parallelMethod.THREAD:
             return ThreadPool(processes=n_workers)
         else:
             return Pool(processes=n_workers)
@@ -71,7 +109,7 @@ def _get_or_create_pool(
 
     with _pool_lock:
         if pool_key not in _pool_cache:
-            if method == ParrallelMethod.THREAD:
+            if method == parallelMethod.THREAD:
                 _pool_cache[pool_key] = ThreadPool(processes=n_workers)
             else:
                 _pool_cache[pool_key] = Pool(processes=n_workers)
@@ -99,7 +137,7 @@ def parallel_apply_internal(
     items: Sequence[Any],
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
     reuse_pool: bool = True,
     verbose: bool = False,
     **func_kwargs: Any,
@@ -128,11 +166,11 @@ def parallel_apply_internal(
         return []
 
     method_enum = (
-        ParrallelMethod(method) if method is not None else ParrallelMethod.PROCESS
+        parallelMethod(method) if method is not None else parallelMethod.PROCESS
     )
 
     # Handle sequential execution
-    if method_enum == ParrallelMethod.SEQUENTIAL:
+    if method_enum == parallelMethod.SEQUENTIAL:
         return [func(item, **func_kwargs) for item in items_list]
 
     # Handle parallel execution

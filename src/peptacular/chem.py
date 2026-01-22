@@ -5,10 +5,10 @@ from typing import overload
 from tacular import ELEMENT_LOOKUP, ElementInfo
 
 from .proforma_components import ChargedFormula
-from .sequence.parrallel import (
-    ParrallelMethod,
-    ParrallelMethodLiteral,
+from .sequence.parallel import (
     parallel_apply_internal,
+    parallelMethod,
+    parallelMethodLiteral,
 )
 
 
@@ -36,7 +36,7 @@ def parse_formula(
     sep: str = "",
     n_workers: None = None,
     chunksize: None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
     reuse_pool: bool = True,
 ) -> Counter[ElementInfo]: ...
 
@@ -47,7 +47,7 @@ def parse_formula(
     sep: str = "",
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
     reuse_pool: bool = True,
 ) -> list[Counter[ElementInfo]]: ...
 
@@ -59,7 +59,7 @@ def parse_formula(
     sep: str = "",
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
     reuse_pool: bool = True,
 ) -> Counter[ElementInfo] | list[Counter[ElementInfo]]:
     """Parse a chemical formula string or list of formulas into elemental composition."""
@@ -88,7 +88,7 @@ def chem_comp(
     formula: str | Mapping[ElementInfo | str, int],
     n_workers: None = None,
     chunksize: None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
     reuse_pool: bool = True,
 ) -> Counter[ElementInfo]: ...
 
@@ -98,7 +98,7 @@ def chem_comp(
     formula: Sequence[str | Mapping[ElementInfo | str, int]],
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
     reuse_pool: bool = True,
 ) -> list[Counter[ElementInfo]]: ...
 
@@ -109,7 +109,7 @@ def chem_comp(
     | Sequence[str | Mapping[ElementInfo | str, int]],
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
     reuse_pool: bool = True,
 ) -> Counter[ElementInfo] | list[Counter[ElementInfo]]:
     """Get the elemental composition of a chemical formula or list of formulas."""
@@ -143,7 +143,7 @@ def chem_mass(
     monoisotopic: bool = True,
     n_workers: None = None,
     chunksize: None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
     reuse_pool: bool = True,
 ) -> float: ...
 
@@ -154,7 +154,7 @@ def chem_mass(
     monoisotopic: bool = True,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
     reuse_pool: bool = True,
 ) -> list[float]: ...
 
@@ -166,7 +166,7 @@ def chem_mass(
     monoisotopic: bool = True,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
     reuse_pool: bool = True,
 ) -> float | list[float]:
     """Calculate the mass of a chemical formula or list of formulas."""
@@ -206,7 +206,7 @@ def chem_formula(
     include_formula_prefix: bool = False,
     n_workers: None = None,
     chunksize: None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
     reuse_pool: bool = True,
 ) -> str: ...
 
@@ -219,7 +219,7 @@ def chem_formula(
     include_formula_prefix: bool = False,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
     reuse_pool: bool = True,
 ) -> list[str]: ...
 
@@ -233,7 +233,7 @@ def chem_formula(
     include_formula_prefix: bool = False,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
     reuse_pool: bool = True,
 ) -> str | list[str]:
     """Generate a chemical formula string from an elemental composition or list of compositions."""

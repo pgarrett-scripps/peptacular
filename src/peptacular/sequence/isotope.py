@@ -4,10 +4,15 @@ from typing import overload
 from tacular import IonType
 
 from ..annotation import ProFormaAnnotation
-from ..annotation.annotation import CHARGE_TYPE, ION_TYPE, ISOTOPE_TYPE, LOSS_TYPE
-from ..constants import ParrallelMethod, ParrallelMethodLiteral
+from ..annotation.annotation import (
+    CHARGE_TYPE,
+    CUSTOM_LOSS_TYPE,
+    ION_TYPE,
+    ISOTOPE_TYPE,
+)
+from ..constants import parallelMethod, parallelMethodLiteral
 from ..isotope import IsotopicData
-from .parrallel import parallel_apply_internal
+from .parallel import parallel_apply_internal
 from .util import get_annotation_input
 
 
@@ -16,7 +21,7 @@ def _isotopic_distribution_single(
     ion_type: ION_TYPE = IonType.PRECURSOR,
     charge: CHARGE_TYPE | None = None,
     isotopes: ISOTOPE_TYPE | None = None,
-    losses: dict[LOSS_TYPE, int] | None = None,
+    deltas: CUSTOM_LOSS_TYPE | None = None,
     max_isotopes: int | None = 10,
     min_abundance_threshold: float = 0.001,  # based on the most abundant peak
     distribution_resolution: int | None = 5,
@@ -27,7 +32,7 @@ def _isotopic_distribution_single(
         ion_type=ion_type,
         charge=charge,
         isotopes=isotopes,
-        losses=losses,
+        deltas=deltas,
         max_isotopes=max_isotopes,
         min_abundance_threshold=min_abundance_threshold,
         distribution_resolution=distribution_resolution,
@@ -42,7 +47,7 @@ def isotopic_distribution(
     ion_type: ION_TYPE = IonType.PRECURSOR,
     charge: CHARGE_TYPE | None = None,
     isotopes: ISOTOPE_TYPE | None = None,
-    losses: dict[LOSS_TYPE, int] | None = None,
+    deltas: CUSTOM_LOSS_TYPE | None = None,
     max_isotopes: int | None = 10,
     min_abundance_threshold: float = 0.001,
     distribution_resolution: int | None = 5,
@@ -50,7 +55,7 @@ def isotopic_distribution(
     conv_min_abundance_threshold: float = 10e-15,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[list[IsotopicData]]: ...
 
 
@@ -60,7 +65,7 @@ def isotopic_distribution(
     ion_type: ION_TYPE = IonType.PRECURSOR,
     charge: CHARGE_TYPE | None = None,
     isotopes: ISOTOPE_TYPE | None = None,
-    losses: dict[LOSS_TYPE, int] | None = None,
+    deltas: CUSTOM_LOSS_TYPE | None = None,
     max_isotopes: int | None = 10,
     min_abundance_threshold: float = 0.001,
     distribution_resolution: int | None = 5,
@@ -68,7 +73,7 @@ def isotopic_distribution(
     conv_min_abundance_threshold: float = 10e-15,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[IsotopicData]: ...
 
 
@@ -77,7 +82,7 @@ def isotopic_distribution(
     ion_type: ION_TYPE = IonType.PRECURSOR,
     charge: CHARGE_TYPE | None = None,
     isotopes: ISOTOPE_TYPE | None = None,
-    losses: dict[LOSS_TYPE, int] | None = None,
+    deltas: CUSTOM_LOSS_TYPE | None = None,
     max_isotopes: int | None = 10,
     min_abundance_threshold: float = 0.001,
     distribution_resolution: int | None = 5,
@@ -85,7 +90,7 @@ def isotopic_distribution(
     conv_min_abundance_threshold: float = 10e-15,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[IsotopicData] | list[list[IsotopicData]]:
     if isinstance(annotations, Sequence) and not isinstance(
         annotations, (str, ProFormaAnnotation)
@@ -99,7 +104,7 @@ def isotopic_distribution(
             ion_type=ion_type,
             charge=charge,
             isotopes=isotopes,
-            losses=losses,
+            deltas=deltas,
             max_isotopes=max_isotopes,
             min_abundance_threshold=min_abundance_threshold,
             distribution_resolution=distribution_resolution,
@@ -112,7 +117,7 @@ def isotopic_distribution(
             ion_type=ion_type,
             charge=charge,
             isotopes=isotopes,
-            losses=losses,
+            deltas=deltas,
             max_isotopes=max_isotopes,
             min_abundance_threshold=min_abundance_threshold,
             distribution_resolution=distribution_resolution,
@@ -126,7 +131,7 @@ def _estimate_isotopic_distribution_single(
     ion_type: ION_TYPE = IonType.PRECURSOR,
     charge: CHARGE_TYPE | None = None,
     isotopes: ISOTOPE_TYPE | None = None,
-    losses: dict[LOSS_TYPE, int] | None = None,
+    deltas: CUSTOM_LOSS_TYPE | None = None,
     max_isotopes: int | None = 10,
     min_abundance_threshold: float = 0.001,
     distribution_resolution: int | None = 5,
@@ -137,7 +142,7 @@ def _estimate_isotopic_distribution_single(
         ion_type=ion_type,
         charge=charge,
         isotopes=isotopes,
-        losses=losses,
+        deltas=deltas,
         max_isotopes=max_isotopes,
         min_abundance_threshold=min_abundance_threshold,
         distribution_resolution=distribution_resolution,
@@ -152,7 +157,7 @@ def estimate_isotopic_distribution(
     ion_type: ION_TYPE = IonType.PRECURSOR,
     charge: CHARGE_TYPE | None = None,
     isotopes: ISOTOPE_TYPE | None = None,
-    losses: dict[LOSS_TYPE, int] | None = None,
+    deltas: CUSTOM_LOSS_TYPE | None = None,
     max_isotopes: int | None = 10,
     min_abundance_threshold: float = 0.001,
     distribution_resolution: int | None = 5,
@@ -160,7 +165,7 @@ def estimate_isotopic_distribution(
     conv_min_abundance_threshold: float = 10e-15,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[list[IsotopicData]]: ...
 
 
@@ -170,7 +175,7 @@ def estimate_isotopic_distribution(
     ion_type: ION_TYPE = IonType.PRECURSOR,
     charge: CHARGE_TYPE | None = None,
     isotopes: ISOTOPE_TYPE | None = None,
-    losses: dict[LOSS_TYPE, int] | None = None,
+    deltas: CUSTOM_LOSS_TYPE | None = None,
     max_isotopes: int | None = 10,
     min_abundance_threshold: float = 0.001,
     distribution_resolution: int | None = 5,
@@ -178,7 +183,7 @@ def estimate_isotopic_distribution(
     conv_min_abundance_threshold: float = 10e-15,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[IsotopicData]: ...
 
 
@@ -187,7 +192,7 @@ def estimate_isotopic_distribution(
     ion_type: ION_TYPE = IonType.PRECURSOR,
     charge: CHARGE_TYPE | None = None,
     isotopes: ISOTOPE_TYPE | None = None,
-    losses: dict[LOSS_TYPE, int] | None = None,
+    deltas: CUSTOM_LOSS_TYPE | None = None,
     max_isotopes: int | None = 10,
     min_abundance_threshold: float = 0.001,
     distribution_resolution: int | None = 5,
@@ -195,7 +200,7 @@ def estimate_isotopic_distribution(
     conv_min_abundance_threshold: float = 10e-15,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[IsotopicData] | list[list[IsotopicData]]:
     if isinstance(annotations, Sequence) and not isinstance(
         annotations, (str, ProFormaAnnotation)
@@ -209,7 +214,7 @@ def estimate_isotopic_distribution(
             ion_type=ion_type,
             charge=charge,
             isotopes=isotopes,
-            losses=losses,
+            deltas=deltas,
             max_isotopes=max_isotopes,
             min_abundance_threshold=min_abundance_threshold,
             distribution_resolution=distribution_resolution,
@@ -222,7 +227,7 @@ def estimate_isotopic_distribution(
             ion_type=ion_type,
             charge=charge,
             isotopes=isotopes,
-            losses=losses,
+            deltas=deltas,
             max_isotopes=max_isotopes,
             min_abundance_threshold=min_abundance_threshold,
             distribution_resolution=distribution_resolution,

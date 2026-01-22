@@ -1,8 +1,8 @@
 from typing import overload
 
 from ..annotation import ProFormaAnnotation
-from ..constants import ParrallelMethod, ParrallelMethodLiteral
-from .parrallel import parallel_apply_internal
+from ..constants import parallelMethod, parallelMethodLiteral
+from .parallel import parallel_apply_internal
 
 
 def _convert_ip2_sequence_single(sequence: str) -> str:
@@ -14,7 +14,7 @@ def convert_ip2_sequence(
     sequence: str,
     n_workers: None = None,
     chunksize: None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> str: ...
 
 
@@ -23,7 +23,7 @@ def convert_ip2_sequence(
     sequence: list[str],
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[str]: ...
 
 
@@ -31,7 +31,7 @@ def convert_ip2_sequence(
     sequence: str | list[str],
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> str | list[str]:
     """
     Converts a IP2-Like sequence to a proforma2.0 compatible sequence.
@@ -63,7 +63,7 @@ def convert_diann_sequence(
     sequence: str,
     n_workers: None = None,
     chunksize: None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> str: ...
 
 
@@ -72,7 +72,7 @@ def convert_diann_sequence(
     sequence: list[str],
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[str]: ...
 
 
@@ -80,7 +80,7 @@ def convert_diann_sequence(
     sequence: str | list[str],
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> str | list[str]:
     """
     Converts a DIANN-Like sequence to a proforma2.0 compatible sequence.
@@ -112,7 +112,7 @@ def convert_casanovo_sequence(
     sequence: str,
     n_workers: None = None,
     chunksize: None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> str: ...
 
 
@@ -121,7 +121,7 @@ def convert_casanovo_sequence(
     sequence: list[str],
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[str]: ...
 
 
@@ -129,7 +129,7 @@ def convert_casanovo_sequence(
     sequence: str | list[str],
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> str | list[str]:
     """
     Converts a Casanovo sequence with modifications to a proforma2.0 compatible sequence.

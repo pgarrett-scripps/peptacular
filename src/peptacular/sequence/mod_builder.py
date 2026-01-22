@@ -2,8 +2,8 @@ from collections.abc import Iterable, Mapping, Sequence
 from typing import Any, cast, overload
 
 from ..annotation import ProFormaAnnotation
-from ..constants import ModType, ModTypeLiteral, ParrallelMethod, ParrallelMethodLiteral
-from .parrallel import parallel_apply_internal
+from ..constants import ModType, ModTypeLiteral, parallelMethod, parallelMethodLiteral
+from .parallel import parallel_apply_internal
 from .util import get_annotation_input
 
 MOD_BUILDER_INPUT_TYPE = Mapping[str, Iterable[Any]]
@@ -58,7 +58,7 @@ def build_mods(
     use_regex: bool = False,
     n_workers: None = None,
     chunksize: None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[str]: ...
 
 
@@ -78,7 +78,7 @@ def build_mods(
     use_regex: bool = False,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[list[str]]: ...
 
 
@@ -97,7 +97,7 @@ def build_mods(
     use_regex: bool = False,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[str] | list[list[str]]:
     """
     Build modified sequences by applying static and variable modifications to a sequence or list of sequences.
@@ -357,7 +357,7 @@ def to_ms2_pip(
     sequence: ProFormaAnnotation | str,
     n_workers: None = None,
     chunksize: None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> tuple[str, str]: ...
 
 
@@ -366,7 +366,7 @@ def to_ms2_pip(
     sequence: Sequence[ProFormaAnnotation | str],
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[tuple[str, str]]: ...
 
 
@@ -374,7 +374,7 @@ def to_ms2_pip(
     sequence: ProFormaAnnotation | str | Sequence[ProFormaAnnotation | str],
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> tuple[str, str] | list[tuple[str, str]]:
     """
     Convert a peptide sequence to MS2PIP format by condensing modifications.
@@ -425,7 +425,7 @@ def from_ms2_pip(
     static_mods: Mapping[str, float] | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> str: ...
 
 
@@ -435,7 +435,7 @@ def from_ms2_pip(
     static_mods: Mapping[str, float] | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[str]: ...
 
 
@@ -444,7 +444,7 @@ def from_ms2_pip(
     static_mods: Mapping[str, float] | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> str | list[str]:
     """
     Convert MS2PIP format to ProForma string(s).

@@ -2,7 +2,7 @@ from collections.abc import Sequence
 from typing import overload
 
 from ..annotation import ProFormaAnnotation
-from ..constants import ParrallelMethod, ParrallelMethodLiteral
+from ..constants import parallelMethod, parallelMethodLiteral
 from ..property.core import (
     aa_property_percentage as _aa_property_percentage,
 )
@@ -38,7 +38,7 @@ from ..property.types import (
     WeightingMethods,
     WeightingMethodsLiteral,
 )
-from .parrallel import parallel_apply_internal
+from .parallel import parallel_apply_internal
 from .util import get_annotation_input, round_to_precision
 
 
@@ -93,7 +93,7 @@ def calc_property(
     precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> float: ...
 
 
@@ -116,7 +116,7 @@ def calc_property(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[float]: ...
 
 
@@ -138,7 +138,7 @@ def calc_property(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> float | list[float]:
     """
     Calculate a physicochemical property for a sequence or list of sequences.
@@ -201,7 +201,7 @@ def hydrophobicity(
     precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> float: ...
 
 
@@ -211,7 +211,7 @@ def hydrophobicity(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[float]: ...
 
 
@@ -220,7 +220,7 @@ def hydrophobicity(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> float | list[float]:
     if (
         isinstance(sequence, Sequence)
@@ -250,7 +250,7 @@ def flexibility(
     precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> float: ...
 
 
@@ -260,7 +260,7 @@ def flexibility(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[float]: ...
 
 
@@ -269,7 +269,7 @@ def flexibility(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> float | list[float]:
     if (
         isinstance(sequence, Sequence)
@@ -299,7 +299,7 @@ def hydrophilicity(
     precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> float: ...
 
 
@@ -309,7 +309,7 @@ def hydrophilicity(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[float]: ...
 
 
@@ -318,7 +318,7 @@ def hydrophilicity(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> float | list[float]:
     if (
         isinstance(sequence, Sequence)
@@ -348,7 +348,7 @@ def surface_accessibility(
     precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> float: ...
 
 
@@ -358,7 +358,7 @@ def surface_accessibility(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[float]: ...
 
 
@@ -367,7 +367,7 @@ def surface_accessibility(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> float | list[float]:
     if (
         isinstance(sequence, Sequence)
@@ -397,7 +397,7 @@ def polarity(
     precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> float: ...
 
 
@@ -407,7 +407,7 @@ def polarity(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[float]: ...
 
 
@@ -416,7 +416,7 @@ def polarity(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> float | list[float]:
     if (
         isinstance(sequence, Sequence)
@@ -446,7 +446,7 @@ def mutability(
     precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> float: ...
 
 
@@ -456,7 +456,7 @@ def mutability(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[float]: ...
 
 
@@ -465,7 +465,7 @@ def mutability(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> float | list[float]:
     if (
         isinstance(sequence, Sequence)
@@ -495,7 +495,7 @@ def codons(
     precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> float: ...
 
 
@@ -505,7 +505,7 @@ def codons(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[float]: ...
 
 
@@ -514,7 +514,7 @@ def codons(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> float | list[float]:
     if (
         isinstance(sequence, Sequence)
@@ -544,7 +544,7 @@ def bulkiness(
     precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> float: ...
 
 
@@ -554,7 +554,7 @@ def bulkiness(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[float]: ...
 
 
@@ -563,7 +563,7 @@ def bulkiness(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> float | list[float]:
     if (
         isinstance(sequence, Sequence)
@@ -593,7 +593,7 @@ def recognition_factors(
     precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> float: ...
 
 
@@ -603,7 +603,7 @@ def recognition_factors(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[float]: ...
 
 
@@ -612,7 +612,7 @@ def recognition_factors(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> float | list[float]:
     if (
         isinstance(sequence, Sequence)
@@ -642,7 +642,7 @@ def transmembrane_tendency(
     precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> float: ...
 
 
@@ -652,7 +652,7 @@ def transmembrane_tendency(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[float]: ...
 
 
@@ -661,7 +661,7 @@ def transmembrane_tendency(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> float | list[float]:
     if (
         isinstance(sequence, Sequence)
@@ -691,7 +691,7 @@ def average_buried_area(
     precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> float: ...
 
 
@@ -701,7 +701,7 @@ def average_buried_area(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[float]: ...
 
 
@@ -710,7 +710,7 @@ def average_buried_area(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> float | list[float]:
     if (
         isinstance(sequence, Sequence)
@@ -740,7 +740,7 @@ def hplc(
     precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> float: ...
 
 
@@ -750,7 +750,7 @@ def hplc(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[float]: ...
 
 
@@ -759,7 +759,7 @@ def hplc(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> float | list[float]:
     if (
         isinstance(sequence, Sequence)
@@ -789,7 +789,7 @@ def refractivity(
     precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> float: ...
 
 
@@ -799,7 +799,7 @@ def refractivity(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[float]: ...
 
 
@@ -808,7 +808,7 @@ def refractivity(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> float | list[float]:
     if (
         isinstance(sequence, Sequence)
@@ -887,7 +887,7 @@ def charge_at_ph(
     precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> float: ...
 
 
@@ -898,7 +898,7 @@ def charge_at_ph(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[float]: ...
 
 
@@ -908,7 +908,7 @@ def charge_at_ph(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> float | list[float]:
     if (
         isinstance(sequence, Sequence)
@@ -964,7 +964,7 @@ def pi(
     precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> float: ...
 
 
@@ -974,7 +974,7 @@ def pi(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[float]: ...
 
 
@@ -983,7 +983,7 @@ def pi(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> float | list[float]:
     if (
         isinstance(sequence, Sequence)
@@ -1025,7 +1025,7 @@ def aa_property_percentage(
     precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> float: ...
 
 
@@ -1036,7 +1036,7 @@ def aa_property_percentage(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[float]: ...
 
 
@@ -1046,7 +1046,7 @@ def aa_property_percentage(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> float | list[float]:
     if (
         isinstance(sequence, Sequence)
@@ -1077,7 +1077,7 @@ def aromaticity(
     precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> float: ...
 
 
@@ -1088,7 +1088,7 @@ def aromaticity(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[float]: ...
 
 
@@ -1098,7 +1098,7 @@ def aromaticity(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> float | list[float]:
     if (
         isinstance(sequence, Sequence)
@@ -1144,7 +1144,7 @@ def secondary_structure(
     precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> dict[str, float]: ...
 
 
@@ -1155,7 +1155,7 @@ def secondary_structure(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[dict[str, float]]: ...
 
 
@@ -1165,7 +1165,7 @@ def secondary_structure(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> dict[str, float] | list[dict[str, float]]:
     if (
         isinstance(sequence, Sequence)
@@ -1205,7 +1205,7 @@ def alpha_helix_percent(
     precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> float: ...
 
 
@@ -1215,7 +1215,7 @@ def alpha_helix_percent(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[float]: ...
 
 
@@ -1224,7 +1224,7 @@ def alpha_helix_percent(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> float | list[float]:
     if (
         isinstance(sequence, Sequence)
@@ -1262,7 +1262,7 @@ def beta_sheet_percent(
     precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> float: ...
 
 
@@ -1272,7 +1272,7 @@ def beta_sheet_percent(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[float]: ...
 
 
@@ -1281,7 +1281,7 @@ def beta_sheet_percent(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> float | list[float]:
     if (
         isinstance(sequence, Sequence)
@@ -1319,7 +1319,7 @@ def beta_turn_percent(
     precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> float: ...
 
 
@@ -1329,7 +1329,7 @@ def beta_turn_percent(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[float]: ...
 
 
@@ -1338,7 +1338,7 @@ def beta_turn_percent(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> float | list[float]:
     if (
         isinstance(sequence, Sequence)
@@ -1376,7 +1376,7 @@ def coil_percent(
     precision: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> float: ...
 
 
@@ -1386,7 +1386,7 @@ def coil_percent(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[float]: ...
 
 
@@ -1395,7 +1395,7 @@ def coil_percent(
     precision: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> float | list[float]:
     if (
         isinstance(sequence, Sequence)
@@ -1470,7 +1470,7 @@ def property_partitions(
     max_weight: float = 1.0,
     n_workers: None = None,
     chunksize: None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[float]: ...
 
 
@@ -1494,7 +1494,7 @@ def property_partitions(
     max_weight: float = 1.0,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[list[float]]: ...
 
 
@@ -1517,7 +1517,7 @@ def property_partitions(
     max_weight: float = 1.0,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[float] | list[list[float]]:
     """Generate property values for N number of sliding windows across the sequence.
 

@@ -549,6 +549,114 @@ class TestFragment(unittest.TestCase):
                 except AssertionError as e:
                     self.fail(f"Assertion failed: {e}")
 
+    def test_fragment_with_netural_delta(self):
+        seq = "PEPTIDE"
+        annot = pt.ProFormaAnnotation.parse(seq)
+
+        frags = annot.fragment(ion_types=["y"], charges=[1], monoisotopic=False)
+
+        expected_masses = [
+            148.136536,
+            263.223936,
+            376.381576,
+            477.485456,
+            574.600636,
+            703.714616,
+            800.829796,
+        ]
+
+        for frag, expected_mass in zip(frags, expected_masses, strict=True):
+            self.assertAlmostEqual(
+                frag.mz,
+                expected_mass,
+                places=2,
+                msg=f"Failed for fragment {frag}, expected mass: {expected_mass}",
+            )
+
+        frags = annot.fragment(
+            ion_types=["y"], charges=[1], monoisotopic=False, neutral_deltas=["H2O"]
+        )
+
+        expected_masses = [
+            148.136536,
+            148.136536 - 18.015286432429832,
+            263.223936,
+            263.223936 - 18.015286432429832,
+            376.381576,
+            376.381576 - 18.015286432429832,
+            477.485456,
+            477.485456 - 18.015286432429832,
+            574.600636,
+            574.600636 - 18.015286432429832,
+            703.714616,
+            703.714616 - 18.015286432429832,
+            800.829796,
+            800.829796 - 18.015286432429832,
+        ]
+
+        for frag, expected_mass in zip(frags, expected_masses, strict=True):
+            self.assertAlmostEqual(
+                frag.mz,
+                expected_mass,
+                places=2,
+                msg=f"Failed for fragment {frag}, expected mass: {expected_mass}",
+            )
+
+        frags = annot.fragment(
+            ion_types=["y"],
+            charges=[1],
+            monoisotopic=False,
+            neutral_deltas=["H2O"],
+            max_losses=2,
+        )
+
+        expected_masses = [
+            # E (Only one water to lose)
+            148.136536,
+            148.136536 - 18.015286432429832,
+            # DE
+            263.223936,
+            263.223936 - 18.015286432429832,
+            263.223936 - 18.015286432429832 * 2,
+            # IDE
+            376.381576,
+            376.381576 - 18.015286432429832,
+            376.381576 - 18.015286432429832 * 2,
+            # TIDE
+            477.485456,
+            477.485456 - 18.015286432429832,
+            477.485456 - 18.015286432429832 * 2,
+            # PTIDE
+            574.600636,
+            574.600636 - 18.015286432429832,
+            574.600636 - 18.015286432429832 * 2,
+            # EPTIDE
+            703.714616,
+            703.714616 - 18.015286432429832,
+            703.714616 - 18.015286432429832 * 2,
+            # PEPTIDE
+            800.829796,
+            800.829796 - 18.015286432429832,
+            800.829796 - 18.015286432429832 * 2,
+        ]
+
+        for frag, expected_mass in zip(frags, expected_masses, strict=True):
+            self.assertAlmostEqual(
+                frag.mz,
+                expected_mass,
+                places=2,
+                msg=f"Failed for fragment {frag}, expected mass: {expected_mass}",
+            )
+
+    def test_to_mzpaf(self):
+        seq = "PEPTIDE"
+        annot = pt.ProFormaAnnotation.parse(seq)
+
+        frags = annot.fragment(ion_types=["y"], charges=[1], monoisotopic=False)
+
+        for frag in frags:
+            paf_annot = frag.to_mzpaf()
+
 
 if __name__ == "__main__":
     unittest.main()

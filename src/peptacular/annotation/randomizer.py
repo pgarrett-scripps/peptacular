@@ -263,8 +263,58 @@ def generate_random_proforma_annotation(
     include_unknown_mods: bool = True,
     include_isotopic_mods: bool = True,
     include_static_mods: bool = True,
-    generate_intervals: bool = True,
+    include_intervals: bool = True,
     include_charge: bool = True,
+    allow_adducts: bool = False,
+    require_composition: bool = True,
+    retry_cnt: int = 10,
+) -> "ProFormaAnnotation":
+    while retry_cnt > 0:
+        annot = _generate_random_proforma_annotation(
+            min_length=min_length,
+            max_length=max_length,
+            mod_probability=mod_probability,
+            include_internal_mods=include_internal_mods,
+            include_nterm_mods=include_nterm_mods,
+            include_cterm_mods=include_cterm_mods,
+            include_labile_mods=include_labile_mods,
+            include_unknown_mods=include_unknown_mods,
+            include_isotopic_mods=include_isotopic_mods,
+            include_static_mods=include_static_mods,
+            include_intervals=include_intervals,
+            include_charge=include_charge,
+            allow_adducts=allow_adducts,
+            require_composition=require_composition,
+        )
+
+        if require_composition:
+            try:
+                annot.comp()
+                return annot
+            except ValueError:
+                retry_cnt -= 1
+        else:
+            return annot
+
+    raise RuntimeError(
+        "Failed to generate ProForma annotation with valid composition after multiple attempts."
+    )
+
+
+def _generate_random_proforma_annotation(
+    min_length: int = 6,
+    max_length: int = 20,
+    mod_probability: float = DEFAULT_MOD_PROBABILITY,
+    include_internal_mods: bool = True,
+    include_nterm_mods: bool = True,
+    include_cterm_mods: bool = True,
+    include_labile_mods: bool = True,
+    include_unknown_mods: bool = True,
+    include_isotopic_mods: bool = True,
+    include_static_mods: bool = True,
+    include_intervals: bool = True,
+    include_charge: bool = True,
+    allow_adducts: bool = False,
     require_composition: bool = True,
 ) -> "ProFormaAnnotation":
     from .annotation import ProFormaAnnotation
@@ -286,7 +336,7 @@ def generate_random_proforma_annotation(
     if include_charge:
         if random() < 0.5:
             charge = random_charge_state(0, 5)
-        else:
+        elif allow_adducts and random() < 0.5:
             charge = random_charge_adduct()
 
     return ProFormaAnnotation(
@@ -325,7 +375,7 @@ def generate_random_proforma_annotation(
             interval_probability=mod_probability,
             require_composition=require_composition,
         )
-        if generate_intervals
+        if include_intervals
         else None,
         charge=charge,
     )

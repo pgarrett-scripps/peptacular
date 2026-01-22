@@ -2,8 +2,8 @@ from collections.abc import Sequence
 from typing import overload
 
 from ..annotation import ProFormaAnnotation
-from ..constants import ParrallelMethod, ParrallelMethodLiteral
-from .parrallel import parallel_apply_internal
+from ..constants import parallelMethod, parallelMethodLiteral
+from .parallel import parallel_apply_internal
 from .util import get_annotation_input
 
 
@@ -21,7 +21,7 @@ def permutations(
     size: int | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[str]: ...
 
 
@@ -31,7 +31,7 @@ def permutations(
     size: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[list[str]]: ...
 
 
@@ -40,7 +40,7 @@ def permutations(
     size: int | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[str] | list[list[str]]:
     """
     Generates all permutations of the input sequence. Terminal sequence are kept in place.
@@ -96,7 +96,7 @@ def product(
     repeat: int | None,
     n_workers: None = None,
     chunksize: None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[str]: ...
 
 
@@ -106,7 +106,7 @@ def product(
     repeat: int | None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[list[str]]: ...
 
 
@@ -115,7 +115,7 @@ def product(
     repeat: int | None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[str] | list[list[str]]:
     """
     Generates all cartesian products of the input sequence of a given size. Terminal sequence are kept in place.
@@ -171,7 +171,7 @@ def combinations(
     size: int | None,
     n_workers: None = None,
     chunksize: None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[str]: ...
 
 
@@ -181,7 +181,7 @@ def combinations(
     size: int | None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[list[str]]: ...
 
 
@@ -190,7 +190,7 @@ def combinations(
     size: int | None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[str] | list[list[str]]:
     """
     Generates all combinations of the input sequence of a given size. Terminal sequence are kept in place.
@@ -246,7 +246,7 @@ def combinations_with_replacement(
     size: int | None,
     n_workers: None = None,
     chunksize: None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[str]: ...
 
 
@@ -256,7 +256,7 @@ def combinations_with_replacement(
     size: int | None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[list[str]]: ...
 
 
@@ -265,7 +265,7 @@ def combinations_with_replacement(
     size: int | None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[str] | list[list[str]]:
     """
     Generates all combinations with replacement of the input sequence of a given size. Terminal sequence are kept

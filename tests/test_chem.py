@@ -47,7 +47,7 @@ class TestParseFormula:
     def test_parse_formula_list_sequential(self):
         """Parse multiple formulas sequentially."""
         formulas = ["H2O", "CO2", "NH3"]
-        results = pt.parse_formula(formulas, n_workers=None)
+        results = pt.parse_formula(formulas, n_workers=None, method="sequential")
         assert results[0][ELEMENT_LOOKUP["H"]] == 2
         assert results[0][ELEMENT_LOOKUP["O"]] == 1
         assert results[1][ELEMENT_LOOKUP["C"]] == 1
@@ -96,7 +96,7 @@ class TestChemComp:
     def test_chem_comp_list(self):
         """Get compositions from list of formulas."""
         formulas = ["H2O", "CO2", "NH3"]
-        results = pt.chem_comp(formulas)
+        results = pt.chem_comp(formulas, n_workers=None, method="sequential")
         assert len(results) == 3
         assert results[0][ELEMENT_LOOKUP["H"]] == 2
         assert results[1][ELEMENT_LOOKUP["O"]] == 2
@@ -144,7 +144,9 @@ class TestChemMass:
     def test_chem_mass_list(self):
         """Calculate masses of multiple formulas."""
         formulas = ["H2O", "CO2", "NH3"]
-        masses = pt.chem_mass(formulas, monoisotopic=True)
+        masses = pt.chem_mass(
+            formulas, monoisotopic=True, n_workers=None, method="sequential"
+        )
         assert len(masses) == 3
         assert all(isinstance(m, float) for m in masses)
         assert abs(masses[0] - 18.015) < 0.01  # H2O
@@ -199,7 +201,9 @@ class TestChemFormula:
     def test_chem_formula_list(self):
         """Generate formula strings from list of compositions."""
         comps = [{"H": 2, "O": 1}, {"C": 1, "O": 2}, {"N": 1, "H": 3}]
-        results = pt.chem_formula(comps, hill_order=True)
+        results = pt.chem_formula(
+            comps, hill_order=True, n_workers=None, method="sequential"
+        )
         assert len(results) == 3
         assert results[0] == "H2O"
         assert results[1] == "CO2"
@@ -249,15 +253,19 @@ class TestChemIntegration:
         formulas = ["H2O", "CO2", "NH3"]
 
         # Parse all formulas
-        comps = pt.parse_formula(formulas)
+        comps = pt.parse_formula(formulas, n_workers=None, method="sequential")
         assert len(comps) == 3
 
         # Calculate masses
-        masses = pt.chem_mass(formulas, monoisotopic=True)
+        masses = pt.chem_mass(
+            formulas, monoisotopic=True, n_workers=None, method="sequential"
+        )
         assert len(masses) == 3
 
         # Generate formula strings from compositions
-        regenerated = pt.chem_formula(comps, hill_order=True)
+        regenerated = pt.chem_formula(
+            comps, hill_order=True, n_workers=None, method="sequential"
+        )
         assert regenerated[0] == "H2O"
         assert regenerated[1] == "CO2"
         assert regenerated[2] == "H3N"

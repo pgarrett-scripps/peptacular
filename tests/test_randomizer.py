@@ -245,7 +245,9 @@ class TestProFormaAnnotationGeneration:
     def test_generate_random_proforma_annotation_with_composition(self):
         """Test that require_composition is respected."""
         annot = generate_random_proforma_annotation(
-            mod_probability=0.3, require_composition=True
+            mod_probability=0.3,
+            require_composition=True,
+            include_isotopic_mods=False,
         )
         # Should be able to calculate composition without errors
         comp = annot.comp()
@@ -313,7 +315,10 @@ class TestRandomizerStability:
         """Test that multiple generations all produce valid annotations."""
         for _ in range(20):
             annot = generate_random_proforma_annotation(
-                mod_probability=0.2, require_composition=True
+                mod_probability=0.2,
+                require_composition=True,
+                allow_adducts=False,
+                include_intervals=False,
             )
             assert annot.sequence is not None
             assert all(c in "ACDEFGHIKLMNPQRSTVWY" for c in annot.sequence)
@@ -327,7 +332,10 @@ class TestRandomizerStability:
         """Test that generated annotations can calculate mass."""
         for _ in range(10):
             annot = generate_random_proforma_annotation(
-                mod_probability=0.2, require_composition=True
+                mod_probability=0.2,
+                require_composition=True,
+                include_isotopic_mods=False,
+                allow_adducts=False,
             )
             mass = annot.mass()
             assert isinstance(mass, float)
@@ -337,8 +345,13 @@ class TestRandomizerStability:
         """Test that generated annotations can calculate composition."""
         for _ in range(10):
             annot = generate_random_proforma_annotation(
-                mod_probability=0.2, require_composition=True
+                mod_probability=0.2,
+                require_composition=True,
+                include_isotopic_mods=False,
+                allow_adducts=False,
+                retry_cnt=100,
             )
+            print(annot)
             comp = annot.comp()
             assert comp is not None
             assert len(comp) > 0

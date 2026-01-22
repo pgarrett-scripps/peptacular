@@ -1,6 +1,6 @@
 import unittest
 
-from peptacular.sequence.parrallel import parallel_apply_internal
+from peptacular.sequence.parallel import parallel_apply_internal
 
 
 def _simple_double(x: int) -> int:

@@ -63,6 +63,11 @@ from .mod_builder import (
     strip_mods,
     to_ms2_pip,
 )
+from .parallel import (
+    get_available_start_methods,
+    get_start_method,
+    set_start_method,
+)
 from .properties import (
     aa_property_percentage,
     alpha_helix_percent,
@@ -199,4 +204,8 @@ __all__ = [
     "convert_casanovo_sequence",
     # isotope
     "isotopic_distribution",
+    # parallel
+    "get_available_start_methods",
+    "get_start_method",
+    "set_start_method",
 ]

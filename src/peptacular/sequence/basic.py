@@ -4,8 +4,8 @@ from typing import Any, overload
 from ..annotation import (
     ProFormaAnnotation,
 )
-from ..constants import ParrallelMethod, ParrallelMethodLiteral
-from .parrallel import parallel_apply_internal
+from ..constants import parallelMethod, parallelMethodLiteral
+from .parallel import parallel_apply_internal
 from .util import get_annotation_input
 
 
@@ -19,7 +19,7 @@ def parse(
     validate: bool = False,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
     reuse_pool: bool = True,
 ) -> ProFormaAnnotation: ...
 
@@ -30,7 +30,7 @@ def parse(
     validate: bool = False,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
     reuse_pool: bool = True,
 ) -> list[ProFormaAnnotation]: ...
 
@@ -40,7 +40,7 @@ def parse(
     validate: bool = False,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
     reuse_pool: bool = True,
 ) -> ProFormaAnnotation | list[ProFormaAnnotation]:
     """Parse a ProForma string or list of strings into ProFormaAnnotation object(s)."""
@@ -69,7 +69,7 @@ def serialize(
     sequence: str | ProFormaAnnotation,
     n_workers: None = None,
     chunksize: None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> str: ...
 
 
@@ -78,7 +78,7 @@ def serialize(
     sequence: Sequence[str | ProFormaAnnotation],
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[str]: ...
 
 
@@ -86,7 +86,7 @@ def serialize(
     sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> str | list[str]:
     """Serialize a peptide sequence or list of sequences to ProForma string format."""
     if (
@@ -114,7 +114,7 @@ def sequence_length(
     sequence: str | ProFormaAnnotation,
     n_workers: None = None,
     chunksize: None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> int: ...
 
 
@@ -123,7 +123,7 @@ def sequence_length(
     sequence: Sequence[str | ProFormaAnnotation],
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[int]: ...
 
 
@@ -131,7 +131,7 @@ def sequence_length(
     sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> int | list[int]:
     """Compute the length of the peptide sequence based on the unmodified sequence."""
     if (
@@ -159,7 +159,7 @@ def is_ambiguous(
     sequence: str | ProFormaAnnotation,
     n_workers: None = None,
     chunksize: None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> bool: ...
 
 
@@ -168,7 +168,7 @@ def is_ambiguous(
     sequence: Sequence[str | ProFormaAnnotation],
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[bool]: ...
 
 
@@ -176,7 +176,7 @@ def is_ambiguous(
     sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> bool | list[bool]:
     """Check if the sequence contains ambiguous amino acids."""
     if (
@@ -204,7 +204,7 @@ def is_modified(
     sequence: str | ProFormaAnnotation,
     n_workers: None = None,
     chunksize: None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> bool: ...
 
 
@@ -213,7 +213,7 @@ def is_modified(
     sequence: Sequence[str | ProFormaAnnotation],
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[bool]: ...
 
 
@@ -221,7 +221,7 @@ def is_modified(
     sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> bool | list[bool]:
     """Check if the sequence contains any modifications."""
     if (
@@ -256,7 +256,7 @@ def count_residues(
     include_mods: bool = True,
     n_workers: None = None,
     chunksize: None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> dict[str, int]: ...
 
 
@@ -266,7 +266,7 @@ def count_residues(
     include_mods: bool = True,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[dict[str, int]]: ...
 
 
@@ -275,7 +275,7 @@ def count_residues(
     include_mods: bool = True,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> dict[str, int] | list[dict[str, int]]:
     """
     Counts the occurrences of each amino acid in the input sequence.
@@ -328,7 +328,7 @@ def percent_residues(
     include_mods: bool = True,
     n_workers: None = None,
     chunksize: None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> dict[str, float]: ...
 
 
@@ -338,7 +338,7 @@ def percent_residues(
     include_mods: bool = True,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[dict[str, float]]: ...
 
 
@@ -347,7 +347,7 @@ def percent_residues(
     include_mods: bool = True,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> dict[str, float] | list[dict[str, float]]:
     """
     Calculates the percentage of each amino acid in the input sequence.
@@ -464,7 +464,7 @@ def validate(
     sequence: str | ProFormaAnnotation,
     n_workers: None = None,
     chunksize: None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> bool: ...
 
 
@@ -473,7 +473,7 @@ def validate(
     sequence: Sequence[str | ProFormaAnnotation],
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[bool]: ...
 
 
@@ -481,7 +481,7 @@ def validate(
     sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> bool | list[bool]:
     """
     Checks if the input sequence is a valid ProForma sequence.
@@ -514,7 +514,7 @@ def _generate_random_single(
     include_unknown_mods: bool = True,
     include_isotopic_mods: bool = True,
     include_static_mods: bool = True,
-    generate_intervals: bool = True,
+    include_intervals: bool = True,
     include_charge: bool = True,
     require_composition: bool = True,
 ) -> ProFormaAnnotation:
@@ -529,7 +529,7 @@ def _generate_random_single(
         include_unknown_mods=include_unknown_mods,
         include_isotopic_mods=include_isotopic_mods,
         include_static_mods=include_static_mods,
-        generate_intervals=generate_intervals,
+        include_intervals=include_intervals,
         include_charge=include_charge,
         require_composition=require_composition,
     )
@@ -548,12 +548,12 @@ def generate_random(
     include_unknown_mods: bool = True,
     include_isotopic_mods: bool = True,
     include_static_mods: bool = True,
-    generate_intervals: bool = True,
+    include_intervals: bool = True,
     include_charge: bool = True,
     require_composition: bool = True,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> ProFormaAnnotation: ...
 
 
@@ -570,12 +570,12 @@ def generate_random(
     include_unknown_mods: bool = True,
     include_isotopic_mods: bool = True,
     include_static_mods: bool = True,
-    generate_intervals: bool = True,
+    include_intervals: bool = True,
     include_charge: bool = True,
     require_composition: bool = True,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[ProFormaAnnotation]: ...
 
 
@@ -591,12 +591,12 @@ def generate_random(
     include_unknown_mods: bool = True,
     include_isotopic_mods: bool = True,
     include_static_mods: bool = True,
-    generate_intervals: bool = True,
+    include_intervals: bool = True,
     include_charge: bool = True,
     require_composition: bool = True,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> ProFormaAnnotation | list[ProFormaAnnotation]:
     """Generate random ProForma annotation(s) with configurable features.
 
@@ -612,7 +612,7 @@ def generate_random(
         include_unknown_mods: Whether to generate unknown position modifications
         include_isotopic_mods: Whether to generate isotopic modifications
         include_static_mods: Whether to generate static modifications
-        generate_intervals: Whether to generate intervals
+        include_intervals: Whether to generate intervals
         include_charge: Whether to generate charge state or adduct
         require_composition: If True, only modifications with composition are allowed (no mass-only)
         n_workers: Number of parallel workers (only used when count > 1)
@@ -656,7 +656,7 @@ def generate_random(
             include_unknown_mods=include_unknown_mods,
             include_isotopic_mods=include_isotopic_mods,
             include_static_mods=include_static_mods,
-            generate_intervals=generate_intervals,
+            include_intervals=include_intervals,
             include_charge=include_charge,
             require_composition=require_composition,
         )
@@ -676,7 +676,7 @@ def generate_random(
             include_unknown_mods=include_unknown_mods,
             include_isotopic_mods=include_isotopic_mods,
             include_static_mods=include_static_mods,
-            generate_intervals=generate_intervals,
+            include_intervals=include_intervals,
             include_charge=include_charge,
             require_composition=require_composition,
             n_workers=n_workers,

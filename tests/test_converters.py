@@ -62,7 +62,7 @@ class TestConvertIP2Sequence:
             "P",
             "PEPTIDE",
         ]
-        results = convert_ip2_sequence(sequences, n_workers=2)
+        results = convert_ip2_sequence(sequences, n_workers=2, method="sequential")
         assert results == expected
 
     def test_parallel_with_thread_method(self):

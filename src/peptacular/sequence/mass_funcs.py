@@ -7,25 +7,26 @@ from tacular import ElementInfo, IonType
 from ..annotation import ProFormaAnnotation
 from ..annotation.annotation import (
     CHARGE_TYPE,
+    CUSTOM_LOSS_TYPE,
     ION_TYPE,
     ISOTOPE_TYPE,
-    LOSS_TYPE,
 )
 from ..constants import (
-    ParrallelMethod,
-    ParrallelMethodLiteral,
+    parallelMethod,
+    parallelMethodLiteral,
 )
-from .parrallel import parallel_apply_internal
+from .parallel import parallel_apply_internal
 from .util import get_annotation_input
 
 
 def _mass_single(
     sequence: str | ProFormaAnnotation,
-    ion_type: ION_TYPE = IonType.PRECURSOR,
-    charge: CHARGE_TYPE | None = None,
-    monoisotopic: bool = True,
-    isotopes: ISOTOPE_TYPE | None = None,
-    losses: dict[LOSS_TYPE, int] | None = None,
+    ion_type: ION_TYPE,
+    charge: CHARGE_TYPE | None,
+    monoisotopic: bool,
+    isotopes: ISOTOPE_TYPE | None,
+    deltas: CUSTOM_LOSS_TYPE | None,
+    calculate_with_composition: bool,
 ) -> float:
     annotation = get_annotation_input(sequence=sequence, copy=False)
     return annotation.mass(
@@ -33,7 +34,8 @@ def _mass_single(
         charge=charge,
         monoisotopic=monoisotopic,
         isotopes=isotopes,
-        losses=losses,
+        deltas=deltas,
+        calculate_with_composition=calculate_with_composition,
     )
 
 
@@ -44,10 +46,11 @@ def mass(
     charge: CHARGE_TYPE | None = None,
     monoisotopic: bool = True,
     isotopes: ISOTOPE_TYPE | None = None,
-    losses: dict[LOSS_TYPE, int] | None = None,
+    deltas: CUSTOM_LOSS_TYPE | None = None,
+    calculate_with_composition: bool = False,
     n_workers: None = None,
     chunksize: None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> float: ...
 
 
@@ -58,10 +61,11 @@ def mass(
     charge: CHARGE_TYPE | None = None,
     monoisotopic: bool = True,
     isotopes: ISOTOPE_TYPE | None = None,
-    losses: dict[LOSS_TYPE, int] | None = None,
+    deltas: CUSTOM_LOSS_TYPE | None = None,
+    calculate_with_composition: bool = False,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[float]: ...
 
 
@@ -71,10 +75,11 @@ def mass(
     charge: CHARGE_TYPE | None = None,
     monoisotopic: bool = True,
     isotopes: ISOTOPE_TYPE | None = None,
-    losses: dict[LOSS_TYPE, int] | None = None,
+    deltas: CUSTOM_LOSS_TYPE | None = None,
+    calculate_with_composition: bool = False,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> float | list[float]:
     """
     Calculate the mass of an amino acid 'sequence'.
@@ -94,7 +99,8 @@ def mass(
             ion_type=ion_type,
             monoisotopic=monoisotopic,
             isotopes=isotopes,
-            losses=losses,
+            deltas=deltas,
+            calculate_with_composition=calculate_with_composition,
         )
     else:
         return _mass_single(
@@ -103,17 +109,19 @@ def mass(
             ion_type=ion_type,
             monoisotopic=monoisotopic,
             isotopes=isotopes,
-            losses=losses,
+            deltas=deltas,
+            calculate_with_composition=calculate_with_composition,
         )
 
 
 def _mz_single(
     sequence: str | ProFormaAnnotation,
-    ion_type: ION_TYPE = IonType.PRECURSOR,
-    charge: CHARGE_TYPE | None = None,
-    monoisotopic: bool = True,
-    isotopes: ISOTOPE_TYPE | None = None,
-    losses: dict[LOSS_TYPE, int] | None = None,
+    ion_type: ION_TYPE,
+    charge: CHARGE_TYPE | None,
+    monoisotopic: bool,
+    isotopes: ISOTOPE_TYPE | None,
+    deltas: CUSTOM_LOSS_TYPE | None,
+    calculate_with_composition: bool,
 ) -> float:
     annotation = get_annotation_input(sequence=sequence, copy=False)
     return annotation.mz(
@@ -121,7 +129,8 @@ def _mz_single(
         charge=charge,
         monoisotopic=monoisotopic,
         isotopes=isotopes,
-        losses=losses,
+        deltas=deltas,
+        calculate_with_composition=calculate_with_composition,
     )
 
 
@@ -132,10 +141,11 @@ def mz(
     charge: CHARGE_TYPE | None = None,
     monoisotopic: bool = True,
     isotopes: ISOTOPE_TYPE | None = None,
-    losses: dict[LOSS_TYPE, int] | None = None,
+    deltas: CUSTOM_LOSS_TYPE | None = None,
+    calculate_with_composition: bool = False,
     n_workers: None = None,
     chunksize: None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> float: ...
 
 
@@ -146,10 +156,11 @@ def mz(
     charge: CHARGE_TYPE | None = None,
     monoisotopic: bool = True,
     isotopes: ISOTOPE_TYPE | None = None,
-    losses: dict[LOSS_TYPE, int] | None = None,
+    deltas: CUSTOM_LOSS_TYPE | None = None,
+    calculate_with_composition: bool = False,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[float]: ...
 
 
@@ -159,10 +170,11 @@ def mz(
     charge: CHARGE_TYPE | None = None,
     monoisotopic: bool = True,
     isotopes: ISOTOPE_TYPE | None = None,
-    losses: dict[LOSS_TYPE, int] | None = None,
+    deltas: CUSTOM_LOSS_TYPE | None = None,
+    calculate_with_composition: bool = False,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> float | list[float]:
     """
     Calculate the m/z (mass-to-charge ratio) of an amino acid 'sequence'.
@@ -182,7 +194,8 @@ def mz(
             ion_type=ion_type,
             monoisotopic=monoisotopic,
             isotopes=isotopes,
-            losses=losses,
+            deltas=deltas,
+            calculate_with_composition=calculate_with_composition,
         )
     else:
         return _mz_single(
@@ -191,7 +204,8 @@ def mz(
             ion_type=ion_type,
             monoisotopic=monoisotopic,
             isotopes=isotopes,
-            losses=losses,
+            deltas=deltas,
+            calculate_with_composition=calculate_with_composition,
         )
 
 
@@ -200,7 +214,7 @@ def _comp_single(
     ion_type: ION_TYPE = IonType.PRECURSOR,
     charge: CHARGE_TYPE | None = None,
     isotopes: ISOTOPE_TYPE | None = None,
-    losses: dict[LOSS_TYPE, int] | None = None,
+    deltas: CUSTOM_LOSS_TYPE | None = None,
 ) -> Counter[ElementInfo]:
     annotation = get_annotation_input(sequence=sequence, copy=True)
 
@@ -208,7 +222,7 @@ def _comp_single(
         ion_type=ion_type,
         charge=charge,
         isotopes=isotopes,
-        losses=losses,
+        deltas=deltas,
     )
 
 
@@ -218,10 +232,10 @@ def comp(
     ion_type: ION_TYPE = IonType.PRECURSOR,
     charge: CHARGE_TYPE | None = None,
     isotopes: ISOTOPE_TYPE | None = None,
-    losses: dict[LOSS_TYPE, int] | None = None,
+    deltas: CUSTOM_LOSS_TYPE | None = None,
     n_workers: None = None,
     chunksize: None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> Counter[ElementInfo]: ...
 
 
@@ -231,10 +245,10 @@ def comp(
     ion_type: ION_TYPE = IonType.PRECURSOR,
     charge: CHARGE_TYPE | None = None,
     isotopes: ISOTOPE_TYPE | None = None,
-    losses: dict[LOSS_TYPE, int] | None = None,
+    deltas: CUSTOM_LOSS_TYPE | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[Counter[ElementInfo]]: ...
 
 
@@ -243,10 +257,10 @@ def comp(
     ion_type: ION_TYPE = IonType.PRECURSOR,
     charge: CHARGE_TYPE | None = None,
     isotopes: ISOTOPE_TYPE | None = None,
-    losses: dict[LOSS_TYPE, int] | None = None,
+    deltas: CUSTOM_LOSS_TYPE | None = None,
     n_workers: int | None = None,
     chunksize: int | None = None,
-    method: ParrallelMethod | ParrallelMethodLiteral | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> Counter[ElementInfo] | list[Counter[ElementInfo]]:
     """
     Calculates the elemental composition of a peptide sequence, including modifications.
@@ -265,7 +279,7 @@ def comp(
             ion_type=ion_type,
             charge=charge,
             isotopes=isotopes,
-            losses=losses,
+            deltas=deltas,
         )
     else:
         return _comp_single(
@@ -273,5 +287,5 @@ def comp(
             ion_type=ion_type,
             charge=charge,
             isotopes=isotopes,
-            losses=losses,
+            deltas=deltas,
         )

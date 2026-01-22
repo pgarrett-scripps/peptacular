@@ -89,6 +89,6 @@ Parallel Processing
 
 Examples of parallel processing capabilities.
 
-.. literalinclude:: ../examples/parrallel.py
+.. literalinclude:: ../examples/parallel.py
    :language: python
    :linenos:

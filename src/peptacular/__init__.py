@@ -8,6 +8,7 @@ from .annotation import *
 from .chem import *
 from .constants import *
 from .digestion import *
+from .fasta import *
 from .isotope import *
 from .proforma_components import *
 from .property import *

@@ -15,7 +15,6 @@ class SupportsStr(Protocol):
 def handle_number_and_intern_mod(mod: SupportsStr | float | int) -> str:
     """Validate and intern a modification string"""
     if isinstance(mod, (float, int)):
-        # ensure has +/- sign for positive/negative masses
         mod_str = f"{mod:+}"
     else:
         mod_str = str(mod).strip()
@@ -64,31 +63,3 @@ def get_mods(
     raise ValueError(
         f"mods parameter must be str, list of str, or None, got {type(mods)}"
     )
-
-
-def ppm_error(theo: float, expt: float) -> float:
-    """
-
-    .. code-block:: python
-
-        # Calculate the parts per million error between two values.
-        >>> ppm_error(100.0, 100.1, 2)
-        1000.0
-
-    """
-    return ((expt - theo) / theo) * 1e6
-
-
-def dalton_error(theo: float, expt: float) -> float:
-    """
-    Calculate the Dalton error between two values.
-
-    .. code-block:: python
-
-        # Calculate the Dalton error between two values.
-        >>> dalton_error(100.0, 100.1, 2)
-        0.1
-
-    """
-
-    return expt - theo
