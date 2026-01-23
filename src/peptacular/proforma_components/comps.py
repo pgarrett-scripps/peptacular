@@ -721,6 +721,17 @@ class GlycanComponent(MassPropertyMixin):
                 "GlycanComponent with ChargedFormula is not fully supported yet."
             )
 
+    def validate(self) -> str | None:
+        try:
+            _ = self.get_mass()
+            return None
+        except Exception as e:
+            return str(e)
+
+    @property
+    def is_valid(self) -> bool:
+        return self.validate() is None
+
     def get_mass(self, monoisotopic: bool = True) -> float:
         if isinstance(self.monosaccharide, ChargedFormula):
             return (

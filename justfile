@@ -52,6 +52,9 @@ ty:
 docs:
     cd docs && uv run sphinx-build -b html . _build/html
 
+docs-test:
+    cd docs && uv run sphinx-build -b doctest . _build/doctest
+
 # Clean documentation build
 docs-clean:
     rm -rf docs/_build

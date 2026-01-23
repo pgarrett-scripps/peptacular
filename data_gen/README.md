@@ -1,4 +1,0 @@
-- This code converts the input files into teh data.py files used within peptacular
-- Elements must be done first
-- Followed by monosaccharides
-- fnally all the rest (unimod, psi-mod....)

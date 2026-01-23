@@ -24,6 +24,7 @@ All notable changes to this project will be documented in this file.
 - Proforma components dataclasses
 - Removed custom errors
 - Removed score / spectra (will make a seperate apckage termed spextacular)
+- Added seperate tacular dependancy to handle element/aa/obo lookup/parsing
 
 ## [2.5.1]
 - added ambiguity support to coverage funcs

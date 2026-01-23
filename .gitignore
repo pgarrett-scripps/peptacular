@@ -13,3 +13,9 @@ docs/_build/*
 
 try*.py
 .coverage
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+.vscode/
+.ipynb_checkpoints/
+htmlcov/

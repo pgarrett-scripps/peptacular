@@ -84,11 +84,4 @@ Convert sequences from other tools (IP2, DIANN, Casanovo, MS2PIP) to ProForma fo
    :language: python
    :linenos:
 
-Parallel Processing
--------------------
 
-Examples of parallel processing capabilities.
-
-.. literalinclude:: ../examples/parallel.py
-   :language: python
-   :linenos:

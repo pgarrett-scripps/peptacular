@@ -95,7 +95,8 @@ Some of the core data classes used throughout Peptacular.
 Data Modules
 ------------
 
-These modules are unsed internally to provide data on the various entities Peptacular works with. They can also be used directly.
+These modules are unsed internally to provide data on the various entities Peptacular works with. 
+They are provided by the tacular package, but are accessable from the peptacular namespace.
 
 Amino Acids
 ~~~~~~~~~~~
@@ -104,7 +105,6 @@ Amino Acids
    :members:
    :undoc-members:
    :show-inheritance:
-
 
 Elements
 ~~~~~~~~
@@ -117,7 +117,7 @@ Elements
 Psimods
 ~~~~~~~
 
-.. automodule:: peptacular.mods.psimod
+.. automodule:: peptacular.psimod
    :members:
    :undoc-members:
    :show-inheritance:
@@ -125,7 +125,7 @@ Psimods
 Unimods
 ~~~~~~~
 
-.. automodule:: peptacular.mods.unimod
+.. automodule:: peptacular.unimod
    :members:
    :undoc-members:
    :show-inheritance:
@@ -133,7 +133,7 @@ Unimods
 Monosaccharides
 ~~~~~~~~~~~~~~~
 
-.. automodule:: peptacular.mods.monosaccharide
+.. automodule:: peptacular.monosaccharides
    :members:
    :undoc-members:
    :show-inheritance:
@@ -141,7 +141,7 @@ Monosaccharides
 Ion Types
 ~~~~~~~~~
 
-.. automodule:: peptacular.fragment.ion_types
+.. automodule:: peptacular.ion_types
    :members:
    :undoc-members:
    :show-inheritance:
@@ -149,7 +149,7 @@ Ion Types
 Neutral Deltas
 ~~~~~~~~~~~~~~
 
-.. automodule:: peptacular.fragment.neutral_deltas
+.. automodule:: peptacular.neutral_deltas
    :members:
    :undoc-members:
    :show-inheritance:
@@ -157,7 +157,7 @@ Neutral Deltas
 Reference Molecules
 ~~~~~~~~~~~~~~~~~~~
 
-.. automodule:: peptacular.fragment.refmol
+.. automodule:: peptacular.refmol
    :members:
    :undoc-members:
    :show-inheritance:
