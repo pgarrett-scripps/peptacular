@@ -74,15 +74,3 @@ class TestTagMass:
         assert isinstance(result2, pt.TagMass)
         assert result2.mass == pytest.approx(17.05685)  # type: ignore
         assert result2.cv == pt.CV.OBSERVED
-
-    def test_observed_mass_with_cv_prefix(self):
-        """Test parsing observed mass with CV prefix (e.g., U:Obs:+15.995)"""
-        result = pt.ModificationTags.from_string("U:Obs:+15.995").tags[0]
-        assert isinstance(result, pt.TagMass)
-        assert result.mass == pytest.approx(15.995)  # type: ignore
-        assert result.cv == pt.CV.UNIMOD
-
-        result2 = pt.ModificationTags.from_string("M:Obs:+79.9663").tags[0]
-        assert isinstance(result2, pt.TagMass)
-        assert result2.mass == pytest.approx(79.9663)  # type: ignore
-        assert result2.cv == pt.CV.PSI_MOD

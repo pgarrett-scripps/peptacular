@@ -141,9 +141,11 @@ def serialize_charged_formula(
 
     if cf.charge is not None:
         charge_str = f":z{cf.charge:+}"
-        return sys.intern(f"{prefix}{formula_str}{charge_str}")
+        return sys.intern(
+            f"{prefix}{formula_str}{charge_str}{cf.serialize_position_score()}"
+        )
     else:
-        return sys.intern(f"{prefix}{formula_str}")
+        return sys.intern(f"{prefix}{formula_str}{cf.serialize_position_score()}")
 
 
 @lru_cache(maxsize=512)
@@ -179,7 +181,9 @@ def serialize_tag_accession(ta: "TagAccession") -> str:
     Returns:
         String representation like 'UNIMOD:35'
     """
-    return sys.intern(f"{CV_TO_ACCESSION_PREFIX[ta.cv]}{ta.accession}")
+    return sys.intern(
+        f"{CV_TO_ACCESSION_PREFIX[ta.cv]}{ta.accession}{ta.serialize_position_score()}"
+    )
 
 
 @lru_cache(maxsize=512)
@@ -195,9 +199,11 @@ def serialize_tag_mass(tm: "TagMass") -> str:
     """
     mass_str = f"{tm.mass:+}"
     if tm.cv is not None:
-        return sys.intern(f"{CV_TO_MASS_PREFIX[tm.cv]}{mass_str}")
+        return sys.intern(
+            f"{CV_TO_MASS_PREFIX[tm.cv]}{mass_str}{tm.serialize_position_score()}"
+        )
     else:
-        return sys.intern(mass_str)
+        return sys.intern(f"{mass_str}{tm.serialize_position_score()}")
 
 
 @lru_cache(maxsize=512)
@@ -212,9 +218,11 @@ def serialize_tag_name(tn: "TagName") -> str:
         String representation like 'Oxidation' or 'U:Oxidation'
     """
     if tn.cv is not None:
-        return sys.intern(f"{CV_TO_NAME_PREFIX[tn.cv]}{tn.name}")
+        return sys.intern(
+            f"{CV_TO_NAME_PREFIX[tn.cv]}{tn.name}{tn.serialize_position_score()}"
+        )
     else:
-        return sys.intern(tn.name)
+        return sys.intern(f"{tn.name}{tn.serialize_position_score()}")
 
 
 @lru_cache(maxsize=256)
@@ -242,7 +250,7 @@ def serialize_tag_custom(tc: "TagCustom") -> str:
     Returns:
         String representation like 'C:custom_name'
     """
-    return sys.intern(f"C:{tc.name}")
+    return sys.intern(f"C:{tc.name}{tc.serialize_position_score()}")
 
 
 @lru_cache(maxsize=256)
@@ -282,7 +290,7 @@ def serialize_glycan_tag(gt: "GlycanTag") -> str:
     glycan_comps: list[str] = []
     for gc in gt.components:
         glycan_comps.append(serialize_glycan_component(gc))
-    return sys.intern(f"Glycan:{''.join(glycan_comps)}")
+    return sys.intern(f"Glycan:{''.join(glycan_comps)}{gt.serialize_position_score()}")
 
 
 @lru_cache(maxsize=128)

@@ -427,17 +427,17 @@ class TestStringConversion:
 
     def test_tag_mass_positive(self):
         """Test pt.TagMass positive value string conversion"""
-        tag = pt.TagMass(mass=15.995)
+        tag = pt.TagMass(mass_str="15.995")
         assert str(tag) == "+15.995"
 
     def test_tag_mass_negative(self):
         """Test pt.TagMass negative value string conversion"""
-        tag = pt.TagMass(mass=-18.010)
+        tag = pt.TagMass(mass_str="-18.010")
         assert str(tag) == "-18.01"
 
     def test_tag_mass_with_cv(self):
         """Test pt.TagMass with CV string conversion"""
-        tag = pt.TagMass(mass=15.995, cv=pt.CV.UNIMOD)
+        tag = pt.TagMass(mass_str="15.995", cv=pt.CV.UNIMOD)
         assert str(tag) == "U:+15.995"
 
     def test_tag_info_to_string(self):

@@ -30,6 +30,7 @@ if TYPE_CHECKING:
         Peptidoform,
         PeptidoformIon,
         PositionRule,
+        PositionScore,
         SequenceElement,
         SequenceRegion,
         TagAccession,
@@ -68,9 +69,8 @@ PATTERN_MASS: re.Pattern[str] = re.compile(
 # Format: [single-letter-CV:]?<name>
 # e.g., "Oxidation", "Phospho", "U:Oxidation", "M:Phospho", "R:Acetyl", "C:CustomMod"
 PATTERN_NAMED_MOD: re.Pattern[str] = re.compile(
-    r"^(?:([UMRXGCumrxgc]):)?([A-Za-z][A-Za-z0-9]*)$", re.IGNORECASE
+    r"^(?:([UMRXGCumrxgc]):)?(?![+-]|Obs:)(.+)$", re.IGNORECASE
 )
-
 
 # Regex pattern for parsing formula elements
 # Matches two formats:
@@ -212,6 +212,14 @@ def parse_charged_formula(
 
     s = s.strip()
 
+    match = LOC_PATTERN.match(s)
+    if match:
+        s, pos, score = match.groups()
+        if score is not None:
+            score = float(score)
+    else:
+        s, pos, score = s, None, None
+
     if require_formula_prefix:
         match = _CHARGED_FORMULA_PATTERN.match(s)
 
@@ -231,7 +239,9 @@ def parse_charged_formula(
     # Parse charge if present
     charge = int(charge_str) if charge_str else None
 
-    return ChargedFormula(formula=formula_elements, charge=charge)
+    return ChargedFormula(
+        formula=formula_elements, charge=charge, position_id=pos, score=score
+    )
 
 
 def _parse_formula_string(
@@ -312,6 +322,29 @@ def _parse_formula_string(
     return tuple(elements)
 
 
+def parse_position_score(s: str) -> "PositionScore":
+    from .comps import PositionScore
+
+    s = s.strip()
+
+    # example : #1
+    # example: #4(0.95)
+    pos = None
+    score = None
+    match = LOC_PATTERN.match("X" + s)
+    if match:
+        s, pos, score_str = match.groups()
+        if score_str is not None:
+            score = float(score_str)
+    if pos is None:
+        raise ValueError(f"Invalid position id in position score string: '{s}'")
+
+    if len(s) > 1:
+        raise ValueError(f"Invalid position score string: '{s[1:]}'")
+
+    return PositionScore(position_id=pos, score=score)
+
+
 # ============================================================================
 # Modification Tag Parsing
 # ============================================================================
@@ -353,22 +386,28 @@ def parse_modification_tag(mod_str: str) -> "MODIFICATION_TAG_TYPE":
     from .comps import GlycanTag, TagName
 
     mod_str = mod_str.strip()
-    mod_str_lower = mod_str.lower()
 
     if not mod_str:
         raise ValueError("Empty modification string")
 
+    mod_str_lower = mod_str.lower()
+
+    if mod_str_lower.startswith("#"):
+        return parse_position_score(mod_str)
+
     # Try to match accession patterns (Rule 1: full CV names only)
-    try:
-        return parse_tag_accession(mod_str)
-    except ValueError:
-        pass
+    if ":" in mod_str_lower:
+        accession_term = mod_str_lower.split(":", 1)[0].upper()
+        if accession_term in {"UNIMOD", "MOD", "RESID", "GNO", "XLMOD"}:
+            return parse_tag_accession(mod_str)
 
     # Try to match mass pattern (Rule 2: must have sign, optional single letter CV prefix)
-    try:
+    if (
+        mod_str_lower.startswith(("+", "-"))
+        or ":" in mod_str_lower
+        and mod_str_lower.split(":", 1)[1].startswith(("+", "-"))
+    ):
         return parse_tag_mass(mod_str)
-    except ValueError:
-        pass
 
     # Try to match formula pattern
     if mod_str_lower.startswith("formula:"):
@@ -376,16 +415,20 @@ def parse_modification_tag(mod_str: str) -> "MODIFICATION_TAG_TYPE":
 
     # Try to match glycan pattern
     if mod_str_lower.startswith("glycan:"):
+        match = LOC_PATTERN.match(mod_str)
+        if match:
+            mod_str, pos, score = match.groups()
+            if score is not None:
+                score = float(score)
+        else:
+            mod_str, pos, score = mod_str, None, None
+
         glycan_components = parse_glycan(mod_str)
-        return GlycanTag(components=glycan_components)
+        return GlycanTag(components=glycan_components, position_id=pos, score=score)
 
     # Try to match INFO pattern
     if mod_str_lower.startswith("info:"):
         return parse_tag_info(mod_str)
-
-    # Try to match CUSTOM pattern (Rule 3: must use "C:")
-    if mod_str_lower.startswith("c:"):
-        return parse_tag_custom(mod_str)
 
     # Default: treat as named modification (Rule 4: optional single letter CV prefix, no +/-)
     try:
@@ -399,6 +442,7 @@ def parse_modification_tag(mod_str: str) -> "MODIFICATION_TAG_TYPE":
 _GLYCAN_PATTERN = re.compile(r"^Glycan:(.+)$", re.IGNORECASE)
 
 
+# TODO: Support mixed glycan and formulas?  Proforma seems to support this yet Peptacular only allows glycans.
 @lru_cache(maxsize=1024)
 def parse_glycan(s: str) -> tuple["GlycanComponent", ...]:
     """
@@ -598,6 +642,9 @@ def parse_position_rule(s: str) -> "PositionRule":
                 raise ValueError(f"Unknown terminal or amino acid: '{s}'")
 
 
+LOC_PATTERN = re.compile(r"^([^#(]+)(?:#([^(]+))?(?:\(([^)]+)\))?$")
+
+
 @lru_cache(maxsize=512)
 def parse_tag_accession(s: str) -> "TagAccession":
     """
@@ -627,30 +674,42 @@ def parse_tag_accession(s: str) -> "TagAccession":
 
     s = s.strip()
 
-    # Use single pattern to match all CV accessions
-    match = PATTERN_ACCESSION.match(s)
+    cv, accession = s.split(":", 1)
+    match = LOC_PATTERN.match(accession)
     if match:
-        cv_name, accession = match.groups()
-        cv_upper = cv_name.upper()
+        name, pos, score = match.groups()
+        if score is not None:
+            score = float(score)
+    else:
+        name, pos, score = accession, None, None
 
-        # Map CV name to CV enum
-        cv_map = {
-            "UNIMOD": CV.UNIMOD,
-            "MOD": CV.PSI_MOD,
-            "RESID": CV.RESID,
-            "GNO": CV.GNOME,
-            "XLMOD": CV.XL_MOD,
-        }
+    match cv_upper := cv.upper():
+        case "UNIMOD":
+            return TagAccession(
+                accession=name, cv=CV.UNIMOD, position_id=pos, score=score
+            )
+        case "MOD":
+            return TagAccession(
+                accession=name, cv=CV.PSI_MOD, position_id=pos, score=score
+            )
+        case "RESID":
+            return TagAccession(
+                accession=name, cv=CV.RESID, position_id=pos, score=score
+            )
+        case "GNO":
+            return TagAccession(
+                accession=name, cv=CV.GNOME, position_id=pos, score=score
+            )
+        case "XLMOD":
+            return TagAccession(
+                accession=name, cv=CV.XL_MOD, position_id=pos, score=score
+            )
+        case _:
+            raise ValueError(
+                f"Unknown CV: {cv_upper} (must be UNIMOD, MOD, RESID, GNO, or XLMOD)"
+            )
 
-        cv = cv_map.get(cv_upper)
-        if cv is None:
-            raise ValueError(f"Unknown CV: {cv_name}")
-
-        return TagAccession(accession=accession, cv=cv)
-
-    raise ValueError(
-        f"Invalid accession string: {s} (must use full CV name: UNIMOD, MOD, RESID, GNO, or XLMOD)"
-    )
+    return TagAccession(accession=accession, cv=cv)
 
 
 @lru_cache(maxsize=512)
@@ -694,43 +753,48 @@ def parse_tag_mass(s: str) -> "TagMass":
     """
     from .comps import TagMass
 
-    s = s.strip()
-    match = PATTERN_MASS.match(s)
+    match = LOC_PATTERN.match(s)
     if match:
-        cv_prefix, obs_prefix, mass_str = match.groups()
-        mass = float(mass_str)
+        s, pos, score = match.groups()
+        if score is not None:
+            score = float(score)
+    else:
+        s, pos, score = s, None, None
 
-        # Map single letter CV prefix to CV enum
-        cv = None
+    if s.startswith(("+", "-")):
+        # No CV prefix, just mass
+        return TagMass(mass_str=s, cv=None, position_id=pos, score=score)
 
-        # Check if Obs: prefix is present (takes precedence if no CV prefix)
-        if obs_prefix and not cv_prefix:
-            cv = CV.OBSERVED
-        elif cv_prefix:
-            cv_upper = cv_prefix.upper()
-            # Map single letter prefixes to CV enum
-            cv_map = {
-                "U": CV.UNIMOD,
-                "M": CV.PSI_MOD,
-                "R": CV.RESID,
-                "X": CV.XL_MOD,
-                "G": CV.GNOME,
-            }
-            cv = cv_map.get(cv_upper)
-            if cv is None and cv_upper != "C":
-                raise ValueError(
-                    f"Invalid CV prefix: {cv_prefix} (must be U, M, R, X, G, or C)"
-                )
-
-        return TagMass(mass=mass, cv=cv)
-
-    raise ValueError(
-        f"Invalid mass string: {s} (sign is required, e.g., '+15.995' or '-18.010')"
-    )
+    cv, mass_str = s.split(":", 1)
+    match cv.upper():
+        case "U":
+            return TagMass(
+                mass_str=mass_str, cv=CV.UNIMOD, position_id=pos, score=score
+            )
+        case "M":
+            return TagMass(
+                mass_str=mass_str, cv=CV.PSI_MOD, position_id=pos, score=score
+            )
+        case "R":
+            return TagMass(mass_str=mass_str, cv=CV.RESID, position_id=pos, score=score)
+        case "X":
+            return TagMass(
+                mass_str=mass_str, cv=CV.XL_MOD, position_id=pos, score=score
+            )
+        case "G":
+            return TagMass(mass_str=mass_str, cv=CV.GNOME, position_id=pos, score=score)
+        case "C":
+            return TagMass(mass_str=mass_str, cv=None, position_id=pos, score=score)
+        case "OBS":
+            return TagMass(
+                mass_str=mass_str, cv=CV.OBSERVED, position_id=pos, score=score
+            )
+        case _:
+            raise ValueError(f"Invalid CV prefix: {cv} (must be U, M, R, X, G, or C)")
 
 
 @lru_cache(maxsize=512)
-def parse_tag_name(s: str) -> "TagName":
+def parse_tag_name(s: str) -> "TagName" | "TagCustom":
     """
     Parse a named modification string.
 
@@ -757,38 +821,38 @@ def parse_tag_name(s: str) -> "TagName":
     Raises:
         ValueError: If the string contains +/- or is invalid
     """
-    from .comps import TagName
+    from .comps import TagCustom, TagName
 
     s = s.strip()
 
-    # Check if it matches the named modification pattern
-    match = PATTERN_NAMED_MOD.match(s)
-    if not match:
-        raise ValueError(
-            f"Invalid named modification: {s} (must not contain +/- and must be alphanumeric)"
-        )
+    match = LOC_PATTERN.match(s)
+    if match:
+        s, pos, score = match.groups()
+        if score is not None:
+            score = float(score)
+    else:
+        s, pos, score = s, None, None
 
-    cv_prefix, name = match.groups()
+    if ":" not in s:
+        # No CV prefix, just name
+        return TagName(name=s, cv=None, position_id=pos, score=score)
 
-    # Map single letter CV prefix to CV enum
-    cv = None
-    if cv_prefix:
-        cv_upper = cv_prefix.upper()
-        cv_map = {
-            "U": CV.UNIMOD,
-            "M": CV.PSI_MOD,
-            "R": CV.RESID,
-            "X": CV.XL_MOD,
-            "G": CV.GNOME,
-            "C": CV.CUSTOM,
-        }
-        cv = cv_map.get(cv_upper)
-        if cv is None and cv_upper != "C":
-            raise ValueError(
-                f"Invalid CV prefix: {cv_prefix} (must be U, M, R, X, G, or C)"
-            )
-
-    return TagName(name=name, cv=cv)
+    cv, name = s.split(":", 1)
+    match cv.upper():
+        case "U":
+            return TagName(name=name, cv=CV.UNIMOD, position_id=pos, score=score)
+        case "M":
+            return TagName(name=name, cv=CV.PSI_MOD, position_id=pos, score=score)
+        case "R":
+            return TagName(name=name, cv=CV.RESID, position_id=pos, score=score)
+        case "X":
+            return TagName(name=name, cv=CV.XL_MOD, position_id=pos, score=score)
+        case "G":
+            return TagName(name=name, cv=CV.GNOME, position_id=pos, score=score)
+        case "C":
+            return TagCustom(name=name, position_id=pos, score=score)
+        case _:
+            raise ValueError(f"Invalid CV prefix: {cv} (must be U, M, R, X, G, or C)")
 
 
 @lru_cache(maxsize=512)
@@ -955,10 +1019,10 @@ def parse_global_charge_carrier(s: str) -> "GlobalChargeCarrier":
     s = s.strip()
 
     # Check for occurrence specification (^number at the end)
-    occurance = 1.0
+    occurance = 1
     if "^" in s:
         formula_part, occ_str = s.rsplit("^", 1)
-        occurance = float(occ_str)
+        occurance = int(occ_str)
     else:
         formula_part = s
 

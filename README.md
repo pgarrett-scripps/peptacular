@@ -81,16 +81,13 @@ Peptacular implements **Base-ProForma** and most of **Level 2-ProForma**:
 - Ambiguous positions: `[Oxidation]?PEPTIDE`
 - Position ranges: `PRT(ESFRMS)[+19.0523]ISK`
 - Glycan compositions: `N[Glycan:Hex5HexNAc4]K`
+- RESID / GNO / XLMOD modifications
 
 ### Not Yet Supported
-- Cross-linking notation (XL-MOD, branch points)
-- Position sets with group notation: `PEP[Oxidation#1]M[#1]AT`
-- Localization scores: `PEP[Oxidation#1(0.95)]M[#1(0.05)]AT`
-- RESID and GNO modifications
-- Chimeric spectra notation
+- Cross-linked or chimeric notation [Will not parse]
+- Position sets / localization score with group notation: `PEP[Oxidation#1(0.95)]M[#1(0.05)]AT` [Will pas but mass/comp based fucntions will not work]
 
 See [PROFORMA_COMPLIANCE.md](PROFORMA_COMPLIANCE.md) for detailed compliance status.
-
 
 ## Contributing
 

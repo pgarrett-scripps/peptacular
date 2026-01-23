@@ -78,6 +78,43 @@ def merge_compositions(components: Iterable[HasMassComp]) -> Counter[ElementInfo
     return sum((comp.get_composition() for comp in components), Counter())
 
 
+@runtime_checkable
+class HasPositionScore(Protocol):
+    """Protocol for objects that have position_id and score attributes."""
+
+    position_id: str | None
+    score: float | None
+
+    def serialize_position_score(self) -> str:
+        """Serialize the position_id and score components."""
+        ...
+
+
+class PositionScoreMixin(ABC):
+    """Mixin to add position/score serialization to classes."""
+
+    position_id: str | None
+    score: float | None
+
+    def serialize_position_score(self) -> str:
+        """Serialize the position_id and score components.
+
+        Returns empty string if neither position_id nor score are present.
+        Returns #<position_id> if only position_id is present.
+        Returns #<position_id>(<score>) if both are present.
+        Returns (<score>) if only score is present.
+        """
+
+        if self.position_id is not None and self.score is not None:
+            return f"#{self.position_id}({self.score})"
+        elif self.position_id is not None:
+            return f"#{self.position_id}"
+        elif self.score is not None:
+            return f"({self.score})"
+        else:
+            return ""
+
+
 @dataclass(frozen=True, slots=True)
 class FormulaElement(MassPropertyMixin):
     """A single element in a molecular formula like [13C]2 or H2"""
@@ -143,11 +180,13 @@ class FormulaElement(MassPropertyMixin):
 
 
 @dataclass(frozen=True, slots=True)
-class ChargedFormula(MassPropertyMixin):
+class ChargedFormula(MassPropertyMixin, PositionScoreMixin):
     """A formula that can be charged, expressed in ProForma as Formula:C2H6:z+2"""
 
     formula: tuple[FormulaElement, ...]
     charge: int | None = None
+    position_id: str | None = None
+    score: float | None = None
 
     @property
     def is_valid(self) -> bool:
@@ -330,11 +369,13 @@ class PositionRule:
 
 
 @dataclass(frozen=True, slots=True)
-class TagAccession(MassPropertyMixin):
+class TagAccession(MassPropertyMixin, PositionScoreMixin):
     """The accession for a modification"""
 
     accession: str
     cv: CV
+    position_id: str | None = None
+    score: float | None = None
 
     @property
     def is_valid(self) -> bool:
@@ -407,11 +448,23 @@ class TagAccession(MassPropertyMixin):
 
 
 @dataclass(frozen=True, slots=True)
-class TagMass(MassPropertyMixin):
+class TagMass(MassPropertyMixin, PositionScoreMixin):
     """A mass modification"""
 
-    mass: float
+    mass_str: str | float
     cv: CV | None = None
+    position_id: str | None = None
+    score: float | None = None
+
+    def __post_init__(self):
+        # Ensure mass_str includes +/- sign
+        mass_str = str(self.mass_str)
+
+        # Add sign if not present
+        if not mass_str.startswith(("+", "-")):
+            mass_str = f"+{mass_str}"
+
+        object.__setattr__(self, "mass_str", mass_str)
 
     @property
     def is_valid(self) -> bool:
@@ -423,6 +476,10 @@ class TagMass(MassPropertyMixin):
             return None
         except Exception as e:
             return str(e)
+
+    @property
+    def mass(self) -> float:
+        return float(self.mass_str)
 
     def get_mass(self, monoisotopic: bool = True) -> float:
         return self.mass
@@ -478,11 +535,25 @@ class TagMass(MassPropertyMixin):
 
 
 @dataclass(frozen=True, slots=True)
-class TagName(MassPropertyMixin):
+class PositionScore(MassPropertyMixin, PositionScoreMixin):
+    position_id: str
+    score: float | None = None
+
+    def get_mass(self, monoisotopic: bool = True) -> float:
+        return 0.0
+
+    def get_composition(self) -> Counter[ElementInfo]:
+        return Counter()
+
+
+@dataclass(frozen=True, slots=True)
+class TagName(MassPropertyMixin, PositionScoreMixin):
     """A named modification"""
 
     name: str
     cv: CV | None = None
+    position_id: str | None = None
+    score: float | None = None
 
     @property
     def is_valid(self) -> bool:
@@ -562,7 +633,7 @@ class TagName(MassPropertyMixin):
 
 
 @dataclass(frozen=True)
-class TagInfo(MassPropertyMixin):
+class TagInfo(MassPropertyMixin, PositionScoreMixin):
     """An INFO tag modification"""
 
     info: str
@@ -599,10 +670,12 @@ class TagInfo(MassPropertyMixin):
 
 
 @dataclass(frozen=True)
-class TagCustom(MassPropertyMixin):
+class TagCustom(MassPropertyMixin, PositionScoreMixin):
     """A custom/user-defined modification"""
 
     name: str
+    position_id: str | None = None
+    score: float | None = None
 
     @property
     def is_valid(self) -> bool:
@@ -641,6 +714,12 @@ class GlycanComponent(MassPropertyMixin):
 
     monosaccharide: Monosaccharide | ChargedFormula
     occurance: int
+
+    def __post_init__(self):
+        if isinstance(self.monosaccharide, ChargedFormula):
+            raise NotImplementedError(
+                "GlycanComponent with ChargedFormula is not fully supported yet."
+            )
 
     def get_mass(self, monoisotopic: bool = True) -> float:
         if isinstance(self.monosaccharide, ChargedFormula):
@@ -688,10 +767,12 @@ class GlycanComponent(MassPropertyMixin):
 
 
 @dataclass(frozen=True, slots=True)
-class GlycanTag(MassPropertyMixin):
+class GlycanTag(MassPropertyMixin, PositionScoreMixin):
     """A glycan composition tag"""
 
     components: tuple[GlycanComponent, ...]
+    position_id: str | None = None
+    score: float | None = None
 
     @property
     def is_valid(self) -> bool:
@@ -839,7 +920,14 @@ class GlobalChargeCarrier(MassPropertyMixin):
 
 # Type alias for modification tags
 MODIFICATION_TAG_TYPE = (
-    TagAccession | ChargedFormula | GlycanTag | TagInfo | TagMass | TagName | TagCustom
+    TagAccession
+    | ChargedFormula
+    | GlycanTag
+    | TagInfo
+    | TagMass
+    | TagName
+    | TagCustom
+    | PositionScore
 )
 
 

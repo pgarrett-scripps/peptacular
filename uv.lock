@@ -326,7 +326,6 @@ dev = [
     { name = "pytest-cov" },
     { name = "pyupgrade" },
     { name = "ruff" },
-    { name = "tacular" },
     { name = "ty" },
 ]
 docs = [
@@ -347,7 +346,6 @@ dev = [
     { name = "pytest-cov", specifier = ">=6.0.0" },
     { name = "pyupgrade", specifier = ">=3.21.0" },
     { name = "ruff", specifier = ">=0.14.7" },
-    { name = "tacular", editable = "../tacular" },
     { name = "ty", specifier = ">=0.0.11" },
 ]
 docs = [

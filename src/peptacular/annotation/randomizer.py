@@ -63,7 +63,7 @@ def as_tag_mass(
         raise ValueError(f"Mass not available for modification: {mod}")
 
     return TagMass(
-        mass=mass,
+        mass_str=str(mass),
         cv=as_cv(mod) if include_cv else None,
     )
 

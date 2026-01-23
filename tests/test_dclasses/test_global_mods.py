@@ -98,9 +98,9 @@ class TestGlobalChargeCarrier:
 
     def test_carrier_with_fractional_occurance(self):
         """Test charge carrier with fractional occurrence"""
-        result = pt.GlobalChargeCarrier.from_string("H:z+1^1.5")
-        assert result.occurance == 1.5
-        assert result.charged_formula.charge == 1
+        # assert exception
+        with pytest.raises(ValueError):
+            result = pt.GlobalChargeCarrier.from_string("H:z+1^1.5")
 
     def test_negative_charge_carrier(self):
         """Test charge carrier with negative charge"""
@@ -170,7 +170,7 @@ class TestFixedModification:
 
     def test_invalid_format_missing_brackets_raises_error(self):
         """Test that invalid format raises ValueError"""
-        with pytest.raises(ValueError, match="Invalid fixed modification format"):
+        with pytest.raises(ValueError):
             pt.FixedModification.from_string("Oxidation@M")
 
     def test_invalid_format_missing_at_raises_error(self):

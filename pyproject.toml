@@ -15,7 +15,6 @@ dev = [
     "ruff>=0.14.7",
     "pyupgrade>=3.21.0",
     "ty>=0.0.11",
-    "tacular",
     "paftacular",
 ]
 

@@ -136,7 +136,7 @@ class Fragment:
         confidence: float | None = None,
         mass_error: float | None = None,
         mass_error_type: Literal["ppm", "da"] = "ppm",
-    ) -> "PafAnnotation":
+    ) -> Any:
         """Convert fragment to mzPAF format string."""
         import paftacular as pft
 
@@ -299,7 +299,7 @@ class Fragment:
 
     @staticmethod
     def from_mzpaf(
-        paf: "PafAnnotation" | str, mass: float, monoisotopic: bool = True
+        paf: Any | str, mass: float, monoisotopic: bool = True
     ) -> "Fragment":
         """Create Fragment from mzPAF PafAnnotation."""
         import paftacular as pft
