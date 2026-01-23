@@ -277,6 +277,13 @@ class Mods(Generic[T], MassPropertyMixin):
             _mods=self._mods.copy() if self._mods else None,
         )
 
+    def __hash__(self) -> int:
+        if self._mods is None:
+            return hash((self.mod_type, None))
+        # Create a frozenset of the items for hashing
+        mods_frozenset = frozenset(self._mods.items())
+        return hash((self.mod_type, mods_frozenset))
+
 
 # Valid Amino Acid codes including Ambiguous ones (B, Z, J, X) and potential future codes
 VALID_AMINO_ACIDS = {aa.one_letter_code for aa in AA_LOOKUP.ordered_amino_acids}

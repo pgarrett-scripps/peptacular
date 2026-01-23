@@ -9,6 +9,137 @@ from .parallel import parallel_apply_internal
 from .util import get_annotation_input
 
 
+def _parse_chimeric_single(s: str, validate: bool = False) -> list[ProFormaAnnotation]:
+    return list(ProFormaAnnotation.parse_chimeric(s, validate=validate))
+
+
+@overload
+def parse_chimeric(
+    s: str,
+    validate: bool = False,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+    reuse_pool: bool = True,
+) -> list[ProFormaAnnotation]: ...
+
+
+@overload
+def parse_chimeric(
+    s: Sequence[str],
+    validate: bool = False,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+    reuse_pool: bool = True,
+) -> list[list[ProFormaAnnotation]]: ...
+
+
+def parse_chimeric(
+    s: str | Sequence[str],
+    validate: bool = False,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+    reuse_pool: bool = True,
+) -> list[ProFormaAnnotation] | list[list[ProFormaAnnotation]]:
+    """Parse a chimeric ProForma string or list of strings into lists of ProFormaAnnotation objects."""
+    if isinstance(s, Sequence) and not isinstance(s, str):
+        return parallel_apply_internal(
+            _parse_chimeric_single,
+            s,
+            n_workers=n_workers,
+            chunksize=chunksize,
+            method=method,
+            validate=validate,
+            reuse_pool=reuse_pool,
+        )
+    else:
+        return _parse_chimeric_single(s, validate=validate)
+
+
+def _serialize_chimeric_single(
+    sequence: Sequence[ProFormaAnnotation | str],
+) -> str:
+    annots = [get_annotation_input(seq, copy=True) for seq in sequence]
+
+    # first annot will have comound anme and global mods (iso and static)
+
+    # ensure all annots share the same compound name and global mods
+    compund_names = set(annot.compound_name for annot in annots)
+    if len(compund_names) > 1:
+        raise ValueError(
+            "All annotations in a chimeric sequence must share the same compound name."
+        )
+
+    static_mods = set(annot.static_mods for annot in annots)
+
+    if len(static_mods) > 1:
+        raise ValueError(
+            "All annotations in a chimeric sequence must share the same static modifications."
+        )
+
+    isotope_mods = set(annot.isotope_mods for annot in annots)
+
+    if len(isotope_mods) > 1:
+        raise ValueError(
+            "All annotations in a chimeric sequence must share the same isotopic modifications."
+        )
+
+    for i, annot in enumerate(annots):
+        if i == 0:
+            continue
+        annot.compound_name = None
+        annot.static_mods = None
+        annot.isotope_mods = None
+
+    return "+".join(annot.serialize() for annot in annots)
+
+
+@overload
+def serialize_chimeric(
+    sequence: Sequence[ProFormaAnnotation | str],
+    n_workers: None = None,
+    chunksize: None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> str: ...
+
+
+@overload
+def serialize_chimeric(
+    sequence: Sequence[Sequence[ProFormaAnnotation | str]],
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> list[str]: ...
+
+
+def serialize_chimeric(
+    sequence: Sequence[ProFormaAnnotation | str]
+    | Sequence[Sequence[ProFormaAnnotation | str]],
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> str | list[str]:
+    """Serialize a chimeric peptide sequence or list of sequences to ProForma string format."""
+    if (
+        isinstance(sequence, Sequence)
+        and not isinstance(sequence, str)
+        and all(
+            isinstance(seq, Sequence) and not isinstance(seq, str) for seq in sequence
+        )
+    ):
+        return parallel_apply_internal(
+            _serialize_chimeric_single,
+            sequence,
+            n_workers=n_workers,
+            chunksize=chunksize,
+            method=method,
+        )
+    else:
+        return _serialize_chimeric_single(sequence)  # type: ignore[arg-type]
+
+
 def _parse_single(s: str, validate: bool = False) -> ProFormaAnnotation:
     return ProFormaAnnotation.parse(s, validate=validate)
 

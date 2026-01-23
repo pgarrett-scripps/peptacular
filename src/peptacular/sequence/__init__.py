@@ -19,9 +19,11 @@ from .basic import (
     is_ambiguous,
     is_modified,
     parse,
+    parse_chimeric,
     percent_residues,
     sequence_length,
     serialize,
+    serialize_chimeric,
     validate,
 )
 from .combinatoric import (

@@ -42,7 +42,7 @@ lint:
 format:
     uv run ruff check --select I --fix src/ tests/
     uv run ruff check --select F401 --fix src/ tests/
-    uv run ruff format src/ tests/
+    uv run ruff format src tests
 
 # ty type checking
 ty:
