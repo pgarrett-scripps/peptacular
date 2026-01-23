@@ -655,7 +655,7 @@ class TestFragment(unittest.TestCase):
         frags = annot.fragment(ion_types=["y"], charges=[1], monoisotopic=False)
 
         for frag in frags:
-            paf_annot = frag.to_mzpaf()
+            _ = frag.to_mzpaf()
 
 
 if __name__ == "__main__":

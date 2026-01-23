@@ -361,7 +361,6 @@ dev = [
 
 [[package]]
 name = "peptacular"
-version = "3.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "tacular" },
@@ -731,7 +730,6 @@ wheels = [
 
 [[package]]
 name = "tacular"
-version = "0.1.0"
 source = { editable = "../tacular" }
 
 [package.metadata]
