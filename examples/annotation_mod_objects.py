@@ -2,25 +2,15 @@
 ProForma Mod Objects Examples
 ==============================
 Demonstrates working with Mods and Mod objects returned from ProForma annotations.
-
-Mods: A collection of modifications (e.g., all N-terminal mods)
-Mod: A single modification with its count (e.g., Acetyl×2)
-
-These objects are returned when accessing modification properties on ProFormaAnnotation.
 """
 
 import peptacular as pt
 
 
 def run():
-
     # ============================================================================
     # ACCESSING MODS OBJECTS
     # ============================================================================
-
-    print("=" * 60)
-    print("ACCESSING MODS OBJECTS")
-    print("=" * 60)
 
     # Parse a ProForma annotation with various modifications
     annot = pt.parse("[Acetyl][Formyl]-PEM[Oxidation][Phospho]TIS[Phospho]DE/2")
@@ -72,25 +62,6 @@ def run():
         print()
 
     # ============================================================================
-    # MODS COLLECTION PROPERTIES
-    # ============================================================================
-
-    print("=" * 60)
-    print("MODS COLLECTION PROPERTIES")
-    print("=" * 60)
-
-    annot = pt.parse("[Acetyl][Formyl]-PEM[Oxidation][Phospho]TIDE/2")
-    nterm = annot.nterm_mods
-
-    print(f"N-terminal mods: {nterm}\n")
-    print(f"Total mass (mono): {nterm.get_mass(monoisotopic=True):.4f}")
-    print(f"Total mass (avg): {nterm.get_mass(monoisotopic=False):.4f}")
-    print(f"Total composition: {nterm.get_composition()}")
-    print(f"Total charge: {nterm.get_charge()}")
-    print(f"Number of unique mods: {len(nterm)}")
-    print(f"Serialized: {nterm.serialize()}")
-
-    # ============================================================================
     # ACCESSING PARSED MOD VALUES
     # ============================================================================
 
@@ -99,7 +70,7 @@ def run():
     print("=" * 60)
 
     annot = pt.parse("PEM[Oxidation]TIS[Phospho]DE")
-    
+
     # Get mods at position 2 (M with Oxidation)
     mods_at_2 = annot.get_internal_mods_at_index(2)
     print(f"Mods at position 2: {mods_at_2}\n")
@@ -216,7 +187,7 @@ def run():
     annot4 = pt.parse("PEM[Formula:O]TIDE")
 
     print("Different representations of Oxidation:\n")
-    
+
     for i, annot in enumerate([annot1, annot2, annot3, annot4], 1):
         mods = annot.get_internal_mods_at_index(2)
         for mod in mods:
@@ -239,7 +210,7 @@ def run():
 
     print(f"N-terminal mods valid: {nterm.is_valid}")
     print(f"Validation result: {nterm.validate()}")
-    
+
     print(f"\nInternal mods valid: {internal.is_valid}")
     print(f"Validation result: {internal.validate()}")
 
@@ -252,9 +223,9 @@ def run():
     print("=" * 60)
 
     annot = pt.parse("PEP(TIS)[Phospho]DE")
-    
+
     print(f"Annotation: {annot.serialize()}\n")
-    
+
     if annot.has_intervals:
         print("Intervals:")
         for interval in annot.intervals:
@@ -280,7 +251,7 @@ def run():
     print("\nIndividual mod serialization:")
     print(f"  N-term: {annot.nterm_mods.serialize()}")
     print(f"  Position 2: {annot.get_internal_mods_at_index(2).serialize()}")
-    
+
     # Show how mods serialize differently based on type
     print("\nMod type serialization patterns:")
     examples = [
@@ -291,7 +262,7 @@ def run():
         ("<15N>PEPTIDE", "isotope_mods"),
         ("PEPTIDE/[Na:z+1]", "charge_adducts"),
     ]
-    
+
     for proforma, attr in examples:
         annot = pt.parse(proforma)
         mods = getattr(annot, attr)

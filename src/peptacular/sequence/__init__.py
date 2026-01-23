@@ -118,6 +118,8 @@ __all__ = [
     # basic
     "parse",
     "serialize",
+    "parse_chimeric",
+    "serialize_chimeric",
     "sequence_length",
     "is_ambiguous",
     "is_modified",

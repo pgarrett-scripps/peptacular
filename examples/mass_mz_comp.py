@@ -6,10 +6,10 @@ Examples of calculating mass, m/z, and elemental composition from ProForma annot
 
 import peptacular as pt
 
-def run():
 
+def run():
     # Parse a simple peptide sequence
-    annot = pt.parse('PEPTIDE')
+    annot = pt.parse("PEPTIDE")
 
     # ============================================================================
     # MASS CALCULATIONS
@@ -25,13 +25,11 @@ def run():
     print(f"Default mass: {mass:.4f} Da")  # 799.3600
 
     # Explicitly specify precursor ion type
-    mass_p = annot.mass(ion_type=pt.IonType.PRECURSOR)
-    mass_p_str = annot.mass(ion_type="p")
+    mass_p = annot.mass(ion_type="p")
     print(f"Precursor mass: {mass_p:.4f} Da")
 
     # --- Neutral Mass (no terminal groups) ---
     neutral = annot.mass(ion_type=pt.IonType.NEUTRAL)
-    neutral_str = annot.mass(ion_type="n")
     print(f"Neutral mass: {neutral:.4f} Da")
 
     # --- m/z Calculation ---
@@ -54,8 +52,8 @@ def run():
     print(f"Mass at -2 charge: {mass_2minus:.4f} Da")
 
     # Adduct charges (overrides annotation charge)
-    mass_na = annot.mass(charge='Na:z+1')
-    mass_multi_adduct = annot.mass(charge=('Na:z+1^2', 'H:z+1'))
+    mass_na = annot.mass(charge="Na:z+1")
+    mass_multi_adduct = annot.mass(charge=("Na:z+1^2", "H:z+1"))
     print(f"Mass with Na+ adduct: {mass_na:.4f} Da")
     print(f"Mass with multiple adducts: {mass_multi_adduct:.4f} Da")
 
@@ -65,19 +63,18 @@ def run():
     print(f"Mass with 1x 13C: {mass_c13:.4f} Da")
 
     # Custom isotope specification
-    mass_custom_iso = annot.mass(isotopes={'17O': 2, '13C': 1})
+    mass_custom_iso = annot.mass(isotopes={"17O": 2, "13C": 1})
     print(f"Mass with 2x 17O and 1x 13C: {mass_custom_iso:.4f} Da")
 
     # --- Neutral Losses ---
     # Single loss
-    mass_water_loss = annot.mass(losses={pt.NeutralDelta.WATER: 1})
+    mass_water_loss = annot.mass(deltas={"H2O": 1})
     print(f"Mass with H2O loss: {mass_water_loss:.4f} Da")
 
     # Multiple losses
-    mass_multi_loss = annot.mass(losses={
-        pt.NeutralDelta.WATER: 1,
-        pt.NeutralDelta.AMMONIA: 2
-    })
+    mass_multi_loss = annot.mass(
+        deltas={pt.NeutralDelta.WATER: 1, pt.NeutralDelta.AMMONIA: 2}
+    )
     print(f"Mass with H2O + 2×NH3 loss: {mass_multi_loss:.4f} Da")
 
     # ============================================================================
@@ -101,7 +98,7 @@ def run():
 
     # --- Composition with Modifications ---
     # Apply charge and isotopes
-    comp_modified = annot.comp(charge='Na:z+1', isotopes={'17O': 2, '13C': 1})
+    comp_modified = annot.comp(charge="Na:z+1", isotopes={"17O": 2, "13C": 1})
     comp_modified_str = {str(elem): count for elem, count in comp_modified.items()}
     print(f"\nModified composition: {comp_modified_str}")
 
@@ -114,17 +111,18 @@ def run():
     print("=" * 60)
 
     # Applies the global isotope to all residues
-    iso_annot = pt.parse('<13C>PEPTIDE')
+    iso_annot = pt.parse("<13C>PEPTIDE")
     iso_comp = iso_annot.comp()
     iso_comp_str = {str(elem): count for elem, count in iso_comp.items()}
     print(f"Composition with global 13C: {iso_comp_str}")
 
-    # will also apply isotopes to modifications where available 
+    # will also apply isotopes to modifications where available
     # Charge is applied after isotopes so will reflect in composition
-    mod_iso_annot = pt.parse('<2H>PEPT[Phospho]IDE/2')
+    mod_iso_annot = pt.parse("<2H>PEPT[Phospho]IDE/2")
     mod_iso_comp = mod_iso_annot.comp()
     mod_iso_comp_str = {str(elem): count for elem, count in mod_iso_comp.items()}
     print(f"Composition with global 13C and Phospho mod: {mod_iso_comp_str}")
+
 
 if __name__ == "__main__":
     run()

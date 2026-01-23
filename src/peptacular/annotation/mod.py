@@ -13,6 +13,7 @@ from ..proforma_components import (
     IsotopeReplacement,
     MassPropertyMixin,
     ModificationTags,
+    TagMass,
 )
 
 # Define your modification types
@@ -68,11 +69,7 @@ class Mod(Generic[T]):
 
     def get_composition(self) -> Counter[ElementInfo]:
         """Get total composition for this modification occurrence."""
-        base_composition: Counter[ElementInfo] = self.value.get_composition()
-        total_composition: Counter[ElementInfo] = Counter()
-        for elem, cnt in base_composition.items():
-            total_composition[elem] = cnt * self.count
-        return total_composition
+        return self.value.get_composition().copy()
 
     def get_charge(self) -> int:
         """Get total charge for this modification occurrence."""
@@ -175,7 +172,28 @@ class Mods(Generic[T], MassPropertyMixin):
         """Get total composition for all modifications."""
         return sum((mod.get_composition() for mod in self.mods), Counter())
 
-    def get_charge(self) -> int | None:
+    def get_composition_with_delta_mass(
+        self, monoisotopic: bool = True
+    ) -> tuple[Counter[ElementInfo], float]:
+        """Get total composition and when not possible fall back to delta mass for MassTags."""
+        total_compsition = Counter[ElementInfo]()
+        total_delta_mass = 0.0
+        for mod in self.mods:
+            try:
+                comp = mod.get_composition()
+                total_compsition += comp
+            except ValueError as e:
+                if isinstance(mod.value, ModificationTags) and isinstance(
+                    mod.value.first_tag, TagMass
+                ):
+                    total_delta_mass += mod.get_mass(monoisotopic=monoisotopic)
+                else:
+                    raise ValueError(
+                        f"Cannot get composition for mod {mod.value}, and no mass tag found."
+                    ) from e
+        return total_compsition, total_delta_mass
+
+    def get_charge(self) -> int:
         """Get total charge for all modifications."""
         return sum(mod.get_charge() for mod in self.mods)
 

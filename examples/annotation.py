@@ -6,46 +6,41 @@ Basic examples of parsing, serializing, and manipulating ProForma annotations.
 
 import peptacular as pt
 
+
 def run():
-
     # ============================================================================
-    # PARSING
+    # PARSING ANNOTATIONS
     # ============================================================================
-
-    print("=" * 60)
-    print("PARSING PROFORMA STRINGS")
-    print("=" * 60)
 
     # Simple sequence
-    simple = pt.parse("PEPTIDE")
+    simple: pt.ProFormaAnnotation = pt.parse("PEPTIDE")
     print(f"Simple: {simple.serialize()}")
 
-    # With modifications
-    modified = pt.parse("PEM[Oxidation]TIDE")
-    print(f"Modified: {modified.serialize()}")
-
-    # Terminal modifications
-    terminal = pt.parse("[Acetyl]-PEPTIDE-[Amidated]")
-    print(f"Terminal mods: {terminal.serialize()}")
-
-    # With charge
-    charged = pt.parse("PEPTIDE/2")
-    print(f"Charged: {charged.serialize()}")
-
-    # Complex example
-    complex_annot = pt.parse("<[Oxidation]@M>[Acetyl]-PEM[Phospho]TIDE/2")
-    print(f"Complex: {complex_annot.serialize()}")
+    # Chimeric sequence
+    chimeric: list[pt.ProFormaAnnotation] = pt.parse_chimeric("PEPTIDE+PEPTIDE")
+    print(f"Chimeric: {pt.serialize_chimeric(chimeric)}")
 
     # ============================================================================
     # CREATING ANNOTATIONS PROGRAMMATICALLY
     # ============================================================================
 
-    print("\n" + "=" * 60)
-    print("CREATING ANNOTATIONS")
-    print("=" * 60)
-
     # Create from scratch
-    annot = pt.ProFormaAnnotation(sequence="PEPTIDE")
+    annot = pt.ProFormaAnnotation(sequence="PEPTIDE", charge=2)
+    print(f"New annotation: {annot.serialize()}")
+
+    # Set internal Mods... it takes a dict of position -> {mod: count}
+    annot = pt.ProFormaAnnotation(
+        sequence="PEPTIDE", charge=2, internal_mods={2: {"Oxidation": 1}}
+    )
+    print(f"New annotation: {annot.serialize()}")
+
+    # Other modications are just {mod: count}
+    annot = pt.ProFormaAnnotation(
+        sequence="PEPTIDE",
+        nterm_mods={"Acetyl": 1},
+        internal_mods={2: {"Oxidation": 1, "Phospho": 1}},
+        charge=2,
+    )
     print(f"New annotation: {annot.serialize()}")
 
     # ============================================================================
@@ -281,7 +276,9 @@ def run():
 
     # Check if has any mods
     print(f"Has any mods: {annot.has_mods()}")
-    print(f"Has internal/charge: {annot.has_mods([pt.ModType.INTERNAL, pt.ModType.CHARGE])}")
+    print(
+        f"Has internal/charge: {annot.has_mods([pt.ModType.INTERNAL, pt.ModType.CHARGE])}"
+    )
     print(f"Has internal/charge: {annot.has_mods(['internal', 'charge'])}")
 
     # ============================================================================
@@ -316,7 +313,6 @@ def run():
     # Enable validation when creating (and for methods that modify the annotation)
     annot_with_val = pt.ProFormaAnnotation(sequence="PEPTIDE", validate=True)
     print(f"With validation: {annot_with_val.serialize()}")
-
 
     # Validation checks modification syntax (can be disabled per method)
     print("\nAttempting to add invalid modification with validation ON:")

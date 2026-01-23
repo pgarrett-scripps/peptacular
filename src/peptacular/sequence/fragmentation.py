@@ -27,7 +27,7 @@ def _fragment_single(
     neutral_deltas: Sequence[LOSS_TYPE] = (),
     calculate_composition: bool = False,
     include_sequence: bool = False,
-    max_losses: int = 1,
+    max_ndeltas: int = 1,
 ) -> list[Fragment]:
     annotation = get_annotation_input(sequence=sequence, copy=False)
 
@@ -40,7 +40,7 @@ def _fragment_single(
         neutral_deltas=neutral_deltas,
         calculate_composition=calculate_composition,
         include_sequence=include_sequence,
-        max_losses=max_losses,
+        max_ndeltas=max_ndeltas,
     )
 
 
@@ -55,7 +55,7 @@ def fragment(
     neutral_deltas: Sequence[LOSS_TYPE | None] = (None,),
     calculate_composition: bool = False,
     include_sequence: bool = False,
-    max_losses: int = 1,
+    max_ndeltas: int = 1,
     n_workers: None = None,
     chunksize: None = None,
     method: parallelMethod | parallelMethodLiteral | None = None,
@@ -73,7 +73,7 @@ def fragment(
     neutral_deltas: Sequence[LOSS_TYPE | None] = (None,),
     calculate_composition: bool = False,
     include_sequence: bool = False,
-    max_losses: int = 1,
+    max_ndeltas: int = 1,
     n_workers: int | None = None,
     chunksize: int | None = None,
     method: parallelMethod | parallelMethodLiteral | None = None,
@@ -90,7 +90,7 @@ def fragment(
     neutral_deltas: Sequence[LOSS_TYPE] = (),
     calculate_composition: bool = False,
     include_sequence: bool = False,
-    max_losses: int = 1,
+    max_ndeltas: int = 1,
     n_workers: int | None = None,
     chunksize: int | None = None,
     method: parallelMethod | parallelMethodLiteral | None = None,
@@ -115,7 +115,7 @@ def fragment(
             isotopes=isotopes,
             deltas=deltas,
             neutral_deltas=neutral_deltas,
-            max_losses=max_losses,
+            max_ndeltas=max_ndeltas,
             calculate_composition=calculate_composition,
             include_sequence=include_sequence,
         )
@@ -128,7 +128,7 @@ def fragment(
             isotopes=isotopes,
             deltas=deltas,
             neutral_deltas=neutral_deltas,
-            max_losses=max_losses,
+            max_ndeltas=max_ndeltas,
             calculate_composition=calculate_composition,
             include_sequence=include_sequence,
         )

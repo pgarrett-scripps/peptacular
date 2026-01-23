@@ -1,5 +1,5 @@
 ProForma Compliance
-=======================
+===================
 
 
 .. include:: ../PROFORMA_COMPLIANCE.md

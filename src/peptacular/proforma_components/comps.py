@@ -545,6 +545,9 @@ class PositionScore(MassPropertyMixin, PositionScoreMixin):
     def get_composition(self) -> Counter[ElementInfo]:
         return Counter()
 
+    def validate(self) -> str | None:
+        return None
+
 
 @dataclass(frozen=True, slots=True)
 class TagName(MassPropertyMixin, PositionScoreMixin):
@@ -840,6 +843,9 @@ class PlacementTagMixin(MassPropertyMixin):
     def get_charge(self) -> int | None:
         return None
 
+    def validate(self) -> str | None:
+        return None
+
 
 @dataclass(frozen=True, slots=True)
 class PositionTag(PlacementTagMixin):
@@ -1055,21 +1061,23 @@ class ModificationTags(MassPropertyMixin):
 
         return None
 
+    @property
+    def first_tag(self) -> MODIFICATION_TAG_TYPE:
+        """Get the first tag in this modification"""
+        return self.tags[0]
+
     def get_mass(self, monoisotopic: bool = True) -> float:
         """Get the mass from this modification"""
-        first_tag = self.tags[0]
-        return first_tag.get_mass(monoisotopic=monoisotopic)
+        return self.first_tag.get_mass(monoisotopic=monoisotopic)
 
     def get_composition(self) -> Counter[ElementInfo]:
         """Get the composition from this modification"""
-        first_tag = self.tags[0]
-        return first_tag.get_composition()
+        return self.first_tag.get_composition()
 
     def get_charge(self) -> int | None:
         """Get the charge of this modification, if any."""
-        first_tag = self.tags[0]
-        if isinstance(first_tag, ChargedFormula):
-            return first_tag.charge
+        if isinstance(self.first_tag, ChargedFormula):
+            return self.first_tag.charge
         return None
 
     def __len__(self) -> int:

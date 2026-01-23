@@ -123,14 +123,16 @@ class ChargeCarrierInfo:
         carriers = handle_charge_input(charge)
         return cast(Self, ChargeCarrierInfo(carriers))
 
-    def to_fragment_mapping(self) -> Mapping[str, int] | None:
+    def to_fragment_mapping(
+        self, has_internal_charge: bool = False
+    ) -> Mapping[str, int] | None:
         composition: Counter[ElementInfo] = self.composition
         if not composition:
             return None
         if len(composition) == 1:
             elem_info, count = next(iter(composition.items()))
-            if str(elem_info) == "H":
-                return None  # None type means infer protonation
+            if str(elem_info) == "H" and not has_internal_charge:
+                return None  # None type means infer protonation. Only do this is no internal charge.
 
         return {str(elem_info): count for elem_info, count in composition.items()}
 
@@ -291,7 +293,11 @@ def _handle_delta_input(
     # Single items - base cases
     if isinstance(deltas, str):
         try:
-            return {NEUTRAL_DELTA_LOOKUP[deltas].composition: 1}
+            return {
+                ChargedFormula.from_composition(
+                    NEUTRAL_DELTA_LOOKUP[deltas].composition
+                ): 1
+            }
         except KeyError:
             pass
 

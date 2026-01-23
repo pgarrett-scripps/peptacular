@@ -1,15 +1,5 @@
 # ProForma Parser Implementation Checklist
 
-[x]: Full compatibility
-
-[-]: Parser only (mass/composition... will cause error or not work correctly) 
-
-[ ]: Not compatible
-
-! - Will support in fucture release
-
-? - Will not support
-
 ## 5.3.1 Base-ProForma Compliance
 
 - [x] **Amino acids (+UO)** - `AAHCFKUOT` (§6.1)
@@ -47,9 +37,9 @@
 ## 5.3.4 Level 2-ProForma + Cross-Linking
 
 - [x] **XL-MOD modifications** - `EVTK[X:Aryl azide]LEK[XLMOD:00114]SEFD` (§9.1)
-- ?[-] **Cross-linkers (intrachain)** - `EVTK[X:Aryl azide#XL1]LEK[#XL1]SEFD` (§9.2.1)
-- ?[ ] **Cross-linkers (interchain)** - `EVTK[X:Aryl azide#XL1]L//EK[#XL1]SEFD` (§9.2.2)
-- ?[ ] **Branches** - `ED[MOD:00093#BRANCH]//D[#BRANCH]ATR` (§9.3) 
+- [ ] **Cross-linkers (intrachain)** - `EVTK[X:Aryl azide#XL1]LEK[#XL1]SEFD` (§9.2.1)
+- [ ] **Cross-linkers (interchain)** - `EVTK[X:Aryl azide#XL1]L//EK[#XL1]SEFD` (§9.2.2)
+- [ ] **Branches** - `ED[MOD:00093#BRANCH]//D[#BRANCH]ATR` (§9.3) 
 
 ## 5.3.5 Level 2-ProForma + Glycans
 
@@ -58,10 +48,10 @@
 
 ## 5.3.6 Level 2-ProForma + Advanced Complexity
 
-- [-] **Charged formulas** - `SEQUEN[Formula:Zn1:z+2]CE` (§11.1)
-- [-] **Controlling placement** - `PTI(MERMERME)[+32|Position:E]PTIDE` (§11.2) 
+- [x] **Charged formulas** - `SEQUEN[Formula:Zn1:z+2]CE` (§11.1)
+- [x] **Controlling placement** - `PTI(MERMERME)[+32|Position:E]PTIDE` (§11.2) 
 - [x] **Global isotope** - `<13C>CARBON` (§11.3.1)
 - [x] **Fixed modifications** - `<[Oxidation]@M>ATPEMILTCMGCLK` (§11.3.2)
-- [ ] **Chimeric spectra** - `NEEYN+SEQUEN` (§11.4)
+- [x] **Chimeric spectra** - `NEEYN+SEQUEN` (§11.4)
 - [x] **Charges** - `SEQUEN/2`, `SEQUEN/[Na:z+1,H:z+1]` (§11.5)
-- ![ ] **Ion notation** - `SEQUEN-[b-type-ion]` (§11.6)
+- [ ] **Ion notation** - `SEQUEN-[b-type-ion]` (§11.6) [May support in future]

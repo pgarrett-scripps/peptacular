@@ -88,3 +88,12 @@ upgrade:
     @echo "Upgrading Python syntax to 3.12+..."
     @find src tests -name "*.py" -type f -exec uv run --python-preference managed pyupgrade --py312-plus {} +
     @echo "Python syntax upgraded to 3.12+"
+
+# Run all Python examples
+examples:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    for file in examples/*.py; do
+        echo "Running $file..."
+        uv run "$file"
+    done

@@ -10,12 +10,11 @@ import peptacular as pt
 
 
 def run():
-
     # ============================================================================
     # SIMPLE DIGESTION (AA Based)
     # ============================================================================
 
-    protein = pt.parse('[Amidated]-PEPTIDEKPEPTIDERPEPT[Phospho]IDER-[+57]')
+    protein = pt.parse("[Amidated]-PEPTIDEKPEPTIDERPEPT[Phospho]IDER-[+57]")
 
     print("=" * 60)
     print("SIMPLE DIGESTION (AA BASED)")
@@ -24,17 +23,14 @@ def run():
 
     # Basic trypsin-like digestion
     print("Trypsin-like (cleave after K/R):")
-    for span in protein.simple_digest(cleave_on='KR'):
+    for span in protein.simple_digest(cleave_on="KR"):
         peptide = protein[span]
         print(f"  {peptide.serialize()} - span: {span}")
 
     # With restrictions
     print("\nWith restrictions (cleave after K/R, but not before N or after P):")
     for span in protein.simple_digest(
-        cleave_on='KR',
-        restrict_before='N',
-        restrict_after='P',
-        cterminal=True
+        cleave_on="KR", restrict_before="N", restrict_after="P", cterminal=True
     ):
         print(f"  {protein[span].serialize()}")
 
@@ -53,7 +49,7 @@ def run():
 
     # Using enzyme string
     print("\nUsing enzyme string 'trypsin':")
-    for span in protein.digest('trypsin'):
+    for span in protein.digest("trypsin"):
         print(f"  {protein[span].serialize()}")
 
     # Custom regex
@@ -70,19 +66,24 @@ def run():
     print("=" * 60)
 
     print("\nCleavage positions for trypsin (after K/R):")
-    sites = list(protein.simple_cleavage_sites(cleave_on='KR', restrict_after='P', restrict_before='N', cterminal=True))
+    sites = list(
+        protein.simple_cleavage_sites(
+            cleave_on="KR",
+            restrict_after="P",
+            restrict_before="N",
+            cterminal=True,
+        )
+    )
     print(f"  Sites: {sites}")
     print(f"  Sequence: {protein.sequence}")
-    print(f"            {''.join('^' if i in sites else ' ' for i in range(len(protein.sequence)))}")
+    print(
+        f"            {''.join('^' if i in sites else ' ' for i in range(len(protein.sequence)))}"
+    )
 
-    print("\nCleavage positions using digest method with regex:")
-    sites_regex = list(protein.cleavage_sites("(?<=[KR])(?=[^P])"))
+    print("\nCleavage positions for included trypsin regex:")
+    # can also use Proteases.TRYPSIN or custom regex
+    sites_regex = list(protein.cleavage_sites("trypsin"))
     print(f"  Sites: {sites_regex}")
-
-    # can also use predefined protease
-    print("\nCleavage positions using Proteases enum:")
-    sites_enum = list(protein.cleavage_sites(pt.Proteases.TRYPSIN))
-    print(f"  Sites: {sites_enum}")
 
     # ============================================================================
     # MISSED CLEAVAGES
@@ -93,7 +94,7 @@ def run():
     print("=" * 60)
 
     print("\nWith 1 missed cleavage:")
-    for span in protein.digest(pt.Proteases.TRYPSIN, missed_cleavages=1):
+    for span in protein.digest("trypsin", missed_cleavages=1):
         print(f"  {protein[span].serialize()}")
 
     # ============================================================================
@@ -105,7 +106,7 @@ def run():
     print("=" * 60)
 
     print("\nPeptides between 7-15 amino acids:")
-    for span in protein.digest('trypsin', min_len=7, max_len=15):
+    for span in protein.digest("trypsin", min_len=7, max_len=15):
         peptide = protein[span]
         print(f"  {peptide.serialize()} (length: {len(peptide)})")
 
@@ -118,32 +119,9 @@ def run():
     print("=" * 60)
 
     print("\nSemi-enzymatic (one end must be enzymatic):")
-    for span in protein.digest(pt.Proteases.TRYPSIN, semi=True, min_len=5, max_len=10):
+    for span in protein.digest("trypsin", semi=True, min_len=5, max_len=10):
         print(f"  {protein[span].serialize()}")
 
-    # ============================================================================
-    # OTHER DIGESTION METHODS
-    # ============================================================================
-
-    print("\n" + "=" * 60)
-    print("OTHER DIGESTION METHODS")
-    print("=" * 60)
-
-    print("\nGenerate all left enzymatic spans")
-    for span in protein.left_semi_spans(min_len=5, max_len=10):
-        print(f"  {protein[span].serialize()}")
-
-    print("\nGenerate all right enzymatic spans")
-    for span in protein.right_semi_spans(min_len=5, max_len=10):
-        print(f"  {protein[span].serialize()}")
-
-    print("\nGenerate all semi-enzymatic spans")
-    for span in protein.semi_spans(min_len=5, max_len=10):
-        print(f"  {protein[span].serialize()}")
-
-    print("\nGenerate all non-enzymatic spans")
-    for span in protein.nonspecific_spans(min_len=5, max_len=7):
-        print(f"  {protein[span].serialize()}")
 
 if __name__ == "__main__":
     run()

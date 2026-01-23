@@ -53,6 +53,7 @@ from ..proforma_components import (
     PositionRule,
     SequenceElement,
     SequenceRegion,
+    TagMass,
 )
 from ..property.prop import AnnotationProperties
 from ..spans import Span
@@ -2050,43 +2051,86 @@ class ProFormaAnnotation:
 
         return isotope_map
 
-    def base_comp(self) -> Counter[ElementInfo]:
-        def get_comp(mod: MODIFICATION_TYPE, mod_type: str) -> Counter[ElementInfo]:
-            """Get composition or raise if unavailable."""
-            comp = mod.get_composition()
-            return comp
-
-        total_composition = self.get_sequence_composition()
-
-        def add_mods(mods: Iterable[tuple[MODIFICATION_TYPE, int]], mod_type: str):
-            for mod, count in mods:
-                for element, elem_count in get_comp(mod, mod_type).items():
-                    total_composition[element] += elem_count * count
+    def base_comp(
+        self, skip_labile: bool = False, monoisotopic: bool = True
+    ) -> tuple[Counter[ElementInfo], int, float]:
+        total_composition: Counter[ElementInfo] = self.get_sequence_composition()
+        total_charge = 0  # results from internal formula mods
+        total_delta_mass = 0.0  # only from MassTags
 
         if self.has_unknown_mods:
-            add_mods(self.unknown_mods.parse_tuples(), "unknown modification")
-        if self.has_labile_mods:
-            add_mods(self.labile_mods.parse_tuples(), "labile modification")
+            unknown_mods = self.unknown_mods
+            composition, delta_mass = unknown_mods.get_composition_with_delta_mass(
+                monoisotopic
+            )
+            total_composition += composition
+            total_delta_mass += delta_mass
+            total_charge += unknown_mods.get_charge()
+
+        if not skip_labile and self.has_labile_mods:
+            labile_mods = self.labile_mods
+            composition, delta_mass = labile_mods.get_composition_with_delta_mass(
+                monoisotopic
+            )
+            total_composition += composition
+            total_delta_mass += delta_mass
+            total_charge += labile_mods.get_charge()
+
         if self.has_nterm_mods:
-            add_mods(self.nterm_mods.parse_tuples(), "N-terminal modification")
+            nterm_mods = self.nterm_mods
+            composition, delta_mass = nterm_mods.get_composition_with_delta_mass(
+                monoisotopic
+            )
+            total_composition += composition
+            total_delta_mass += delta_mass
+            total_charge += nterm_mods.get_charge()
+
         if self.has_cterm_mods:
-            add_mods(self.cterm_mods.parse_tuples(), "C-terminal modification")
+            cterm_mods = self.cterm_mods
+            composition, delta_mass = cterm_mods.get_composition_with_delta_mass(
+                monoisotopic
+            )
+            total_composition += composition
+            total_delta_mass += delta_mass
+            total_charge += cterm_mods.get_charge()
+
         if self.has_static_mods:
             static_mod_map = self.map_static_mods_to_indexes()
             for _, mods in static_mod_map.items():
-                add_mods((mod.as_tuple() for mod in mods), "static modification")
+                for mod in mods:
+                    try:
+                        total_composition += mod.get_composition()
+                    except ValueError as e:
+                        if isinstance(mod.value, ModificationTags) and isinstance(
+                            mod.value.first_tag, TagMass
+                        ):
+                            # MassTag does not have composition, only delta mass
+                            total_delta_mass += mod.get_mass(monoisotopic)
+                        else:
+                            raise e
+                    total_charge += mod.get_charge()
 
         # Internal mods
         if self.has_internal_mods:
             for mods in self.internal_mods.values():
-                add_mods(mods.parse_tuples(), "internal modification")
+                composition, delta_mass = mods.get_composition_with_delta_mass(
+                    monoisotopic
+                )
+                total_composition += composition
+                total_delta_mass += delta_mass
+                total_charge += mods.get_charge()
 
         # Intervals
         if self.has_intervals:
             for interval in self.intervals:
-                add_mods(interval.mods.parse_tuples(), "interval modification")
+                composition, delta_mass = interval.mods.get_composition_with_delta_mass(
+                    monoisotopic
+                )
+                total_composition += composition
+                total_delta_mass += delta_mass
+                total_charge += interval.mods.get_charge()
 
-        return total_composition
+        return total_composition, total_charge, total_delta_mass
 
     def comp(
         self,
@@ -2112,9 +2156,12 @@ class ProFormaAnnotation:
 
         return frag.composition
 
-    def base_mass(self, monoisotopic: bool = True) -> float:
+    def base_mass(
+        self, monoisotopic: bool = True, skip_labile: bool = False
+    ) -> tuple[float, int]:
         """Optimized mass calculation with minimal overhead."""
         total_mass = 0.0
+        total_charge = 0  # results from internal formula mods
 
         # Inline mass lookup to avoid function call overhead
         # Amino acids - hot path, optimize heavily
@@ -2125,84 +2172,48 @@ class ProFormaAnnotation:
                 raise ValueError(f"Mass not available for amino acid: {aa}")
             total_mass += mass
 
-        # Process modifications directly without building intermediate lists
-        # This eliminates the mod_sources list entirely
-
         # Unknown mods
         if self.has_unknown_mods:
-            for mod, count in self.unknown_mods.parse_items():
-                mass = mod.get_mass(monoisotopic=monoisotopic)
-                if mass is None:
-                    raise ValueError(
-                        f"Mass not available for unknown modification: {mod}"
-                    )
-                total_mass += mass * count
+            total_mass += self.unknown_mods.get_mass(monoisotopic=monoisotopic)
+            total_charge += self.unknown_mods.get_charge()
 
         # Labile mods
-        if self.has_labile_mods:
-            for mod, count in self.labile_mods.parse_items():
-                mass = mod.get_mass(monoisotopic=monoisotopic)
-                if mass is None:
-                    raise ValueError(
-                        f"Mass not available for labile modification: {mod}"
-                    )
-                total_mass += mass * count
+        if not skip_labile and self.has_labile_mods:
+            total_mass += self.labile_mods.get_mass(monoisotopic=monoisotopic)
+            total_charge += self.labile_mods.get_charge()
 
         # N-terminal mods
         if self.has_nterm_mods:
-            for mod, count in self.nterm_mods.parse_items():
-                mass = mod.get_mass(monoisotopic=monoisotopic)
-                if mass is None:
-                    raise ValueError(
-                        f"Mass not available for N-terminal modification: {mod}"
-                    )
-                total_mass += mass * count
+            total_mass += self.nterm_mods.get_mass(monoisotopic=monoisotopic)
+            total_charge += self.nterm_mods.get_charge()
 
         # Internal mods
         if self.has_internal_mods:
             for mods in self.internal_mods.values():
-                for mod, count in mods.parse_items():
-                    mass = mod.get_mass(monoisotopic=monoisotopic)
-                    if mass is None:
-                        raise ValueError(
-                            f"Mass not available for internal modification: {mod}"
-                        )
-                    total_mass += mass * count
+                total_mass += mods.get_mass(monoisotopic=monoisotopic)
+                total_charge += mods.get_charge()
 
         # Interval mods
         if self.has_intervals:
             for interval in self.intervals:
-                for mod, count in interval.mods.parse_tuples():
-                    mass = mod.get_mass(monoisotopic=monoisotopic)
-                    if mass is None:
-                        raise ValueError(
-                            f"Mass not available for interval modification: {mod}"
-                        )
-                    total_mass += mass * count
+                for mods in interval.mods:
+                    total_mass += mods.get_mass(monoisotopic=monoisotopic)
+                    total_charge += mods.get_charge()
 
         # C-terminal mods
         if self.has_cterm_mods:
-            for mod, count in self.cterm_mods.parse_items():
-                mass = mod.get_mass(monoisotopic=monoisotopic)
-                if mass is None:
-                    raise ValueError(
-                        f"Mass not available for C-terminal modification: {mod}"
-                    )
-                total_mass += mass * count
+            total_mass += self.cterm_mods.get_mass(monoisotopic=monoisotopic)
+            total_charge += self.cterm_mods.get_charge()
 
         # Static mods
         if self.has_static_mods:
             static_mod_map = self.map_static_mods_to_indexes()
             for mods in static_mod_map.values():
                 for mod in mods:
-                    mass = mod.value.get_mass(monoisotopic=monoisotopic)
-                    if mass is None:
-                        raise ValueError(
-                            f"Mass not available for static modification: {mod.value}"
-                        )
-                    total_mass += mass * mod.count
+                    total_mass += mod.get_mass(monoisotopic=monoisotopic)
+                    total_charge += mod.get_charge()
 
-        return total_mass
+        return total_mass, total_charge
 
     def _get_mass_vector(self, monoisotopic: bool = True) -> list[float]:
         # slice sequence into single aa slcices
@@ -2236,12 +2247,12 @@ class ProFormaAnnotation:
     @property
     def monoisotopic_mass(self) -> float:
         """Calculate monoisotopic mass of the unmodified sequence."""
-        return self.base_mass(monoisotopic=True)
+        return self.base_mass(monoisotopic=True)[0]
 
     @property
     def average_mass(self) -> float:
         """Calculate average mass of the unmodified sequence."""
-        return self.base_mass(monoisotopic=False)
+        return self.base_mass(monoisotopic=False)[0]
 
     def mass(
         self,
@@ -2276,34 +2287,72 @@ class ProFormaAnnotation:
         include_sequence: bool,
         position: POSITION_TYPE | None,
     ) -> Fragment:
+        sequence: str | None = None
+        if include_sequence:
+            # Dont include charge mods in sequence since it can be overridden
+            sequence = self.filter_mods(
+                ["charge"], keep=False, inplace=False
+            ).serialize()
+
+        # Dont include labile mods for fragment ions
+        skip_labile = True
+        if ion_type == IonType.NEUTRAL or ion_type == IonType.PRECURSOR:
+            skip_labile = False
+
         if self.has_isotope_mods or calculate_composition:
-            return adjust_comp(
-                base_comp=self.base_comp(),
-                charge=charge,
-                ion_type=ion_type,
-                monoisotopic=monoisotopic,
-                isotope=isotope,
-                delta=delta,
-                inplace=True,
-                isotope_map=self._map_isotopes() if self.has_isotope_mods else None,
-                position=position,
-                # serialzie without charge mods
-                parent_sequence=self.filter_mods(
-                    ["charge"], keep=False, inplace=False
-                ).serialize()
-                if include_sequence
-                else None,
+            base_comp, base_charge, delta_mass = self.base_comp(
+                skip_labile=skip_labile, monoisotopic=monoisotopic
             )
 
+            if calculate_composition and delta_mass != 0.0:
+                raise ValueError(
+                    "Cannot calculate composition with delta mass changes."
+                )
+            elif calculate_composition and delta_mass == 0.0:
+                return adjust_comp(
+                    base_comp=base_comp,
+                    charge=charge,
+                    ion_type=ion_type,
+                    monoisotopic=monoisotopic,
+                    isotope=isotope,
+                    delta=delta,
+                    inplace=True,
+                    isotope_map=self._map_isotopes() if self.has_isotope_mods else None,
+                    position=position,
+                    sequence=sequence,
+                    internal_charge=base_charge,
+                )
+            else:
+                base_mass = sum(
+                    element.get_mass(monoisotopic=monoisotopic) * count
+                    for element, count in base_comp.items()
+                )
+                return adjust_mass_mz(
+                    base=base_mass + delta_mass,
+                    charge=charge,
+                    monoisotopic=monoisotopic,
+                    ion_type=ion_type,
+                    isotope=isotope,
+                    delta=delta,
+                    position=position,
+                    sequence=sequence,
+                    internal_charge=base_charge,
+                )
+
+        base_mass, base_charge = self.base_mass(
+            monoisotopic=monoisotopic, skip_labile=skip_labile
+        )
+
         return adjust_mass_mz(
-            base=self.base_mass(monoisotopic=monoisotopic),
+            base=base_mass,
             charge=charge,
             monoisotopic=monoisotopic,
             ion_type=ion_type,
             isotope=isotope,
             delta=delta,
             position=position,
-            parent_sequence=self.serialize() if include_sequence else None,
+            sequence=sequence,
+            internal_charge=base_charge,
         )
 
     def frag(
@@ -2767,7 +2816,7 @@ class ProFormaAnnotation:
     def fragment(
         self,
         ion_types: Sequence[ION_TYPE] = (IonType.B, IonType.Y),
-        charges: Sequence[CHARGE_TYPE] = (1,),
+        charges: Sequence[CHARGE_TYPE] | None = None,
         monoisotopic: bool = True,
         *,
         isotopes: Sequence[ISOTOPE_TYPE | None] = (0,),
@@ -2775,11 +2824,18 @@ class ProFormaAnnotation:
         neutral_deltas: Sequence[LOSS_TYPE] = (),
         calculate_composition: bool = False,
         include_sequence: bool = False,
-        max_losses: int = 1,
+        max_ndeltas: int = 1,
         min_length: int | None = None,
         max_length: int | None = None,
     ) -> list[Fragment]:
         """Generate fragment annotation for given ion type."""
+
+        if charges is None:
+            cstate = self.charge_state
+            if cstate != 0:
+                charges = (cstate,)
+            else:
+                charges = (1,)
 
         charge_infos: list[ChargeCarrierInfo] = [
             ChargeCarrierInfo.from_input(charge) for charge in charges
@@ -2815,7 +2871,7 @@ class ProFormaAnnotation:
                         neutral_deltas=neutral_deltas_infos,
                         calculate_composition=calculate_composition,
                         include_sequence=include_sequence,
-                        max_deltas=max_losses,
+                        max_deltas=max_ndeltas,
                         min_length=min_length,
                         max_length=max_length,
                     )

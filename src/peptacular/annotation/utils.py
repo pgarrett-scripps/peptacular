@@ -102,7 +102,8 @@ def adjust_mass_mz(
     isotope: IsotopeInfo,
     delta: DeltaInfo,
     position: int | tuple[int, int] | str | None = None,
-    parent_sequence: str | None = None,
+    sequence: str | None = None,
+    internal_charge: int = 0,  # already includded in base mass (only effects mz calculation)
 ) -> Fragment:
     """Adjust base mass by charge carriers and ion type."""
 
@@ -119,7 +120,7 @@ def adjust_mass_mz(
     # Apply losses
     base_mass += delta.get_mass_delta(monoisotopic)
 
-    total_charge = charge.charge
+    total_charge = charge.charge + internal_charge
     # Correct for electron mass based on charge
     base_mass += charge.get_mass(monoisotopic)
 
@@ -138,11 +139,11 @@ def adjust_mass_mz(
         mass=base_mass,
         monoisotopic=monoisotopic,
         charge_state=total_charge,
-        charge_adducts=charge.to_fragment_mapping(),
+        charge_adducts=charge.to_fragment_mapping(internal_charge != 0),
         isotopes=isotope.to_fragment_mapping(),
         deltas=delta.to_fragment_mapping(),
         composition=None,
-        sequence=parent_sequence,
+        sequence=sequence,
     )
 
 
@@ -156,7 +157,8 @@ def adjust_comp(
     inplace: bool = True,
     isotope_map: dict[ElementInfo, ElementInfo] | None = None,
     position: int | tuple[int, int] | str | None = None,
-    parent_sequence: str | None = None,
+    sequence: str | None = None,
+    internal_charge: int = 0,
 ) -> Fragment:
     """Adjust base composition by charge carriers and ion type, returning a Fragment object."""
 
@@ -188,7 +190,7 @@ def adjust_comp(
     # Build fragment notation for charge adducts
 
     charge.adjust_composition(base_comp)
-    total_charge = charge.charge
+    total_charge = charge.charge + internal_charge
 
     # Validate no negative counts
     if any(count < 0 for count in base_comp.values()):
@@ -209,11 +211,11 @@ def adjust_comp(
         mass=base_mass,
         charge_state=total_charge,
         monoisotopic=monoisotopic,
-        charge_adducts=charge.to_fragment_mapping(),
+        charge_adducts=charge.to_fragment_mapping(internal_charge != 0),
         isotopes=isotope.to_fragment_mapping(),
         deltas=delta.to_fragment_mapping(),
         composition=base_comp,
-        sequence=parent_sequence,
+        sequence=sequence,
     )
 
 
@@ -239,7 +241,7 @@ def comp_frag(
         isotope=isotopes,
         delta=deltas,
         position=position,
-        parent_sequence=parent_sequence,
+        sequence=parent_sequence,
     )
 
 

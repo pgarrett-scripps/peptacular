@@ -607,7 +607,7 @@ class TestFragment(unittest.TestCase):
             charges=[1],
             monoisotopic=False,
             neutral_deltas=["H2O"],
-            max_losses=2,
+            max_ndeltas=2,
         )
 
         expected_masses = [

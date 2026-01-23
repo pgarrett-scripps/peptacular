@@ -1,18 +1,13 @@
 Features
 ========
 
-Peptacular is a Python package for peptide sequence analysis built around ProForma 2.0 notation.
-
-Core Features
--------------
-
-ProForma 2.0 Parsing
+ProForma 2.1 Parsing
 ~~~~~~~~~~~~~~~~~~~~
 
-Parse and serialize ProForma sequences with modifications, charge states, and isotope labels.
+Parse, serialize, and modify ProForma sequences.
 
 - Full support for Base-ProForma and Level 2-ProForma and select other features
-- Named modifications from Unimod and PSI-MOD databases
+- Named modifications from Unimod / PSI-MOD / RESID / XLMOD / GNOme databases
 - Delta mass and formula-based modifications
 - Terminal, labile, and ambiguous modifications
 - Charge states and adducts
@@ -36,8 +31,7 @@ Generate theoretical isotopic patterns with configurable resolution and abundanc
 
 - High-performance isotopic pattern generation
 - Configurable resolution and abundance thresholds
-- Support for fragments with modifications
-- Binary exponentiation algorithm for efficiency
+- Support for modifications (must have composition data)
 
 Protein Digestion
 ~~~~~~~~~~~~~~~~~
@@ -47,7 +41,6 @@ Simulate enzymatic digestion with various proteases and cleavage rules.
 - Built-in protease database (trypsin, chymotrypsin, pepsin, etc.)
 - Missed cleavage support
 - Semi-specific and non-specific digestion
-- Length filtering
 - Custom protease definitions
 
 Fragment Generation
