@@ -383,7 +383,7 @@ def parse_modification_tag(mod_str: str) -> "MODIFICATION_TAG_TYPE":
     Raises:
         ValueError: If the modification string cannot be parsed
     """
-    from .comps import GlycanTag, TagName
+    from .comps import ComkpTag, ComupTag, GlycanTag, LimitTag, PositionTag, TagName
 
     mod_str = mod_str.strip()
 
@@ -429,6 +429,18 @@ def parse_modification_tag(mod_str: str) -> "MODIFICATION_TAG_TYPE":
     # Try to match INFO pattern
     if mod_str_lower.startswith("info:"):
         return parse_tag_info(mod_str)
+
+    if mod_str_lower.startswith("position:"):
+        return PositionTag.from_string(mod_str)
+
+    if mod_str_lower.startswith("limit:"):
+        return LimitTag.from_string(mod_str)
+
+    if mod_str_lower == "comkp":
+        return ComkpTag.from_string(mod_str)
+
+    if mod_str_lower == "comup":
+        return ComupTag.from_string(mod_str)
 
     # Default: treat as named modification (Rule 4: optional single letter CV prefix, no +/-)
     try:

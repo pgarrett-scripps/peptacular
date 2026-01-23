@@ -817,6 +817,91 @@ class GlycanTag(MassPropertyMixin, PositionScoreMixin):
         return self.serialize()
 
 
+class PlacementTagMixin(MassPropertyMixin):
+    """Mixin to add mass properties to classes that implement get_mass()"""
+
+    def get_mass(self, monoisotopic: bool = True) -> float:
+        raise ValueError("PlacementTag has no mass")
+
+    def get_composition(self) -> Counter[ElementInfo]:
+        return Counter()
+
+    def get_charge(self) -> int | None:
+        return None
+
+
+@dataclass(frozen=True, slots=True)
+class PositionTag(PlacementTagMixin):
+    residues: tuple[PositionRule, ...]
+
+    @staticmethod
+    def from_string(s: str) -> PositionTag:
+        s = s.strip().lower()
+        if s.startswith("position:"):
+            s = s[len("position:") :]
+        else:
+            raise ValueError("PositionTag string must start with 'Position:'")
+        return PositionTag(
+            tuple(PositionRule.from_string(part.strip()) for part in s.split(","))
+        )
+
+    def serialize(self) -> str:
+        return "Position:" + ",".join(str(r) for r in self.residues)
+
+    def __str__(self) -> str:
+        return self.serialize()
+
+
+@dataclass(frozen=True, slots=True)
+class LimitTag(PlacementTagMixin):
+    limit: int
+
+    @staticmethod
+    def from_string(s: str) -> LimitTag:
+        s = s.strip().lower()
+        if s.startswith("limit:"):
+            s = s[len("limit:") :]
+        else:
+            raise ValueError("LimitTag string must start with 'Limit:'")
+        return LimitTag(limit=int(s.strip()))
+
+    def serialize(self) -> str:
+        return f"Limit:{self.limit}"
+
+    def __str__(self) -> str:
+        return self.serialize()
+
+
+@dataclass(frozen=True, slots=True)
+class ComkpTag(PlacementTagMixin):
+    @staticmethod
+    def from_string(s: str) -> ComkpTag:
+        if not s.strip().lower() == "comkp":
+            raise ValueError("ComkpTag string must be 'Comkp'")
+        return ComkpTag()
+
+    def serialize(self) -> str:
+        return "CoMKP"
+
+    def __str__(self) -> str:
+        return self.serialize()
+
+
+@dataclass(frozen=True, slots=True)
+class ComupTag(PlacementTagMixin):
+    @staticmethod
+    def from_string(s: str) -> ComupTag:
+        if not s.strip().lower() == "comup":
+            raise ValueError("ComupTag string must be 'Comup'")
+        return ComupTag()
+
+    def serialize(self) -> str:
+        return "CoMUP"
+
+    def __str__(self) -> str:
+        return self.serialize()
+
+
 @dataclass(frozen=True)
 class IsotopeReplacement(MassPropertyMixin):
     """A global isotope replacement"""
@@ -928,6 +1013,10 @@ MODIFICATION_TAG_TYPE = (
     | TagName
     | TagCustom
     | PositionScore
+    | PositionTag
+    | LimitTag
+    | ComkpTag
+    | ComupTag
 )
 
 
@@ -993,6 +1082,57 @@ class ModificationTags(MassPropertyMixin):
 
     def __str__(self) -> str:
         return self.serialize()
+
+    @property
+    def has_placement_tags(self) -> bool:
+        """Check if any tags specify placement rules (PositionTag, LimitTag, ComkpTag, ComupTag)"""
+        for tag in self.tags:
+            if isinstance(tag, (PositionTag, LimitTag, ComkpTag, ComupTag)):
+                return True
+        return False
+
+    @property
+    def placement_tags(
+        self,
+    ) -> tuple[PositionTag | LimitTag | ComkpTag | ComupTag, ...]:
+        """Get all placement tags (PositionTag, LimitTag, ComkpTag, ComupTag)"""
+        placement_tags: list[PositionTag | LimitTag | ComkpTag | ComupTag] = []
+        for tag in self.tags:
+            if isinstance(tag, (PositionTag, LimitTag, ComkpTag, ComupTag)):
+                placement_tags.append(tag)
+        return tuple(placement_tags)
+
+    @property
+    def position_tag(self) -> PositionTag | None:
+        """Get the PositionTag if present, else None"""
+        for tag in self.tags:
+            if isinstance(tag, PositionTag):
+                return tag
+        return None
+
+    @property
+    def limit_tag(self) -> LimitTag | None:
+        """Get the LimitTag if present, else None"""
+        for tag in self.tags:
+            if isinstance(tag, LimitTag):
+                return tag
+        return None
+
+    @property
+    def comkp_tag(self) -> ComkpTag | None:
+        """Get the ComkpTag if present, else None"""
+        for tag in self.tags:
+            if isinstance(tag, ComkpTag):
+                return tag
+        return None
+
+    @property
+    def comup_tag(self) -> ComupTag | None:
+        """Get the ComupTag if present, else None"""
+        for tag in self.tags:
+            if isinstance(tag, ComupTag):
+                return tag
+        return None
 
 
 @dataclass(frozen=True, slots=True)

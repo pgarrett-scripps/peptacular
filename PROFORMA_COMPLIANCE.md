@@ -59,7 +59,7 @@
 ## 5.3.6 Level 2-ProForma + Advanced Complexity
 
 - ![-] **Charged formulas** - `SEQUEN[Formula:Zn1:z+2]CE` (§11.1) [Charge not apply to sequence yet]
-- ?[ ] **Controlling placement** - `PTI(MERMERME)[+32|Position:E]PTIDE` (§11.2) 
+- ![-] **Controlling placement** - `PTI(MERMERME)[+32|Position:E]PTIDE` (§11.2) 
 - [x] **Global isotope** - `<13C>CARBON` (§11.3.1)
 - [x] **Fixed modifications** - `<[Oxidation]@M>ATPEMILTCMGCLK` (§11.3.2)
 - ![ ] **Chimeric spectra** - `NEEYN+SEQUEN` (§11.4) [Will support parsing into individual annotations]
