@@ -50,7 +50,7 @@ class TestMultipleTags:
         assert isinstance(first_tag, pt.TagAccession)
         assert first_tag.accession == "35"
         assert isinstance(second_tag, pt.TagMass)
-        assert second_tag.mass == pytest.approx(15.995)  # type: ignore
+        assert second_tag.mass == pytest.approx(15.995)
 
     def test_three_tags_name_accession_mass(self):
         """Test parsing three tags: name, accession, and mass"""
@@ -61,7 +61,7 @@ class TestMultipleTags:
         assert isinstance(result[1], pt.TagAccession)
         assert result[1].accession == "35"
         assert isinstance(result[2], pt.TagMass)
-        assert result[2].mass == pytest.approx(15.995)  # type: ignore
+        assert result[2].mass == pytest.approx(15.995)
 
     def test_four_tags_complete_oxidation(self):
         """Test parsing all four ways to represent oxidation"""
@@ -101,7 +101,7 @@ class TestMultipleTags:
         assert result[0].cv == pt.CV.UNIMOD
         assert result[0].name == "Oxidation"
         assert isinstance(result[1], pt.TagMass)
-        assert result[1].mass == pytest.approx(15.995)  # type: ignore
+        assert result[1].mass == pytest.approx(15.995)
 
     def test_formula_with_mass(self):
         """Test parsing formula with mass"""
@@ -119,7 +119,7 @@ class TestMultipleTags:
         assert isinstance(result[1], pt.TagAccession)
         assert result[1].accession == "35"
         assert isinstance(result[2], pt.TagMass)
-        assert result[2].mass == pytest.approx(15.995)  # type: ignore
+        assert result[2].mass == pytest.approx(15.995)
 
     def test_empty_parts_ignored(self):
         """Test that empty parts from consecutive pipes throw error"""

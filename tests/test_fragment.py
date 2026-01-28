@@ -2,6 +2,13 @@ import unittest
 
 import peptacular as pt
 
+try:
+    import paftacular  # noqa: F401
+
+    HAS_PAFTACULAR = True
+except ImportError:
+    HAS_PAFTACULAR = False
+
 
 class TestFragment(unittest.TestCase):
     def test_calculate_mass1(self):
@@ -648,6 +655,7 @@ class TestFragment(unittest.TestCase):
                 msg=f"Failed for fragment {frag}, expected mass: {expected_mass}",
             )
 
+    @unittest.skipIf(not HAS_PAFTACULAR, "paftacular not installed")
     def test_to_mzpaf(self):
         seq = "PEPTIDE"
         annot = pt.ProFormaAnnotation.parse(seq)

@@ -77,3 +77,10 @@ class TestAnnotationConstruction:
         annot.mass()
         m: int | float = pt.mass("<13C>PEPTIDE") + 100.0
         assert annot.mass() == m
+
+    def test_annot_with_resid(self):
+        """Test creating annotation with resid modification"""
+        sequence = "PEPTIDE[Resid:AA0367]"
+        annot = pt.ProFormaAnnotation.parse(sequence)
+        assert annot.serialize() == sequence
+        mass = annot.mass()

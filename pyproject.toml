@@ -4,7 +4,7 @@ dynamic = ["version"]
 description = "A ProForma peptide sequence parser and annotation library"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = ["tacular"]
+dependencies = ["tacular>=1.0.0"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Science/Research",
@@ -25,7 +25,6 @@ dev = [
     "ruff>=0.14.7",
     "pyupgrade>=3.21.0",
     "ty>=0.0.11",
-    "paftacular",
 ]
 
 docs = [
@@ -56,6 +55,6 @@ path = "src/peptacular/__init__.py"
 "data.py" = ["E741"]
 "constants.py" = ["E741"]
 
-[tool.uv.sources]
-tacular = { path = "../tacular", editable = true }
-paftacular = { path = "../paftacular", editable = true }
+#[tool.uv.sources]
+#tacular = { path = "../tacular", editable = true }
+#paftacular = { path = "../paftacular", editable = true }
