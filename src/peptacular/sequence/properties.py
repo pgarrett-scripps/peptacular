@@ -1,0 +1,1560 @@
+from collections.abc import Sequence
+from typing import overload
+
+from ..annotation import ProFormaAnnotation
+from ..constants import parallelMethod, parallelMethodLiteral
+from ..property.core import (
+    aa_property_percentage as _aa_property_percentage,
+)
+from ..property.core import (
+    calc_property as _calc_property,
+)
+from ..property.core import (
+    calc_window_property as _calc_window_property,
+)
+from ..property.core import (
+    charge_at_ph as _charge_at_ph,
+)
+from ..property.core import (
+    generate_partitions as _property_partitions,
+)
+from ..property.core import (
+    secondary_structure as _secondary_structure,
+)
+from ..property.data import (
+    HPLCScale,
+    HydrophobicityScale,
+    PhysicalPropertyScale,
+    PolarityScale,
+    SecondaryStructureMethod,
+    SecondaryStructureType,
+    SurfaceAccessibilityScale,
+)
+from ..property.types import (
+    AggregationMethod,
+    AggregationMethodLiteral,
+    MissingAAHandling,
+    MissingAAHandlingLiteral,
+    WeightingMethods,
+    WeightingMethodsLiteral,
+)
+from .parallel import parallel_apply_internal
+from .util import get_annotation_input, round_to_precision
+
+
+def _calc_property_single(
+    sequence: str | ProFormaAnnotation,
+    scale: str | dict[str, float],
+    missing_aa_handling: (
+        MissingAAHandlingLiteral | MissingAAHandling
+    ) = MissingAAHandling.ERROR,
+    aggregation_method: (
+        AggregationMethodLiteral | AggregationMethod
+    ) = AggregationMethod.AVG,
+    normalize: bool = False,
+    weighting_scheme: (
+        WeightingMethodsLiteral | WeightingMethods
+    ) = WeightingMethods.UNIFORM,
+    min_weight: float = 0.1,
+    max_weight: float = 1.0,
+    precision: int | None = None,
+) -> float:
+    """Calculate property for a single sequence"""
+    annotation = get_annotation_input(sequence=sequence, copy=True)
+    val = _calc_property(
+        sequence=annotation.stripped_sequence,
+        scale=scale,
+        missing_aa_handling=missing_aa_handling,
+        aggregation_method=aggregation_method,
+        normalize=normalize,
+        weighting_scheme=weighting_scheme,
+        min_weight=min_weight,
+        max_weight=max_weight,
+    )
+    return round_to_precision(val, precision)
+
+
+@overload
+def calc_property(
+    sequence: str | ProFormaAnnotation,
+    scale: str | dict[str, float],
+    missing_aa_handling: (
+        MissingAAHandlingLiteral | MissingAAHandling
+    ) = MissingAAHandling.ERROR,
+    aggregation_method: (
+        AggregationMethodLiteral | AggregationMethod
+    ) = AggregationMethod.AVG,
+    normalize: bool = False,
+    weighting_scheme: (
+        WeightingMethodsLiteral | WeightingMethods
+    ) = WeightingMethods.UNIFORM,
+    min_weight: float = 0.1,
+    max_weight: float = 1.0,
+    precision: int | None = None,
+    n_workers: None = None,
+    chunksize: None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> float: ...
+
+
+@overload
+def calc_property(
+    sequence: Sequence[str | ProFormaAnnotation],
+    scale: str | dict[str, float],
+    missing_aa_handling: (
+        MissingAAHandlingLiteral | MissingAAHandling
+    ) = MissingAAHandling.ERROR,
+    aggregation_method: (
+        AggregationMethodLiteral | AggregationMethod
+    ) = AggregationMethod.AVG,
+    normalize: bool = False,
+    weighting_scheme: (
+        WeightingMethodsLiteral | WeightingMethods
+    ) = WeightingMethods.UNIFORM,
+    min_weight: float = 0.1,
+    max_weight: float = 1.0,
+    precision: int | None = None,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> list[float]: ...
+
+
+def calc_property(
+    sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
+    scale: str | dict[str, float],
+    missing_aa_handling: (
+        MissingAAHandlingLiteral | MissingAAHandling
+    ) = MissingAAHandling.ERROR,
+    aggregation_method: (
+        AggregationMethodLiteral | AggregationMethod
+    ) = AggregationMethod.AVG,
+    normalize: bool = False,
+    weighting_scheme: (
+        WeightingMethodsLiteral | WeightingMethods
+    ) = WeightingMethods.UNIFORM,
+    min_weight: float = 0.1,
+    max_weight: float = 1.0,
+    precision: int | None = None,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> float | list[float]:
+    """
+    Calculate a physicochemical property for a sequence or list of sequences.
+    """
+    if (
+        isinstance(sequence, Sequence)
+        and not isinstance(sequence, str)
+        and not isinstance(sequence, ProFormaAnnotation)
+    ):
+        return parallel_apply_internal(
+            _calc_property_single,
+            sequence,
+            n_workers=n_workers,
+            chunksize=chunksize,
+            method=method,
+            scale=scale,
+            missing_aa_handling=missing_aa_handling,
+            aggregation_method=aggregation_method,
+            normalize=normalize,
+            weighting_scheme=weighting_scheme,
+            min_weight=min_weight,
+            max_weight=max_weight,
+            precision=precision,
+        )
+    else:
+        return _calc_property_single(
+            sequence=sequence,
+            scale=scale,
+            missing_aa_handling=missing_aa_handling,
+            aggregation_method=aggregation_method,
+            normalize=normalize,
+            weighting_scheme=weighting_scheme,
+            min_weight=min_weight,
+            max_weight=max_weight,
+            precision=precision,
+        )
+
+
+# Helper function for simple property calculations
+def _simple_property_single(
+    sequence: str | ProFormaAnnotation,
+    scale: str | dict[str, float],
+    precision: int | None = None,
+) -> float:
+    annotation = get_annotation_input(sequence=sequence, copy=True)
+    val = _calc_property(
+        sequence=annotation.stripped_sequence,
+        scale=scale,
+        missing_aa_handling=MissingAAHandling.ERROR,
+        aggregation_method=AggregationMethod.AVG,
+        normalize=True,
+        weighting_scheme=WeightingMethods.UNIFORM,
+    )
+    return round_to_precision(val, precision)
+
+
+@overload
+def hydrophobicity(
+    sequence: str | ProFormaAnnotation,
+    precision: int | None = None,
+    n_workers: None = None,
+    chunksize: None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> float: ...
+
+
+@overload
+def hydrophobicity(
+    sequence: Sequence[str | ProFormaAnnotation],
+    precision: int | None = None,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> list[float]: ...
+
+
+def hydrophobicity(
+    sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
+    precision: int | None = None,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> float | list[float]:
+    if (
+        isinstance(sequence, Sequence)
+        and not isinstance(sequence, str)
+        and not isinstance(sequence, ProFormaAnnotation)
+    ):
+        return parallel_apply_internal(
+            _simple_property_single,
+            sequence,
+            n_workers=n_workers,
+            chunksize=chunksize,
+            method=method,
+            scale=HydrophobicityScale.KYTE_DOOLITTLE,
+            precision=precision,
+        )
+    else:
+        return _simple_property_single(
+            sequence=sequence,
+            scale=HydrophobicityScale.KYTE_DOOLITTLE,
+            precision=precision,
+        )
+
+
+@overload
+def flexibility(
+    sequence: str | ProFormaAnnotation,
+    precision: int | None = None,
+    n_workers: None = None,
+    chunksize: None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> float: ...
+
+
+@overload
+def flexibility(
+    sequence: Sequence[str | ProFormaAnnotation],
+    precision: int | None = None,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> list[float]: ...
+
+
+def flexibility(
+    sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
+    precision: int | None = None,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> float | list[float]:
+    if (
+        isinstance(sequence, Sequence)
+        and not isinstance(sequence, str)
+        and not isinstance(sequence, ProFormaAnnotation)
+    ):
+        return parallel_apply_internal(
+            _simple_property_single,
+            sequence,
+            n_workers=n_workers,
+            chunksize=chunksize,
+            method=method,
+            scale=PhysicalPropertyScale.FLEXIBILITY_VIHINEN,
+            precision=precision,
+        )
+    else:
+        return _simple_property_single(
+            sequence=sequence,
+            scale=PhysicalPropertyScale.FLEXIBILITY_VIHINEN,
+            precision=precision,
+        )
+
+
+@overload
+def hydrophilicity(
+    sequence: str | ProFormaAnnotation,
+    precision: int | None = None,
+    n_workers: None = None,
+    chunksize: None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> float: ...
+
+
+@overload
+def hydrophilicity(
+    sequence: Sequence[str | ProFormaAnnotation],
+    precision: int | None = None,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> list[float]: ...
+
+
+def hydrophilicity(
+    sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
+    precision: int | None = None,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> float | list[float]:
+    if (
+        isinstance(sequence, Sequence)
+        and not isinstance(sequence, str)
+        and not isinstance(sequence, ProFormaAnnotation)
+    ):
+        return parallel_apply_internal(
+            _simple_property_single,
+            sequence,
+            n_workers=n_workers,
+            chunksize=chunksize,
+            method=method,
+            scale=PhysicalPropertyScale.HYDROPHILICITY_HOP_WOOD,
+            precision=precision,
+        )
+    else:
+        return _simple_property_single(
+            sequence=sequence,
+            scale=PhysicalPropertyScale.HYDROPHILICITY_HOP_WOOD,
+            precision=precision,
+        )
+
+
+@overload
+def surface_accessibility(
+    sequence: str | ProFormaAnnotation,
+    precision: int | None = None,
+    n_workers: None = None,
+    chunksize: None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> float: ...
+
+
+@overload
+def surface_accessibility(
+    sequence: Sequence[str | ProFormaAnnotation],
+    precision: int | None = None,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> list[float]: ...
+
+
+def surface_accessibility(
+    sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
+    precision: int | None = None,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> float | list[float]:
+    if (
+        isinstance(sequence, Sequence)
+        and not isinstance(sequence, str)
+        and not isinstance(sequence, ProFormaAnnotation)
+    ):
+        return parallel_apply_internal(
+            _simple_property_single,
+            sequence,
+            n_workers=n_workers,
+            chunksize=chunksize,
+            method=method,
+            scale=SurfaceAccessibilityScale.VERGOTEN,
+            precision=precision,
+        )
+    else:
+        return _simple_property_single(
+            sequence=sequence,
+            scale=SurfaceAccessibilityScale.VERGOTEN,
+            precision=precision,
+        )
+
+
+@overload
+def polarity(
+    sequence: str | ProFormaAnnotation,
+    precision: int | None = None,
+    n_workers: None = None,
+    chunksize: None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> float: ...
+
+
+@overload
+def polarity(
+    sequence: Sequence[str | ProFormaAnnotation],
+    precision: int | None = None,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> list[float]: ...
+
+
+def polarity(
+    sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
+    precision: int | None = None,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> float | list[float]:
+    if (
+        isinstance(sequence, Sequence)
+        and not isinstance(sequence, str)
+        and not isinstance(sequence, ProFormaAnnotation)
+    ):
+        return parallel_apply_internal(
+            _simple_property_single,
+            sequence,
+            n_workers=n_workers,
+            chunksize=chunksize,
+            method=method,
+            scale=PolarityScale.GRANTHAM,
+            precision=precision,
+        )
+    else:
+        return _simple_property_single(
+            sequence=sequence,
+            scale=PolarityScale.GRANTHAM,
+            precision=precision,
+        )
+
+
+@overload
+def mutability(
+    sequence: str | ProFormaAnnotation,
+    precision: int | None = None,
+    n_workers: None = None,
+    chunksize: None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> float: ...
+
+
+@overload
+def mutability(
+    sequence: Sequence[str | ProFormaAnnotation],
+    precision: int | None = None,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> list[float]: ...
+
+
+def mutability(
+    sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
+    precision: int | None = None,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> float | list[float]:
+    if (
+        isinstance(sequence, Sequence)
+        and not isinstance(sequence, str)
+        and not isinstance(sequence, ProFormaAnnotation)
+    ):
+        return parallel_apply_internal(
+            _simple_property_single,
+            sequence,
+            n_workers=n_workers,
+            chunksize=chunksize,
+            method=method,
+            scale=PhysicalPropertyScale.MUTABILITY,
+            precision=precision,
+        )
+    else:
+        return _simple_property_single(
+            sequence=sequence,
+            scale=PhysicalPropertyScale.MUTABILITY,
+            precision=precision,
+        )
+
+
+@overload
+def codons(
+    sequence: str | ProFormaAnnotation,
+    precision: int | None = None,
+    n_workers: None = None,
+    chunksize: None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> float: ...
+
+
+@overload
+def codons(
+    sequence: Sequence[str | ProFormaAnnotation],
+    precision: int | None = None,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> list[float]: ...
+
+
+def codons(
+    sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
+    precision: int | None = None,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> float | list[float]:
+    if (
+        isinstance(sequence, Sequence)
+        and not isinstance(sequence, str)
+        and not isinstance(sequence, ProFormaAnnotation)
+    ):
+        return parallel_apply_internal(
+            _simple_property_single,
+            sequence,
+            n_workers=n_workers,
+            chunksize=chunksize,
+            method=method,
+            scale=PhysicalPropertyScale.CODONS,
+            precision=precision,
+        )
+    else:
+        return _simple_property_single(
+            sequence=sequence,
+            scale=PhysicalPropertyScale.CODONS,
+            precision=precision,
+        )
+
+
+@overload
+def bulkiness(
+    sequence: str | ProFormaAnnotation,
+    precision: int | None = None,
+    n_workers: None = None,
+    chunksize: None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> float: ...
+
+
+@overload
+def bulkiness(
+    sequence: Sequence[str | ProFormaAnnotation],
+    precision: int | None = None,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> list[float]: ...
+
+
+def bulkiness(
+    sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
+    precision: int | None = None,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> float | list[float]:
+    if (
+        isinstance(sequence, Sequence)
+        and not isinstance(sequence, str)
+        and not isinstance(sequence, ProFormaAnnotation)
+    ):
+        return parallel_apply_internal(
+            _simple_property_single,
+            sequence,
+            n_workers=n_workers,
+            chunksize=chunksize,
+            method=method,
+            scale=PhysicalPropertyScale.BULKINESS,
+            precision=precision,
+        )
+    else:
+        return _simple_property_single(
+            sequence=sequence,
+            scale=PhysicalPropertyScale.BULKINESS,
+            precision=precision,
+        )
+
+
+@overload
+def recognition_factors(
+    sequence: str | ProFormaAnnotation,
+    precision: int | None = None,
+    n_workers: None = None,
+    chunksize: None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> float: ...
+
+
+@overload
+def recognition_factors(
+    sequence: Sequence[str | ProFormaAnnotation],
+    precision: int | None = None,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> list[float]: ...
+
+
+def recognition_factors(
+    sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
+    precision: int | None = None,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> float | list[float]:
+    if (
+        isinstance(sequence, Sequence)
+        and not isinstance(sequence, str)
+        and not isinstance(sequence, ProFormaAnnotation)
+    ):
+        return parallel_apply_internal(
+            _simple_property_single,
+            sequence,
+            n_workers=n_workers,
+            chunksize=chunksize,
+            method=method,
+            scale=PhysicalPropertyScale.RECOGNITION_FACTORS,
+            precision=precision,
+        )
+    else:
+        return _simple_property_single(
+            sequence=sequence,
+            scale=PhysicalPropertyScale.RECOGNITION_FACTORS,
+            precision=precision,
+        )
+
+
+@overload
+def transmembrane_tendency(
+    sequence: str | ProFormaAnnotation,
+    precision: int | None = None,
+    n_workers: None = None,
+    chunksize: None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> float: ...
+
+
+@overload
+def transmembrane_tendency(
+    sequence: Sequence[str | ProFormaAnnotation],
+    precision: int | None = None,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> list[float]: ...
+
+
+def transmembrane_tendency(
+    sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
+    precision: int | None = None,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> float | list[float]:
+    if (
+        isinstance(sequence, Sequence)
+        and not isinstance(sequence, str)
+        and not isinstance(sequence, ProFormaAnnotation)
+    ):
+        return parallel_apply_internal(
+            _simple_property_single,
+            sequence,
+            n_workers=n_workers,
+            chunksize=chunksize,
+            method=method,
+            scale=PhysicalPropertyScale.TRANSMEMBRANE_TENDENCY,
+            precision=precision,
+        )
+    else:
+        return _simple_property_single(
+            sequence=sequence,
+            scale=PhysicalPropertyScale.TRANSMEMBRANE_TENDENCY,
+            precision=precision,
+        )
+
+
+@overload
+def average_buried_area(
+    sequence: str | ProFormaAnnotation,
+    precision: int | None = None,
+    n_workers: None = None,
+    chunksize: None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> float: ...
+
+
+@overload
+def average_buried_area(
+    sequence: Sequence[str | ProFormaAnnotation],
+    precision: int | None = None,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> list[float]: ...
+
+
+def average_buried_area(
+    sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
+    precision: int | None = None,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> float | list[float]:
+    if (
+        isinstance(sequence, Sequence)
+        and not isinstance(sequence, str)
+        and not isinstance(sequence, ProFormaAnnotation)
+    ):
+        return parallel_apply_internal(
+            _simple_property_single,
+            sequence,
+            n_workers=n_workers,
+            chunksize=chunksize,
+            method=method,
+            scale=SurfaceAccessibilityScale.AVERAGE_BURIED_AREA,
+            precision=precision,
+        )
+    else:
+        return _simple_property_single(
+            sequence=sequence,
+            scale=SurfaceAccessibilityScale.AVERAGE_BURIED_AREA,
+            precision=precision,
+        )
+
+
+@overload
+def hplc(
+    sequence: str | ProFormaAnnotation,
+    precision: int | None = None,
+    n_workers: None = None,
+    chunksize: None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> float: ...
+
+
+@overload
+def hplc(
+    sequence: Sequence[str | ProFormaAnnotation],
+    precision: int | None = None,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> list[float]: ...
+
+
+def hplc(
+    sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
+    precision: int | None = None,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> float | list[float]:
+    if (
+        isinstance(sequence, Sequence)
+        and not isinstance(sequence, str)
+        and not isinstance(sequence, ProFormaAnnotation)
+    ):
+        return parallel_apply_internal(
+            _simple_property_single,
+            sequence,
+            n_workers=n_workers,
+            chunksize=chunksize,
+            method=method,
+            scale=HPLCScale.MEEK_2_1,
+            precision=precision,
+        )
+    else:
+        return _simple_property_single(
+            sequence=sequence,
+            scale=HPLCScale.MEEK_2_1,
+            precision=precision,
+        )
+
+
+@overload
+def refractivity(
+    sequence: str | ProFormaAnnotation,
+    precision: int | None = None,
+    n_workers: None = None,
+    chunksize: None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> float: ...
+
+
+@overload
+def refractivity(
+    sequence: Sequence[str | ProFormaAnnotation],
+    precision: int | None = None,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> list[float]: ...
+
+
+def refractivity(
+    sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
+    precision: int | None = None,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> float | list[float]:
+    if (
+        isinstance(sequence, Sequence)
+        and not isinstance(sequence, str)
+        and not isinstance(sequence, ProFormaAnnotation)
+    ):
+        return parallel_apply_internal(
+            _simple_property_single,
+            sequence,
+            n_workers=n_workers,
+            chunksize=chunksize,
+            method=method,
+            scale=PhysicalPropertyScale.REFRACTIVITY,
+            precision=precision,
+        )
+    else:
+        return _simple_property_single(
+            sequence=sequence,
+            scale=PhysicalPropertyScale.REFRACTIVITY,
+            precision=precision,
+        )
+
+
+def calc_window_property(
+    sequence: str | ProFormaAnnotation,
+    scale: str | dict[str, float],
+    window_size: int = 9,
+    missing_aa_handling: (
+        MissingAAHandlingLiteral | MissingAAHandling
+    ) = MissingAAHandling.ERROR,
+    aggregation_method: (
+        AggregationMethodLiteral | AggregationMethod
+    ) = AggregationMethod.AVG,
+    normalize: bool = False,
+    weighting_scheme: (
+        WeightingMethodsLiteral | WeightingMethods
+    ) = WeightingMethods.UNIFORM,
+    min_weight: float = 0.1,
+    max_weight: float = 1.0,
+    precision: int | None = None,
+) -> list[float]:
+    annotation = get_annotation_input(sequence=sequence, copy=True)
+    vals = _calc_window_property(
+        sequence=annotation.stripped_sequence,
+        scale=scale,
+        window_size=window_size,
+        missing_aa_handling=missing_aa_handling,
+        aggregation_method=aggregation_method,
+        normalize=normalize,
+        weighting_scheme=weighting_scheme,
+        min_weight=min_weight,
+        max_weight=max_weight,
+    )
+    if precision is not None:
+        vals = [round_to_precision(v, precision) for v in vals]
+    return vals
+
+
+def _charge_at_ph_single(
+    sequence: str | ProFormaAnnotation,
+    pH: float = 7.0,
+    precision: int | None = None,
+) -> float:
+    annotation = get_annotation_input(sequence=sequence, copy=False)
+    val = _charge_at_ph(
+        sequence=annotation.stripped_sequence,
+        pH=pH,
+    )
+    return round_to_precision(val, precision)
+
+
+@overload
+def charge_at_ph(
+    sequence: str | ProFormaAnnotation,
+    pH: float = 7.0,
+    precision: int | None = None,
+    n_workers: None = None,
+    chunksize: None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> float: ...
+
+
+@overload
+def charge_at_ph(
+    sequence: Sequence[str | ProFormaAnnotation],
+    pH: float = 7.0,
+    precision: int | None = None,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> list[float]: ...
+
+
+def charge_at_ph(
+    sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
+    pH: float = 7.0,
+    precision: int | None = None,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> float | list[float]:
+    if (
+        isinstance(sequence, Sequence)
+        and not isinstance(sequence, str)
+        and not isinstance(sequence, ProFormaAnnotation)
+    ):
+        return parallel_apply_internal(
+            _charge_at_ph_single,
+            sequence,
+            n_workers=n_workers,
+            chunksize=chunksize,
+            method=method,
+            pH=pH,
+            precision=precision,
+        )
+    else:
+        return _charge_at_ph_single(
+            sequence=sequence,
+            pH=pH,
+            precision=precision,
+        )
+
+
+def _pi_single(
+    sequence: str | ProFormaAnnotation,
+    precision: int | None = None,
+) -> float:
+    annotation = get_annotation_input(sequence=sequence, copy=False)
+
+    def _calculate_pi(
+        ph: float = 7.775,
+        min_: float = 4.05,
+        max_: float = 12.0,
+        tol_: float = 0.001,
+    ) -> float:
+        charge = _charge_at_ph(sequence=annotation.stripped_sequence, pH=ph)
+        if max_ - min_ > tol_:
+            if charge > 0.0:
+                min_ = ph
+            else:
+                max_ = ph
+            next_ph = (min_ + max_) / 2
+            return _calculate_pi(next_ph, min_, max_, tol_)
+        return ph
+
+    isoelectric_point = _calculate_pi()
+    return round_to_precision(isoelectric_point, precision)
+
+
+@overload
+def pi(
+    sequence: str | ProFormaAnnotation,
+    precision: int | None = None,
+    n_workers: None = None,
+    chunksize: None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> float: ...
+
+
+@overload
+def pi(
+    sequence: Sequence[str | ProFormaAnnotation],
+    precision: int | None = None,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> list[float]: ...
+
+
+def pi(
+    sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
+    precision: int | None = None,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> float | list[float]:
+    if (
+        isinstance(sequence, Sequence)
+        and not isinstance(sequence, str)
+        and not isinstance(sequence, ProFormaAnnotation)
+    ):
+        return parallel_apply_internal(
+            _pi_single,
+            sequence,
+            n_workers=n_workers,
+            chunksize=chunksize,
+            method=method,
+            precision=precision,
+        )
+    else:
+        return _pi_single(
+            sequence=sequence,
+            precision=precision,
+        )
+
+
+def _aa_property_percentage_single(
+    sequence: str | ProFormaAnnotation,
+    residues: list[str],
+    precision: int | None = None,
+) -> float:
+    annotation = get_annotation_input(sequence=sequence, copy=False)
+    val = _aa_property_percentage(
+        sequence=annotation.stripped_sequence,
+        residues=residues,
+    )
+    return round_to_precision(val, precision)
+
+
+@overload
+def aa_property_percentage(
+    sequence: str | ProFormaAnnotation,
+    residues: list[str],
+    precision: int | None = None,
+    n_workers: None = None,
+    chunksize: None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> float: ...
+
+
+@overload
+def aa_property_percentage(
+    sequence: Sequence[str | ProFormaAnnotation],
+    residues: list[str],
+    precision: int | None = None,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> list[float]: ...
+
+
+def aa_property_percentage(
+    sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
+    residues: list[str],
+    precision: int | None = None,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> float | list[float]:
+    if (
+        isinstance(sequence, Sequence)
+        and not isinstance(sequence, str)
+        and not isinstance(sequence, ProFormaAnnotation)
+    ):
+        return parallel_apply_internal(
+            _aa_property_percentage_single,
+            sequence,
+            n_workers=n_workers,
+            chunksize=chunksize,
+            method=method,
+            residues=residues,
+            precision=precision,
+        )
+    else:
+        return _aa_property_percentage_single(
+            sequence=sequence,
+            residues=residues,
+            precision=precision,
+        )
+
+
+@overload
+def aromaticity(
+    sequence: str | ProFormaAnnotation,
+    aromatic_residues: list[str] = ["Y", "W", "F"],
+    precision: int | None = None,
+    n_workers: None = None,
+    chunksize: None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> float: ...
+
+
+@overload
+def aromaticity(
+    sequence: Sequence[str | ProFormaAnnotation],
+    aromatic_residues: list[str] = ["Y", "W", "F"],
+    precision: int | None = None,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> list[float]: ...
+
+
+def aromaticity(
+    sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
+    aromatic_residues: list[str] = ["Y", "W", "F"],
+    precision: int | None = None,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> float | list[float]:
+    if (
+        isinstance(sequence, Sequence)
+        and not isinstance(sequence, str)
+        and not isinstance(sequence, ProFormaAnnotation)
+    ):
+        return parallel_apply_internal(
+            _aa_property_percentage_single,
+            sequence,
+            n_workers=n_workers,
+            chunksize=chunksize,
+            method=method,
+            residues=aromatic_residues,
+            precision=precision,
+        )
+    else:
+        return _aa_property_percentage_single(
+            sequence=sequence,
+            residues=aromatic_residues,
+            precision=precision,
+        )
+
+
+def _secondary_structure_single(
+    sequence: str | ProFormaAnnotation,
+    scale: str = SecondaryStructureMethod.DELEAGE_ROUX,
+    precision: int | None = None,
+) -> dict[str, float]:
+    annotation = get_annotation_input(sequence=sequence, copy=True)
+    d = _secondary_structure(
+        sequence=annotation.stripped_sequence,
+        scale=scale,
+    )
+    if precision is not None:
+        d = {k: round_to_precision(v, precision) for k, v in d.items()}
+    return d
+
+
+@overload
+def secondary_structure(
+    sequence: str | ProFormaAnnotation,
+    scale: str = SecondaryStructureMethod.DELEAGE_ROUX,
+    precision: int | None = None,
+    n_workers: None = None,
+    chunksize: None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> dict[str, float]: ...
+
+
+@overload
+def secondary_structure(
+    sequence: Sequence[str | ProFormaAnnotation],
+    scale: str = SecondaryStructureMethod.DELEAGE_ROUX,
+    precision: int | None = None,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> list[dict[str, float]]: ...
+
+
+def secondary_structure(
+    sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
+    scale: str = SecondaryStructureMethod.DELEAGE_ROUX,
+    precision: int | None = None,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> dict[str, float] | list[dict[str, float]]:
+    if (
+        isinstance(sequence, Sequence)
+        and not isinstance(sequence, str)
+        and not isinstance(sequence, ProFormaAnnotation)
+    ):
+        return parallel_apply_internal(
+            _secondary_structure_single,
+            sequence,
+            n_workers=n_workers,
+            chunksize=chunksize,
+            method=method,
+            scale=scale,
+            precision=precision,
+        )
+    else:
+        return _secondary_structure_single(
+            sequence=sequence,
+            scale=scale,
+            precision=precision,
+        )
+
+
+def _alpha_helix_percent_single(
+    sequence: str | ProFormaAnnotation,
+    precision: int | None = None,
+) -> float:
+    d = _secondary_structure_single(
+        sequence, scale=SecondaryStructureMethod.DELEAGE_ROUX, precision=precision
+    )
+    return d[SecondaryStructureType.ALPHA_HELIX]
+
+
+@overload
+def alpha_helix_percent(
+    sequence: str | ProFormaAnnotation,
+    precision: int | None = None,
+    n_workers: None = None,
+    chunksize: None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> float: ...
+
+
+@overload
+def alpha_helix_percent(
+    sequence: Sequence[str | ProFormaAnnotation],
+    precision: int | None = None,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> list[float]: ...
+
+
+def alpha_helix_percent(
+    sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
+    precision: int | None = None,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> float | list[float]:
+    if (
+        isinstance(sequence, Sequence)
+        and not isinstance(sequence, str)
+        and not isinstance(sequence, ProFormaAnnotation)
+    ):
+        return parallel_apply_internal(
+            _alpha_helix_percent_single,
+            sequence,
+            n_workers=n_workers,
+            chunksize=chunksize,
+            method=method,
+            precision=precision,
+        )
+    else:
+        return _alpha_helix_percent_single(
+            sequence=sequence,
+            precision=precision,
+        )
+
+
+def _beta_sheet_percent_single(
+    sequence: str | ProFormaAnnotation,
+    precision: int | None = None,
+) -> float:
+    d = _secondary_structure_single(
+        sequence, scale=SecondaryStructureMethod.DELEAGE_ROUX, precision=precision
+    )
+    return d[SecondaryStructureType.BETA_SHEET]
+
+
+@overload
+def beta_sheet_percent(
+    sequence: str | ProFormaAnnotation,
+    precision: int | None = None,
+    n_workers: None = None,
+    chunksize: None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> float: ...
+
+
+@overload
+def beta_sheet_percent(
+    sequence: Sequence[str | ProFormaAnnotation],
+    precision: int | None = None,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> list[float]: ...
+
+
+def beta_sheet_percent(
+    sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
+    precision: int | None = None,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> float | list[float]:
+    if (
+        isinstance(sequence, Sequence)
+        and not isinstance(sequence, str)
+        and not isinstance(sequence, ProFormaAnnotation)
+    ):
+        return parallel_apply_internal(
+            _beta_sheet_percent_single,
+            sequence,
+            n_workers=n_workers,
+            chunksize=chunksize,
+            method=method,
+            precision=precision,
+        )
+    else:
+        return _beta_sheet_percent_single(
+            sequence=sequence,
+            precision=precision,
+        )
+
+
+def _beta_turn_percent_single(
+    sequence: str | ProFormaAnnotation,
+    precision: int | None = None,
+) -> float:
+    d = _secondary_structure_single(
+        sequence, scale=SecondaryStructureMethod.DELEAGE_ROUX, precision=precision
+    )
+    return d[SecondaryStructureType.BETA_TURN]
+
+
+@overload
+def beta_turn_percent(
+    sequence: str | ProFormaAnnotation,
+    precision: int | None = None,
+    n_workers: None = None,
+    chunksize: None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> float: ...
+
+
+@overload
+def beta_turn_percent(
+    sequence: Sequence[str | ProFormaAnnotation],
+    precision: int | None = None,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> list[float]: ...
+
+
+def beta_turn_percent(
+    sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
+    precision: int | None = None,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> float | list[float]:
+    if (
+        isinstance(sequence, Sequence)
+        and not isinstance(sequence, str)
+        and not isinstance(sequence, ProFormaAnnotation)
+    ):
+        return parallel_apply_internal(
+            _beta_turn_percent_single,
+            sequence,
+            n_workers=n_workers,
+            chunksize=chunksize,
+            method=method,
+            precision=precision,
+        )
+    else:
+        return _beta_turn_percent_single(
+            sequence=sequence,
+            precision=precision,
+        )
+
+
+def _coil_percent_single(
+    sequence: str | ProFormaAnnotation,
+    precision: int | None = None,
+) -> float:
+    d = _secondary_structure_single(
+        sequence, scale=SecondaryStructureMethod.DELEAGE_ROUX, precision=precision
+    )
+    return d[SecondaryStructureType.COIL]
+
+
+@overload
+def coil_percent(
+    sequence: str | ProFormaAnnotation,
+    precision: int | None = None,
+    n_workers: None = None,
+    chunksize: None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> float: ...
+
+
+@overload
+def coil_percent(
+    sequence: Sequence[str | ProFormaAnnotation],
+    precision: int | None = None,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> list[float]: ...
+
+
+def coil_percent(
+    sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
+    precision: int | None = None,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> float | list[float]:
+    if (
+        isinstance(sequence, Sequence)
+        and not isinstance(sequence, str)
+        and not isinstance(sequence, ProFormaAnnotation)
+    ):
+        return parallel_apply_internal(
+            _coil_percent_single,
+            sequence,
+            n_workers=n_workers,
+            chunksize=chunksize,
+            method=method,
+            precision=precision,
+        )
+    else:
+        return _coil_percent_single(
+            sequence=sequence,
+            precision=precision,
+        )
+
+
+def _property_partitions_single(
+    sequence: str | ProFormaAnnotation,
+    scale: str | dict[str, float],
+    num_windows: int = 5,
+    aa_overlap: int = 0,
+    missing_aa_handling: (
+        MissingAAHandlingLiteral | MissingAAHandling
+    ) = MissingAAHandling.AVG,
+    aggregation_method: (
+        AggregationMethodLiteral | AggregationMethod
+    ) = AggregationMethod.AVG,
+    normalize: bool = False,
+    weighting_scheme: (
+        WeightingMethodsLiteral | WeightingMethods
+    ) = WeightingMethods.UNIFORM,
+    min_weight: float = 0.1,
+    max_weight: float = 1.0,
+) -> list[float]:
+    annotation = get_annotation_input(sequence=sequence, copy=True)
+    return _property_partitions(
+        sequence=annotation.stripped_sequence,
+        scale=scale,
+        num_windows=num_windows,
+        aa_overlap=aa_overlap,
+        missing_aa_handling=missing_aa_handling,
+        aggregation_method=aggregation_method,
+        normalize=normalize,
+        weighting_scheme=weighting_scheme,
+        min_weight=min_weight,
+        max_weight=max_weight,
+    )
+
+
+@overload
+def property_partitions(
+    sequence: str | ProFormaAnnotation,
+    scale: str | dict[str, float],
+    num_windows: int = 5,
+    aa_overlap: int = 0,
+    missing_aa_handling: (
+        MissingAAHandlingLiteral | MissingAAHandling
+    ) = MissingAAHandling.AVG,
+    aggregation_method: (
+        AggregationMethodLiteral | AggregationMethod
+    ) = AggregationMethod.AVG,
+    normalize: bool = False,
+    weighting_scheme: (
+        WeightingMethodsLiteral | WeightingMethods
+    ) = WeightingMethods.UNIFORM,
+    min_weight: float = 0.1,
+    max_weight: float = 1.0,
+    n_workers: None = None,
+    chunksize: None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> list[float]: ...
+
+
+@overload
+def property_partitions(
+    sequence: Sequence[str | ProFormaAnnotation],
+    scale: str | dict[str, float],
+    num_windows: int = 5,
+    aa_overlap: int = 0,
+    missing_aa_handling: (
+        MissingAAHandlingLiteral | MissingAAHandling
+    ) = MissingAAHandling.AVG,
+    aggregation_method: (
+        AggregationMethodLiteral | AggregationMethod
+    ) = AggregationMethod.AVG,
+    normalize: bool = False,
+    weighting_scheme: (
+        WeightingMethodsLiteral | WeightingMethods
+    ) = WeightingMethods.UNIFORM,
+    min_weight: float = 0.1,
+    max_weight: float = 1.0,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> list[list[float]]: ...
+
+
+def property_partitions(
+    sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
+    scale: str | dict[str, float],
+    num_windows: int = 5,
+    aa_overlap: int = 0,
+    missing_aa_handling: (
+        MissingAAHandlingLiteral | MissingAAHandling
+    ) = MissingAAHandling.AVG,
+    aggregation_method: (
+        AggregationMethodLiteral | AggregationMethod
+    ) = AggregationMethod.AVG,
+    normalize: bool = False,
+    weighting_scheme: (
+        WeightingMethodsLiteral | WeightingMethods
+    ) = WeightingMethods.UNIFORM,
+    min_weight: float = 0.1,
+    max_weight: float = 1.0,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> list[float] | list[list[float]]:
+    """Generate property values for N number of sliding windows across the sequence.
+
+    Divides the sequence into N overlapping windows and calculates property values
+    for each window. Useful for analyzing local variations in peptide properties.
+    """
+    if (
+        isinstance(sequence, Sequence)
+        and not isinstance(sequence, str)
+        and not isinstance(sequence, ProFormaAnnotation)
+    ):
+        return parallel_apply_internal(
+            _property_partitions_single,
+            sequence,
+            n_workers=n_workers,
+            chunksize=chunksize,
+            method=method,
+            scale=scale,
+            num_windows=num_windows,
+            aa_overlap=aa_overlap,
+            missing_aa_handling=missing_aa_handling,
+            aggregation_method=aggregation_method,
+            normalize=normalize,
+            weighting_scheme=weighting_scheme,
+            min_weight=min_weight,
+            max_weight=max_weight,
+        )
+    else:
+        return _property_partitions_single(
+            sequence=sequence,
+            scale=scale,
+            num_windows=num_windows,
+            aa_overlap=aa_overlap,
+            missing_aa_handling=missing_aa_handling,
+            aggregation_method=aggregation_method,
+            normalize=normalize,
+            weighting_scheme=weighting_scheme,
+            min_weight=min_weight,
+            max_weight=max_weight,
+        )

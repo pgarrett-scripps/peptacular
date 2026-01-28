@@ -1,19 +1,27 @@
-
-
 # Peptacular
 
-[![DOI](https://zenodo.org/badge/591504879.svg)](https://doi.org/10.5281/zenodo.15054278)[![Python package](https://github.com/pgarrett-scripps/peptacular/actions/workflows/python-package.yml/badge.svg)](https://github.com/pgarrett-scripps/peptacular/actions/workflows/python-package.yml)[![Pylint](https://github.com/pgarrett-scripps/peptacular/actions/workflows/pylint.yml/badge.svg)](https://github.com/pgarrett-scripps/peptacular/actions/workflows/pylint.yml)
+<div align="center">
+  <img src="peptacular_logo.png" alt="Peptacular Logo" width="400"/>
+  
+  # Peptacular
+  
+  A Python package for peptide sequence analysis built around **ProForma 2.1 notation**. Calculate masses, generate fragments, predict isotopic patterns, and more. Peptacular uses type annotations extensively, so it is type safe.
+  
+  [![PyPI version](https://badge.fury.io/py/peptacular.svg)](https://badge.fury.io/py/peptacular)
+  [![License: MIT](https://img.shields.io/badge/License-MIT-g.svg)](https://opensource.org/licenses/MIT)
+  
+</div>
 
+## Features
 
-**peptacular** is an extremely lightweight package with only one dependency: ``regex``.
-
-It contains functions for parsing and working with Proforma2.0 compliant peptide & protein sequences.
-
-If you use **peptacular** in your research, please cite: https://doi.org/10.5281/zenodo.15054278
-
-## Documentation
-https://peptacular.readthedocs.io/en/latest/index.html
-
+- **Nearly Complete ProForma 2.1 Parsing**
+- **Modifiable ProFormaAnnotaion Objects (Factory Pattern)**
+- **Mass/Mz/Composition Calculations**
+- **Predicted Isotopic Distributions**
+- **Enzymatic Protein Digestion** 
+- **Fragment Ion Generation** 
+- **Physiochemical Property Calculations** 
+- **Built-in Parallel Processing** 
 
 ## Installation
 
@@ -21,13 +29,59 @@ https://peptacular.readthedocs.io/en/latest/index.html
 pip install peptacular
 ```
 
-## Proforma Notation:
-- ProForma_v2.pdf
-- https://pubs.acs.org/doi/10.1021/acs.jproteome.1c00771
+## Quick Start (Object Based)
+
+See docs for more detail.
+
+```python
+import peptacular as pt
+
+# Parse a sequence into a ProFormaAnnotation
+peptide: pt.ProFormaAnnotation = pt.parse("PEM[Oxidation]TIDE")
+
+# Calculate mass and m/z
+mass: float = peptide.mass()
+mz: float = peptide.mz(charge=2)
+
+# Facotry pattern
+print(peptide.set_charge(2).set_peptide_name("Peptacular").serialize())
+# (>Peptacular)PEM[Oxidation]TIDE/2
+```
+
+## Quick Start (Functional Based)
+
+When more than one item is passed to the functional API methods, it is automatically parallelized.
+
+```python
+import peptacular as pt
+
+peptides = ['PEPTIDE', 'PATRICK', 'GARRETT']
+
+# Calculate mass and m/z for all peptides
+masses: list[float] = pt.mass(peptides)
+mzs: list[float] = pt.mz(peptides, charge=2)
+
+# For single peptides 
+mass: float = pt.mass(peptides[0])
+mz: float = pt.mz(peptides[0], charge=2)
+```
 
 
-## Warnings
+## ProForma 2.1 Compliance
 
-- The internal fragment ion mass calculation may not be accurate. Fairly certain that the ay, by, and cy internal fragments are correct.
-- GNO and RESID mods are disabled for now since very few were able to be parsed.
-- Project is still under development. I will be adding more features and fixing bugs as I find them.
+See [PROFORMA_COMPLIANCE.md](PROFORMA_COMPLIANCE.md) for detailed compliance status.
+
+## Contributing
+
+Contributions welcome! Check the examples directory for code style and documentation patterns.
+
+## License
+
+MIT
+
+## Citation
+
+Working on a JOSS submission, but in the meantime use:
+
+https://doi.org/10.5281/zenodo.15054278
+

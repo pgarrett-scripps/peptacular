@@ -1,26 +1,51 @@
-"""
-This module provides functions to generate permutations, combinations, and products of sequences.
-"""
+from collections.abc import Sequence
+from typing import overload
 
-from typing import List, Union
+from ..annotation import ProFormaAnnotation
+from ..constants import parallelMethod, parallelMethodLiteral
+from .parallel import parallel_apply_internal
+from .util import get_annotation_input
 
-from ..proforma.proforma_parser import ProFormaAnnotation
-from .sequence_funcs import get_annotation_input
+
+def _permutations_single(
+    sequence: str | ProFormaAnnotation,
+    size: int | None = None,
+) -> list[str]:
+    annotation = get_annotation_input(sequence, copy=False)
+    return [a.serialize() for a in annotation.permutations(size=size)]
+
+
+@overload
+def permutations(
+    sequence: str | ProFormaAnnotation,
+    size: int | None = None,
+    n_workers: None = None,
+    chunksize: None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> list[str]: ...
+
+
+@overload
+def permutations(
+    sequence: Sequence[str | ProFormaAnnotation],
+    size: int | None = None,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> list[list[str]]: ...
 
 
 def permutations(
-    sequence: Union[str, ProFormaAnnotation], size: int = None
-) -> List[str]:
+    sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
+    size: int | None = None,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> list[str] | list[list[str]]:
     """
     Generates all permutations of the input sequence. Terminal sequence are kept in place.
 
-    :param sequence: The sequence to be permuted.
-    :type sequence: str
-    :param size: The size of the permutations.
-    :type size: int
-
-    :return: A list of all permutations of the input sequence.
-    :rtype: List[str]
+    The size of the permutations. If None, uses the length of the sequence.
 
     .. code-block:: python
 
@@ -37,23 +62,65 @@ def permutations(
         ['<13C>PET', '<13C>PTE', '<13C>EPT', '<13C>ETP', '<13C>TPE', '<13C>TEP']
 
     """
-    annotation = get_annotation_input(sequence, copy=False)
-    return [a.serialize() for a in annotation.permutations(size)]
+    if (
+        isinstance(sequence, Sequence)
+        and not isinstance(sequence, str)
+        and not isinstance(sequence, ProFormaAnnotation)
+    ):
+        return parallel_apply_internal(
+            _permutations_single,
+            sequence,
+            n_workers=n_workers,
+            chunksize=chunksize,
+            method=method,
+            size=size,
+        )
+    else:
+        return _permutations_single(
+            sequence=sequence,
+            size=size,
+        )
+
+
+def _product_single(
+    sequence: str | ProFormaAnnotation,
+    repeat: int | None,
+) -> list[str]:
+    annotation = get_annotation_input(sequence=sequence, copy=False)
+    return [a.serialize() for a in annotation.product(repeat=repeat)]
+
+
+@overload
+def product(
+    sequence: str | ProFormaAnnotation,
+    repeat: int | None,
+    n_workers: None = None,
+    chunksize: None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> list[str]: ...
+
+
+@overload
+def product(
+    sequence: Sequence[str | ProFormaAnnotation],
+    repeat: int | None,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> list[list[str]]: ...
 
 
 def product(
-    sequence: Union[str, ProFormaAnnotation], repeat: Union[int, None]
-) -> List[str]:
+    sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
+    repeat: int | None,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> list[str] | list[list[str]]:
     """
-    Generates all sartesian products of the input sequence of a given size. Terminal sequence are kept in place.
+    Generates all cartesian products of the input sequence of a given size. Terminal sequence are kept in place.
 
-    :param sequence: The sequence to be combined.
-    :type sequence: str
-    :param repeat: The size of the combinations to be generated.
-    :type repeat: int
-
-    :return: A list of all combinations of the input sequence of the given size.
-    :rtype: List[str]
+    The size of the combinations to be generated. If None, uses the length of the sequence.
 
     .. code-block:: python
 
@@ -70,25 +137,65 @@ def product(
         ['<13C>PP', '<13C>PE', '<13C>PT', '<13C>EP', '<13C>EE', '<13C>ET', '<13C>TP', '<13C>TE', '<13C>TT']
 
     """
+    if (
+        isinstance(sequence, Sequence)
+        and not isinstance(sequence, str)
+        and not isinstance(sequence, ProFormaAnnotation)
+    ):
+        return parallel_apply_internal(
+            _product_single,
+            sequence,
+            n_workers=n_workers,
+            chunksize=chunksize,
+            method=method,
+            repeat=repeat,
+        )
+    else:
+        return _product_single(
+            sequence=sequence,
+            repeat=repeat,
+        )
 
-    annotation = get_annotation_input(sequence, copy=False)
-    return [a.serialize() for a in annotation.product(repeat)]
+
+def _combinations_single(
+    sequence: str | ProFormaAnnotation,
+    size: int | None,
+) -> list[str]:
+    annotation = get_annotation_input(sequence=sequence, copy=False)
+    return [a.serialize() for a in annotation.combinations(r=size)]
+
+
+@overload
+def combinations(
+    sequence: str | ProFormaAnnotation,
+    size: int | None,
+    n_workers: None = None,
+    chunksize: None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> list[str]: ...
+
+
+@overload
+def combinations(
+    sequence: Sequence[str | ProFormaAnnotation],
+    size: int | None,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> list[list[str]]: ...
 
 
 def combinations(
-    sequence: Union[str, ProFormaAnnotation], size: Union[int, None]
-) -> List[str]:
+    sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
+    size: int | None,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> list[str] | list[list[str]]:
     """
     Generates all combinations of the input sequence of a given size. Terminal sequence are kept in place.
 
-    :param sequence: The sequence to be combined.
-    :type sequence: str
-
-    :param size: The size of the combinations to be generated.
-    :type size: int
-
-    :return: A list of all combinations of the input sequence of the given size.
-    :rtype: List[str]
+    size: The size of the combinations to be generated. If None, uses the length of the sequence.
 
     .. code-block:: python
 
@@ -105,25 +212,66 @@ def combinations(
         ['<13C>PE', '<13C>PT', '<13C>ET']
 
     """
-    annotation = get_annotation_input(sequence, copy=False)
-    return [a.serialize() for a in annotation.combinations(size)]
+    if (
+        isinstance(sequence, Sequence)
+        and not isinstance(sequence, str)
+        and not isinstance(sequence, ProFormaAnnotation)
+    ):
+        return parallel_apply_internal(
+            _combinations_single,
+            sequence,
+            n_workers=n_workers,
+            chunksize=chunksize,
+            method=method,
+            size=size,
+        )
+    else:
+        return _combinations_single(
+            sequence=sequence,
+            size=size,
+        )
+
+
+def _combinations_with_replacement_single(
+    sequence: str | ProFormaAnnotation,
+    size: int | None,
+) -> list[str]:
+    annotation = get_annotation_input(sequence=sequence, copy=False)
+    return [a.serialize() for a in annotation.combinations_with_replacement(r=size)]
+
+
+@overload
+def combinations_with_replacement(
+    sequence: str | ProFormaAnnotation,
+    size: int | None,
+    n_workers: None = None,
+    chunksize: None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> list[str]: ...
+
+
+@overload
+def combinations_with_replacement(
+    sequence: Sequence[str | ProFormaAnnotation],
+    size: int | None,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> list[list[str]]: ...
 
 
 def combinations_with_replacement(
-    sequence: Union[str, ProFormaAnnotation], size: Union[int, None]
-) -> List[str]:
+    sequence: str | ProFormaAnnotation | Sequence[str | ProFormaAnnotation],
+    size: int | None,
+    n_workers: int | None = None,
+    chunksize: int | None = None,
+    method: parallelMethod | parallelMethodLiteral | None = None,
+) -> list[str] | list[list[str]]:
     """
     Generates all combinations with replacement of the input sequence of a given size. Terminal sequence are kept
     in place.
 
-    :param sequence: The sequence to be combined.
-    :type sequence: str
-
-    :param size: The size of the combinations to be generated.
-    :type size: int
-
-    :return: A list of all combinations of the input sequence of the given size.
-    :rtype: List[str]
+    size: The size of the combinations to be generated. If None, uses the length of the sequence.
 
     .. code-block:: python
 
@@ -140,5 +288,21 @@ def combinations_with_replacement(
         ['<13C>PP', '<13C>PE', '<13C>PT', '<13C>EE', '<13C>ET', '<13C>TT']
 
     """
-    annotation = get_annotation_input(sequence, copy=False)
-    return [a.serialize() for a in annotation.combinations_with_replacement(size)]
+    if (
+        isinstance(sequence, Sequence)
+        and not isinstance(sequence, str)
+        and not isinstance(sequence, ProFormaAnnotation)
+    ):
+        return parallel_apply_internal(
+            _combinations_with_replacement_single,
+            sequence,
+            n_workers=n_workers,
+            chunksize=chunksize,
+            method=method,
+            size=size,
+        )
+    else:
+        return _combinations_with_replacement_single(
+            sequence=sequence,
+            size=size,
+        )

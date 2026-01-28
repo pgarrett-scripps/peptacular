@@ -4,26 +4,27 @@
 All notable changes to this project will be documented in this file.
 
 ### TODO (Next Release?)
-- Fix internal fragment ions (Some might not be correct).
-- Cleanup custom errors as many are not used.
-- Update tests
-- Add a mode to all mods additions: overwrite, append, skip...
 - Take valid mod values from the respective dbs for randomizer
-- Have Mod objects work for fragment loss?
-- Improve fragment loss handling based on ion type and sequence
-- Can improve the performance of mass calculations with isotopes and use_isotope_on_mods, by not calculating the composition of mods
-- Add MultiProformaAnnot support to mass/chem/fragment/isotope....
-
+- W/V/D iosn should pop the terminal mods if present? and/or internal mods on first/last aa?
+- ensure str values are properly handles with intern and that mod values are cached
 
 ## [3.0.0]
-- added remove mod functions
-- added filter mods function
-- more inplace options
-- proforma objects now return proforma objects such that methods can be chained
-- some inplace options have changed
-- optional mods arg to many mod functions
-- Switched ProformaAnnotation to normal python class (was dataclass)
-- ProformaAnnotation mods objects dont return None anymore 
+- Major refactor / overhaul
+- Proforma 2.1 compatible
+- Proforma annotation methods now return proforma objects such that methods can be chained (factory pattern)
+- Most functionality is now accessible through annotation objetcs
+- Fasta reader
+- Split now splits unambiguous segemnts of the annotation (intervals are not split)
+- Extensive tests
+- uv backend
+- Decoy protein generation methods
+- Auto multiproccessing/threading via functional api
+- Improved copy perforamnce
+- Mod objects are frozen and cached
+- Proforma components dataclasses
+- Removed custom errors
+- Removed score / spectra (will make a seperate apckage termed spextacular)
+- Added seperate tacular dependancy to handle element/aa/obo lookup/parsing
 
 ## [2.5.1]
 - added ambiguity support to coverage funcs

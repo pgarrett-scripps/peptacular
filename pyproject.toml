@@ -1,51 +1,60 @@
-[build-system]
-requires = ["setuptools"]
-
 [project]
 name = "peptacular"
-authors = [
-    {name = "Patrick Garrett", email = "pgarrett@scripps.edu"},
-]
-description = "A spectacularly simple package for working with peptide sequences."
-readme = "README.md"
-requires-python = ">=3.8"
 dynamic = ["version"]
-license = {file = "LICENSE"}
+description = "A ProForma peptide sequence parser and annotation library"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = ["tacular>=1.0.0"]
 classifiers = [
-    "Programming Language :: Python :: 3",
     "Development Status :: 4 - Beta",
-    "License :: OSI Approved :: MIT License",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "Topic :: Scientific/Engineering :: Chemistry",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
     "Operating System :: OS Independent",
-]
-dependencies = [
-"regex",
+    "Typing :: Typed",
 ]
 
-[tool.setuptools]
-package-dir = {"" = "src"}
+[dependency-groups]
+dev = [
+    "pytest>=9.0.1",
+    "pytest-cov>=6.0.0",
+    "pympler>=1.1",
+    "pyteomics>=4.7.5",
+    "ruff>=0.14.7",
+    "pyupgrade>=3.21.0",
+    "ty>=0.0.11",
+]
 
-[tool.setuptools.package-data]
-peptacular = ["*.obo", "chem.txt"]
+docs = [
+    "sphinx>=7.0",
+    "sphinx-rtd-theme>=2.0",
+    "sphinx-autodoc-typehints>=1.25",
+    "myst-parser"
+]
 
-[project.urls]
-repository = "https://github.com/pgarrett-scripps/peptacular.git"
-
-[tool.setuptools.dynamic]
-version = {attr = "peptacular.__version__"}
-
-[tool.pylint]
-max-line-length = 120
-fail-under = 9.0
-good-names = ["db", "i", "j", "aa", "n", "k", "p", "Na", "Nb", "Nc", "Nx", "Ny", "Nz", "mz", "k", "v",
-    "f", "d", "m", "s", "r", "c", "id", "d1", "d2"]
-extension-pkg-whitelist = 'pydantic'
-max-branches = 50  # Increase the number of allowed branches
-max-locals = 30    # Increase the number of allowed local variables
-max-attributes = 50 # Increase the number of allowed attributes
-max-statements = 100  # Increase the number of allowed statements in a function
-max-args = 10  # Increase the number of allowed arguments in a function
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [tool.pytest.ini_options]
-filterwarnings = [
-    "ignore::UserWarning",
-]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-v --strict-markers"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/peptacular"]
+
+[tool.hatch.version]
+path = "src/peptacular/__init__.py"
+
+[tool.ruff]
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F403", "F401"]
+"data.py" = ["E741"]
+"constants.py" = ["E741"]
+
+#[tool.uv.sources]
+#tacular = { path = "../tacular", editable = true }
+#paftacular = { path = "../paftacular", editable = true }

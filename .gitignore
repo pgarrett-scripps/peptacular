@@ -1,28 +1,27 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# IDEs and editors
+.idea/
+.vscode/
+.zed/
+
+# Virtual environments
 .venv
 
-# Compiled Python files
-__pycache__/
-__pycache__
-*.pyc
+docs/_build/*
 
-# Virtual environment
-venv/
-env/
-
-# PyCharm
-.idea/
-
-# Logs and other generated files
-*.log
-*.sqlite3
-*.bak
-*.csv
-
-# Build files
-dist/
-build/
-*.egg-info/
-
-# OS generated files
-.DS_Store
-Thumbs.db
+# Testing and coverage reports
+try*.py
+.coverage
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+.ipynb_checkpoints/
+htmlcov/
+uv.lock

@@ -1,10 +1,9 @@
-from peptacular import coverage, find_subsequence_indices, percent_coverage
-
 import unittest
+
+from peptacular import coverage, find_subsequence_indices, percent_coverage
 
 
 class TestProtein(unittest.TestCase):
-
     def test_get_peptide_indexes_in_protein(self):
         # Test basic functionality
         self.assertEqual(find_subsequence_indices("AAPEPTIDEAA", "PEPTIDE"), [2])

@@ -1,0 +1,41 @@
+Fragment Ion Formulas
+=====================
+
+Precursor:  delta_formula=H2O
+Neutral:  delta_formula=
+a-ion:  delta_formula=C-1O-1
+b-ion:  delta_formula=
+c-ion:  delta_formula=H3N
+x-ion:  delta_formula=CO2
+y-ion:  delta_formula=H2O
+z-ion:  delta_formula=H-1N-1O
+z• radical ion:  delta_formula=N-1O
+z+H ion:  delta_formula=HN-1O
+c-H ion:  delta_formula=H2N
+Immonium:  delta_formula=C-1O-1
+d-ion:  delta_formula=C2H3N
+d-ion (valine):  delta_formula=C3H6N
+da-ion:  delta_formula=None
+db-ion:  delta_formula=None
+da-ion (threonine):  delta_formula=C2H4NO
+da-ion (isoleucine):  delta_formula=C4H8N
+db-ion (threonine):  delta_formula=C3H6N
+db-ion (isoleucine):  delta_formula=C3H6N
+v-ion:  delta_formula=C2H2NO
+w-ion:  delta_formula=C3H3O
+w-ion (valine):  delta_formula=C4H6O
+wa-ion (threonine):  delta_formula=C3H4O2
+wa-ion:  delta_formula=None
+wb-ion:  delta_formula=None
+wa-ion (isoleucine):  delta_formula=C5H8O
+wb-ion (threonine):  delta_formula=C4H6O
+wb-ion (isoleucine):  delta_formula=C4H6O
+by internal fragment:  delta_formula=C-1O-1
+ax internal fragment:  delta_formula=C-1O-1
+cz internal fragment:  delta_formula=C-1O-1
+ay internal fragment:  delta_formula=C-2O-2
+az internal fragment:  delta_formula=C-2H-1N-1O-2
+bx internal fragment:  delta_formula=
+bz internal fragment:  delta_formula=C-1H-1N-1O-1
+cx internal fragment:  delta_formula=N
+cy internal fragment:  delta_formula=C-1H-1NO-1

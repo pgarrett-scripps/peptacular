@@ -1,0 +1,3891 @@
+import re
+from collections import Counter
+from collections.abc import Callable, Generator, Iterable, Mapping, Sequence
+from enum import StrEnum
+from itertools import product
+from typing import (
+    Any,
+    Self,
+    cast,
+)
+
+from tacular import (
+    AA_LOOKUP,
+    FRAGMENT_ION_LOOKUP,
+    NEUTRAL_DELTA_LOOKUP,
+    AminoAcid,
+    Element,
+    ElementInfo,
+    FragmentIonInfo,
+    IonType,
+    IonTypeLiteral,
+    NeutralDelta,
+    NeutralDeltaInfo,
+    NeutralDeltaLiteral,
+)
+
+from ..constants import ELECTRON_MASS, ModType, ModTypeLiteral, Terminal
+from ..digestion.core import (
+    EnzymeConfig,
+    digest_annotation_by_aa,
+    digest_annotation_by_regex,
+    generate_regex,
+    get_cleavage_sites,
+    left_semi_spans,
+    nonspecific_spans,
+    right_semi_spans,
+    semi_spans,
+    sequential_digest_annotation,
+)
+from ..isotope import (
+    IsotopicData,
+    estimate_isotopic_distribution,
+    isotopic_distribution,
+)
+from ..proforma_components import (
+    MODIFICATION_TYPE,
+    ChargedFormula,
+    FixedModification,
+    FormulaElement,
+    GlobalChargeCarrier,
+    IsotopeReplacement,
+    ModificationTags,
+    PositionRule,
+    SequenceElement,
+    SequenceRegion,
+    TagMass,
+)
+from ..property.prop import AnnotationProperties
+from ..spans import Span
+from ..utils import get_mods
+from .ambiguity import (
+    annotate_ambiguity,
+    condense_ambiguity_to_xnotation,
+    group_by_ambiguity,
+    unique_fragments,
+)
+from .cached_comps import ChargeCarrierInfo, DeltaInfo, IsotopeInfo
+from .combinatorics import (
+    generate_combinations,
+    generate_combinations_with_replacement,
+    generate_permutations,
+    generate_product,
+)
+from .manipulation import (
+    condense_mods_to_intervals,
+    condense_static_mods,
+    condense_to_peptidoform,
+    count_residues,
+    coverage,
+    find_indices,
+    is_subsequence,
+    modification_coverage,
+    percent_coverage,
+    percent_residues,
+)
+from .mod import (
+    Interval,
+    Mod,
+    Mods,
+    convert_moddict_input,
+    convert_single_mod_input,
+)
+from .mod_builder import build_mods
+from .parser import ProFormaParser
+from .randomizer import generate_random_proforma_annotation
+from .serializer import serialize_annotation, serialize_charge
+from .slicing import (
+    generate_sliding_windows,
+    join_annotations,
+    reverse_annotation,
+    shift_annotation,
+    shuffle_annotation,
+    slice_annotation,
+    sort_annotation,
+    split_annotation,
+)
+from .utils import (
+    Fragment,
+    adjust_comp,
+    adjust_mass_mz,
+    can_fragment_sequence,
+    handle_charge_input_comp,
+)
+
+fe = FormulaElement(element=Element.H, occurance=1)
+H_CHARGE_FORMULA = ChargedFormula(formula=(fe,), charge=1)
+
+
+ION_TYPE = IonTypeLiteral | IonType
+CHARGE_TYPE = int | str | GlobalChargeCarrier | tuple[GlobalChargeCarrier | str, ...]
+ISOTOPE_TYPE = int | dict[str | ElementInfo, int]
+LOSS_TYPE = NeutralDelta | NeutralDeltaLiteral | NeutralDeltaInfo | str
+CUSTOM_LOSS_TYPE = (
+    str | ChargedFormula | float | dict[str | ChargedFormula | float, int]
+)
+POSITION_TYPE = int | str | tuple[int, int]
+
+EMPTY_ISOTOPE_MODS = Mods[IsotopeReplacement](mod_type=ModType.ISOTOPE, _mods=None)
+EMPTY_STATIC_MODS = Mods[FixedModification](mod_type=ModType.STATIC, _mods=None)
+EMPTY_UNKNOWN_MODS = Mods[ModificationTags](mod_type=ModType.UNKNOWN, _mods=None)
+EMPTY_LABILE_MODS = Mods[ModificationTags](mod_type=ModType.LABILE, _mods=None)
+EMPTY_NTERM_MODS = Mods[ModificationTags](mod_type=ModType.NTERM, _mods=None)
+EMPTY_CTERM_MODS = Mods[ModificationTags](mod_type=ModType.CTERM, _mods=None)
+EMPTY_CHARGE_MODS = Mods[GlobalChargeCarrier](mod_type=ModType.CHARGE, _mods=None)
+EMPTY_INTERNAL_MODS = Mods[ModificationTags](mod_type=ModType.INTERNAL, _mods=None)
+
+
+class ChargeType(StrEnum):
+    INT = "int"
+    ADDUCTS = "adducts"
+    NONE = "none"
+
+
+def get_loss_combinations(
+    losses: dict[NeutralDeltaInfo, int], max_losses: int
+) -> list[DeltaInfo]:
+    """Generate all combinations of losses up to max_losses."""
+    if not losses:
+        return [DeltaInfo.from_input(None)]
+
+    # Generate all possible count combinations for each loss
+    loss_items = list(losses.items())
+    count_ranges = [range(count + 1) for _, count in loss_items]
+
+    loss_combinations: list[dict[NeutralDeltaInfo, int] | None] = [None]
+
+    for counts in product(*count_ranges):
+        total_losses = sum(counts)
+        # Skip if no losses or exceeds max
+        if total_losses == 0 or total_losses > max_losses:
+            continue
+
+        # Build combination dict
+        combo = {}
+        for (loss, _), count in zip(loss_items, counts):
+            if count > 0:
+                combo[loss] = count
+
+        loss_combinations.append(combo)
+
+    # Convert to DeltaInfo
+    delta_combinations: list[DeltaInfo] = []
+    for loss_combo in loss_combinations:
+        if loss_combo is None:
+            delta_combinations.append(DeltaInfo.from_input(None))
+        else:
+            formula_dict: dict[ChargedFormula, int] = {}
+            for nd, count in loss_combo.items():
+                nd_formula: ChargedFormula = ChargedFormula.from_composition(
+                    nd.composition
+                )
+                formula_dict[nd_formula] = count
+            delta_combinations.append(DeltaInfo.from_input(formula_dict))  # type: ignore
+
+    return delta_combinations
+
+
+class ProFormaAnnotation:
+    def __init__(
+        self,
+        sequence: str | None = None,
+        compound_name: str | None = None,  # (>>>Name)
+        ion_name: str | None = None,  # (>>Name)
+        peptide_name: str | None = None,  # (>Name)
+        isotope_mods: Any = None,
+        static_mods: Any = None,
+        labile_mods: Any = None,
+        unknown_mods: Any = None,
+        nterm_mods: Any = None,
+        cterm_mods: Any = None,
+        internal_mods: dict[int, Any] | None = None,
+        intervals: list[Interval] | None = None,
+        charge: Any = None,
+        validate: bool = False,
+    ) -> None:
+        self._sequence: str | None = None
+        self._compound_name: str | None = None
+        self._ion_name: str | None = None
+        self._peptide_name: str | None = None
+        self._isotope_mods: dict[str, int] | None = None
+        self._static_mods: dict[str, int] | None = None
+        self._labile_mods: dict[str, int] | None = None
+        self._unknown_mods: dict[str, int] | None = None
+        self._nterm_mods: dict[str, int] | None = None
+        self._cterm_mods: dict[str, int] | None = None
+        self._internal_mods: dict[int, dict[str, int]] | None = None
+        self._intervals: list[Interval] | None = None
+        self._charge: int | dict[str, int] | None = None
+        self._validate = validate
+
+        self.set_sequence(sequence, inplace=True, validate=validate)
+        self.set_compound_name(compound_name, inplace=True, validate=validate)
+        self.set_ion_name(ion_name, inplace=True, validate=validate)
+        self.set_peptide_name(peptide_name, inplace=True, validate=validate)
+        self.set_isotope_mods(isotope_mods, inplace=True, validate=validate)
+        self.set_static_mods(static_mods, inplace=True, validate=validate)
+        self.set_labile_mods(labile_mods, inplace=True, validate=validate)
+        self.set_unknown_mods(unknown_mods, inplace=True, validate=validate)
+        self.set_nterm_mods(nterm_mods, inplace=True, validate=validate)
+        self.set_cterm_mods(cterm_mods, inplace=True, validate=validate)
+        self.set_internal_mods(internal_mods, inplace=True, validate=validate)
+        self.set_intervals(intervals, inplace=True, validate=validate)
+        self.set_charge(charge, inplace=True, validate=validate)
+
+    @property
+    def charge_type(self) -> ChargeType:
+        if isinstance(self._charge, int):
+            if self._charge == 0:
+                return ChargeType.NONE
+            return ChargeType.INT
+        elif isinstance(self._charge, dict):
+            return ChargeType.ADDUCTS
+        else:
+            return ChargeType.NONE
+
+    """
+    Validators
+    """
+
+    def validate_sequence(self) -> None:
+        for aa in self.sequence:
+            if aa not in AA_LOOKUP:
+                raise ValueError(
+                    f"Invalid amino acid '{aa}' in sequence '{self.sequence}'"
+                )
+
+    def validate_isotope_mods(self) -> None:
+        if errors := self.isotope_mods.validate():
+            raise ValueError(f"Invalid isotope modifications: {errors}")
+
+    def validate_static_mods(self) -> None:
+        if errors := self.static_mods.validate():
+            raise ValueError(f"Invalid static modifications: {errors}")
+
+    def validate_labile_mods(self) -> None:
+        if errors := self.labile_mods.validate():
+            raise ValueError(f"Invalid labile modifications: {errors}")
+
+    def validate_unknown_mods(self) -> None:
+        if errors := self.unknown_mods.validate():
+            raise ValueError(f"Invalid unknown modifications: {errors}")
+
+    def validate_nterm_mods(self) -> None:
+        if errors := self.nterm_mods.validate():
+            raise ValueError(f"Invalid N-terminal modifications: {errors}")
+
+    def validate_cterm_mods(self) -> None:
+        if errors := self.cterm_mods.validate():
+            raise ValueError(f"Invalid C-terminal modifications: {errors}")
+
+    def validate_internal_mods(self) -> None:
+        for pos, mods in self.internal_mods.items():
+            if errors := mods.validate():
+                raise ValueError(
+                    f"Invalid internal modifications at position {pos}: {errors}"
+                )
+
+    def validate_intervals(self) -> None:
+        intervals = self.intervals
+        for interval in intervals:
+            if errors := interval.validate():
+                raise ValueError(f"Invalid interval: {errors}")
+
+        # ensure no overlapping intervals
+        sorted_intervals = sorted(intervals, key=lambda x: x.start)
+        for i in range(1, len(sorted_intervals)):
+            if sorted_intervals[i].start < sorted_intervals[i - 1].end:
+                raise ValueError(
+                    f"Overlapping intervals detected: {sorted_intervals[i - 1]} and {sorted_intervals[i]}"
+                )
+
+        # ensure that intervals dont start/end out of bounds
+        seq_len = len(self.sequence) if self._sequence is not None else 0
+        for interval in intervals:
+            if interval.start < 0 or interval.end > seq_len:
+                raise ValueError(
+                    f"Interval {interval} is out of bounds for sequence length {seq_len}"
+                )
+
+    def validate_charge(self) -> None:
+        charge_type = self.charge_type
+
+        match charge_type:
+            case ChargeType.INT:
+                pass
+            case ChargeType.ADDUCTS:
+                if errors := self.charge_adducts.validate():
+                    raise ValueError(f"Invalid charge adducts: {errors}")
+            case ChargeType.NONE:
+                pass
+            case _:
+                raise ValueError(f"Invalid charge type: {charge_type}")
+
+    def validate_annotation(self) -> None:
+        self.validate_sequence()
+        self.validate_isotope_mods()
+        self.validate_static_mods()
+        self.validate_labile_mods()
+        self.validate_unknown_mods()
+        self.validate_nterm_mods()
+        self.validate_cterm_mods()
+        self.validate_internal_mods()
+        self.validate_intervals()
+        self.validate_charge()
+
+    @property
+    def start_aa(self) -> str | None:
+        if self.has_sequence:
+            return self.sequence[0]
+        return None
+
+    @property
+    def end_aa(self) -> str | None:
+        if self.has_sequence:
+            return self.sequence[-1]
+        return None
+
+    # ============================================================================
+    # Properties
+    # ============================================================================
+
+    @property
+    def sequence_elements(self) -> tuple[SequenceElement, ...]:
+        if self._sequence is None:
+            return ()
+        return tuple(
+            SequenceElement.from_string(
+                f"{aa}{self.get_internal_mods_str_at_index(i)}"
+                if self.has_internal_mods_at_index(i)
+                else aa
+            )
+            for i, aa in enumerate(self.sequence)
+        )
+
+    @property
+    def sequence_regions(self) -> tuple[SequenceRegion, ...]:
+        if self._sequence is None or self.has_intervals is False:
+            return ()
+
+        sequence_elements = self.sequence_elements
+        sequence_regions: list[SequenceRegion] = []
+        for interval in self.intervals:
+            region_elements = sequence_elements[interval.start : interval.end]
+
+            mods: list[MODIFICATION_TYPE] = []
+            if interval.has_mods:
+                for mod, count in interval.mods.parse_items():
+                    for _ in range(count):
+                        mods.append(mod)
+
+            sequence_regions.append(
+                SequenceRegion(sequence=region_elements, modifications=tuple(mods))
+            )
+
+        return tuple(sequence_regions)
+
+    @property
+    def sequence(self) -> str:
+        return self._sequence if self._sequence is not None else ""
+
+    @sequence.setter
+    def sequence(self, value: str | None) -> None:
+        self.set_sequence(value, inplace=True, validate=self._validate)
+
+    @property
+    def compound_name(self) -> str:
+        return self._compound_name if self._compound_name is not None else ""
+
+    @compound_name.setter
+    def compound_name(self, value: Any | None) -> None:
+        self.set_compound_name(value, inplace=True, validate=self._validate)
+
+    @property
+    def compound_name_str(self) -> str:
+        if self._compound_name is None:
+            return ""
+        return f"(>>>{self._compound_name})"
+
+    @property
+    def ion_name(self) -> str:
+        return self._ion_name if self._ion_name is not None else ""
+
+    @ion_name.setter
+    def ion_name(self, value: Any | None) -> None:
+        self.set_ion_name(value, inplace=True, validate=self._validate)
+
+    @property
+    def ion_name_str(self) -> str:
+        if self._ion_name is None:
+            return ""
+        return f"(>>{self._ion_name})"
+
+    @property
+    def peptide_name(self) -> str:
+        return self._peptide_name if self._peptide_name is not None else ""
+
+    @peptide_name.setter
+    def peptide_name(self, value: Any | None) -> None:
+        self.set_peptide_name(value, inplace=True, validate=self._validate)
+
+    @property
+    def peptide_name_str(self) -> str:
+        if self._peptide_name is None:
+            return ""
+        return f"(>{self._peptide_name})"
+
+    @property
+    def isotope_mods(self) -> Mods[IsotopeReplacement]:
+        if self._isotope_mods is None:
+            return EMPTY_ISOTOPE_MODS
+
+        return Mods[IsotopeReplacement](
+            mod_type=ModType.ISOTOPE, _mods=self._isotope_mods
+        )
+
+    @isotope_mods.setter
+    def isotope_mods(self, value: Any) -> None:
+        self.set_isotope_mods(value, inplace=True, validate=self._validate)
+
+    @property
+    def isotope_mods_str(self) -> str:
+        if self._isotope_mods is None:
+            return ""
+        return self.isotope_mods.serialize()
+
+    @property
+    def static_mods(self) -> Mods[FixedModification]:
+        if self._static_mods is None:
+            return EMPTY_STATIC_MODS
+
+        return Mods[FixedModification](mod_type=ModType.STATIC, _mods=self._static_mods)
+
+    @static_mods.setter
+    def static_mods(self, value: Any) -> None:
+        self.set_static_mods(value, inplace=True, validate=self._validate)
+
+    @property
+    def static_mods_str(self) -> str:
+        if self._static_mods is None:
+            return ""
+        return self.static_mods.serialize()
+
+    @property
+    def labile_mods(self) -> Mods[ModificationTags]:
+        if self._labile_mods is None:
+            return EMPTY_LABILE_MODS
+        return Mods[ModificationTags](mod_type=ModType.LABILE, _mods=self._labile_mods)
+
+    @labile_mods.setter
+    def labile_mods(self, value: Any) -> None:
+        self.set_labile_mods(value, inplace=True, validate=self._validate)
+
+    @property
+    def labile_mods_str(self) -> str:
+        if self._labile_mods is None:
+            return ""
+        return self.labile_mods.serialize()
+
+    @property
+    def unknown_mods(self) -> Mods[ModificationTags]:
+        if self._unknown_mods is None:
+            return EMPTY_UNKNOWN_MODS
+        return Mods[ModificationTags](
+            mod_type=ModType.UNKNOWN, _mods=self._unknown_mods
+        )
+
+    @unknown_mods.setter
+    def unknown_mods(self, value: Any) -> None:
+        self.set_unknown_mods(value, inplace=True, validate=self._validate)
+
+    @property
+    def unknown_mods_str(self) -> str:
+        if self._unknown_mods is None:
+            return ""
+        return self.unknown_mods.serialize()
+
+    @property
+    def nterm_mods(self) -> Mods[ModificationTags]:
+        if self._nterm_mods is None:
+            return EMPTY_NTERM_MODS
+        return Mods[ModificationTags](mod_type=ModType.NTERM, _mods=self._nterm_mods)
+
+    @nterm_mods.setter
+    def nterm_mods(self, value: Any) -> None:
+        self.set_nterm_mods(value, inplace=True, validate=self._validate)
+
+    @property
+    def nterm_mods_str(self) -> str:
+        if self._nterm_mods is None:
+            return ""
+        return self.nterm_mods.serialize()
+
+    @property
+    def cterm_mods(self) -> Mods[ModificationTags]:
+        if self._cterm_mods is None:
+            return EMPTY_CTERM_MODS
+        return Mods[ModificationTags](mod_type=ModType.CTERM, _mods=self._cterm_mods)
+
+    @cterm_mods.setter
+    def cterm_mods(self, value: Any) -> None:
+        self.set_cterm_mods(value, inplace=True, validate=self._validate)
+
+    @property
+    def cterm_mods_str(self) -> str:
+        if self._cterm_mods is None:
+            return ""
+        return self.cterm_mods.serialize()
+
+    @property
+    def internal_mods(self) -> dict[int, Mods[ModificationTags]]:
+        if self._internal_mods is None:
+            return {}
+        internal_mods_parsed: dict[int, Mods[ModificationTags]] = {}
+        for pos, mods_dict in self._internal_mods.items():
+            internal_mods_parsed[pos] = Mods[ModificationTags](
+                mod_type=ModType.INTERNAL, _mods=mods_dict
+            )
+        return internal_mods_parsed
+
+    @internal_mods.setter
+    def internal_mods(self, value: dict[int, Any] | None) -> None:
+        self.set_internal_mods(value, inplace=True, validate=self._validate)
+
+    @property
+    def validate(self) -> bool:
+        return self._validate
+
+    @validate.setter
+    def validate(self, value: bool) -> None:
+        self._validate = value
+        if self.has_intervals:
+            for interval in self.intervals:
+                interval._validate = value
+
+    def has_internal_mods_at_index(self, position: int) -> bool:
+        """Check if there are any modifications at a specific position in the sequence."""
+        if self._internal_mods is None:
+            return False
+
+        mods_dict = self._internal_mods.get(position, None)
+        if mods_dict is None or len(mods_dict) == 0:
+            return False
+
+        return True
+
+    def get_internal_mod_indexes(self) -> list[int]:
+        """Get a list of all indexes that have internal modifications."""
+        if self._internal_mods is None:
+            return []
+        return list(self._internal_mods.keys())
+
+    def get_internal_mods_str_at_index(self, position: int) -> str:
+        """Get the modification string at a specific position in the sequence."""
+        if self.has_internal_mods_at_index(position) is False:
+            return ""
+
+        return self.get_internal_mods_at_index(position).serialize()
+
+    def get_internal_mods_at_index(self, position: int) -> Mods[ModificationTags]:
+        """Get all modifications at a specific position in the sequence."""
+        if self.has_internal_mods_at_index(position) is False:
+            return EMPTY_INTERNAL_MODS
+        return Mods[ModificationTags](
+            mod_type=ModType.INTERNAL,
+            _mods=self._internal_mods[position],  # type: ignore
+        )
+
+    @property
+    def intervals(self) -> tuple[Interval, ...]:
+        return tuple(self._intervals) if self._intervals is not None else ()
+
+    @intervals.setter
+    def intervals(self, value: list[Interval] | None) -> None:
+        self.set_intervals(value, inplace=True, validate=self._validate)
+
+    @property
+    def charge(self) -> int | Mods[GlobalChargeCarrier] | None:
+        if isinstance(self._charge, int):
+            if self._charge == 0:
+                return None
+            return self._charge
+        elif isinstance(self._charge, dict):
+            return Mods[GlobalChargeCarrier](
+                mod_type=ModType.CHARGE, _mods=self._charge
+            )
+
+        return None
+
+    @charge.setter
+    def charge(
+        self, value: int | dict[str, int] | Mods[GlobalChargeCarrier] | None
+    ) -> None:
+        self.set_charge(value, inplace=True, validate=self._validate)
+
+    @property
+    def charge_state(self) -> int:
+        charge = self.charge
+        if isinstance(charge, int):
+            return charge
+        elif isinstance(charge, Mods):
+            return sum(mod.get_charge() for mod in charge.mods)
+        elif charge is None:
+            return 0
+        else:
+            raise ValueError(f"Invalid charge type: {type(charge)}")
+
+    @property
+    def charge_adducts(self) -> Mods[GlobalChargeCarrier]:
+        charge = self.charge
+        if isinstance(charge, int):
+            if charge == 0 or charge < 0:
+                return EMPTY_CHARGE_MODS
+            elif charge > 0:
+                s = str(
+                    GlobalChargeCarrier(
+                        charged_formula=H_CHARGE_FORMULA,
+                        occurance=charge,
+                    )
+                )
+                return Mods[GlobalChargeCarrier](mod_type=ModType.CHARGE, _mods={s: 1})
+        elif isinstance(charge, Mods):
+            return charge
+        return EMPTY_CHARGE_MODS
+
+    """
+    Set Methods - Replace existing modifications
+    """
+
+    def set_sequence(
+        self, sequence: str | None, inplace: bool = True, validate: bool | None = None
+    ) -> Self:
+        if validate is None:
+            validate = self._validate
+        if not inplace:
+            return self.copy().set_sequence(sequence, inplace=True, validate=validate)
+        self._sequence = sequence
+        if validate:
+            self.validate_sequence()
+        return self
+
+    def set_compound_name(
+        self, name: str | None, inplace: bool = True, validate: bool | None = None
+    ) -> Self:
+        return self._set_name_generic(name, "_compound_name", inplace, validate)
+
+    def set_ion_name(
+        self, name: str | None, inplace: bool = True, validate: bool | None = None
+    ) -> Self:
+        return self._set_name_generic(name, "_ion_name", inplace, validate)
+
+    def set_peptide_name(
+        self, name: str | None, inplace: bool = True, validate: bool | None = None
+    ) -> Self:
+        return self._set_name_generic(name, "_peptide_name", inplace, validate)
+
+    def set_isotope_mods(
+        self,
+        mods: dict[str, int] | Mods[IsotopeReplacement] | None,
+        inplace: bool = True,
+        validate: bool | None = None,
+    ) -> Self:
+        return self._set_mod_generic(
+            mods, "_isotope_mods", "validate_isotope_mods", inplace, validate
+        )
+
+    def set_static_mods(
+        self,
+        mods: dict[str, int] | Mods[FixedModification] | None,
+        inplace: bool = True,
+        validate: bool | None = None,
+    ) -> Self:
+        return self._set_mod_generic(
+            mods, "_static_mods", "validate_static_mods", inplace, validate
+        )
+
+    def set_labile_mods(
+        self,
+        mods: dict[str, int] | Mods[ModificationTags] | None,
+        inplace: bool = True,
+        validate: bool | None = None,
+    ) -> Self:
+        return self._set_mod_generic(
+            mods, "_labile_mods", "validate_labile_mods", inplace, validate
+        )
+
+    def set_unknown_mods(
+        self,
+        mods: dict[str, int] | Mods[ModificationTags] | None,
+        inplace: bool = True,
+        validate: bool | None = None,
+    ) -> Self:
+        return self._set_mod_generic(
+            mods, "_unknown_mods", "validate_unknown_mods", inplace, validate
+        )
+
+    def set_nterm_mods(
+        self,
+        mods: dict[str, int] | Mods[ModificationTags] | None,
+        inplace: bool = True,
+        validate: bool | None = None,
+        start_aa: str | None = None,
+    ) -> Self:
+        if start_aa is not None:
+            if self.start_aa != start_aa:
+                return self if inplace else self.copy()
+        return self._set_mod_generic(
+            mods, "_nterm_mods", "validate_nterm_mods", inplace, validate
+        )
+
+    def set_cterm_mods(
+        self,
+        mods: dict[str, int] | Mods[ModificationTags] | None,
+        inplace: bool = True,
+        validate: bool | None = None,
+        end_aa: str | None = None,
+    ) -> Self:
+        if end_aa is not None:
+            if self.end_aa != end_aa:
+                return self if inplace else self.copy()
+        return self._set_mod_generic(
+            mods, "_cterm_mods", "validate_cterm_mods", inplace, validate
+        )
+
+    def set_internal_mods(
+        self,
+        mods: dict[int, dict[str, int] | Mods[ModificationTags] | None] | None,
+        inplace: bool = True,
+        validate: bool | None = None,
+    ) -> Self:
+        if validate is None:
+            validate = self._validate
+
+        if not inplace:
+            return self.copy().set_internal_mods(mods, inplace=True, validate=validate)
+
+        if mods is None:
+            self._internal_mods = None
+            return self
+
+        internal_mods: dict[int, dict[str, int]] = {}
+        for pos, mods_dict in mods.items():
+            internalmod = convert_moddict_input(mods_dict)
+            if internalmod is None or len(internalmod) == 0:
+                continue
+            internal_mods[pos] = internalmod
+
+        if len(internal_mods) == 0:
+            self._internal_mods = None
+            return self
+
+        self._internal_mods = internal_mods
+        if validate:
+            self.validate_internal_mods()
+        return self
+
+    def set_intervals(
+        self,
+        intervals: list[Interval] | None,
+        inplace: bool = True,
+        validate: bool | None = None,
+    ) -> Self:
+        if validate is None:
+            validate = self._validate
+
+        if not inplace:
+            return self.copy().set_intervals(intervals, inplace=True, validate=validate)
+
+        if intervals is None:
+            self._intervals = None
+            return self
+
+        if len(intervals) == 0:
+            self._intervals = None
+            return self
+
+        self._intervals = intervals.copy()
+        if validate:
+            self.validate_intervals()
+        return self
+
+    def set_internal_mods_at_index(
+        self, index: int, mods: Any, inplace: bool = True, validate: bool | None = None
+    ) -> Self:
+        if validate is None:
+            validate = self._validate
+        if not inplace:
+            return self.copy().set_internal_mods_at_index(
+                index, mods, inplace=True, validate=validate
+            )
+
+        if mods is None:
+            # remove mod at index
+            if self._internal_mods is not None and index in self._internal_mods:
+                del self._internal_mods[index]
+            return self
+
+        mods = convert_moddict_input(mods)
+
+        if len(mods) == 0:
+            # remove mod at index
+            if self._internal_mods is not None and index in self._internal_mods:
+                del self._internal_mods[index]
+            return self
+
+        if validate:
+            if not Mods[ModificationTags](
+                mod_type=ModType.INTERNAL, _mods=mods
+            ).is_valid:
+                raise ValueError(f"Invalid internal modifications at position {index}")
+
+        if self._internal_mods is None:
+            self._internal_mods = {}
+
+        self._internal_mods[index] = mods
+        return self
+
+    def set_charge(
+        self,
+        charge: int | dict[str, int] | Mods[GlobalChargeCarrier] | None,
+        inplace: bool = True,
+        validate: bool | None = None,
+    ) -> Self:
+        if validate is None:
+            validate = self._validate
+        if not inplace:
+            return self.copy().set_charge(charge, inplace=True, validate=validate)
+
+        if isinstance(charge, int):
+            if charge == 0:
+                charge = None
+        elif isinstance(charge, dict):
+            if len(charge) == 0:
+                charge = None
+            else:
+                charge = convert_moddict_input(charge)
+                if len(charge) == 0:
+                    charge = None
+        elif charge is None:
+            pass
+        elif isinstance(charge, Mods):
+            charge = charge._mods
+
+        if isinstance(charge, Mods):  # For type checker
+            raise RuntimeError(
+                "Internal error: Mods should have been converted to dict"
+            )
+
+        self._charge = charge
+
+        if validate:
+            self.validate_charge()
+
+        return self
+
+    def _set_name_generic(
+        self,
+        name: Any | None,
+        attr_name: str,
+        inplace: bool = True,
+        validate: bool | None = None,
+    ) -> Self:
+        if validate is None:
+            validate = self._validate
+        if not inplace:
+            return self.copy()._set_name_generic(
+                name, attr_name, inplace=True, validate=validate
+            )
+
+        if name is not None and not isinstance(name, str):
+            name = str(name)
+        if name == "":
+            name = None
+        setattr(self, attr_name, name)
+        return self
+
+    def _set_mod_generic(
+        self,
+        mods: Any,
+        attr_name: str,
+        validator_method_name: str | None = None,
+        inplace: bool = True,
+        validate: bool | None = None,
+    ) -> Self:
+        if validate is None:
+            validate = self._validate
+        if not inplace:
+            return self.copy()._set_mod_generic(
+                mods, attr_name, validator_method_name, inplace=True, validate=validate
+            )
+
+        if mods is None:
+            setattr(self, attr_name, None)
+            return self
+
+        converted_mods = convert_moddict_input(mods)
+        if len(converted_mods) == 0:
+            setattr(self, attr_name, None)
+            return self
+
+        setattr(self, attr_name, converted_mods)
+
+        if validate and validator_method_name:
+            getattr(self, validator_method_name)()
+
+        return self
+
+    def _set_mod_by_type(
+        self,
+        value: Any,
+        mod_type: ModType,
+    ) -> Self:
+        match mod_type:
+            case ModType.ISOTOPE:
+                self.isotope_mods = value
+            case ModType.STATIC:
+                self.static_mods = value
+            case ModType.LABILE:
+                self.labile_mods = value
+            case ModType.UNKNOWN:
+                self.unknown_mods = value
+            case ModType.NTERM:
+                self.nterm_mods = value
+            case ModType.CTERM:
+                self.cterm_mods = value
+            case ModType.INTERNAL:
+                self.internal_mods = value
+            case ModType.INTERVAL:
+                self.intervals = value
+            case ModType.CHARGE:
+                self.charge = value
+            case _:
+                raise TypeError(f"Unknown mod type: {mod_type}")
+
+        return self
+
+    def set_mods(
+        self,
+        mods: Mapping[ModType | ModTypeLiteral | int, Any] | None,
+        inplace: bool = True,
+    ) -> Self:
+        """Set a modification by type, replacing any existing mods of that type"""
+
+        if not inplace:
+            return self.copy().set_mods(mods=mods, inplace=True)
+
+        if mods is None:
+            self.clear_mods(inplace=True)
+            return self
+
+        for mod_type, mod_value in mods.items():
+            if isinstance(mod_type, int):
+                if mod_type < 0 or mod_type >= len(self.sequence):
+                    raise IndexError(
+                        f"Internal modification index out of range: {mod_type}"
+                    )
+                self.set_internal_mods_at_index(mod_type, mod_value, inplace=True)
+                continue
+
+            self._set_mod_by_type(mod_value, ModType(mod_type))
+
+        return self
+
+    """
+    Append Methods
+    """
+
+    def _append_mod_generic(
+        self,
+        mod: Any,
+        attr_name: str,
+        validator: Callable[[str], Any],
+        inplace: bool = True,
+        validate: bool | None = None,
+    ) -> Self:
+        if validate is None:
+            validate = self._validate
+
+        if not inplace:
+            return self.copy()._append_mod_generic(
+                mod, attr_name, validator, inplace=True, validate=validate
+            )
+
+        mod_str, count = convert_single_mod_input(mod)
+
+        if validate:
+            if not validator(mod_str).is_valid:
+                raise ValueError(f"Invalid modification: {mod_str}")
+
+        mod_dict = getattr(self, attr_name)
+        if mod_dict is None:
+            setattr(self, attr_name, {})
+            mod_dict = getattr(self, attr_name)
+
+        if mod_str in mod_dict:
+            mod_dict[mod_str] += count
+        else:
+            mod_dict[mod_str] = count
+
+        return self
+
+    def append_isotope_mod(
+        self, mod: Any, inplace: bool = True, validate: bool | None = None
+    ) -> Self:
+        return self._append_mod_generic(
+            mod, "_isotope_mods", IsotopeReplacement.from_string, inplace, validate
+        )
+
+    def append_static_mod(
+        self, mod: Any, inplace: bool = True, validate: bool | None = None
+    ) -> Self:
+        return self._append_mod_generic(
+            mod, "_static_mods", FixedModification.from_string, inplace, validate
+        )
+
+    def append_labile_mod(
+        self, mod: Any, inplace: bool = True, validate: bool | None = None
+    ) -> Self:
+        return self._append_mod_generic(
+            mod, "_labile_mods", ModificationTags.from_string, inplace, validate
+        )
+
+    def append_unknown_mod(
+        self, mod: Any, inplace: bool = True, validate: bool | None = None
+    ) -> Self:
+        return self._append_mod_generic(
+            mod, "_unknown_mods", ModificationTags.from_string, inplace, validate
+        )
+
+    def append_nterm_mod(
+        self,
+        mod: Any,
+        inplace: bool = True,
+        validate: bool | None = None,
+        start_aa: str | None = None,
+    ) -> Self:
+        if start_aa is not None:
+            if self.start_aa != start_aa:
+                return self if inplace else self.copy()
+        return self._append_mod_generic(
+            mod, "_nterm_mods", ModificationTags.from_string, inplace, validate
+        )
+
+    def append_cterm_mod(
+        self,
+        mod: Any,
+        inplace: bool = True,
+        validate: bool | None = None,
+        end_aa: str | None = None,
+    ) -> Self:
+        if end_aa is not None:
+            if self.end_aa != end_aa:
+                return self if inplace else self.copy()
+        return self._append_mod_generic(
+            mod, "_cterm_mods", ModificationTags.from_string, inplace, validate
+        )
+
+    def append_internal_mod_at_index(
+        self, index: int, mod: Any, inplace: bool = True, validate: bool | None = None
+    ) -> Self:
+        if validate is None:
+            validate = self._validate
+
+        if not inplace:
+            return self.copy().append_internal_mod_at_index(
+                index, mod, inplace=True, validate=validate
+            )
+
+        mod_str, count = convert_single_mod_input(mod)
+
+        if validate:
+            if not ModificationTags.from_string(mod_str).is_valid:
+                raise ValueError(f"Invalid modification: {mod_str}")
+
+        if self._internal_mods is None:
+            self._internal_mods = {}
+
+        if index not in self._internal_mods:
+            self._internal_mods[index] = {}
+
+        if mod_str in self._internal_mods[index]:
+            self._internal_mods[index][mod_str] += count
+        else:
+            self._internal_mods[index][mod_str] = count
+
+        return self
+
+    def append_interval(
+        self,
+        interval: Interval | tuple[int, int, bool, Any],
+        inplace: bool = True,
+        validate: bool | None = None,
+    ) -> Self:
+        if validate is None:
+            validate = self._validate
+        if not inplace:
+            return self.copy().append_interval(
+                interval, inplace=True, validate=validate
+            )
+
+        if isinstance(interval, tuple):
+            start, end, ambiguous, mods_input = interval
+            mods_converted = convert_moddict_input(mods_input)
+            interval = Interval(
+                start=start,
+                end=end,
+                ambiguous=ambiguous,
+                mods=mods_converted,
+                validate=validate,
+            )
+        else:
+            interval = interval.copy()
+            interval._validate = validate
+
+        if validate:
+            if not isinstance(interval, Interval):
+                raise TypeError(f"Expected Interval object, got {type(interval)}")
+            if not interval.is_valid:
+                raise ValueError(f"Invalid interval: {interval}")
+
+        if self._intervals is None:
+            self._intervals = []
+
+        self._intervals.append(interval)
+        return self
+
+    def _append_by_type(
+        self,
+        value: Any,
+        mod_type: ModType,
+        inplace: bool = True,
+        validate: bool | None = None,
+    ) -> Self:
+        if not inplace:
+            return self.copy()._append_by_type(
+                value, mod_type, inplace=True, validate=validate
+            )
+
+        match mod_type:
+            case ModType.ISOTOPE:
+                self.append_isotope_mod(value, inplace=True, validate=validate)
+            case ModType.STATIC:
+                self.append_static_mod(value, inplace=True, validate=validate)
+            case ModType.LABILE:
+                self.append_labile_mod(value, inplace=True, validate=validate)
+            case ModType.UNKNOWN:
+                self.append_unknown_mod(value, inplace=True, validate=validate)
+            case ModType.NTERM:
+                self.append_nterm_mod(value, inplace=True, validate=validate)
+            case ModType.CTERM:
+                self.append_cterm_mod(value, inplace=True, validate=validate)
+            case ModType.INTERNAL:
+                for key, val in value.items():
+                    self.append_internal_mod_at_index(
+                        key, val, inplace=True, validate=validate
+                    )
+            case ModType.INTERVAL:
+                self.append_interval(value, inplace=True, validate=validate)
+            case ModType.CHARGE:
+                self.set_charge(value, inplace=True, validate=validate)
+            case _:
+                raise TypeError(f"Unknown mod type: {mod_type}")
+
+        return self
+
+    def append_mods(
+        self,
+        mods: Mapping[ModType | ModTypeLiteral | int, Any],
+        inplace: bool = True,
+        validate: bool | None = None,
+    ) -> Self:
+        if not inplace:
+            return self.copy().append_mods(mods, inplace=True, validate=validate)
+
+        for mod_type, value in mods.items():
+            if isinstance(mod_type, int):
+                if mod_type < 0 or mod_type >= len(self.sequence):
+                    raise IndexError(
+                        f"Internal modification index out of range: {mod_type}"
+                    )
+                self.append_internal_mod_at_index(
+                    mod_type, value, inplace=True, validate=validate
+                )
+                continue
+
+            self._append_by_type(
+                value, ModType(mod_type), inplace=True, validate=validate
+            )
+
+        return self
+
+    """
+    Extend Methods - Add multiple modifications
+    """
+
+    def _extend_generic(
+        self,
+        mods: Any,
+        append_method: Callable[[Any, bool, bool | None], Self],
+        inplace: bool = True,
+        validate: bool | None = None,
+    ) -> Self:
+        if validate is None:
+            validate = self._validate
+        if not inplace:
+            return self.copy()._extend_generic(
+                mods, append_method, inplace=True, validate=validate
+            )
+        if mods is not None:
+            for mod in mods:
+                append_method(mod, inplace=True, validate=validate)  # type: ignore
+        return self
+
+    def extend_isotope_mods(
+        self, mods: Any, inplace: bool = True, validate: bool | None = None
+    ) -> Self:
+        return self._extend_generic(mods, self.append_isotope_mod, inplace, validate)
+
+    def extend_static_mods(
+        self, mods: Any, inplace: bool = True, validate: bool | None = None
+    ) -> Self:
+        return self._extend_generic(mods, self.append_static_mod, inplace, validate)
+
+    def extend_labile_mods(
+        self, mods: Any, inplace: bool = True, validate: bool | None = None
+    ) -> Self:
+        return self._extend_generic(mods, self.append_labile_mod, inplace, validate)
+
+    def extend_unknown_mods(
+        self, mods: Any, inplace: bool = True, validate: bool | None = None
+    ) -> Self:
+        return self._extend_generic(mods, self.append_unknown_mod, inplace, validate)
+
+    def extend_nterm_mods(
+        self,
+        mods: Any,
+        inplace: bool = True,
+        validate: bool | None = None,
+        start_aa: str | None = None,
+    ) -> Self:
+        if validate is None:
+            validate = self._validate
+        if not inplace:
+            return self.copy().extend_nterm_mods(
+                mods, inplace=True, validate=validate, start_aa=start_aa
+            )
+        if start_aa is not None:
+            if self.start_aa != start_aa:
+                return self
+        if mods is not None:
+            for mod in mods:
+                self.append_nterm_mod(
+                    mod, inplace=True, validate=validate, start_aa=start_aa
+                )
+        return self
+
+    def extend_cterm_mods(
+        self,
+        mods: Any,
+        inplace: bool = True,
+        validate: bool | None = None,
+        end_aa: str | None = None,
+    ) -> Self:
+        if validate is None:
+            validate = self._validate
+        if not inplace:
+            return self.copy().extend_cterm_mods(
+                mods, inplace=True, validate=validate, end_aa=end_aa
+            )
+        if end_aa is not None:
+            if self.end_aa != end_aa:
+                return self
+        if mods is not None:
+            for mod in mods:
+                self.append_cterm_mod(
+                    mod, inplace=True, validate=validate, end_aa=end_aa
+                )
+        return self
+
+    def extend_internal_mods_at_index(
+        self, index: int, mods: Any, inplace: bool = True, validate: bool | None = None
+    ) -> Self:
+        if validate is None:
+            validate = self._validate
+        if not inplace:
+            return self.copy().extend_internal_mods_at_index(
+                index, mods, inplace=True, validate=validate
+            )
+        if mods is not None:
+            for mod in mods:
+                self.append_internal_mod_at_index(
+                    index, mod, inplace=True, validate=validate
+                )
+        return self
+
+    def extend_intervals(
+        self, intervals: Any, inplace: bool = True, validate: bool | None = None
+    ) -> Self:
+        return self._extend_generic(intervals, self.append_interval, inplace, validate)
+
+    def _extend_by_type(
+        self,
+        value: Any,
+        mod_type: ModType,
+        inplace: bool = True,
+        validate: bool | None = None,
+    ) -> Self:
+        if validate is None:
+            validate = self._validate
+        if not inplace:
+            return self.copy()._extend_by_type(
+                value, mod_type, inplace=True, validate=validate
+            )
+
+        match mod_type:
+            case ModType.ISOTOPE:
+                self.extend_isotope_mods(value, inplace=True, validate=validate)
+            case ModType.STATIC:
+                self.extend_static_mods(value, inplace=True, validate=validate)
+            case ModType.LABILE:
+                self.extend_labile_mods(value, inplace=True, validate=validate)
+            case ModType.UNKNOWN:
+                self.extend_unknown_mods(value, inplace=True, validate=validate)
+            case ModType.NTERM:
+                self.extend_nterm_mods(value, inplace=True, validate=validate)
+            case ModType.CTERM:
+                self.extend_cterm_mods(value, inplace=True, validate=validate)
+            case ModType.INTERNAL:
+                for index, mod in value.items():
+                    self.extend_internal_mods_at_index(
+                        index, mod, inplace=True, validate=validate
+                    )
+            case ModType.INTERVAL:
+                self.extend_intervals(value, inplace=True, validate=validate)
+            case ModType.CHARGE:
+                raise NotImplementedError("Extending charge not supported.")
+            case _:
+                raise NotImplementedError(f"Appending {mod_type} not supported.")
+
+        return self
+
+    def extend_mods(
+        self,
+        mods: Mapping[ModType | ModTypeLiteral | int, Any],
+        inplace: bool = True,
+        validate: bool | None = None,
+    ) -> Self:
+        if validate is None:
+            validate = self._validate
+        if not inplace:
+            return self.copy().extend_mods(mods, inplace=True, validate=validate)
+
+        for mod_type, value in mods.items():
+            if isinstance(mod_type, int):
+                if mod_type < 0 or mod_type >= len(self.sequence):
+                    raise IndexError(
+                        f"Internal modification index out of range: {mod_type}"
+                    )
+                self.extend_internal_mods_at_index(
+                    mod_type, value, inplace=True, validate=validate
+                )
+                continue
+            self._extend_by_type(
+                value, ModType(mod_type), inplace=True, validate=validate
+            )
+
+        return self
+
+    """
+    REMOVE Methods
+    """
+
+    def _remove_mod_generic(
+        self,
+        mod: Any,
+        attr_name: str,
+        inplace: bool = True,
+    ) -> Self:
+        """Generic method to remove a modification by decrementing its count."""
+        if not inplace:
+            return self.copy()._remove_mod_generic(mod, attr_name, inplace=True)
+
+        mod_dict = getattr(self, attr_name)
+        if mod_dict is None:
+            return self
+
+        mod_str, count = convert_single_mod_input(mod)
+
+        if mod_str not in mod_dict:
+            return self
+
+        # Decrement count, ensuring it doesn't go below 0
+        mod_dict[mod_str] = max(0, mod_dict[mod_str] - count)
+
+        # Remove if count reaches 0
+        if mod_dict[mod_str] == 0:
+            del mod_dict[mod_str]
+
+        # Clean up if dict is now empty
+        if len(mod_dict) == 0:
+            setattr(self, attr_name, None)
+
+        return self
+
+    def remove_isotope_mod(self, mod: Any, inplace: bool = True) -> Self:
+        """Remove a specific isotope modification by decrementing its count."""
+        return self._remove_mod_generic(mod, "_isotope_mods", inplace)
+
+    def remove_static_mod(self, mod: Any, inplace: bool = True) -> Self:
+        """Remove a specific static modification by decrementing its count."""
+        return self._remove_mod_generic(mod, "_static_mods", inplace)
+
+    def remove_labile_mod(self, mod: Any, inplace: bool = True) -> Self:
+        """Remove a specific labile modification by decrementing its count."""
+        return self._remove_mod_generic(mod, "_labile_mods", inplace)
+
+    def remove_unknown_mod(self, mod: Any, inplace: bool = True) -> Self:
+        """Remove a specific unknown modification by decrementing its count."""
+        return self._remove_mod_generic(mod, "_unknown_mods", inplace)
+
+    def remove_nterm_mod(
+        self, mod: Any, inplace: bool = True, start_aa: str | None = None
+    ) -> Self:
+        """Remove a specific N-terminal modification by decrementing its count."""
+        if start_aa is not None and self.start_aa != start_aa:
+            return self if inplace else self.copy()
+        return self._remove_mod_generic(mod, "_nterm_mods", inplace)
+
+    def remove_cterm_mod(
+        self, mod: Any, inplace: bool = True, end_aa: str | None = None
+    ) -> Self:
+        """Remove a specific C-terminal modification by decrementing its count."""
+        if end_aa is not None and self.end_aa != end_aa:
+            return self if inplace else self.copy()
+        return self._remove_mod_generic(mod, "_cterm_mods", inplace)
+
+    def remove_internal_mod_at_index(
+        self, index: int, mod: Any, inplace: bool = True
+    ) -> Self:
+        """Remove a specific internal modification at a position by decrementing its count."""
+        if not inplace:
+            return self.copy().remove_internal_mod_at_index(index, mod, inplace=True)
+
+        if self._internal_mods is None or index not in self._internal_mods:
+            return self
+
+        mod_str, count = convert_single_mod_input(mod)
+
+        if mod_str not in self._internal_mods[index]:
+            return self
+
+        # Decrement count, ensuring it doesn't go below 0
+        self._internal_mods[index][mod_str] = max(
+            0, self._internal_mods[index][mod_str] - count
+        )
+
+        # Remove if count reaches 0
+        if self._internal_mods[index][mod_str] == 0:
+            del self._internal_mods[index][mod_str]
+
+        # Remove position if no mods left
+        if len(self._internal_mods[index]) == 0:
+            del self._internal_mods[index]
+
+        # Clean up if internal_mods is now empty
+        if len(self._internal_mods) == 0:
+            self._internal_mods = None
+
+        return self
+
+    def remove_interval(self, interval: Interval, inplace: bool = True) -> Self:
+        """Remove a specific interval from the intervals list."""
+        if not inplace:
+            return self.copy().remove_interval(interval, inplace=True)
+
+        if self._intervals is None:
+            return self
+
+        try:
+            self._intervals.remove(interval)
+        except ValueError:
+            # Interval not found, just return
+            pass
+
+        if len(self._intervals) == 0:
+            self._intervals = None
+
+        return self
+
+    """
+    Magic Methods
+    """
+
+    def compare(self, other: Self) -> bool:
+        # check each attribute for equality
+        diffs = []  # hold the string values of differing attributes (ACTUALLY SHOW THE ATTRIBUTES)
+        for attr in [
+            "_sequence",
+            "_isotope_mods",
+            "_static_mods",
+            "_labile_mods",
+            "_unknown_mods",
+            "_nterm_mods",
+            "_cterm_mods",
+            "_internal_mods",
+            "_intervals",
+            "_charge",
+        ]:
+            if getattr(self, attr) != getattr(other, attr):
+                self_attribute = getattr(self, attr)
+                other_attribute = getattr(other, attr)
+                diffs.append(
+                    f"{attr} (self: {self_attribute}, other: {other_attribute})"
+                )
+        if diffs:
+            print(f"Differences found in attributes: {', '.join(diffs)}")
+            return False
+        return True
+
+    def __len__(self) -> int:
+        return len(self.stripped_sequence)
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, ProFormaAnnotation):
+            raise NotImplementedError(
+                f"Cannot compare ProFormaAnnotationBase with {type(other)}"
+            )
+
+        return (
+            self.sequence == other.sequence
+            and self._isotope_mods == other._isotope_mods
+            and self._static_mods == other._static_mods
+            and self._labile_mods == other._labile_mods
+            and self._unknown_mods == other._unknown_mods
+            and self._nterm_mods == other._nterm_mods
+            and self._cterm_mods == other._cterm_mods
+            and self._internal_mods == other._internal_mods
+            and self._intervals == other._intervals
+            and self._charge == other._charge
+        )
+
+    def __repr__(self) -> str:
+        seq = f"ProFormaAnnot(sequence={self.sequence}"
+
+        if self.has_isotope_mods:
+            seq += f", {ModType.ISOTOPE.value}={self.isotope_mods}"
+        if self.has_static_mods:
+            seq += f", {ModType.STATIC.value}={self.static_mods}"
+        if self.has_labile_mods:
+            seq += f", {ModType.LABILE.value}={self.labile_mods}"
+        if self.has_unknown_mods:
+            seq += f", {ModType.UNKNOWN.value}={self.unknown_mods}"
+        if self.has_nterm_mods:
+            seq += f", {ModType.NTERM.value}={self.nterm_mods}"
+        if self.has_cterm_mods:
+            seq += f", {ModType.CTERM.value}={self.cterm_mods}"
+        if self.has_internal_mods:
+            internal_mod_items = ", ".join(
+                f"{pos}: {mods}" for pos, mods in sorted(self.internal_mods.items())
+            )
+            seq += f", {ModType.INTERNAL.value}={{{internal_mod_items}}}"
+        if self.has_intervals:
+            seq += f", {ModType.INTERVAL.value}={self.intervals}"
+        if self.has_charge:
+            seq += f", {ModType.CHARGE.value}={self.charge}"
+        seq += ")"
+
+        return seq
+
+    def __str__(self) -> str:
+        return self.serialize()
+
+    def __hash__(self):
+        return hash(
+            (
+                self._sequence,
+                tuple(self._isotope_mods.items()) if self._isotope_mods else None,
+                tuple(self._static_mods.items()) if self._static_mods else None,
+                tuple(self._labile_mods.items()) if self._labile_mods else None,
+                tuple(self._unknown_mods.items()) if self._unknown_mods else None,
+                tuple(self._nterm_mods.items()) if self._nterm_mods else None,
+                tuple(self._cterm_mods.items()) if self._cterm_mods else None,
+                tuple(
+                    (pos, tuple(sorted(mods.items())))
+                    for pos, mods in sorted(self._internal_mods.items())
+                )
+                if self._internal_mods
+                else None,
+                tuple(self._intervals) if self._intervals else None,
+                self._charge,
+            )
+        )
+
+    def copy(self) -> Self:
+        return self.__class__(
+            sequence=self._sequence,
+            compound_name=self._compound_name,
+            ion_name=self._ion_name,
+            peptide_name=self._peptide_name,
+            isotope_mods=self._isotope_mods.copy()
+            if self._isotope_mods is not None
+            else None,
+            static_mods=self._static_mods.copy()
+            if self._static_mods is not None
+            else None,
+            labile_mods=self._labile_mods.copy()
+            if self._labile_mods is not None
+            else None,
+            unknown_mods=self._unknown_mods.copy()
+            if self._unknown_mods is not None
+            else None,
+            nterm_mods=self._nterm_mods.copy()
+            if self._nterm_mods is not None
+            else None,
+            cterm_mods=self._cterm_mods.copy()
+            if self._cterm_mods is not None
+            else None,
+            internal_mods={
+                pos: mods.copy() for pos, mods in self._internal_mods.items()
+            }
+            if self._internal_mods is not None
+            else None,
+            intervals=self._intervals.copy() if self._intervals is not None else None,
+            charge=self._charge,
+            validate=self._validate,
+        )
+
+    def update(self, other: Self) -> None:
+        self._sequence = other._sequence
+        self._compound_name = other._compound_name
+        self._ion_name = other._ion_name
+        self._peptide_name = other._peptide_name
+        self._isotope_mods = (
+            other._isotope_mods.copy() if other._isotope_mods is not None else None
+        )
+        self._static_mods = (
+            other._static_mods.copy() if other._static_mods is not None else None
+        )
+        self._labile_mods = (
+            other._labile_mods.copy() if other._labile_mods is not None else None
+        )
+        self._unknown_mods = (
+            other._unknown_mods.copy() if other._unknown_mods is not None else None
+        )
+        self._nterm_mods = (
+            other._nterm_mods.copy() if other._nterm_mods is not None else None
+        )
+        self._cterm_mods = (
+            other._cterm_mods.copy() if other._cterm_mods is not None else None
+        )
+        self._internal_mods = (
+            {pos: mods.copy() for pos, mods in other._internal_mods.items()}
+            if other._internal_mods is not None
+            else None
+        )
+        self._intervals = (
+            other._intervals.copy() if other._intervals is not None else None
+        )
+        self._charge = other._charge
+
+    def __getitem__(self, key: int | slice | Span | tuple[int, int, int]) -> Self:
+        if isinstance(key, (tuple, Span)):
+            return self.slice_by_span(key, inplace=False)
+        if isinstance(key, slice):
+            start, stop, step = key.start, key.stop, key.step
+            if step is not None and step != 1:
+                raise ValueError("Step slicing not supported")
+            return self.slice(start, stop, inplace=False)
+        elif isinstance(key, int):
+            raise NotImplementedError(
+                "Single index access not supported for ProFormaAnnotation"
+            )
+
+    def sort_mods(self, inplace: bool = True) -> Self:
+        if not inplace:
+            return self.copy().sort_mods(inplace=True)
+
+        if self._isotope_mods is not None:
+            self._isotope_mods = dict(sorted(self._isotope_mods.items()))
+        if self._static_mods is not None:
+            self._static_mods = dict(sorted(self._static_mods.items()))
+        if self._labile_mods is not None:
+            self._labile_mods = dict(sorted(self._labile_mods.items()))
+        if self._unknown_mods is not None:
+            self._unknown_mods = dict(sorted(self._unknown_mods.items()))
+        if self._nterm_mods is not None:
+            self._nterm_mods = dict(sorted(self._nterm_mods.items()))
+        if self._cterm_mods is not None:
+            self._cterm_mods = dict(sorted(self._cterm_mods.items()))
+        if self._internal_mods is not None:
+            for pos in self._internal_mods:
+                self._internal_mods[pos] = dict(
+                    sorted(self._internal_mods[pos].items())
+                )
+            self._internal_mods = dict(sorted(self._internal_mods.items()))
+        if self._intervals is not None:
+            self._intervals.sort(key=lambda x: (x.start, x.end))
+
+        if self._charge is not None and isinstance(self._charge, dict):
+            self._charge = dict(sorted(self._charge.items()))
+
+        return self
+
+    @property
+    def has_sequence(self) -> bool:
+        return bool(self._sequence)
+
+    @property
+    def has_compound_name(self) -> bool:
+        return bool(self._compound_name)
+
+    @property
+    def has_ion_name(self) -> bool:
+        return bool(self._ion_name)
+
+    @property
+    def has_peptide_name(self) -> bool:
+        return bool(self._peptide_name)
+
+    @property
+    def has_isotope_mods(self) -> bool:
+        return bool(self._isotope_mods)
+
+    @property
+    def has_static_mods(self) -> bool:
+        return bool(self._static_mods)
+
+    @property
+    def has_labile_mods(self) -> bool:
+        return bool(self._labile_mods)
+
+    @property
+    def has_unknown_mods(self) -> bool:
+        return bool(self._unknown_mods)
+
+    @property
+    def has_nterm_mods(self) -> bool:
+        return bool(self._nterm_mods)
+
+    @property
+    def has_cterm_mods(self) -> bool:
+        return bool(self._cterm_mods)
+
+    @property
+    def has_internal_mods(self) -> bool:
+        return bool(self._internal_mods)
+
+    @property
+    def has_intervals(self) -> bool:
+        return bool(self._intervals)
+
+    @property
+    def has_charge(self) -> bool:
+        return bool(self._charge)
+
+    def _has_mods_by_type(self, mod_type: ModType) -> bool:
+        match mod_type:
+            case ModType.ISOTOPE:
+                return self.has_isotope_mods
+            case ModType.STATIC:
+                return self.has_static_mods
+            case ModType.LABILE:
+                return self.has_labile_mods
+            case ModType.UNKNOWN:
+                return self.has_unknown_mods
+            case ModType.NTERM:
+                return self.has_nterm_mods
+            case ModType.CTERM:
+                return self.has_cterm_mods
+            case ModType.INTERNAL:
+                return self.has_internal_mods
+            case ModType.INTERVAL:
+                return self.has_intervals
+            case ModType.CHARGE:
+                return self.has_charge
+            case _:
+                raise TypeError(f"Unknown mod type: {mod_type}")
+
+    def has_mods(
+        self,
+        mod_types: (
+            Iterable[ModTypeLiteral | ModType] | ModType | ModTypeLiteral | None
+        ) = None,
+    ) -> bool:
+        mod_enums = get_mods(mod_types)
+        return any(self._has_mods_by_type(mod_enum) for mod_enum in mod_enums)
+
+    @property
+    def has_sequence_ambiguity(self) -> bool:
+        return self.has_intervals or self.has_unknown_mods
+
+    @property
+    def has_residue_ambiguity(self) -> bool:
+        return len(self.ambiguous_residues) > 0
+
+    @property
+    def ambiguous_residues(self) -> tuple[str, ...]:
+        return tuple(aa for aa in self.stripped_sequence if AA_LOOKUP.is_ambiguous(aa))
+
+    @property
+    def has_mass_ambiguity(self) -> bool:
+        return len(self.mass_ambiguous_residues) > 0
+
+    @property
+    def mass_ambiguous_residues(self) -> tuple[str, ...]:
+        return tuple(
+            aa for aa in self.stripped_sequence if AA_LOOKUP.is_mass_ambiguous(aa)
+        )
+
+    def _get_mods_by_type(self, mod_type: ModType) -> Any:
+        match mod_type:
+            case ModType.ISOTOPE:
+                return self.isotope_mods
+            case ModType.STATIC:
+                return self.static_mods
+            case ModType.LABILE:
+                return self.labile_mods
+            case ModType.UNKNOWN:
+                return self.unknown_mods
+            case ModType.NTERM:
+                return self.nterm_mods
+            case ModType.CTERM:
+                return self.cterm_mods
+            case ModType.INTERNAL:
+                return self.internal_mods
+            case ModType.INTERVAL:
+                return self.intervals
+            case ModType.CHARGE:
+                return self.charge
+            case _:
+                raise TypeError(f"Unknown mod type: {mod_type}")
+
+    def get_mods(
+        self,
+        mod_types: (
+            Iterable[ModTypeLiteral | ModType] | ModType | ModTypeLiteral | None
+        ) = None,
+    ) -> dict[ModType, Any]:
+        mod_enums = get_mods(mod_types)
+        return {
+            mod_enum: self._get_mods_by_type(mod_enum)
+            for mod_enum in mod_enums
+            if self._has_mods_by_type(mod_enum)
+        }
+
+    @classmethod
+    def parse_chimeric(
+        cls, sequence: str, validate: bool | None = None
+    ) -> Generator["ProFormaAnnotation", None, None]:
+        """Parse a ProForma string into multiple ProFormaAnnotation objects"""
+        if validate is None:
+            validate = False
+        # Initialize the Generator
+        parser_gen = ProFormaParser(sequence).parse()
+
+        for prof_parser, connection in parser_gen:
+            # Split Global Mods into Static (Fixed) vs Isotope (Global)
+            # The parser groups all <...> tags together; we separate them by the '@' symbol.
+            static_mods: dict[str, int] | None = None  # e.g., <[Oxidation]@C>
+            isotope_mods: dict[str, int] | None = None  # e.g., <13C>
+
+            if prof_parser.global_mods:
+                for mod, count in prof_parser.global_mods.items():
+                    if "@" in mod:
+                        if static_mods is None:
+                            static_mods = {}
+                        static_mods[mod] = count
+                    else:
+                        if isotope_mods is None:
+                            isotope_mods = {}
+                        isotope_mods[mod] = count
+
+            charge = None
+            if prof_parser.charge is not None:
+                charge = prof_parser.charge
+            elif prof_parser.charge_adducts is not None:
+                charge = prof_parser.charge_adducts
+
+            # Construct the object
+            # We cast defaultdicts to standard dicts to prevent side effects
+            annot = ProFormaAnnotation(
+                sequence="".join(prof_parser.amino_acids),
+                compound_name=prof_parser.compound_name,
+                ion_name=prof_parser.ion_name,
+                peptide_name=prof_parser.peptide_name,
+                isotope_mods=isotope_mods,
+                static_mods=static_mods,
+                labile_mods=prof_parser.labile_mods,
+                unknown_mods=prof_parser.unknown_mods,
+                nterm_mods=prof_parser.nterm_mods,
+                cterm_mods=prof_parser.cterm_mods,
+                internal_mods=prof_parser.internal_mods,
+                intervals=prof_parser.intervals,
+                charge=charge,
+                validate=validate,
+            )
+
+            yield annot
+
+    @classmethod
+    def parse(cls, sequence: str, validate: bool | None = None) -> "ProFormaAnnotation":
+        """Parse a ProForma string into a ProFormaAnnotation object"""
+        if validate is None:
+            validate = False
+        # Initialize the Generator
+        parser_gen = ProFormaParser(sequence).parse()
+
+        # Get first annotation segment
+        try:
+            prof_parser, connection = next(parser_gen)
+        except StopIteration:
+            raise ValueError(f"Invalid ProForma sequence: {sequence}")
+
+        # Validate that this is a single peptide (not chimeric/crosslinked)
+        if connection is not None:
+            raise ValueError(
+                f"Chimeric and crosslinked peptides not supported in single annotation: {sequence}"
+            )
+
+        # Ensure there are no subsequent segments waiting in the generator
+        try:
+            next(parser_gen)
+            raise ValueError(f"Multiple peptide segments found in sequence: {sequence}")
+        except StopIteration:
+            pass  # This is expected for a single annotation
+
+        # Split Global Mods into Static (Fixed) vs Isotope (Global)
+        # The parser groups all <...> tags together; we separate them by the '@' symbol.
+        static_mods: dict[str, int] | None = None  # e.g., <[Oxidation]@C>
+        isotope_mods: dict[str, int] | None = None  # e.g., <13C>
+
+        if prof_parser.global_mods:
+            for mod, count in prof_parser.global_mods.items():
+                if "@" in mod:
+                    if static_mods is None:
+                        static_mods = {}
+                    static_mods[mod] = count
+                else:
+                    if isotope_mods is None:
+                        isotope_mods = {}
+                    isotope_mods[mod] = count
+
+        charge = None
+        if prof_parser.charge is not None:
+            charge = prof_parser.charge
+        elif prof_parser.charge_adducts is not None:
+            charge = prof_parser.charge_adducts
+
+        # Construct the object
+        # We cast defaultdicts to standard dicts to prevent side effects
+        annot = ProFormaAnnotation(
+            sequence="".join(prof_parser.amino_acids),
+            compound_name=prof_parser.compound_name,
+            ion_name=prof_parser.ion_name,
+            peptide_name=prof_parser.peptide_name,
+            isotope_mods=isotope_mods,
+            static_mods=static_mods,
+            labile_mods=prof_parser.labile_mods,
+            unknown_mods=prof_parser.unknown_mods,
+            nterm_mods=prof_parser.nterm_mods,
+            cterm_mods=prof_parser.cterm_mods,
+            internal_mods=prof_parser.internal_mods,
+            intervals=prof_parser.intervals,
+            charge=charge,
+            validate=validate,
+        )
+
+        return annot
+
+    def serialize(self) -> str:
+        return serialize_annotation(self)
+
+    def serialize_charge(self) -> str:
+        return serialize_charge(self)
+
+    def get_sequence_composition(self) -> Counter[ElementInfo]:
+        sequence_composition: Counter[ElementInfo] = Counter()
+        for aa in self.stripped_sequence:
+            aa_info = AA_LOOKUP.one_letter(aa)
+            if aa_info.composition is None:
+                raise ValueError(f"Composition not available for amino acid: {aa}")
+            for element, count in aa_info.composition.items():
+                sequence_composition[element] += count
+        return sequence_composition
+
+    @property
+    def stripped_sequence(self) -> str:
+        """Get the unmodified amino acid sequence without any modifications"""
+        return self._sequence if self._sequence is not None else ""
+
+    def map_static_mods_to_indexes(self) -> dict[int, list[Mod[ModificationTags]]]:
+        # can be N, C or internal
+        if self._static_mods is None:
+            return {}
+
+        mapped_mods: dict[int, list[Mod[ModificationTags]]] = {}
+        for static_mod in self.static_mods:
+            valid_indexes = static_mod.value.find_indexes(self.sequence)
+
+            if not valid_indexes:
+                continue
+
+            for index in valid_indexes:
+                if index not in mapped_mods:
+                    mapped_mods[index] = []
+                mapped_mods[index].append(
+                    Mod(static_mod.value.modifications, count=static_mod.count)
+                )
+        return mapped_mods
+
+    def _map_isotopes(self) -> dict[ElementInfo, ElementInfo]:
+        """Map isotope modifications to element replacements."""
+        isotope_map: dict[ElementInfo, ElementInfo] = {}
+        if not self.has_isotope_mods:
+            return isotope_map
+
+        for isotope_mod in self._isotope_mods.keys():  # type: ignore
+            template, replaced = IsotopeReplacement.from_string(
+                isotope_mod
+            ).get_isotope_replacements()
+            isotope_map[template] = replaced
+
+        return isotope_map
+
+    def base_comp(
+        self, skip_labile: bool = False, monoisotopic: bool = True
+    ) -> tuple[Counter[ElementInfo], int, float]:
+        total_composition: Counter[ElementInfo] = self.get_sequence_composition()
+        total_charge = 0  # results from internal formula mods
+        total_delta_mass = 0.0  # only from MassTags
+
+        if self.has_unknown_mods:
+            unknown_mods = self.unknown_mods
+            composition, delta_mass = unknown_mods.get_composition_with_delta_mass(
+                monoisotopic
+            )
+            total_composition += composition
+            total_delta_mass += delta_mass
+            total_charge += unknown_mods.get_charge()
+
+        if not skip_labile and self.has_labile_mods:
+            labile_mods = self.labile_mods
+            composition, delta_mass = labile_mods.get_composition_with_delta_mass(
+                monoisotopic
+            )
+            total_composition += composition
+            total_delta_mass += delta_mass
+            total_charge += labile_mods.get_charge()
+
+        if self.has_nterm_mods:
+            nterm_mods = self.nterm_mods
+            composition, delta_mass = nterm_mods.get_composition_with_delta_mass(
+                monoisotopic
+            )
+            total_composition += composition
+            total_delta_mass += delta_mass
+            total_charge += nterm_mods.get_charge()
+
+        if self.has_cterm_mods:
+            cterm_mods = self.cterm_mods
+            composition, delta_mass = cterm_mods.get_composition_with_delta_mass(
+                monoisotopic
+            )
+            total_composition += composition
+            total_delta_mass += delta_mass
+            total_charge += cterm_mods.get_charge()
+
+        if self.has_static_mods:
+            static_mod_map = self.map_static_mods_to_indexes()
+            for _, mods in static_mod_map.items():
+                for mod in mods:
+                    try:
+                        total_composition += mod.get_composition()
+                    except ValueError as e:
+                        if isinstance(mod.value, ModificationTags) and isinstance(
+                            mod.value.first_tag, TagMass
+                        ):
+                            # MassTag does not have composition, only delta mass
+                            total_delta_mass += mod.get_mass(monoisotopic)
+                        else:
+                            raise e
+                    total_charge += mod.get_charge()
+
+        # Internal mods
+        if self.has_internal_mods:
+            for mods in self.internal_mods.values():
+                composition, delta_mass = mods.get_composition_with_delta_mass(
+                    monoisotopic
+                )
+                total_composition += composition
+                total_delta_mass += delta_mass
+                total_charge += mods.get_charge()
+
+        # Intervals
+        if self.has_intervals:
+            for interval in self.intervals:
+                composition, delta_mass = interval.mods.get_composition_with_delta_mass(
+                    monoisotopic
+                )
+                total_composition += composition
+                total_delta_mass += delta_mass
+                total_charge += interval.mods.get_charge()
+
+        return total_composition, total_charge, total_delta_mass
+
+    def comp(
+        self,
+        ion_type: ION_TYPE = IonType.PRECURSOR,
+        charge: CHARGE_TYPE | None = None,
+        *,
+        isotopes: ISOTOPE_TYPE | None = None,
+        deltas: CUSTOM_LOSS_TYPE | None = None,
+    ) -> Counter[ElementInfo]:
+        """Calculate composition, preferring user charge over annotation charge."""
+
+        frag = self.frag(
+            ion_type=ion_type,
+            charge=charge,
+            monoisotopic=True,
+            isotopes=isotopes,
+            deltas=deltas,
+            calculate_composition=True,
+        )
+
+        if frag.composition is None:
+            raise ValueError("Fragment composition could not be calculated.")
+
+        return frag.composition
+
+    def base_mass(
+        self, monoisotopic: bool = True, skip_labile: bool = False
+    ) -> tuple[float, int]:
+        """Optimized mass calculation with minimal overhead."""
+        total_mass = 0.0
+        total_charge = 0  # results from internal formula mods
+
+        # Inline mass lookup to avoid function call overhead
+        # Amino acids - hot path, optimize heavily
+        aa_lookup = AA_LOOKUP.one_letter_to_info
+        for aa in self.stripped_sequence:
+            mass = aa_lookup[aa].get_mass(monoisotopic=monoisotopic)
+            if mass is None:
+                raise ValueError(f"Mass not available for amino acid: {aa}")
+            total_mass += mass
+
+        # Unknown mods
+        if self.has_unknown_mods:
+            total_mass += self.unknown_mods.get_mass(monoisotopic=monoisotopic)
+            total_charge += self.unknown_mods.get_charge()
+
+        # Labile mods
+        if not skip_labile and self.has_labile_mods:
+            total_mass += self.labile_mods.get_mass(monoisotopic=monoisotopic)
+            total_charge += self.labile_mods.get_charge()
+
+        # N-terminal mods
+        if self.has_nterm_mods:
+            total_mass += self.nterm_mods.get_mass(monoisotopic=monoisotopic)
+            total_charge += self.nterm_mods.get_charge()
+
+        # Internal mods
+        if self.has_internal_mods:
+            for mods in self.internal_mods.values():
+                total_mass += mods.get_mass(monoisotopic=monoisotopic)
+                total_charge += mods.get_charge()
+
+        # Interval mods
+        if self.has_intervals:
+            for interval in self.intervals:
+                for mods in interval.mods:
+                    total_mass += mods.get_mass(monoisotopic=monoisotopic)
+                    total_charge += mods.get_charge()
+
+        # C-terminal mods
+        if self.has_cterm_mods:
+            total_mass += self.cterm_mods.get_mass(monoisotopic=monoisotopic)
+            total_charge += self.cterm_mods.get_charge()
+
+        # Static mods
+        if self.has_static_mods:
+            static_mod_map = self.map_static_mods_to_indexes()
+            for mods in static_mod_map.values():
+                for mod in mods:
+                    total_mass += mod.get_mass(monoisotopic=monoisotopic)
+                    total_charge += mod.get_charge()
+
+        return total_mass, total_charge
+
+    def _get_mass_vector(self, monoisotopic: bool = True) -> list[float]:
+        # slice sequence into single aa slcices
+        vec: list[float] = []
+        for i in range(len(self)):
+            sub_annot = self.slice(i, i + 1, inplace=False)
+            vec.append(
+                sub_annot.mass(
+                    ion_type=IonType.NEUTRAL,
+                    charge=None,
+                    monoisotopic=monoisotopic,
+                    isotopes=None,
+                )
+            )
+        return vec
+
+    def _get_comp_vector(self) -> list[Counter[ElementInfo]]:
+        # slice sequence into single aa slcices
+        vec: list[Counter[ElementInfo]] = []
+        for i in range(len(self)):
+            sub_annot = self.slice(i, i + 1, inplace=False)
+            vec.append(
+                sub_annot.comp(
+                    ion_type=IonType.NEUTRAL,
+                    charge=None,
+                    isotopes=None,
+                )
+            )
+        return vec
+
+    @property
+    def monoisotopic_mass(self) -> float:
+        """Calculate monoisotopic mass of the unmodified sequence."""
+        return self.base_mass(monoisotopic=True)[0]
+
+    @property
+    def average_mass(self) -> float:
+        """Calculate average mass of the unmodified sequence."""
+        return self.base_mass(monoisotopic=False)[0]
+
+    def mass(
+        self,
+        ion_type: ION_TYPE = IonType.PRECURSOR,
+        charge: CHARGE_TYPE | None = None,
+        monoisotopic: bool = True,
+        *,
+        isotopes: ISOTOPE_TYPE | None = None,
+        deltas: CUSTOM_LOSS_TYPE | None = None,
+        calculate_with_composition: bool = False,
+    ) -> float:
+        """Calculate mass, preferring user charge over annotation charge."""
+
+        f = self.frag(
+            ion_type=ion_type,
+            charge=charge,
+            monoisotopic=monoisotopic,
+            isotopes=isotopes,
+            deltas=deltas,
+            calculate_composition=calculate_with_composition,
+        )
+        return f.mass
+
+    def _frag(
+        self,
+        ion_type: IonType,
+        charge: ChargeCarrierInfo,
+        monoisotopic: bool,
+        isotope: IsotopeInfo,
+        delta: DeltaInfo,
+        calculate_composition: bool,
+        include_sequence: bool,
+        position: POSITION_TYPE | None,
+    ) -> Fragment:
+        sequence: str | None = None
+        if include_sequence:
+            # Dont include charge mods in sequence since it can be overridden
+            sequence = self.filter_mods(
+                ["charge"], keep=False, inplace=False
+            ).serialize()
+
+        # Dont include labile mods for fragment ions
+        skip_labile = True
+        if ion_type == IonType.NEUTRAL or ion_type == IonType.PRECURSOR:
+            skip_labile = False
+
+        if self.has_isotope_mods or calculate_composition:
+            base_comp, base_charge, delta_mass = self.base_comp(
+                skip_labile=skip_labile, monoisotopic=monoisotopic
+            )
+
+            if calculate_composition and delta_mass != 0.0:
+                raise ValueError(
+                    "Cannot calculate composition with delta mass changes."
+                )
+            elif calculate_composition and delta_mass == 0.0:
+                return adjust_comp(
+                    base_comp=base_comp,
+                    charge=charge,
+                    ion_type=ion_type,
+                    monoisotopic=monoisotopic,
+                    isotope=isotope,
+                    delta=delta,
+                    inplace=True,
+                    isotope_map=self._map_isotopes() if self.has_isotope_mods else None,
+                    position=position,
+                    sequence=sequence,
+                    internal_charge=base_charge,
+                )
+            else:
+                base_mass = sum(
+                    element.get_mass(monoisotopic=monoisotopic) * count
+                    for element, count in base_comp.items()
+                )
+                return adjust_mass_mz(
+                    base=base_mass + delta_mass,
+                    charge=charge,
+                    monoisotopic=monoisotopic,
+                    ion_type=ion_type,
+                    isotope=isotope,
+                    delta=delta,
+                    position=position,
+                    sequence=sequence,
+                    internal_charge=base_charge,
+                )
+
+        base_mass, base_charge = self.base_mass(
+            monoisotopic=monoisotopic, skip_labile=skip_labile
+        )
+
+        return adjust_mass_mz(
+            base=base_mass,
+            charge=charge,
+            monoisotopic=monoisotopic,
+            ion_type=ion_type,
+            isotope=isotope,
+            delta=delta,
+            position=position,
+            sequence=sequence,
+            internal_charge=base_charge,
+        )
+
+    def frag(
+        self,
+        ion_type: ION_TYPE = IonType.PRECURSOR,
+        charge: CHARGE_TYPE | None = None,
+        monoisotopic: bool = True,
+        *,
+        isotopes: ISOTOPE_TYPE | None = None,
+        deltas: CUSTOM_LOSS_TYPE | None = None,
+        calculate_composition: bool = False,
+        include_sequence: bool = False,
+        position: POSITION_TYPE | None = None,
+    ) -> Fragment:
+        """Calculate mass, preferring user charge over annotation charge."""
+
+        can_fragment_sequence(self.sequence, ion_type)
+        delta_info = DeltaInfo.from_input(deltas)
+
+        # handle user specified charge
+        has_user_charge = charge is not None
+        has_annot_charge = self._charge is not None
+
+        charge_info: ChargeCarrierInfo = ChargeCarrierInfo.from_input(charge)
+        if not has_user_charge and has_annot_charge:
+            annot_charge: int | Mods[GlobalChargeCarrier] | None = self.charge
+            if annot_charge is None:
+                charge_info = ChargeCarrierInfo.from_input(annot_charge)
+            elif isinstance(annot_charge, int):
+                charge_info = ChargeCarrierInfo.from_input(annot_charge)
+            elif isinstance(annot_charge, Mods):
+                # Extract the values from Mod objects
+                charge_info = ChargeCarrierInfo.from_input(
+                    tuple(mod.value for mod in annot_charge.mods)
+                )
+            else:
+                raise RuntimeError(
+                    f"Unsupported charge type in annotation: {type(annot_charge)}"
+                )
+
+        iso_info = IsotopeInfo.from_input(isotopes)
+
+        return self._frag(
+            ion_type=IonType(ion_type),
+            charge=charge_info,
+            monoisotopic=monoisotopic,
+            isotope=iso_info,
+            delta=delta_info,
+            calculate_composition=calculate_composition,
+            include_sequence=include_sequence,
+            position=position,
+        )
+
+    def mz(
+        self,
+        ion_type: ION_TYPE = IonType.PRECURSOR,
+        charge: CHARGE_TYPE | None = None,
+        monoisotopic: bool = True,
+        *,
+        isotopes: ISOTOPE_TYPE | None = None,
+        deltas: CUSTOM_LOSS_TYPE | None = None,
+        calculate_with_composition: bool = False,
+    ) -> float:
+        """Calculate m/z, preferring user charge over annotation charge."""
+
+        f = self.frag(
+            ion_type=ion_type,
+            charge=charge,
+            monoisotopic=monoisotopic,
+            isotopes=isotopes,
+            deltas=deltas,
+            calculate_composition=calculate_with_composition,
+        )
+        return f.mz
+
+    def _fast_fragment(
+        self,
+        mass_vector: list[float],
+        ion_type: IonType,
+        charges: list[ChargeCarrierInfo],
+        monoisotopic: bool = True,
+        *,
+        min_length: int | None = None,
+        max_length: int | None = None,
+    ) -> Generator[Fragment, None, None]:
+        if not mass_vector:
+            return
+
+        ion_info: FragmentIonInfo = FRAGMENT_ION_LOOKUP[ion_type]
+
+        # Helper to yield fragments
+        def yield_frags(
+            pos: Any, mass_val: float, seq_len: int
+        ) -> Generator[Fragment, None, None]:
+            if min_length is not None and seq_len < min_length:
+                return
+            if max_length is not None and seq_len > max_length:
+                return
+
+            for charge_info in charges:
+                yield Fragment(
+                    ion_type=ion_type,
+                    position=pos,
+                    mass=mass_val
+                    + ion_info.get_mass(monoisotopic=monoisotopic)
+                    + charge_info.get_mass(monoisotopic=monoisotopic)
+                    + (ELECTRON_MASS * -charge_info.charge),
+                    monoisotopic=monoisotopic,
+                    charge_state=charge_info.charge,
+                    charge_adducts=charge_info.to_fragment_mapping(),
+                    sequence=None,
+                    composition=None,
+                )
+
+        # Forward
+        if ion_info.is_forward:
+            current_sum = 0.0
+            for i, val in enumerate(mass_vector):
+                current_sum += val
+                cnt = i + 1
+                base = current_sum
+                yield from yield_frags(cnt, base, cnt)
+
+        # Backward
+        elif ion_info.is_backward:
+            current_sum = 0.0
+            # mass_vector is 0..N-1.
+            # reversed iterator
+            for i, val in enumerate(reversed(mass_vector)):
+                current_sum += val
+                cnt = i + 1
+                base = current_sum
+                yield from yield_frags(cnt, base, cnt)
+
+        # Intact
+        elif ion_info.is_intact:
+            total = sum(mass_vector)
+            cnt = len(mass_vector)
+            base = total
+            yield from yield_frags(cnt, base, cnt)
+
+        # Internal
+        elif ion_info.is_internal:
+            P = [0.0] * (len(mass_vector) + 1)
+            acc = 0.0
+            for i, v in enumerate(mass_vector):
+                acc += v
+                P[i + 1] = acc
+
+            if ion_info.ion_type == IonType.IMMONIUM:
+                for i in range(len(mass_vector)):
+                    val = mass_vector[i]
+                    # Try to get sequence label, safe fallback
+                    # TODO: Update to not repeat amino acids
+                    if self.sequence:
+                        pos_label = self.sequence[i]
+                    else:
+                        pos_label = i
+                    yield from yield_frags(pos_label, val, 1)
+
+            else:
+                n = len(mass_vector)
+                for start in range(n):
+                    for end in range(start + 1, n + 1):
+                        if end - start == n:
+                            continue
+
+                        length = end - start
+                        base_sum = P[end] - P[start]
+                        base = base_sum
+                        yield from yield_frags((start, end), base, length)
+
+    def _fragment(
+        self,
+        ion_type: IonType,
+        charges: list[ChargeCarrierInfo],
+        monoisotopic: bool = True,
+        *,
+        isotopes: list[IsotopeInfo],
+        deltas: list[DeltaInfo],
+        neutral_deltas: list[NeutralDeltaInfo],
+        calculate_composition: bool,
+        include_sequence: bool,
+        max_deltas: int,
+        min_length: int | None,
+        max_length: int | None,
+    ) -> Generator[Fragment, None, None]:
+        if self.has_unknown_mods or self.has_intervals:
+            raise ValueError(
+                "Fragmentation not supported for sequences with unknown modifications or intervals: "
+                f"{str(self)}"
+            )
+
+        # check for fragments wa/wb and da/db, then return both
+        match ion_type:
+            case IonType.W:
+                # yeild both wa and wb
+                yield from self._fragment(
+                    IonType.WA,
+                    charges,
+                    monoisotopic,
+                    isotopes=isotopes,
+                    deltas=deltas,
+                    neutral_deltas=neutral_deltas,
+                    calculate_composition=calculate_composition,
+                    include_sequence=include_sequence,
+                    max_deltas=max_deltas,
+                    min_length=min_length,
+                    max_length=max_length,
+                )
+                yield from self._fragment(
+                    IonType.WB,
+                    charges,
+                    monoisotopic,
+                    isotopes=isotopes,
+                    deltas=deltas,
+                    neutral_deltas=neutral_deltas,
+                    calculate_composition=calculate_composition,
+                    include_sequence=include_sequence,
+                    max_deltas=max_deltas,
+                    min_length=min_length,
+                    max_length=max_length,
+                )
+                return
+            case IonType.D:
+                # yeild both da and db
+                yield from self._fragment(
+                    IonType.DA,
+                    charges,
+                    monoisotopic,
+                    isotopes=isotopes,
+                    deltas=deltas,
+                    neutral_deltas=neutral_deltas,
+                    calculate_composition=calculate_composition,
+                    include_sequence=include_sequence,
+                    max_deltas=max_deltas,
+                    min_length=min_length,
+                    max_length=max_length,
+                )
+                yield from self._fragment(
+                    IonType.DB,
+                    charges,
+                    monoisotopic,
+                    isotopes=isotopes,
+                    deltas=deltas,
+                    neutral_deltas=neutral_deltas,
+                    calculate_composition=calculate_composition,
+                    include_sequence=include_sequence,
+                    max_deltas=max_deltas,
+                    min_length=min_length,
+                    max_length=max_length,
+                )
+                return
+            case _:
+                pass
+
+        ion_info: FragmentIonInfo = FRAGMENT_ION_LOOKUP[ion_type]
+
+        loss_dict: dict[NeutralDeltaInfo, int] = {}
+        # Forward ions: b1, b2, b3, ... (cumulative from N-terminus)
+        if ion_info.is_forward:
+            for i in range(1, len(self) + 1):
+                if min_length is not None and i < min_length:
+                    continue
+
+                if max_length is not None and i > max_length:
+                    break
+
+                sub_annot = self.slice(0, i, inplace=False)
+
+                try:
+                    ion_type = can_fragment_sequence(sub_annot.sequence, ion_type)
+                except ValueError:
+                    continue
+
+                if neutral_deltas:
+                    loss_dict.clear()
+                    for nd in neutral_deltas:
+                        loss_dict[nd] = min(
+                            nd.calculate_loss_sites(sub_annot.sequence), max_deltas
+                        )
+
+                neutral_delta_combinations: list[DeltaInfo] = get_loss_combinations(
+                    loss_dict, max_deltas
+                )
+
+                for charge in charges:
+                    for isotope in isotopes:
+                        for delta in deltas:
+                            for ndelta in neutral_delta_combinations:
+                                combined_delta = delta + ndelta
+                                yield sub_annot._frag(
+                                    ion_type=ion_type,
+                                    charge=charge,
+                                    monoisotopic=monoisotopic,
+                                    isotope=isotope,
+                                    delta=combined_delta,
+                                    calculate_composition=calculate_composition,
+                                    include_sequence=include_sequence,
+                                    position=i,  # Changed: position is the cleavage site
+                                )
+
+        # Backward ions: y1, y2, y3, ... (cumulative from C-terminus)
+        elif ion_info.is_backward:
+            for i in range(1, len(self) + 1):
+                if min_length is not None and i < min_length:
+                    continue
+
+                if max_length is not None and i > max_length:
+                    break
+
+                sub_annot = self[len(self) - i : len(self)]
+
+                try:
+                    ion_type = can_fragment_sequence(sub_annot.sequence, ion_type)
+                except ValueError:
+                    continue
+
+                if neutral_deltas:
+                    loss_dict.clear()
+                    for nd in neutral_deltas:
+                        loss_dict[nd] = min(
+                            nd.calculate_loss_sites(sub_annot.sequence), max_deltas
+                        )
+
+                neutral_delta_combinations = get_loss_combinations(
+                    loss_dict, max_deltas
+                )
+
+                for charge in charges:
+                    for isotope in isotopes:
+                        for delta in deltas:
+                            for ndelta in neutral_delta_combinations:
+                                combined_delta = delta + ndelta
+
+                                yield sub_annot._frag(
+                                    ion_type=ion_type,
+                                    charge=charge,
+                                    monoisotopic=monoisotopic,
+                                    isotope=isotope,
+                                    delta=combined_delta,
+                                    calculate_composition=calculate_composition,
+                                    include_sequence=include_sequence,
+                                    position=i,
+                                )
+
+        elif ion_info.is_intact:
+            if min_length is not None and len(self) < min_length:
+                return
+
+            if max_length is not None and len(self) > max_length:
+                return
+
+            if neutral_deltas:
+                loss_dict.clear()
+                for nd in neutral_deltas:
+                    loss_dict[nd] = min(
+                        nd.calculate_loss_sites(self.sequence), max_deltas
+                    )
+
+            neutral_delta_combinations = get_loss_combinations(loss_dict, max_deltas)
+
+            for charge in charges:
+                for isotope in isotopes:
+                    for delta in deltas:
+                        for ndelta in neutral_delta_combinations:
+                            combined_delta = delta + ndelta
+                            yield self._frag(
+                                ion_type=ion_type,
+                                charge=charge,
+                                monoisotopic=monoisotopic,
+                                isotope=isotope,
+                                delta=combined_delta,
+                                calculate_composition=calculate_composition,
+                                include_sequence=include_sequence,
+                                position=len(self),  # Precursor position
+                            )
+        elif ion_info.is_internal:
+            if ion_info.ion_type == IonType.IMMONIUM:
+                # Immonium ions are single residue fragments
+                for i in range(1, len(self) - 1):
+                    if min_length is not None and 1 < min_length:
+                        continue
+
+                    if max_length is not None and 1 > max_length:
+                        break
+
+                    sub_annot = self.slice(i, i + 1, inplace=False)
+
+                    if neutral_deltas:
+                        loss_dict.clear()
+                        for nd in neutral_deltas:
+                            loss_dict[nd] = min(
+                                nd.calculate_loss_sites(self.sequence), max_deltas
+                            )
+
+                    neutral_delta_combinations = get_loss_combinations(
+                        loss_dict, max_deltas
+                    )
+
+                    for charge in charges:
+                        for isotope in isotopes:
+                            for delta in deltas:
+                                for ndelta in neutral_delta_combinations:
+                                    combined_delta = delta + ndelta
+                                    yield sub_annot._frag(
+                                        ion_type=ion_type,
+                                        charge=charge,
+                                        monoisotopic=monoisotopic,
+                                        isotope=isotope,
+                                        delta=combined_delta,
+                                        calculate_composition=calculate_composition,
+                                        include_sequence=include_sequence,
+                                        position=sub_annot.sequence,  # Position is the residue index
+                                    )
+            else:
+                # gen all internal fragmetns from 1 to n-1
+                for start in range(len(self)):
+                    for end in range(start + 1, len(self) + 1):
+                        if end - start == len(self) or start == 0 or end == len(self):
+                            continue  # skip full length
+
+                        if min_length is not None and (end - start) < min_length:
+                            continue
+
+                        if max_length is not None and (end - start) > max_length:
+                            continue
+
+                        sub_annot = self.slice(start, end, inplace=False)
+
+                        if neutral_deltas:
+                            loss_dict.clear()
+                            for nd in neutral_deltas:
+                                loss_dict[nd] = min(
+                                    nd.calculate_loss_sites(self.sequence), max_deltas
+                                )
+
+                        neutral_delta_combinations = get_loss_combinations(
+                            loss_dict, max_deltas
+                        )
+
+                        for charge in charges:
+                            for isotope in isotopes:
+                                for delta in deltas:
+                                    for ndelta in neutral_delta_combinations:
+                                        combined_delta = delta + ndelta
+                                        yield sub_annot._frag(
+                                            ion_type=ion_type,
+                                            charge=charge,
+                                            monoisotopic=monoisotopic,
+                                            isotope=isotope,
+                                            delta=combined_delta,
+                                            calculate_composition=calculate_composition,
+                                            include_sequence=include_sequence,
+                                            position=(
+                                                start,
+                                                end,
+                                            ),
+                                        )
+
+    def fragment(
+        self,
+        ion_types: Sequence[ION_TYPE] = (IonType.B, IonType.Y),
+        charges: Sequence[CHARGE_TYPE] | None = None,
+        monoisotopic: bool = True,
+        *,
+        isotopes: Sequence[ISOTOPE_TYPE | None] = (0,),
+        deltas: Sequence[CUSTOM_LOSS_TYPE | None] = (None,),
+        neutral_deltas: Sequence[LOSS_TYPE] = (),
+        calculate_composition: bool = False,
+        include_sequence: bool = False,
+        max_ndeltas: int = 1,
+        min_length: int | None = None,
+        max_length: int | None = None,
+    ) -> list[Fragment]:
+        """Generate fragment annotation for given ion type."""
+
+        if charges is None:
+            cstate = self.charge_state
+            if cstate != 0:
+                charges = (cstate,)
+            else:
+                charges = (1,)
+
+        charge_infos: list[ChargeCarrierInfo] = [
+            ChargeCarrierInfo.from_input(charge) for charge in charges
+        ]
+
+        isotope_infos: list[IsotopeInfo] = [
+            IsotopeInfo.from_input(isotope) for isotope in isotopes
+        ]
+
+        neutral_deltas_infos: list[NeutralDeltaInfo] = []
+        if neutral_deltas_infos is not None:
+            for loss in neutral_deltas:
+                if loss is None:
+                    continue
+                if isinstance(loss, NeutralDeltaInfo):
+                    neutral_deltas_infos.append(loss)
+                else:
+                    nd: NeutralDeltaInfo = NEUTRAL_DELTA_LOOKUP[loss]
+                    neutral_deltas_infos.append(nd)
+
+        delta_infos = [DeltaInfo.from_input(loss) for loss in deltas]
+
+        fragments: list[Fragment] = []
+        for ion in ion_types:
+            fragments.extend(
+                list(
+                    self._fragment(
+                        ion_type=IonType(ion),
+                        charges=charge_infos,
+                        monoisotopic=monoisotopic,
+                        isotopes=isotope_infos,
+                        deltas=delta_infos,
+                        neutral_deltas=neutral_deltas_infos,
+                        calculate_composition=calculate_composition,
+                        include_sequence=include_sequence,
+                        max_deltas=max_ndeltas,
+                        min_length=min_length,
+                        max_length=max_length,
+                    )
+                )
+            )
+        return fragments
+
+    """
+    Pop Methods
+    """
+
+    def pop_isotope_mods(self, inplace: bool = True) -> Mods[IsotopeReplacement]:
+        if not self.has_isotope_mods:
+            return EMPTY_ISOTOPE_MODS
+
+        if not inplace:
+            return self.copy().pop_isotope_mods(inplace=True)
+
+        value = self.isotope_mods
+        self._isotope_mods = None
+        return value
+
+    def pop_static_mods(self, inplace: bool = True) -> Mods[FixedModification]:
+        if not self.has_static_mods:
+            return EMPTY_STATIC_MODS
+
+        if not inplace:
+            return self.copy().pop_static_mods(inplace=True)
+
+        value = self.static_mods
+        self._static_mods = None
+        return value
+
+    def pop_labile_mods(self, inplace: bool = True) -> Mods[ModificationTags]:
+        if not self.has_labile_mods:
+            return EMPTY_LABILE_MODS
+
+        if not inplace:
+            return self.copy().pop_labile_mods(inplace=True)
+
+        value = self.labile_mods
+        self._labile_mods = None
+        return value
+
+    def pop_unknown_mods(self, inplace: bool = True) -> Mods[ModificationTags]:
+        if not self.has_unknown_mods:
+            return EMPTY_UNKNOWN_MODS
+
+        if not inplace:
+            return self.copy().pop_unknown_mods(inplace=True)
+
+        value = self.unknown_mods
+        self._unknown_mods = None
+        return value
+
+    def pop_nterm_mods(self, inplace: bool = True) -> Mods[ModificationTags]:
+        if not self.has_nterm_mods:
+            return EMPTY_NTERM_MODS
+
+        if not inplace:
+            return self.copy().pop_nterm_mods(inplace=True)
+
+        value = self.nterm_mods
+        self._nterm_mods = None
+        return value
+
+    def pop_cterm_mods(self, inplace: bool = True) -> Mods[ModificationTags]:
+        if not self.has_cterm_mods:
+            return EMPTY_CTERM_MODS
+
+        if not inplace:
+            return self.copy().pop_cterm_mods(inplace=True)
+
+        value = self.cterm_mods
+        self._cterm_mods = None
+        return value
+
+    def pop_internal_mods(
+        self, inplace: bool = True
+    ) -> dict[int, Mods[ModificationTags]]:
+        if not self.has_internal_mods:
+            return {}
+
+        if not inplace:
+            return self.copy().pop_internal_mods(inplace=True)
+
+        value = self.internal_mods
+        self._internal_mods = None
+        return value
+
+    def pop_intervals(self, inplace: bool = True) -> list[Interval]:
+        if not self.has_intervals:
+            return []
+
+        if not inplace:
+            return self.copy().pop_intervals(inplace=True)
+
+        value = self._intervals.copy() if self._intervals else []
+        self._intervals = None
+        return value
+
+    def pop_charge(
+        self, inplace: bool = True
+    ) -> int | Mods[GlobalChargeCarrier] | None:
+        if not self.has_charge:
+            return None
+
+        if not inplace:
+            return self.copy().pop_charge(inplace=True)
+
+        value = self.charge
+        self._charge = None
+        return value
+
+    def pop_internal_mod_at_index(
+        self, index: int, inplace: bool = True
+    ) -> tuple[tuple[MODIFICATION_TYPE, int], ...]:
+        if self._internal_mods is None:
+            return ()
+
+        if index not in self._internal_mods:
+            return ()
+
+        if not inplace:
+            return self.copy().pop_internal_mod_at_index(index, inplace=True)
+
+        # Parse the modifications at this index before removing
+        mods_dict = self._internal_mods[index]
+        mods = tuple(
+            (ModificationTags.from_string(mod_str), count)
+            for mod_str, count in mods_dict.items()
+        )
+
+        # Remove the mod dict at this index
+        del self._internal_mods[index]
+
+        # Clean up if internal_mods is now empty
+        if len(self._internal_mods) == 0:
+            self._internal_mods = None
+
+        return mods
+
+    def _pop_mod_by_type(self, mod_type: ModType) -> Any:
+        match mod_type:
+            case ModType.ISOTOPE:
+                return self.pop_isotope_mods(inplace=True)
+            case ModType.STATIC:
+                return self.pop_static_mods(inplace=True)
+            case ModType.LABILE:
+                return self.pop_labile_mods(inplace=True)
+            case ModType.UNKNOWN:
+                return self.pop_unknown_mods(inplace=True)
+            case ModType.NTERM:
+                return self.pop_nterm_mods(inplace=True)
+            case ModType.CTERM:
+                return self.pop_cterm_mods(inplace=True)
+            case ModType.INTERNAL:
+                return self.pop_internal_mods(inplace=True)
+            case ModType.INTERVAL:
+                return self.pop_intervals(inplace=True)
+            case ModType.CHARGE:
+                return self.pop_charge(inplace=True)
+            case _:
+                raise TypeError(f"Unknown mod type: {mod_type}")
+
+    def pop_mods(
+        self,
+        mod_types: (
+            ModTypeLiteral | Iterable[ModTypeLiteral | ModType] | ModType | None
+        ) = None,
+        inplace: bool = True,
+    ) -> dict[ModType, Any]:
+        if inplace is False:
+            return self.copy().pop_mods(mod_types=mod_types, inplace=True)
+
+        mod_enums: list[ModType] = get_mods(mod_types)
+
+        d: dict[ModType, Any] = {}
+        for mod_enum in mod_enums:
+            d[mod_enum] = self._pop_mod_by_type(mod_enum)
+
+        return d
+
+    def filter_mods(
+        self,
+        mods: (
+            ModTypeLiteral | ModType | Iterable[ModTypeLiteral | ModType] | None
+        ) = None,
+        inplace: bool = True,
+        keep: bool = True,
+    ) -> Self:
+        if inplace is False:
+            return self.copy().filter_mods(mods=mods, inplace=True)
+
+        if keep:
+            # Keep only specified mods
+            mod_types_to_keep = set(get_mods(mods))
+
+            all_mod_types = {mod_type for mod_type in ModType}
+            mod_types_to_remove = all_mod_types - mod_types_to_keep
+        else:
+            # Remove only specified mods
+            mod_types_to_remove = get_mods(mods)
+
+        if len(mod_types_to_remove) == 0:
+            # If no mods to remove, return the annotation as is
+            return self
+
+        self.pop_mods(mod_types_to_remove)
+        return self
+
+    """
+    Remove Methods
+    """
+
+    def _clear_mod_dict(self, attr_name: str, inplace: bool = True) -> Self:
+        if not inplace:
+            return self.copy()._clear_mod_dict(attr_name, inplace=True)
+        setattr(self, attr_name, None)
+        return self
+
+    def clear_isotope_mods(self, inplace: bool = True) -> Self:
+        return self._clear_mod_dict("_isotope_mods", inplace)
+
+    def clear_static_mods(self, inplace: bool = True) -> Self:
+        return self._clear_mod_dict("_static_mods", inplace)
+
+    def clear_nterm_mods(self, inplace: bool = True) -> Self:
+        return self._clear_mod_dict("_nterm_mods", inplace)
+
+    def clear_cterm_mods(self, inplace: bool = True) -> Self:
+        return self._clear_mod_dict("_cterm_mods", inplace)
+
+    def clear_labile_mods(self, inplace: bool = True) -> Self:
+        return self._clear_mod_dict("_labile_mods", inplace)
+
+    def clear_unknown_mods(self, inplace: bool = True) -> Self:
+        return self._clear_mod_dict("_unknown_mods", inplace)
+
+    def clear_internal_mods(self, inplace: bool = True) -> Self:
+        return self._clear_mod_dict("_internal_mods", inplace)
+
+    def clear_internal_mod_at_index(self, index: int, inplace: bool = True) -> Self:
+        if not inplace:
+            return self.copy().clear_internal_mod_at_index(index, inplace=True)
+        if self._internal_mods is None or index not in self._internal_mods:
+            return self
+        del self._internal_mods[index]
+        if len(self._internal_mods) == 0:
+            self._internal_mods = None
+        return self
+
+    def clear_intervals(self, inplace: bool = True) -> Self:
+        return self._clear_mod_dict("_intervals", inplace)
+
+    def clear_charge(self, inplace: bool = True) -> Self:
+        return self._clear_mod_dict("_charge", inplace)
+
+    def _clear_mod_by_type(self, mod_type: ModType) -> None:
+        match mod_type:
+            case ModType.ISOTOPE:
+                self.clear_isotope_mods(inplace=True)
+            case ModType.STATIC:
+                self.clear_static_mods(inplace=True)
+            case ModType.LABILE:
+                self.clear_labile_mods(inplace=True)
+            case ModType.UNKNOWN:
+                self.clear_unknown_mods(inplace=True)
+            case ModType.NTERM:
+                self.clear_nterm_mods(inplace=True)
+            case ModType.CTERM:
+                self.clear_cterm_mods(inplace=True)
+            case ModType.INTERNAL:
+                self.clear_internal_mods(inplace=True)
+            case ModType.INTERVAL:
+                self.clear_intervals(inplace=True)
+            case ModType.CHARGE:
+                self.clear_charge(inplace=True)
+            case _:
+                raise TypeError(f"Unknown mod type: {mod_type}")
+
+    def clear_mods(
+        self,
+        mods: (
+            ModTypeLiteral | ModType | Iterable[ModTypeLiteral | ModType] | None
+        ) = None,
+        inplace: bool = True,
+    ) -> Self:
+        if inplace is False:
+            return self.copy().clear_mods(mods=mods, inplace=True)
+        mod_enums = get_mods(mods)
+        for mod_enum in mod_enums:
+            self._clear_mod_by_type(mod_enum)
+        return self
+
+    def strip_mods(self, inplace: bool = False) -> Self:
+        return self.clear_mods(None, inplace=inplace)
+
+    """
+    Slicing Methods
+    """
+
+    def slice_by_span(
+        self,
+        span: Span | tuple[int, int, int],
+        inplace: bool = False,
+    ) -> Self:
+        return self.slice(span[0], span[1], inplace=inplace)
+
+    def slice(
+        self,
+        start: int | None,
+        stop: int | None,
+        inplace: bool = False,
+    ) -> Self:
+        return cast(
+            Self,
+            slice_annotation(
+                self,
+                start=start,
+                stop=stop,
+                inplace=inplace,
+            ),
+        )
+
+    def split(self) -> list[Self]:
+        return [cast(Self, a) for a in split_annotation(self)]
+
+    @staticmethod
+    def join(annotations: Sequence["ProFormaAnnotation"]) -> "ProFormaAnnotation":
+        return join_annotations(annotations)
+
+    def shift(
+        self,
+        n: int,
+        keep_nterm: int = 0,
+        keep_cterm: int = 0,
+        inplace: bool = False,
+    ) -> Self:
+        return cast(Self, shift_annotation(self, n, keep_nterm, keep_cterm, inplace))
+
+    def shuffle(
+        self,
+        seed: Any = None,
+        keep_nterm: int = 0,
+        keep_cterm: int = 0,
+        inplace: bool = False,
+    ) -> Self:
+        return cast(
+            Self, shuffle_annotation(self, seed, keep_nterm, keep_cterm, inplace)
+        )
+
+    def reverse(
+        self,
+        keep_nterm: int = 0,
+        keep_cterm: int = 0,
+        inplace: bool = False,
+    ) -> Self:
+        return cast(Self, reverse_annotation(self, keep_nterm, keep_cterm, inplace))
+
+    def sort(
+        self,
+        inplace: bool = False,
+        key: Callable[[str], Any] | None = None,
+        reverse: bool = False,
+    ) -> Self:
+        return cast(Self, sort_annotation(self, inplace, key, reverse))
+
+    def sliding_windows(
+        self,
+        window_size: int,
+        reverse: bool = False,
+    ) -> Generator[Self, None, None]:
+        for window in generate_sliding_windows(self, window_size, reverse):
+            yield cast(Self, window)
+
+    """
+    Modification Methods
+    """
+
+    def condense_static_mods(self, inplace: bool = True) -> Self:
+        return cast(Self, condense_static_mods(self, inplace=inplace))
+
+    def condense_to_peptidoform(self, inplace: bool = True) -> Self:
+        return cast(Self, condense_to_peptidoform(self, inplace=inplace))
+
+    def count_residues(self, include_mods: bool = True) -> dict[str, int]:
+        return count_residues(self, include_mods=include_mods)
+
+    def percent_residues(self, include_mods: bool = True) -> dict[str, float]:
+        return percent_residues(self, include_mods=include_mods)
+
+    def is_subsequence(
+        self,
+        other: Self,
+        ignore_mods: bool = False,
+        ignore_intervals: bool = True,
+    ) -> bool:
+        return is_subsequence(
+            self, other, ignore_mods=ignore_mods, ignore_intervals=ignore_intervals
+        )
+
+    def find_indices(
+        self,
+        other: Self,
+        ignore_mods: bool = False,
+        ignore_intervals: bool = True,
+    ) -> list[int]:
+        return find_indices(
+            self, other, ignore_mods=ignore_mods, ignore_intervals=ignore_intervals
+        )
+
+    def condense_mods_to_intervals(self, inplace: bool = True) -> Self:
+        return cast(Self, condense_mods_to_intervals(self, inplace=inplace))
+
+    def coverage(
+        self,
+        annotations: Iterable[Self],
+        accumulate: bool = False,
+        ignore_mods: bool = False,
+        ignore_ambiguity: bool = False,
+    ) -> list[int]:
+        return coverage(
+            annotation=self,
+            annotations=annotations,
+            accumulate=accumulate,
+            ignore_mods=ignore_mods,
+            ignore_ambiguity=ignore_ambiguity,
+        )
+
+    def percent_coverage(
+        self,
+        annotations: Iterable[Self],
+        accumulate: bool = False,
+        ignore_mods: bool = False,
+        ignore_ambiguity: bool = False,
+    ) -> float:
+        return percent_coverage(
+            annotation=self,
+            annotations=annotations,
+            accumulate=accumulate,
+            ignore_mods=ignore_mods,
+            ignore_ambiguity=ignore_ambiguity,
+        )
+
+    def modification_coverage(
+        self,
+        annotations: Iterable[Self],
+        ignore_ambiguity: bool = False,
+        accumulate: bool = False,
+    ) -> dict[int, int]:
+        return modification_coverage(
+            annotation=self,
+            annotations=annotations,
+            ignore_ambiguity=ignore_ambiguity,
+            accumulate=accumulate,
+        )
+
+    def permutations(self, size: int | None = None) -> Generator[Self, None, None]:
+        for item in generate_permutations(self, size):
+            yield cast(Self, item)
+
+    def product(self, repeat: int | None = None) -> Generator[Self, None, None]:
+        for item in generate_product(self, repeat):
+            yield cast(Self, item)
+
+    def combinations(self, r: int | None = None) -> Generator[Self, None, None]:
+        for item in generate_combinations(self, r):
+            yield cast(Self, item)
+
+    def combinations_with_replacement(
+        self, r: int | None = None
+    ) -> Generator[Self, None, None]:
+        for item in generate_combinations_with_replacement(self, r):
+            yield cast(Self, item)
+
+    def build_mods(
+        self,
+        *,
+        nterm_static: Mapping[str, Iterable[Any]] | None = None,
+        cterm_static: Mapping[str, Iterable[Any]] | None = None,
+        internal_static: Mapping[str, Iterable[Any]] | None = None,
+        labile_static: Mapping[str, Iterable[Any]] | None = None,
+        nterm_variable: Mapping[str, Iterable[Any]] | None = None,
+        cterm_variable: Mapping[str, Iterable[Any]] | None = None,
+        internal_variable: (Mapping[str, Iterable[Any]] | None) = None,
+        labile_variable: Mapping[str, Iterable[Any]] | None = None,
+        max_variable_mods: int = 2,
+        use_regex: bool = False,
+        inplace: bool = False,
+        use_static_notation: bool = False,
+        unique_peptidoforms: bool = True,
+    ) -> Generator[Self, None, None]:
+        """
+        Build all modifications from intervals and mass shifts.
+        """
+        for annot in build_mods(
+            self,
+            nterm_static=nterm_static,
+            cterm_static=cterm_static,
+            internal_static=internal_static,
+            labile_static=labile_static,
+            nterm_variable=nterm_variable,
+            cterm_variable=cterm_variable,
+            internal_variable=internal_variable,
+            labile_variable=labile_variable,
+            max_variable_mods=max_variable_mods,
+            use_regex=use_regex,
+            inplace=inplace,
+            use_static_notation=use_static_notation,
+            unique_peptidoforms=unique_peptidoforms,
+        ):
+            yield cast(Self, annot)
+
+    def add_static_mod_by_residue(
+        self,
+        residue: str | Iterable[str],
+        mod: Any,
+        inplace: bool = True,
+    ) -> Self:
+        if not inplace:
+            return self.copy().add_static_mod_by_residue(residue, mod, inplace=True)
+
+        residues = list(residue)
+
+        mod_str, count = convert_single_mod_input(mod)
+
+        if count != 1:
+            raise ValueError(
+                "Fixed modifications added by residue must have a count of 1."
+            )
+
+        # filter residues to only those in the sequence
+        residues = [aa for aa in residues if aa in self.stripped_sequence]
+
+        if len(residues) == 0:
+            return self
+
+        rules: list[PositionRule] = []
+        for aa in residues:
+            rules.append(
+                PositionRule(
+                    terminal=Terminal.ANYWHERE, amino_acid=AminoAcid.from_str(aa)
+                )
+            )
+        fixed_mod = FixedModification(
+            modifications=ModificationTags.from_string(mod_str),
+            position_rules=tuple(rules),
+        )
+
+        self.append_static_mod(fixed_mod, inplace=True)
+        return self
+
+    def get_interval(self, start: int, end: int) -> Interval | None:
+        """Get the interval modification that spans the given start and end positions.
+
+        Args:
+            start (int): The start position of the interval (1-based).
+            end (int): The end position of the interval (1-based).
+        Returns:
+            Interval | None: The Interval object if found, otherwise None.
+        """
+        if not self.has_intervals:
+            return None
+
+        for interval in self.intervals:
+            if interval.start == start and interval.end == end:
+                return interval
+
+        return None
+
+    def annotate_ambiguity(
+        self,
+        forward_coverage: list[int],
+        reverse_coverage: list[int],
+        mass_shift: Any | None = None,
+        add_mods_to_intervals: bool = False,
+        sort_mods: bool = True,
+        inplace: bool = False,
+    ) -> Self:
+        return cast(
+            Self,
+            annotate_ambiguity(
+                self,
+                forward_coverage=forward_coverage,
+                reverse_coverage=reverse_coverage,
+                mass_shift=mass_shift,
+                add_mods_to_intervals=add_mods_to_intervals,
+                sort_mods=sort_mods,
+                inplace=inplace,
+            ),
+        )
+
+    def condense_ambiguity_to_xnotation(self, inplace: bool = True) -> Self:
+        return cast(Self, condense_ambiguity_to_xnotation(self, inplace=inplace))
+
+    @staticmethod
+    def group_by_ambiguity(
+        annotations: Iterable["ProFormaAnnotation"], precision: int = 5
+    ) -> list[tuple["ProFormaAnnotation", ...]]:
+        return group_by_ambiguity(annotations, precision=precision)
+
+    @staticmethod
+    def unique_fragments(
+        annotations: Iterable["ProFormaAnnotation"], precision: int = 4
+    ) -> list[int]:
+        return unique_fragments(annotations, precision=precision)
+
+    def to_ip2(self) -> str:
+        raise NotImplementedError("Conversion to IP2 format is not yet implemented.")
+
+    @staticmethod
+    def from_ip2_sequence(sequence: str) -> "ProFormaAnnotation":
+        """Internal function for converting a single IP2 sequence."""
+        if re.match(r"^([A-Z]|-)\..*\.([A-Z]|-)$", sequence):
+            sequence = sequence[2:-2]
+        sequence = re.sub(r"\(([^)]+)\)", r"[\1]", sequence)
+        sequence = re.sub(r"^\[([^\]]+)\]", r"[\1]-", sequence)
+        sequence = re.sub(r"\]\[", r"]-[", sequence)
+
+        return ProFormaAnnotation.parse(sequence)
+
+    def to_diann(self) -> str:
+        raise NotImplementedError("Conversion to DIANN format is not yet implemented.")
+
+    @staticmethod
+    def from_diann(sequence: str) -> "ProFormaAnnotation":
+        """Internal function for converting a single DIANN sequence."""
+        if sequence.startswith("_"):
+            sequence = sequence[1:]
+            if re.match(r"^\[[^\]]+\]", sequence):
+                sequence = re.sub(r"^\[([^\]]+)\]", r"[\1]-", sequence)
+
+        if sequence.endswith("_"):
+            sequence = sequence[:-1]
+
+        elif re.search(r"_\[[^\]]+\]$", sequence):
+            sequence = re.sub(r"_\[([^\]]+)\]$", r"-[\1]", sequence)
+
+        return ProFormaAnnotation.parse(sequence)
+
+    def to_casanovo(self) -> str:
+        raise NotImplementedError(
+            "Conversion to Casanovo format is not yet implemented."
+        )
+
+    @staticmethod
+    def from_casanovo(sequence: str) -> "ProFormaAnnotation":
+        """Internal function for converting a single Casanovo sequence."""
+        new_sequence_comps: list[str] = []
+        in_mod = False  # Tracks if we are within a modification
+        is_nterm = False  # Tracks if the current modification is at the N-terminus
+
+        for _, char in enumerate(sequence):
+            if char in {"+", "-"}:
+                # Check if it's at the start (N-terminal)
+                is_nterm = len(new_sequence_comps) == 0
+
+                # Start a new modification block
+                new_sequence_comps.append("[")
+                new_sequence_comps.append(char)
+                in_mod = True
+            elif in_mod and char.isalpha():
+                # End the modification block
+                new_sequence_comps.append("]")
+
+                if is_nterm:
+                    # Add a dash if it's an N-terminal modification
+                    new_sequence_comps.append("-")
+                    is_nterm = False
+
+                # Add the current character and close modification
+                in_mod = False
+                new_sequence_comps.append(char)
+            else:
+                # Add regular characters
+                new_sequence_comps.append(char)
+
+        # Close any unclosed modification at the end of the sequence
+        if in_mod:
+            new_sequence_comps.append("]")
+
+        sequence = "".join(new_sequence_comps)
+        return ProFormaAnnotation.parse(sequence)
+
+    def to_ms2_pip(
+        self,
+        inplace: bool = False,
+    ) -> tuple[str, str]:
+        """Convert a single peptide sequence to MS2PIP format
+
+        Returns:
+            tuple[str, str]: (unmodified_sequence, modification_string)
+                where modification_string is in format "loc1|name1|loc2|name2|..."
+        """
+
+        if self.has_mods(
+            (
+                ModType.ISOTOPE,
+                ModType.LABILE,
+                ModType.UNKNOWN,
+                ModType.INTERVAL,
+                ModType.CHARGE,
+            )
+        ):
+            raise ValueError(
+                "MS2PIP format does not support isotope, labile, unknown, interval, charge, or charge adduct modifications."
+            )
+
+        if not inplace:
+            # Create a copy to condense
+            annot_copy = self.copy()
+            annot_copy.condense_static_mods(inplace=True)
+        else:
+            self.condense_static_mods(inplace=True)
+            annot_copy = self
+
+        mod_tuples: list[tuple[int, str]] = []
+
+        # Process N-terminal modifications
+        if annot_copy._nterm_mods is not None:
+            for mod_name, count in annot_copy._nterm_mods.items():
+                if count != 1:
+                    raise ValueError(
+                        "MS2PIP format does not support modification multipliers."
+                    )
+                mod_tuples.append((0, mod_name))
+
+        # Process C-terminal modifications
+        if annot_copy._cterm_mods is not None:
+            for mod_name, count in annot_copy._cterm_mods.items():
+                if count != 1:
+                    raise ValueError(
+                        "MS2PIP format does not support modification multipliers."
+                    )
+                mod_tuples.append((-1, mod_name))
+
+        # Process internal modifications
+        if annot_copy._internal_mods is not None:
+            for index, mods_dict in annot_copy._internal_mods.items():
+                if len(mods_dict) > 1:
+                    raise ValueError(
+                        "MS2PIP format does not support multiple modifications at the same site."
+                    )
+                for mod_name, count in mods_dict.items():
+                    if count != 1:
+                        raise ValueError(
+                            "MS2PIP format does not support modification multipliers."
+                        )
+                    # MS2PIP uses 1-indexed positions
+                    mod_tuples.append((index + 1, mod_name))
+
+        unmod_sequence = annot_copy.stripped_sequence
+
+        mod_str = "|".join(f"{loc}|{name}" for loc, name in mod_tuples)
+
+        return unmod_sequence, mod_str
+
+    @staticmethod
+    def from_ms2_pip(
+        sequence: str,
+        mod_str: str,
+        static_mods: Mapping[str, float | int | str] | None = None,
+    ) -> "ProFormaAnnotation":
+        """Create ProFormaAnnotation from MS2PIP format"""
+
+        # Create annotation with just the sequence
+        annot = ProFormaAnnotation(sequence=sequence)
+
+        if mod_str.strip() == "":
+            # No modifications - just add static mods if provided
+            for static_aa, mass in (static_mods or {}).items():
+                annot.add_static_mod_by_residue(static_aa, mass, inplace=True)
+            return annot
+
+        # Parse modification string: format is "loc1|name1|loc2|name2|..."
+        mod_parts = mod_str.split("|")
+
+        if len(mod_parts) % 2 != 0:
+            raise ValueError(f"Invalid MS2PIP modification string format: {mod_str}")
+
+        # Process modifications in pairs (location, name)
+        for i in range(0, len(mod_parts), 2):
+            loc_str = mod_parts[i]
+            mod_name = mod_parts[i + 1]
+
+            # Parse location
+            loc = int(loc_str)
+
+            # Add to appropriate location
+            if loc == 0:
+                # N-terminal modification
+                annot.append_nterm_mod(mod_name, inplace=True)
+            elif loc == -1:
+                # C-terminal modification
+                annot.append_cterm_mod(mod_name, inplace=True)
+            else:
+                # Internal modification (1-indexed in MS2PIP, convert to 0-indexed)
+                internal_index = loc - 1
+                if internal_index < 0 or internal_index >= len(sequence):
+                    raise ValueError(
+                        f"Modification location {loc} is out of range for sequence of length {len(sequence)}"
+                    )
+                annot.append_internal_mod_at_index(
+                    internal_index, mod_name, inplace=True
+                )
+
+        # Add static modifications
+        for static_aa, mass in (static_mods or {}).items():
+            annot.add_static_mod_by_residue(static_aa, mass, inplace=True)
+
+        return annot
+
+    def isotopic_distribution(
+        self,
+        ion_type: ION_TYPE = IonType.PRECURSOR,
+        charge: CHARGE_TYPE | None = None,
+        isotopes: ISOTOPE_TYPE | None = None,
+        deltas: CUSTOM_LOSS_TYPE | None = None,
+        max_isotopes: int | None = 10,
+        min_abundance_threshold: float = 0.001,  # based on the most abundant peak
+        distribution_resolution: int | None = 5,
+        use_neutron_count: bool = False,
+        conv_min_abundance_threshold: float = 10e-15,
+    ) -> list[IsotopicData]:
+        # check if any deltas provided are float?
+
+        composition: Counter[ElementInfo] = self.comp(
+            ion_type=ion_type, charge=charge, isotopes=isotopes, deltas=deltas
+        )
+
+        # get charge state
+        if charge is None:
+            charge_state = self.charge_state
+        else:
+            _, charge_state = handle_charge_input_comp(charge=charge)
+
+        return isotopic_distribution(
+            chemical_formula=cast(Mapping[str | ElementInfo, int | float], composition),
+            max_isotopes=max_isotopes,
+            min_abundance_threshold=min_abundance_threshold,
+            distribution_resolution=distribution_resolution,
+            use_neutron_count=use_neutron_count,
+            conv_min_abundance_threshold=conv_min_abundance_threshold,
+            charge=charge_state,
+        )
+
+    def estimate_isotopic_distribution(
+        self,
+        ion_type: ION_TYPE = IonType.PRECURSOR,
+        charge: CHARGE_TYPE | None = None,
+        isotopes: ISOTOPE_TYPE | None = None,
+        deltas: CUSTOM_LOSS_TYPE | None = None,
+        max_isotopes: int | None = 10,
+        min_abundance_threshold: float = 0.001,
+        distribution_resolution: int | None = 5,
+        use_neutron_count: bool = False,
+        conv_min_abundance_threshold: float = 10e-15,
+    ) -> list[IsotopicData]:
+        """Estimate isotopic distribution based on mass."""
+
+        mass = self.mass(
+            ion_type=ion_type, charge=charge, isotopes=isotopes, deltas=deltas
+        )
+
+        return estimate_isotopic_distribution(
+            neutral_mass=mass,
+            max_isotopes=max_isotopes,
+            min_abundance_threshold=min_abundance_threshold,
+            distribution_resolution=distribution_resolution,
+            use_neutron_count=use_neutron_count,
+            conv_min_abundance_threshold=conv_min_abundance_threshold,
+        )
+
+    @staticmethod
+    def random(
+        min_length: int = 6,
+        max_length: int = 20,
+        mod_probability: float = 0.05,
+        include_internal_mods: bool = True,
+        include_nterm_mods: bool = True,
+        include_cterm_mods: bool = True,
+        include_labile_mods: bool = True,
+        include_unknown_mods: bool = True,
+        include_isotopic_mods: bool = True,
+        include_static_mods: bool = True,
+        include_intervals: bool = True,
+        include_charge: bool = True,
+        require_composition: bool = True,
+    ) -> "ProFormaAnnotation":
+        """Generate a random ProFormaAnnotation for testing purposes."""
+        return generate_random_proforma_annotation(
+            min_length=min_length,
+            max_length=max_length,
+            mod_probability=mod_probability,
+            include_internal_mods=include_internal_mods,
+            include_nterm_mods=include_nterm_mods,
+            include_cterm_mods=include_cterm_mods,
+            include_labile_mods=include_labile_mods,
+            include_unknown_mods=include_unknown_mods,
+            include_isotopic_mods=include_isotopic_mods,
+            include_static_mods=include_static_mods,
+            include_intervals=include_intervals,
+            include_charge=include_charge,
+            require_composition=require_composition,
+        )
+
+    def left_semi_spans(
+        self,
+        min_len: int | None = None,
+        max_len: int | None = None,
+    ) -> Generator[Span, None, None]:
+        """Get left semi-enzymatic sequences (N-terminus fixed)."""
+        return left_semi_spans(self, min_len, max_len)
+
+    def right_semi_spans(
+        self,
+        min_len: int | None = None,
+        max_len: int | None = None,
+    ) -> Generator[Span, None, None]:
+        """Get right semi-enzymatic sequences (C-terminus fixed)."""
+        return right_semi_spans(self, min_len, max_len)
+
+    def semi_spans(
+        self,
+        min_len: int | None = None,
+        max_len: int | None = None,
+    ) -> Generator[Span, None, None]:
+        """Get all semi-enzymatic sequences."""
+        return semi_spans(self, min_len, max_len)
+
+    def nonspecific_spans(
+        self,
+        min_len: int | None = None,
+        max_len: int | None = None,
+    ) -> Generator[Span, None, None]:
+        """Get all non-enzymatic sequences (all possible subsequences)."""
+        return nonspecific_spans(self, min_len, max_len)
+
+    def cleavage_sites(
+        self,
+        enzyme: str | re.Pattern[str],
+    ) -> Generator[int, None, None]:
+        # Call the underlying function
+        return get_cleavage_sites(self, enzyme)
+
+    def simple_cleavage_sites(
+        self,
+        cleave_on: str,
+        restrict_before: str = "",
+        restrict_after: str = "",
+        cterminal: bool = True,
+    ) -> Generator[int, None, None]:
+        """Get cleavage sites using simple amino acid rules."""
+        enzyme_regex = generate_regex(
+            cleave_on=cleave_on,
+            restrict_before=restrict_before,
+            restrict_after=restrict_after,
+            cterminal=cterminal,
+        )
+        return self.cleavage_sites(enzyme_regex)
+
+    def digest(
+        self,
+        enzyme: str,
+        missed_cleavages: int = 0,
+        semi: bool = False,
+        min_len: int | None = None,
+        max_len: int | None = None,
+    ) -> Generator[Span, None, None]:
+        """Digest this annotation using a regex pattern."""
+        return digest_annotation_by_regex(
+            annotation=self,
+            enzyme_regex=enzyme,
+            missed_cleavages=missed_cleavages,
+            semi=semi,
+            min_len=min_len,
+            max_len=max_len,
+        )
+
+    def simple_digest(
+        self,
+        cleave_on: str,
+        restrict_before: str = "",
+        restrict_after: str = "",
+        cterminal: bool = True,
+        missed_cleavages: int = 0,
+        semi: bool = False,
+        min_len: int | None = None,
+        max_len: int | None = None,
+    ) -> Generator[Span, None, None]:
+        """Digest this annotation with specified enzyme parameters."""
+        return digest_annotation_by_aa(
+            annotation=self,
+            cleave_on=cleave_on,
+            restrict_before=restrict_before,
+            restrict_after=restrict_after,
+            cterminal=cterminal,
+            missed_cleavages=missed_cleavages,
+            semi=semi,
+            min_len=min_len,
+            max_len=max_len,
+        )
+
+    def sequential_digest(
+        self,
+        enzyme_configs: list[EnzymeConfig],
+        min_len: int | None = None,
+        max_len: int | None = None,
+    ) -> Generator[Span, None, None]:
+        """Perform sequential digestion with multiple enzymes."""
+        return sequential_digest_annotation(self, enzyme_configs, min_len, max_len)
+
+    @property
+    def prop(self) -> AnnotationProperties:
+        """Get the properties of this annotation."""
+        return AnnotationProperties(self.stripped_sequence)
