@@ -24,3 +24,4 @@ try*.py
 .pytest_cache/
 .ipynb_checkpoints/
 htmlcov/
+uv.lock
