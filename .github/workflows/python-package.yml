@@ -5,10 +5,9 @@ name: Python package
 
 on:
   push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
-
+    paths:
+      - 'src/**'
+      - 'tests/**'
 jobs:
   build:
 
@@ -40,5 +39,5 @@ jobs:
       uses: codecov/codecov-action@v5
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
-        slug: tacular-omics/tacular
+        slug: tacular-omics/peptacular
         fail_ci_if_error: false
