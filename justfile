@@ -21,7 +21,8 @@ test:
 
 # Run tests with coverage
 test-cov:
-    uv run pytest tests/ --cov=src/peptacular --cov-report=term-missing
+    uv run pytest tests --cov=src/tacular --cov-branch --cov-report=term-missing --cov-report=html --cov-report=xml
+
 
 
 # Clean build artifacts and cache
