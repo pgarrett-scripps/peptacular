@@ -32,3 +32,4 @@ htmlcov/
 .coverage
 *.cover
 .pytest_cache/
+junit.xml

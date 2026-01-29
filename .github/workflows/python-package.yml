@@ -9,7 +9,7 @@ on:
       - 'src/**'
       - 'tests/**'
   workflow_dispatch:
-    
+
 jobs:
   build:
 
@@ -42,4 +42,10 @@ jobs:
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         slug: tacular-omics/peptacular
+        fail_ci_if_error: false
+    - name: Upload test results to Codecov
+      if: ${{ !cancelled() }}
+      uses: codecov/test-results-action@v1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
         fail_ci_if_error: false

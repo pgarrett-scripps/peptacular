@@ -23,7 +23,8 @@ test:
 test-cov:
     uv run pytest tests --cov=src/peptacular --cov-branch --cov-report=term-missing --cov-report=html --cov-report=xml
 
-
+codecov-tests:
+    uv run pytest --cov --junitxml=junit.xml -o junit_family=legacy
 
 # Clean build artifacts and cache
 clean:
