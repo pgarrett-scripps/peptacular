@@ -13,18 +13,14 @@ class TestRemoveMods(unittest.TestCase):
         annotation = pt.ProFormaAnnotation.parse("[Acetyl]-PEPTIDE-[Amide]")
         removed_annotation = annotation.clear_nterm_mods(inplace=True)
         self.assertEqual(removed_annotation.serialize(), "PEPTIDE-[Amide]")
-        self.assertEqual(
-            annotation.serialize(), "PEPTIDE-[Amide]"
-        )  # Original changed too
+        self.assertEqual(annotation.serialize(), "PEPTIDE-[Amide]")  # Original changed too
         self.assertIs(removed_annotation, annotation)
 
     def test_remove_nterm_mods_inplace_false(self):
         annotation = pt.ProFormaAnnotation.parse("[Acetyl]-PEPTIDE-[Amide]")
         removed_annotation = annotation.clear_nterm_mods(inplace=False)
         self.assertEqual(removed_annotation.serialize(), "PEPTIDE-[Amide]")
-        self.assertEqual(
-            annotation.serialize(), "[Acetyl]-PEPTIDE-[Amide]"
-        )  # Original unchanged
+        self.assertEqual(annotation.serialize(), "[Acetyl]-PEPTIDE-[Amide]")  # Original unchanged
         self.assertIsNot(removed_annotation, annotation)
 
     def test_remove_nterm_mods_no_nterm_mods(self):
@@ -45,18 +41,14 @@ class TestRemoveMods(unittest.TestCase):
         annotation = pt.ProFormaAnnotation.parse("[Acetyl]-PEPTIDE-[Amide]")
         removed_annotation = annotation.clear_cterm_mods(inplace=True)
         self.assertEqual(removed_annotation.serialize(), "[Acetyl]-PEPTIDE")
-        self.assertEqual(
-            annotation.serialize(), "[Acetyl]-PEPTIDE"
-        )  # Original changed too
+        self.assertEqual(annotation.serialize(), "[Acetyl]-PEPTIDE")  # Original changed too
         self.assertIs(removed_annotation, annotation)
 
     def test_remove_cterm_mods_inplace_false(self):
         annotation = pt.ProFormaAnnotation.parse("[Acetyl]-PEPTIDE-[Amide]")
         removed_annotation = annotation.clear_cterm_mods(inplace=False)
         self.assertEqual(removed_annotation.serialize(), "[Acetyl]-PEPTIDE")
-        self.assertEqual(
-            annotation.serialize(), "[Acetyl]-PEPTIDE-[Amide]"
-        )  # Original unchanged
+        self.assertEqual(annotation.serialize(), "[Acetyl]-PEPTIDE-[Amide]")  # Original unchanged
         self.assertIsNot(removed_annotation, annotation)
 
     def test_remove_cterm_mods_no_cterm_mods(self):
@@ -84,9 +76,7 @@ class TestRemoveMods(unittest.TestCase):
         annotation = pt.ProFormaAnnotation.parse("PE[Phospho]PTI[Methyl]DE")
         removed_annotation = annotation.clear_internal_mods(inplace=False)
         self.assertEqual(removed_annotation.serialize(), "PEPTIDE")
-        self.assertEqual(
-            annotation.serialize(), "PE[Phospho]PTI[Methyl]DE"
-        )  # Original unchanged
+        self.assertEqual(annotation.serialize(), "PE[Phospho]PTI[Methyl]DE")  # Original unchanged
         self.assertIsNot(removed_annotation, annotation)
 
     def test_remove_internal_mods_no_internal_mods(self):
@@ -114,9 +104,7 @@ class TestRemoveMods(unittest.TestCase):
         annotation = pt.ProFormaAnnotation.parse("P(EP)[Phospho]TIDE")
         removed_annotation = annotation.clear_intervals(inplace=False)
         self.assertEqual(removed_annotation.serialize(), "PEPTIDE")
-        self.assertEqual(
-            annotation.serialize(), "P(EP)[Phospho]TIDE"
-        )  # Original unchanged
+        self.assertEqual(annotation.serialize(), "P(EP)[Phospho]TIDE")  # Original unchanged
         self.assertIsNot(removed_annotation, annotation)
 
     def test_remove_intervals_no_intervals(self):
@@ -177,9 +165,7 @@ class TestRemoveMods(unittest.TestCase):
         annotation = pt.ProFormaAnnotation.parse("PEPTIDE/[Na:z+1]")
         removed_annotation = annotation.clear_charge(inplace=False)
         self.assertEqual(removed_annotation.serialize(), "PEPTIDE")
-        self.assertEqual(
-            annotation.serialize(), "PEPTIDE/[Na:z+1]"
-        )  # Original unchanged
+        self.assertEqual(annotation.serialize(), "PEPTIDE/[Na:z+1]")  # Original unchanged
         self.assertIsNot(removed_annotation, annotation)
 
     def test_remove_charge_adducts_multiple(self):
@@ -248,9 +234,7 @@ class TestRemoveMods(unittest.TestCase):
     """
 
     def test_remove_mods_all_default(self):
-        annotation = pt.ProFormaAnnotation.parse(
-            "<57@C>{Glycan}[Acetyl]-PE[Phospho]PTIDE-[Amide]/2"
-        )
+        annotation = pt.ProFormaAnnotation.parse("<57@C>{Glycan}[Acetyl]-PE[Phospho]PTIDE-[Amide]/2")
         removed_annotation = annotation.clear_mods(inplace=False)
         self.assertEqual(removed_annotation.serialize(), "PEPTIDE")
 
@@ -261,41 +245,31 @@ class TestRemoveMods(unittest.TestCase):
 
     def test_remove_mods_specific_types_list(self):
         annotation = pt.ProFormaAnnotation.parse("[Acetyl]-PE[Phospho]PTIDE-[Amide]")
-        removed_annotation = annotation.clear_mods(
-            mods=["nterm", "cterm"], inplace=False
-        )
+        removed_annotation = annotation.clear_mods(mods=["nterm", "cterm"], inplace=False)
         self.assertEqual(removed_annotation.serialize(), "PE[Phospho]PTIDE")
 
     def test_remove_mods_mod_type_enum(self):
         annotation = pt.ProFormaAnnotation.parse("[Acetyl]-PE[Phospho]PTIDE-[Amide]")
-        removed_annotation = annotation.clear_mods(
-            mods=pt.ModType.INTERNAL, inplace=False
-        )
+        removed_annotation = annotation.clear_mods(mods=pt.ModType.INTERNAL, inplace=False)
         self.assertEqual(removed_annotation.serialize(), "[Acetyl]-PEPTIDE-[Amide]")
 
     def test_remove_mods_mixed_list(self):
         annotation = pt.ProFormaAnnotation.parse("[Acetyl]-PE[Phospho]PTIDE-[Amide]/2")
-        removed_annotation = annotation.clear_mods(
-            mods=["nterm", pt.ModType.CHARGE], inplace=False
-        )
+        removed_annotation = annotation.clear_mods(mods=["nterm", pt.ModType.CHARGE], inplace=False)
         self.assertEqual(removed_annotation.serialize(), "PE[Phospho]PTIDE-[Amide]")
 
     def test_remove_mods_inplace_true(self):
         annotation = pt.ProFormaAnnotation.parse("[Acetyl]-PEPTIDE-[Amide]")
         removed_annotation = annotation.clear_mods(mods=["nterm"], inplace=True)
         self.assertEqual(removed_annotation.serialize(), "PEPTIDE-[Amide]")
-        self.assertEqual(
-            annotation.serialize(), "PEPTIDE-[Amide]"
-        )  # Original changed too
+        self.assertEqual(annotation.serialize(), "PEPTIDE-[Amide]")  # Original changed too
         self.assertIs(removed_annotation, annotation)
 
     def test_remove_mods_inplace_false(self):
         annotation = pt.ProFormaAnnotation.parse("[Acetyl]-PEPTIDE-[Amide]")
         removed_annotation = annotation.clear_mods(mods=["nterm"], inplace=False)
         self.assertEqual(removed_annotation.serialize(), "PEPTIDE-[Amide]")
-        self.assertEqual(
-            annotation.serialize(), "[Acetyl]-PEPTIDE-[Amide]"
-        )  # Original unchanged
+        self.assertEqual(annotation.serialize(), "[Acetyl]-PEPTIDE-[Amide]")  # Original unchanged
         self.assertIsNot(removed_annotation, annotation)
 
     """

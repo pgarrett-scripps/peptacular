@@ -98,11 +98,7 @@ def fragment(
     """
     Builds fragment ions from a given input sequence or list of sequences.
     """
-    if (
-        isinstance(sequence, Sequence)
-        and not isinstance(sequence, str)
-        and not isinstance(sequence, ProFormaAnnotation)
-    ):
+    if isinstance(sequence, Sequence) and not isinstance(sequence, str) and not isinstance(sequence, ProFormaAnnotation):
         return parallel_apply_internal(
             _fragment_single,
             sequence,

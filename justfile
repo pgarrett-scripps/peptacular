@@ -2,13 +2,13 @@
 help:
     @just --list
 
-# Install dependencies
+# Install all dependencies (dev + all extras)
 install:
-    uv sync
+    uv sync --all-extras
 
-# Install all dependencies
-install-all:
-    uv sync --all-groups
+# Install minimal dependencies (no dev, no extras)
+install-prod:
+    uv sync --no-dev --frozen
 
 # Sync dependencies
 sync:

@@ -120,9 +120,7 @@ ION_TYPE = IonTypeLiteral | IonType
 CHARGE_TYPE = int | str | GlobalChargeCarrier | tuple[GlobalChargeCarrier | str, ...]
 ISOTOPE_TYPE = int | dict[str | ElementInfo, int]
 LOSS_TYPE = NeutralDelta | NeutralDeltaLiteral | NeutralDeltaInfo | str
-CUSTOM_LOSS_TYPE = (
-    str | ChargedFormula | float | dict[str | ChargedFormula | float, int]
-)
+CUSTOM_LOSS_TYPE = str | ChargedFormula | float | dict[str | ChargedFormula | float, int]
 POSITION_TYPE = int | str | tuple[int, int]
 
 EMPTY_ISOTOPE_MODS = Mods[IsotopeReplacement](mod_type=ModType.ISOTOPE, _mods=None)
@@ -141,9 +139,7 @@ class ChargeType(StrEnum):
     NONE = "none"
 
 
-def get_loss_combinations(
-    losses: dict[NeutralDeltaInfo, int], max_losses: int
-) -> list[DeltaInfo]:
+def get_loss_combinations(losses: dict[NeutralDeltaInfo, int], max_losses: int) -> list[DeltaInfo]:
     """Generate all combinations of losses up to max_losses."""
     if not losses:
         return [DeltaInfo.from_input(None)]
@@ -162,7 +158,7 @@ def get_loss_combinations(
 
         # Build combination dict
         combo = {}
-        for (loss, _), count in zip(loss_items, counts):
+        for (loss, _), count in zip(loss_items, counts, strict=True):
             if count > 0:
                 combo[loss] = count
 
@@ -176,9 +172,7 @@ def get_loss_combinations(
         else:
             formula_dict: dict[ChargedFormula, int] = {}
             for nd, count in loss_combo.items():
-                nd_formula: ChargedFormula = ChargedFormula.from_composition(
-                    nd.composition
-                )
+                nd_formula: ChargedFormula = ChargedFormula.from_composition(nd.composition)
                 formula_dict[nd_formula] = count
             delta_combinations.append(DeltaInfo.from_input(formula_dict))  # type: ignore
 
@@ -250,9 +244,7 @@ class ProFormaAnnotation:
     def validate_sequence(self) -> None:
         for aa in self.sequence:
             if aa not in AA_LOOKUP:
-                raise ValueError(
-                    f"Invalid amino acid '{aa}' in sequence '{self.sequence}'"
-                )
+                raise ValueError(f"Invalid amino acid '{aa}' in sequence '{self.sequence}'")
 
     def validate_isotope_mods(self) -> None:
         if errors := self.isotope_mods.validate():
@@ -281,9 +273,7 @@ class ProFormaAnnotation:
     def validate_internal_mods(self) -> None:
         for pos, mods in self.internal_mods.items():
             if errors := mods.validate():
-                raise ValueError(
-                    f"Invalid internal modifications at position {pos}: {errors}"
-                )
+                raise ValueError(f"Invalid internal modifications at position {pos}: {errors}")
 
     def validate_intervals(self) -> None:
         intervals = self.intervals
@@ -295,17 +285,13 @@ class ProFormaAnnotation:
         sorted_intervals = sorted(intervals, key=lambda x: x.start)
         for i in range(1, len(sorted_intervals)):
             if sorted_intervals[i].start < sorted_intervals[i - 1].end:
-                raise ValueError(
-                    f"Overlapping intervals detected: {sorted_intervals[i - 1]} and {sorted_intervals[i]}"
-                )
+                raise ValueError(f"Overlapping intervals detected: {sorted_intervals[i - 1]} and {sorted_intervals[i]}")
 
         # ensure that intervals dont start/end out of bounds
         seq_len = len(self.sequence) if self._sequence is not None else 0
         for interval in intervals:
             if interval.start < 0 or interval.end > seq_len:
-                raise ValueError(
-                    f"Interval {interval} is out of bounds for sequence length {seq_len}"
-                )
+                raise ValueError(f"Interval {interval} is out of bounds for sequence length {seq_len}")
 
     def validate_charge(self) -> None:
         charge_type = self.charge_type
@@ -354,11 +340,7 @@ class ProFormaAnnotation:
         if self._sequence is None:
             return ()
         return tuple(
-            SequenceElement.from_string(
-                f"{aa}{self.get_internal_mods_str_at_index(i)}"
-                if self.has_internal_mods_at_index(i)
-                else aa
-            )
+            SequenceElement.from_string(f"{aa}{self.get_internal_mods_str_at_index(i)}" if self.has_internal_mods_at_index(i) else aa)
             for i, aa in enumerate(self.sequence)
         )
 
@@ -378,9 +360,7 @@ class ProFormaAnnotation:
                     for _ in range(count):
                         mods.append(mod)
 
-            sequence_regions.append(
-                SequenceRegion(sequence=region_elements, modifications=tuple(mods))
-            )
+            sequence_regions.append(SequenceRegion(sequence=region_elements, modifications=tuple(mods)))
 
         return tuple(sequence_regions)
 
@@ -439,9 +419,7 @@ class ProFormaAnnotation:
         if self._isotope_mods is None:
             return EMPTY_ISOTOPE_MODS
 
-        return Mods[IsotopeReplacement](
-            mod_type=ModType.ISOTOPE, _mods=self._isotope_mods
-        )
+        return Mods[IsotopeReplacement](mod_type=ModType.ISOTOPE, _mods=self._isotope_mods)
 
     @isotope_mods.setter
     def isotope_mods(self, value: Any) -> None:
@@ -490,9 +468,7 @@ class ProFormaAnnotation:
     def unknown_mods(self) -> Mods[ModificationTags]:
         if self._unknown_mods is None:
             return EMPTY_UNKNOWN_MODS
-        return Mods[ModificationTags](
-            mod_type=ModType.UNKNOWN, _mods=self._unknown_mods
-        )
+        return Mods[ModificationTags](mod_type=ModType.UNKNOWN, _mods=self._unknown_mods)
 
     @unknown_mods.setter
     def unknown_mods(self, value: Any) -> None:
@@ -542,9 +518,7 @@ class ProFormaAnnotation:
             return {}
         internal_mods_parsed: dict[int, Mods[ModificationTags]] = {}
         for pos, mods_dict in self._internal_mods.items():
-            internal_mods_parsed[pos] = Mods[ModificationTags](
-                mod_type=ModType.INTERNAL, _mods=mods_dict
-            )
+            internal_mods_parsed[pos] = Mods[ModificationTags](mod_type=ModType.INTERNAL, _mods=mods_dict)
         return internal_mods_parsed
 
     @internal_mods.setter
@@ -610,16 +584,12 @@ class ProFormaAnnotation:
                 return None
             return self._charge
         elif isinstance(self._charge, dict):
-            return Mods[GlobalChargeCarrier](
-                mod_type=ModType.CHARGE, _mods=self._charge
-            )
+            return Mods[GlobalChargeCarrier](mod_type=ModType.CHARGE, _mods=self._charge)
 
         return None
 
     @charge.setter
-    def charge(
-        self, value: int | dict[str, int] | Mods[GlobalChargeCarrier] | None
-    ) -> None:
+    def charge(self, value: int | dict[str, int] | Mods[GlobalChargeCarrier] | None) -> None:
         self.set_charge(value, inplace=True, validate=self._validate)
 
     @property
@@ -656,9 +626,7 @@ class ProFormaAnnotation:
     Set Methods - Replace existing modifications
     """
 
-    def set_sequence(
-        self, sequence: str | None, inplace: bool = True, validate: bool | None = None
-    ) -> Self:
+    def set_sequence(self, sequence: str | None, inplace: bool = True, validate: bool | None = None) -> Self:
         if validate is None:
             validate = self._validate
         if not inplace:
@@ -668,19 +636,13 @@ class ProFormaAnnotation:
             self.validate_sequence()
         return self
 
-    def set_compound_name(
-        self, name: str | None, inplace: bool = True, validate: bool | None = None
-    ) -> Self:
+    def set_compound_name(self, name: str | None, inplace: bool = True, validate: bool | None = None) -> Self:
         return self._set_name_generic(name, "_compound_name", inplace, validate)
 
-    def set_ion_name(
-        self, name: str | None, inplace: bool = True, validate: bool | None = None
-    ) -> Self:
+    def set_ion_name(self, name: str | None, inplace: bool = True, validate: bool | None = None) -> Self:
         return self._set_name_generic(name, "_ion_name", inplace, validate)
 
-    def set_peptide_name(
-        self, name: str | None, inplace: bool = True, validate: bool | None = None
-    ) -> Self:
+    def set_peptide_name(self, name: str | None, inplace: bool = True, validate: bool | None = None) -> Self:
         return self._set_name_generic(name, "_peptide_name", inplace, validate)
 
     def set_isotope_mods(
@@ -689,9 +651,7 @@ class ProFormaAnnotation:
         inplace: bool = True,
         validate: bool | None = None,
     ) -> Self:
-        return self._set_mod_generic(
-            mods, "_isotope_mods", "validate_isotope_mods", inplace, validate
-        )
+        return self._set_mod_generic(mods, "_isotope_mods", "validate_isotope_mods", inplace, validate)
 
     def set_static_mods(
         self,
@@ -699,9 +659,7 @@ class ProFormaAnnotation:
         inplace: bool = True,
         validate: bool | None = None,
     ) -> Self:
-        return self._set_mod_generic(
-            mods, "_static_mods", "validate_static_mods", inplace, validate
-        )
+        return self._set_mod_generic(mods, "_static_mods", "validate_static_mods", inplace, validate)
 
     def set_labile_mods(
         self,
@@ -709,9 +667,7 @@ class ProFormaAnnotation:
         inplace: bool = True,
         validate: bool | None = None,
     ) -> Self:
-        return self._set_mod_generic(
-            mods, "_labile_mods", "validate_labile_mods", inplace, validate
-        )
+        return self._set_mod_generic(mods, "_labile_mods", "validate_labile_mods", inplace, validate)
 
     def set_unknown_mods(
         self,
@@ -719,9 +675,7 @@ class ProFormaAnnotation:
         inplace: bool = True,
         validate: bool | None = None,
     ) -> Self:
-        return self._set_mod_generic(
-            mods, "_unknown_mods", "validate_unknown_mods", inplace, validate
-        )
+        return self._set_mod_generic(mods, "_unknown_mods", "validate_unknown_mods", inplace, validate)
 
     def set_nterm_mods(
         self,
@@ -733,9 +687,7 @@ class ProFormaAnnotation:
         if start_aa is not None:
             if self.start_aa != start_aa:
                 return self if inplace else self.copy()
-        return self._set_mod_generic(
-            mods, "_nterm_mods", "validate_nterm_mods", inplace, validate
-        )
+        return self._set_mod_generic(mods, "_nterm_mods", "validate_nterm_mods", inplace, validate)
 
     def set_cterm_mods(
         self,
@@ -747,9 +699,7 @@ class ProFormaAnnotation:
         if end_aa is not None:
             if self.end_aa != end_aa:
                 return self if inplace else self.copy()
-        return self._set_mod_generic(
-            mods, "_cterm_mods", "validate_cterm_mods", inplace, validate
-        )
+        return self._set_mod_generic(mods, "_cterm_mods", "validate_cterm_mods", inplace, validate)
 
     def set_internal_mods(
         self,
@@ -808,15 +758,11 @@ class ProFormaAnnotation:
             self.validate_intervals()
         return self
 
-    def set_internal_mods_at_index(
-        self, index: int, mods: Any, inplace: bool = True, validate: bool | None = None
-    ) -> Self:
+    def set_internal_mods_at_index(self, index: int, mods: Any, inplace: bool = True, validate: bool | None = None) -> Self:
         if validate is None:
             validate = self._validate
         if not inplace:
-            return self.copy().set_internal_mods_at_index(
-                index, mods, inplace=True, validate=validate
-            )
+            return self.copy().set_internal_mods_at_index(index, mods, inplace=True, validate=validate)
 
         if mods is None:
             # remove mod at index
@@ -833,9 +779,7 @@ class ProFormaAnnotation:
             return self
 
         if validate:
-            if not Mods[ModificationTags](
-                mod_type=ModType.INTERNAL, _mods=mods
-            ).is_valid:
+            if not Mods[ModificationTags](mod_type=ModType.INTERNAL, _mods=mods).is_valid:
                 raise ValueError(f"Invalid internal modifications at position {index}")
 
         if self._internal_mods is None:
@@ -871,9 +815,7 @@ class ProFormaAnnotation:
             charge = charge._mods
 
         if isinstance(charge, Mods):  # For type checker
-            raise RuntimeError(
-                "Internal error: Mods should have been converted to dict"
-            )
+            raise RuntimeError("Internal error: Mods should have been converted to dict")
 
         self._charge = charge
 
@@ -892,9 +834,7 @@ class ProFormaAnnotation:
         if validate is None:
             validate = self._validate
         if not inplace:
-            return self.copy()._set_name_generic(
-                name, attr_name, inplace=True, validate=validate
-            )
+            return self.copy()._set_name_generic(name, attr_name, inplace=True, validate=validate)
 
         if name is not None and not isinstance(name, str):
             name = str(name)
@@ -914,9 +854,7 @@ class ProFormaAnnotation:
         if validate is None:
             validate = self._validate
         if not inplace:
-            return self.copy()._set_mod_generic(
-                mods, attr_name, validator_method_name, inplace=True, validate=validate
-            )
+            return self.copy()._set_mod_generic(mods, attr_name, validator_method_name, inplace=True, validate=validate)
 
         if mods is None:
             setattr(self, attr_name, None)
@@ -980,9 +918,7 @@ class ProFormaAnnotation:
         for mod_type, mod_value in mods.items():
             if isinstance(mod_type, int):
                 if mod_type < 0 or mod_type >= len(self.sequence):
-                    raise IndexError(
-                        f"Internal modification index out of range: {mod_type}"
-                    )
+                    raise IndexError(f"Internal modification index out of range: {mod_type}")
                 self.set_internal_mods_at_index(mod_type, mod_value, inplace=True)
                 continue
 
@@ -1006,9 +942,7 @@ class ProFormaAnnotation:
             validate = self._validate
 
         if not inplace:
-            return self.copy()._append_mod_generic(
-                mod, attr_name, validator, inplace=True, validate=validate
-            )
+            return self.copy()._append_mod_generic(mod, attr_name, validator, inplace=True, validate=validate)
 
         mod_str, count = convert_single_mod_input(mod)
 
@@ -1028,33 +962,17 @@ class ProFormaAnnotation:
 
         return self
 
-    def append_isotope_mod(
-        self, mod: Any, inplace: bool = True, validate: bool | None = None
-    ) -> Self:
-        return self._append_mod_generic(
-            mod, "_isotope_mods", IsotopeReplacement.from_string, inplace, validate
-        )
+    def append_isotope_mod(self, mod: Any, inplace: bool = True, validate: bool | None = None) -> Self:
+        return self._append_mod_generic(mod, "_isotope_mods", IsotopeReplacement.from_string, inplace, validate)
 
-    def append_static_mod(
-        self, mod: Any, inplace: bool = True, validate: bool | None = None
-    ) -> Self:
-        return self._append_mod_generic(
-            mod, "_static_mods", FixedModification.from_string, inplace, validate
-        )
+    def append_static_mod(self, mod: Any, inplace: bool = True, validate: bool | None = None) -> Self:
+        return self._append_mod_generic(mod, "_static_mods", FixedModification.from_string, inplace, validate)
 
-    def append_labile_mod(
-        self, mod: Any, inplace: bool = True, validate: bool | None = None
-    ) -> Self:
-        return self._append_mod_generic(
-            mod, "_labile_mods", ModificationTags.from_string, inplace, validate
-        )
+    def append_labile_mod(self, mod: Any, inplace: bool = True, validate: bool | None = None) -> Self:
+        return self._append_mod_generic(mod, "_labile_mods", ModificationTags.from_string, inplace, validate)
 
-    def append_unknown_mod(
-        self, mod: Any, inplace: bool = True, validate: bool | None = None
-    ) -> Self:
-        return self._append_mod_generic(
-            mod, "_unknown_mods", ModificationTags.from_string, inplace, validate
-        )
+    def append_unknown_mod(self, mod: Any, inplace: bool = True, validate: bool | None = None) -> Self:
+        return self._append_mod_generic(mod, "_unknown_mods", ModificationTags.from_string, inplace, validate)
 
     def append_nterm_mod(
         self,
@@ -1066,9 +984,7 @@ class ProFormaAnnotation:
         if start_aa is not None:
             if self.start_aa != start_aa:
                 return self if inplace else self.copy()
-        return self._append_mod_generic(
-            mod, "_nterm_mods", ModificationTags.from_string, inplace, validate
-        )
+        return self._append_mod_generic(mod, "_nterm_mods", ModificationTags.from_string, inplace, validate)
 
     def append_cterm_mod(
         self,
@@ -1080,20 +996,14 @@ class ProFormaAnnotation:
         if end_aa is not None:
             if self.end_aa != end_aa:
                 return self if inplace else self.copy()
-        return self._append_mod_generic(
-            mod, "_cterm_mods", ModificationTags.from_string, inplace, validate
-        )
+        return self._append_mod_generic(mod, "_cterm_mods", ModificationTags.from_string, inplace, validate)
 
-    def append_internal_mod_at_index(
-        self, index: int, mod: Any, inplace: bool = True, validate: bool | None = None
-    ) -> Self:
+    def append_internal_mod_at_index(self, index: int, mod: Any, inplace: bool = True, validate: bool | None = None) -> Self:
         if validate is None:
             validate = self._validate
 
         if not inplace:
-            return self.copy().append_internal_mod_at_index(
-                index, mod, inplace=True, validate=validate
-            )
+            return self.copy().append_internal_mod_at_index(index, mod, inplace=True, validate=validate)
 
         mod_str, count = convert_single_mod_input(mod)
 
@@ -1123,9 +1033,7 @@ class ProFormaAnnotation:
         if validate is None:
             validate = self._validate
         if not inplace:
-            return self.copy().append_interval(
-                interval, inplace=True, validate=validate
-            )
+            return self.copy().append_interval(interval, inplace=True, validate=validate)
 
         if isinstance(interval, tuple):
             start, end, ambiguous, mods_input = interval
@@ -1161,9 +1069,7 @@ class ProFormaAnnotation:
         validate: bool | None = None,
     ) -> Self:
         if not inplace:
-            return self.copy()._append_by_type(
-                value, mod_type, inplace=True, validate=validate
-            )
+            return self.copy()._append_by_type(value, mod_type, inplace=True, validate=validate)
 
         match mod_type:
             case ModType.ISOTOPE:
@@ -1180,9 +1086,7 @@ class ProFormaAnnotation:
                 self.append_cterm_mod(value, inplace=True, validate=validate)
             case ModType.INTERNAL:
                 for key, val in value.items():
-                    self.append_internal_mod_at_index(
-                        key, val, inplace=True, validate=validate
-                    )
+                    self.append_internal_mod_at_index(key, val, inplace=True, validate=validate)
             case ModType.INTERVAL:
                 self.append_interval(value, inplace=True, validate=validate)
             case ModType.CHARGE:
@@ -1204,17 +1108,11 @@ class ProFormaAnnotation:
         for mod_type, value in mods.items():
             if isinstance(mod_type, int):
                 if mod_type < 0 or mod_type >= len(self.sequence):
-                    raise IndexError(
-                        f"Internal modification index out of range: {mod_type}"
-                    )
-                self.append_internal_mod_at_index(
-                    mod_type, value, inplace=True, validate=validate
-                )
+                    raise IndexError(f"Internal modification index out of range: {mod_type}")
+                self.append_internal_mod_at_index(mod_type, value, inplace=True, validate=validate)
                 continue
 
-            self._append_by_type(
-                value, ModType(mod_type), inplace=True, validate=validate
-            )
+            self._append_by_type(value, ModType(mod_type), inplace=True, validate=validate)
 
         return self
 
@@ -1232,32 +1130,22 @@ class ProFormaAnnotation:
         if validate is None:
             validate = self._validate
         if not inplace:
-            return self.copy()._extend_generic(
-                mods, append_method, inplace=True, validate=validate
-            )
+            return self.copy()._extend_generic(mods, append_method, inplace=True, validate=validate)
         if mods is not None:
             for mod in mods:
                 append_method(mod, inplace=True, validate=validate)  # type: ignore
         return self
 
-    def extend_isotope_mods(
-        self, mods: Any, inplace: bool = True, validate: bool | None = None
-    ) -> Self:
+    def extend_isotope_mods(self, mods: Any, inplace: bool = True, validate: bool | None = None) -> Self:
         return self._extend_generic(mods, self.append_isotope_mod, inplace, validate)
 
-    def extend_static_mods(
-        self, mods: Any, inplace: bool = True, validate: bool | None = None
-    ) -> Self:
+    def extend_static_mods(self, mods: Any, inplace: bool = True, validate: bool | None = None) -> Self:
         return self._extend_generic(mods, self.append_static_mod, inplace, validate)
 
-    def extend_labile_mods(
-        self, mods: Any, inplace: bool = True, validate: bool | None = None
-    ) -> Self:
+    def extend_labile_mods(self, mods: Any, inplace: bool = True, validate: bool | None = None) -> Self:
         return self._extend_generic(mods, self.append_labile_mod, inplace, validate)
 
-    def extend_unknown_mods(
-        self, mods: Any, inplace: bool = True, validate: bool | None = None
-    ) -> Self:
+    def extend_unknown_mods(self, mods: Any, inplace: bool = True, validate: bool | None = None) -> Self:
         return self._extend_generic(mods, self.append_unknown_mod, inplace, validate)
 
     def extend_nterm_mods(
@@ -1270,17 +1158,13 @@ class ProFormaAnnotation:
         if validate is None:
             validate = self._validate
         if not inplace:
-            return self.copy().extend_nterm_mods(
-                mods, inplace=True, validate=validate, start_aa=start_aa
-            )
+            return self.copy().extend_nterm_mods(mods, inplace=True, validate=validate, start_aa=start_aa)
         if start_aa is not None:
             if self.start_aa != start_aa:
                 return self
         if mods is not None:
             for mod in mods:
-                self.append_nterm_mod(
-                    mod, inplace=True, validate=validate, start_aa=start_aa
-                )
+                self.append_nterm_mod(mod, inplace=True, validate=validate, start_aa=start_aa)
         return self
 
     def extend_cterm_mods(
@@ -1293,38 +1177,26 @@ class ProFormaAnnotation:
         if validate is None:
             validate = self._validate
         if not inplace:
-            return self.copy().extend_cterm_mods(
-                mods, inplace=True, validate=validate, end_aa=end_aa
-            )
+            return self.copy().extend_cterm_mods(mods, inplace=True, validate=validate, end_aa=end_aa)
         if end_aa is not None:
             if self.end_aa != end_aa:
                 return self
         if mods is not None:
             for mod in mods:
-                self.append_cterm_mod(
-                    mod, inplace=True, validate=validate, end_aa=end_aa
-                )
+                self.append_cterm_mod(mod, inplace=True, validate=validate, end_aa=end_aa)
         return self
 
-    def extend_internal_mods_at_index(
-        self, index: int, mods: Any, inplace: bool = True, validate: bool | None = None
-    ) -> Self:
+    def extend_internal_mods_at_index(self, index: int, mods: Any, inplace: bool = True, validate: bool | None = None) -> Self:
         if validate is None:
             validate = self._validate
         if not inplace:
-            return self.copy().extend_internal_mods_at_index(
-                index, mods, inplace=True, validate=validate
-            )
+            return self.copy().extend_internal_mods_at_index(index, mods, inplace=True, validate=validate)
         if mods is not None:
             for mod in mods:
-                self.append_internal_mod_at_index(
-                    index, mod, inplace=True, validate=validate
-                )
+                self.append_internal_mod_at_index(index, mod, inplace=True, validate=validate)
         return self
 
-    def extend_intervals(
-        self, intervals: Any, inplace: bool = True, validate: bool | None = None
-    ) -> Self:
+    def extend_intervals(self, intervals: Any, inplace: bool = True, validate: bool | None = None) -> Self:
         return self._extend_generic(intervals, self.append_interval, inplace, validate)
 
     def _extend_by_type(
@@ -1337,9 +1209,7 @@ class ProFormaAnnotation:
         if validate is None:
             validate = self._validate
         if not inplace:
-            return self.copy()._extend_by_type(
-                value, mod_type, inplace=True, validate=validate
-            )
+            return self.copy()._extend_by_type(value, mod_type, inplace=True, validate=validate)
 
         match mod_type:
             case ModType.ISOTOPE:
@@ -1356,9 +1226,7 @@ class ProFormaAnnotation:
                 self.extend_cterm_mods(value, inplace=True, validate=validate)
             case ModType.INTERNAL:
                 for index, mod in value.items():
-                    self.extend_internal_mods_at_index(
-                        index, mod, inplace=True, validate=validate
-                    )
+                    self.extend_internal_mods_at_index(index, mod, inplace=True, validate=validate)
             case ModType.INTERVAL:
                 self.extend_intervals(value, inplace=True, validate=validate)
             case ModType.CHARGE:
@@ -1382,16 +1250,10 @@ class ProFormaAnnotation:
         for mod_type, value in mods.items():
             if isinstance(mod_type, int):
                 if mod_type < 0 or mod_type >= len(self.sequence):
-                    raise IndexError(
-                        f"Internal modification index out of range: {mod_type}"
-                    )
-                self.extend_internal_mods_at_index(
-                    mod_type, value, inplace=True, validate=validate
-                )
+                    raise IndexError(f"Internal modification index out of range: {mod_type}")
+                self.extend_internal_mods_at_index(mod_type, value, inplace=True, validate=validate)
                 continue
-            self._extend_by_type(
-                value, ModType(mod_type), inplace=True, validate=validate
-            )
+            self._extend_by_type(value, ModType(mod_type), inplace=True, validate=validate)
 
         return self
 
@@ -1447,25 +1309,19 @@ class ProFormaAnnotation:
         """Remove a specific unknown modification by decrementing its count."""
         return self._remove_mod_generic(mod, "_unknown_mods", inplace)
 
-    def remove_nterm_mod(
-        self, mod: Any, inplace: bool = True, start_aa: str | None = None
-    ) -> Self:
+    def remove_nterm_mod(self, mod: Any, inplace: bool = True, start_aa: str | None = None) -> Self:
         """Remove a specific N-terminal modification by decrementing its count."""
         if start_aa is not None and self.start_aa != start_aa:
             return self if inplace else self.copy()
         return self._remove_mod_generic(mod, "_nterm_mods", inplace)
 
-    def remove_cterm_mod(
-        self, mod: Any, inplace: bool = True, end_aa: str | None = None
-    ) -> Self:
+    def remove_cterm_mod(self, mod: Any, inplace: bool = True, end_aa: str | None = None) -> Self:
         """Remove a specific C-terminal modification by decrementing its count."""
         if end_aa is not None and self.end_aa != end_aa:
             return self if inplace else self.copy()
         return self._remove_mod_generic(mod, "_cterm_mods", inplace)
 
-    def remove_internal_mod_at_index(
-        self, index: int, mod: Any, inplace: bool = True
-    ) -> Self:
+    def remove_internal_mod_at_index(self, index: int, mod: Any, inplace: bool = True) -> Self:
         """Remove a specific internal modification at a position by decrementing its count."""
         if not inplace:
             return self.copy().remove_internal_mod_at_index(index, mod, inplace=True)
@@ -1479,9 +1335,7 @@ class ProFormaAnnotation:
             return self
 
         # Decrement count, ensuring it doesn't go below 0
-        self._internal_mods[index][mod_str] = max(
-            0, self._internal_mods[index][mod_str] - count
-        )
+        self._internal_mods[index][mod_str] = max(0, self._internal_mods[index][mod_str] - count)
 
         # Remove if count reaches 0
         if self._internal_mods[index][mod_str] == 0:
@@ -1538,9 +1392,7 @@ class ProFormaAnnotation:
             if getattr(self, attr) != getattr(other, attr):
                 self_attribute = getattr(self, attr)
                 other_attribute = getattr(other, attr)
-                diffs.append(
-                    f"{attr} (self: {self_attribute}, other: {other_attribute})"
-                )
+                diffs.append(f"{attr} (self: {self_attribute}, other: {other_attribute})")
         if diffs:
             print(f"Differences found in attributes: {', '.join(diffs)}")
             return False
@@ -1551,9 +1403,7 @@ class ProFormaAnnotation:
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, ProFormaAnnotation):
-            raise NotImplementedError(
-                f"Cannot compare ProFormaAnnotationBase with {type(other)}"
-            )
+            raise NotImplementedError(f"Cannot compare ProFormaAnnotationBase with {type(other)}")
 
         return (
             self.sequence == other.sequence
@@ -1584,9 +1434,7 @@ class ProFormaAnnotation:
         if self.has_cterm_mods:
             seq += f", {ModType.CTERM.value}={self.cterm_mods}"
         if self.has_internal_mods:
-            internal_mod_items = ", ".join(
-                f"{pos}: {mods}" for pos, mods in sorted(self.internal_mods.items())
-            )
+            internal_mod_items = ", ".join(f"{pos}: {mods}" for pos, mods in sorted(self.internal_mods.items()))
             seq += f", {ModType.INTERNAL.value}={{{internal_mod_items}}}"
         if self.has_intervals:
             seq += f", {ModType.INTERVAL.value}={self.intervals}"
@@ -1609,12 +1457,7 @@ class ProFormaAnnotation:
                 tuple(self._unknown_mods.items()) if self._unknown_mods else None,
                 tuple(self._nterm_mods.items()) if self._nterm_mods else None,
                 tuple(self._cterm_mods.items()) if self._cterm_mods else None,
-                tuple(
-                    (pos, tuple(sorted(mods.items())))
-                    for pos, mods in sorted(self._internal_mods.items())
-                )
-                if self._internal_mods
-                else None,
+                tuple((pos, tuple(sorted(mods.items()))) for pos, mods in sorted(self._internal_mods.items())) if self._internal_mods else None,
                 tuple(self._intervals) if self._intervals else None,
                 self._charge,
             )
@@ -1626,29 +1469,13 @@ class ProFormaAnnotation:
             compound_name=self._compound_name,
             ion_name=self._ion_name,
             peptide_name=self._peptide_name,
-            isotope_mods=self._isotope_mods.copy()
-            if self._isotope_mods is not None
-            else None,
-            static_mods=self._static_mods.copy()
-            if self._static_mods is not None
-            else None,
-            labile_mods=self._labile_mods.copy()
-            if self._labile_mods is not None
-            else None,
-            unknown_mods=self._unknown_mods.copy()
-            if self._unknown_mods is not None
-            else None,
-            nterm_mods=self._nterm_mods.copy()
-            if self._nterm_mods is not None
-            else None,
-            cterm_mods=self._cterm_mods.copy()
-            if self._cterm_mods is not None
-            else None,
-            internal_mods={
-                pos: mods.copy() for pos, mods in self._internal_mods.items()
-            }
-            if self._internal_mods is not None
-            else None,
+            isotope_mods=self._isotope_mods.copy() if self._isotope_mods is not None else None,
+            static_mods=self._static_mods.copy() if self._static_mods is not None else None,
+            labile_mods=self._labile_mods.copy() if self._labile_mods is not None else None,
+            unknown_mods=self._unknown_mods.copy() if self._unknown_mods is not None else None,
+            nterm_mods=self._nterm_mods.copy() if self._nterm_mods is not None else None,
+            cterm_mods=self._cterm_mods.copy() if self._cterm_mods is not None else None,
+            internal_mods={pos: mods.copy() for pos, mods in self._internal_mods.items()} if self._internal_mods is not None else None,
             intervals=self._intervals.copy() if self._intervals is not None else None,
             charge=self._charge,
             validate=self._validate,
@@ -1659,32 +1486,14 @@ class ProFormaAnnotation:
         self._compound_name = other._compound_name
         self._ion_name = other._ion_name
         self._peptide_name = other._peptide_name
-        self._isotope_mods = (
-            other._isotope_mods.copy() if other._isotope_mods is not None else None
-        )
-        self._static_mods = (
-            other._static_mods.copy() if other._static_mods is not None else None
-        )
-        self._labile_mods = (
-            other._labile_mods.copy() if other._labile_mods is not None else None
-        )
-        self._unknown_mods = (
-            other._unknown_mods.copy() if other._unknown_mods is not None else None
-        )
-        self._nterm_mods = (
-            other._nterm_mods.copy() if other._nterm_mods is not None else None
-        )
-        self._cterm_mods = (
-            other._cterm_mods.copy() if other._cterm_mods is not None else None
-        )
-        self._internal_mods = (
-            {pos: mods.copy() for pos, mods in other._internal_mods.items()}
-            if other._internal_mods is not None
-            else None
-        )
-        self._intervals = (
-            other._intervals.copy() if other._intervals is not None else None
-        )
+        self._isotope_mods = other._isotope_mods.copy() if other._isotope_mods is not None else None
+        self._static_mods = other._static_mods.copy() if other._static_mods is not None else None
+        self._labile_mods = other._labile_mods.copy() if other._labile_mods is not None else None
+        self._unknown_mods = other._unknown_mods.copy() if other._unknown_mods is not None else None
+        self._nterm_mods = other._nterm_mods.copy() if other._nterm_mods is not None else None
+        self._cterm_mods = other._cterm_mods.copy() if other._cterm_mods is not None else None
+        self._internal_mods = {pos: mods.copy() for pos, mods in other._internal_mods.items()} if other._internal_mods is not None else None
+        self._intervals = other._intervals.copy() if other._intervals is not None else None
         self._charge = other._charge
 
     def __getitem__(self, key: int | slice | Span | tuple[int, int, int]) -> Self:
@@ -1696,9 +1505,7 @@ class ProFormaAnnotation:
                 raise ValueError("Step slicing not supported")
             return self.slice(start, stop, inplace=False)
         elif isinstance(key, int):
-            raise NotImplementedError(
-                "Single index access not supported for ProFormaAnnotation"
-            )
+            raise NotImplementedError("Single index access not supported for ProFormaAnnotation")
 
     def sort_mods(self, inplace: bool = True) -> Self:
         if not inplace:
@@ -1718,9 +1525,7 @@ class ProFormaAnnotation:
             self._cterm_mods = dict(sorted(self._cterm_mods.items()))
         if self._internal_mods is not None:
             for pos in self._internal_mods:
-                self._internal_mods[pos] = dict(
-                    sorted(self._internal_mods[pos].items())
-                )
+                self._internal_mods[pos] = dict(sorted(self._internal_mods[pos].items()))
             self._internal_mods = dict(sorted(self._internal_mods.items()))
         if self._intervals is not None:
             self._intervals.sort(key=lambda x: (x.start, x.end))
@@ -1807,9 +1612,7 @@ class ProFormaAnnotation:
 
     def has_mods(
         self,
-        mod_types: (
-            Iterable[ModTypeLiteral | ModType] | ModType | ModTypeLiteral | None
-        ) = None,
+        mod_types: (Iterable[ModTypeLiteral | ModType] | ModType | ModTypeLiteral | None) = None,
     ) -> bool:
         mod_enums = get_mods(mod_types)
         return any(self._has_mods_by_type(mod_enum) for mod_enum in mod_enums)
@@ -1832,9 +1635,7 @@ class ProFormaAnnotation:
 
     @property
     def mass_ambiguous_residues(self) -> tuple[str, ...]:
-        return tuple(
-            aa for aa in self.stripped_sequence if AA_LOOKUP.is_mass_ambiguous(aa)
-        )
+        return tuple(aa for aa in self.stripped_sequence if AA_LOOKUP.is_mass_ambiguous(aa))
 
     def _get_mods_by_type(self, mod_type: ModType) -> Any:
         match mod_type:
@@ -1861,28 +1662,20 @@ class ProFormaAnnotation:
 
     def get_mods(
         self,
-        mod_types: (
-            Iterable[ModTypeLiteral | ModType] | ModType | ModTypeLiteral | None
-        ) = None,
+        mod_types: (Iterable[ModTypeLiteral | ModType] | ModType | ModTypeLiteral | None) = None,
     ) -> dict[ModType, Any]:
         mod_enums = get_mods(mod_types)
-        return {
-            mod_enum: self._get_mods_by_type(mod_enum)
-            for mod_enum in mod_enums
-            if self._has_mods_by_type(mod_enum)
-        }
+        return {mod_enum: self._get_mods_by_type(mod_enum) for mod_enum in mod_enums if self._has_mods_by_type(mod_enum)}
 
     @classmethod
-    def parse_chimeric(
-        cls, sequence: str, validate: bool | None = None
-    ) -> Generator["ProFormaAnnotation", None, None]:
+    def parse_chimeric(cls, sequence: str, validate: bool | None = None) -> Generator["ProFormaAnnotation", None, None]:
         """Parse a ProForma string into multiple ProFormaAnnotation objects"""
         if validate is None:
             validate = False
         # Initialize the Generator
         parser_gen = ProFormaParser(sequence).parse()
 
-        for prof_parser, connection in parser_gen:
+        for prof_parser, _ in parser_gen:
             # Split Global Mods into Static (Fixed) vs Isotope (Global)
             # The parser groups all <...> tags together; we separate them by the '@' symbol.
             static_mods: dict[str, int] | None = None  # e.g., <[Oxidation]@C>
@@ -1937,14 +1730,12 @@ class ProFormaAnnotation:
         # Get first annotation segment
         try:
             prof_parser, connection = next(parser_gen)
-        except StopIteration:
-            raise ValueError(f"Invalid ProForma sequence: {sequence}")
+        except StopIteration as e:
+            raise ValueError(f"Invalid ProForma sequence: {sequence}") from e
 
         # Validate that this is a single peptide (not chimeric/crosslinked)
         if connection is not None:
-            raise ValueError(
-                f"Chimeric and crosslinked peptides not supported in single annotation: {sequence}"
-            )
+            raise ValueError(f"Chimeric and crosslinked peptides not supported in single annotation: {sequence}")
 
         # Ensure there are no subsequent segments waiting in the generator
         try:
@@ -2032,9 +1823,7 @@ class ProFormaAnnotation:
             for index in valid_indexes:
                 if index not in mapped_mods:
                     mapped_mods[index] = []
-                mapped_mods[index].append(
-                    Mod(static_mod.value.modifications, count=static_mod.count)
-                )
+                mapped_mods[index].append(Mod(static_mod.value.modifications, count=static_mod.count))
         return mapped_mods
 
     def _map_isotopes(self) -> dict[ElementInfo, ElementInfo]:
@@ -2044,52 +1833,40 @@ class ProFormaAnnotation:
             return isotope_map
 
         for isotope_mod in self._isotope_mods.keys():  # type: ignore
-            template, replaced = IsotopeReplacement.from_string(
-                isotope_mod
-            ).get_isotope_replacements()
+            template, replaced = IsotopeReplacement.from_string(isotope_mod).get_isotope_replacements()
             isotope_map[template] = replaced
 
         return isotope_map
 
-    def base_comp(
-        self, skip_labile: bool = False, monoisotopic: bool = True
-    ) -> tuple[Counter[ElementInfo], int, float]:
+    def base_comp(self, skip_labile: bool = False, monoisotopic: bool = True) -> tuple[Counter[ElementInfo], int, float]:
         total_composition: Counter[ElementInfo] = self.get_sequence_composition()
         total_charge = 0  # results from internal formula mods
         total_delta_mass = 0.0  # only from MassTags
 
         if self.has_unknown_mods:
             unknown_mods = self.unknown_mods
-            composition, delta_mass = unknown_mods.get_composition_with_delta_mass(
-                monoisotopic
-            )
+            composition, delta_mass = unknown_mods.get_composition_with_delta_mass(monoisotopic)
             total_composition += composition
             total_delta_mass += delta_mass
             total_charge += unknown_mods.get_charge()
 
         if not skip_labile and self.has_labile_mods:
             labile_mods = self.labile_mods
-            composition, delta_mass = labile_mods.get_composition_with_delta_mass(
-                monoisotopic
-            )
+            composition, delta_mass = labile_mods.get_composition_with_delta_mass(monoisotopic)
             total_composition += composition
             total_delta_mass += delta_mass
             total_charge += labile_mods.get_charge()
 
         if self.has_nterm_mods:
             nterm_mods = self.nterm_mods
-            composition, delta_mass = nterm_mods.get_composition_with_delta_mass(
-                monoisotopic
-            )
+            composition, delta_mass = nterm_mods.get_composition_with_delta_mass(monoisotopic)
             total_composition += composition
             total_delta_mass += delta_mass
             total_charge += nterm_mods.get_charge()
 
         if self.has_cterm_mods:
             cterm_mods = self.cterm_mods
-            composition, delta_mass = cterm_mods.get_composition_with_delta_mass(
-                monoisotopic
-            )
+            composition, delta_mass = cterm_mods.get_composition_with_delta_mass(monoisotopic)
             total_composition += composition
             total_delta_mass += delta_mass
             total_charge += cterm_mods.get_charge()
@@ -2101,9 +1878,7 @@ class ProFormaAnnotation:
                     try:
                         total_composition += mod.get_composition()
                     except ValueError as e:
-                        if isinstance(mod.value, ModificationTags) and isinstance(
-                            mod.value.first_tag, TagMass
-                        ):
+                        if isinstance(mod.value, ModificationTags) and isinstance(mod.value.first_tag, TagMass):
                             # MassTag does not have composition, only delta mass
                             total_delta_mass += mod.get_mass(monoisotopic)
                         else:
@@ -2113,9 +1888,7 @@ class ProFormaAnnotation:
         # Internal mods
         if self.has_internal_mods:
             for mods in self.internal_mods.values():
-                composition, delta_mass = mods.get_composition_with_delta_mass(
-                    monoisotopic
-                )
+                composition, delta_mass = mods.get_composition_with_delta_mass(monoisotopic)
                 total_composition += composition
                 total_delta_mass += delta_mass
                 total_charge += mods.get_charge()
@@ -2123,9 +1896,7 @@ class ProFormaAnnotation:
         # Intervals
         if self.has_intervals:
             for interval in self.intervals:
-                composition, delta_mass = interval.mods.get_composition_with_delta_mass(
-                    monoisotopic
-                )
+                composition, delta_mass = interval.mods.get_composition_with_delta_mass(monoisotopic)
                 total_composition += composition
                 total_delta_mass += delta_mass
                 total_charge += interval.mods.get_charge()
@@ -2156,9 +1927,7 @@ class ProFormaAnnotation:
 
         return frag.composition
 
-    def base_mass(
-        self, monoisotopic: bool = True, skip_labile: bool = False
-    ) -> tuple[float, int]:
+    def base_mass(self, monoisotopic: bool = True, skip_labile: bool = False) -> tuple[float, int]:
         """Optimized mass calculation with minimal overhead."""
         total_mass = 0.0
         total_charge = 0  # results from internal formula mods
@@ -2290,9 +2059,7 @@ class ProFormaAnnotation:
         sequence: str | None = None
         if include_sequence:
             # Dont include charge mods in sequence since it can be overridden
-            sequence = self.filter_mods(
-                ["charge"], keep=False, inplace=False
-            ).serialize()
+            sequence = self.filter_mods(["charge"], keep=False, inplace=False).serialize()
 
         # Dont include labile mods for fragment ions
         skip_labile = True
@@ -2300,14 +2067,10 @@ class ProFormaAnnotation:
             skip_labile = False
 
         if self.has_isotope_mods or calculate_composition:
-            base_comp, base_charge, delta_mass = self.base_comp(
-                skip_labile=skip_labile, monoisotopic=monoisotopic
-            )
+            base_comp, base_charge, delta_mass = self.base_comp(skip_labile=skip_labile, monoisotopic=monoisotopic)
 
             if calculate_composition and delta_mass != 0.0:
-                raise ValueError(
-                    "Cannot calculate composition with delta mass changes."
-                )
+                raise ValueError("Cannot calculate composition with delta mass changes.")
             elif calculate_composition and delta_mass == 0.0:
                 return adjust_comp(
                     base_comp=base_comp,
@@ -2323,10 +2086,7 @@ class ProFormaAnnotation:
                     internal_charge=base_charge,
                 )
             else:
-                base_mass = sum(
-                    element.get_mass(monoisotopic=monoisotopic) * count
-                    for element, count in base_comp.items()
-                )
+                base_mass = sum(element.get_mass(monoisotopic=monoisotopic) * count for element, count in base_comp.items())
                 return adjust_mass_mz(
                     base=base_mass + delta_mass,
                     charge=charge,
@@ -2339,9 +2099,7 @@ class ProFormaAnnotation:
                     internal_charge=base_charge,
                 )
 
-        base_mass, base_charge = self.base_mass(
-            monoisotopic=monoisotopic, skip_labile=skip_labile
-        )
+        base_mass, base_charge = self.base_mass(monoisotopic=monoisotopic, skip_labile=skip_labile)
 
         return adjust_mass_mz(
             base=base_mass,
@@ -2385,13 +2143,9 @@ class ProFormaAnnotation:
                 charge_info = ChargeCarrierInfo.from_input(annot_charge)
             elif isinstance(annot_charge, Mods):
                 # Extract the values from Mod objects
-                charge_info = ChargeCarrierInfo.from_input(
-                    tuple(mod.value for mod in annot_charge.mods)
-                )
+                charge_info = ChargeCarrierInfo.from_input(tuple(mod.value for mod in annot_charge.mods))
             else:
-                raise RuntimeError(
-                    f"Unsupported charge type in annotation: {type(annot_charge)}"
-                )
+                raise RuntimeError(f"Unsupported charge type in annotation: {type(annot_charge)}")
 
         iso_info = IsotopeInfo.from_input(isotopes)
 
@@ -2444,9 +2198,7 @@ class ProFormaAnnotation:
         ion_info: FragmentIonInfo = FRAGMENT_ION_LOOKUP[ion_type]
 
         # Helper to yield fragments
-        def yield_frags(
-            pos: Any, mass_val: float, seq_len: int
-        ) -> Generator[Fragment, None, None]:
+        def yield_frags(pos: Any, mass_val: float, seq_len: int) -> Generator[Fragment, None, None]:
             if min_length is not None and seq_len < min_length:
                 return
             if max_length is not None and seq_len > max_length:
@@ -2541,10 +2293,7 @@ class ProFormaAnnotation:
         max_length: int | None,
     ) -> Generator[Fragment, None, None]:
         if self.has_unknown_mods or self.has_intervals:
-            raise ValueError(
-                "Fragmentation not supported for sequences with unknown modifications or intervals: "
-                f"{str(self)}"
-            )
+            raise ValueError(f"Fragmentation not supported for sequences with unknown modifications or intervals: {str(self)}")
 
         # check for fragments wa/wb and da/db, then return both
         match ion_type:
@@ -2631,13 +2380,9 @@ class ProFormaAnnotation:
                 if neutral_deltas:
                     loss_dict.clear()
                     for nd in neutral_deltas:
-                        loss_dict[nd] = min(
-                            nd.calculate_loss_sites(sub_annot.sequence), max_deltas
-                        )
+                        loss_dict[nd] = min(nd.calculate_loss_sites(sub_annot.sequence), max_deltas)
 
-                neutral_delta_combinations: list[DeltaInfo] = get_loss_combinations(
-                    loss_dict, max_deltas
-                )
+                neutral_delta_combinations: list[DeltaInfo] = get_loss_combinations(loss_dict, max_deltas)
 
                 for charge in charges:
                     for isotope in isotopes:
@@ -2674,13 +2419,9 @@ class ProFormaAnnotation:
                 if neutral_deltas:
                     loss_dict.clear()
                     for nd in neutral_deltas:
-                        loss_dict[nd] = min(
-                            nd.calculate_loss_sites(sub_annot.sequence), max_deltas
-                        )
+                        loss_dict[nd] = min(nd.calculate_loss_sites(sub_annot.sequence), max_deltas)
 
-                neutral_delta_combinations = get_loss_combinations(
-                    loss_dict, max_deltas
-                )
+                neutral_delta_combinations = get_loss_combinations(loss_dict, max_deltas)
 
                 for charge in charges:
                     for isotope in isotopes:
@@ -2709,9 +2450,7 @@ class ProFormaAnnotation:
             if neutral_deltas:
                 loss_dict.clear()
                 for nd in neutral_deltas:
-                    loss_dict[nd] = min(
-                        nd.calculate_loss_sites(self.sequence), max_deltas
-                    )
+                    loss_dict[nd] = min(nd.calculate_loss_sites(self.sequence), max_deltas)
 
             neutral_delta_combinations = get_loss_combinations(loss_dict, max_deltas)
 
@@ -2745,13 +2484,9 @@ class ProFormaAnnotation:
                     if neutral_deltas:
                         loss_dict.clear()
                         for nd in neutral_deltas:
-                            loss_dict[nd] = min(
-                                nd.calculate_loss_sites(self.sequence), max_deltas
-                            )
+                            loss_dict[nd] = min(nd.calculate_loss_sites(self.sequence), max_deltas)
 
-                    neutral_delta_combinations = get_loss_combinations(
-                        loss_dict, max_deltas
-                    )
+                    neutral_delta_combinations = get_loss_combinations(loss_dict, max_deltas)
 
                     for charge in charges:
                         for isotope in isotopes:
@@ -2786,13 +2521,9 @@ class ProFormaAnnotation:
                         if neutral_deltas:
                             loss_dict.clear()
                             for nd in neutral_deltas:
-                                loss_dict[nd] = min(
-                                    nd.calculate_loss_sites(self.sequence), max_deltas
-                                )
+                                loss_dict[nd] = min(nd.calculate_loss_sites(self.sequence), max_deltas)
 
-                        neutral_delta_combinations = get_loss_combinations(
-                            loss_dict, max_deltas
-                        )
+                        neutral_delta_combinations = get_loss_combinations(loss_dict, max_deltas)
 
                         for charge in charges:
                             for isotope in isotopes:
@@ -2837,13 +2568,9 @@ class ProFormaAnnotation:
             else:
                 charges = (1,)
 
-        charge_infos: list[ChargeCarrierInfo] = [
-            ChargeCarrierInfo.from_input(charge) for charge in charges
-        ]
+        charge_infos: list[ChargeCarrierInfo] = [ChargeCarrierInfo.from_input(charge) for charge in charges]
 
-        isotope_infos: list[IsotopeInfo] = [
-            IsotopeInfo.from_input(isotope) for isotope in isotopes
-        ]
+        isotope_infos: list[IsotopeInfo] = [IsotopeInfo.from_input(isotope) for isotope in isotopes]
 
         neutral_deltas_infos: list[NeutralDeltaInfo] = []
         if neutral_deltas_infos is not None:
@@ -2949,9 +2676,7 @@ class ProFormaAnnotation:
         self._cterm_mods = None
         return value
 
-    def pop_internal_mods(
-        self, inplace: bool = True
-    ) -> dict[int, Mods[ModificationTags]]:
+    def pop_internal_mods(self, inplace: bool = True) -> dict[int, Mods[ModificationTags]]:
         if not self.has_internal_mods:
             return {}
 
@@ -2973,9 +2698,7 @@ class ProFormaAnnotation:
         self._intervals = None
         return value
 
-    def pop_charge(
-        self, inplace: bool = True
-    ) -> int | Mods[GlobalChargeCarrier] | None:
+    def pop_charge(self, inplace: bool = True) -> int | Mods[GlobalChargeCarrier] | None:
         if not self.has_charge:
             return None
 
@@ -2986,9 +2709,7 @@ class ProFormaAnnotation:
         self._charge = None
         return value
 
-    def pop_internal_mod_at_index(
-        self, index: int, inplace: bool = True
-    ) -> tuple[tuple[MODIFICATION_TYPE, int], ...]:
+    def pop_internal_mod_at_index(self, index: int, inplace: bool = True) -> tuple[tuple[MODIFICATION_TYPE, int], ...]:
         if self._internal_mods is None:
             return ()
 
@@ -3000,10 +2721,7 @@ class ProFormaAnnotation:
 
         # Parse the modifications at this index before removing
         mods_dict = self._internal_mods[index]
-        mods = tuple(
-            (ModificationTags.from_string(mod_str), count)
-            for mod_str, count in mods_dict.items()
-        )
+        mods = tuple((ModificationTags.from_string(mod_str), count) for mod_str, count in mods_dict.items())
 
         # Remove the mod dict at this index
         del self._internal_mods[index]
@@ -3039,9 +2757,7 @@ class ProFormaAnnotation:
 
     def pop_mods(
         self,
-        mod_types: (
-            ModTypeLiteral | Iterable[ModTypeLiteral | ModType] | ModType | None
-        ) = None,
+        mod_types: (ModTypeLiteral | Iterable[ModTypeLiteral | ModType] | ModType | None) = None,
         inplace: bool = True,
     ) -> dict[ModType, Any]:
         if inplace is False:
@@ -3057,9 +2773,7 @@ class ProFormaAnnotation:
 
     def filter_mods(
         self,
-        mods: (
-            ModTypeLiteral | ModType | Iterable[ModTypeLiteral | ModType] | None
-        ) = None,
+        mods: (ModTypeLiteral | ModType | Iterable[ModTypeLiteral | ModType] | None) = None,
         inplace: bool = True,
         keep: bool = True,
     ) -> Self:
@@ -3155,9 +2869,7 @@ class ProFormaAnnotation:
 
     def clear_mods(
         self,
-        mods: (
-            ModTypeLiteral | ModType | Iterable[ModTypeLiteral | ModType] | None
-        ) = None,
+        mods: (ModTypeLiteral | ModType | Iterable[ModTypeLiteral | ModType] | None) = None,
         inplace: bool = True,
     ) -> Self:
         if inplace is False:
@@ -3220,9 +2932,7 @@ class ProFormaAnnotation:
         keep_cterm: int = 0,
         inplace: bool = False,
     ) -> Self:
-        return cast(
-            Self, shuffle_annotation(self, seed, keep_nterm, keep_cterm, inplace)
-        )
+        return cast(Self, shuffle_annotation(self, seed, keep_nterm, keep_cterm, inplace))
 
     def reverse(
         self,
@@ -3270,9 +2980,7 @@ class ProFormaAnnotation:
         ignore_mods: bool = False,
         ignore_intervals: bool = True,
     ) -> bool:
-        return is_subsequence(
-            self, other, ignore_mods=ignore_mods, ignore_intervals=ignore_intervals
-        )
+        return is_subsequence(self, other, ignore_mods=ignore_mods, ignore_intervals=ignore_intervals)
 
     def find_indices(
         self,
@@ -3280,9 +2988,7 @@ class ProFormaAnnotation:
         ignore_mods: bool = False,
         ignore_intervals: bool = True,
     ) -> list[int]:
-        return find_indices(
-            self, other, ignore_mods=ignore_mods, ignore_intervals=ignore_intervals
-        )
+        return find_indices(self, other, ignore_mods=ignore_mods, ignore_intervals=ignore_intervals)
 
     def condense_mods_to_intervals(self, inplace: bool = True) -> Self:
         return cast(Self, condense_mods_to_intervals(self, inplace=inplace))
@@ -3342,9 +3048,7 @@ class ProFormaAnnotation:
         for item in generate_combinations(self, r):
             yield cast(Self, item)
 
-    def combinations_with_replacement(
-        self, r: int | None = None
-    ) -> Generator[Self, None, None]:
+    def combinations_with_replacement(self, r: int | None = None) -> Generator[Self, None, None]:
         for item in generate_combinations_with_replacement(self, r):
             yield cast(Self, item)
 
@@ -3400,9 +3104,7 @@ class ProFormaAnnotation:
         mod_str, count = convert_single_mod_input(mod)
 
         if count != 1:
-            raise ValueError(
-                "Fixed modifications added by residue must have a count of 1."
-            )
+            raise ValueError("Fixed modifications added by residue must have a count of 1.")
 
         # filter residues to only those in the sequence
         residues = [aa for aa in residues if aa in self.stripped_sequence]
@@ -3412,11 +3114,7 @@ class ProFormaAnnotation:
 
         rules: list[PositionRule] = []
         for aa in residues:
-            rules.append(
-                PositionRule(
-                    terminal=Terminal.ANYWHERE, amino_acid=AminoAcid.from_str(aa)
-                )
-            )
+            rules.append(PositionRule(terminal=Terminal.ANYWHERE, amino_acid=AminoAcid.from_str(aa)))
         fixed_mod = FixedModification(
             modifications=ModificationTags.from_string(mod_str),
             position_rules=tuple(rules),
@@ -3469,15 +3167,11 @@ class ProFormaAnnotation:
         return cast(Self, condense_ambiguity_to_xnotation(self, inplace=inplace))
 
     @staticmethod
-    def group_by_ambiguity(
-        annotations: Iterable["ProFormaAnnotation"], precision: int = 5
-    ) -> list[tuple["ProFormaAnnotation", ...]]:
+    def group_by_ambiguity(annotations: Iterable["ProFormaAnnotation"], precision: int = 5) -> list[tuple["ProFormaAnnotation", ...]]:
         return group_by_ambiguity(annotations, precision=precision)
 
     @staticmethod
-    def unique_fragments(
-        annotations: Iterable["ProFormaAnnotation"], precision: int = 4
-    ) -> list[int]:
+    def unique_fragments(annotations: Iterable["ProFormaAnnotation"], precision: int = 4) -> list[int]:
         return unique_fragments(annotations, precision=precision)
 
     def to_ip2(self) -> str:
@@ -3514,9 +3208,7 @@ class ProFormaAnnotation:
         return ProFormaAnnotation.parse(sequence)
 
     def to_casanovo(self) -> str:
-        raise NotImplementedError(
-            "Conversion to Casanovo format is not yet implemented."
-        )
+        raise NotImplementedError("Conversion to Casanovo format is not yet implemented.")
 
     @staticmethod
     def from_casanovo(sequence: str) -> "ProFormaAnnotation":
@@ -3577,9 +3269,7 @@ class ProFormaAnnotation:
                 ModType.CHARGE,
             )
         ):
-            raise ValueError(
-                "MS2PIP format does not support isotope, labile, unknown, interval, charge, or charge adduct modifications."
-            )
+            raise ValueError("MS2PIP format does not support isotope, labile, unknown, interval, charge, or charge adduct modifications.")
 
         if not inplace:
             # Create a copy to condense
@@ -3595,32 +3285,24 @@ class ProFormaAnnotation:
         if annot_copy._nterm_mods is not None:
             for mod_name, count in annot_copy._nterm_mods.items():
                 if count != 1:
-                    raise ValueError(
-                        "MS2PIP format does not support modification multipliers."
-                    )
+                    raise ValueError("MS2PIP format does not support modification multipliers.")
                 mod_tuples.append((0, mod_name))
 
         # Process C-terminal modifications
         if annot_copy._cterm_mods is not None:
             for mod_name, count in annot_copy._cterm_mods.items():
                 if count != 1:
-                    raise ValueError(
-                        "MS2PIP format does not support modification multipliers."
-                    )
+                    raise ValueError("MS2PIP format does not support modification multipliers.")
                 mod_tuples.append((-1, mod_name))
 
         # Process internal modifications
         if annot_copy._internal_mods is not None:
             for index, mods_dict in annot_copy._internal_mods.items():
                 if len(mods_dict) > 1:
-                    raise ValueError(
-                        "MS2PIP format does not support multiple modifications at the same site."
-                    )
+                    raise ValueError("MS2PIP format does not support multiple modifications at the same site.")
                 for mod_name, count in mods_dict.items():
                     if count != 1:
-                        raise ValueError(
-                            "MS2PIP format does not support modification multipliers."
-                        )
+                        raise ValueError("MS2PIP format does not support modification multipliers.")
                     # MS2PIP uses 1-indexed positions
                     mod_tuples.append((index + 1, mod_name))
 
@@ -3672,12 +3354,8 @@ class ProFormaAnnotation:
                 # Internal modification (1-indexed in MS2PIP, convert to 0-indexed)
                 internal_index = loc - 1
                 if internal_index < 0 or internal_index >= len(sequence):
-                    raise ValueError(
-                        f"Modification location {loc} is out of range for sequence of length {len(sequence)}"
-                    )
-                annot.append_internal_mod_at_index(
-                    internal_index, mod_name, inplace=True
-                )
+                    raise ValueError(f"Modification location {loc} is out of range for sequence of length {len(sequence)}")
+                annot.append_internal_mod_at_index(internal_index, mod_name, inplace=True)
 
         # Add static modifications
         for static_aa, mass in (static_mods or {}).items():
@@ -3699,9 +3377,7 @@ class ProFormaAnnotation:
     ) -> list[IsotopicData]:
         # check if any deltas provided are float?
 
-        composition: Counter[ElementInfo] = self.comp(
-            ion_type=ion_type, charge=charge, isotopes=isotopes, deltas=deltas
-        )
+        composition: Counter[ElementInfo] = self.comp(ion_type=ion_type, charge=charge, isotopes=isotopes, deltas=deltas)
 
         # get charge state
         if charge is None:
@@ -3733,9 +3409,7 @@ class ProFormaAnnotation:
     ) -> list[IsotopicData]:
         """Estimate isotopic distribution based on mass."""
 
-        mass = self.mass(
-            ion_type=ion_type, charge=charge, isotopes=isotopes, deltas=deltas
-        )
+        mass = self.mass(ion_type=ion_type, charge=charge, isotopes=isotopes, deltas=deltas)
 
         return estimate_isotopic_distribution(
             neutral_mass=mass,

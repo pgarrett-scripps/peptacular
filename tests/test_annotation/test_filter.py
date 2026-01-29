@@ -10,18 +10,14 @@ class TestFilterMods(unittest.TestCase):
         filtered_annotation = annotation.filter_mods(mods=["nterm"], inplace=True)
         # Should keep only nterm mods
         self.assertEqual(filtered_annotation.serialize(), "[Acetyl]-PEPTIDE")
-        self.assertEqual(
-            annotation.serialize(), "[Acetyl]-PEPTIDE"
-        )  # Original changed too
+        self.assertEqual(annotation.serialize(), "[Acetyl]-PEPTIDE")  # Original changed too
 
     def test_filter_mods_basic_inplace_false(self):
         annotation = pt.ProFormaAnnotation.parse("[Acetyl]-PEPTIDE-[Amide]")
         filtered_annotation = annotation.filter_mods(mods=["nterm"], inplace=False)
         # Should keep only nterm mods
         self.assertEqual(filtered_annotation.serialize(), "[Acetyl]-PEPTIDE")
-        self.assertEqual(
-            annotation.serialize(), "[Acetyl]-PEPTIDE-[Amide]"
-        )  # Original unchanged
+        self.assertEqual(annotation.serialize(), "[Acetyl]-PEPTIDE-[Amide]")  # Original unchanged
 
     def test_filter_mods_single_string(self):
         annotation = pt.ProFormaAnnotation.parse("[Acetyl]-PE[Phospho]PTIDE-[Amide]")
@@ -30,30 +26,22 @@ class TestFilterMods(unittest.TestCase):
 
     def test_filter_mods_single_mod_type(self):
         annotation = pt.ProFormaAnnotation.parse("[Acetyl]-PE[Phospho]PTIDE-[Amide]")
-        filtered_annotation = annotation.filter_mods(
-            mods=pt.ModType.INTERNAL, inplace=False
-        )
+        filtered_annotation = annotation.filter_mods(mods=pt.ModType.INTERNAL, inplace=False)
         self.assertEqual(filtered_annotation.serialize(), "PE[Phospho]PTIDE")
 
     def test_filter_mods_list_of_strings(self):
         annotation = pt.ProFormaAnnotation.parse("[Acetyl]-PE[Phospho]PTIDE-[Amide]")
-        filtered_annotation = annotation.filter_mods(
-            mods=["nterm", "cterm"], inplace=False
-        )
+        filtered_annotation = annotation.filter_mods(mods=["nterm", "cterm"], inplace=False)
         self.assertEqual(filtered_annotation.serialize(), "[Acetyl]-PEPTIDE-[Amide]")
 
     def test_filter_mods_list_of_mod_types(self):
         annotation = pt.ProFormaAnnotation.parse("[Acetyl]-PE[Phospho]PTIDE-[Amide]")
-        filtered_annotation = annotation.filter_mods(
-            mods=[pt.ModType.NTERM, pt.ModType.CTERM], inplace=False
-        )
+        filtered_annotation = annotation.filter_mods(mods=[pt.ModType.NTERM, pt.ModType.CTERM], inplace=False)
         self.assertEqual(filtered_annotation.serialize(), "[Acetyl]-PEPTIDE-[Amide]")
 
     def test_filter_mods_mixed_list(self):
         annotation = pt.ProFormaAnnotation.parse("[Acetyl]-PE[Phospho]PTIDE-[Amide]")
-        filtered_annotation = annotation.filter_mods(
-            mods=["nterm", pt.ModType.INTERNAL], inplace=False
-        )
+        filtered_annotation = annotation.filter_mods(mods=["nterm", pt.ModType.INTERNAL], inplace=False)
         self.assertEqual(filtered_annotation.serialize(), "[Acetyl]-PE[Phospho]PTIDE")
 
     """
@@ -100,19 +88,13 @@ class TestFilterMods(unittest.TestCase):
     """
 
     def test_filter_mods_keep_multiple_types(self):
-        annotation = pt.ProFormaAnnotation.parse(
-            "<[57]@C>{Glycan}[Acetyl]-PE[Phospho]PTIDE-[Amide]/2"
-        )
-        filtered_annotation = annotation.filter_mods(
-            mods=["nterm", "internal", "charge"], inplace=False
-        )
+        annotation = pt.ProFormaAnnotation.parse("<[57]@C>{Glycan}[Acetyl]-PE[Phospho]PTIDE-[Amide]/2")
+        filtered_annotation = annotation.filter_mods(mods=["nterm", "internal", "charge"], inplace=False)
         self.assertEqual(filtered_annotation.serialize(), "[Acetyl]-PE[Phospho]PTIDE/2")
 
     def test_filter_mods_keep_all_terminal_mods(self):
         annotation = pt.ProFormaAnnotation.parse("[Acetyl]-PE[Phospho]PTIDE-[Amide]")
-        filtered_annotation = annotation.filter_mods(
-            mods=["nterm", "cterm"], inplace=False
-        )
+        filtered_annotation = annotation.filter_mods(mods=["nterm", "cterm"], inplace=False)
         self.assertEqual(filtered_annotation.serialize(), "[Acetyl]-PEPTIDE-[Amide]")
 
     """
@@ -138,9 +120,7 @@ class TestFilterMods(unittest.TestCase):
 
     def test_filter_mods_all_mod_types(self):
         # Test keeping all modification types (should not change anything)
-        annotation = pt.ProFormaAnnotation.parse(
-            "<57@C>{Glycan}[Unknown]?[Acetyl]-PE[Phospho]PTIDE-[Amide]/[Na:z+1]"
-        )
+        annotation = pt.ProFormaAnnotation.parse("<57@C>{Glycan}[Unknown]?[Acetyl]-PE[Phospho]PTIDE-[Amide]/[Na:z+1]")
         all_mod_types = [
             "labile",
             "static",
@@ -154,9 +134,7 @@ class TestFilterMods(unittest.TestCase):
         self.assertEqual(filtered_annotation.serialize(), annotation.serialize())
 
     def test_filter_mods_complex_annotation(self):
-        annotation = pt.ProFormaAnnotation.parse(
-            "<[57]@C>{Glycan}[Acetyl]-P(EP)[Phospho]TI[Methyl]DE-[Amide]/2"
-        )
+        annotation = pt.ProFormaAnnotation.parse("<[57]@C>{Glycan}[Acetyl]-P(EP)[Phospho]TI[Methyl]DE-[Amide]/2")
         # Keep only internal modifications
         filtered_annotation = annotation.filter_mods(mods=["internal"], inplace=False)
         self.assertEqual(filtered_annotation.serialize(), "PEPTI[Methyl]DE")

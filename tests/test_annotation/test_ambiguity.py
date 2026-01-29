@@ -37,9 +37,7 @@ class TestCondenseAmbiguityToXNotation(unittest.TestCase):
 
     def test_preserves_non_interval_modifications(self):
         """Test that non-interval modifications are preserved"""
-        annotation = pt.ProFormaAnnotation.parse(
-            "{Oxidation}[Acetyl]-PEP(?TIDE)[Phospho]/2"
-        )
+        annotation = pt.ProFormaAnnotation.parse("{Oxidation}[Acetyl]-PEP(?TIDE)[Phospho]/2")
         condensed = annotation.condense_ambiguity_to_xnotation()
 
         self.assertEqual(condensed.sequence, "PEPX")  # PEPX

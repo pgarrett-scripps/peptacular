@@ -27,7 +27,7 @@ def get_mod_index_from_regex(peptide: str, mod: str) -> set[int]:
     if match:
         sites.add(match.start())
         if match.end() - match.start() != 0:
-            warnings.warn("Using start of regex", UserWarning)
+            warnings.warn("Using start of regex", UserWarning, stacklevel=2)
     return sites
 
 
@@ -37,9 +37,7 @@ def get_mod_index(peptide: str, mod: str, is_regex: bool) -> set[int]:
     return get_mod_index_from_aa(peptide, mod)
 
 
-def get_sites(
-    peptide: str, mods: Mapping[str, Iterable[Any]], is_regex: bool
-) -> dict[int, list[Any]]:
+def get_sites(peptide: str, mods: Mapping[str, Iterable[Any]], is_regex: bool) -> dict[int, list[Any]]:
     sites: dict[int, list[Any]] = {}
     for mod_pattern, mod_values in mods.items():
         mod_sites = get_mod_index(peptide, mod_pattern, is_regex)
@@ -60,6 +58,7 @@ def ensure_single_static_mod(mods: dict[int, list[Any]]) -> None:
             warnings.warn(
                 f"Multiple static modifications applied to site {site}: {mod}",
                 UserWarning,
+                stacklevel=2,
             )
 
 
@@ -83,9 +82,7 @@ def apply_mods(
     # get sites
     nterm_sites = get_sites(annotation.sequence, nterm, is_regex) if nterm else {}
     cterm_sites = get_sites(annotation.sequence, cterm, is_regex) if cterm else {}
-    internal_sites = (
-        get_sites(annotation.sequence, internal, is_regex) if internal else {}
-    )
+    internal_sites = get_sites(annotation.sequence, internal, is_regex) if internal else {}
 
     # warn if more than 1 static mod per site
     # ensure_single_static_mod(nterm_sites)
@@ -159,21 +156,9 @@ def build_mods(
     """
 
     # Get all modification sites
-    nterm_variable_sites = (
-        get_sites(annotation.stripped_sequence, nterm_variable, use_regex)
-        if nterm_variable
-        else {}
-    )
-    cterm_variable_sites = (
-        get_sites(annotation.stripped_sequence, cterm_variable, use_regex)
-        if cterm_variable
-        else {}
-    )
-    internal_variable_sites = (
-        get_sites(annotation.stripped_sequence, internal_variable, use_regex)
-        if internal_variable
-        else {}
-    )
+    nterm_variable_sites = get_sites(annotation.stripped_sequence, nterm_variable, use_regex) if nterm_variable else {}
+    cterm_variable_sites = get_sites(annotation.stripped_sequence, cterm_variable, use_regex) if cterm_variable else {}
+    internal_variable_sites = get_sites(annotation.stripped_sequence, internal_variable, use_regex) if internal_variable else {}
 
     # Get terminal modifications
     nterm_variable_mods: list[Any] = nterm_variable_sites.get(0, [])
@@ -197,9 +182,7 @@ def build_mods(
 
     # Add labile variable mods
     if labile_variable:
-        labile_variable_sites = get_sites(
-            annotation.sequence, labile_variable, use_regex
-        )
+        labile_variable_sites = get_sites(annotation.sequence, labile_variable, use_regex)
         for site, mods in labile_variable_sites.items():
             for mod in mods:
                 variable_site_mod_pairs.append(("labile", site, mod))
@@ -222,7 +205,7 @@ def build_mods(
 
     if labile_static:
         labile_static_sites = get_sites(annotation.sequence, labile_static, use_regex)
-        for site, mods in labile_static_sites.items():
+        for _, mods in labile_static_sites.items():
             for mod in mods:
                 static_modified_annotation.append_labile_mod(mod)
 
@@ -233,14 +216,12 @@ def build_mods(
 
     # Generate all combinations of variable modifications up to max_variable_mods
     for num_var_mods in range(max_variable_mods + 1):
-        for var_mod_combination in itertools.combinations(
-            variable_site_mod_pairs, num_var_mods
-        ):
+        for var_mod_combination in itertools.combinations(variable_site_mod_pairs, num_var_mods):
             # Check for site conflicts
             site_conflicts = {}
             has_conflict = False
 
-            for mod_type, site, mod in var_mod_combination:
+            for mod_type, site, _ in var_mod_combination:
                 key = (mod_type, site)
                 if key in site_conflicts:
                     has_conflict = True
@@ -254,12 +235,7 @@ def build_mods(
             if unique_peptidoforms:
                 # Create a hashable signature of the modification combination
                 # Sort by (mod_type, mod_value) to make position-independent
-                mod_signature = tuple(
-                    sorted(
-                        (mod_type, _get_mod_value(mod))
-                        for mod_type, _, mod in var_mod_combination
-                    )
-                )
+                mod_signature = tuple(sorted((mod_type, _get_mod_value(mod)) for mod_type, _, mod in var_mod_combination))
 
                 if seen_mod_combinations is None:
                     raise RuntimeError("seen_mod_combinations should be initialized")

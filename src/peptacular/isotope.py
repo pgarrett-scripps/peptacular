@@ -15,14 +15,8 @@ AVERAGINE_RATIOS: Final[dict[str, float]] = {
     "S": 0.0417,
 }
 
-ISOTOPIC_AVERAGINE_MASS: float = sum(
-    v * ELEMENT_LOOKUP[k].get_mass(monoisotopic=True)
-    for k, v in AVERAGINE_RATIOS.items()
-)
-AVERAGE_AVERAGINE_MASS: float = sum(
-    v * ELEMENT_LOOKUP[k].get_mass(monoisotopic=False)
-    for k, v in AVERAGINE_RATIOS.items()
-)
+ISOTOPIC_AVERAGINE_MASS: float = sum(v * ELEMENT_LOOKUP[k].get_mass(monoisotopic=True) for k, v in AVERAGINE_RATIOS.items())
+AVERAGE_AVERAGINE_MASS: float = sum(v * ELEMENT_LOOKUP[k].get_mass(monoisotopic=False) for k, v in AVERAGINE_RATIOS.items())
 
 
 def _chem_mass(
@@ -54,10 +48,7 @@ def estimate_averagine_comp(neutral_mass: float) -> dict[str | ElementInfo, floa
 
     """
 
-    composition = {
-        ELEMENT_LOOKUP[atom]: ratio * neutral_mass / ISOTOPIC_AVERAGINE_MASS
-        for atom, ratio in AVERAGINE_RATIOS.items()
-    }
+    composition = {ELEMENT_LOOKUP[atom]: ratio * neutral_mass / ISOTOPIC_AVERAGINE_MASS for atom, ratio in AVERAGINE_RATIOS.items()}
 
     return composition
 
@@ -197,9 +188,7 @@ def isotopic_distribution(
         post_mass = _chem_mass(composition)
         delta_mass = prior_mass - post_mass
 
-    total_distribution = {
-        0.0: (1.0, 0)
-    }  # Start with a base distribution (mass/offset: (abundance, neutron_count))
+    total_distribution = {0.0: (1.0, 0)}  # Start with a base distribution (mass/offset: (abundance, neutron_count))
     for element, count in composition.items():
         elemental_distribution = _calculate_elemental_distribution(
             element,
@@ -229,19 +218,13 @@ def isotopic_distribution(
 
     if delta_mass != 0.0 and not use_neutron_count:
         normalized_distribution = [
-            (mass + delta_mass + particle_mass_offset, abundance, neutron_count)
-            for mass, abundance, neutron_count in normalized_distribution
+            (mass + delta_mass + particle_mass_offset, abundance, neutron_count) for mass, abundance, neutron_count in normalized_distribution
         ]
 
-    return [
-        IsotopicData(mass=mass, neutron_count=neutron_count, abundance=abundance)
-        for mass, abundance, neutron_count in normalized_distribution
-    ]
+    return [IsotopicData(mass=mass, neutron_count=neutron_count, abundance=abundance) for mass, abundance, neutron_count in normalized_distribution]
 
 
-def merge_isotopic_distributions(
-    *distributions: list[IsotopicData], merge_precision: int | None = None
-) -> list[IsotopicData]:
+def merge_isotopic_distributions(*distributions: list[IsotopicData], merge_precision: int | None = None) -> list[IsotopicData]:
     """
     Merge multiple isotopic distributions by summing abundances at each mass.
 
@@ -280,9 +263,7 @@ def merge_isotopic_distributions(
 
     return [
         IsotopicData(mass=mass, neutron_count=neutron_count, abundance=abundance)
-        for mass, (abundance, neutron_count) in sorted(
-            merged_distribution.items(), key=lambda x: x[0]
-        )
+        for mass, (abundance, neutron_count) in sorted(merged_distribution.items(), key=lambda x: x[0])
     ]
 
 
@@ -450,9 +431,7 @@ def _calculate_elemental_distribution_slow(
             # When use_neutron_count=False, mass_or_offset is mass, and we track neutron by index
             neutron_count = int(mass_or_offset) if use_neutron_count else i
             isotope_distribution[mass_or_offset] = (abundance, neutron_count)
-        distribution = _convolve_distributions(
-            distribution, isotope_distribution, None, min_abundance_threshold, None
-        )
+        distribution = _convolve_distributions(distribution, isotope_distribution, None, min_abundance_threshold, None)
     return distribution
 
 
@@ -495,12 +474,8 @@ def _calculate_elemental_distribution(
 
     while count > 0:
         if count % 2 == 1:
-            result = _convolve_distributions(
-                result, base, max_isotopes, min_abundance_threshold, None
-            )
-        base = _convolve_distributions(
-            base, base, max_isotopes, min_abundance_threshold, None
-        )
+            result = _convolve_distributions(result, base, max_isotopes, min_abundance_threshold, None)
+        base = _convolve_distributions(base, base, max_isotopes, min_abundance_threshold, None)
         count //= 2
 
     return result

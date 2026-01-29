@@ -131,9 +131,7 @@ def serialize_charged_formula(
                     return (2, element_str, 0)
 
         sorted_elements = sorted(cf.formula, key=hill_sort_key)
-        formula_str = space.join(
-            serialize_formula_element(fe) for fe in sorted_elements
-        )
+        formula_str = space.join(serialize_formula_element(fe) for fe in sorted_elements)
     else:
         formula_str = space.join(serialize_formula_element(fe) for fe in cf.formula)
 
@@ -141,9 +139,7 @@ def serialize_charged_formula(
 
     if cf.charge is not None:
         charge_str = f":z{cf.charge:+}"
-        return sys.intern(
-            f"{prefix}{formula_str}{charge_str}{cf.serialize_position_score()}"
-        )
+        return sys.intern(f"{prefix}{formula_str}{charge_str}{cf.serialize_position_score()}")
     else:
         return sys.intern(f"{prefix}{formula_str}{cf.serialize_position_score()}")
 
@@ -181,9 +177,7 @@ def serialize_tag_accession(ta: "TagAccession") -> str:
     Returns:
         String representation like 'UNIMOD:35'
     """
-    return sys.intern(
-        f"{CV_TO_ACCESSION_PREFIX[ta.cv]}{ta.accession}{ta.serialize_position_score()}"
-    )
+    return sys.intern(f"{CV_TO_ACCESSION_PREFIX[ta.cv]}{ta.accession}{ta.serialize_position_score()}")
 
 
 @lru_cache(maxsize=512)
@@ -199,9 +193,7 @@ def serialize_tag_mass(tm: "TagMass") -> str:
     """
     mass_str = f"{tm.mass:+}"
     if tm.cv is not None:
-        return sys.intern(
-            f"{CV_TO_MASS_PREFIX[tm.cv]}{mass_str}{tm.serialize_position_score()}"
-        )
+        return sys.intern(f"{CV_TO_MASS_PREFIX[tm.cv]}{mass_str}{tm.serialize_position_score()}")
     else:
         return sys.intern(f"{mass_str}{tm.serialize_position_score()}")
 
@@ -218,9 +210,7 @@ def serialize_tag_name(tn: "TagName") -> str:
         String representation like 'Oxidation' or 'U:Oxidation'
     """
     if tn.cv is not None:
-        return sys.intern(
-            f"{CV_TO_NAME_PREFIX[tn.cv]}{tn.name}{tn.serialize_position_score()}"
-        )
+        return sys.intern(f"{CV_TO_NAME_PREFIX[tn.cv]}{tn.name}{tn.serialize_position_score()}")
     else:
         return sys.intern(f"{tn.name}{tn.serialize_position_score()}")
 
@@ -323,9 +313,7 @@ def serialize_global_charge_carrier(gcc: "GlobalChargeCarrier") -> str:
     Returns:
         String representation like 'Na:z+1' or 'H:z+1^2'
     """
-    formula_str = serialize_charged_formula(
-        gcc.charged_formula, include_formula_prefix=False
-    )
+    formula_str = serialize_charged_formula(gcc.charged_formula, include_formula_prefix=False)
 
     if gcc.occurance == 1.0:
         return sys.intern(formula_str)
@@ -410,9 +398,7 @@ def serialize_modification_cross_linker(mod: "ModificationCrossLinker") -> str:
 
         # Add label if present
         if mod.label is not None:
-            result = tags_str + (
-                f"#XL{mod.label}" if mod.label != "BRANCH" else "#BRANCH"
-            )
+            result = tags_str + (f"#XL{mod.label}" if mod.label != "BRANCH" else "#BRANCH")
         else:
             result = tags_str
 
@@ -460,14 +446,7 @@ def serialize_modification_tag(tag: "MODIFICATION_TAG_TYPE") -> str:
     )
 
     match tag:
-        case (
-            TagAccession()
-            | TagMass()
-            | TagName()
-            | TagInfo()
-            | TagCustom()
-            | ChargedFormula()
-        ):
+        case TagAccession() | TagMass() | TagName() | TagInfo() | TagCustom() | ChargedFormula():
             return str(tag)
         case GlycanTag():
             return serialize_glycan_tag(tag)
@@ -494,11 +473,7 @@ def serialize_modification(mod: "MODIFICATION_TYPE") -> str:
     )
 
     match mod:
-        case (
-            ModificationAmbiguousPrimary()
-            | ModificationCrossLinker()
-            | ModificationAmbiguousSecondary()
-        ):
+        case ModificationAmbiguousPrimary() | ModificationCrossLinker() | ModificationAmbiguousSecondary():
             return sys.intern(str(mod))
         case ModificationTags():
             return serialize_modification_tags(mod)
@@ -521,9 +496,7 @@ def serialize_sequence_element(se: "SequenceElement") -> str:
     result = se.amino_acid.value
 
     if se.modifications:
-        result += "".join(
-            f"[{serialize_modification(mod)}]" for mod in se.modifications
-        )
+        result += "".join(f"[{serialize_modification(mod)}]" for mod in se.modifications)
     return sys.intern(result)
 
 

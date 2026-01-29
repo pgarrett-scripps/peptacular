@@ -75,11 +75,7 @@ def build_non_enzymatic_spans(
     max_len = min(max_len, max_span)
 
     start, end, _ = span
-    return (
-        Span(i, j, 0)
-        for i in range(start, end)
-        for j in range(i + min_len, min(end + 1, i + max_len + 1))
-    )
+    return (Span(i, j, 0) for i in range(start, end) for j in range(i + min_len, min(end + 1, i + max_len + 1)))
 
 
 def build_left_semi_spans(
@@ -135,11 +131,7 @@ def build_left_semi_spans(
 
     start, end, value = span
     new_end = min(start + max_len, end - 1)
-    return (
-        Span(start, i, value)
-        for i in range(new_end, start - 1, -1)
-        if i - start >= min_len
-    )
+    return (Span(start, i, value) for i in range(new_end, start - 1, -1) if i - start >= min_len)
 
 
 def build_right_semi_spans(
@@ -195,9 +187,7 @@ def build_right_semi_spans(
 
     start, end, value = span
     new_start = max(start + 1, end - max_len)
-    return (
-        Span(i, end, value) for i in range(new_start, end + 1) if end - i >= min_len
-    )
+    return (Span(i, end, value) for i in range(new_start, end + 1) if end - i >= min_len)
 
 
 def build_enzymatic_spans(
@@ -290,9 +280,7 @@ def _grouped_left_semi_span_builder(
         min_len = 1
 
     # Convert tuples to Span objects if needed
-    converted_spans: list[Span] = [
-        s if isinstance(s, Span) else Span(*s) for s in spans
-    ]
+    converted_spans: list[Span] = [s if isinstance(s, Span) else Span(*s) for s in spans]
     converted_spans = sorted(converted_spans, key=lambda x: (x[0], -x[2]))
 
     for _, group in groupby(converted_spans, key=lambda x: x[0]):
@@ -350,9 +338,7 @@ def _grouped_right_semi_span_builder(
         min_len = 1
 
     # Convert tuples to Span objects if needed
-    converted_spans: list[Span] = [
-        s if isinstance(s, Span) else Span(*s) for s in spans
-    ]
+    converted_spans: list[Span] = [s if isinstance(s, Span) else Span(*s) for s in spans]
     converted_spans = sorted(converted_spans, key=lambda x: (x[1], -x[2]))
     for _, group in groupby(converted_spans, key=lambda x: x[1]):
         group = list(group)
@@ -408,9 +394,7 @@ def build_semi_spans(
     """
 
     # Convert tuples to Span objects if needed
-    converted_spans: list[Span] = [
-        s if isinstance(s, Span) else Span(*s) for s in spans
-    ]
+    converted_spans: list[Span] = [s if isinstance(s, Span) else Span(*s) for s in spans]
 
     yield from _grouped_left_semi_span_builder(converted_spans, min_len, max_len)
     yield from _grouped_right_semi_span_builder(converted_spans, min_len, max_len)

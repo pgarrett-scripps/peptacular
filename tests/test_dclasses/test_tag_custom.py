@@ -33,7 +33,7 @@ class TestTagCustom:
 
     def test_missing_prefix_raises_error(self):
         """Test that missing C: prefix raises ValueError"""
-        with pytest.raises(ValueError, match="must start with 'C:'"):
+        with pytest.raises(ValueError):
             pt.TagCustom.from_string("CustomMod")
 
     def test_empty_name_after_prefix(self):

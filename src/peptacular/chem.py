@@ -12,13 +12,9 @@ from .sequence.parallel import (
 )
 
 
-def _parse_formula_single(
-    formula: str | Mapping[ElementInfo | str, int], sep: str = ""
-) -> Counter[ElementInfo]:
+def _parse_formula_single(formula: str | Mapping[ElementInfo | str, int], sep: str = "") -> Counter[ElementInfo]:
     if isinstance(formula, str):
-        return ChargedFormula.from_string(
-            formula, allow_zero=False, require_formula_prefix=False, sep=sep
-        ).get_composition()
+        return ChargedFormula.from_string(formula, allow_zero=False, require_formula_prefix=False, sep=sep).get_composition()
 
     composition: Counter[ElementInfo] = Counter[ElementInfo]()
     for key, value in formula.items():
@@ -53,9 +49,7 @@ def parse_formula(
 
 
 def parse_formula(
-    formula: str
-    | Mapping[ElementInfo | str, int]
-    | Sequence[str | Mapping[ElementInfo | str, int]],
+    formula: str | Mapping[ElementInfo | str, int] | Sequence[str | Mapping[ElementInfo | str, int]],
     sep: str = "",
     n_workers: int | None = None,
     chunksize: int | None = None,
@@ -104,9 +98,7 @@ def chem_comp(
 
 
 def chem_comp(
-    formula: str
-    | Mapping[ElementInfo | str, int]
-    | Sequence[str | Mapping[ElementInfo | str, int]],
+    formula: str | Mapping[ElementInfo | str, int] | Sequence[str | Mapping[ElementInfo | str, int]],
     n_workers: int | None = None,
     chunksize: int | None = None,
     method: parallelMethod | parallelMethodLiteral | None = None,
@@ -160,9 +152,7 @@ def chem_mass(
 
 
 def chem_mass(
-    formula: str
-    | Mapping[ElementInfo | str, int]
-    | Sequence[str | Mapping[ElementInfo | str, int]],
+    formula: str | Mapping[ElementInfo | str, int] | Sequence[str | Mapping[ElementInfo | str, int]],
     monoisotopic: bool = True,
     n_workers: int | None = None,
     chunksize: int | None = None,
@@ -193,9 +183,7 @@ def _chem_formula_single(
     """Generate a chemical formula string from an elemental composition."""
     if isinstance(comp, str):
         comp: Counter[ElementInfo] = _parse_formula_single(comp, sep=sep)
-    return ChargedFormula.from_composition(comp, charge=None).serialize(
-        hill_order=hill_order, sep=sep, include_formula_prefix=include_formula_prefix
-    )
+    return ChargedFormula.from_composition(comp, charge=None).serialize(hill_order=hill_order, sep=sep, include_formula_prefix=include_formula_prefix)
 
 
 @overload
@@ -225,9 +213,7 @@ def chem_formula(
 
 
 def chem_formula(
-    comp: str
-    | Mapping[ElementInfo | str, int]
-    | Sequence[Mapping[ElementInfo | str, int]],
+    comp: str | Mapping[ElementInfo | str, int] | Sequence[Mapping[ElementInfo | str, int]],
     hill_order: bool = True,
     sep: str = "",
     include_formula_prefix: bool = False,

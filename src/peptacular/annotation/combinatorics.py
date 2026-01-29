@@ -11,9 +11,7 @@ if TYPE_CHECKING:
     from .mod import Mods
 
 
-def generate_permutations(
-    annotation: ProFormaAnnotation, size: int | None = None
-) -> Generator[ProFormaAnnotation]:
+def generate_permutations(annotation: ProFormaAnnotation, size: int | None = None) -> Generator[ProFormaAnnotation]:
     """
     Generate all permutations of the annotation sequence.
 
@@ -47,9 +45,7 @@ def generate_permutations(
         yield result
 
 
-def generate_product(
-    annotation: ProFormaAnnotation, repeat: int | None = None
-) -> Generator[ProFormaAnnotation]:
+def generate_product(annotation: ProFormaAnnotation, repeat: int | None = None) -> Generator[ProFormaAnnotation]:
     """
     Generate the Cartesian product of the annotation sequence with itself.
 
@@ -80,9 +76,7 @@ def generate_product(
         yield result
 
 
-def generate_combinations(
-    annotation: ProFormaAnnotation, r: int | None = None
-) -> Generator[ProFormaAnnotation]:
+def generate_combinations(annotation: ProFormaAnnotation, r: int | None = None) -> Generator[ProFormaAnnotation]:
     """
     Generate all combinations of the annotation sequence.
 
@@ -112,9 +106,7 @@ def generate_combinations(
         yield result
 
 
-def generate_combinations_with_replacement(
-    annotation: ProFormaAnnotation, r: int | None = None
-) -> Generator[ProFormaAnnotation]:
+def generate_combinations_with_replacement(annotation: ProFormaAnnotation, r: int | None = None) -> Generator[ProFormaAnnotation]:
     """
     Generate all combinations of the annotation sequence with replacement.
 
@@ -177,9 +169,7 @@ def _extract_non_internal_mods(
     return d
 
 
-def _apply_extracted_mods(
-    annotation: ProFormaAnnotation, mods_dict: dict[ModType, Mods[Any] | int | None]
-) -> None:
+def _apply_extracted_mods(annotation: ProFormaAnnotation, mods_dict: dict[ModType, Mods[Any] | int | None]) -> None:
     """Apply extracted modifications back to annotation"""
     for mod_type, mod_value in mods_dict.items():
         match mod_type:

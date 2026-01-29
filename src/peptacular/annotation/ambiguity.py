@@ -13,9 +13,7 @@ if TYPE_CHECKING:
     from .annotation import ProFormaAnnotation
 
 
-def condense_ambiguity_to_xnotation(
-    annotation: ProFormaAnnotation, inplace: bool = False
-) -> ProFormaAnnotation:
+def condense_ambiguity_to_xnotation(annotation: ProFormaAnnotation, inplace: bool = False) -> ProFormaAnnotation:
     """
     Condense ambiguity intervals in the annotation to X[+Mod]
     """
@@ -26,9 +24,7 @@ def condense_ambiguity_to_xnotation(
     for elem in elems:
         if elem.has_intervals:
             # drop unknown and labile and charge / adducts
-            elem_annot = elem.filter_mods(
-                [ModType.INTERNAL, ModType.STATIC, ModType.ISOTOPE, ModType.INTERVAL]
-            )
+            elem_annot = elem.filter_mods([ModType.INTERNAL, ModType.STATIC, ModType.ISOTOPE, ModType.INTERVAL])
             mass = elem_annot.mass(ion_type=IonType.NEUTRAL, charge=1)
 
             elem.sequence = "X"
@@ -85,14 +81,9 @@ def annotate_ambiguity(
 
     forward_intervals = _construct_ambiguity_intervals(forward_coverage, reverse=False)
     reverse_intervals = _construct_ambiguity_intervals(reverse_coverage, reverse=True)
-    ambiguity_intervals = _combine_ambiguity_intervals(
-        forward_intervals, reverse_intervals
-    )
+    ambiguity_intervals = _combine_ambiguity_intervals(forward_intervals, reverse_intervals)
 
-    intervals = [
-        Interval(start, end + 1, True, None, validate=annotation._validate)
-        for start, end in ambiguity_intervals
-    ]
+    intervals = [Interval(start, end + 1, True, None, validate=annotation._validate) for start, end in ambiguity_intervals]
 
     annotation.extend_intervals(intervals)
 
@@ -109,9 +100,7 @@ def annotate_ambiguity(
     return annotation
 
 
-def _construct_ambiguity_intervals(
-    counts: list[int], reverse: bool
-) -> list[tuple[int, int]]:
+def _construct_ambiguity_intervals(counts: list[int], reverse: bool) -> list[tuple[int, int]]:
     """
     Construct intervals for sequences of zeros in the counts list. When reverse is false, start from the left hand side
     and move to the right. When reverse is true, start from the right hand side and move to the left. Intervals start
@@ -139,13 +128,8 @@ def _construct_ambiguity_intervals(
     """
 
     if reverse:
-        ambiguity_intervals = _construct_ambiguity_intervals(
-            counts[::-1], reverse=False
-        )
-        ambiguity_intervals = [
-            (len(counts) - 1 - end, len(counts) - 1 - start)
-            for start, end in ambiguity_intervals
-        ]
+        ambiguity_intervals = _construct_ambiguity_intervals(counts[::-1], reverse=False)
+        ambiguity_intervals = [(len(counts) - 1 - end, len(counts) - 1 - start) for start, end in ambiguity_intervals]
         # sort the intervals
         ambiguity_intervals.sort(key=lambda x: x[0])
         return ambiguity_intervals
@@ -261,9 +245,7 @@ def _combine_ambiguity_intervals(
     return result
 
 
-def _get_mass_shift_interval(
-    forward_coverage: list[int], reverse_coverage: list[int]
-) -> tuple[int, int] | None:
+def _get_mass_shift_interval(forward_coverage: list[int], reverse_coverage: list[int]) -> tuple[int, int] | None:
     """
         Determine the interval where a mass shift should be placed based on fragment ion coverage.
 
@@ -328,15 +310,10 @@ def _get_mass_shift_interval(
     return (highest_forward_fragment + 1, highest_reverse_fragment - 1)
 
 
-def _validate_coverage_lengths(
-    forward_coverage: list[int], reverse_coverage: list[int], seq_len: int
-) -> None:
+def _validate_coverage_lengths(forward_coverage: list[int], reverse_coverage: list[int], seq_len: int) -> None:
     """Validate that coverage lengths match sequence length"""
     if len(forward_coverage) != len(reverse_coverage) != seq_len:
-        raise ValueError(
-            f"Coverage length does not match sequence length: "
-            f"{len(forward_coverage)} != {len(reverse_coverage)} != {seq_len}"
-        )
+        raise ValueError(f"Coverage length does not match sequence length: {len(forward_coverage)} != {len(reverse_coverage)} != {seq_len}")
 
 
 def _apply_mass_shift(
@@ -358,9 +335,7 @@ def _apply_mass_shift(
         # Add interval modification
 
         # check if interval already exists
-        found_int = annotation.get_interval(
-            mass_shift_interval[0], mass_shift_interval[1] + 1
-        )
+        found_int = annotation.get_interval(mass_shift_interval[0], mass_shift_interval[1] + 1)
 
         if found_int is not None:
             # add mod to existing interval
@@ -377,9 +352,7 @@ def _apply_mass_shift(
         annotation.append_interval(mod_interval)
 
 
-def group_by_ambiguity(
-    annotations: Iterable[ProFormaAnnotation], precision: int = 4
-) -> list[tuple[ProFormaAnnotation, ...]]:
+def group_by_ambiguity(annotations: Iterable[ProFormaAnnotation], precision: int = 4) -> list[tuple[ProFormaAnnotation, ...]]:
     annotation_masses: list[tuple[ProFormaAnnotation, set[int]]] = []
 
     if precision < 0 or precision > 10:
@@ -389,10 +362,7 @@ def group_by_ambiguity(
 
     for annotation in annotations:
         elements = annotation.split()
-        masses = [
-            int(round(element.mass(ion_type=IonType.NEUTRAL), precision)) * mult
-            for element in elements
-        ]
+        masses = [int(round(element.mass(ion_type=IonType.NEUTRAL), precision)) * mult for element in elements]
         forward_masses = [mass for mass in itertools.accumulate(masses)]
         reverse_masses = [mass for mass in itertools.accumulate(reversed(masses))]
         unique_masses = set(forward_masses) | set(reverse_masses)
@@ -423,12 +393,8 @@ def group_by_ambiguity(
                 added_indexes.add(i)
 
                 # Check all remaining annotations for subsets
-                for j, (other_annotation, other_unique_masses) in enumerate(
-                    annotation_masses[i + 1 :], start=i + 1
-                ):
-                    if j not in added_indexes and other_unique_masses.issubset(
-                        unique_masses
-                    ):
+                for j, (other_annotation, other_unique_masses) in enumerate(annotation_masses[i + 1 :], start=i + 1):
+                    if j not in added_indexes and other_unique_masses.issubset(unique_masses):
                         current_group.append(other_annotation)
                         added_indexes.add(j)
 
@@ -437,9 +403,7 @@ def group_by_ambiguity(
     return [tuple(group) for group in groups]
 
 
-def unique_fragments(
-    annotations: Iterable[ProFormaAnnotation], precision: int = 4
-) -> list[int]:
+def unique_fragments(annotations: Iterable[ProFormaAnnotation], precision: int = 4) -> list[int]:
     annotation_masses: list[tuple[ProFormaAnnotation, set[int]]] = []
 
     if precision < 0 or precision > 10:
@@ -449,10 +413,7 @@ def unique_fragments(
 
     for annotation in annotations:
         elements = annotation.split()
-        masses = [
-            int(round(element.mass(ion_type=IonType.NEUTRAL), precision)) * mult
-            for element in elements
-        ]
+        masses = [int(round(element.mass(ion_type=IonType.NEUTRAL), precision)) * mult for element in elements]
         forward_masses = [mass for mass in itertools.accumulate(masses)]
         reverse_masses = [mass for mass in itertools.accumulate(reversed(masses))]
         unique_masses = set(forward_masses) | set(reverse_masses)

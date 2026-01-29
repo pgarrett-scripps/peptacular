@@ -122,9 +122,7 @@ class ProFormaParser:
                     if parser_state.global_mods is None:
                         parser_state.global_mods = {}
                     for mod, count in self.global_mods.items():
-                        parser_state.global_mods[mod] = (
-                            parser_state.global_mods.get(mod, 0) + count
-                        )
+                        parser_state.global_mods[mod] = parser_state.global_mods.get(mod, 0) + count
 
                 yield parser_state, connection
 
@@ -171,9 +169,7 @@ class ProFormaParser:
                 self.cursor += 1
 
             if self.cursor >= self.length:
-                self._raise_parse_error(
-                    "Unclosed global modification bracket", mod_start
-                )
+                self._raise_parse_error("Unclosed global modification bracket", mod_start)
 
             content = self.original_sequence[content_start : self.cursor]
             self.cursor += 1  # Skip closing >
@@ -269,10 +265,7 @@ class ProFormaParser:
         if self.cursor < self.length and self.original_sequence[self.cursor] == "-":
             # Lookahead to ensure this is a mod, not part of a sequence like A-B (if that were allowed)
             # ProForma 2.1 requires -[Mod] for C-term
-            if (
-                self.cursor + 1 < self.length
-                and self.original_sequence[self.cursor + 1] == "["
-            ):
+            if self.cursor + 1 < self.length and self.original_sequence[self.cursor + 1] == "[":
                 self.cursor += 1  # Consume '-'
                 mods = self._parse_bracket_content("[", "]", allow_multiplier=False)
                 for mod in mods:
@@ -316,39 +309,24 @@ class ProFormaParser:
                         if depth == 0:
                             temp_cursor += 1
                             # Check for multiplier
-                            if (
-                                temp_cursor < self.length
-                                and self.original_sequence[temp_cursor] == "^"
-                            ):
+                            if temp_cursor < self.length and self.original_sequence[temp_cursor] == "^":
                                 while temp_cursor < self.length and (
-                                    self.original_sequence[temp_cursor].isdigit()
-                                    or self.original_sequence[temp_cursor] == "^"
+                                    self.original_sequence[temp_cursor].isdigit() or self.original_sequence[temp_cursor] == "^"
                                 ):
                                     temp_cursor += 1
                             # Now check what follows
-                            if (
-                                temp_cursor < self.length
-                                and self.original_sequence[temp_cursor] == "["
-                            ):
+                            if temp_cursor < self.length and self.original_sequence[temp_cursor] == "[":
                                 # Another bracket follows, continue
                                 continue
                             break
                     temp_cursor += 1
 
                 # Determine suffix type
-                is_unknown = (
-                    temp_cursor < self.length
-                    and self.original_sequence[temp_cursor] == "?"
-                )
-                is_nterm = (
-                    temp_cursor < self.length
-                    and self.original_sequence[temp_cursor] == "-"
-                )
+                is_unknown = temp_cursor < self.length and self.original_sequence[temp_cursor] == "?"
+                is_nterm = temp_cursor < self.length and self.original_sequence[temp_cursor] == "-"
 
                 # Parse with appropriate multiplier setting
-                mods = self._parse_bracket_content(
-                    "[", "]", allow_multiplier=is_unknown
-                )
+                mods = self._parse_bracket_content("[", "]", allow_multiplier=is_unknown)
 
                 if is_nterm:
                     # N-Terminal
@@ -371,11 +349,7 @@ class ProFormaParser:
                         start_pos,
                     )
 
-            elif (
-                char == "?"
-                and self.cursor + 1 < self.length
-                and self.original_sequence[self.cursor + 1] == "["
-            ):
+            elif char == "?" and self.cursor + 1 < self.length and self.original_sequence[self.cursor + 1] == "[":
                 # Handling rare case if ? comes before (unlikely in standard ProForma 2.1 but robust to check)
                 pass
             else:
@@ -455,9 +429,7 @@ class ProFormaParser:
                 self._parse_inline_mods(target, len(target.amino_acids) - 1)
             else:
                 # If we hit something invalid inside parens (that isn't a mod caught above)
-                self._raise_parse_error(
-                    f"Unexpected character '{char}' inside interval"
-                )
+                self._raise_parse_error(f"Unexpected character '{char}' inside interval")
 
         if self.cursor >= self.length:
             interval_start = self.cursor
@@ -488,9 +460,7 @@ class ProFormaParser:
             is_ambiguous = True
             self.cursor += 1
 
-        target.intervals.append(
-            Interval(start_pos, end_pos, is_ambiguous, interval_mods)
-        )
+        target.intervals.append(Interval(start_pos, end_pos, is_ambiguous, interval_mods))
 
     def _parse_inline_mods(self, target: "ProFormaParser", aa_index: int):
         """Checks for [Mod] immediately following an AA"""
@@ -501,9 +471,7 @@ class ProFormaParser:
             for mod in mods:
                 if aa_index not in target.internal_mods:
                     target.internal_mods[aa_index] = {}
-                target.internal_mods[aa_index][mod] = (
-                    target.internal_mods[aa_index].get(mod, 0) + 1
-                )
+                target.internal_mods[aa_index][mod] = target.internal_mods[aa_index].get(mod, 0) + 1
 
     # =========================================================================
     # Level 3: Charge and Utilities
@@ -601,9 +569,7 @@ class ProFormaParser:
 
         return sys.intern(content)
 
-    def _parse_bracket_content(
-        self, open_char: str, close_char: str, allow_multiplier: bool
-    ) -> list[str]:
+    def _parse_bracket_content(self, open_char: str, close_char: str, allow_multiplier: bool) -> list[str]:
         """Optimized bracket parsing - reduces string operations"""
         items: list[str] = []
         seq = self.original_sequence
@@ -656,10 +622,7 @@ class ProFormaParser:
 
     def _read_until(self, terminator: str) -> str:
         start = self.cursor
-        while (
-            self.cursor < self.length
-            and self.original_sequence[self.cursor] != terminator
-        ):
+        while self.cursor < self.length and self.original_sequence[self.cursor] != terminator:
             self.cursor += 1
         return self.original_sequence[start : self.cursor]
 
@@ -671,10 +634,7 @@ class ProFormaParser:
         Check if current position is start of C-term mod (-[Mod]).
         Used to distinguish from sequences if hyphens were allowed (they aren't really, but good for safety).
         """
-        if (
-            self.cursor + 1 < self.length
-            and self.original_sequence[self.cursor + 1] == "["
-        ):
+        if self.cursor + 1 < self.length and self.original_sequence[self.cursor + 1] == "[":
             return True
         return False
 

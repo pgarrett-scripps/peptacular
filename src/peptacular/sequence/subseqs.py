@@ -40,18 +40,11 @@ def is_subsequence(
     from .basic import count_residues
 
     if order is True:
-        return (
-            len(
-                find_subsequence_indices(sequence, subsequence, ignore_mods=ignore_mods)
-            )
-            != 0
-        )
+        return len(find_subsequence_indices(sequence, subsequence, ignore_mods=ignore_mods)) != 0
 
     subsequence_counts = count_residues(subsequence, include_mods=not ignore_mods)
     sequence_counts = count_residues(sequence, include_mods=not ignore_mods)
-    return all(
-        subsequence_counts[aa] <= sequence_counts[aa] for aa in subsequence_counts
-    )
+    return all(subsequence_counts[aa] <= sequence_counts[aa] for aa in subsequence_counts)
 
 
 def find_subsequence_indices(
@@ -132,9 +125,7 @@ def coverage(
     """
 
     sequence_annot = get_annotation_input(sequence, copy=False)
-    subsequences_annot = [
-        get_annotation_input(subseq, copy=False) for subseq in subsequences
-    ]
+    subsequences_annot = [get_annotation_input(subseq, copy=False) for subseq in subsequences]
 
     return sequence_annot.coverage(
         subsequences_annot,
@@ -176,9 +167,7 @@ def percent_coverage(
     """
 
     sequence_annot = get_annotation_input(sequence, copy=False)
-    subsequences_annot = [
-        get_annotation_input(subseq, copy=False) for subseq in subsequences
-    ]
+    subsequences_annot = [get_annotation_input(subseq, copy=False) for subseq in subsequences]
 
     return sequence_annot.percent_coverage(
         subsequences_annot,
@@ -217,10 +206,6 @@ def modification_coverage(
 
     """
     sequence_annot = get_annotation_input(sequence, copy=False)
-    subsequence_annots = [
-        get_annotation_input(subseq, copy=False) for subseq in subsequences
-    ]
+    subsequence_annots = [get_annotation_input(subseq, copy=False) for subseq in subsequences]
 
-    return sequence_annot.modification_coverage(
-        annotations=subsequence_annots, accumulate=accumulate
-    )
+    return sequence_annot.modification_coverage(annotations=subsequence_annots, accumulate=accumulate)

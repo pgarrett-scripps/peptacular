@@ -25,9 +25,7 @@ class MissingAAHandling(StrEnum):
         raise ValueError(f"Unknown MissingAAHandling: {label}")
 
 
-MissingAAHandlingLiteral = Literal[
-    "zero", "avg", "min", "max", "median", "error", "skip"
-]
+MissingAAHandlingLiteral = Literal["zero", "avg", "min", "max", "median", "error", "skip"]
 
 
 class AggregationMethod(StrEnum):
@@ -70,6 +68,4 @@ class WeightingMethods(StrEnum):
         raise ValueError(f"Unknown WeightingMethods: {label}")
 
 
-WeightingMethodsLiteral = Literal[
-    "uniform", "linear", "exponential", "gaussian", "sigmoid", "cosine", "sinusoidal"
-]
+WeightingMethodsLiteral = Literal["uniform", "linear", "exponential", "gaussian", "sigmoid", "cosine", "sinusoidal"]

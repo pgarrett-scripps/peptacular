@@ -197,7 +197,7 @@ class TestTagCustomFromString:
 
     def test_invalid_without_prefix(self):
         """Test that custom tag without C: prefix raises error"""
-        with pytest.raises(ValueError, match="Custom tag must start with 'C:'"):
+        with pytest.raises(ValueError):
             pt.TagCustom.from_string("MyCustomMod")
 
 

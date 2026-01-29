@@ -101,15 +101,11 @@ class TestJoin(unittest.TestCase):
 
     def test_join_with_multiple_modifications(self):
         """Test joining complex annotation with multiple modification types"""
-        annotation = pt.ProFormaAnnotation.parse(
-            "<15N>{Glycan}[Acetyl]-PE[Phospho]PTIDE-[Amide]/2"
-        )
+        annotation = pt.ProFormaAnnotation.parse("<15N>{Glycan}[Acetyl]-PE[Phospho]PTIDE-[Amide]/2")
         split_annotations = annotation.split()
         joined = pt.ProFormaAnnotation.join(split_annotations)
 
-        self.assertEqual(
-            joined.serialize(), "<15N>{Glycan}[Acetyl]-PE[Phospho]PTIDE-[Amide]/2"
-        )
+        self.assertEqual(joined.serialize(), "<15N>{Glycan}[Acetyl]-PE[Phospho]PTIDE-[Amide]/2")
 
     def test_join_with_stacked_modifications(self):
         """Test joining preserves stacked modifications on same residue"""

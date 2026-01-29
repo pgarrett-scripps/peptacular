@@ -84,11 +84,7 @@ def mass(
     """
     Calculate the mass of an amino acid 'sequence'.
     """
-    if (
-        isinstance(sequence, Sequence)
-        and not isinstance(sequence, str)
-        and not isinstance(sequence, ProFormaAnnotation)
-    ):
+    if isinstance(sequence, Sequence) and not isinstance(sequence, str) and not isinstance(sequence, ProFormaAnnotation):
         return parallel_apply_internal(
             _mass_single,
             sequence,
@@ -179,11 +175,7 @@ def mz(
     """
     Calculate the m/z (mass-to-charge ratio) of an amino acid 'sequence'.
     """
-    if (
-        isinstance(sequence, Sequence)
-        and not isinstance(sequence, str)
-        and not isinstance(sequence, ProFormaAnnotation)
-    ):
+    if isinstance(sequence, Sequence) and not isinstance(sequence, str) and not isinstance(sequence, ProFormaAnnotation):
         return parallel_apply_internal(
             _mz_single,
             sequence,
@@ -265,11 +257,7 @@ def comp(
     """
     Calculates the elemental composition of a peptide sequence, including modifications.
     """
-    if (
-        isinstance(sequence, Sequence)
-        and not isinstance(sequence, str)
-        and not isinstance(sequence, ProFormaAnnotation)
-    ):
+    if isinstance(sequence, Sequence) and not isinstance(sequence, str) and not isinstance(sequence, ProFormaAnnotation):
         return parallel_apply_internal(
             _comp_single,
             sequence,

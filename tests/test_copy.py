@@ -14,9 +14,7 @@ class TestProFormaAnnotationCopy:
     @pytest.fixture
     def complex_annotation(self):
         """Create a complex annotation with various modifications."""
-        return pt.ProFormaAnnotation.parse(
-            "[Acetyl]-PEP[Phospho]T[+79.966]IDE[Oxidation]-[Amidation]/3"
-        )
+        return pt.ProFormaAnnotation.parse("[Acetyl]-PEP[Phospho]T[+79.966]IDE[Oxidation]-[Amidation]/3")
 
     @pytest.fixture
     def annotation_with_internals(self):
@@ -26,9 +24,7 @@ class TestProFormaAnnotationCopy:
         annot.append_internal_mod_at_index(3, 15.995)
         return annot
 
-    def test_deep_copy_creates_independent_object(
-        self, complex_annotation: pt.ProFormaAnnotation
-    ):
+    def test_deep_copy_creates_independent_object(self, complex_annotation: pt.ProFormaAnnotation):
         """Test that deep copy creates completely independent object."""
         original = complex_annotation
         copy = original.copy()

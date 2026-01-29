@@ -58,9 +58,7 @@ def slice_annotation(
     new_internal_mods = None
     if annotation.has_internal_mods:
         if annotation._internal_mods is None:
-            raise RuntimeError(
-                "Annotation internal_mods are None despite has_internal_mods being True."
-            )
+            raise RuntimeError("Annotation internal_mods are None despite has_internal_mods being True.")
         new_internal_mods = _adjust_internal_mods(
             annotation._internal_mods,
             start,
@@ -71,9 +69,7 @@ def slice_annotation(
     new_intervals = None
     if annotation.has_intervals:
         if annotation._intervals is None:
-            raise RuntimeError(
-                "Annotation intervals are None despite has_intervals being True."
-            )
+            raise RuntimeError("Annotation intervals are None despite has_intervals being True.")
         new_intervals = _adjust_intervals(annotation._intervals, start, stop)
 
     # Handle terminal modifications
@@ -294,19 +290,12 @@ def shift_annotation(
                 new_end = (relative_end - middle_shift) % middle_len + keep_nterm
 
                 if new_start < new_end:
-                    new_intervals.append(
-                        Interval(new_start, new_end, interval.ambiguous, interval.mods)
-                    )
+                    new_intervals.append(Interval(new_start, new_end, interval.ambiguous, interval.mods))
                 else:
-                    raise ValueError(
-                        "Shifting intervals that wrap around the sequence end is not supported."
-                    )
+                    raise ValueError("Shifting intervals that wrap around the sequence end is not supported.")
             else:
                 # Interval spans kept and shifted regions
-                raise ValueError(
-                    f"Interval [{interval.start}:{interval.end}] spans kept and shifted regions. "
-                    "This is not supported."
-                )
+                raise ValueError(f"Interval [{interval.start}:{interval.end}] spans kept and shifted regions. This is not supported.")
 
     # Update annotation
     annotation.sequence = shifted_sequence
@@ -336,9 +325,7 @@ def shuffle_annotation(
         The shuffled annotation
     """
     if not inplace:
-        return shuffle_annotation(
-            annotation.copy(), seed, keep_nterm, keep_cterm, inplace=True
-        )
+        return shuffle_annotation(annotation.copy(), seed, keep_nterm, keep_cterm, inplace=True)
 
     if seed is not None:
         random.seed(seed)
@@ -401,20 +388,12 @@ def shuffle_annotation(
         for interval in annotation.intervals:
             if interval.start < keep_nterm or interval.end > seq_len - keep_cterm:
                 # Interval overlaps with kept regions - check if it's entirely in kept region
-                if not (
-                    interval.end <= keep_nterm or interval.start >= seq_len - keep_cterm
-                ):
-                    raise ValueError(
-                        f"Interval [{interval.start}:{interval.end}] spans kept and shuffled regions. "
-                        "This is not supported."
-                    )
+                if not (interval.end <= keep_nterm or interval.start >= seq_len - keep_cterm):
+                    raise ValueError(f"Interval [{interval.start}:{interval.end}] spans kept and shuffled regions. This is not supported.")
             # If interval is entirely in middle, its positions will be shuffled via the mapping
             # Note: This could lead to non-contiguous intervals, which might not be valid
             # Consider raising an error if intervals exist in the shuffled region
-            if (
-                keep_nterm < interval.start < seq_len - keep_cterm
-                or keep_nterm < interval.end < seq_len - keep_cterm
-            ):
+            if keep_nterm < interval.start < seq_len - keep_cterm or keep_nterm < interval.end < seq_len - keep_cterm:
                 raise ValueError(
                     f"Shuffling sequences with intervals in the shuffled region is not supported. "
                     f"Interval [{interval.start}:{interval.end}] would be disrupted."
@@ -511,10 +490,7 @@ def reverse_annotation(
                 new_intervals.append(interval.update(start=new_start, end=new_end))
             else:
                 # Interval spans kept and reversed regions
-                raise ValueError(
-                    f"Interval [{interval.start}:{interval.end}] spans kept and reversed regions. "
-                    "This is not supported."
-                )
+                raise ValueError(f"Interval [{interval.start}:{interval.end}] spans kept and reversed regions. This is not supported.")
 
         annotation.intervals = new_intervals
 
@@ -540,9 +516,7 @@ def sort_annotation(
         The sorted annotation
     """
     if not inplace:
-        return sort_annotation(
-            annotation.copy(), inplace=True, key=key, reverse=reverse
-        )
+        return sort_annotation(annotation.copy(), inplace=True, key=key, reverse=reverse)
 
     seq_len = len(annotation.sequence)
     if seq_len <= 1:
@@ -619,9 +593,7 @@ def generate_sliding_windows(
 
     seq_len = len(annotation.sequence)
     if window_size > seq_len:
-        raise ValueError(
-            f"Window size {window_size} cannot be greater than sequence length {seq_len}."
-        )
+        raise ValueError(f"Window size {window_size} cannot be greater than sequence length {seq_len}.")
 
     if reverse:
         # Generate windows from right to left
@@ -655,10 +627,7 @@ def _normalize_start_index(start: int | None, seq_len: int) -> int:
             raise ValueError("Start index is out of bounds for the sequence length.")
         return start
     elif start > seq_len:
-        raise ValueError(
-            f"Start index exceeds the sequence length. "
-            f"Sequence length is {seq_len}, but start is {start}."
-        )
+        raise ValueError(f"Start index exceeds the sequence length. Sequence length is {seq_len}, but start is {start}.")
     return start
 
 
@@ -672,24 +641,17 @@ def _normalize_stop_index(stop: int | None, seq_len: int) -> int:
             raise ValueError("Stop index is out of bounds for the sequence length.")
         return stop
     elif stop > seq_len:
-        raise ValueError(
-            f"Stop index exceeds the sequence length. "
-            f"Sequence length is {seq_len}, but stop is {stop}."
-        )
+        raise ValueError(f"Stop index exceeds the sequence length. Sequence length is {seq_len}, but stop is {stop}.")
     return stop
 
 
 def _validate_slice_indices(start: int, stop: int, seq_len: int) -> None:
     """Validate that slice indices are valid"""
     if start > stop:
-        raise ValueError(
-            f"Start index {start} cannot be greater than stop index {stop}."
-        )
+        raise ValueError(f"Start index {start} cannot be greater than stop index {stop}.")
 
 
-def _adjust_internal_mods(
-    internal_mods: dict[int, dict[str, int]], start: int, stop: int
-) -> dict[int, dict[str, int]]:
+def _adjust_internal_mods(internal_mods: dict[int, dict[str, int]], start: int, stop: int) -> dict[int, dict[str, int]]:
     """Adjust internal modifications for slicing"""
     new_internal_mods: dict[int, dict[str, int]] = {}
     for pos, mods in internal_mods.items():
@@ -698,9 +660,7 @@ def _adjust_internal_mods(
     return new_internal_mods
 
 
-def _adjust_intervals(
-    intervals: list[Interval], start: int, stop: int
-) -> list[Interval]:
+def _adjust_intervals(intervals: list[Interval], start: int, stop: int) -> list[Interval]:
     """Adjust intervals for slicing"""
     new_intervals: list[Interval] = []
     for interval in intervals:
@@ -710,10 +670,7 @@ def _adjust_intervals(
             interval_gets_cut = (interval.start < start) or (interval.end > stop)
 
             if interval_gets_cut:
-                raise ValueError(
-                    f"Interval [{interval.start}:{interval.end}] would be cut by slice [{start}:{stop}]. "
-                    f"Slicing intervals is not supported."
-                )
+                raise ValueError(f"Interval [{interval.start}:{interval.end}] would be cut by slice [{start}:{stop}]. Slicing intervals is not supported.")
 
             # Calculate new positions relative to slice
             new_interval_start = max(0, interval.start - start)

@@ -35,9 +35,7 @@ class IsotopeInfo:
         if any(v < 0 for v in base_comp.values()):
             negative_counts = {str(k): v for k, v in base_comp.items() if v < 0}
 
-            raise ValueError(
-                f"Isotopic adjustment resulted in negative element counts: {negative_counts}"
-            )
+            raise ValueError(f"Isotopic adjustment resulted in negative element counts: {negative_counts}")
 
     @property
     def composition(self) -> Counter[ElementInfo]:
@@ -108,24 +106,16 @@ class ChargeCarrierInfo:
                 base_comp[elem_info] += count
 
         if any(v < 0 for v in base_comp.values()):
-            raise ValueError(
-                f"Charge carrier adjustment resulted in negative element counts: {base_comp}"
-            )
+            raise ValueError(f"Charge carrier adjustment resulted in negative element counts: {base_comp}")
 
     @staticmethod
     def from_input(
-        charge: int
-        | str
-        | GlobalChargeCarrier
-        | tuple[GlobalChargeCarrier | str, ...]
-        | None,
+        charge: int | str | GlobalChargeCarrier | tuple[GlobalChargeCarrier | str, ...] | None,
     ) -> Self:
         carriers = handle_charge_input(charge)
         return cast(Self, ChargeCarrierInfo(carriers))
 
-    def to_fragment_mapping(
-        self, has_internal_charge: bool = False
-    ) -> Mapping[str, int] | None:
+    def to_fragment_mapping(self, has_internal_charge: bool = False) -> Mapping[str, int] | None:
         composition: Counter[ElementInfo] = self.composition
         if not composition:
             return None
@@ -192,21 +182,13 @@ class DeltaInfo:
                     base_comp[elem_info] += elem_count * count
 
         if any(v < 0 for v in base_comp.values()):
-            raise ValueError(
-                f"Delta adjustment resulted in negative element counts: {base_comp}"
-            )
+            raise ValueError(f"Delta adjustment resulted in negative element counts: {base_comp}")
 
     @staticmethod
     def from_input(
-        deltas: str
-        | ChargedFormula
-        | float
-        | dict[str | ChargedFormula | float, int]
-        | None,
+        deltas: str | ChargedFormula | float | dict[str | ChargedFormula | float, int] | None,
     ) -> Self:
-        normalized: dict[ChargedFormula | int | float, int] = _handle_delta_input(
-            deltas
-        )
+        normalized: dict[ChargedFormula | int | float, int] = _handle_delta_input(deltas)
         for key in normalized.keys():
             if isinstance(key, ChargedFormula) and key.is_charged:
                 raise ValueError("Delta formulas must be neutral (charge=0)")
@@ -272,11 +254,7 @@ class DeltaInfo:
 
 
 def _handle_delta_input(
-    deltas: str
-    | ChargedFormula
-    | float
-    | dict[str | ChargedFormula | float, int]
-    | None,
+    deltas: str | ChargedFormula | float | dict[str | ChargedFormula | float, int] | None,
 ) -> dict[ChargedFormula | float, int]:
     # Dict - recursively normalize each key
     if deltas is None:
@@ -293,11 +271,7 @@ def _handle_delta_input(
     # Single items - base cases
     if isinstance(deltas, str):
         try:
-            return {
-                ChargedFormula.from_composition(
-                    NEUTRAL_DELTA_LOOKUP[deltas].composition
-                ): 1
-            }
+            return {ChargedFormula.from_composition(NEUTRAL_DELTA_LOOKUP[deltas].composition): 1}
         except KeyError:
             pass
 
@@ -310,11 +284,7 @@ def _handle_delta_input(
 
 
 def handle_charge_input(
-    charge: int
-    | str
-    | GlobalChargeCarrier
-    | tuple[GlobalChargeCarrier | str, ...]
-    | None,
+    charge: int | str | GlobalChargeCarrier | tuple[GlobalChargeCarrier | str, ...] | None,
 ) -> tuple[GlobalChargeCarrier, ...]:
     if isinstance(charge, int):
         adduct: GlobalChargeCarrier = get_charge_adducts(charge)

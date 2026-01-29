@@ -62,11 +62,7 @@ def permutations(
         ['<13C>PET', '<13C>PTE', '<13C>EPT', '<13C>ETP', '<13C>TPE', '<13C>TEP']
 
     """
-    if (
-        isinstance(sequence, Sequence)
-        and not isinstance(sequence, str)
-        and not isinstance(sequence, ProFormaAnnotation)
-    ):
+    if isinstance(sequence, Sequence) and not isinstance(sequence, str) and not isinstance(sequence, ProFormaAnnotation):
         return parallel_apply_internal(
             _permutations_single,
             sequence,
@@ -137,11 +133,7 @@ def product(
         ['<13C>PP', '<13C>PE', '<13C>PT', '<13C>EP', '<13C>EE', '<13C>ET', '<13C>TP', '<13C>TE', '<13C>TT']
 
     """
-    if (
-        isinstance(sequence, Sequence)
-        and not isinstance(sequence, str)
-        and not isinstance(sequence, ProFormaAnnotation)
-    ):
+    if isinstance(sequence, Sequence) and not isinstance(sequence, str) and not isinstance(sequence, ProFormaAnnotation):
         return parallel_apply_internal(
             _product_single,
             sequence,
@@ -212,11 +204,7 @@ def combinations(
         ['<13C>PE', '<13C>PT', '<13C>ET']
 
     """
-    if (
-        isinstance(sequence, Sequence)
-        and not isinstance(sequence, str)
-        and not isinstance(sequence, ProFormaAnnotation)
-    ):
+    if isinstance(sequence, Sequence) and not isinstance(sequence, str) and not isinstance(sequence, ProFormaAnnotation):
         return parallel_apply_internal(
             _combinations_single,
             sequence,
@@ -288,11 +276,7 @@ def combinations_with_replacement(
         ['<13C>PP', '<13C>PE', '<13C>PT', '<13C>EE', '<13C>ET', '<13C>TT']
 
     """
-    if (
-        isinstance(sequence, Sequence)
-        and not isinstance(sequence, str)
-        and not isinstance(sequence, ProFormaAnnotation)
-    ):
+    if isinstance(sequence, Sequence) and not isinstance(sequence, str) and not isinstance(sequence, ProFormaAnnotation):
         return parallel_apply_internal(
             _combinations_with_replacement_single,
             sequence,

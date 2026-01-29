@@ -9,9 +9,7 @@ if TYPE_CHECKING:
     from .annotation import ProFormaAnnotation
 
 
-def condense_mods_to_intervals(
-    annotation: ProFormaAnnotation, inplace: bool = True
-) -> ProFormaAnnotation:
+def condense_mods_to_intervals(annotation: ProFormaAnnotation, inplace: bool = True) -> ProFormaAnnotation:
     """
     Condense modifications into intervals
     """
@@ -55,9 +53,7 @@ def coverage(
                     for i in range(interval.start, interval.end):
                         peptide_cov[i] = 0
 
-        for subsequence_index in find_indices(
-            sub_annots, other=annotation, ignore_mods=ignore_mods
-        ):
+        for subsequence_index in find_indices(sub_annots, other=annotation, ignore_mods=ignore_mods):
             start = subsequence_index
 
             for i, cov in enumerate(peptide_cov):
@@ -117,9 +113,7 @@ def modification_coverage(
     return mod_cov
 
 
-def condense_static_mods(
-    annotation: ProFormaAnnotation, inplace: bool = True
-) -> ProFormaAnnotation:
+def condense_static_mods(annotation: ProFormaAnnotation, inplace: bool = True) -> ProFormaAnnotation:
     """
     Condense static mods into internal mods
 
@@ -146,9 +140,7 @@ def condense_static_mods(
     return annotation
 
 
-def condense_to_peptidoform(
-    annotation: ProFormaAnnotation, inplace: bool = True
-) -> ProFormaAnnotation:
+def condense_to_peptidoform(annotation: ProFormaAnnotation, inplace: bool = True) -> ProFormaAnnotation:
     """
     Condense all modifications into peptidoform notation
     PEP[+100]TI[+20]DE-[30]
@@ -178,9 +170,7 @@ def condense_to_peptidoform(
     return annotation
 
 
-def count_residues(
-    annotation: ProFormaAnnotation, include_mods: bool = True
-) -> dict[str, int]:
+def count_residues(annotation: ProFormaAnnotation, include_mods: bool = True) -> dict[str, int]:
     """
     Count the occurrences of each residue in the sequence.
 
@@ -220,10 +210,7 @@ def percent_residues(
     if total_count == 0:
         return {}
 
-    percentages = {
-        residue: (count / total_count) * 100
-        for residue, count in residue_counts.items()
-    }
+    percentages = {residue: (count / total_count) * 100 for residue, count in residue_counts.items()}
 
     return percentages
 
@@ -254,9 +241,7 @@ def is_subsequence(
         start = match.start()
 
         # Check if all modifications are also a subsequence
-        sliced_annot = other.slice(
-            start, start + len(annotation.sequence), inplace=False
-        )
+        sliced_annot = other.slice(start, start + len(annotation.sequence), inplace=False)
 
         if ignore_mods and sliced_annot.sequence == annotation.sequence:
             return True
@@ -295,9 +280,7 @@ def find_indices(
         TypeError: If other is not a ProFormaAnnotation
     """
     if not isinstance(other, type(annotation)):
-        raise TypeError(
-            f"other must be a {type(annotation).__name__}, got {type(other).__name__}"
-        )
+        raise TypeError(f"other must be a {type(annotation).__name__}, got {type(other).__name__}")
 
     if not annotation.sequence or not other.sequence:
         return []
@@ -305,9 +288,7 @@ def find_indices(
     indices: list[int] = []
     for match in re.finditer(annotation.sequence, other.sequence):
         start = match.start()
-        sliced_other = other.slice(
-            start, start + len(annotation.sequence), inplace=False
-        )
+        sliced_other = other.slice(start, start + len(annotation.sequence), inplace=False)
 
         if is_subsequence(annotation, sliced_other, ignore_mods, ignore_intervals):
             indices.append(start)

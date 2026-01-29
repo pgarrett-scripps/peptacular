@@ -51,9 +51,7 @@ monosaccharide_names: list[str] = sorted(list(Monosaccharide), key=len, reverse=
 # Accession patterns: MUST use full CV name (UNIMOD, MOD, RESID, GNO, XLMOD)
 # Rule 1: Full CV name with colon, MUST NOT be followed with +/-
 # e.g., "UNIMOD:35", "MOD:00719", "RESID:1234", "GNO:5678", "XLMOD:91011"
-PATTERN_ACCESSION: re.Pattern[str] = re.compile(
-    r"^(UNIMOD|MOD|RESID|GNO|XLMOD):(\w+)$", re.IGNORECASE
-)
+PATTERN_ACCESSION: re.Pattern[str] = re.compile(r"^(UNIMOD|MOD|RESID|GNO|XLMOD):(\w+)$", re.IGNORECASE)
 
 # Custom pattern: Rule 3: MUST use shorthand "C:"
 # e.g., "C:some custom data"
@@ -61,16 +59,12 @@ PATTERN_CUSTOM: re.Pattern[str] = re.compile(r"^C:(.+)$", re.IGNORECASE)
 # Mass pattern: Rule 2: MUST include sign (+/-), can optionally use CV single letter prefix
 # Format: [single-letter-CV:]?[Obs:]?<sign><number>[.number]
 # e.g., "+15.995", "-18.010", "U:+15.995", "M:-18.010", "Obs:+17.05685", "U:Obs:+15.995"
-PATTERN_MASS: re.Pattern[str] = re.compile(
-    r"^(?:([UMRXGumrxg]):)?(?:(Obs):)?([+-]\d+(?:\.\d+)?)$", re.IGNORECASE
-)
+PATTERN_MASS: re.Pattern[str] = re.compile(r"^(?:([UMRXGumrxg]):)?(?:(Obs):)?([+-]\d+(?:\.\d+)?)$", re.IGNORECASE)
 
 # Named modification pattern: Rule 4: Can optionally use shorthand CVs (including C: for custom), MUST NOT be followed with +/-
 # Format: [single-letter-CV:]?<name>
 # e.g., "Oxidation", "Phospho", "U:Oxidation", "M:Phospho", "R:Acetyl", "C:CustomMod"
-PATTERN_NAMED_MOD: re.Pattern[str] = re.compile(
-    r"^(?:([UMRXGCumrxgc]):)?(?![+-]|Obs:)(.+)$", re.IGNORECASE
-)
+PATTERN_NAMED_MOD: re.Pattern[str] = re.compile(r"^(?:([UMRXGCumrxgc]):)?(?![+-]|Obs:)(.+)$", re.IGNORECASE)
 
 # Regex pattern for parsing formula elements
 # Matches two formats:
@@ -87,9 +81,7 @@ _FORMULA_ELEMENT_PATTERN: re.Pattern[str] = re.compile(
 
 # Regex pattern for parsing charged formulas
 # Matches: Formula:C2H6 or Formula:C2H6:z+2
-_CHARGED_FORMULA_PATTERN: re.Pattern[str] = re.compile(
-    r"^Formula:(.+?)(?::z([+-]?\d+))?$", re.IGNORECASE
-)
+_CHARGED_FORMULA_PATTERN: re.Pattern[str] = re.compile(r"^Formula:(.+?)(?::z([+-]?\d+))?$", re.IGNORECASE)
 
 
 def parse_formula_element(s: str, allow_zero: bool = False) -> "FormulaElement":
@@ -141,9 +133,7 @@ def parse_formula_element(s: str, allow_zero: bool = False) -> "FormulaElement":
         raise ValueError(f"Invalid formula element: '{s}'")
 
     # Extract groups: [isotope Element count] or Element count
-    isotope_str, element_bracketed, count_bracketed, element_plain, count_plain = (
-        match.groups()
-    )
+    isotope_str, element_bracketed, count_bracketed, element_plain, count_plain = match.groups()
 
     # Determine which format was used
     if isotope_str and element_bracketed:
@@ -169,16 +159,14 @@ def parse_formula_element(s: str, allow_zero: bool = False) -> "FormulaElement":
             # Special cases for Deuterium and Tritium
             element_symbol = "H"
         element = Element(element_symbol)
-    except ValueError:
-        raise ValueError(f"Unknown element symbol: '{element_symbol}'")
+    except ValueError as e:
+        raise ValueError(f"Unknown element symbol: '{element_symbol}'") from e
 
     return FormulaElement(element=element, occurance=count, isotope=isotope)
 
 
 @lru_cache(maxsize=1024)
-def parse_charged_formula(
-    s: str, allow_zero: bool = False, require_formula_prefix: bool = True, sep: str = ""
-) -> "ChargedFormula":
+def parse_charged_formula(s: str, allow_zero: bool = False, require_formula_prefix: bool = True, sep: str = "") -> "ChargedFormula":
     """
     Parse a charged formula string like 'Formula:C2H6' or 'Formula:C2H6:z+2'
 
@@ -239,14 +227,10 @@ def parse_charged_formula(
     # Parse charge if present
     charge = int(charge_str) if charge_str else None
 
-    return ChargedFormula(
-        formula=formula_elements, charge=charge, position_id=pos, score=score
-    )
+    return ChargedFormula(formula=formula_elements, charge=charge, position_id=pos, score=score)
 
 
-def _parse_formula_string(
-    formula_str: str, allow_zero: bool = False
-) -> tuple["FormulaElement", ...]:
+def _parse_formula_string(formula_str: str, allow_zero: bool = False) -> tuple["FormulaElement", ...]:
     """
     Parse a chemical formula string into FormulaElements.
 
@@ -262,7 +246,9 @@ def _parse_formula_string(
         "[13C2]H6" -> (FormulaElement(C, 2, 13), FormulaElement(H, 6))
         "[13C2][12C-2]H2N" -> isotope replacement notation
     """
-    elements: list["FormulaElement"] = []
+    from .comps import FormulaElement
+
+    elements: list[FormulaElement] = []
     i = 0
 
     while i < len(formula_str):
@@ -292,9 +278,7 @@ def _parse_formula_string(
                 i += 1
 
             # Now parse optional count (including sign)
-            if i < len(formula_str) and (
-                formula_str[i].isdigit() or formula_str[i] in "+-"
-            ):
+            if i < len(formula_str) and (formula_str[i].isdigit() or formula_str[i] in "+-"):
                 if formula_str[i] in "+-":
                     i += 1
                 while i < len(formula_str) and formula_str[i].isdigit():
@@ -303,18 +287,14 @@ def _parse_formula_string(
             # Extract the element string
             element_str = formula_str[start:i]
         else:
-            raise ValueError(
-                f"Unexpected character '{formula_str[i]}' at position {i} in '{formula_str}'"
-            )
+            raise ValueError(f"Unexpected character '{formula_str[i]}' at position {i} in '{formula_str}'")
 
         # Parse the element string
         try:
             element = parse_formula_element(element_str, allow_zero=allow_zero)
             elements.append(element)
         except ValueError as e:
-            raise ValueError(
-                f"Failed to parse element '{element_str}' in formula '{formula_str}': {e}"
-            )
+            raise ValueError(f"Failed to parse element '{element_str}' in formula '{formula_str}'") from e
 
     if not elements:
         raise ValueError(f"No elements found in formula '{formula_str}'")
@@ -402,11 +382,7 @@ def parse_modification_tag(mod_str: str) -> "MODIFICATION_TAG_TYPE":
             return parse_tag_accession(mod_str)
 
     # Try to match mass pattern (Rule 2: must have sign, optional single letter CV prefix)
-    if (
-        mod_str_lower.startswith(("+", "-"))
-        or ":" in mod_str_lower
-        and mod_str_lower.split(":", 1)[1].startswith(("+", "-"))
-    ):
+    if mod_str_lower.startswith(("+", "-")) or ":" in mod_str_lower and mod_str_lower.split(":", 1)[1].startswith(("+", "-")):
         return parse_tag_mass(mod_str)
 
     # Try to match formula pattern
@@ -505,8 +481,9 @@ def _parse_glycan_composition(glycan_str: str) -> tuple["GlycanComponent", ...]:
         "Hex5HexNAc4" -> (GlycanComponent(Hex, 5), GlycanComponent(HexNAc, 4))
         "Hex5HexNAc4NeuAc2" -> (GlycanComponent(Hex, 5), GlycanComponent(HexNAc, 4), GlycanComponent(NeuAc, 2))
     """
+    from .comps import GlycanComponent
 
-    components: list["GlycanComponent"] = []
+    components: list[GlycanComponent] = []
     i = 0
 
     while i < len(glycan_str):
@@ -529,21 +506,15 @@ def _parse_glycan_composition(glycan_str: str) -> tuple["GlycanComponent", ...]:
 
                 try:
                     monosaccharide = Monosaccharide(mono_name)
-                except ValueError:
-                    raise ValueError(f"Unknown monosaccharide: {mono_name}")
+                except ValueError as e:
+                    raise ValueError(f"Unknown monosaccharide: {mono_name}") from e
 
-                from .comps import GlycanComponent
-
-                components.append(
-                    GlycanComponent(monosaccharide=monosaccharide, occurance=count)
-                )
+                components.append(GlycanComponent(monosaccharide=monosaccharide, occurance=count))
                 matched = True
                 break
 
         if not matched:
-            raise ValueError(
-                f"Could not parse glycan composition at position {i}: '{glycan_str[i:]}'"
-            )
+            raise ValueError(f"Could not parse glycan composition at position {i}: '{glycan_str[i:]}'")
 
     return tuple(components)
 
@@ -569,7 +540,7 @@ def parse_modification_tags(mod_str: str) -> "ModificationTags":
     # Split on pipe character to handle multiple tag definitions
     if "|" in mod_str:
         parts = mod_str.split("|")
-        tags: list["MODIFICATION_TAG_TYPE"] = []
+        tags: list[MODIFICATION_TAG_TYPE] = []
         for part in parts:
             part = part.strip()
             tags.append(parse_modification_tag(part))
@@ -582,9 +553,7 @@ def parse_modification_tags(mod_str: str) -> "ModificationTags":
 
 # Regex pattern for parsing position rules
 # Matches: N-term, C-term, N-term:K, C-term:K, or just K
-_POSITION_RULE_PATTERN = re.compile(
-    r"^(?:(N-term|C-term|Protein N-term|Protein C-term):)?([A-Z])?$", re.IGNORECASE
-)
+_POSITION_RULE_PATTERN = re.compile(r"^(?:(N-term|C-term|Protein N-term|Protein C-term):)?([A-Z])?$", re.IGNORECASE)
 
 
 @lru_cache(maxsize=1024)
@@ -629,14 +598,14 @@ def parse_position_rule(s: str) -> "PositionRule":
 
         try:
             terminal = Terminal.from_str(terminal_str)
-        except ValueError:
-            raise ValueError(f"Unknown terminal: '{terminal_str}'")
+        except ValueError as e:
+            raise ValueError(f"Unknown terminal: '{terminal_str}'") from e
 
         if aa_str:
             try:
                 amino_acid = AminoAcid(aa_str)
-            except ValueError:
-                raise ValueError(f"Unknown amino acid: '{aa_str}'")
+            except ValueError as e:
+                raise ValueError(f"Unknown amino acid: '{aa_str}'") from e
             return PositionRule(terminal=terminal, amino_acid=amino_acid)
         else:
             return PositionRule(terminal=terminal, amino_acid=None)
@@ -650,8 +619,8 @@ def parse_position_rule(s: str) -> "PositionRule":
             try:
                 amino_acid = AminoAcid.from_str(s)
                 return PositionRule(terminal=Terminal.ANYWHERE, amino_acid=amino_acid)
-            except ValueError:
-                raise ValueError(f"Unknown terminal or amino acid: '{s}'")
+            except ValueError as e:
+                raise ValueError(f"Unknown terminal or amino acid: '{s}'") from e
 
 
 LOC_PATTERN = re.compile(r"^([^#(]+)(?:#([^(]+))?(?:\(([^)]+)\))?$")
@@ -697,29 +666,17 @@ def parse_tag_accession(s: str) -> "TagAccession":
 
     match cv_upper := cv.upper():
         case "UNIMOD":
-            return TagAccession(
-                accession=name, cv=CV.UNIMOD, position_id=pos, score=score
-            )
+            return TagAccession(accession=name, cv=CV.UNIMOD, position_id=pos, score=score)
         case "MOD":
-            return TagAccession(
-                accession=name, cv=CV.PSI_MOD, position_id=pos, score=score
-            )
+            return TagAccession(accession=name, cv=CV.PSI_MOD, position_id=pos, score=score)
         case "RESID":
-            return TagAccession(
-                accession=name, cv=CV.RESID, position_id=pos, score=score
-            )
+            return TagAccession(accession=name, cv=CV.RESID, position_id=pos, score=score)
         case "GNO":
-            return TagAccession(
-                accession=name, cv=CV.GNOME, position_id=pos, score=score
-            )
+            return TagAccession(accession=name, cv=CV.GNOME, position_id=pos, score=score)
         case "XLMOD":
-            return TagAccession(
-                accession=name, cv=CV.XL_MOD, position_id=pos, score=score
-            )
+            return TagAccession(accession=name, cv=CV.XL_MOD, position_id=pos, score=score)
         case _:
-            raise ValueError(
-                f"Unknown CV: {cv_upper} (must be UNIMOD, MOD, RESID, GNO, or XLMOD)"
-            )
+            raise ValueError(f"Unknown CV: {cv_upper} (must be UNIMOD, MOD, RESID, GNO, or XLMOD)")
 
     return TagAccession(accession=accession, cv=cv)
 
@@ -780,27 +737,19 @@ def parse_tag_mass(s: str) -> "TagMass":
     cv, mass_str = s.split(":", 1)
     match cv.upper():
         case "U":
-            return TagMass(
-                mass_str=mass_str, cv=CV.UNIMOD, position_id=pos, score=score
-            )
+            return TagMass(mass_str=mass_str, cv=CV.UNIMOD, position_id=pos, score=score)
         case "M":
-            return TagMass(
-                mass_str=mass_str, cv=CV.PSI_MOD, position_id=pos, score=score
-            )
+            return TagMass(mass_str=mass_str, cv=CV.PSI_MOD, position_id=pos, score=score)
         case "R":
             return TagMass(mass_str=mass_str, cv=CV.RESID, position_id=pos, score=score)
         case "X":
-            return TagMass(
-                mass_str=mass_str, cv=CV.XL_MOD, position_id=pos, score=score
-            )
+            return TagMass(mass_str=mass_str, cv=CV.XL_MOD, position_id=pos, score=score)
         case "G":
             return TagMass(mass_str=mass_str, cv=CV.GNOME, position_id=pos, score=score)
         case "C":
             return TagMass(mass_str=mass_str, cv=None, position_id=pos, score=score)
         case "OBS":
-            return TagMass(
-                mass_str=mass_str, cv=CV.OBSERVED, position_id=pos, score=score
-            )
+            return TagMass(mass_str=mass_str, cv=CV.OBSERVED, position_id=pos, score=score)
         case _:
             raise ValueError(f"Invalid CV prefix: {cv} (must be U, M, R, X, G, or C)")
 
@@ -1006,8 +955,8 @@ def parse_isotope_replacement(s: str) -> "IsotopeReplacement":
 
     try:
         element = Element(element_str)
-    except ValueError:
-        raise ValueError(f"Unknown element symbol: {element_str}")
+    except ValueError as e:
+        raise ValueError(f"Unknown element symbol: {element_str}") from e
 
     return IsotopeReplacement(element=element, isotope=isotope)
 
@@ -1258,9 +1207,7 @@ def parse_fixed_modification(s: str) -> "FixedModification":
         modification_tags = parse_modification_tags(mod_str)
         position_rules = ()
 
-    return FixedModification(
-        modifications=modification_tags, position_rules=position_rules
-    )
+    return FixedModification(modifications=modification_tags, position_rules=position_rules)
 
 
 def parse_modification(s: str) -> "MODIFICATION_TYPE":
@@ -1288,12 +1235,7 @@ def parse_modification(s: str) -> "MODIFICATION_TYPE":
     if "#" in s:
         if s.lower().startswith("#xl") or "|" in s:
             # Could be cross-linker or ambiguous primary
-            if any(
-                part.startswith("Position:")
-                or part.startswith("Limit:")
-                or part in ("CoMKP", "CoMUP")
-                for part in s.split("|")
-            ):
+            if any(part.startswith("Position:") or part.startswith("Limit:") or part in ("CoMKP", "CoMUP") for part in s.split("|")):
                 # Ambiguous primary
                 return parse_modification_ambiguous_primary(s)
             else:
@@ -1325,11 +1267,12 @@ def _extract_bracketed_modifications(s: str) -> tuple["MODIFICATION_TYPE", ...]:
     Raises:
         ValueError: If brackets are unmatched or invalid characters are found
     """
+    from .comps import MODIFICATION_TYPE
 
     if not s:
         return ()
 
-    modifications: list["MODIFICATION_TYPE"] = []
+    modifications: list[MODIFICATION_TYPE] = []
     i = 0
 
     while i < len(s):
@@ -1354,9 +1297,7 @@ def _extract_bracketed_modifications(s: str) -> tuple["MODIFICATION_TYPE", ...]:
             modifications.append(parse_modification(mod_str))
             i = j
         else:
-            raise ValueError(
-                f"Unexpected character '{s[i]}' at position {i} in modifications"
-            )
+            raise ValueError(f"Unexpected character '{s[i]}' at position {i} in modifications")
 
     return tuple(modifications)
 
@@ -1438,14 +1379,12 @@ def parse_sequence_region(s: str) -> "SequenceRegion":
 
     # Parse the sequence into SequenceElements
     # We need to split the sequence string into individual amino acid + modification pairs
-    sequence_elements: list["SequenceElement"] = []
+    sequence_elements: list[SequenceElement] = []
     i = 0
     while i < len(seq_str):
         # Each element starts with an amino acid letter
         if not seq_str[i].isupper():
-            raise ValueError(
-                f"Expected amino acid at position {i} in sequence '{seq_str}'"
-            )
+            raise ValueError(f"Expected amino acid at position {i} in sequence '{seq_str}'")
 
         # Find the extent of this sequence element (amino acid + any modifications)
         start = i
@@ -1476,9 +1415,7 @@ def parse_sequence_region(s: str) -> "SequenceRegion":
     mods_str = s[close_paren + 1 :]
     modifications = _extract_bracketed_modifications(mods_str)
 
-    return SequenceRegion(
-        sequence=tuple(sequence_elements), modifications=tuple(modifications)
-    )
+    return SequenceRegion(sequence=tuple(sequence_elements), modifications=tuple(modifications))
 
 
 @lru_cache(maxsize=512)

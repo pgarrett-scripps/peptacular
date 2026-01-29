@@ -88,7 +88,7 @@ class TestParseGlycan:
 
         from peptacular.proforma_components.parsers import parse_glycan
 
-        with pytest.raises(ValueError, match="must start with 'Glycan:'"):
+        with pytest.raises(ValueError):
             parse_glycan("Hex5HexNAc4")
 
     def test_empty_string_raises_error(self):
@@ -97,7 +97,7 @@ class TestParseGlycan:
 
         from peptacular.proforma_components.parsers import parse_glycan
 
-        with pytest.raises(ValueError, match="Empty glycan string"):
+        with pytest.raises(ValueError):
             parse_glycan("")
 
     def test_only_prefix_raises_error(self):

@@ -64,9 +64,7 @@ class Fragment:
             for adduct_name, count in self._charge_adducts.items():
                 adducts.append(
                     GlobalChargeCarrier(
-                        ChargedFormula.from_string(
-                            adduct_name, require_formula_prefix=False
-                        ),
+                        ChargedFormula.from_string(adduct_name, require_formula_prefix=False),
                         count,
                     )
                 )
@@ -90,10 +88,7 @@ class Fragment:
                 return {ELEMENT_LOOKUP["13C"]: self._isotopes}
 
             if isinstance(self._isotopes, dict):
-                return {
-                    ELEMENT_LOOKUP[elem]: count
-                    for elem, count in self._isotopes.items()
-                }
+                return {ELEMENT_LOOKUP[elem]: count for elem, count in self._isotopes.items()}
 
         return {}
 
@@ -111,9 +106,7 @@ class Fragment:
                 if isinstance(loss_name, float | int):
                     losses[loss_name] = count
                     continue
-                loss_formula = ChargedFormula.from_string(
-                    loss_name, require_formula_prefix=False
-                )
+                loss_formula = ChargedFormula.from_string(loss_name, require_formula_prefix=False)
                 losses[loss_formula] = count
             return losses
         return {}
@@ -138,7 +131,7 @@ class Fragment:
         mass_error_type: Literal["ppm", "da"] = "ppm",
     ) -> Any:
         """Convert fragment to mzPAF format string."""
-        import paftacular as pft # ty: ignore
+        import paftacular as pft
 
         ion = None
         internal_loss = None
@@ -186,10 +179,7 @@ class Fragment:
                         ion = pft.ImmoniumIon(amino_acid=pft.AminoAcids(position))
 
                     else:
-                        if (
-                            not isinstance(self.position, tuple)
-                            or len(self.position) != 2
-                        ):
+                        if not isinstance(self.position, tuple) or len(self.position) != 2:
                             start = -1
                             end = -1
                         else:
@@ -197,12 +187,8 @@ class Fragment:
 
                         internal_ion_key = tuple(list(ion_info.ion_type.value))
                         if internal_ion_key not in pft.INTERNAL_MASS_DIFFS:
-                            raise ValueError(
-                                f"Internal ion type {ion_info.ion_type} not supported in mzPAF."
-                            )
-                        internal_loss: None | str = pft.INTERNAL_MASS_DIFFS[
-                            internal_ion_key
-                        ]
+                            raise ValueError(f"Internal ion type {ion_info.ion_type} not supported in mzPAF.")
+                        internal_loss: None | str = pft.INTERNAL_MASS_DIFFS[internal_ion_key]
                         ion = pft.InternalFragment(
                             start_position=start,
                             end_position=end,
@@ -212,16 +198,12 @@ class Fragment:
                     if ion_info.ion_type == IonType.PRECURSOR:
                         ion = pft.PrecursorIon()
                     else:
-                        raise ValueError(
-                            f"Cannot convert intact ion type {ion_info.id} to mzPAF."
-                        )
+                        raise ValueError(f"Cannot convert intact ion type {ion_info.id} to mzPAF.")
                 case _:
                     pass
 
         if ion is None:
-            raise ValueError(
-                f"Cannot convert fragment with ion type {ion_info.id} to mzPAF."
-            )
+            raise ValueError(f"Cannot convert fragment with ion type {ion_info.id} to mzPAF.")
 
         # handle isotope
         isotopes: list[pft.IsotopeSpecification] = []
@@ -231,9 +213,7 @@ class Fragment:
                 if _isotopes is None:
                     raise ValueError("Isotopes property is None despite dict type.")
                 for element, count in _isotopes.items():
-                    isotopes.append(
-                        pft.IsotopeSpecification(element=str(element), count=count)
-                    )
+                    isotopes.append(pft.IsotopeSpecification(element=str(element), count=count))
             case int() as iso_count:
                 isotopes.append(pft.IsotopeSpecification(count=iso_count))
             case None:
@@ -255,14 +235,10 @@ class Fragment:
                         paf_formula = loss.to_mz_paf()
                         sign = paf_formula[0]
                         if sign not in ("+", "-"):
-                            raise ValueError(
-                                f"Invalid formula sign in loss: {paf_formula}"
-                            )
+                            raise ValueError(f"Invalid formula sign in loss: {paf_formula}")
                         mult = 1 if sign == "+" else -1
 
-                        nloss = pft.NeutralLoss(
-                            count=count * mult, base_formula=paf_formula[1:]
-                        )  #   skip +/- sign
+                        nloss = pft.NeutralLoss(count=count * mult, base_formula=paf_formula[1:])  #   skip +/- sign
                         losses.append(nloss)
                     else:
                         raise TypeError(f"Invalid loss type in tuple: {type(loss)}")
@@ -278,10 +254,7 @@ class Fragment:
         pzpaf_adducts: list[pft.Adduct] = []
         if self._charge_adducts is not None:
             _adducts: tuple[GlobalChargeCarrier, ...] = self.charge_adducts
-            pzpaf_adducts = [
-                pft.Adduct(count=a.occurance, base_formula=a.to_mz_paf()[2:])
-                for a in _adducts
-            ]
+            pzpaf_adducts = [pft.Adduct(count=a.occurance, base_formula=a.to_mz_paf()[2:]) for a in _adducts]
 
         mz_paf_mass_error = None
         if mass_error is not None:
@@ -298,11 +271,9 @@ class Fragment:
         )
 
     @staticmethod
-    def from_mzpaf(
-        paf: Any | str, mass: float, monoisotopic: bool = True
-    ) -> "Fragment":
+    def from_mzpaf(paf: Any | str, mass: float, monoisotopic: bool = True) -> "Fragment":
         """Create Fragment from mzPAF PafAnnotation."""
-        import paftacular as pft # ty: ignore
+        import paftacular as pft
 
         if isinstance(paf, str):
             paf = pft.parse_single(paf)
@@ -333,11 +304,7 @@ class Fragment:
 
                 # Check for structural losses
                 candidates = [
-                    it
-                    for it in IonType
-                    if (info := FRAGMENT_ION_LOOKUP.get(it))
-                    and info.properties == IonTypeProperty.INTERNAL
-                    and it != IonType.IMMONIUM
+                    it for it in IonType if (info := FRAGMENT_ION_LOOKUP.get(it)) and info.properties == IonTypeProperty.INTERNAL and it != IonType.IMMONIUM
                 ]
 
                 # We prioritize finding a matching structural loss
@@ -351,10 +318,7 @@ class Fragment:
                         target_count = 1 if sign == "+" else -1
 
                         for i, loss in enumerate(paf.neutral_losses):
-                            if (
-                                loss.base_formula == formula
-                                and loss.count == target_count
-                            ):
+                            if loss.base_formula == formula and loss.count == target_count:
                                 ion_type = it
                                 structural_loss_indices.add(i)
                                 break
@@ -379,11 +343,7 @@ class Fragment:
                 only_c13 = False
             isotopes[elem] = isotopes.get(elem, 0) + iso.count
 
-        final_isotopes = (
-            c13_count
-            if only_c13 and c13_count > 0
-            else (isotopes if isotopes else None)
-        )
+        final_isotopes = c13_count if only_c13 and c13_count > 0 else (isotopes if isotopes else None)
 
         # Losses
         deltas = {}

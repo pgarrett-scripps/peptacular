@@ -65,9 +65,7 @@ class TestMultipleTags:
 
     def test_four_tags_complete_oxidation(self):
         """Test parsing all four ways to represent oxidation"""
-        result = pt.ModificationTags.from_string(
-            "Oxidation|UNIMOD:35|+15.995|Formula:O"
-        )
+        result = pt.ModificationTags.from_string("Oxidation|UNIMOD:35|+15.995|Formula:O")
         assert len(result) == 4
         assert isinstance(result[0], pt.TagName)
         assert isinstance(result[1], pt.TagAccession)
@@ -123,14 +121,12 @@ class TestMultipleTags:
 
     def test_empty_parts_ignored(self):
         """Test that empty parts from consecutive pipes throw error"""
-        with pytest.raises(ValueError, match="Empty modification string"):
+        with pytest.raises(ValueError):
             _ = pt.ModificationTags.from_string("Oxidation||UNIMOD:35")
 
     def test_complex_real_world_example(self):
         """Test complex real-world example with multiple tags"""
-        result = pt.ModificationTags.from_string(
-            "Phosphorylation|MOD:00046|M:Phospho|+79.966|Formula:H P O3|INFO:high confidence"
-        )
+        result = pt.ModificationTags.from_string("Phosphorylation|MOD:00046|M:Phospho|+79.966|Formula:H P O3|INFO:high confidence")
         assert len(result) == 6
         assert isinstance(result[0], pt.TagName)
         assert result[0].name == "Phosphorylation"

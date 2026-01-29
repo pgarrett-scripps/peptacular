@@ -28,25 +28,19 @@ class TestParallelApply(unittest.TestCase):
     def test_process_method(self):
         """Test multiprocessing execution method."""
         items = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-        result = parallel_apply_internal(
-            _simple_double, items, method="process", n_workers=2, chunksize=2
-        )
+        result = parallel_apply_internal(_simple_double, items, method="process", n_workers=2, chunksize=2)
         self.assertEqual(result, [2, 4, 6, 8, 10, 12, 14, 16, 18, 20])
 
     def test_thread_method(self):
         """Test threading execution method."""
         items = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-        result = parallel_apply_internal(
-            _simple_double, items, method="thread", n_workers=2, chunksize=2
-        )
+        result = parallel_apply_internal(_simple_double, items, method="thread", n_workers=2, chunksize=2)
         self.assertEqual(result, [2, 4, 6, 8, 10, 12, 14, 16, 18, 20])
 
     def test_with_kwargs(self):
         """Test parallel execution with keyword arguments."""
         items = [1, 2, 3, 4, 5]
-        result = parallel_apply_internal(
-            _add_value, items, method="sequential", value=10
-        )
+        result = parallel_apply_internal(_add_value, items, method="sequential", value=10)
         self.assertEqual(result, [11, 12, 13, 14, 15])
 
     def test_order_preservation(self):

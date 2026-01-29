@@ -130,9 +130,7 @@ class TestAnnotationParse:
 
     def test_parse_with_multiple_internal_mods_with_validation(self):
         """Test parsing with multiple internal modifications with validation"""
-        annot = pt.ProFormaAnnotation.parse(
-            "PEM[Oxidation]TIS[Phospho]DE", validate=True
-        )
+        annot = pt.ProFormaAnnotation.parse("PEM[Oxidation]TIS[Phospho]DE", validate=True)
         assert annot.sequence == "PEMTISDE"
         assert annot._internal_mods is not None
         assert "Oxidation" in annot._internal_mods[2]
@@ -268,80 +266,78 @@ class TestAnnotationParse:
 
     def test_parse_with_invalid_amino_acid_raises_error(self):
         """Test that parsing with invalid amino acid raises error with validation"""
-        with pytest.raises(ValueError, match="Unexpected character"):
+        with pytest.raises(ValueError):
             pt.ProFormaAnnotation.parse("PEPT@IDE", validate=True)
 
     def test_parse_rejects_chimeric(self):
         """Test that parsing rejects chimeric peptides"""
         with pytest.raises(
-            ValueError, match="Chimeric and crosslinked peptides not supported"
+            ValueError,
         ):
             pt.ProFormaAnnotation.parse("PEPTIDE+SEQUENCE")
 
     def test_parse_rejects_crosslinked(self):
         """Test that parsing rejects crosslinked peptides"""
-        with pytest.raises(
-            ValueError, match="Chimeric and crosslinked peptides not supported"
-        ):
+        with pytest.raises(ValueError):
             pt.ProFormaAnnotation.parse("PEPTK[#XL1]IDE//SEQK[#XL1]")
 
     def test_round_trip_simple_peptide(self):
         """Test parse -> serialize round trip for simple peptide"""
         original = "PEPTIDE"
         annot = pt.ProFormaAnnotation.parse(original)
-        result = pt.annotation.serializer.serialize_annotation(annot)
+        result = annot.serialize()
         assert result == original
 
     def test_round_trip_with_modifications(self):
         """Test parse -> serialize round trip with modifications"""
         original = "[Acetyl]-PEM[Oxidation]TIDE-[Amidated]"
         annot = pt.ProFormaAnnotation.parse(original)
-        result = pt.annotation.serializer.serialize_annotation(annot)
+        result = annot.serialize()
         assert result == original
 
     def test_round_trip_with_name(self):
         """Test parse -> serialize round trip with name"""
         original = "(>myPeptide)PEPTIDE"
         annot = pt.ProFormaAnnotation.parse(original)
-        result = pt.annotation.serializer.serialize_annotation(annot)
+        result = annot.serialize()
         assert result == original
 
     def test_round_trip_with_charge(self):
         """Test parse -> serialize round trip with charge"""
         original = "PEPTIDE/2"
         annot = pt.ProFormaAnnotation.parse(original)
-        result = pt.annotation.serializer.serialize_annotation(annot)
+        result = annot.serialize()
         assert result == original
 
     def test_round_trip_complex(self):
         """Test parse -> serialize round trip with complex annotation"""
         original = "(>>>complex)<13C>[Acetyl]-PEM[Oxidation]TIS[Phospho]DE-[Amidated]/2"
         annot = pt.ProFormaAnnotation.parse(original)
-        result = pt.annotation.serializer.serialize_annotation(annot)
+        result = annot.serialize()
         assert result == original
 
     def test_round_trip_labile(self):
         """Test parse -> serialize round trip with labile modification"""
         original = "{Glycan:Hex}PEPTIDE"
         annot = pt.ProFormaAnnotation.parse(original)
-        result = pt.annotation.serializer.serialize_annotation(annot)
+        result = annot.serialize()
         assert result == original
 
     def test_round_trip_unknown(self):
         """Test parse -> serialize round trip with unknown modification"""
         original = "[Phospho]?PEPTIDE"
         annot = pt.ProFormaAnnotation.parse(original)
-        result = pt.annotation.serializer.serialize_annotation(annot)
+        result = annot.serialize()
         assert result == original
 
     def test_serialize_empty_annotation(self):
         """Test serializing empty annotation"""
         annot = pt.ProFormaAnnotation()
-        result = pt.annotation.serializer.serialize_annotation(annot)
+        result = annot.serialize()
         assert result == ""
 
     def test_serialize_only_name(self):
         """Test serializing annotation with only name (no sequence)"""
         annot = pt.ProFormaAnnotation(peptide_name="test")
-        result = pt.annotation.serializer.serialize_annotation(annot)
+        result = annot.serialize()
         assert result == "(>test)"

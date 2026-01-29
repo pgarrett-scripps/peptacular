@@ -50,14 +50,8 @@ def as_tag_name(mod: OboEntity, include_cv: bool = False) -> TagName:
     )
 
 
-def as_tag_mass(
-    mod: OboEntity, monoisotopic: bool = True, include_cv: bool = False
-) -> TagMass:
-    mass = (
-        mod.monoisotopic_mass
-        if monoisotopic and mod.monoisotopic_mass is not None
-        else mod.average_mass
-    )
+def as_tag_mass(mod: OboEntity, monoisotopic: bool = True, include_cv: bool = False) -> TagMass:
+    mass = mod.monoisotopic_mass if monoisotopic and mod.monoisotopic_mass is not None else mod.average_mass
 
     if mass is None:
         raise ValueError(f"Mass not available for modification: {mod}")
@@ -70,16 +64,12 @@ def as_tag_mass(
 
 def get_random_psimod() -> "PsimodInfo":
     """Get a random PSI-MOD modification with mass and composition."""
-    return PSIMOD_LOOKUP.choice(
-        require_monoisotopic_mass=True, require_composition=True
-    )
+    return PSIMOD_LOOKUP.choice(require_monoisotopic_mass=True, require_composition=True)
 
 
 def get_random_unimod() -> "UnimodInfo":
     """Get a random Unimod modification with mass and composition."""
-    return UNIMOD_LOOKUP.choice(
-        require_monoisotopic_mass=True, require_composition=True
-    )
+    return UNIMOD_LOOKUP.choice(require_monoisotopic_mass=True, require_composition=True)
 
 
 def get_random_mod_component(require_composition: bool = True) -> str:
@@ -93,9 +83,7 @@ def get_random_mod_component(require_composition: bool = True) -> str:
     m = mod_list()
 
     # When composition is required, exclude mass-only modifications
-    mod_type = choice(
-        ["name", "accession"] if require_composition else ["name", "accession", "mass"]
-    )
+    mod_type = choice(["name", "accession"] if require_composition else ["name", "accession", "mass"])
 
     match mod_type:
         case "name":
@@ -103,16 +91,12 @@ def get_random_mod_component(require_composition: bool = True) -> str:
         case "accession":
             return as_tag_accession(m).serialize()
         case "mass":
-            return as_tag_mass(
-                m, monoisotopic=True, include_cv=choice([True, False])
-            ).serialize()
+            return as_tag_mass(m, monoisotopic=True, include_cv=choice([True, False])).serialize()
         case _:
             raise ValueError(f"Invalid mod type: {mod_type}")
 
 
-def get_random_mod_dict(
-    mod_probability: float, require_composition: bool = True
-) -> dict[str, int]:
+def get_random_mod_dict(mod_probability: float, require_composition: bool = True) -> dict[str, int]:
     """Generate a dictionary of random modifications.
 
     Args:
@@ -121,9 +105,7 @@ def get_random_mod_dict(
     """
     mod_dict: dict[str, int] = {}
     while random() < mod_probability:
-        mod_component = get_random_mod_component(
-            require_composition=require_composition
-        )
+        mod_component = get_random_mod_component(require_composition=require_composition)
         # should be 1 most of the time, but occasionally have multiple mods
         mod_count = 1 if random() < MULTIPLE_MOD_THRESHOLD else randint(2, 3)
         mod_dict[mod_component] = mod_dict.get(mod_component, 0) + mod_count
@@ -134,9 +116,7 @@ def get_random_mod_dict(
 @lru_cache(maxsize=1)
 def _get_specific_isotopes() -> tuple:
     """Cache the list of non-monoisotopic isotopes."""
-    return tuple(
-        elem for elem in ELEMENT_LOOKUP.values() if elem.is_monoisotopic is not None
-    )
+    return tuple(elem for elem in ELEMENT_LOOKUP.values() if elem.is_monoisotopic is not None)
 
 
 def generate_random_isotope_mod() -> str:
@@ -171,9 +151,7 @@ def generate_static_mod(require_composition: bool = True) -> str:
     return f"[{mod_component}]@{aa_string}"
 
 
-def generate_static_mods_dict(
-    mod_probability: float, require_composition: bool = True
-) -> dict[str, int]:
+def generate_static_mods_dict(mod_probability: float, require_composition: bool = True) -> dict[str, int]:
     """Generate a dictionary with a single static modification.
 
     Args:
@@ -218,9 +196,7 @@ def generate_random_intervals(
             end = randint(start + 1, max_end)
 
             ambiguous = choice([True, False])
-            mods = get_random_mod_dict(
-                mod_probability, require_composition=require_composition
-            )
+            mods = get_random_mod_dict(mod_probability, require_composition=require_composition)
 
             interval = Interval(start=start, end=end, ambiguous=ambiguous, mods=mods)
             intervals.append(interval)
@@ -296,9 +272,7 @@ def generate_random_proforma_annotation(
         else:
             return annot
 
-    raise RuntimeError(
-        "Failed to generate ProForma annotation with valid composition after multiple attempts."
-    )
+    raise RuntimeError("Failed to generate ProForma annotation with valid composition after multiple attempts.")
 
 
 def _generate_random_proforma_annotation(
@@ -325,9 +299,7 @@ def _generate_random_proforma_annotation(
     internal_mods: dict[int, dict[str, int]] = {}
     if include_internal_mods:
         for i in range(length):
-            mod_dict = get_random_mod_dict(
-                mod_probability, require_composition=require_composition
-            )
+            mod_dict = get_random_mod_dict(mod_probability, require_composition=require_composition)
             if mod_dict:
                 internal_mods[i] = mod_dict
 
@@ -341,35 +313,13 @@ def _generate_random_proforma_annotation(
 
     return ProFormaAnnotation(
         sequence="".join(sequence_chars),
-        nterm_mods=get_random_mod_dict(
-            mod_probability, require_composition=require_composition
-        )
-        if include_nterm_mods
-        else None,
-        cterm_mods=get_random_mod_dict(
-            mod_probability, require_composition=require_composition
-        )
-        if include_cterm_mods
-        else None,
-        labile_mods=get_random_mod_dict(
-            mod_probability, require_composition=require_composition
-        )
-        if include_labile_mods
-        else None,
-        unknown_mods=get_random_mod_dict(
-            mod_probability, require_composition=require_composition
-        )
-        if include_unknown_mods
-        else None,
+        nterm_mods=get_random_mod_dict(mod_probability, require_composition=require_composition) if include_nterm_mods else None,
+        cterm_mods=get_random_mod_dict(mod_probability, require_composition=require_composition) if include_cterm_mods else None,
+        labile_mods=get_random_mod_dict(mod_probability, require_composition=require_composition) if include_labile_mods else None,
+        unknown_mods=get_random_mod_dict(mod_probability, require_composition=require_composition) if include_unknown_mods else None,
         internal_mods=internal_mods if internal_mods else None,
-        isotope_mods=generate_isotope_mod_dict(mod_probability)
-        if include_isotopic_mods
-        else None,
-        static_mods=generate_static_mods_dict(
-            mod_probability, require_composition=require_composition
-        )
-        if include_static_mods
-        else None,
+        isotope_mods=generate_isotope_mod_dict(mod_probability) if include_isotopic_mods else None,
+        static_mods=generate_static_mods_dict(mod_probability, require_composition=require_composition) if include_static_mods else None,
         intervals=generate_random_intervals(
             length,
             interval_probability=mod_probability,

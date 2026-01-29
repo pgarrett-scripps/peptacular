@@ -22,11 +22,7 @@ H_ELEMENT_INFO = ELEMENT_LOOKUP["H"]
 
 
 def _handle_charge_input_mass(
-    charge: int
-    | str
-    | GlobalChargeCarrier
-    | tuple[GlobalChargeCarrier | str, ...]
-    | Mods[GlobalChargeCarrier],
+    charge: int | str | GlobalChargeCarrier | tuple[GlobalChargeCarrier | str, ...] | Mods[GlobalChargeCarrier],
     monoisotopic: bool,
 ) -> tuple[float, int]:
     if isinstance(charge, Mods):
@@ -51,9 +47,7 @@ def _handle_charge_input_mass(
         charge_value = 0
         for global_charge_carrier in charge:
             if isinstance(global_charge_carrier, str):
-                global_charge_carrier = GlobalChargeCarrier.from_string(
-                    global_charge_carrier
-                )
+                global_charge_carrier = GlobalChargeCarrier.from_string(global_charge_carrier)
             m = global_charge_carrier.get_mass(monoisotopic=monoisotopic)
             base_mass += m
             charge_value += global_charge_carrier.get_charge()
@@ -82,9 +76,7 @@ def handle_charge_input_comp(
     elif isinstance(charge, tuple):
         for global_charge_carrier in charge:
             if isinstance(global_charge_carrier, str):
-                global_charge_carrier = GlobalChargeCarrier.from_string(
-                    global_charge_carrier
-                )
+                global_charge_carrier = GlobalChargeCarrier.from_string(global_charge_carrier)
             comp = global_charge_carrier.get_composition()
             for element, elem_count in comp.items():
                 base_comp[element] += elem_count
@@ -124,11 +116,7 @@ def adjust_mass_mz(
     # Correct for electron mass based on charge
     base_mass += charge.get_mass(monoisotopic)
 
-    ion_info: FragmentIonInfo = (
-        FRAGMENT_ION_LOOKUP[ion_type]
-        if not isinstance(ion_type, FragmentIonInfo)
-        else ion_type
-    )
+    ion_info: FragmentIonInfo = FRAGMENT_ION_LOOKUP[ion_type] if not isinstance(ion_type, FragmentIonInfo) else ion_type
     base_mass += ion_info.get_mass(monoisotopic=monoisotopic)
 
     base_mass -= total_charge * ELECTRON_MASS
@@ -171,11 +159,7 @@ def adjust_comp(
     # Build fragment notation for losses
     delta.adjust_composition(base_comp)
 
-    ion_info = (
-        FRAGMENT_ION_LOOKUP[ion_type]
-        if not isinstance(ion_type, FragmentIonInfo)
-        else ion_type
-    )
+    ion_info = FRAGMENT_ION_LOOKUP[ion_type] if not isinstance(ion_type, FragmentIonInfo) else ion_type
 
     base_comp += ion_info.composition
 
@@ -250,9 +234,7 @@ def process_losses(
 ) -> Mapping[ChargedFormula | float, int]:
     """Convert loss input to composition counter."""
     if isinstance(losses, str):
-        return {
-            ChargedFormula.from_composition(NEUTRAL_DELTA_LOOKUP[losses].composition): 1
-        }
+        return {ChargedFormula.from_composition(NEUTRAL_DELTA_LOOKUP[losses].composition): 1}
     if isinstance(losses, ChargedFormula):
         return {losses: 1}
     if isinstance(losses, float):
@@ -266,14 +248,12 @@ def process_losses(
     for key, count in losses.items():
         if isinstance(key, str):
             try:
-                loss = ChargedFormula.from_composition(
-                    NEUTRAL_DELTA_LOOKUP[key].composition
-                )
+                loss = ChargedFormula.from_composition(NEUTRAL_DELTA_LOOKUP[key].composition)
                 total[loss] += count
-            except KeyError:
+            except KeyError as e:
                 loss = ChargedFormula.from_string(key, require_formula_prefix=False)
                 if loss.charge:
-                    raise ValueError(f"Loss formula cannot have charge: {key}")
+                    raise ValueError(f"Loss formula cannot have charge: {key}") from e
                 total[loss] += count
         elif isinstance(key, ChargedFormula):
             total[key] += count
@@ -293,14 +273,10 @@ def cumsum(numbers: Sequence[float], reverse: bool = False) -> list[float]: ...
 
 
 @overload
-def cumsum(
-    numbers: Sequence[Counter[Any]], reverse: bool = False
-) -> list[Counter[Any]]: ...
+def cumsum(numbers: Sequence[Counter[Any]], reverse: bool = False) -> list[Counter[Any]]: ...
 
 
-def cumsum(
-    numbers: Sequence[float] | Sequence[Counter[Any]], reverse: bool = False
-) -> list[float] | list[Counter[Any]]:
+def cumsum(numbers: Sequence[float] | Sequence[Counter[Any]], reverse: bool = False) -> list[float] | list[Counter[Any]]:
     """Compute cumulative sum of a list of numbers or Counters."""
     match numbers:
         case [Counter(), *_]:
@@ -322,9 +298,7 @@ def cumsum(
             return result_num
 
         case _:
-            raise TypeError(
-                f"cumsum expects sequence of float or Counter, got {type(numbers[0])}"
-            )
+            raise TypeError(f"cumsum expects sequence of float or Counter, got {type(numbers[0])}")
 
 
 # Define rules: ion_type -> (position, required_aas, excluded_aas, specific_ion_map)
@@ -384,14 +358,10 @@ def can_fragment_sequence(sequence: str, ion_type: IonType | IonTypeLiteral) -> 
     aa = last_aa if position == "end" else first_aa
 
     if excluded and aa in excluded:
-        raise ValueError(
-            f"{ion_type.name} fragments cannot be produced from sequences {position}ing in {aa}."
-        )
+        raise ValueError(f"{ion_type.name} fragments cannot be produced from sequences {position}ing in {aa}.")
 
     if required and aa not in required:
-        raise ValueError(
-            f"{ion_type.name} fragments can only be produced from sequences {position}ing in {', or '.join(required)}."
-        )
+        raise ValueError(f"{ion_type.name} fragments can only be produced from sequences {position}ing in {', or '.join(required)}.")
 
     if specific_map and aa in specific_map:
         return specific_map[aa]

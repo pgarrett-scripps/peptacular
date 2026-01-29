@@ -8,9 +8,7 @@ class TestProtein(unittest.TestCase):
         # Test basic functionality
         self.assertEqual(find_subsequence_indices("AAPEPTIDEAA", "PEPTIDE"), [2])
         # Test with multiple occurrences
-        self.assertEqual(
-            find_subsequence_indices("AAPEPTIDEPEPTIDEAA", "PEPTIDE"), [2, 9]
-        )
+        self.assertEqual(find_subsequence_indices("AAPEPTIDEPEPTIDEAA", "PEPTIDE"), [2, 9])
         # Test peptide not in protein
         self.assertEqual(find_subsequence_indices("AAPEPTIDEAA", "XYZ"), [])
 

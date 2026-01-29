@@ -262,9 +262,7 @@ class TestProFormaAnnotationGeneration:
 
     def test_generate_random_proforma_annotation_parseable(self):
         """Test that generated annotation can be parsed back."""
-        annot = generate_random_proforma_annotation(
-            mod_probability=0.2, require_composition=True
-        )
+        annot = generate_random_proforma_annotation(mod_probability=0.2, require_composition=True)
         proforma_str = annot.serialize()
         parsed = ProFormaAnnotation.parse(proforma_str)
         assert parsed.sequence == annot.sequence
@@ -289,9 +287,7 @@ class TestFunctionalAPI:
 
     def test_generate_random_with_params(self):
         """Test generating with custom parameters."""
-        seq = pt.generate_random(
-            min_length=10, max_length=15, mod_probability=0.1, include_charge=False
-        )
+        seq = pt.generate_random(min_length=10, max_length=15, mod_probability=0.1, include_charge=False)
         assert 10 <= len(seq.sequence) <= 15
         assert seq.charge is None
 

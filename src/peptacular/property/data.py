@@ -494,10 +494,10 @@ DIWV: Final[dict[_AA, dict[str, float]]] = {
 https://www.peptideweb.com/images/pdf/pKa-and-pI-values-of-amino-acids.pdf
 """
 
-pk_nterminal: Final[dict[str, float]] = { 
+pk_nterminal: Final[dict[str, float]] = {
       _AA.A: 9.69, _AA.R: 9.04, _AA.N: 8.80, _AA.D: 9.82, _AA.C: 10.78,
-      _AA.Q: 9.13, _AA.E: 9.67, _AA.G: 9.60, _AA.H: 9.17, _AA.I: 9.60, 
-      _AA.L: 9.60, _AA.K: 8.95, _AA.M: 9.21, _AA.F: 9.13, _AA.P: 10.60, 
+      _AA.Q: 9.13, _AA.E: 9.67, _AA.G: 9.60, _AA.H: 9.17, _AA.I: 9.60,
+      _AA.L: 9.60, _AA.K: 8.95, _AA.M: 9.21, _AA.F: 9.13, _AA.P: 10.60,
       _AA.S: 9.15, _AA.T: 9.10, _AA.W: 9.44, _AA.Y: 9.11, _AA.V: 9.62
 }
 pk_cterminal: Final[dict[str, float]] = {
@@ -817,7 +817,7 @@ Author(s):
 Zimmerman J.M., Eliezer N., Simha R.
 Reference: J. Theor. Biol. 21:170-201(1968).
 
-https://web.expasy.org/protscale/pscale/Bulkiness.html 
+https://web.expasy.org/protscale/pscale/Bulkiness.html
 """
 
 bulkiness: Final[dict[str, float]] = {
@@ -862,7 +862,7 @@ Amino acid scale: Amino acid composition (%) in the UniProtKB/Swiss-Prot data ba
 Author(s):
 Bairoch A.
 Reference: Release notes for UniProtKB/Swiss-Prot release 2013_04 - April 2013.
-https://web.expasy.org/protscale/pscale/A.A.Swiss-Prot.html 
+https://web.expasy.org/protscale/pscale/A.A.Swiss-Prot.html
 """
 
 aa_composition_swissprot: Final[dict[str, float]] = {

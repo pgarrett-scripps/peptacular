@@ -15,11 +15,7 @@ def _reverse_single(
     keep_nterm: int = 0,
     keep_cterm: int = 0,
 ) -> str:
-    return (
-        get_annotation_input(sequence=sequence, copy=True)
-        .reverse(inplace=True, keep_nterm=keep_nterm, keep_cterm=keep_cterm)
-        .serialize()
-    )
+    return get_annotation_input(sequence=sequence, copy=True).reverse(inplace=True, keep_nterm=keep_nterm, keep_cterm=keep_cterm).serialize()
 
 
 @overload
@@ -70,11 +66,7 @@ def reverse(
         'PEEDITP'
 
     """
-    if (
-        isinstance(sequence, Sequence)
-        and not isinstance(sequence, str)
-        and not isinstance(sequence, ProFormaAnnotation)
-    ):
+    if isinstance(sequence, Sequence) and not isinstance(sequence, str) and not isinstance(sequence, ProFormaAnnotation):
         return parallel_apply_internal(
             _reverse_single,
             sequence,
@@ -95,11 +87,7 @@ def _shuffle_single(
     keep_cterm: int = 0,
 ) -> str:
     """Internal function for shuffling a single sequence."""
-    return (
-        get_annotation_input(sequence=sequence, copy=True)
-        .shuffle(seed=seed, keep_nterm=keep_nterm, keep_cterm=keep_cterm, inplace=True)
-        .serialize()
-    )
+    return get_annotation_input(sequence=sequence, copy=True).shuffle(seed=seed, keep_nterm=keep_nterm, keep_cterm=keep_cterm, inplace=True).serialize()
 
 
 @overload
@@ -152,11 +140,7 @@ def shuffle(
         'PEITPED'
 
     """
-    if (
-        isinstance(sequence, Sequence)
-        and not isinstance(sequence, str)
-        and not isinstance(sequence, ProFormaAnnotation)
-    ):
+    if isinstance(sequence, Sequence) and not isinstance(sequence, str) and not isinstance(sequence, ProFormaAnnotation):
         return parallel_apply_internal(
             _shuffle_single,
             sequence,
@@ -178,11 +162,7 @@ def _shift_single(
     keep_cterm: int = 0,
 ) -> str:
     """Internal function for shifting a single sequence."""
-    return (
-        get_annotation_input(sequence=sequence, copy=True)
-        .shift(n=n, keep_nterm=keep_nterm, keep_cterm=keep_cterm, inplace=True)
-        .serialize()
-    )
+    return get_annotation_input(sequence=sequence, copy=True).shift(n=n, keep_nterm=keep_nterm, keep_cterm=keep_cterm, inplace=True).serialize()
 
 
 @overload
@@ -235,11 +215,7 @@ def shift(
         'PEIDEPT'
 
     """
-    if (
-        isinstance(sequence, Sequence)
-        and not isinstance(sequence, str)
-        and not isinstance(sequence, ProFormaAnnotation)
-    ):
+    if isinstance(sequence, Sequence) and not isinstance(sequence, str) and not isinstance(sequence, ProFormaAnnotation):
         return parallel_apply_internal(
             _shift_single,
             sequence,
@@ -258,11 +234,7 @@ def _span_to_sequence_single(
     sequence: str | ProFormaAnnotation,
     span: tuple[int, int, int],
 ) -> str:
-    return (
-        get_annotation_input(sequence=sequence, copy=True)
-        .slice(span[0], span[1], inplace=True)
-        .serialize()
-    )
+    return get_annotation_input(sequence=sequence, copy=True).slice(span[0], span[1], inplace=True).serialize()
 
 
 @overload
@@ -304,11 +276,7 @@ def span_to_sequence(
         'PEPT'
 
     """
-    if (
-        isinstance(sequence, Sequence)
-        and not isinstance(sequence, str)
-        and not isinstance(sequence, ProFormaAnnotation)
-    ):
+    if isinstance(sequence, Sequence) and not isinstance(sequence, str) and not isinstance(sequence, ProFormaAnnotation):
         return parallel_apply_internal(
             _span_to_sequence_single,
             sequence,
@@ -324,10 +292,7 @@ def span_to_sequence(
 def _split_single(
     sequence: str | ProFormaAnnotation,
 ) -> list[str]:
-    return [
-        a.serialize()
-        for a in get_annotation_input(sequence=sequence, copy=True).split()
-    ]
+    return [a.serialize() for a in get_annotation_input(sequence=sequence, copy=True).split()]
 
 
 @overload
@@ -364,11 +329,7 @@ def split(
         ['P', 'E', 'P', 'T', 'I', 'D', 'E']
 
     """
-    if (
-        isinstance(sequence, Sequence)
-        and not isinstance(sequence, str)
-        and not isinstance(sequence, ProFormaAnnotation)
-    ):
+    if isinstance(sequence, Sequence) and not isinstance(sequence, str) and not isinstance(sequence, ProFormaAnnotation):
         return parallel_apply_internal(
             _split_single,
             sequence,
@@ -385,11 +346,7 @@ def _sort_single(
     key: Callable[[str], Any] | None = None,
     reverse: bool = False,
 ) -> str:
-    return (
-        get_annotation_input(sequence=sequence, copy=True)
-        .sort(inplace=True, key=key, reverse=reverse)
-        .serialize()
-    )
+    return get_annotation_input(sequence=sequence, copy=True).sort(inplace=True, key=key, reverse=reverse).serialize()
 
 
 @overload
@@ -435,11 +392,7 @@ def sort(
         'DEEIPPT'
 
     """
-    if (
-        isinstance(sequence, Sequence)
-        and not isinstance(sequence, str)
-        and not isinstance(sequence, ProFormaAnnotation)
-    ):
+    if isinstance(sequence, Sequence) and not isinstance(sequence, str) and not isinstance(sequence, ProFormaAnnotation):
         return parallel_apply_internal(
             _sort_single,
             sequence,
@@ -479,8 +432,7 @@ def join(
 
 
 def join(
-    annotations: Sequence[ProFormaAnnotation | str]
-    | Sequence[Sequence[ProFormaAnnotation | str]],
+    annotations: Sequence[ProFormaAnnotation | str] | Sequence[Sequence[ProFormaAnnotation | str]],
     n_workers: int | None = None,
     chunksize: int | None = None,
     method: parallelMethod | parallelMethodLiteral | None = None,
@@ -495,11 +447,7 @@ def join(
         'PEPTIDEMODIFIED'
 
     """
-    if (
-        isinstance(annotations, Sequence)
-        and isinstance(annotations[0], Sequence)
-        and not isinstance(annotations[0], (str, ProFormaAnnotation))
-    ):
+    if isinstance(annotations, Sequence) and isinstance(annotations[0], Sequence) and not isinstance(annotations[0], (str, ProFormaAnnotation)):
         return parallel_apply_internal(
             _join_single,
             annotations,

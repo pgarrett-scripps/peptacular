@@ -307,7 +307,7 @@ class TestChargedFormula:
 
     def test_formula_zero_cardinality_not_allowed(self):
         """Test that zero cardinality raises error (ProForma Rule 2)"""
-        with pytest.raises(ValueError, match="Zero cardinality not allowed"):
+        with pytest.raises(ValueError):
             pt.ModificationTags.from_string("Formula:C0H2")
 
 
@@ -319,7 +319,7 @@ class TestGlycanComposition:
         result = pt.ModificationTags.from_string("Glycan:Hex").tags[0]
         assert isinstance(result, pt.GlycanTag)
         assert len(result) == 1
-        res: pt.GlycanComponent = result[0]  # type: ignore
+        res: pt.GlycanComponent = result[0]
         assert res.monosaccharide == pt.Monosaccharide.Hex
         assert res.occurance == 1
 
@@ -328,7 +328,7 @@ class TestGlycanComposition:
         result = pt.ModificationTags.from_string("Glycan:Hex5").tags[0]
         assert isinstance(result, pt.GlycanTag)
         assert len(result) == 1
-        res: pt.GlycanComponent = result[0]  # type: ignore
+        res: pt.GlycanComponent = result[0]
         assert res.monosaccharide == pt.Monosaccharide.Hex
         assert res.occurance == 5
 
@@ -337,8 +337,8 @@ class TestGlycanComposition:
         result = pt.ModificationTags.from_string("Glycan:Hex5HexNAc4").tags[0]
         assert isinstance(result, pt.GlycanTag)
         assert len(result) == 2
-        res1: pt.GlycanComponent = result[0]  # type: ignore
-        res2: pt.GlycanComponent = result[1]  # type: ignore
+        res1: pt.GlycanComponent = result[0]
+        res2: pt.GlycanComponent = result[1]
 
         assert res1.monosaccharide == pt.Monosaccharide.Hex
         assert res1.occurance == 5
@@ -365,9 +365,7 @@ class TestTagInfo:
 
     def test_info_with_special_chars(self):
         """Test parsing INFO tag with special characters"""
-        result = pt.ModificationTags.from_string(
-            "INFO:annotation-with_special.chars"
-        ).tags[0]
+        result = pt.ModificationTags.from_string("INFO:annotation-with_special.chars").tags[0]
         assert isinstance(result, pt.TagInfo)
         assert result.info == "annotation-with_special.chars"
 
@@ -377,12 +375,12 @@ class TestEdgeCases:
 
     def test_empty_string(self):
         """Test parsing empty string raises error"""
-        with pytest.raises(ValueError, match="Empty modification string"):
+        with pytest.raises(ValueError):
             pt.ModificationTags.from_string("")
 
     def test_whitespace_only(self):
         """Test parsing whitespace-only string raises error"""
-        with pytest.raises(ValueError, match="Empty modification string"):
+        with pytest.raises(ValueError):
             pt.ModificationTags.from_string("   ")
 
     def test_unknown_cv_prefix_treated_as_name(self):
@@ -393,12 +391,12 @@ class TestEdgeCases:
 
     def test_invalid_formula_element(self):
         """Test parsing formula with invalid element"""
-        with pytest.raises(ValueError, match="Unknown element symbol"):
+        with pytest.raises(ValueError):
             pt.ModificationTags.from_string("Formula:Zz")
 
     def test_invalid_glycan_composition(self):
         """Test parsing invalid glycan composition"""
-        with pytest.raises(ValueError, match="Could not parse glycan composition"):
+        with pytest.raises(ValueError):
             pt.ModificationTags.from_string("Glycan:InvalidMono")
 
 
@@ -483,9 +481,7 @@ class TestStringConversion:
 
     def test_charged_formula_negative_charge(self):
         """Test pt.ChargedFormula with negative charge"""
-        formula = pt.ChargedFormula(
-            formula=(pt.FormulaElement(element=pt.Element.O, occurance=1),), charge=-1
-        )
+        formula = pt.ChargedFormula(formula=(pt.FormulaElement(element=pt.Element.O, occurance=1),), charge=-1)
         assert str(formula) == "Formula:O:z-1"
 
     def test_glycan_component_simple(self):

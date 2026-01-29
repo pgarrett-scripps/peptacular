@@ -47,7 +47,4 @@ modules.extend(get_all_modules(pt.digestion))
 def test_doctests(module):
     """Test doctests for each module."""
     result = doctest.testmod(module, verbose=False)
-    assert result.failed == 0, (
-        f"Doctests failed in {module.__name__}: "
-        f"{result.failed} failures out of {result.attempted} tests"
-    )
+    assert result.failed == 0, f"Doctests failed in {module.__name__}: {result.failed} failures out of {result.attempted} tests"

@@ -54,11 +54,7 @@ def left_semi_digest(
     chunksize: int | None = None,
     method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[tuple[str, Span]] | list[list[tuple[str, Span]]]:
-    if (
-        isinstance(sequence, Sequence)
-        and not isinstance(sequence, str)
-        and not isinstance(sequence, ProFormaAnnotation)
-    ):
+    if isinstance(sequence, Sequence) and not isinstance(sequence, str) and not isinstance(sequence, ProFormaAnnotation):
         return parallel_apply_internal(
             _left_semi_digest,
             sequence,
@@ -121,11 +117,7 @@ def right_semi_digest(
     chunksize: int | None = None,
     method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[tuple[str, Span]] | list[list[tuple[str, Span]]]:
-    if (
-        isinstance(sequence, Sequence)
-        and not isinstance(sequence, str)
-        and not isinstance(sequence, ProFormaAnnotation)
-    ):
+    if isinstance(sequence, Sequence) and not isinstance(sequence, str) and not isinstance(sequence, ProFormaAnnotation):
         return parallel_apply_internal(
             _right_semi_digest,
             sequence,
@@ -192,11 +184,7 @@ def semi_digest(
     Builds all semi-enzymatic sequences from the given input `sequence`.
     Equivalent to combining left and right semi-enzymatic sequences.
     """
-    if (
-        isinstance(sequence, Sequence)
-        and not isinstance(sequence, str)
-        and not isinstance(sequence, ProFormaAnnotation)
-    ):
+    if isinstance(sequence, Sequence) and not isinstance(sequence, str) and not isinstance(sequence, ProFormaAnnotation):
         return parallel_apply_internal(
             _semi_digest,
             sequence,
@@ -262,11 +250,7 @@ def nonspecific_digest(
     """
     Builds all non-enzymatic sequences from the given input `sequence`.
     """
-    if (
-        isinstance(sequence, Sequence)
-        and not isinstance(sequence, str)
-        and not isinstance(sequence, ProFormaAnnotation)
-    ):
+    if isinstance(sequence, Sequence) and not isinstance(sequence, str) and not isinstance(sequence, ProFormaAnnotation):
         return parallel_apply_internal(
             _nonspecific_digest,
             sequence,
@@ -285,9 +269,7 @@ def nonspecific_digest(
 
 
 def _cleavage_sites(sequence: str | ProFormaAnnotation, enzyme_regex: str) -> list[int]:
-    return list(
-        get_annotation_input(sequence, copy=False).cleavage_sites(enzyme=enzyme_regex)
-    )
+    return list(get_annotation_input(sequence, copy=False).cleavage_sites(enzyme=enzyme_regex))
 
 
 @overload
@@ -320,11 +302,7 @@ def cleavage_sites(
     """
     Return positions where cleavage occurs in input `sequence` based on the provided enzyme regex.
     """
-    if (
-        isinstance(sequence, Sequence)
-        and not isinstance(sequence, str)
-        and not isinstance(sequence, ProFormaAnnotation)
-    ):
+    if isinstance(sequence, Sequence) and not isinstance(sequence, str) and not isinstance(sequence, ProFormaAnnotation):
         return parallel_apply_internal(
             _cleavage_sites,
             sequence,
@@ -353,9 +331,7 @@ def _simple_cleavage_sites(
         restrict_after=restrict_after,
         cterminal=cterminal,
     )
-    return list(
-        get_annotation_input(sequence, copy=False).cleavage_sites(enzyme=enzyme_regex)
-    )
+    return list(get_annotation_input(sequence, copy=False).cleavage_sites(enzyme=enzyme_regex))
 
 
 @overload
@@ -397,11 +373,7 @@ def simple_cleavage_sites(
     """
     Get cleavage sites using simple amino acid rules.
     """
-    if (
-        isinstance(sequence, Sequence)
-        and not isinstance(sequence, str)
-        and not isinstance(sequence, ProFormaAnnotation)
-    ):
+    if isinstance(sequence, Sequence) and not isinstance(sequence, str) and not isinstance(sequence, ProFormaAnnotation):
         return parallel_apply_internal(
             _simple_cleavage_sites,
             sequence,
@@ -489,11 +461,7 @@ def digest(
     """
     Returns digested sequences using a regular expression to define cleavage sites.
     """
-    if (
-        isinstance(sequence, Sequence)
-        and not isinstance(sequence, str)
-        and not isinstance(sequence, ProFormaAnnotation)
-    ):
+    if isinstance(sequence, Sequence) and not isinstance(sequence, str) and not isinstance(sequence, ProFormaAnnotation):
         return parallel_apply_internal(
             _digest,
             sequence,
@@ -598,11 +566,7 @@ def simple_digest(
     """
     Returns digested sequences using amino acid specifications with optional restrictions.
     """
-    if (
-        isinstance(sequence, Sequence)
-        and not isinstance(sequence, str)
-        and not isinstance(sequence, ProFormaAnnotation)
-    ):
+    if isinstance(sequence, Sequence) and not isinstance(sequence, str) and not isinstance(sequence, ProFormaAnnotation):
         return parallel_apply_internal(
             _digest_single,
             sequence,

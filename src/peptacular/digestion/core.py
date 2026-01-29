@@ -59,9 +59,7 @@ def nonspecific_spans(
     return build_non_enzymatic_spans(span=span, min_len=min_len, max_len=max_len)
 
 
-def get_cleavage_sites(
-    annotation: DigestProtocol, enzyme: str | re.Pattern[str]
-) -> Generator[int]:
+def get_cleavage_sites(annotation: DigestProtocol, enzyme: str | re.Pattern[str]) -> Generator[int]:
     """Get cleavage sites for a given enzyme (name, regex string, or compiled pattern)."""
 
     # Normalize to compiled pattern
@@ -76,9 +74,7 @@ def get_cleavage_sites(
     if pattern.pattern == "()":
         return (i for i in range(len(annotation.stripped_sequence) + 1))
 
-    return get_regex_match_indices(
-        input_str=annotation.stripped_sequence, regex_str=pattern
-    )
+    return get_regex_match_indices(input_str=annotation.stripped_sequence, regex_str=pattern)
 
 
 def _convert_to_aa_set(aa_keys: str | None) -> set[str]:
@@ -108,9 +104,7 @@ def _convert_to_aa_set(aa_keys: str | None) -> set[str]:
 
     if "-" in aa_keys:
         if aa_keys.count("-") != 1:
-            raise ValueError(
-                "Amino acid keys with '-' must contain exactly one '-' character."
-            )
+            raise ValueError("Amino acid keys with '-' must contain exactly one '-' character.")
         first_part, second_part = aa_keys.split("-")
         return make_aa_set(first_part) - make_aa_set(second_part)
 
@@ -142,16 +136,12 @@ def generate_regex(
 
         # Restrict after: what follows cleavage point
         if restrict_after:
-            escaped_restrict = "".join(
-                re.escape(char) for char in _convert_to_aa_set(restrict_after)
-            )
+            escaped_restrict = "".join(re.escape(char) for char in _convert_to_aa_set(restrict_after))
             parts.append(f"(?=[^{escaped_restrict}])")
 
         # Restrict before: what precedes cleavage residue
         if restrict_before:
-            escaped_restrict = "".join(
-                re.escape(char) for char in _convert_to_aa_set(restrict_before)
-            )
+            escaped_restrict = "".join(re.escape(char) for char in _convert_to_aa_set(restrict_before))
             # Need to check what comes before the cleavage residue
             parts.insert(0, f"(?<=[^{escaped_restrict}][{escaped_cleave}])")
             # Remove the simple lookbehind since we now have the combined one
@@ -162,16 +152,12 @@ def generate_regex(
 
         # Restrict before: what precedes cleavage point
         if restrict_before:
-            escaped_restrict = "".join(
-                re.escape(char) for char in _convert_to_aa_set(restrict_before)
-            )
+            escaped_restrict = "".join(re.escape(char) for char in _convert_to_aa_set(restrict_before))
             parts.insert(0, f"(?<=[^{escaped_restrict}])")
 
         # Restrict after: what follows cleavage residue
         if restrict_after:
-            escaped_restrict = "".join(
-                re.escape(char) for char in _convert_to_aa_set(restrict_after)
-            )
+            escaped_restrict = "".join(re.escape(char) for char in _convert_to_aa_set(restrict_after))
             # Replace simple lookahead with one that checks after the residue
             parts[-1] = f"(?=[{escaped_cleave}][^{escaped_restrict}])"
 
@@ -227,9 +213,7 @@ def digest_annotation_by_regex(
     if not complete_digestion:
         all_spans.add(Span(0, len(annotation), 0))
 
-    cleavage_sites_list: list[int] = list(
-        get_cleavage_sites(annotation, enzyme=enzyme_regex)
-    )
+    cleavage_sites_list: list[int] = list(get_cleavage_sites(annotation, enzyme=enzyme_regex))
 
     spans = build_spans(
         max_index=len(annotation),
@@ -305,8 +289,6 @@ def sequential_digest_annotation(
             digested_spans = sequential_digested_spans
 
     if max_len is not None:
-        digested_spans = [
-            span for span in digested_spans if span[1] - span[0] <= max_len
-        ]
+        digested_spans = [span for span in digested_spans if span[1] - span[0] <= max_len]
 
     return (span for span in digested_spans)

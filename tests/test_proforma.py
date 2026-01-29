@@ -27,9 +27,7 @@ def test_parse_empty():
 def test_single_mod(basic_mod: pt.Mod):
     # Test the case where there is a single modification in the peptide _sequence
     proforma = "PEPTIDE[HelloWorld]"
-    expected_output = pt.ProFormaAnnotation(
-        sequence="PEPTIDE", internal_mods={6: {"HelloWorld": 1}}
-    )
+    expected_output = pt.ProFormaAnnotation(sequence="PEPTIDE", internal_mods={6: {"HelloWorld": 1}})
     assert pt.ProFormaAnnotation.parse(proforma) == expected_output
     assert pt.serialize(expected_output) == proforma
 
@@ -59,9 +57,7 @@ def test_single_double_multi_mod():
 def test_nterm_mod(basic_mod: pt.Mod):
     # Test the case where there is a single N-Term mod
     proforma = "[HelloWorld]-PEPTIDE"
-    expected_output = pt.ProFormaAnnotation(
-        sequence="PEPTIDE", nterm_mods={"HelloWorld": 1}
-    )
+    expected_output = pt.ProFormaAnnotation(sequence="PEPTIDE", nterm_mods={"HelloWorld": 1})
     assert pt.ProFormaAnnotation.parse(proforma) == expected_output
     assert pt.serialize(expected_output) == proforma
 
@@ -69,9 +65,7 @@ def test_nterm_mod(basic_mod: pt.Mod):
 def test_nterm_double_mod():
     # Test the case where there is a single N-Term mod
     proforma = "[Hello][World]-PEPTIDE"
-    expected_output = pt.ProFormaAnnotation(
-        sequence="PEPTIDE", nterm_mods={"Hello": 1, "World": 1}
-    )
+    expected_output = pt.ProFormaAnnotation(sequence="PEPTIDE", nterm_mods={"Hello": 1, "World": 1})
     assert pt.ProFormaAnnotation.parse(proforma) == expected_output
     assert pt.serialize(expected_output) == proforma
 
@@ -89,9 +83,7 @@ def test_nterm_double_multi_mod():
 def test_cterm_mod(basic_mod: pt.Mod):
     # Test the case where there is a single C-Term mod
     proforma = "PEPTIDE-[HelloWorld]"
-    expected_output = pt.ProFormaAnnotation(
-        sequence="PEPTIDE", cterm_mods={"HelloWorld": 1}
-    )
+    expected_output = pt.ProFormaAnnotation(sequence="PEPTIDE", cterm_mods={"HelloWorld": 1})
     assert pt.ProFormaAnnotation.parse(proforma) == expected_output
     assert pt.serialize(expected_output) == proforma
 
@@ -99,9 +91,7 @@ def test_cterm_mod(basic_mod: pt.Mod):
 def test_cterm_double_mod():
     # Test the case where there is a single C-Term mod
     proforma = "PEPTIDE-[Hello][World]"
-    expected_output = pt.ProFormaAnnotation(
-        sequence="PEPTIDE", cterm_mods={"Hello": 1, "World": 1}
-    )
+    expected_output = pt.ProFormaAnnotation(sequence="PEPTIDE", cterm_mods={"Hello": 1, "World": 1})
     assert pt.ProFormaAnnotation.parse(proforma) == expected_output
     assert pt.serialize(expected_output) == proforma
 
@@ -109,9 +99,7 @@ def test_cterm_double_mod():
 def test_cterm_double_multi_mod():
     # Test the case where there is a single C-Term mod
     proforma = "PEPTIDE-[Hello][Hello][World][World][World]"
-    expected_output = pt.ProFormaAnnotation(
-        sequence="PEPTIDE", cterm_mods={"Hello": 2, "World": 3}
-    )
+    expected_output = pt.ProFormaAnnotation(sequence="PEPTIDE", cterm_mods={"Hello": 2, "World": 3})
     assert pt.ProFormaAnnotation.parse(proforma) == expected_output
     assert pt.serialize(expected_output) == proforma
 
@@ -119,9 +107,7 @@ def test_cterm_double_multi_mod():
 def test_multiple_mods(basic_mod: pt.Mod):
     # Test the case with multiple modifications at different positions
     proforma = "P[HelloWorld]EPT[HelloWorld]IDE"
-    expected_output = pt.ProFormaAnnotation(
-        sequence="PEPTIDE", internal_mods={0: {"HelloWorld": 1}, 3: {"HelloWorld": 1}}
-    )
+    expected_output = pt.ProFormaAnnotation(sequence="PEPTIDE", internal_mods={0: {"HelloWorld": 1}, 3: {"HelloWorld": 1}})
     assert pt.ProFormaAnnotation.parse(proforma) == expected_output
     assert pt.serialize(expected_output) == proforma
 
@@ -129,12 +115,8 @@ def test_multiple_mods(basic_mod: pt.Mod):
 def test_interval_mods(basic_mod: pt.Mod):
     # Test the case where there is an interval with modifications
     proforma = "PEP(TI)[HelloWorld]DE"
-    expected_interval = pt.Interval(
-        start=3, end=5, ambiguous=False, mods={"HelloWorld": 1}
-    )
-    expected_output = pt.ProFormaAnnotation(
-        sequence="PEPTIDE", intervals=[expected_interval]
-    )
+    expected_interval = pt.Interval(start=3, end=5, ambiguous=False, mods={"HelloWorld": 1})
+    expected_output = pt.ProFormaAnnotation(sequence="PEPTIDE", intervals=[expected_interval])
     assert pt.ProFormaAnnotation.parse(proforma) == expected_output
     assert pt.serialize(expected_output) == proforma
 
@@ -147,9 +129,7 @@ def test_interval_mods_double():
         ambiguous=False,
         mods={"Hello": 1, "World": 1},
     )
-    expected_output = pt.ProFormaAnnotation(
-        sequence="PEPTIDE", intervals=[expected_interval]
-    )
+    expected_output = pt.ProFormaAnnotation(sequence="PEPTIDE", intervals=[expected_interval])
     assert pt.ProFormaAnnotation.parse(proforma) == expected_output
     assert pt.serialize(expected_output) == proforma
 
@@ -158,9 +138,7 @@ def test_ambiguous_interval():
     # Test an ambiguous interval
     proforma = "PEP(?TI)DE"
     expected_interval = pt.Interval(start=3, end=5, ambiguous=True, mods=None)
-    expected_output = pt.ProFormaAnnotation(
-        sequence="PEPTIDE", intervals=[expected_interval]
-    )
+    expected_output = pt.ProFormaAnnotation(sequence="PEPTIDE", intervals=[expected_interval])
     assert pt.ProFormaAnnotation.parse(proforma) == expected_output
     assert pt.serialize(expected_output) == proforma
 
@@ -168,12 +146,8 @@ def test_ambiguous_interval():
 def test_ambiguous_interval_with_mod(basic_mod: pt.Mod):
     # Test an ambiguous interval with a modification
     proforma = "PEP(?TI)[HelloWorld]DE"
-    expected_interval = pt.Interval(
-        start=3, end=5, ambiguous=True, mods={"HelloWorld": 1}
-    )
-    expected_output = pt.ProFormaAnnotation(
-        sequence="PEPTIDE", intervals=[expected_interval]
-    )
+    expected_interval = pt.Interval(start=3, end=5, ambiguous=True, mods={"HelloWorld": 1})
+    expected_output = pt.ProFormaAnnotation(sequence="PEPTIDE", intervals=[expected_interval])
     assert pt.ProFormaAnnotation.parse(proforma) == expected_output
     assert pt.serialize(expected_output) == proforma
 
@@ -197,9 +171,7 @@ def test_negative_charge_state():
 def test_charge_state_with_mod(basic_mod: pt.Mod):
     # Test the case with a charge state at the end of the _sequence
     proforma = "PEPTIDE[HelloWorld]/2"
-    expected_output = pt.ProFormaAnnotation(
-        sequence="PEPTIDE", internal_mods={6: {"HelloWorld": 1}}, charge=2
-    )
+    expected_output = pt.ProFormaAnnotation(sequence="PEPTIDE", internal_mods={6: {"HelloWorld": 1}}, charge=2)
     assert pt.ProFormaAnnotation.parse(proforma) == expected_output
     assert pt.serialize(expected_output) == proforma
 
@@ -215,9 +187,7 @@ def test_charge_state_with_adduct():
 def test_labile_mod(basic_mod: pt.Mod):
     # Test the case where there is a labile modification
     proforma = "{HelloWorld}PEPTIDE"
-    expected_output = pt.ProFormaAnnotation(
-        sequence="PEPTIDE", labile_mods={"HelloWorld": 1}
-    )
+    expected_output = pt.ProFormaAnnotation(sequence="PEPTIDE", labile_mods={"HelloWorld": 1})
     assert pt.ProFormaAnnotation.parse(proforma) == expected_output
     assert pt.serialize(expected_output) == proforma
 
@@ -225,9 +195,7 @@ def test_labile_mod(basic_mod: pt.Mod):
 def test_labile_mod_double():
     # Test the case where there is a labile modification
     proforma = "{Hello}{World}PEPTIDE"
-    expected_output = pt.ProFormaAnnotation(
-        sequence="PEPTIDE", labile_mods={"Hello": 1, "World": 1}
-    )
+    expected_output = pt.ProFormaAnnotation(sequence="PEPTIDE", labile_mods={"Hello": 1, "World": 1})
     assert pt.ProFormaAnnotation.parse(proforma) == expected_output
     assert pt.serialize(expected_output) == proforma
 
@@ -235,9 +203,7 @@ def test_labile_mod_double():
 def test_labile_mod_double_multi():
     # Test the case where there is a labile modification
     proforma = "{Hello}{World}{World}PEPTIDE"
-    expected_output = pt.ProFormaAnnotation(
-        sequence="PEPTIDE", labile_mods={"Hello": 1, "World": 2}
-    )
+    expected_output = pt.ProFormaAnnotation(sequence="PEPTIDE", labile_mods={"Hello": 1, "World": 2})
     assert pt.ProFormaAnnotation.parse(proforma) == expected_output
     assert pt.serialize(expected_output) == proforma
 
@@ -245,9 +211,7 @@ def test_labile_mod_double_multi():
 def test_unknown_mod(basic_mod: pt.Mod):
     # Test the case with an unknown modification
     proforma = "[HelloWorld]?PEPTIDE"
-    expected_output = pt.ProFormaAnnotation(
-        sequence="PEPTIDE", unknown_mods={"HelloWorld": 1}
-    )
+    expected_output = pt.ProFormaAnnotation(sequence="PEPTIDE", unknown_mods={"HelloWorld": 1})
     assert pt.ProFormaAnnotation.parse(proforma) == expected_output
     assert pt.serialize(expected_output) == proforma
 
@@ -255,9 +219,7 @@ def test_unknown_mod(basic_mod: pt.Mod):
 def test_unknown_mod_double():
     # Test the case with an unknown modification
     proforma = "[Hello][World]?PEPTIDE"
-    expected_output = pt.ProFormaAnnotation(
-        sequence="PEPTIDE", unknown_mods={"Hello": 1, "World": 1}
-    )
+    expected_output = pt.ProFormaAnnotation(sequence="PEPTIDE", unknown_mods={"Hello": 1, "World": 1})
     assert pt.ProFormaAnnotation.parse(proforma) == expected_output
     assert pt.serialize(expected_output) == proforma
 
@@ -265,9 +227,7 @@ def test_unknown_mod_double():
 def test_unknown_mod_double_multi():
     # Test the case with an unknown modification
     proforma = "[Hello]^2[World]^3?PEPTIDE"
-    expected_output = pt.ProFormaAnnotation(
-        sequence="PEPTIDE", unknown_mods={"Hello": 2, "World": 3}
-    )
+    expected_output = pt.ProFormaAnnotation(sequence="PEPTIDE", unknown_mods={"Hello": 2, "World": 3})
     assert pt.ProFormaAnnotation.parse(proforma) == expected_output
     assert pt.serialize(expected_output) == proforma
 
@@ -283,9 +243,7 @@ def test_isotope_mod():
 def test_isotope_mod_double():
     # Test the case with an isotope modification
     proforma = "<13C><15N>PEPTIDE"
-    expected_output = pt.ProFormaAnnotation(
-        sequence="PEPTIDE", isotope_mods={"13C": 1, "15N": 1}
-    )
+    expected_output = pt.ProFormaAnnotation(sequence="PEPTIDE", isotope_mods={"13C": 1, "15N": 1})
     assert pt.ProFormaAnnotation.parse(proforma) == expected_output
     assert pt.serialize(expected_output) == proforma
 
@@ -301,9 +259,7 @@ def test_isotope_mod_double_multi():
 def test_static_mod_with_target():
     # Test static modification with a specified target
     proforma = "<[Phospho]@S>PEPTIDE"
-    expected_output = pt.ProFormaAnnotation(
-        sequence="PEPTIDE", static_mods={"[Phospho]@S": 1}
-    )
+    expected_output = pt.ProFormaAnnotation(sequence="PEPTIDE", static_mods={"[Phospho]@S": 1})
     assert pt.ProFormaAnnotation.parse(proforma) == expected_output
     assert pt.serialize(expected_output) == proforma
 
@@ -311,9 +267,7 @@ def test_static_mod_with_target():
 def test_static_mod_with_target_double():
     # Test static modification with a specified target
     proforma = "<[Phospho]@S><[Acetyl]@K>PEPTIDE"
-    expected_output = pt.ProFormaAnnotation(
-        sequence="PEPTIDE", static_mods={"[Phospho]@S": 1, "[Acetyl]@K": 1}
-    )
+    expected_output = pt.ProFormaAnnotation(sequence="PEPTIDE", static_mods={"[Phospho]@S": 1, "[Acetyl]@K": 1})
     assert pt.ProFormaAnnotation.parse(proforma) == expected_output
     assert pt.serialize(expected_output) == proforma
 
@@ -359,9 +313,7 @@ def test_sequence_with_multiple_intervals():
         pt.Interval(start=3, end=5, ambiguous=False, mods={"Mod1": 1}),
         pt.Interval(start=5, end=7, ambiguous=False, mods={"Mod2": 1}),
     ]
-    expected_output = pt.ProFormaAnnotation(
-        sequence="PEPTIDE", intervals=expected_intervals
-    )
+    expected_output = pt.ProFormaAnnotation(sequence="PEPTIDE", intervals=expected_intervals)
     assert pt.ProFormaAnnotation.parse(proforma) == expected_output
     assert pt.serialize(expected_output) == proforma
 

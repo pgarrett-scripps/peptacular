@@ -95,9 +95,7 @@ class TestConvertDiannSequence:
 
     def test_cterm_modification(self):
         """Test C-terminal modification conversion."""
-        result = convert_diann_sequence(
-            "_[Acytel]YMGTLRGC[Carbamidomethyl]LLRLYHD[1.0]_[Methyl]"
-        )
+        result = convert_diann_sequence("_[Acytel]YMGTLRGC[Carbamidomethyl]LLRLYHD[1.0]_[Methyl]")
         assert result == "[Acytel]-YMGTLRGC[Carbamidomethyl]LLRLYHD[1.0]-[Methyl]"
 
     def test_no_underscores(self):

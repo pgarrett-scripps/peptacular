@@ -116,9 +116,7 @@ class TestTagName:
         tag = pt.TagName(name="Oxidation", cv=pt.CV.UNIMOD)
         mass = tag.get_mass(monoisotopic=True)
         assert mass is not None
-        assert (
-            abs(mass - 15.9949) < 0.0001
-        )  # Approximate monoisotopic mass of Oxidation
+        assert abs(mass - 15.9949) < 0.0001  # Approximate monoisotopic mass of Oxidation
 
     def test_composition(self):
         """Test retrieving composition for a known modification"""

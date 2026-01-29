@@ -137,12 +137,7 @@ class FormulaElement(MassPropertyMixin):
     def get_mass(self, monoisotopic: bool = True) -> float:
         if self.isotope is not None:
             monoisotopic = True
-        return (
-            ELEMENT_LOOKUP[(self.element, self.isotope)].get_mass(
-                monoisotopic=monoisotopic
-            )
-            * self.occurance
-        )
+        return ELEMENT_LOOKUP[(self.element, self.isotope)].get_mass(monoisotopic=monoisotopic) * self.occurance
 
     def get_element_count(self) -> tuple[ElementInfo, int]:
         return (ELEMENT_LOOKUP[(self.element, self.isotope)], self.occurance)
@@ -174,9 +169,7 @@ class FormulaElement(MassPropertyMixin):
 
     def abs(self) -> FormulaElement:
         """Get a FormulaElement with absolute occurance."""
-        return FormulaElement(
-            element=self.element, occurance=abs(self.occurance), isotope=self.isotope
-        )
+        return FormulaElement(element=self.element, occurance=abs(self.occurance), isotope=self.isotope)
 
 
 @dataclass(frozen=True, slots=True)
@@ -223,9 +216,7 @@ class ChargedFormula(MassPropertyMixin, PositionScoreMixin):
 
     def get_dict_composition(self) -> dict[str, int]:
         """Get the composition as a dict of element symbols to counts"""
-        return {
-            str(elem_info): count for elem_info, count in self.get_composition().items()
-        }
+        return {str(elem_info): count for elem_info, count in self.get_composition().items()}
 
     @staticmethod
     def from_composition(
@@ -236,9 +227,7 @@ class ChargedFormula(MassPropertyMixin, PositionScoreMixin):
         for elem_info, occurance in composition.items():
             if isinstance(elem_info, str):
                 elem_info = ELEMENT_LOOKUP[elem_info]
-            formula_elements.append(
-                FormulaElement.from_element_info(elem_info, occurance)
-            )
+            formula_elements.append(FormulaElement.from_element_info(elem_info, occurance))
         return ChargedFormula(formula=tuple(formula_elements), charge=charge)
 
     @staticmethod
@@ -281,9 +270,7 @@ class ChargedFormula(MassPropertyMixin, PositionScoreMixin):
         neg_parts = [str(fe.abs()) for fe in self.formula if fe.occurance < 0]
 
         if pos_parts and neg_parts:
-            raise ValueError(
-                "Cannot convert to mzPAF: contains both positive and negative elements"
-            )
+            raise ValueError("Cannot convert to mzPAF: contains both positive and negative elements")
 
         if pos_parts:
             return "+" + "".join(pos_parts)
@@ -301,9 +288,7 @@ class ChargedFormula(MassPropertyMixin, PositionScoreMixin):
             # assert all are positive
             for fe in formula.formula:
                 if fe.occurance < 0:
-                    raise ValueError(
-                        "Invalid mzPAF format: negative occurance in positive part"
-                    )
+                    raise ValueError("Invalid mzPAF format: negative occurance in positive part")
             return formula
         if s.startswith("-"):
             s = "0" + s  # prepend a zero to handle leading negative
@@ -311,17 +296,13 @@ class ChargedFormula(MassPropertyMixin, PositionScoreMixin):
             # assert all are negative
             for fe in formula.formula:
                 if fe.occurance > 0:
-                    raise ValueError(
-                        "Invalid mzPAF format: positive occurance in negative part"
-                    )
+                    raise ValueError("Invalid mzPAF format: positive occurance in negative part")
             return formula
         raise ValueError("Invalid mzPAF format: must start with + or -")
 
     def __add__(self, other: ChargedFormula) -> ChargedFormula:
         """Add two ChargedFormulas together."""
-        combined_comp: Counter[ElementInfo] = (
-            self.get_composition() + other.get_composition()
-        )
+        combined_comp: Counter[ElementInfo] = self.get_composition() + other.get_composition()
         combined_charge = None
         if self.charge is not None and other.charge is not None:
             combined_charge = self.charge + other.charge
@@ -329,9 +310,7 @@ class ChargedFormula(MassPropertyMixin, PositionScoreMixin):
 
     def __sub__(self, other: ChargedFormula) -> ChargedFormula:
         """Subtract one ChargedFormula from another."""
-        combined_comp: Counter[ElementInfo] = (
-            self.get_composition() - other.get_composition()
-        )
+        combined_comp: Counter[ElementInfo] = self.get_composition() - other.get_composition()
         combined_charge = None
         if self.charge is not None and other.charge is not None:
             combined_charge = self.charge - other.charge
@@ -405,9 +384,7 @@ class TagAccession(MassPropertyMixin, PositionScoreMixin):
             case CV.XL_MOD:
                 return XLMOD_LOOKUP.query_id(self.accession)
             case _:
-                raise ValueError(
-                    f"Modification lookup by accession not implemented for CV: {self.cv}"
-                )
+                raise ValueError(f"Modification lookup by accession not implemented for CV: {self.cv}")
 
         return None
 
@@ -487,40 +464,22 @@ class TagMass(MassPropertyMixin, PositionScoreMixin):
     def get_composition(self) -> Counter[ElementInfo]:
         match self.cv:
             case CV.UNIMOD:
-                mod_info = UNIMOD_LOOKUP.query_mass(
-                    self.mass, monoisotopic=True, tolerance=0.005
-                )
+                mod_info = UNIMOD_LOOKUP.query_mass(self.mass, monoisotopic=True, tolerance=0.005)
             case CV.PSI_MOD:
-                mod_info = PSIMOD_LOOKUP.query_mass(
-                    self.mass, monoisotopic=True, tolerance=0.005
-                )
+                mod_info = PSIMOD_LOOKUP.query_mass(self.mass, monoisotopic=True, tolerance=0.005)
             case CV.RESID:
-                mod_info = RESID_LOOKUP.query_mass(
-                    self.mass, monoisotopic=True, tolerance=0.005
-                )
+                mod_info = RESID_LOOKUP.query_mass(self.mass, monoisotopic=True, tolerance=0.005)
             case CV.GNOME:
-                mod_info = GNO_LOOKUP.query_mass(
-                    self.mass, monoisotopic=True, tolerance=0.005
-                )
+                mod_info = GNO_LOOKUP.query_mass(self.mass, monoisotopic=True, tolerance=0.005)
             case CV.XL_MOD:
-                mod_info = XLMOD_LOOKUP.query_mass(
-                    self.mass, monoisotopic=True, tolerance=0.005
-                )
+                mod_info = XLMOD_LOOKUP.query_mass(self.mass, monoisotopic=True, tolerance=0.005)
             case _:
-                raise ValueError(
-                    f"Modification lookup by mass not implemented for CV: {self.cv}"
-                )
+                raise ValueError(f"Modification lookup by mass not implemented for CV: {self.cv}")
 
         if len(mod_info) > 1:
-            raise ValueError(
-                f"Multiple modifications found for mass: {self.mass} in CV: {self.cv}"
-            )
+            raise ValueError(f"Multiple modifications found for mass: {self.mass} in CV: {self.cv}")
 
-        return (
-            Counter(mod_info[0].composition)
-            if mod_info and mod_info[0].composition
-            else Counter()
-        )
+        return Counter(mod_info[0].composition) if mod_info and mod_info[0].composition else Counter()
 
     def get_charge(self) -> int | None:
         return None
@@ -599,9 +558,7 @@ class TagName(MassPropertyMixin, PositionScoreMixin):
                 if psimod is not None:
                     return psimod
             case _:
-                raise ValueError(
-                    f"Modification lookup by name not implemented for CV: {self.cv}"
-                )
+                raise ValueError(f"Modification lookup by name not implemented for CV: {self.cv}")
 
         return None
 
@@ -726,9 +683,7 @@ class GlycanComponent(MassPropertyMixin):
 
     def __post_init__(self):
         if isinstance(self.monosaccharide, ChargedFormula):
-            raise NotImplementedError(
-                "GlycanComponent with ChargedFormula is not fully supported yet."
-            )
+            raise NotImplementedError("GlycanComponent with ChargedFormula is not fully supported yet.")
 
     def validate(self) -> str | None:
         try:
@@ -743,16 +698,12 @@ class GlycanComponent(MassPropertyMixin):
 
     def get_mass(self, monoisotopic: bool = True) -> float:
         if isinstance(self.monosaccharide, ChargedFormula):
-            return (
-                self.monosaccharide.get_mass(monoisotopic=monoisotopic) * self.occurance
-            )
+            return self.monosaccharide.get_mass(monoisotopic=monoisotopic) * self.occurance
         else:
             monosaccharide = MONOSACCHARIDE_LOOKUP.proforma(self.monosaccharide)
             mass = monosaccharide.mass(monoisotopic=monoisotopic)
             if mass is None:
-                raise ValueError(
-                    f"Unknown mass for monosaccharide: {self.monosaccharide}"
-                )
+                raise ValueError(f"Unknown mass for monosaccharide: {self.monosaccharide}")
             return mass * self.occurance
 
     def get_composition(self) -> Counter[ElementInfo]:
@@ -763,9 +714,7 @@ class GlycanComponent(MassPropertyMixin):
             monosaccharide = MONOSACCHARIDE_LOOKUP.proforma(self.monosaccharide)
             composition = monosaccharide.composition
             if composition is None:
-                raise ValueError(
-                    f"Unknown composition for monosaccharide: {self.monosaccharide}"
-                )
+                raise ValueError(f"Unknown composition for monosaccharide: {self.monosaccharide}")
             return Counter(composition)
 
     def get_charge(self) -> int | None:
@@ -864,9 +813,7 @@ class PositionTag(PlacementTagMixin):
             s = s[len("position:") :]
         else:
             raise ValueError("PositionTag string must start with 'Position:'")
-        return PositionTag(
-            tuple(PositionRule.from_string(part.strip()) for part in s.split(","))
-        )
+        return PositionTag(tuple(PositionRule.from_string(part.strip()) for part in s.split(",")))
 
     def serialize(self) -> str:
         return "Position:" + ",".join(str(r) for r in self.residues)
@@ -1028,18 +975,7 @@ class GlobalChargeCarrier(MassPropertyMixin):
 
 # Type alias for modification tags
 MODIFICATION_TAG_TYPE = (
-    TagAccession
-    | ChargedFormula
-    | GlycanTag
-    | TagInfo
-    | TagMass
-    | TagName
-    | TagCustom
-    | PositionScore
-    | PositionTag
-    | LimitTag
-    | ComkpTag
-    | ComupTag
+    TagAccession | ChargedFormula | GlycanTag | TagInfo | TagMass | TagName | TagCustom | PositionScore | PositionTag | LimitTag | ComkpTag | ComupTag
 )
 
 
@@ -1344,12 +1280,8 @@ class FixedModification(MassPropertyMixin):
 
 
 # Type aliases for modification types (defined after all classes)
-MODIFICATION_AMBIGUOUS_TYPE = (
-    ModificationAmbiguousPrimary | ModificationAmbiguousSecondary
-)
-MODIFICATION_TYPE = (
-    MODIFICATION_AMBIGUOUS_TYPE | ModificationCrossLinker | ModificationTags
-)
+MODIFICATION_AMBIGUOUS_TYPE = ModificationAmbiguousPrimary | ModificationAmbiguousSecondary
+MODIFICATION_TYPE = MODIFICATION_AMBIGUOUS_TYPE | ModificationCrossLinker | ModificationTags
 
 
 @dataclass(frozen=True, slots=True)
@@ -1441,21 +1373,13 @@ class Peptidoform(MassPropertyMixin):
 
     def get_mass(self, monoisotopic: bool = True) -> float:
         return sum_masses(
-            self.sequence
-            + self.n_term_modifications
-            + self.c_term_modifications
-            + self.labile_modifications
-            + self.unlocalised_modifications,
+            self.sequence + self.n_term_modifications + self.c_term_modifications + self.labile_modifications + self.unlocalised_modifications,
             monoisotopic=monoisotopic,
         )
 
     def get_composition(self) -> Counter[ElementInfo]:
         return merge_compositions(
-            self.sequence
-            + self.n_term_modifications
-            + self.c_term_modifications
-            + self.labile_modifications
-            + self.unlocalised_modifications,
+            self.sequence + self.n_term_modifications + self.c_term_modifications + self.labile_modifications + self.unlocalised_modifications,
         )
 
     @staticmethod
@@ -1539,23 +1463,17 @@ class CompoundPeptidoformIon(MassPropertyMixin):
 
         # if fixed or isotope modifications raise NotImplementedError
         if self.fixed_modifications or self.isotope_replacement:
-            raise NotImplementedError(
-                "Fixed modifications and isotope replacements are not yet supported in mass calculation."
-            )
+            raise NotImplementedError("Fixed modifications and isotope replacements are not yet supported in mass calculation.")
 
         return total_mass
 
     def get_composition(self) -> Counter[ElementInfo] | None:
         raise NotImplementedError()
-        total_composition: Counter[ElementInfo] = merge_compositions(
-            self.peptidoform_ions
-        )
+        total_composition: Counter[ElementInfo] = merge_compositions(self.peptidoform_ions)
 
         # if fixed or isotope modifications raise NotImplementedError
         if self.fixed_modifications or self.isotope_replacement:
-            raise NotImplementedError(
-                "Fixed modifications and isotope replacements are not yet supported in composition calculation."
-            )
+            raise NotImplementedError("Fixed modifications and isotope replacements are not yet supported in composition calculation.")
 
         return total_composition
 
@@ -1575,6 +1493,4 @@ class CompoundPeptidoformIon(MassPropertyMixin):
 
 
 # H:z+1
-PROTON_FORMULA = ChargedFormula(
-    formula=(FormulaElement(element=Element.H, occurance=1),), charge=1
-)
+PROTON_FORMULA = ChargedFormula(formula=(FormulaElement(element=Element.H, occurance=1),), charge=1)

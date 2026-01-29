@@ -2,7 +2,7 @@ import sys
 from collections import Counter
 from collections.abc import Callable, Iterable, Iterator
 from dataclasses import dataclass
-from typing import Any, Generic, Protocol, Self, TypeVar, cast
+from typing import Any, Protocol, Self, cast
 
 from tacular import AA_LOOKUP, ElementInfo
 
@@ -17,9 +17,7 @@ from ..proforma_components import (
 )
 
 # Define your modification types
-ModValue = (
-    IsotopeReplacement | FixedModification | GlobalChargeCarrier | ModificationTags
-)
+ModValue = IsotopeReplacement | FixedModification | GlobalChargeCarrier | ModificationTags
 
 
 class ModificationProtocol(Protocol):
@@ -35,11 +33,10 @@ class ModificationProtocol(Protocol):
 
 
 # Use bound instead of constraints
-T = TypeVar("T", bound=ModificationProtocol)
 
 
 @dataclass(frozen=True, slots=True)
-class Mod(Generic[T]):
+class Mod[T: ModificationProtocol]:
     """A modification with its occurrence count."""
 
     value: T
@@ -105,7 +102,7 @@ _MOD_PARSERS: dict[ModType, Callable[[str], Any]] = {
 
 
 @dataclass(frozen=True)
-class Mods(Generic[T], MassPropertyMixin):
+class Mods[T: ModificationProtocol](MassPropertyMixin):
     """Collection of modifications of a specific type."""
 
     mod_type: ModType
@@ -159,10 +156,7 @@ class Mods(Generic[T], MassPropertyMixin):
         if self._mods is None:
             return tuple()
 
-        return tuple(
-            Mod(value=self._parse_mod(mod_str), count=count)
-            for mod_str, count in self._mods.items()
-        )
+        return tuple(Mod(value=self._parse_mod(mod_str), count=count) for mod_str, count in self._mods.items())
 
     def get_mass(self, monoisotopic: bool = True) -> float:
         """Get total mass for all modifications."""
@@ -172,9 +166,7 @@ class Mods(Generic[T], MassPropertyMixin):
         """Get total composition for all modifications."""
         return sum((mod.get_composition() for mod in self.mods), Counter())
 
-    def get_composition_with_delta_mass(
-        self, monoisotopic: bool = True
-    ) -> tuple[Counter[ElementInfo], float]:
+    def get_composition_with_delta_mass(self, monoisotopic: bool = True) -> tuple[Counter[ElementInfo], float]:
         """Get total composition and when not possible fall back to delta mass for MassTags."""
         total_compsition = Counter[ElementInfo]()
         total_delta_mass = 0.0
@@ -183,14 +175,10 @@ class Mods(Generic[T], MassPropertyMixin):
                 comp = mod.get_composition()
                 total_compsition += comp
             except ValueError as e:
-                if isinstance(mod.value, ModificationTags) and isinstance(
-                    mod.value.first_tag, TagMass
-                ):
+                if isinstance(mod.value, ModificationTags) and isinstance(mod.value.first_tag, TagMass):
                     total_delta_mass += mod.get_mass(monoisotopic=monoisotopic)
                 else:
-                    raise ValueError(
-                        f"Cannot get composition for mod {mod.value}, and no mass tag found."
-                    ) from e
+                    raise ValueError(f"Cannot get composition for mod {mod.value}, and no mass tag found.") from e
         return total_compsition, total_delta_mass
 
     def get_charge(self) -> int:
@@ -274,11 +262,7 @@ class Mods(Generic[T], MassPropertyMixin):
             return f"Mods@{self.mod_type.value.capitalize()}()"
 
         # Show all modifications in compact form
-        mods_repr = (
-            "["
-            + ", ".join(f"{k}^{v}" if v > 1 else f"{k}" for k, v in self._mods.items())
-            + "]"
-        )
+        mods_repr = "[" + ", ".join(f"{k}^{v}" if v > 1 else f"{k}" for k, v in self._mods.items()) + "]"
         return f"Mods@{self.mod_type.value.capitalize()}({mods_repr})"
 
     def __repr__(self) -> str:
@@ -391,9 +375,7 @@ class Interval:
         if self._start < 0:
             raise ValueError(f"Start position must be non-negative, got {self.start}")
         if self._end <= self.start:
-            raise ValueError(
-                f"End position must be >= start position, got {self.end} <= {self.start}"
-            )
+            raise ValueError(f"End position must be >= start position, got {self.end} <= {self.start}")
 
     @property
     def is_valid(self) -> bool:
@@ -451,9 +433,7 @@ class Interval:
             validate=self._validate,
         )
 
-    def append_mod(
-        self, mod: Any, validate: bool | None = None, inplace: bool = True
-    ) -> None:
+    def append_mod(self, mod: Any, validate: bool | None = None, inplace: bool = True) -> None:
         if not inplace:
             return self.copy().append_mod(mod, validate=validate, inplace=True)
 
@@ -546,9 +526,4 @@ class Interval:
     def __eq__(self, value: object) -> bool:
         if not isinstance(value, Interval):
             return False
-        return (
-            self.start == value.start
-            and self.end == value.end
-            and self.ambiguous == value.ambiguous
-            and self._mods == value._mods
-        )
+        return self.start == value.start and self.end == value.end and self.ambiguous == value.ambiguous and self._mods == value._mods

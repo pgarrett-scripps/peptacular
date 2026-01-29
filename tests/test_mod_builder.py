@@ -63,57 +63,57 @@ class TestGetModIndexFromAA(unittest.TestCase):
 class TestGetModIndexFromRegexImplemented(unittest.TestCase):
     def test_single_character_regex_match(self):
         """Test regex matching single character."""
-        result = get_mod_index_from_regex("PEPTIDE", r"P")
+        result = get_mod_index_from_regex("PEPTIDE", r"(?=P)")
         self.assertEqual(result, {0})  # Should match first P only
 
     def test_regex_match_at_end(self):
         """Test regex matching at end of sequence."""
-        result = get_mod_index_from_regex("PEPTIDE", r"E$")
-        self.assertEqual(result, {6})  # Should match E at end
+        result = get_mod_index_from_regex("PEPTIDE", r"(?<=E)$")
+        self.assertEqual(result, {7})  # Should match after E at end
 
     def test_regex_match_at_beginning(self):
         """Test regex matching at beginning of sequence."""
-        result = get_mod_index_from_regex("PEPTIDE", r"^P")
+        result = get_mod_index_from_regex("PEPTIDE", r"^(?=P)")
         self.assertEqual(result, {0})  # Should match P at start
 
     def test_regex_no_match(self):
         """Test regex with no matches."""
-        result = get_mod_index_from_regex("PEPTIDE", r"X")
+        result = get_mod_index_from_regex("PEPTIDE", r"(?=X)")
         self.assertEqual(result, set())
 
     def test_regex_multiple_matches(self):
         """Test regex that could match multiple positions."""
-        result = get_mod_index_from_regex("PEPTIDE", r"E")
+        result = get_mod_index_from_regex("PEPTIDE", r"(?=E)")
         self.assertEqual(result, {1})  # Should match first E only
 
     def test_regex_character_class(self):
         """Test regex with character class."""
-        result = get_mod_index_from_regex("PEPTIDE", r"[PT]")
+        result = get_mod_index_from_regex("PEPTIDE", r"(?=[PT])")
         self.assertEqual(result, {0})  # Should match first P
 
     def test_regex_lookahead_pattern(self):
         """Test regex with lookahead pattern."""
-        result = get_mod_index_from_regex("PEPTIDE", r"P(?=E)")
+        result = get_mod_index_from_regex("PEPTIDE", r"(?=PE)")
         self.assertEqual(result, {0})  # P followed by E
 
     def test_regex_lookbehind_pattern(self):
         """Test regex with lookbehind pattern."""
-        result = get_mod_index_from_regex("PEPTIDE", r"(?<=P)E")
-        self.assertEqual(result, {1})  # E preceded by P
+        result = get_mod_index_from_regex("PEPTIDE", r"(?<=PE)")
+        self.assertEqual(result, {2})  # After PE
 
     def test_regex_empty_sequence(self):
         """Test regex with empty sequence."""
-        result = get_mod_index_from_regex("", r"P")
+        result = get_mod_index_from_regex("", r"(?=P)")
         self.assertEqual(result, set())
 
     def test_regex_case_sensitive(self):
         """Test regex case sensitivity."""
-        result = get_mod_index_from_regex("peptide", r"P")
+        result = get_mod_index_from_regex("peptide", r"(?=P)")
         self.assertEqual(result, set())  # No match due to case
 
     def test_regex_case_insensitive_flag(self):
         """Test regex with case insensitive flag."""
-        result = get_mod_index_from_regex("peptide", r"(?i)P")
+        result = get_mod_index_from_regex("peptide", r"(?i)(?=P)")
         self.assertEqual(result, {0})  # Should match with flag
 
 
@@ -335,16 +335,12 @@ class TestApplyMods(unittest.TestCase):
 
     def test_none_modifications(self):
         """Test with None modification parameters."""
-        result = apply_mods(
-            self.annotation, nterm=None, cterm=None, internal=None, inplace=False
-        )
+        result = apply_mods(self.annotation, nterm=None, cterm=None, internal=None, inplace=False)
         self.assertEqual(result.serialize(), "PEPTIDE")
 
     def test_empty_modification_dicts(self):
         """Test with empty modification dictionaries."""
-        result = apply_mods(
-            self.annotation, nterm={}, cterm={}, internal={}, inplace=False
-        )
+        result = apply_mods(self.annotation, nterm={}, cterm={}, internal={}, inplace=False)
         self.assertEqual(result.serialize(), "PEPTIDE")
 
 
@@ -738,12 +734,8 @@ class TestBuildModsFirstProteoformOnly(unittest.TestCase):
         self.assertIn("PEPTIDE", serialized)
 
         # Check that we have the right combinations
-        has_phospho_only = any(
-            "Phospho" in s and "Oxidation" not in s for s in serialized
-        )
-        has_oxidation_only = any(
-            "Oxidation" in s and "Phospho" not in s for s in serialized
-        )
+        has_phospho_only = any("Phospho" in s and "Oxidation" not in s for s in serialized)
+        has_oxidation_only = any("Oxidation" in s and "Phospho" not in s for s in serialized)
         has_both = any("Phospho" in s and "Oxidation" in s for s in serialized)
 
         self.assertTrue(has_phospho_only)
@@ -956,9 +948,7 @@ class TestBuildModsFirstProteoformOnly(unittest.TestCase):
         phospho_count_distribution = {}
         for s in serialized:
             count = s.count("Phospho")
-            phospho_count_distribution[count] = (
-                phospho_count_distribution.get(count, 0) + 1
-            )
+            phospho_count_distribution[count] = phospho_count_distribution.get(count, 0) + 1
 
         # Each count should appear exactly once
         self.assertEqual(phospho_count_distribution, {0: 1, 1: 1, 2: 1, 3: 1})

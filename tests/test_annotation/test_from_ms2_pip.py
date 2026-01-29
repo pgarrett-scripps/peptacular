@@ -10,9 +10,7 @@ class TestFromMS2PIP(unittest.TestCase):
 
     def test_empty_modification_string(self):
         """Test parsing with no modifications"""
-        annot = ProFormaAnnotation.from_ms2_pip(
-            sequence="PEPTIDE", mod_str="", static_mods=None
-        )
+        annot = ProFormaAnnotation.from_ms2_pip(sequence="PEPTIDE", mod_str="", static_mods=None)
         self.assertEqual(annot.serialize(), "PEPTIDE")
 
     def test_single_nterm_modification(self):
@@ -22,9 +20,7 @@ class TestFromMS2PIP(unittest.TestCase):
 
     def test_single_cterm_modification(self):
         """Test C-terminal modification (loc=-1)"""
-        annot = ProFormaAnnotation.from_ms2_pip(
-            sequence="PEPTIDE", mod_str="-1|Amidated"
-        )
+        annot = ProFormaAnnotation.from_ms2_pip(sequence="PEPTIDE", mod_str="-1|Amidated")
         self.assertEqual(annot.serialize(), "PEPTIDE-[Amidated]")
 
     def test_single_internal_modification(self):
@@ -34,25 +30,19 @@ class TestFromMS2PIP(unittest.TestCase):
 
     def test_multiple_internal_modifications_same_position(self):
         """Test multiple modifications at same position"""
-        annot = ProFormaAnnotation.from_ms2_pip(
-            sequence="PEPTIDE", mod_str="2|Phospho|2|Oxidation"
-        )
+        annot = ProFormaAnnotation.from_ms2_pip(sequence="PEPTIDE", mod_str="2|Phospho|2|Oxidation")
         serialized = annot.serialize()
         self.assertIn("Phospho", serialized)
         self.assertIn("Oxidation", serialized)
 
     def test_multiple_internal_modifications_different_positions(self):
         """Test modifications at different positions"""
-        annot = ProFormaAnnotation.from_ms2_pip(
-            sequence="PEPTIDE", mod_str="2|Phospho|5|Oxidation"
-        )
+        annot = ProFormaAnnotation.from_ms2_pip(sequence="PEPTIDE", mod_str="2|Phospho|5|Oxidation")
         self.assertEqual(annot.serialize(), "PE[Phospho]PTI[Oxidation]DE")
 
     def test_mixed_modification_locations(self):
         """Test N-term, C-term, and internal modifications"""
-        annot = ProFormaAnnotation.from_ms2_pip(
-            sequence="PEPTIDE", mod_str="0|Acetyl|3|Phospho|-1|Amidated"
-        )
+        annot = ProFormaAnnotation.from_ms2_pip(sequence="PEPTIDE", mod_str="0|Acetyl|3|Phospho|-1|Amidated")
         self.assertEqual(annot.serialize(), "[Acetyl]-PEP[Phospho]TIDE-[Amidated]")
 
     def test_static_modifications(self):
@@ -78,16 +68,12 @@ class TestFromMS2PIP(unittest.TestCase):
 
     def test_mass_modification(self):
         """Test mass-based modification"""
-        annot = ProFormaAnnotation.from_ms2_pip(
-            sequence="PEPTIDE", mod_str="2|+79.966331"
-        )
+        annot = ProFormaAnnotation.from_ms2_pip(sequence="PEPTIDE", mod_str="2|+79.966331")
         self.assertEqual(annot.serialize(), "PE[+79.966331]PTIDE")
 
     def test_unimod_accession(self):
         """Test Unimod accession"""
-        annot = ProFormaAnnotation.from_ms2_pip(
-            sequence="PEPTIDE", mod_str="2|UNIMOD:21"
-        )
+        annot = ProFormaAnnotation.from_ms2_pip(sequence="PEPTIDE", mod_str="2|UNIMOD:21")
         self.assertEqual(annot.serialize(), "PE[UNIMOD:21]PTIDE")
 
     def test_complex_example(self):
@@ -97,9 +83,7 @@ class TestFromMS2PIP(unittest.TestCase):
             mod_str="0|Acetyl|5|Oxidation|10|Phospho",
             static_mods={"C": 57.02146},
         )
-        self.assertEqual(
-            annot.serialize(), "<[+57.02146]@C>[Acetyl]-PEPTC[Oxidation]MIDEK[Phospho]"
-        )
+        self.assertEqual(annot.serialize(), "<[+57.02146]@C>[Acetyl]-PEPTC[Oxidation]MIDEK[Phospho]")
 
 
 class TestToMS2PIP(unittest.TestCase):
@@ -124,9 +108,7 @@ class TestToMS2PIP(unittest.TestCase):
 
     def test_single_internal_modification(self):
         """Test internal modification"""
-        annot = ProFormaAnnotation(
-            sequence="PEPTIDE", internal_mods={1: {"Phospho": 1}}
-        )
+        annot = ProFormaAnnotation(sequence="PEPTIDE", internal_mods={1: {"Phospho": 1}})
         seq, mod_str = annot.to_ms2_pip()
         self.assertEqual((seq, mod_str), ("PEPTIDE", "2|Phospho"))
 
@@ -145,9 +127,7 @@ class TestToMS2PIP(unittest.TestCase):
 
     def test_multiple_internal_modifications(self):
         """Test multiple internal modifications"""
-        annot = ProFormaAnnotation(
-            sequence="PEPTIDE", internal_mods={1: {"Phospho": 1}, 4: {"Oxidation": 1}}
-        )
+        annot = ProFormaAnnotation(sequence="PEPTIDE", internal_mods={1: {"Phospho": 1}, 4: {"Oxidation": 1}})
         seq, mod_str = annot.to_ms2_pip()
         self.assertEqual(seq, "PEPTIDE")
         parts = set(mod_str.split("|"))
@@ -155,17 +135,13 @@ class TestToMS2PIP(unittest.TestCase):
 
     def test_mass_modification(self):
         """Test mass-based modification"""
-        annot = ProFormaAnnotation(
-            sequence="PEPTIDE", internal_mods={1: {"+79.966331": 1}}
-        )
+        annot = ProFormaAnnotation(sequence="PEPTIDE", internal_mods={1: {"+79.966331": 1}})
         seq, mod_str = annot.to_ms2_pip()
         self.assertEqual((seq, mod_str), ("PEPTIDE", "2|+79.966331"))
 
     def test_unimod_accession(self):
         """Test Unimod accession"""
-        annot = ProFormaAnnotation(
-            sequence="PEPTIDE", internal_mods={1: {"UNIMOD:21": 1}}
-        )
+        annot = ProFormaAnnotation(sequence="PEPTIDE", internal_mods={1: {"UNIMOD:21": 1}})
         seq, mod_str = annot.to_ms2_pip()
         self.assertEqual((seq, mod_str), ("PEPTIDE", "2|UNIMOD:21"))
 
@@ -174,25 +150,19 @@ class TestToMS2PIP(unittest.TestCase):
         with self.assertRaises(ValueError):
             ProFormaAnnotation(sequence="PEPTIDE", labile_mods={"Hex": 1}).to_ms2_pip()
         with self.assertRaises(ValueError):
-            ProFormaAnnotation(
-                sequence="PEPTIDE", unknown_mods={"Phospho": 1}
-            ).to_ms2_pip()
+            ProFormaAnnotation(sequence="PEPTIDE", unknown_mods={"Phospho": 1}).to_ms2_pip()
         with self.assertRaises(ValueError):
             ProFormaAnnotation(sequence="PEPTIDE", charge=2).to_ms2_pip()
 
     def test_rejects_modification_multipliers(self):
         """Test that modification multipliers raise ValueError"""
         with self.assertRaises(ValueError):
-            ProFormaAnnotation(
-                sequence="PEPTIDE", nterm_mods={"Acetyl": 2}
-            ).to_ms2_pip()
+            ProFormaAnnotation(sequence="PEPTIDE", nterm_mods={"Acetyl": 2}).to_ms2_pip()
 
     def test_rejects_multiple_mods_same_site(self):
         """Test that multiple mods at same site raise ValueError"""
         with self.assertRaises(ValueError):
-            ProFormaAnnotation(
-                sequence="PEPTIDE", internal_mods={1: {"Phospho": 1, "Oxidation": 1}}
-            ).to_ms2_pip()
+            ProFormaAnnotation(sequence="PEPTIDE", internal_mods={1: {"Phospho": 1, "Oxidation": 1}}).to_ms2_pip()
 
     def test_roundtrip(self):
         """Test roundtrip: from_ms2_pip -> to_ms2_pip"""

@@ -118,9 +118,7 @@ class TestSplit(unittest.TestCase):
 
     def test_split_with_multiple_modifications(self):
         """Test splitting with multiple types of modifications"""
-        annotation = pt.ProFormaAnnotation.parse(
-            "<15N>{Glycan}[Acetyl]-PE[Phospho]PTIDE-[Amide]/2"
-        )
+        annotation = pt.ProFormaAnnotation.parse("<15N>{Glycan}[Acetyl]-PE[Phospho]PTIDE-[Amide]/2")
         split_annotations = annotation.split()
 
         self.assertEqual(len(split_annotations), 7)

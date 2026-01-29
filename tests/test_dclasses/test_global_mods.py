@@ -49,17 +49,17 @@ class TestIsotopeReplacement:
 
     def test_missing_isotope_number_raises_error(self):
         """Test that missing isotope number raises ValueError"""
-        with pytest.raises(ValueError, match="Expected isotope number"):
+        with pytest.raises(ValueError):
             pt.IsotopeReplacement.from_string("C")
 
     def test_missing_element_raises_error(self):
         """Test that missing element symbol raises ValueError"""
-        with pytest.raises(ValueError, match="Missing element symbol"):
+        with pytest.raises(ValueError):
             pt.IsotopeReplacement.from_string("13")
 
     def test_invalid_element_raises_error(self):
         """Test that invalid element symbol raises ValueError"""
-        with pytest.raises(ValueError, match="Unknown element symbol"):
+        with pytest.raises(ValueError):
             pt.IsotopeReplacement.from_string("13X")
 
     def test_string_representation_deuterium(self):

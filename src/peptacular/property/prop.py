@@ -40,16 +40,10 @@ class AnnotationProperties:
     def calc_property(
         self,
         scale: str | dict[str, float],
-        missing_aa_handling: (
-            MissingAAHandlingLiteral | MissingAAHandling
-        ) = MissingAAHandling.ERROR,
-        aggregation_method: (
-            AggregationMethodLiteral | AggregationMethod
-        ) = AggregationMethod.AVG,
+        missing_aa_handling: (MissingAAHandlingLiteral | MissingAAHandling) = MissingAAHandling.ERROR,
+        aggregation_method: (AggregationMethodLiteral | AggregationMethod) = AggregationMethod.AVG,
         normalize: bool = False,
-        weighting_scheme: (
-            WeightingMethodsLiteral | WeightingMethods | Sequence[float]
-        ) = WeightingMethods.UNIFORM,
+        weighting_scheme: (WeightingMethodsLiteral | WeightingMethods | Sequence[float]) = WeightingMethods.UNIFORM,
         min_weight: float = 0.1,
         max_weight: float = 1.0,
     ) -> float:
@@ -261,16 +255,10 @@ class AnnotationProperties:
         self,
         scale: str | dict[str, float],
         window_size: int = 9,
-        missing_aa_handling: (
-            MissingAAHandlingLiteral | MissingAAHandling
-        ) = MissingAAHandling.ERROR,
-        aggregation_method: (
-            AggregationMethodLiteral | AggregationMethod
-        ) = AggregationMethod.AVG,
+        missing_aa_handling: (MissingAAHandlingLiteral | MissingAAHandling) = MissingAAHandling.ERROR,
+        aggregation_method: (AggregationMethodLiteral | AggregationMethod) = AggregationMethod.AVG,
         normalize: bool = False,
-        weighting_scheme: (
-            WeightingMethodsLiteral | WeightingMethods | Sequence[float]
-        ) = WeightingMethods.UNIFORM,
+        weighting_scheme: (WeightingMethodsLiteral | WeightingMethods | Sequence[float]) = WeightingMethods.UNIFORM,
         min_weight: float = 0.1,
         max_weight: float = 1.0,
     ) -> list[float]:
@@ -396,15 +384,9 @@ class AnnotationProperties:
         num_windows: int = 5,
         normalize: bool = False,
         aa_overlap: int = 0,
-        missing_aa_handling: (
-            MissingAAHandlingLiteral | MissingAAHandling
-        ) = MissingAAHandling.AVG,
-        aggregation_method: (
-            AggregationMethodLiteral | AggregationMethod
-        ) = AggregationMethod.AVG,
-        weighting_scheme: (
-            WeightingMethodsLiteral | WeightingMethods | Sequence[float]
-        ) = WeightingMethods.UNIFORM,
+        missing_aa_handling: (MissingAAHandlingLiteral | MissingAAHandling) = MissingAAHandling.AVG,
+        aggregation_method: (AggregationMethodLiteral | AggregationMethod) = AggregationMethod.AVG,
+        weighting_scheme: (WeightingMethodsLiteral | WeightingMethods | Sequence[float]) = WeightingMethods.UNIFORM,
         min_weight: float = 0.1,
         max_weight: float = 1.0,
     ) -> list[float]:

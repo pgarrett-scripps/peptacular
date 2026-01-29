@@ -3,9 +3,7 @@ import warnings
 from collections.abc import Generator
 
 
-def get_regex_match_indices(
-    input_str: str, regex_str: str | re.Pattern[str], offset: int = 0
-) -> Generator[int, None, None]:
+def get_regex_match_indices(input_str: str, regex_str: str | re.Pattern[str], offset: int = 0) -> Generator[int, None, None]:
     """
     Identify the starting indexes of occurrences of a given regex pattern within a string.
 
@@ -20,30 +18,31 @@ def get_regex_match_indices(
 
     .. code-block:: python
 
-        >>> list(get_regex_match_indices("PEPTIDE", "P"))
-        [1, 3]
+        >>> list(get_regex_match_indices("PEPTIDE", "(?=P)"))
+        [0, 2]
 
-        >>> list(get_regex_match_indices("PEPTIDE", re.compile("E")))
-        [2, 7]
+        >>> list(get_regex_match_indices("PEPTIDE", re.compile("(?=E)")))
+        [1, 6]
 
-        >>> list(get_regex_match_indices("PEPTIDE", 'E'))
-        [2, 7]
+        >>> list(get_regex_match_indices("PEPTIDE", '(?=E)'))
+        [1, 6]
 
         # More complex regex
-        >>> list(get_regex_match_indices("PEPTIDE", "P[ST]"))
-        [3]
+        >>> list(get_regex_match_indices("PEPTIDE", "(?=P[ST])"))
+        [2]
 
-        >>> list(get_regex_match_indices("PPPP", "PP"))
-        [1, 2, 3]
+        >>> list(get_regex_match_indices("PPPP", "(?=PP)"))
+        [0, 1, 2]
 
         >>> list(get_regex_match_indices("PEPCTIDE", "(?=C)"))
         [3]
 
-        >>> list(get_regex_match_indices("PEPCTIDE", "C"))
-        [4]
+        >>> list(get_regex_match_indices("PEPCTIDE", "(?<=P)(?=E)"))
+        [1]
 
         >>> list(get_regex_match_indices("PEPCTIDE", "(?<=C)"))
         [4]
+
 
     """
 
@@ -63,6 +62,8 @@ def get_regex_match_indices(
         if match.start() != match.end():
             warnings.warn(
                 message="The regex pattern has a match with a none zero length. Using start index + 1 for the match.",
+                category=UserWarning,
+                stacklevel=2,
             )
             yield match.start() + offset + 1
         else:
@@ -72,9 +73,7 @@ def get_regex_match_indices(
         pos = match.start() + 1
 
 
-def get_regex_match_range(
-    input_str: str, regex_str: str | re.Pattern[str], offset: int = 0
-) -> list[tuple[int, int]]:
+def get_regex_match_range(input_str: str, regex_str: str | re.Pattern[str], offset: int = 0) -> list[tuple[int, int]]:
     """
     Identify the starting indexes of occurrences of a given regex pattern within a string.
 

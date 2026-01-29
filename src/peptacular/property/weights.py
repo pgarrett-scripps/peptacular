@@ -5,9 +5,7 @@ from typing import Any
 from .types import WeightingMethods
 
 
-def _get_uniform_weights(
-    length: int, min_weight: float = 0.1, max_weight: float = 1.0
-) -> list[float]:
+def _get_uniform_weights(length: int, min_weight: float = 0.1, max_weight: float = 1.0) -> list[float]:
     """
     Generate uniform weights for a sequence of given length.
 
@@ -22,9 +20,7 @@ def _get_uniform_weights(
     return [max_weight] * length  # Uniform weights for simplicity
 
 
-def _get_linear_weights(
-    length: int, min_weight: float = 0.1, max_weight: float = 1.0
-) -> list[float]:
+def _get_linear_weights(length: int, min_weight: float = 0.1, max_weight: float = 1.0) -> list[float]:
     """
     Generate linear weights for a sequence of given length. Middle should be peak and left right should be min.
 
@@ -56,9 +52,7 @@ def _get_linear_weights(
     return weights
 
 
-def _get_exponential_weights(
-    length: int, min_weight: float = 0.1, max_weight: float = 1.0
-) -> list[float]:
+def _get_exponential_weights(length: int, min_weight: float = 0.1, max_weight: float = 1.0) -> list[float]:
     """
     Generate exponential weights for a sequence of given length. Middle should be peak and left right should be min.
     Uses exponential decay from center to edges.
@@ -95,9 +89,7 @@ def _get_exponential_weights(
     return weights
 
 
-def _get_gaussian_weights(
-    length: int, min_weight: float = 0.1, max_weight: float = 1.0
-) -> list[float]:
+def _get_gaussian_weights(length: int, min_weight: float = 0.1, max_weight: float = 1.0) -> list[float]:
     """
     Generate Gaussian weights for a sequence of given length.
     Uses fixed Gaussian distribution sampled across predetermined space.
@@ -176,9 +168,7 @@ def _get_sigmoid_weights(
     return weights
 
 
-def _get_cosine_weights(
-    length: int, min_weight: float = 0.1, max_weight: float = 1.0, cycles: float = 1.0
-) -> list[float]:
+def _get_cosine_weights(length: int, min_weight: float = 0.1, max_weight: float = 1.0, cycles: float = 1.0) -> list[float]:
     """
     Generate cosine-based weights for a sequence. Creates periodic patterns.
 
@@ -213,9 +203,7 @@ def _get_cosine_weights(
     return weights
 
 
-def _get_sinusoidal_weights(
-    length: int, min_weight: float = 0.1, max_weight: float = 1.0, phase: float = 0.0
-) -> list[float]:
+def _get_sinusoidal_weights(length: int, min_weight: float = 0.1, max_weight: float = 1.0, phase: float = 0.0) -> list[float]:
     """
     Generate sinusoidal weights (half sine wave from 0 to π).
 
@@ -276,26 +264,16 @@ def get_weights(
             case WeightingMethods.GAUSSIAN:
                 return _get_gaussian_weights(length, min_weight, max_weight)
             case WeightingMethods.SIGMOID:
-                return _get_sigmoid_weights(
-                    length, min_weight, max_weight, kwargs.get("steepness", 2.0)
-                )
+                return _get_sigmoid_weights(length, min_weight, max_weight, kwargs.get("steepness", 2.0))
             case WeightingMethods.COSINE:
-                return _get_cosine_weights(
-                    length, min_weight, max_weight, kwargs.get("cycles", 1.0)
-                )
+                return _get_cosine_weights(length, min_weight, max_weight, kwargs.get("cycles", 1.0))
             case WeightingMethods.SINUSOIDAL:
-                return _get_sinusoidal_weights(
-                    length, min_weight, max_weight, kwargs.get("phase", 0.0)
-                )
+                return _get_sinusoidal_weights(length, min_weight, max_weight, kwargs.get("phase", 0.0))
             case _:
                 raise ValueError(f"Unsupported weights type: {weights}")
     else:
         if not isinstance(weights, Sequence):
-            raise TypeError(
-                "weights must be a sequence of floats or a valid WeightingMethod enum."
-            )
+            raise TypeError("weights must be a sequence of floats or a valid WeightingMethod enum.")
         if len(weights) != length:
-            raise ValueError(
-                f"Length of weights list ({len(weights)}) does not match sequence length ({length})."
-            )
+            raise ValueError(f"Length of weights list ({len(weights)}) does not match sequence length ({length}).")
         return weights

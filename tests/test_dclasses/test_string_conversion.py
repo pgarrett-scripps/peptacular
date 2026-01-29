@@ -90,9 +90,7 @@ class TestFormulaStringConversion:
 
     def test_charged_formula_negative_charge(self):
         """Test ChargedFormula with negative charge"""
-        formula = pt.ChargedFormula(
-            formula=(pt.FormulaElement(element=pt.Element.O, occurance=1),), charge=-1
-        )
+        formula = pt.ChargedFormula(formula=(pt.FormulaElement(element=pt.Element.O, occurance=1),), charge=-1)
         assert str(formula) == "Formula:O:z-1"
 
 

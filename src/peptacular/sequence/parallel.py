@@ -77,7 +77,7 @@ def _get_optimal_method() -> Literal["process", "thread"]:
     return "thread" if _is_gil_disabled() else "process"
 
 
-def _apply_wrapper(item: Any, func: Callable[..., T], func_kwargs: dict[str, Any]) -> T:
+def _apply_wrapper[T](item: Any, func: Callable[..., T], func_kwargs: dict[str, Any]) -> T:
     """
     Wrapper function at module level so it can be pickled.
     :param item: Single item to process
@@ -88,9 +88,7 @@ def _apply_wrapper(item: Any, func: Callable[..., T], func_kwargs: dict[str, Any
     return func(item, **func_kwargs)
 
 
-def _get_or_create_pool(
-    method: parallelMethod, n_workers: int, reuse_pool: bool = True
-) -> Pool | ThreadPool:
+def _get_or_create_pool(method: parallelMethod, n_workers: int, reuse_pool: bool = True) -> Pool | ThreadPool:
     """
     Get an existing pool or create a new one.
 
@@ -132,7 +130,7 @@ def cleanup_pools():
         _pool_cache.clear()
 
 
-def parallel_apply_internal(
+def parallel_apply_internal[T](
     func: Callable[..., T],
     items: Sequence[Any],
     n_workers: int | None = None,
@@ -165,9 +163,7 @@ def parallel_apply_internal(
     if not items_list:
         return []
 
-    method_enum = (
-        parallelMethod(method) if method is not None else parallelMethod.PROCESS
-    )
+    method_enum = parallelMethod(method) if method is not None else parallelMethod.PROCESS
 
     # Handle sequential execution
     if method_enum == parallelMethod.SEQUENTIAL:

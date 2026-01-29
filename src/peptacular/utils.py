@@ -60,6 +60,4 @@ def get_mods(
         # List of modification types
         return [get_mod_type(mod) for mod in mods]
 
-    raise ValueError(
-        f"mods parameter must be str, list of str, or None, got {type(mods)}"
-    )
+    raise ValueError(f"mods parameter must be str, list of str, or None, got {type(mods)}")

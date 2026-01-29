@@ -68,23 +68,17 @@ def _serialize_chimeric_single(
     # ensure all annots share the same compound name and global mods
     compund_names = set(annot.compound_name for annot in annots)
     if len(compund_names) > 1:
-        raise ValueError(
-            "All annotations in a chimeric sequence must share the same compound name."
-        )
+        raise ValueError("All annotations in a chimeric sequence must share the same compound name.")
 
     static_mods = set(annot.static_mods for annot in annots)
 
     if len(static_mods) > 1:
-        raise ValueError(
-            "All annotations in a chimeric sequence must share the same static modifications."
-        )
+        raise ValueError("All annotations in a chimeric sequence must share the same static modifications.")
 
     isotope_mods = set(annot.isotope_mods for annot in annots)
 
     if len(isotope_mods) > 1:
-        raise ValueError(
-            "All annotations in a chimeric sequence must share the same isotopic modifications."
-        )
+        raise ValueError("All annotations in a chimeric sequence must share the same isotopic modifications.")
 
     for i, annot in enumerate(annots):
         if i == 0:
@@ -115,20 +109,13 @@ def serialize_chimeric(
 
 
 def serialize_chimeric(
-    sequence: Sequence[ProFormaAnnotation | str]
-    | Sequence[Sequence[ProFormaAnnotation | str]],
+    sequence: Sequence[ProFormaAnnotation | str] | Sequence[Sequence[ProFormaAnnotation | str]],
     n_workers: int | None = None,
     chunksize: int | None = None,
     method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> str | list[str]:
     """Serialize a chimeric peptide sequence or list of sequences to ProForma string format."""
-    if (
-        isinstance(sequence, Sequence)
-        and not isinstance(sequence, str)
-        and all(
-            isinstance(seq, Sequence) and not isinstance(seq, str) for seq in sequence
-        )
-    ):
+    if isinstance(sequence, Sequence) and not isinstance(sequence, str) and all(isinstance(seq, Sequence) and not isinstance(seq, str) for seq in sequence):
         return parallel_apply_internal(
             _serialize_chimeric_single,
             sequence,
@@ -220,11 +207,7 @@ def serialize(
     method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> str | list[str]:
     """Serialize a peptide sequence or list of sequences to ProForma string format."""
-    if (
-        isinstance(sequence, Sequence)
-        and not isinstance(sequence, str)
-        and not isinstance(sequence, ProFormaAnnotation)
-    ):
+    if isinstance(sequence, Sequence) and not isinstance(sequence, str) and not isinstance(sequence, ProFormaAnnotation):
         return parallel_apply_internal(
             _serialize_single,
             sequence,
@@ -265,11 +248,7 @@ def sequence_length(
     method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> int | list[int]:
     """Compute the length of the peptide sequence based on the unmodified sequence."""
-    if (
-        isinstance(sequence, Sequence)
-        and not isinstance(sequence, str)
-        and not isinstance(sequence, ProFormaAnnotation)
-    ):
+    if isinstance(sequence, Sequence) and not isinstance(sequence, str) and not isinstance(sequence, ProFormaAnnotation):
         return parallel_apply_internal(
             _sequence_length_single,
             sequence,
@@ -310,11 +289,7 @@ def is_ambiguous(
     method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> bool | list[bool]:
     """Check if the sequence contains ambiguous amino acids."""
-    if (
-        isinstance(sequence, Sequence)
-        and not isinstance(sequence, str)
-        and not isinstance(sequence, ProFormaAnnotation)
-    ):
+    if isinstance(sequence, Sequence) and not isinstance(sequence, str) and not isinstance(sequence, ProFormaAnnotation):
         return parallel_apply_internal(
             _is_ambiguous_single,
             sequence,
@@ -355,11 +330,7 @@ def is_modified(
     method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> bool | list[bool]:
     """Check if the sequence contains any modifications."""
-    if (
-        isinstance(sequence, Sequence)
-        and not isinstance(sequence, str)
-        and not isinstance(sequence, ProFormaAnnotation)
-    ):
+    if isinstance(sequence, Sequence) and not isinstance(sequence, str) and not isinstance(sequence, ProFormaAnnotation):
         return parallel_apply_internal(
             _is_modified_single,
             sequence,
@@ -371,14 +342,8 @@ def is_modified(
         return _is_modified_single(sequence)
 
 
-def _count_residues_single(
-    sequence: str | ProFormaAnnotation, include_mods: bool = True
-) -> dict[str, int]:
-    return (
-        get_annotation_input(sequence, copy=False)
-        .condense_static_mods(inplace=True)
-        .count_residues(include_mods=include_mods)
-    )
+def _count_residues_single(sequence: str | ProFormaAnnotation, include_mods: bool = True) -> dict[str, int]:
+    return get_annotation_input(sequence, copy=False).condense_static_mods(inplace=True).count_residues(include_mods=include_mods)
 
 
 @overload
@@ -425,11 +390,7 @@ def count_residues(
         {'P': 1, 'E': 1, 'P[Oxidation]': 1, 'T': 1, 'I': 1, 'D': 1, 'E-[+30]': 1}
 
     """
-    if (
-        isinstance(sequence, Sequence)
-        and not isinstance(sequence, str)
-        and not isinstance(sequence, ProFormaAnnotation)
-    ):
+    if isinstance(sequence, Sequence) and not isinstance(sequence, str) and not isinstance(sequence, ProFormaAnnotation):
         return parallel_apply_internal(
             _count_residues_single,
             sequence,
@@ -446,11 +407,7 @@ def _percent_residues_single(
     sequence: str | ProFormaAnnotation,
     include_mods: bool = True,
 ) -> dict[str, float]:
-    return (
-        get_annotation_input(sequence, copy=False)
-        .condense_static_mods(inplace=True)
-        .percent_residues(include_mods=include_mods)
-    )
+    return get_annotation_input(sequence, copy=False).condense_static_mods(inplace=True).percent_residues(include_mods=include_mods)
 
 
 @overload
@@ -499,11 +456,7 @@ def percent_residues(
         {'P': 14.29, 'E': 14.29, 'P[Oxidation]': 14.29, 'T': 14.29, 'I': 14.29, 'D': 14.29, 'E-[+30]': 14.29}
 
     """
-    if (
-        isinstance(sequence, Sequence)
-        and not isinstance(sequence, str)
-        and not isinstance(sequence, ProFormaAnnotation)
-    ):
+    if isinstance(sequence, Sequence) and not isinstance(sequence, str) and not isinstance(sequence, ProFormaAnnotation):
         return parallel_apply_internal(
             _percent_residues_single,
             sequence,
@@ -617,11 +570,7 @@ def validate(
     """
     Checks if the input sequence is a valid ProForma sequence.
     """
-    if (
-        isinstance(sequence, Sequence)
-        and not isinstance(sequence, str)
-        and not isinstance(sequence, ProFormaAnnotation)
-    ):
+    if isinstance(sequence, Sequence) and not isinstance(sequence, str) and not isinstance(sequence, ProFormaAnnotation):
         return parallel_apply_internal(
             _validate_single,
             sequence,

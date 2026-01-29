@@ -119,11 +119,7 @@ def build_mods(
 
 
     """
-    if (
-        isinstance(sequence, Sequence)
-        and not isinstance(sequence, str)
-        and not isinstance(sequence, ProFormaAnnotation)
-    ):
+    if isinstance(sequence, Sequence) and not isinstance(sequence, str) and not isinstance(sequence, ProFormaAnnotation):
         return parallel_apply_internal(
             _build_mods_single,
             sequence,
@@ -172,33 +168,21 @@ def set_mods(
     sequence: str | ProFormaAnnotation,
     mods: Mapping[ModType | ModTypeLiteral | int, Any] | None,
 ) -> str:
-    return (
-        get_annotation_input(sequence, copy=True)
-        .set_mods(mods, inplace=True)
-        .serialize()
-    )
+    return get_annotation_input(sequence, copy=True).set_mods(mods, inplace=True).serialize()
 
 
 def append_mods(
     sequence: str | ProFormaAnnotation,
     mods: Mapping[ModType | ModTypeLiteral | int, Any],
 ) -> str:
-    return (
-        get_annotation_input(sequence, copy=True)
-        .append_mods(mods, inplace=True)
-        .serialize()
-    )
+    return get_annotation_input(sequence, copy=True).append_mods(mods, inplace=True).serialize()
 
 
 def extend_mods(
     sequence: str | ProFormaAnnotation,
     mods: Mapping[ModType | ModTypeLiteral | int, Any],
 ) -> str:
-    return (
-        get_annotation_input(sequence, copy=True)
-        .extend_mods(mods, inplace=True)
-        .serialize()
-    )
+    return get_annotation_input(sequence, copy=True).extend_mods(mods, inplace=True).serialize()
 
 
 def condense_static_mods(
@@ -231,11 +215,7 @@ def condense_static_mods(
 
     """
 
-    return (
-        get_annotation_input(sequence=sequence, copy=True)
-        .condense_static_mods(inplace=False)
-        .serialize()
-    )
+    return get_annotation_input(sequence=sequence, copy=True).condense_static_mods(inplace=False).serialize()
 
 
 def pop_mods(
@@ -307,11 +287,7 @@ def strip_mods(
         'PEPTIDE'
     """
 
-    if (
-        isinstance(sequence, Sequence)
-        and not isinstance(sequence, str)
-        and not isinstance(sequence, ProFormaAnnotation)
-    ):
+    if isinstance(sequence, Sequence) and not isinstance(sequence, str) and not isinstance(sequence, ProFormaAnnotation):
         return parallel_apply_internal(
             _strip_mods,
             sequence,
@@ -338,11 +314,7 @@ def filter_mods(
         'PEP[phospho]TIDE'
 
     """
-    return (
-        get_annotation_input(sequence=sequence, copy=True)
-        .filter_mods(mods=mods, inplace=True)
-        .serialize()
-    )
+    return get_annotation_input(sequence=sequence, copy=True).filter_mods(mods=mods, inplace=True).serialize()
 
 
 def _to_ms2_pip_single(
@@ -391,11 +363,7 @@ def to_ms2_pip(
         [('PEPTIDE', '3|Phospho'), ('PROTEIN', '4|Oxidation')]
 
     """
-    if (
-        isinstance(sequence, Sequence)
-        and not isinstance(sequence, str)
-        and not isinstance(sequence, ProFormaAnnotation)
-    ):
+    if isinstance(sequence, Sequence) and not isinstance(sequence, str) and not isinstance(sequence, ProFormaAnnotation):
         return parallel_apply_internal(
             _to_ms2_pip_single,
             sequence,
@@ -468,9 +436,7 @@ def from_ms2_pip(
     if isinstance(sequence, Sequence) and not isinstance(sequence, tuple):
         # Validate that all items are tuples
         if not all(isinstance(item, tuple) and len(item) == 2 for item in sequence):
-            raise ValueError(
-                "All items in sequence must be tuples of (sequence, modifications)"
-            )
+            raise ValueError("All items in sequence must be tuples of (sequence, modifications)")
 
         return parallel_apply_internal(
             _from_ms2_pip_single,
@@ -483,9 +449,7 @@ def from_ms2_pip(
     else:
         # Single tuple processing
         if not isinstance(sequence, tuple) or len(sequence) != 2:
-            raise ValueError(
-                "sequence must be a tuple of (sequence, modifications) for single processing"
-            )
+            raise ValueError("sequence must be a tuple of (sequence, modifications) for single processing")
 
         item = cast(tuple[str, str], sequence)
         return _from_ms2_pip_single(
@@ -497,11 +461,7 @@ def from_ms2_pip(
 def _condense_to_peptidoform(
     sequence: str | ProFormaAnnotation,
 ) -> str:
-    return (
-        get_annotation_input(sequence=sequence, copy=True)
-        .condense_to_peptidoform(inplace=False)
-        .serialize()
-    )
+    return get_annotation_input(sequence=sequence, copy=True).condense_to_peptidoform(inplace=False).serialize()
 
 
 @overload
@@ -527,11 +487,7 @@ def condense_to_peptidoform(
     Condenses all modifications into a peptidoform representation for a sequence or list of sequences.
     """
 
-    if (
-        isinstance(sequence, Sequence)
-        and not isinstance(sequence, str)
-        and not isinstance(sequence, ProFormaAnnotation)
-    ):
+    if isinstance(sequence, Sequence) and not isinstance(sequence, str) and not isinstance(sequence, ProFormaAnnotation):
         return parallel_apply_internal(
             _condense_to_peptidoform,
             sequence,

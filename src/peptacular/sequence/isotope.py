@@ -92,9 +92,7 @@ def isotopic_distribution(
     chunksize: int | None = None,
     method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[IsotopicData] | list[list[IsotopicData]]:
-    if isinstance(annotations, Sequence) and not isinstance(
-        annotations, (str, ProFormaAnnotation)
-    ):
+    if isinstance(annotations, Sequence) and not isinstance(annotations, (str, ProFormaAnnotation)):
         return parallel_apply_internal(
             _isotopic_distribution_single,
             annotations,
@@ -202,9 +200,7 @@ def estimate_isotopic_distribution(
     chunksize: int | None = None,
     method: parallelMethod | parallelMethodLiteral | None = None,
 ) -> list[IsotopicData] | list[list[IsotopicData]]:
-    if isinstance(annotations, Sequence) and not isinstance(
-        annotations, (str, ProFormaAnnotation)
-    ):
+    if isinstance(annotations, Sequence) and not isinstance(annotations, (str, ProFormaAnnotation)):
         return parallel_apply_internal(
             _estimate_isotopic_distribution_single,
             annotations,

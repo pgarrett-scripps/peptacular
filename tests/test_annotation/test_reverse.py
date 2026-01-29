@@ -63,9 +63,7 @@ class TestReverse(unittest.TestCase):
         annotation = pt.ProFormaAnnotation.parse("P(EP)[Phospho]TI(DE)[Methyl]")
         reversed_annotation = annotation.reverse()
         # First interval (1,3) becomes (4,6), second interval (4,6) becomes (1,3)
-        self.assertEqual(
-            reversed_annotation.serialize(), "(ED)[Methyl]IT(PE)[Phospho]P"
-        )
+        self.assertEqual(reversed_annotation.serialize(), "(ED)[Methyl]IT(PE)[Phospho]P")
 
     def test_reverse_with_labile_mods(self):
         """Test reversing with labile modifications"""
@@ -105,9 +103,7 @@ class TestReverse(unittest.TestCase):
 
     def test_reverse_with_complex_modifications(self):
         """Test reversing with multiple types of modifications"""
-        annotation = pt.ProFormaAnnotation.parse(
-            "<15N>{Glycan}[Acetyl]-PE[Phospho]PTI[Methyl]DE-[Amide]/2"
-        )
+        annotation = pt.ProFormaAnnotation.parse("<15N>{Glycan}[Acetyl]-PE[Phospho]PTI[Methyl]DE-[Amide]/2")
         reversed_annotation = annotation.reverse()
         self.assertEqual(
             reversed_annotation.serialize(),

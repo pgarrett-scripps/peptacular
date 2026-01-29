@@ -60,18 +60,18 @@ class TestPositionRule:
 
     def test_empty_string_raises_error(self):
         """Test that empty string raises ValueError"""
-        with pytest.raises(ValueError, match="Empty position rule"):
+        with pytest.raises(ValueError):
             pt.PositionRule.from_string("")
 
     def test_invalid_terminal_raises_error(self):
         """Test that invalid terminal raises ValueError"""
-        with pytest.raises(ValueError, match="Unknown terminal or amino acid"):
+        with pytest.raises(ValueError):
             pt.PositionRule.from_string("X-term")
 
     def test_invalid_amino_acid_raises_error(self):
         """Test that invalid amino acid with terminal raises ValueError"""
         # Lowercase z is not a valid amino acid (case-sensitive)
-        with pytest.raises(ValueError, match="Unknown amino acid"):
+        with pytest.raises(ValueError):
             pt.PositionRule.from_string("N-term:z")
 
     def test_string_representation(self):

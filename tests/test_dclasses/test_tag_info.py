@@ -16,9 +16,7 @@ class TestTagInfo:
 
     def test_info_with_special_chars(self):
         """Test parsing INFO tag with special characters"""
-        result = pt.ModificationTags.from_string(
-            "INFO:annotation-with_special.chars"
-        ).tags[0]
+        result = pt.ModificationTags.from_string("INFO:annotation-with_special.chars").tags[0]
         assert isinstance(result, pt.TagInfo)
         assert result.info == "annotation-with_special.chars"
 

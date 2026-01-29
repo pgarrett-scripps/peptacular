@@ -72,9 +72,7 @@ class TestPopMods(unittest.TestCase):
     def test_pop_internal_mods_with_mods(self):
         annotation = pt.ProFormaAnnotation.parse("PE[Phospho]PTI[Methyl]DE")
         popped_mods = annotation.pop_internal_mods()
-        popped_mods = {
-            pos: Counter(map(str, mods)) for pos, mods in popped_mods.items()
-        }
+        popped_mods = {pos: Counter(map(str, mods)) for pos, mods in popped_mods.items()}
 
         self.assertEqual(len(popped_mods), 2)
 
@@ -166,9 +164,7 @@ class TestPopMods(unittest.TestCase):
         self.assertEqual(len(nterm_mods), 1)
 
     def test_pop_mods_all_default(self):
-        annotation = pt.ProFormaAnnotation.parse(
-            "<[57]@C>{Glycan}[Acetyl]-PE[Phospho]PTIDE-[Amide]/2"
-        )
+        annotation = pt.ProFormaAnnotation.parse("<[57]@C>{Glycan}[Acetyl]-PE[Phospho]PTIDE-[Amide]/2")
         popped_mods = annotation.pop_mods()
 
         expected_keys = ["labile", "static", "nterm", "internal", "cterm", "charge"]
@@ -246,9 +242,7 @@ class TestPopMods(unittest.TestCase):
     def test_pop_mods_with_multipliers(self):
         annotation = pt.ProFormaAnnotation.parse("PE[Phospho]PTIDE")
         popped_mods = annotation.pop_internal_mods()
-        popped_mods = {
-            pos: Counter(map(str, mods)) for pos, mods in popped_mods.items()
-        }
+        popped_mods = {pos: Counter(map(str, mods)) for pos, mods in popped_mods.items()}
 
         self.assertEqual(len(popped_mods), 1)
 
