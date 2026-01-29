@@ -1,11 +1,11 @@
-```yaml
+---
 title: 'Peptacular: A Python Library for ProForma 2.0-Compliant Peptide Analysis'
 tags:
   - Python
-  - proteomics
-  - mass spectrometry
+  - Proteomics
+  - Mass Spectrometry
   - ProForma
-  - bioinformatics 
+  - Bioinformatics 
 authors:
   - name: Patrick Tyler Garrett 
     orcid: 0000-0002-8434-9693 
@@ -19,8 +19,6 @@ affiliations:
     index: 1
 date: 12 December 2025
 bibliography: paper.bib
-```
-
 ---
 
 # Summary
@@ -33,7 +31,7 @@ Mass spectrometry-based proteomics relies on computational methods to identify a
 
 The proteomics field has historically lacked standardization for peptide and protein sequences. Individual software tools have implemented proprietary notations, creating barriers to data integration and reanalysis. While the Proteomics Standards Initiative developed ProForma notation to address this issue, adoption remains limited due to its relative novelty and the scarcity of computational tools supporting the standard.
 
-Modern proteomics experiments routinely identify hundreds of thousands of peptide-spectrum matches. Results are typically exported as tabular files (CSV, TSV, Parquet) compatible with Python data analysis libraries such as **pandas** [@&#x74;eam-2025] and **polars** [@vink-2025]. However, existing proteomics libraries lack efficient mechanisms for performing sequence-based calculations at this scale or integrating seamlessly with dataframe-centric workflows.
+Modern proteomics experiments routinely identify hundreds of thousands of peptide-spectrum matches. Results are typically exported as tabular files (CSV, TSV, Parquet) compatible with Python data analysis libraries such as **pandas** [@team-2025] and **polars** [@vink-2025]. However, existing proteomics libraries lack efficient mechanisms for performing sequence-based calculations at this scale or integrating seamlessly with dataframe-centric workflows.
 
 Peptacular addresses these limitations by providing two complementary APIs: an object-oriented interface, and a functional interface. The functional API accepts serialized ProForma sequences, applies transformations using parallel processing, and returns serialized results. This design enables direct integration with dataframes without sacrificing computational performance. The object-oriented interface allows for direct manipulation of the annotation objetcs without the need for serialiazation or parsing, improving performance for more complex operations.
 
@@ -49,7 +47,7 @@ The library supports bidirectional conversion between ProForma notation and comm
 
 # Related Software
 
-Several existing tools address aspects of peptide manipulation and property calculation, including pyteomics [@goloborodko-2013], rdkit [@goloborodko-2013], and biopython [@cock-2009]. However, these tools were developed prior to the establishment of ProForma 2.0 notation and consequently lack native support for many modern ProForma-specific features. Furthermore, these packages include extensive dependencies and functionality that extends well beyond the scope of peptide notation standardization. Peptacular addresses this gap by providing a focused implementation designed to serve as computational infrastructure connecting different software tools and packages within the proteomics ecosystem. 
+Several existing tools address aspects of peptide manipulation and property calculation, including pyteomics [@goloborodko-2013] and biopython [@cock-2009]. However, these tools were developed prior to the establishment of ProForma 2.0 notation and consequently lack native support for many modern ProForma-specific features. Furthermore, these packages include extensive dependencies and functionality that extends well beyond the scope of peptide notation standardization. Peptacular addresses this gap by providing a focused implementation designed to serve as computational infrastructure connecting different software tools and packages within the proteomics ecosystem. 
 
 # Proforma Compliance
 
@@ -108,3 +106,7 @@ Several existing tools address aspects of peptide manipulation and property calc
 - [x] **Chimeric spectra** - `NEEYN+SEQUEN` (§11.4) 
 - [x] **Charges** - `SEQUEN/2`, `SEQUEN/[Na:z+1,H:z+1]` (§11.5)
 - [x] **Ion notation** - `SEQUEN-[b-type-ion]` (§11.6)
+
+# AI usage disclosure
+
+Generative AI models were used to assist in developing this software's codebase, tests, and documentation, primarily Claude Sonnet 4.5, Gemini 2.0 Pro, and GitHub Copilot's autocomplete extension. These tools were accessed through the Copilot extension in VS Code and were used for code generation, debugging assistance, and documentation writing. No AI models were used in the creation of this manuscript. 

@@ -1,0 +1,580 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE article PUBLIC "-//NLM//DTD JATS (Z39.96) Journal Publishing DTD v1.2 20190208//EN"
+                  "JATS-publishing1.dtd">
+<article xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:xlink="http://www.w3.org/1999/xlink" dtd-version="1.2" article-type="other">
+<front>
+<journal-meta>
+<journal-id></journal-id>
+<journal-title-group>
+<journal-title>Journal of Open Source Software</journal-title>
+<abbrev-journal-title>JOSS</abbrev-journal-title>
+</journal-title-group>
+<issn publication-format="electronic">2475-9066</issn>
+<publisher>
+<publisher-name>Open Journals</publisher-name>
+</publisher>
+</journal-meta>
+<article-meta>
+<article-id pub-id-type="publisher-id">0</article-id>
+<article-id pub-id-type="doi">N/A</article-id>
+<title-group>
+<article-title>Peptacular: A Python Library for ProForma 2.0-Compliant
+Peptide Analysis</article-title>
+</title-group>
+<contrib-group>
+<contrib contrib-type="author">
+<contrib-id contrib-id-type="orcid">https://orcid.org/0000-0002-8434-9693</contrib-id>
+<name>
+<surname>Garrett</surname>
+<given-names>Patrick Tyler</given-names>
+</name>
+<xref ref-type="aff" rid="aff-1"/>
+</contrib>
+<contrib contrib-type="author" corresp="yes">
+<contrib-id contrib-id-type="orcid">https://orcid.org/0000-0001-5267-1672</contrib-id>
+<name>
+<surname>III</surname>
+<given-names>John R. Yates</given-names>
+</name>
+<xref ref-type="aff" rid="aff-1"/>
+<xref ref-type="corresp" rid="cor-1"><sup>*</sup></xref>
+</contrib>
+<aff id="aff-1">
+<institution-wrap>
+<institution>The Scripps Research Institute, United States</institution>
+</institution-wrap>
+</aff>
+</contrib-group>
+<author-notes>
+<corresp id="cor-1">* E-mail: <email></email></corresp>
+</author-notes>
+<pub-date date-type="pub" publication-format="electronic" iso-8601-date="2025-12-12">
+<day>12</day>
+<month>12</month>
+<year>2025</year>
+</pub-date>
+<volume>¿VOL?</volume>
+<issue>¿ISSUE?</issue>
+<fpage>¿PAGE?</fpage>
+<permissions>
+<copyright-statement>Authors of papers retain copyright and release the
+work under a Creative Commons Attribution 4.0 International License (CC
+BY 4.0)</copyright-statement>
+<copyright-year>1970</copyright-year>
+<copyright-holder>The article authors</copyright-holder>
+<license license-type="open-access" xlink:href="https://creativecommons.org/licenses/by/4.0/">
+<license-p>Authors of papers retain copyright and release the work under
+a Creative Commons Attribution 4.0 International License (CC BY
+4.0)</license-p>
+</license>
+</permissions>
+<kwd-group kwd-group-type="author">
+<kwd>Python</kwd>
+<kwd>Proteomics</kwd>
+<kwd>Mass Spectrometry</kwd>
+<kwd>ProForma</kwd>
+<kwd>Bioinformatics</kwd>
+</kwd-group>
+</article-meta>
+</front>
+<body>
+<sec id="summary">
+  <title>Summary</title>
+  <p>Mass spectrometry-based proteomics relies on computational methods
+  to identify and characterize amino acid sequences
+  (<xref alt="Angel et al., 2012" rid="ref-angel-2012" ref-type="bibr">Angel
+  et al., 2012</xref>). These sequences, which range from short peptides
+  to complete proteins, exhibiting considerable chemical complexity.
+  This complexity includes post-translational modifications, variable
+  charge states, charge adducts, neutral losses, and isotopic patterns
+  (<xref alt="Smith &amp; Kelleher, 2013" rid="ref-smith-2013" ref-type="bibr">Smith
+  &amp; Kelleher, 2013</xref>). ProForma notation provides a
+  standardized, human-readable representation of this complexity,
+  facilitating consistent communication of peptide and protein
+  identifications across the proteomics community
+  (<xref alt="LeDuc et al., 2018" rid="ref-leduc-2018" ref-type="bibr">LeDuc
+  et al., 2018</xref>).</p>
+  <p><bold>Peptacular</bold> is a pure Python library designed for
+  working with <bold>ProForma</bold> notation in high-throughput
+  proteomics applications. The library provides functionality for
+  sequence manipulation, molecular mass and composition calculation,
+  physicochemical property prediction, fragment ion generation, in
+  silico enzymatic digestion, isotopic distribution computation, and
+  format conversion between ProForma and vendor-specific notations.</p>
+</sec>
+<sec id="statement-of-need">
+  <title>Statement of Need</title>
+  <p>The proteomics field has historically lacked standardization for
+  peptide and protein sequences. Individual software tools have
+  implemented proprietary notations, creating barriers to data
+  integration and reanalysis. While the Proteomics Standards Initiative
+  developed ProForma notation to address this issue, adoption remains
+  limited due to its relative novelty and the scarcity of computational
+  tools supporting the standard.</p>
+  <p>Modern proteomics experiments routinely identify hundreds of
+  thousands of peptide-spectrum matches. Results are typically exported
+  as tabular files (CSV, TSV, Parquet) compatible with Python data
+  analysis libraries such as <bold>pandas</bold>
+  (<xref alt="Team, 2025" rid="ref-team-2025" ref-type="bibr">Team,
+  2025</xref>) and <bold>polars</bold>
+  (<xref alt="Vink et al., 2025" rid="ref-vink-2025" ref-type="bibr">Vink
+  et al., 2025</xref>). However, existing proteomics libraries lack
+  efficient mechanisms for performing sequence-based calculations at
+  this scale or integrating seamlessly with dataframe-centric
+  workflows.</p>
+  <p>Peptacular addresses these limitations by providing two
+  complementary APIs: an object-oriented interface, and a functional
+  interface. The functional API accepts serialized ProForma sequences,
+  applies transformations using parallel processing, and returns
+  serialized results. This design enables direct integration with
+  dataframes without sacrificing computational performance. The
+  object-oriented interface allows for direct manipulation of the
+  annotation objetcs without the need for serialiazation or parsing,
+  improving performance for more complex operations.</p>
+</sec>
+<sec id="features-and-implementation">
+  <title>Features and Implementation</title>
+  <p>Peptacular’s employs lazy evaluation to minimize memory overhead:
+  modifications remain in serialized form until explicitly required for
+  calculations. Since Python strings are immutable and proteomics
+  datasets typically contain repeated modifications, Peptacular utilizes
+  caching wherever possible, yielding performance and memory
+  improvements.</p>
+  <p>The object-oriented API uses a factory pattern to construct
+  Annotation objects, enabling sequence manipulation including
+  modification placement, isotopic labeling, and custom fragment ion
+  definitions. The functional API provides stateless functions that
+  operate directly on serialized sequences, facilitating parallel
+  execution across CPU cores.</p>
+  <p>Modification reference data, including masses, compositions, and
+  identifiers from Unimod
+  (<xref alt="Creasy &amp; Cottrell, 2004" rid="ref-creasy-2004" ref-type="bibr">Creasy
+  &amp; Cottrell, 2004</xref>), and other databases, are embedded within
+  the package as Python modules rather than external files. This design
+  eliminates file I/O overhead for parsing the supported ontologies,
+  improving performance. Additionally, Peptacular uses conditional
+  initialization: modification-related data structures are only
+  instantiated when the corresponding modification type is present in
+  the input sequences, reducing startup overhead and memory
+  consumption.</p>
+  <p>The library supports bidirectional conversion between ProForma
+  notation and common vendor-specific formats, facilitating integration
+  with existing proteomics workflows while promoting migration toward
+  standardized representations.</p>
+</sec>
+<sec id="related-software">
+  <title>Related Software</title>
+  <p>Several existing tools address aspects of peptide manipulation and
+  property calculation, including pyteomics
+  (<xref alt="Goloborodko et al., 2013" rid="ref-goloborodko-2013" ref-type="bibr">Goloborodko
+  et al., 2013</xref>) and biopython
+  (<xref alt="Cock et al., 2009" rid="ref-cock-2009" ref-type="bibr">Cock
+  et al., 2009</xref>). However, these tools were developed prior to the
+  establishment of ProForma 2.0 notation and consequently lack native
+  support for many modern ProForma-specific features. Furthermore, these
+  packages include extensive dependencies and functionality that extends
+  well beyond the scope of peptide notation standardization. Peptacular
+  addresses this gap by providing a focused implementation designed to
+  serve as computational infrastructure connecting different software
+  tools and packages within the proteomics ecosystem.</p>
+</sec>
+<sec id="proforma-compliance">
+  <title>Proforma Compliance</title>
+  <sec id="base-proforma-compliance">
+    <title>5.3.1 Base-ProForma Compliance</title>
+    <list list-type="bullet">
+      <list-item>
+        <p>☒ <bold>Amino acids (+UO)</bold> -
+        <monospace>AAHCFKUOT</monospace> (§6.1)</p>
+      </list-item>
+      <list-item>
+        <p>☒ <bold>Unimod names</bold> -
+        <monospace>PEM[Oxidation]AT</monospace> (§6.2.1)</p>
+      </list-item>
+      <list-item>
+        <p>☒ <bold>PSI-MOD names</bold> -
+        <monospace>PEM[monohydroxylated residue]AT</monospace>
+        (§6.2.1)</p>
+      </list-item>
+      <list-item>
+        <p>☒ <bold>Unimod numbers</bold> -
+        <monospace>PEM[UNIMOD:35]AT</monospace> (§6.2.2)</p>
+      </list-item>
+      <list-item>
+        <p>☒ <bold>PSI-MOD numbers</bold> -
+        <monospace>PEM[MOD:00425]AT</monospace> (§6.2.2)</p>
+      </list-item>
+      <list-item>
+        <p>☒ <bold>Delta masses</bold> -
+        <monospace>PEM[+15.995]AT</monospace> (§6.2.3)</p>
+      </list-item>
+      <list-item>
+        <p>☒ <bold>N-terminal modifications</bold> -
+        <monospace>[Carbamyl]-QPEPTIDE</monospace> (§6.3)</p>
+      </list-item>
+      <list-item>
+        <p>☒ <bold>C-terminal modifications</bold> -
+        <monospace>PEPTIDEG-[Methyl]</monospace> (§6.3)</p>
+      </list-item>
+      <list-item>
+        <p>☒ <bold>Labile modifications</bold> -
+        <monospace>{Glycan:Hex}EM[U:Oxidation]EV</monospace> (§6.4)</p>
+      </list-item>
+      <list-item>
+        <p>☒ <bold>Multiple modifications</bold> -
+        <monospace>MPGNW[Oxidation][Carboxymethyl]PESQE</monospace>
+        (§6.5)</p>
+      </list-item>
+      <list-item>
+        <p>☒ <bold>Information tag</bold> -
+        <monospace>ELV[INFO:AnyString]IS</monospace> (§6.6)</p>
+      </list-item>
+    </list>
+  </sec>
+  <sec id="level-2-proforma-compliance">
+    <title>5.3.2 Level 2-ProForma Compliance</title>
+    <list list-type="bullet">
+      <list-item>
+        <p>☒ <bold>Ambiguous amino acids</bold> -
+        <monospace>BZJX</monospace> (§7.1)</p>
+      </list-item>
+      <list-item>
+        <p>☒ <bold>Prefixed delta masses</bold> -
+        <monospace>PEM[U:+15.995]AT</monospace> (§7.2)</p>
+      </list-item>
+      <list-item>
+        <p>☒ <bold>Mass gap</bold> -
+        <monospace>PEX[+147.035]AT</monospace> (§7.3)</p>
+      </list-item>
+      <list-item>
+        <p>☒ <bold>Formulas</bold> -
+        <monospace>PEM[Formula:O]AT</monospace>,
+        <monospace>PEM[Formula:[17O1]]AT</monospace> (§7.4)</p>
+      </list-item>
+      <list-item>
+        <p>☒ <bold>Mass with interpretation</bold> -
+        <monospace>PEM[+15.995|Oxidation]AT</monospace> (§7.5)</p>
+      </list-item>
+      <list-item>
+        <p>☒ <bold>Unknown mod position</bold> -
+        <monospace>[Oxidation]?PEMAT</monospace> (§7.6.1)</p>
+      </list-item>
+      <list-item>
+        <p>☒ <bold>Set of positions</bold> -
+        <monospace>PEP[Oxidation#1]M[#1]AT</monospace> (§7.6.2)</p>
+      </list-item>
+      <list-item>
+        <p>☒ <bold>Range of positions</bold> -
+        <monospace>PRT(ESFRMS)[+19.0523]ISK</monospace> (§7.6.3)</p>
+      </list-item>
+      <list-item>
+        <p>☒ <bold>Position scores</bold> -
+        <monospace>PEP[Oxidation#1(0.95)]M[#1(0.05)]AT</monospace>
+        (§7.6.4)</p>
+      </list-item>
+      <list-item>
+        <p>☒ <bold>Range position scores</bold> -
+        <monospace>(PEP)[Oxidation#1(0.95)]M[#1(0.05)]AT</monospace>
+        (§7.6.5)</p>
+      </list-item>
+      <list-item>
+        <p>☒ <bold>Amino acid ambiguity</bold> -
+        <monospace>(?VCH)AT</monospace> (§7.7)</p>
+      </list-item>
+      <list-item>
+        <p>☒ <bold>Modification prefixes</bold> -
+        <monospace>PEPM[U:Oxidation]AS[M:O-phospho-L-serine]</monospace>
+        (§7.8)</p>
+      </list-item>
+    </list>
+  </sec>
+  <sec id="level-2-proforma-top-down">
+    <title>5.3.3 Level 2-ProForma + Top-Down</title>
+    <list list-type="bullet">
+      <list-item>
+        <p>☒ <bold>RESID modifications</bold> -
+        <monospace>EM[R:L-methionine sulfone]EM[RESID:AA0581]</monospace>
+        (§8.1)</p>
+      </list-item>
+      <list-item>
+        <p>☒ <bold>Names</bold> -
+        <monospace>(&gt;Heavy chain)EVQLVESG</monospace> (§8.2)</p>
+      </list-item>
+    </list>
+  </sec>
+  <sec id="level-2-proforma-cross-linking">
+    <title>5.3.4 Level 2-ProForma + Cross-Linking</title>
+    <list list-type="bullet">
+      <list-item>
+        <p>☒ <bold>XL-MOD modifications</bold> -
+        <monospace>EVTK[X:Aryl azide]LEK[XLMOD:00114]SEFD</monospace>
+        (§9.1)</p>
+      </list-item>
+      <list-item>
+        <p>☐ <bold>Cross-linkers (intrachain)</bold> -
+        <monospace>EVTK[X:Aryl azide#XL1]LEK[#XL1]SEFD</monospace>
+        (§9.2.1)</p>
+      </list-item>
+      <list-item>
+        <p>☐ <bold>Cross-linkers (interchain)</bold> -
+        <monospace>EVTK[X:Aryl azide#XL1]L//EK[#XL1]SEFD</monospace>
+        (§9.2.2)</p>
+      </list-item>
+      <list-item>
+        <p>☐ <bold>Branches</bold> -
+        <monospace>ED[MOD:00093#BRANCH]//D[#BRANCH]ATR</monospace>
+        (§9.3)</p>
+      </list-item>
+    </list>
+  </sec>
+  <sec id="level-2-proforma-glycans">
+    <title>5.3.5 Level 2-ProForma + Glycans</title>
+    <list list-type="bullet">
+      <list-item>
+        <p>☒ <bold>GNO modifications</bold> -
+        <monospace>NEEYN[GNO:G59626AS]K</monospace> (§10.1)</p>
+      </list-item>
+      <list-item>
+        <p>☒ <bold>Glycan compositions</bold> -
+        <monospace>NEEYN[Glycan:Hex5HexNAc4NeuAc1]K</monospace>
+        (§10.2)</p>
+      </list-item>
+    </list>
+  </sec>
+  <sec id="level-2-proforma-advanced-complexity">
+    <title>5.3.6 Level 2-ProForma + Advanced Complexity</title>
+    <list list-type="bullet">
+      <list-item>
+        <p>☒ <bold>Charged formulas</bold> -
+        <monospace>SEQUEN[Formula:Zn1:z+2]CE</monospace> (§11.1)</p>
+      </list-item>
+      <list-item>
+        <p>☒ <bold>Controlling placement</bold> -
+        <monospace>PTI(MERMERME)[+32|Position:E]PTIDE</monospace>
+        (§11.2)</p>
+      </list-item>
+      <list-item>
+        <p>☒ <bold>Global isotope</bold> -
+        <monospace>&lt;13C&gt;CARBON</monospace> (§11.3.1)</p>
+      </list-item>
+      <list-item>
+        <p>☒ <bold>Fixed modifications</bold> -
+        <monospace>&lt;[Oxidation]@M&gt;ATPEMILTCMGCLK</monospace>
+        (§11.3.2)</p>
+      </list-item>
+      <list-item>
+        <p>☒ <bold>Chimeric spectra</bold> -
+        <monospace>NEEYN+SEQUEN</monospace> (§11.4)</p>
+      </list-item>
+      <list-item>
+        <p>☒ <bold>Charges</bold> - <monospace>SEQUEN/2</monospace>,
+        <monospace>SEQUEN/[Na:z+1,H:z+1]</monospace> (§11.5)</p>
+      </list-item>
+      <list-item>
+        <p>☒ <bold>Ion notation</bold> -
+        <monospace>SEQUEN-[b-type-ion]</monospace> (§11.6)</p>
+      </list-item>
+    </list>
+  </sec>
+</sec>
+<sec id="ai-usage-disclosure">
+  <title>AI usage disclosure</title>
+  <p>Various AI models were used to aid in the creation of this
+  softwares codebase, tests, and documentation, mainly Claude Sonnet
+  4.5, Gemini 3 Pro, and Github’s copilot autocomlete extension. The AI
+  models were used via the copilot extension in VS code. No AI models
+  were used in the create of this manuscript.</p>
+</sec>
+</body>
+<back>
+<ref-list>
+  <title></title>
+  <ref id="ref-leduc-2018">
+    <element-citation publication-type="article-journal">
+      <person-group person-group-type="author">
+        <name><surname>LeDuc</surname><given-names>Richard D.</given-names></name>
+        <name><surname>Schwämmle</surname><given-names>Veit</given-names></name>
+        <name><surname>Shortreed</surname><given-names>Michael R.</given-names></name>
+        <name><surname>Cesnik</surname><given-names>Anthony J.</given-names></name>
+        <name><surname>Solntsev</surname><given-names>Stefan K.</given-names></name>
+        <name><surname>Shaw</surname><given-names>Jared B.</given-names></name>
+        <name><surname>Martin</surname><given-names>Maria J.</given-names></name>
+        <name><surname>Vizcaino</surname><given-names>Juan A.</given-names></name>
+        <name><surname>Alpi</surname><given-names>Emanuele</given-names></name>
+        <name><surname>Danis</surname><given-names>Paul</given-names></name>
+        <name><surname>Kelleher</surname><given-names>Neil L.</given-names></name>
+        <name><surname>Smith</surname><given-names>Lloyd M.</given-names></name>
+        <name><surname>Ge</surname><given-names>Ying</given-names></name>
+        <name><surname>Agar</surname><given-names>Jeffrey N.</given-names></name>
+        <name><surname>Chamot-Rooke</surname><given-names>Julia</given-names></name>
+        <name><surname>Loo</surname><given-names>Joseph A.</given-names></name>
+        <name><surname>Pasa-Tolic</surname><given-names>Ljiljana</given-names></name>
+        <name><surname>Tsybin</surname><given-names>Yury O.</given-names></name>
+      </person-group>
+      <article-title>ProForma: a standard proteoform notation</article-title>
+      <source>Journal of Proteome Research</source>
+      <year iso-8601-date="2018-02">2018</year><month>02</month>
+      <volume>17</volume>
+      <issue>3</issue>
+      <uri>https://pmc.ncbi.nlm.nih.gov/articles/PMC5837035/</uri>
+      <pub-id pub-id-type="doi">10.1021/acs.jproteome.7b00851</pub-id>
+      <fpage>1321</fpage>
+      <lpage>1325</lpage>
+    </element-citation>
+  </ref>
+  <ref id="ref-team-2025">
+    <element-citation publication-type="article-journal">
+      <person-group person-group-type="author">
+        <name><surname>Team</surname><given-names>Pandas Development</given-names></name>
+      </person-group>
+      <article-title>pandas-dev/pandas: Pandas</article-title>
+      <source>Zenodo (CERN European Organization for Nuclear Research)</source>
+      <year iso-8601-date="2025-12">2025</year><month>12</month>
+      <uri>https://doi.org/10.5281/zenodo.17992932</uri>
+      <pub-id pub-id-type="doi">10.5281/zenodo.17992932</pub-id>
+    </element-citation>
+  </ref>
+  <ref id="ref-vink-2025">
+    <element-citation publication-type="article-journal">
+      <person-group person-group-type="author">
+        <name><surname>Vink</surname><given-names>Ritchie</given-names></name>
+        <name><surname>De Gooijer</surname><given-names>Stijn</given-names></name>
+        <name><surname>Beedie</surname><given-names>Alexander</given-names></name>
+        <name><surname>Burghoorn</surname><given-names>Gijs</given-names></name>
+        <name><surname>Nameexhaustion</surname></name>
+        <name><surname>Peters</surname><given-names>Orson</given-names></name>
+        <name><surname>Gorelli</surname><given-names>Marco Edward</given-names></name>
+        <name><surname>Reswqa</surname></name>
+        <name><surname>Van Zundert</surname><given-names>Jeroen</given-names></name>
+        <name><surname>Marshall</surname></name>
+        <name><surname>Hulselmans</surname><given-names>Gert</given-names></name>
+        <name><surname>Grinstead</surname><given-names>Cory</given-names></name>
+        <name><surname>Denecker</surname><given-names>Koen</given-names></name>
+        <name><surname>Manley</surname><given-names>Luke</given-names></name>
+        <name><surname>chielP</surname></name>
+        <name><surname>Turner-Trauring</surname><given-names>Itamar</given-names></name>
+        <name><surname>Valtar</surname><given-names>Kuba</given-names></name>
+        <name><surname>Mitchell</surname><given-names>Lawrence</given-names></name>
+        <name><surname>Sprenkels</surname><given-names>Amber</given-names></name>
+        <name><surname>Genockey</surname><given-names>Karl</given-names></name>
+        <name><surname>Eitsupi</surname></name>
+        <name><surname>Harbeck</surname><given-names>Henry</given-names></name>
+        <name><surname>Robin</surname></name>
+        <name><surname>Patyk</surname><given-names>Kevin</given-names></name>
+        <name><surname>Santamaria</surname><given-names>Matteo</given-names></name>
+        <name><surname>Borchert</surname><given-names>Oliver</given-names></name>
+        <name><surname>Deanm</surname></name>
+        <name><surname>Heres</surname><given-names>Daniël</given-names></name>
+        <name><surname>Magarick</surname><given-names>Josh</given-names></name>
+      </person-group>
+      <article-title>pola-rs/polars: Python Polars 1.36.1</article-title>
+      <source>Zenodo (CERN European Organization for Nuclear Research)</source>
+      <year iso-8601-date="2025-12">2025</year><month>12</month>
+      <uri>https://doi.org/10.5281/zenodo.17873635</uri>
+      <pub-id pub-id-type="doi">10.5281/zenodo.17873635</pub-id>
+    </element-citation>
+  </ref>
+  <ref id="ref-creasy-2004">
+    <element-citation publication-type="article-journal">
+      <person-group person-group-type="author">
+        <name><surname>Creasy</surname><given-names>David M.</given-names></name>
+        <name><surname>Cottrell</surname><given-names>John S.</given-names></name>
+      </person-group>
+      <article-title>Unimod: Protein modifications for mass spectrometry</article-title>
+      <source>PROTEOMICS</source>
+      <year iso-8601-date="2004-04">2004</year><month>04</month>
+      <volume>4</volume>
+      <issue>6</issue>
+      <uri>https://doi.org/10.1002/pmic.200300744</uri>
+      <pub-id pub-id-type="doi">10.1002/pmic.200300744</pub-id>
+      <fpage>1534</fpage>
+      <lpage>1536</lpage>
+    </element-citation>
+  </ref>
+  <ref id="ref-angel-2012">
+    <element-citation publication-type="article-journal">
+      <person-group person-group-type="author">
+        <name><surname>Angel</surname><given-names>Thomas E.</given-names></name>
+        <name><surname>Aryal</surname><given-names>Uma K.</given-names></name>
+        <name><surname>Hengel</surname><given-names>Shawna M.</given-names></name>
+        <name><surname>Baker</surname><given-names>Erin S.</given-names></name>
+        <name><surname>Kelly</surname><given-names>Ryan T.</given-names></name>
+        <name><surname>Robinson</surname><given-names>Errol W.</given-names></name>
+        <name><surname>Smith</surname><given-names>Richard D.</given-names></name>
+      </person-group>
+      <article-title>Mass spectrometry-based proteomics: existing capabilities and future directions</article-title>
+      <source>Chemical Society Reviews</source>
+      <year iso-8601-date="2012-01">2012</year><month>01</month>
+      <volume>41</volume>
+      <issue>10</issue>
+      <uri>https://pmc.ncbi.nlm.nih.gov/articles/PMC3375054/</uri>
+      <pub-id pub-id-type="doi">10.1039/c2cs15331a</pub-id>
+      <fpage>3912</fpage>
+      <lpage></lpage>
+    </element-citation>
+  </ref>
+  <ref id="ref-smith-2013">
+    <element-citation publication-type="article-journal">
+      <person-group person-group-type="author">
+        <name><surname>Smith</surname><given-names>Lloyd M</given-names></name>
+        <name><surname>Kelleher</surname><given-names>Neil L</given-names></name>
+      </person-group>
+      <article-title>Proteoform: a single term describing protein complexity</article-title>
+      <source>Nature Methods</source>
+      <year iso-8601-date="2013-02">2013</year><month>02</month>
+      <volume>10</volume>
+      <issue>3</issue>
+      <uri>https://pmc.ncbi.nlm.nih.gov/articles/PMC4114032/</uri>
+      <pub-id pub-id-type="doi">10.1038/nmeth.2369</pub-id>
+      <fpage>186</fpage>
+      <lpage>187</lpage>
+    </element-citation>
+  </ref>
+  <ref id="ref-goloborodko-2013">
+    <element-citation publication-type="article-journal">
+      <person-group person-group-type="author">
+        <name><surname>Goloborodko</surname><given-names>Anton A.</given-names></name>
+        <name><surname>Levitsky</surname><given-names>Lev I.</given-names></name>
+        <name><surname>Ivanov</surname><given-names>Mark V.</given-names></name>
+        <name><surname>Gorshkov</surname><given-names>Mikhail V.</given-names></name>
+      </person-group>
+      <article-title>Pyteomics—A Python framework for exploratory data analysis and rapid software prototyping in proteomics</article-title>
+      <source>Journal of the American Society for Mass Spectrometry</source>
+      <year iso-8601-date="2013-01">2013</year><month>01</month>
+      <volume>24</volume>
+      <issue>2</issue>
+      <uri>https://doi.org/10.1007/s13361-012-0516-6</uri>
+      <pub-id pub-id-type="doi">10.1007/s13361-012-0516-6</pub-id>
+      <fpage>301</fpage>
+      <lpage>304</lpage>
+    </element-citation>
+  </ref>
+  <ref id="ref-cock-2009">
+    <element-citation publication-type="article-journal">
+      <person-group person-group-type="author">
+        <name><surname>Cock</surname><given-names>Peter J. A.</given-names></name>
+        <name><surname>Antao</surname><given-names>Tiago</given-names></name>
+        <name><surname>Chang</surname><given-names>Jeffrey T.</given-names></name>
+        <name><surname>Chapman</surname><given-names>Brad A.</given-names></name>
+        <name><surname>Cox</surname><given-names>Cymon J.</given-names></name>
+        <name><surname>Dalke</surname><given-names>Andrew</given-names></name>
+        <name><surname>Friedberg</surname><given-names>Iddo</given-names></name>
+        <name><surname>Hamelryck</surname><given-names>Thomas</given-names></name>
+        <name><surname>Kauff</surname><given-names>Frank</given-names></name>
+        <name><surname>Wilczynski</surname><given-names>Bartek</given-names></name>
+        <name><surname>De Hoon</surname><given-names>Michiel J. L.</given-names></name>
+      </person-group>
+      <article-title>Biopython: freely available Python tools for computational molecular biology and bioinformatics</article-title>
+      <source>Bioinformatics</source>
+      <year iso-8601-date="2009-03">2009</year><month>03</month>
+      <volume>25</volume>
+      <issue>11</issue>
+      <uri>https://doi.org/10.1093/bioinformatics/btp163</uri>
+      <pub-id pub-id-type="doi">10.1093/bioinformatics/btp163</pub-id>
+      <fpage>1422</fpage>
+      <lpage>1423</lpage>
+    </element-citation>
+  </ref>
+</ref-list>
+</back>
+</article>
