@@ -25,3 +25,10 @@ try*.py
 .ipynb_checkpoints/
 htmlcov/
 uv.lock
+
+# Other
+coverage.xml
+htmlcov/
+.coverage
+*.cover
+.pytest_cache/
