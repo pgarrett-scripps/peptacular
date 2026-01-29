@@ -36,7 +36,7 @@ jobs:
     - name: Type check with ty
       run: just check
     - name: Test with pytest
-      run: just test-cov
+      run: just test-cov codecov-tests
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v5
       with:
@@ -48,4 +48,5 @@ jobs:
       uses: codecov/test-results-action@v1
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
+        slug: tacular-omics/peptacular
         fail_ci_if_error: false
