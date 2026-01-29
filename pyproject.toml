@@ -50,6 +50,9 @@ packages = ["src/peptacular"]
 path = "src/peptacular/__init__.py"
 
 [tool.ruff]
+target-version = "py312"
+line-length = 120
+
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F403", "F401"]
 "data.py" = ["E741"]
