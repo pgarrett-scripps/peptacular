@@ -3,7 +3,6 @@
 
 # ProForma Notation - Basic Summary
 
-
 1 - Never make summary documentation unles specifically asked.
 2 - check makfile for commands
 
