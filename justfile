@@ -21,7 +21,7 @@ test:
 
 # Run tests with coverage
 test-cov:
-    uv run pytest tests --cov=src/tacular --cov-branch --cov-report=term-missing --cov-report=html --cov-report=xml
+    uv run pytest tests --cov=src/peptacular --cov-branch --cov-report=term-missing --cov-report=html --cov-report=xml
 
 
 
