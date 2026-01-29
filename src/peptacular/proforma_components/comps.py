@@ -510,9 +510,15 @@ class TagMass(MassPropertyMixin, PositionScoreMixin):
                 raise ValueError(
                     f"Modification lookup by mass not implemented for CV: {self.cv}"
                 )
+
+        if len(mod_info) > 1:
+            raise ValueError(
+                f"Multiple modifications found for mass: {self.mass} in CV: {self.cv}"
+            )
+
         return (
-            Counter(mod_info.composition)
-            if mod_info and mod_info.composition
+            Counter(mod_info[0].composition)
+            if mod_info and mod_info[0].composition
             else Counter()
         )
 

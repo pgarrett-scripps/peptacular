@@ -138,7 +138,7 @@ class Fragment:
         mass_error_type: Literal["ppm", "da"] = "ppm",
     ) -> Any:
         """Convert fragment to mzPAF format string."""
-        import paftacular as pft
+        import paftacular as pft # ty: ignore
 
         ion = None
         internal_loss = None
@@ -302,7 +302,7 @@ class Fragment:
         paf: Any | str, mass: float, monoisotopic: bool = True
     ) -> "Fragment":
         """Create Fragment from mzPAF PafAnnotation."""
-        import paftacular as pft
+        import paftacular as pft # ty: ignore
 
         if isinstance(paf, str):
             paf = pft.parse_single(paf)

@@ -78,6 +78,7 @@ paper:
 check:
     just lint
     just test
+    just ty
 
 # Clean, install, and test
 all:

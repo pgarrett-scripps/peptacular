@@ -1,9 +1,12 @@
 name: Draft PDF
 on:
   push:
+    branches:
+      - paper
     paths:
       - 'paper/**'
   workflow_dispatch:
+
 jobs:
   paper:
     runs-on: ubuntu-latest
