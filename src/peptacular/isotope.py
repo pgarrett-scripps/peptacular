@@ -1,22 +1,19 @@
 from collections import Counter
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Final
+from typing import Final, cast
 
-from tacular import ELEMENT_LOOKUP, ElementInfo
+from tacular import ELEMENT_LOOKUP, FRAGMENT_ION_LOOKUP, ElementInfo, FragmentIonInfo, IonType, IonTypeLiteral
 
 from . import constants
 
-AVERAGINE_RATIOS: Final[dict[str, float]] = {
-    "C": 4.9384,
-    "H": 7.7583,
-    "N": 1.3577,
-    "O": 1.4773,
-    "S": 0.0417,
-}
+CARBON = ELEMENT_LOOKUP["C"]
+HYDROGEN = ELEMENT_LOOKUP["H"]
+NITROGEN = ELEMENT_LOOKUP["N"]
+OXYGEN = ELEMENT_LOOKUP["O"]
+SULFUR = ELEMENT_LOOKUP["S"]
 
-ISOTOPIC_AVERAGINE_MASS: float = sum(v * ELEMENT_LOOKUP[k].get_mass(monoisotopic=True) for k, v in AVERAGINE_RATIOS.items())
-AVERAGE_AVERAGINE_MASS: float = sum(v * ELEMENT_LOOKUP[k].get_mass(monoisotopic=False) for k, v in AVERAGINE_RATIOS.items())
+AVERAGINE_RATIOS: Final[dict[ElementInfo, float]] = {CARBON: 0.044179, HYDROGEN: 0.069749, NITROGEN: 0.012344, OXYGEN: 0.013352, SULFUR: 0.0004}
 
 
 def _chem_mass(
@@ -36,32 +33,35 @@ class IsotopicData:
     abundance: float
 
 
-def estimate_averagine_comp(neutral_mass: float) -> dict[str | ElementInfo, float]:
+def estimate_averagine_comp(neutral_mass: float, ion_type: str | IonType | IonTypeLiteral = "p") -> Mapping[ElementInfo, float]:
     """
     Estimate elemental composition from molecular mass using the averagine model.
 
     .. code-block:: python
 
         # Example usage
-        >>> round(estimate_averagine_comp(1000)['C'], 3)
-        44.468
+        >>> round(estimate_averagine_comp(1000)['C'], 2)
+        44.18
 
     """
 
-    composition = {ELEMENT_LOOKUP[atom]: ratio * neutral_mass / ISOTOPIC_AVERAGINE_MASS for atom, ratio in AVERAGINE_RATIOS.items()}
+    composition: dict[ElementInfo, float] = {element: ratio * neutral_mass for element, ratio in AVERAGINE_RATIOS.items()}
+    ion_info: FragmentIonInfo = FRAGMENT_ION_LOOKUP[ion_type]
+
+    for elem_info, count in ion_info.composition.items():
+        if elem_info in composition:
+            composition[elem_info] += count
+        else:
+            composition[elem_info] = count
 
     return composition
 
 
 def averagine_comp(neutral_mass: float) -> Counter[ElementInfo]:
-    comp: dict[str | ElementInfo, int | float] = estimate_averagine_comp(neutral_mass)
+    comp: Mapping[ElementInfo, int | float] = estimate_averagine_comp(neutral_mass)
     composition: Counter[ElementInfo] = Counter()
     for element, count in comp.items():
-        if isinstance(element, str):
-            elem_info = ELEMENT_LOOKUP[element]
-        else:
-            elem_info = element
-        composition[elem_info] = int(round(count))
+        composition[element] = int(round(count))
 
     # pop zeros
     for elem in list(composition.keys()):
@@ -299,19 +299,19 @@ def estimate_isotopic_distribution(
         # Example usage
         >>> result = estimate_isotopic_distribution(800, 3, 0.0, 5)
         >>> [(round(r.mass, 3), round(r.abundance, 3)) for r in result]
-        [(800.0, 1.0), (801.003, 0.389), (802.007, 0.074)]
+        [(810.424, 1.0), (811.427, 0.379), (812.43, 0.07)]
 
         # Example usage with neutron count
         >>> result = estimate_isotopic_distribution(800, 3, 0.0, 5, True)
         >>> [(round(r.mass, 3), round(r.abundance, 3)) for r in result]
-        [(0.0, 1.0), (1.0, 0.437), (2.0, 0.116)]
+        [(0.0, 1.0), (1.0, 0.426), (2.0, 0.113)]
 
     """
     # Calculate the total number of each atom in the molecule based on its molecular mass
-    total_atoms = estimate_averagine_comp(neutral_mass)
+    total_atoms: Counter[ElementInfo] = averagine_comp(neutral_mass)
 
     return isotopic_distribution(
-        total_atoms,
+        cast(Mapping[str | ElementInfo, int | float], total_atoms),
         max_isotopes,
         min_abundance_threshold,
         distribution_resolution,

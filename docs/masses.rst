@@ -1,41 +1,197 @@
-Fragment Ion Formulas
-=====================
+=====================================
+Ion Types
+=====================================
 
-Precursor:  delta_formula=H2O
-Neutral:  delta_formula=
-a-ion:  delta_formula=C-1O-1
-b-ion:  delta_formula=
-c-ion:  delta_formula=H3N
-x-ion:  delta_formula=CO2
-y-ion:  delta_formula=H2O
-z-ion:  delta_formula=H-1N-1O
-z• radical ion:  delta_formula=N-1O
-z+H ion:  delta_formula=HN-1O
-c-H ion:  delta_formula=H2N
-Immonium:  delta_formula=C-1O-1
-d-ion:  delta_formula=C2H3N
-d-ion (valine):  delta_formula=C3H6N
-da-ion:  delta_formula=None
-db-ion:  delta_formula=None
-da-ion (threonine):  delta_formula=C2H4NO
-da-ion (isoleucine):  delta_formula=C4H8N
-db-ion (threonine):  delta_formula=C3H6N
-db-ion (isoleucine):  delta_formula=C3H6N
-v-ion:  delta_formula=C2H2NO
-w-ion:  delta_formula=C3H3O
-w-ion (valine):  delta_formula=C4H6O
-wa-ion (threonine):  delta_formula=C3H4O2
-wa-ion:  delta_formula=None
-wb-ion:  delta_formula=None
-wa-ion (isoleucine):  delta_formula=C5H8O
-wb-ion (threonine):  delta_formula=C4H6O
-wb-ion (isoleucine):  delta_formula=C4H6O
-by internal fragment:  delta_formula=C-1O-1
-ax internal fragment:  delta_formula=C-1O-1
-cz internal fragment:  delta_formula=C-1O-1
-ay internal fragment:  delta_formula=C-2O-2
-az internal fragment:  delta_formula=C-2H-1N-1O-2
-bx internal fragment:  delta_formula=
-bz internal fragment:  delta_formula=C-1H-1N-1O-1
-cx internal fragment:  delta_formula=N
-cy internal fragment:  delta_formula=C-1H-1NO-1
+Standard Fragment Ions
+-----------------------
+
+These are the most commonly used fragment ions in peptide mass spectrometry:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 15 15 25 45
+
+   * - Ion Type
+     - String Value
+     - Delta Formula
+     - Description
+   * - **Precursor**
+     - ``"p"``
+     - H₂O
+     - Intact peptide with water addition
+   * - **Neutral**
+     - ``"n"``
+     - (none)
+     - Neutral peptide backbone (no modifications)
+   * - **a-ion**
+     - ``"a"``
+     - C⁻¹O⁻¹
+     - N-terminal fragment
+   * - **b-ion**
+     - ``"b"``
+     - (none)
+     - N-terminal fragment
+   * - **c-ion**
+     - ``"c"``
+     - H₃N
+     - N-terminal fragment
+   * - **x-ion**
+     - ``"x"``
+     - CO₂
+     - C-terminal fragment
+   * - **y-ion**
+     - ``"y"``
+     - H₂O
+     - C-terminal fragment
+   * - **z-ion**
+     - ``"z"``
+     - H⁻¹N⁻¹O
+     - C-terminal fragment
+   * - **z• radical**
+     - ``"z."``
+     - N⁻¹O
+     - Radical z-ion
+   * - **z+H**
+     - ``"z+H"``
+     - HN⁻¹O
+     - Protonated z-ion (additional H from c-ion)
+   * - **c-H**
+     - ``"c-H"``
+     - H₂N
+     - Dehydrogenated c-ion (loss of H from z-ion)
+   * - **Immonium**
+     - ``"i"``
+     - C⁻¹O⁻¹
+     - Amino acid immonium ions (residue-specific)
+
+Side-Chain Fragment Ions
+--------------------------
+
+These ions involve side-chain cleavage and are residue-specific:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 20 20 25 35
+
+   * - Ion Type
+     - String Value
+     - Delta Formula
+     - Description
+   * - **d-ion**
+     - ``"d"``
+     - C₂H₃N
+     - General side-chain loss from a-ion
+   * - **d-ion (Val)**
+     - ``"d-valine"``
+     - C₃H₆N
+     - Valine-specific d-ion
+   * - **da-ion**
+     - ``"da"``
+     - 
+     - General da-ion (side-chain loss)
+   * - **da-ion (Thr)**
+     - ``"da-threonine"``
+     - C₂H₄NO
+     - Threonine-specific da-ion
+   * - **da-ion (Ile)**
+     - ``"da-isoleucine"``
+     - C₄H₈N
+     - Isoleucine-specific da-ion
+   * - **db-ion**
+     - ``"db"``
+     - 
+     - General db-ion (side-chain loss)
+   * - **db-ion (Thr)**
+     - ``"db-threonine"``
+     - C₃H₆N
+     - Threonine-specific db-ion
+   * - **db-ion (Ile)**
+     - ``"db-isoleucine"``
+     - C₃H₆N
+     - Isoleucine-specific db-ion
+   * - **v-ion**
+     - ``"v"``
+     - C₂H₂NO
+     - Side-chain retention (complement of d-ion)
+   * - **w-ion**
+     - ``"w"``
+     - C₃H₃O
+     - General side-chain retention from x-ion
+   * - **w-ion (Val)**
+     - ``"w-valine"``
+     - C₄H₆O
+     - Valine-specific w-ion
+   * - **wa-ion**
+     - ``"wa"``
+     - 
+     - General wa-ion (side-chain retention)
+   * - **wa-ion (Thr)**
+     - ``"wa-threonine"``
+     - C₃H₄O₂
+     - Threonine-specific wa-ion
+   * - **wa-ion (Ile)**
+     - ``"wa-isoleucine"``
+     - C₅H₈O
+     - Isoleucine-specific wa-ion
+   * - **wb-ion**
+     - ``"wb"``
+     - 
+     - General wb-ion (side-chain retention)
+   * - **wb-ion (Thr)**
+     - ``"wb-threonine"``
+     - C₄H₆O
+     - Threonine-specific wb-ion
+   * - **wb-ion (Ile)**
+     - ``"wb-isoleucine"``
+     - C₄H₆O
+     - Isoleucine-specific wb-ion
+
+Internal Fragment Ions
+-----------------------
+
+Internal fragments result from cleavage at both N- and C-termini. Formulas are based on the mzPAF specification.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 20 20 25 35
+
+   * - Ion Type
+     - String Value
+     - Delta Formula
+     - Description
+   * - **by**
+     - ``"by"``
+     - C⁻¹O⁻¹
+     - N-terminal b-ion, C-terminal y-ion
+   * - **ax**
+     - ``"ax"``
+     - C⁻¹O⁻¹
+     - N-terminal a-ion, C-terminal x-ion
+   * - **cz**
+     - ``"cz"``
+     - C⁻¹O⁻¹
+     - N-terminal c-ion, C-terminal z-ion
+   * - **ay**
+     - ``"ay"``
+     - C⁻²O⁻²
+     - N-terminal a-ion, C-terminal y-ion
+   * - **az**
+     - ``"az"``
+     - C⁻²H⁻¹N⁻¹O⁻²
+     - N-terminal a-ion, C-terminal z-ion
+   * - **bx**
+     - ``"bx"``
+     - (none)
+     - N-terminal b-ion, C-terminal x-ion
+   * - **bz**
+     - ``"bz"``
+     - C⁻¹H⁻¹N⁻¹O⁻¹
+     - N-terminal b-ion, C-terminal z-ion
+   * - **cx**
+     - ``"cx"``
+     - N
+     - N-terminal c-ion, C-terminal x-ion
+   * - **cy**
+     - ``"cy"``
+     - C⁻¹H⁻¹NO⁻¹
+     - N-terminal c-ion, C-terminal y-ion

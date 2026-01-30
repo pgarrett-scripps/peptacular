@@ -58,7 +58,7 @@ When more than one item is passed to the functional API methods, it is automatic
 ```python
 import peptacular as pt
 
-peptides = ['PEPTIDE', 'PATRICK', 'GARRETT']
+peptides = ['[Acetyl]-PEPTIDES', '<C13>ARE', 'SICK/2']
 
 # Calculate mass and m/z for all peptides
 masses: list[float] = pt.mass(peptides)

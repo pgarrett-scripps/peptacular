@@ -88,7 +88,7 @@ Automatic multiprocessing for batch operations.
 - Automatic parallelization for list inputs
 - No code changes needed
 - Applies to all major functions (mass, digest, fragment, etc.)
-- Efficient memory usage
+- Efficient memory usage, cached modifications, and frozen dataclasses
 
 Design Principles
 -----------------

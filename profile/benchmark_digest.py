@@ -83,15 +83,11 @@ def benchmark_digest_methods():
 
     for method in methods:
         time_val = results[method]["time"]
-        speedup = (
-            results["sequential"]["time"] / time_val if method != "sequential" else 1.0
-        )
+        speedup = results["sequential"]["time"] / time_val if method != "sequential" else 1.0
         ms_per_protein = results[method]["ms_per_protein"]
 
         marker = " ← FASTEST" if method == fastest_method else ""
-        print(
-            f"{method:<12} {time_val:<12.3f} {speedup:<12.2f}x {ms_per_protein:<15.2f}{marker}"
-        )
+        print(f"{method:<12} {time_val:<12.3f} {speedup:<12.2f}x {ms_per_protein:<15.2f}{marker}")
 
     print("=" * 80)
 

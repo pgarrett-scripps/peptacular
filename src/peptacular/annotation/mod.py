@@ -166,11 +166,14 @@ class Mods[T: ModificationProtocol](MassPropertyMixin):
         """Get total composition for all modifications."""
         return sum((mod.get_composition() for mod in self.mods), Counter())
 
-    def get_composition_with_delta_mass(self, monoisotopic: bool = True) -> tuple[Counter[ElementInfo], float]:
+    def get_composition_with_delta_mass_charge(self, monoisotopic: bool = True) -> tuple[Counter[ElementInfo], float, int]:
         """Get total composition and when not possible fall back to delta mass for MassTags."""
+
         total_compsition = Counter[ElementInfo]()
         total_delta_mass = 0.0
+        total_charge = 0
         for mod in self.mods:
+            total_charge += mod.get_charge()
             try:
                 comp = mod.get_composition()
                 total_compsition += comp
@@ -179,11 +182,22 @@ class Mods[T: ModificationProtocol](MassPropertyMixin):
                     total_delta_mass += mod.get_mass(monoisotopic=monoisotopic)
                 else:
                     raise ValueError(f"Cannot get composition for mod {mod.value}, and no mass tag found.") from e
-        return total_compsition, total_delta_mass
+        return total_compsition, total_delta_mass, total_charge
 
     def get_charge(self) -> int:
         """Get total charge for all modifications."""
         return sum(mod.get_charge() for mod in self.mods)
+
+    def get_mass_charge(self, monoisotopic: bool = True) -> tuple[float, int]:
+        """Get total mass and charge for all modifications."""
+        mods = self.mods
+
+        if len(mods) == 1:
+            return mods[0].get_mass(monoisotopic), mods[0].get_charge()
+
+        total_mass = sum(mod.get_mass(monoisotopic) for mod in mods)
+        total_charge = sum(mod.get_charge() for mod in mods)
+        return total_mass, total_charge
 
     def __len__(self) -> int:
         return len(self._mods) if self._mods is not None else 0

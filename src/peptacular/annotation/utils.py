@@ -1,3 +1,4 @@
+from sys import intern
 from collections import Counter
 from collections.abc import Mapping, Sequence
 from typing import Any, TypeVar, overload
@@ -99,6 +100,7 @@ def adjust_mass_mz(
 ) -> Fragment:
     """Adjust base mass by charge carriers and ion type."""
 
+
     base_mass = 0.0
     if isinstance(base, Counter):
         for elem, count in base.items():
@@ -127,9 +129,9 @@ def adjust_mass_mz(
         mass=base_mass,
         monoisotopic=monoisotopic,
         charge_state=total_charge,
-        charge_adducts=charge.to_fragment_mapping(internal_charge != 0),
-        isotopes=isotope.to_fragment_mapping(),
-        deltas=delta.to_fragment_mapping(),
+        charge_adducts=charge.to_fragment_mapping,
+        isotopes=isotope.to_fragment_mapping,
+        deltas=delta.to_fragment_mapping,
         composition=None,
         sequence=sequence,
     )
@@ -149,6 +151,7 @@ def adjust_comp(
     internal_charge: int = 0,
 ) -> Fragment:
     """Adjust base composition by charge carriers and ion type, returning a Fragment object."""
+
 
     if not inplace:
         base_comp = base_comp.copy()
@@ -195,9 +198,9 @@ def adjust_comp(
         mass=base_mass,
         charge_state=total_charge,
         monoisotopic=monoisotopic,
-        charge_adducts=charge.to_fragment_mapping(internal_charge != 0),
-        isotopes=isotope.to_fragment_mapping(),
-        deltas=delta.to_fragment_mapping(),
+        charge_adducts=charge.to_fragment_mapping,
+        isotopes=isotope.to_fragment_mapping,
+        deltas=delta.to_fragment_mapping,
         composition=base_comp,
         sequence=sequence,
     )

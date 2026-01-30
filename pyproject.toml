@@ -51,6 +51,8 @@ dev-dependencies = [
     "sphinx-rtd-theme>=2.0",
     "sphinx-autodoc-typehints>=1.25",
     "myst-parser",
+    "lxml>=6.0.2",
+    "numpy>=2.4.1",
 ]
 
 [tool.pytest.ini_options]

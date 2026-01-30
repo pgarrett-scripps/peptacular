@@ -8,6 +8,10 @@ from tacular import ELEMENT_LOOKUP, NEUTRAL_DELTA_LOOKUP, ElementInfo
 
 from ..proforma_components import ChargedFormula, GlobalChargeCarrier
 
+# ============================================================================
+# IsotopeInfo
+# ============================================================================
+
 
 @dataclass(frozen=True)
 class IsotopeInfo:
@@ -34,7 +38,6 @@ class IsotopeInfo:
 
         if any(v < 0 for v in base_comp.values()):
             negative_counts = {str(k): v for k, v in base_comp.items() if v < 0}
-
             raise ValueError(f"Isotopic adjustment resulted in negative element counts: {negative_counts}")
 
     @property
@@ -63,12 +66,24 @@ class IsotopeInfo:
             return self.monoisotopic_mass_delta
         return self.average_mass_delta
 
+    @cached_property
     def to_fragment_mapping(self) -> Mapping[str, int] | int | None:
         if len(self.data) == 1:
             elem_info, count = self.data[0]
             if str(elem_info) == "13C":
                 return count
         return {str(elem_info): count for elem_info, count in self.data}
+
+
+# ============================================================================
+# ChargeCarrierInfo
+# ============================================================================
+
+
+@cache
+def _get_charge_carrier_info(adducts: tuple[GlobalChargeCarrier, ...]) -> "ChargeCarrierInfo":
+    """Cached factory for ChargeCarrierInfo."""
+    return ChargeCarrierInfo(adducts)
 
 
 @dataclass(frozen=True)
@@ -113,18 +128,70 @@ class ChargeCarrierInfo:
         charge: int | str | GlobalChargeCarrier | tuple[GlobalChargeCarrier | str, ...] | None,
     ) -> Self:
         carriers = handle_charge_input(charge)
-        return cast(Self, ChargeCarrierInfo(carriers))
+        # Sort for consistent caching - use serialized form as sort key
+        carriers = tuple(sorted(carriers, key=lambda x: x.serialize()))
+        return cast(Self, _get_charge_carrier_info(carriers))
 
-    def to_fragment_mapping(self, has_internal_charge: bool = False) -> Mapping[str, int] | None:
+    @cached_property
+    def to_fragment_mapping(self) -> Mapping[str, int] | None:
         composition: Counter[ElementInfo] = self.composition
         if not composition:
             return None
         if len(composition) == 1:
             elem_info, count = next(iter(composition.items()))
-            if str(elem_info) == "H" and not has_internal_charge:
-                return None  # None type means infer protonation. Only do this is no internal charge.
+            if str(elem_info) == "H":
+                return None
 
         return {str(elem_info): count for elem_info, count in composition.items()}
+
+    @cached_property
+    def to_explicit_fragment_mapping(self) -> Mapping[str, int]:
+        composition: Counter[ElementInfo] = self.composition
+        if not composition:
+            return {}
+        return {str(elem_info): count for elem_info, count in composition.items()}
+
+
+
+# ============================================================================
+# DeltaInfo
+# ============================================================================
+
+
+@cache
+def _normalize_delta_key(key_str: str) -> ChargedFormula | float:
+    """Normalize a delta key string to ChargedFormula or float."""
+    # Try as named delta first
+    try:
+        return ChargedFormula.from_composition(NEUTRAL_DELTA_LOOKUP[key_str].composition)
+    except KeyError:
+        pass
+
+    # Try as float
+    try:
+        return float(key_str)
+    except ValueError:
+        pass
+
+    # Parse as formula
+    return ChargedFormula.from_string(key_str, require_formula_prefix=False)
+
+
+@cache
+def _get_delta_info(items: tuple[tuple[str, int], ...] | None) -> "DeltaInfo":
+    """Cached factory for DeltaInfo."""
+    if items is None or len(items) == 0:
+        return DeltaInfo({})
+
+    result: dict[ChargedFormula | float, int] = {}
+    for key_str, count in items:
+        key = _normalize_delta_key(key_str)
+        result[key] = result.get(key, 0) + count
+
+    # Remove zero counts
+    result = {k: v for k, v in result.items() if v != 0}
+
+    return DeltaInfo(result)
 
 
 @dataclass(frozen=True)
@@ -188,12 +255,32 @@ class DeltaInfo:
     def from_input(
         deltas: str | ChargedFormula | float | dict[str | ChargedFormula | float, int] | None,
     ) -> Self:
-        normalized: dict[ChargedFormula | int | float, int] = _handle_delta_input(deltas)
-        for key in normalized.keys():
+        if deltas is None:
+            return cast(Self, _get_delta_info(None))
+
+        # Normalize to dict first
+        normalized_dict = _handle_delta_input(deltas)
+
+        # Check for charged formulas
+        for key in normalized_dict.keys():
             if isinstance(key, ChargedFormula) and key.is_charged:
                 raise ValueError("Delta formulas must be neutral (charge=0)")
 
-        return cast(Self, DeltaInfo(normalized))
+        # Convert to sorted tuple of (str_key, count) for caching
+        items: list[tuple[str, int]] = []
+        for k, v in normalized_dict.items():
+            if isinstance(k, float):
+                key_str = str(k)
+            elif isinstance(k, ChargedFormula):
+                key_str = k.serialize(include_formula_prefix=False)
+            else:
+                key_str = str(k)
+            items.append((key_str, v))
+
+        # Sort for consistent caching
+        items_tuple = tuple(sorted(items, key=lambda x: (x[0], x[1])))
+
+        return cast(Self, _get_delta_info(items_tuple))
 
     def __add__(self, other: "DeltaInfo") -> "DeltaInfo":
         """Combine two DeltaInfo objects (add deltas together)."""
@@ -204,7 +291,8 @@ class DeltaInfo:
         # Remove zero counts
         combined = {k: v for k, v in combined.items() if v != 0}
 
-        return DeltaInfo(combined)
+        # Use from_input to get cached version
+        return DeltaInfo.from_input(combined)
 
     def __sub__(self, other: "DeltaInfo") -> "DeltaInfo":
         """Subtract one DeltaInfo from another."""
@@ -215,15 +303,18 @@ class DeltaInfo:
         # Remove zero counts
         result = {k: v for k, v in result.items() if v != 0}
 
-        return DeltaInfo(result)
+        # Use from_input to get cached version
+        return DeltaInfo.from_input(result)
 
     def __neg__(self) -> "DeltaInfo":
         """Negate all deltas (flip signs)."""
-        return DeltaInfo({k: -v for k, v in self.deltas.items()})
+        negated = {k: -v for k, v in self.deltas.items()}
+        return DeltaInfo.from_input(negated)
 
     def __mul__(self, scalar: int) -> "DeltaInfo":
         """Multiply all delta counts by a scalar."""
-        return DeltaInfo({k: v * scalar for k, v in self.deltas.items()})
+        multiplied = {k: v * scalar for k, v in self.deltas.items()}
+        return DeltaInfo.from_input(multiplied)
 
     def __rmul__(self, scalar: int) -> "DeltaInfo":
         """Allow scalar * DeltaInfo."""
@@ -241,6 +332,7 @@ class DeltaInfo:
             parts.append(part)
         return " + ".join(parts) if parts else "No Delta"
 
+    @cached_property
     def to_fragment_mapping(self) -> Mapping[str | float, int] | None:
         if not self.deltas:
             return None
@@ -253,12 +345,18 @@ class DeltaInfo:
         return result
 
 
+# ============================================================================
+# Helper functions
+# ============================================================================
+
+
 def _handle_delta_input(
     deltas: str | ChargedFormula | float | dict[str | ChargedFormula | float, int] | None,
 ) -> dict[ChargedFormula | float, int]:
-    # Dict - recursively normalize each key
+    """Normalize delta input to standard dict format."""
     if deltas is None:
         return {}
+
     if isinstance(deltas, dict):
         result: dict[ChargedFormula | float, int] = {}
         for key, count in deltas.items():
@@ -286,6 +384,7 @@ def _handle_delta_input(
 def handle_charge_input(
     charge: int | str | GlobalChargeCarrier | tuple[GlobalChargeCarrier | str, ...] | None,
 ) -> tuple[GlobalChargeCarrier, ...]:
+    """Normalize charge input to tuple of GlobalChargeCarrier."""
     if isinstance(charge, int):
         adduct: GlobalChargeCarrier = get_charge_adducts(charge)
         return (adduct,)
@@ -307,15 +406,31 @@ def handle_charge_input(
 
 @cache
 def get_charge_adducts(charge_state: int) -> GlobalChargeCarrier:
+    """Get a cached GlobalChargeCarrier for a given charge state."""
     return GlobalChargeCarrier.charged_proton(charge_state)
 
 
 C13: ElementInfo = ELEMENT_LOOKUP["13C"]
 
 
+@cache
+def _get_isotopes(
+    isotopes: int | tuple[tuple[ElementInfo, int], ...],
+) -> IsotopeInfo:
+    """Cached factory for IsotopeInfo."""
+    if isinstance(isotopes, tuple):
+        return IsotopeInfo(isotopes)
+
+    if isotopes == 0:
+        return IsotopeInfo(())
+
+    return IsotopeInfo(((C13, isotopes),))
+
+
 def get_isotopes(
     isotopes: int | dict[ElementInfo | str, int] | None,
 ) -> IsotopeInfo:
+    """Normalize isotope input and return cached IsotopeInfo."""
     if isotopes is None:
         return _get_isotopes(0)
 
@@ -325,10 +440,12 @@ def get_isotopes(
             if isinstance(elem, str):
                 elem_info: ElementInfo = ELEMENT_LOOKUP[elem]
             else:
-                elem_info: ElementInfo = elem
+                elem_info = elem
             elem_infos.append((elem_info, count))
 
-        return _get_isotopes(tuple(elem_infos))
+        # Sort for consistent caching
+        elem_infos_sorted = tuple(sorted(elem_infos, key=lambda x: str(x[0])))
+        return _get_isotopes(elem_infos_sorted)
 
     if isinstance(isotopes, int):
         if isotopes < 0:
@@ -339,22 +456,10 @@ def get_isotopes(
 
 
 @cache
-def _get_isotopes(
-    isotopes: int | tuple[tuple[ElementInfo, int], ...],
-) -> IsotopeInfo:
-    if isinstance(isotopes, tuple):
-        return IsotopeInfo(isotopes)
-
-    if isotopes == 0:
-        return IsotopeInfo(())
-
-    return IsotopeInfo(((C13, isotopes),))
-
-
-@cache
 def _get_losses(
     losses: tuple[tuple[ElementInfo, int], ...],
 ) -> Mapping[ChargedFormula, int]:
+    """Cached factory for neutral loss mappings."""
     composition: Counter[ElementInfo] = Counter()
     for element, count in losses:
         composition[element] += count
@@ -365,4 +470,5 @@ def _get_losses(
 def get_losses(
     losses: Counter[ElementInfo],
 ) -> Mapping[ChargedFormula, int] | None:
+    """Get cached neutral loss mapping from composition."""
     return _get_losses(tuple(losses.items())) if losses else None

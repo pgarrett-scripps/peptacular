@@ -18,6 +18,7 @@ Contents
    features
    proforma_compliance
    examples
+   masses
 
 .. toctree::
    :maxdepth: 2

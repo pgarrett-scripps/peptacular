@@ -1838,38 +1838,38 @@ class ProFormaAnnotation:
 
         return isotope_map
 
-    def base_comp(self, skip_labile: bool = False, monoisotopic: bool = True) -> tuple[Counter[ElementInfo], int, float]:
+    def _base_comp(self, skip_labile: bool = False, monoisotopic: bool = True) -> tuple[Counter[ElementInfo], int, float]:
         total_composition: Counter[ElementInfo] = self.get_sequence_composition()
         total_charge = 0  # results from internal formula mods
         total_delta_mass = 0.0  # only from MassTags
 
         if self.has_unknown_mods:
             unknown_mods = self.unknown_mods
-            composition, delta_mass = unknown_mods.get_composition_with_delta_mass(monoisotopic)
+            composition, delta_mass, charge = unknown_mods.get_composition_with_delta_mass_charge(monoisotopic)
             total_composition += composition
             total_delta_mass += delta_mass
-            total_charge += unknown_mods.get_charge()
+            total_charge += charge
 
         if not skip_labile and self.has_labile_mods:
             labile_mods = self.labile_mods
-            composition, delta_mass = labile_mods.get_composition_with_delta_mass(monoisotopic)
+            composition, delta_mass, charge = labile_mods.get_composition_with_delta_mass_charge(monoisotopic)
             total_composition += composition
             total_delta_mass += delta_mass
-            total_charge += labile_mods.get_charge()
+            total_charge += charge
 
         if self.has_nterm_mods:
             nterm_mods = self.nterm_mods
-            composition, delta_mass = nterm_mods.get_composition_with_delta_mass(monoisotopic)
+            composition, delta_mass, charge = nterm_mods.get_composition_with_delta_mass_charge(monoisotopic)
             total_composition += composition
             total_delta_mass += delta_mass
-            total_charge += nterm_mods.get_charge()
+            total_charge += charge
 
         if self.has_cterm_mods:
             cterm_mods = self.cterm_mods
-            composition, delta_mass = cterm_mods.get_composition_with_delta_mass(monoisotopic)
+            composition, delta_mass, charge = cterm_mods.get_composition_with_delta_mass_charge(monoisotopic)
             total_composition += composition
             total_delta_mass += delta_mass
-            total_charge += cterm_mods.get_charge()
+            total_charge += charge
 
         if self.has_static_mods:
             static_mod_map = self.map_static_mods_to_indexes()
@@ -1888,18 +1888,18 @@ class ProFormaAnnotation:
         # Internal mods
         if self.has_internal_mods:
             for mods in self.internal_mods.values():
-                composition, delta_mass = mods.get_composition_with_delta_mass(monoisotopic)
+                composition, delta_mass, charge = mods.get_composition_with_delta_mass_charge(monoisotopic)
                 total_composition += composition
                 total_delta_mass += delta_mass
-                total_charge += mods.get_charge()
+                total_charge += charge
 
         # Intervals
         if self.has_intervals:
             for interval in self.intervals:
-                composition, delta_mass = interval.mods.get_composition_with_delta_mass(monoisotopic)
+                composition, delta_mass, charge = interval.mods.get_composition_with_delta_mass_charge(monoisotopic)
                 total_composition += composition
                 total_delta_mass += delta_mass
-                total_charge += interval.mods.get_charge()
+                total_charge += charge
 
         return total_composition, total_charge, total_delta_mass
 
@@ -1927,7 +1927,7 @@ class ProFormaAnnotation:
 
         return frag.composition
 
-    def base_mass(self, monoisotopic: bool = True, skip_labile: bool = False) -> tuple[float, int]:
+    def _base_mass(self, monoisotopic: bool = True, skip_labile: bool = False) -> tuple[float, int]:
         """Optimized mass calculation with minimal overhead."""
         total_mass = 0.0
         total_charge = 0  # results from internal formula mods
@@ -1943,36 +1943,41 @@ class ProFormaAnnotation:
 
         # Unknown mods
         if self.has_unknown_mods:
-            total_mass += self.unknown_mods.get_mass(monoisotopic=monoisotopic)
-            total_charge += self.unknown_mods.get_charge()
+            m, c = self.unknown_mods.get_mass_charge(monoisotopic=monoisotopic)
+            total_mass += m
+            total_charge += c
 
         # Labile mods
         if not skip_labile and self.has_labile_mods:
-            total_mass += self.labile_mods.get_mass(monoisotopic=monoisotopic)
-            total_charge += self.labile_mods.get_charge()
+            m, c = self.labile_mods.get_mass_charge(monoisotopic=monoisotopic)
+            total_mass += m
+            total_charge += c
 
         # N-terminal mods
         if self.has_nterm_mods:
-            total_mass += self.nterm_mods.get_mass(monoisotopic=monoisotopic)
-            total_charge += self.nterm_mods.get_charge()
+            m, c = self.nterm_mods.get_mass_charge(monoisotopic=monoisotopic)
+            total_mass += m
+            total_charge += c
 
         # Internal mods
         if self.has_internal_mods:
             for mods in self.internal_mods.values():
-                total_mass += mods.get_mass(monoisotopic=monoisotopic)
-                total_charge += mods.get_charge()
+                m, c = mods.get_mass_charge(monoisotopic=monoisotopic)
+                total_mass += m
+                total_charge += c
 
         # Interval mods
         if self.has_intervals:
             for interval in self.intervals:
-                for mods in interval.mods:
-                    total_mass += mods.get_mass(monoisotopic=monoisotopic)
-                    total_charge += mods.get_charge()
+                m, c = interval.mods.get_mass_charge(monoisotopic=monoisotopic)
+                total_mass += m
+                total_charge += c
 
         # C-terminal mods
         if self.has_cterm_mods:
-            total_mass += self.cterm_mods.get_mass(monoisotopic=monoisotopic)
-            total_charge += self.cterm_mods.get_charge()
+            m, c = self.cterm_mods.get_mass_charge(monoisotopic=monoisotopic)
+            total_mass += m
+            total_charge += c
 
         # Static mods
         if self.has_static_mods:
@@ -2014,14 +2019,14 @@ class ProFormaAnnotation:
         return vec
 
     @property
-    def monoisotopic_mass(self) -> float:
+    def monoisotopic_base_mass(self) -> float:
         """Calculate monoisotopic mass of the unmodified sequence."""
-        return self.base_mass(monoisotopic=True)[0]
+        return self._base_mass(monoisotopic=True)[0]
 
     @property
-    def average_mass(self) -> float:
+    def average_base_mass(self) -> float:
         """Calculate average mass of the unmodified sequence."""
-        return self.base_mass(monoisotopic=False)[0]
+        return self._base_mass(monoisotopic=False)[0]
 
     def mass(
         self,
@@ -2038,6 +2043,25 @@ class ProFormaAnnotation:
         f = self.frag(
             ion_type=ion_type,
             charge=charge,
+            monoisotopic=monoisotopic,
+            isotopes=isotopes,
+            deltas=deltas,
+            calculate_composition=calculate_with_composition,
+        )
+        return f.mass
+
+    def neutral_mass(
+        self,
+        ion_type: ION_TYPE = IonType.PRECURSOR,
+        monoisotopic: bool = True,
+        *,
+        isotopes: ISOTOPE_TYPE | None = None,
+        deltas: CUSTOM_LOSS_TYPE | None = None,
+        calculate_with_composition: bool = False,
+    ) -> float:
+        f = self.frag(
+            ion_type=ion_type,
+            charge=0,
             monoisotopic=monoisotopic,
             isotopes=isotopes,
             deltas=deltas,
@@ -2067,7 +2091,7 @@ class ProFormaAnnotation:
             skip_labile = False
 
         if self.has_isotope_mods or calculate_composition:
-            base_comp, base_charge, delta_mass = self.base_comp(skip_labile=skip_labile, monoisotopic=monoisotopic)
+            base_comp, base_charge, delta_mass = self._base_comp(skip_labile=skip_labile, monoisotopic=monoisotopic)
 
             if calculate_composition and delta_mass != 0.0:
                 raise ValueError("Cannot calculate composition with delta mass changes.")
@@ -2099,7 +2123,7 @@ class ProFormaAnnotation:
                     internal_charge=base_charge,
                 )
 
-        base_mass, base_charge = self.base_mass(monoisotopic=monoisotopic, skip_labile=skip_labile)
+        base_mass, base_charge = self._base_mass(monoisotopic=monoisotopic, skip_labile=skip_labile)
 
         return adjust_mass_mz(
             base=base_mass,
@@ -2192,6 +2216,7 @@ class ProFormaAnnotation:
         min_length: int | None = None,
         max_length: int | None = None,
     ) -> Generator[Fragment, None, None]:
+        raise NotImplementedError("Fast fragmentation is not supported for ProFormaAnnotation.")
         if not mass_vector:
             return
 

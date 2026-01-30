@@ -329,6 +329,9 @@ class TestApplyMods(unittest.TestCase):
         result = apply_mods(self.annotation, internal=internal_mods, inplace=True)
 
         # Should have both oxidation and phospho mods
+        if result._internal_mods is None:
+            raise AssertionError("Internal mods should not be None")
+
         mod_dict = result._internal_mods[0]
         self.assertIn("Oxidation", mod_dict)
         self.assertIn("Phospho", mod_dict)
