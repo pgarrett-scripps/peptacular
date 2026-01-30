@@ -1,4 +1,3 @@
-from sys import intern
 from collections import Counter
 from collections.abc import Mapping, Sequence
 from typing import Any, TypeVar, overload
@@ -100,7 +99,6 @@ def adjust_mass_mz(
 ) -> Fragment:
     """Adjust base mass by charge carriers and ion type."""
 
-
     base_mass = 0.0
     if isinstance(base, Counter):
         for elem, count in base.items():
@@ -151,7 +149,6 @@ def adjust_comp(
     internal_charge: int = 0,
 ) -> Fragment:
     """Adjust base composition by charge carriers and ion type, returning a Fragment object."""
-
 
     if not inplace:
         base_comp = base_comp.copy()

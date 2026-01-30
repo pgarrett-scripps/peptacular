@@ -1,7 +1,7 @@
 # Peptacular
 
 <div align="center">
-  <img src="peptacular_logo.png" alt="Peptacular Logo" width="400"/>
+  <img src="peptacular_logo.png" alt="Peptacular Logo" width="400" style="margin: 50px;"/>
   
   # Peptacular
   
