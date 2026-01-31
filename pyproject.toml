@@ -23,8 +23,8 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
-paftacular = ["paftacular>=1.0.0"]
-all = ["paftacular>=1.0.0"]
+paftacular = ["paftacular>=0.1.0"]
+all = ["paftacular>=0.1.0"]
 
 [build-system]
 requires = ["hatchling"]
@@ -39,7 +39,7 @@ path = "src/peptacular/__init__.py"
 [tool.uv]
 package = true
 dev-dependencies = [
-    "paftacular>=1.0.0",
+    "paftacular>=0.1.0",
     "pytest>=9.0.1",
     "pytest-cov>=6.0.0",
     "pympler>=1.1",
@@ -79,6 +79,6 @@ select = [
 "data.py" = ["E741"]
 "constants.py" = ["E741"]
 
-[tool.uv.sources]
+#[tool.uv.sources]
 #tacular = { path = "../tacular", editable = true }
-paftacular = { path = "../paftacular", editable = true }
+#paftacular = { path = "../paftacular", editable = true }
