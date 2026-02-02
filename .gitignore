@@ -24,7 +24,6 @@ try*.py
 .pytest_cache/
 .ipynb_checkpoints/
 htmlcov/
-uv.lock
 
 # Other
 coverage.xml
@@ -144,7 +143,6 @@ ipython_config.py
 
 # uv
 .venv
-uv.lock
 
 # ruff
 .ruff_cache/
