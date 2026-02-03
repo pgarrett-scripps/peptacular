@@ -1369,13 +1369,15 @@ def parse_sequence_region(s: str) -> "SequenceRegion":
     if not s.startswith("("):
         raise ValueError(f"Sequence region must start with '(': {s}")
 
+    ambiguous = s[1] == "?"
+
     # Find the closing parenthesis
     close_paren = s.find(")")
     if close_paren == -1:
         raise ValueError(f"Sequence region missing closing ')': {s}")
 
     # Extract the sequence part (between parentheses)
-    seq_str = s[1:close_paren]
+    seq_str: str = s[1 + ambiguous : close_paren]
 
     # Parse the sequence into SequenceElements
     # We need to split the sequence string into individual amino acid + modification pairs
@@ -1389,6 +1391,8 @@ def parse_sequence_region(s: str) -> "SequenceRegion":
         # Find the extent of this sequence element (amino acid + any modifications)
         start = i
         i += 1  # Move past the amino acid
+
+        i += ambiguous
 
         # Skip any modifications (enclosed in square brackets)
         while i < len(seq_str) and seq_str[i] == "[":
@@ -1415,7 +1419,7 @@ def parse_sequence_region(s: str) -> "SequenceRegion":
     mods_str = s[close_paren + 1 :]
     modifications = _extract_bracketed_modifications(mods_str)
 
-    return SequenceRegion(sequence=tuple(sequence_elements), modifications=tuple(modifications))
+    return SequenceRegion(sequence=tuple(sequence_elements), modifications=tuple(modifications), ambiguous=ambiguous)
 
 
 @lru_cache(maxsize=512)
