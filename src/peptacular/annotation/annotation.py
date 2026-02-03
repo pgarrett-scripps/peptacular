@@ -24,7 +24,7 @@ from tacular import (
     NeutralDeltaLiteral,
 )
 
-from ..constants import ELECTRON_MASS, ModType, ModTypeLiteral, Terminal
+from ..constants import ModType, ModTypeLiteral, Terminal
 from ..digestion.core import (
     EnzymeConfig,
     digest_annotation_by_aa,
@@ -109,7 +109,6 @@ from .utils import (
     adjust_comp,
     adjust_mass_mz,
     can_fragment_sequence,
-    handle_charge_input_comp,
 )
 
 fe = FormulaElement(element=Element.H, occurance=1)
@@ -360,9 +359,44 @@ class ProFormaAnnotation:
                     for _ in range(count):
                         mods.append(mod)
 
-            sequence_regions.append(SequenceRegion(sequence=region_elements, modifications=tuple(mods)))
+            sequence_regions.append(SequenceRegion(sequence=region_elements, modifications=tuple(mods), ambiguous=interval.ambiguous))
 
         return tuple(sequence_regions)
+
+    @property
+    def sequence_elements_and_regions(self) -> tuple[SequenceElement | SequenceRegion, ...]:
+        if self._sequence is None:
+            return ()
+
+        if self.has_intervals is False:
+            return self.sequence_elements
+
+        elements_and_regions: list[SequenceElement | SequenceRegion] = []
+        seq_index = 0
+        for interval in self.intervals:
+            # Add sequence elements before interval
+            while seq_index < interval.start:
+                elements_and_regions.append(self.sequence_elements[seq_index])
+                seq_index += 1
+
+            # Add sequence region for interval
+            region_elements = self.sequence_elements[interval.start : interval.end]
+
+            mods: list[MODIFICATION_TYPE] = []
+            if interval.has_mods:
+                for mod, count in interval.mods.parse_items():
+                    for _ in range(count):
+                        mods.append(mod)
+
+            elements_and_regions.append(SequenceRegion(sequence=region_elements, modifications=tuple(mods), ambiguous=interval.ambiguous))
+            seq_index = interval.end
+
+        # Add remaining sequence elements after last interval
+        while seq_index < len(self.sequence_elements):
+            elements_and_regions.append(self.sequence_elements[seq_index])
+            seq_index += 1
+
+        return tuple(elements_and_regions)
 
     @property
     def sequence(self) -> str:
@@ -2158,7 +2192,6 @@ class ProFormaAnnotation:
         has_user_charge = charge is not None
         has_annot_charge = self._charge is not None
 
-        charge_info: ChargeCarrierInfo = ChargeCarrierInfo.from_input(charge)
         if not has_user_charge and has_annot_charge:
             annot_charge: int | Mods[GlobalChargeCarrier] | None = self.charge
             if annot_charge is None:
@@ -2170,6 +2203,8 @@ class ProFormaAnnotation:
                 charge_info = ChargeCarrierInfo.from_input(tuple(mod.value for mod in annot_charge.mods))
             else:
                 raise RuntimeError(f"Unsupported charge type in annotation: {type(annot_charge)}")
+        else:
+            charge_info: ChargeCarrierInfo = ChargeCarrierInfo.from_input(charge)
 
         iso_info = IsotopeInfo.from_input(isotopes)
 
@@ -2205,102 +2240,6 @@ class ProFormaAnnotation:
             calculate_composition=calculate_with_composition,
         )
         return f.mz
-
-    def _fast_fragment(
-        self,
-        mass_vector: list[float],
-        ion_type: IonType,
-        charges: list[ChargeCarrierInfo],
-        monoisotopic: bool = True,
-        *,
-        min_length: int | None = None,
-        max_length: int | None = None,
-    ) -> Generator[Fragment, None, None]:
-        raise NotImplementedError("Fast fragmentation is not supported for ProFormaAnnotation.")
-        if not mass_vector:
-            return
-
-        ion_info: FragmentIonInfo = FRAGMENT_ION_LOOKUP[ion_type]
-
-        # Helper to yield fragments
-        def yield_frags(pos: Any, mass_val: float, seq_len: int) -> Generator[Fragment, None, None]:
-            if min_length is not None and seq_len < min_length:
-                return
-            if max_length is not None and seq_len > max_length:
-                return
-
-            for charge_info in charges:
-                yield Fragment(
-                    ion_type=ion_type,
-                    position=pos,
-                    mass=mass_val
-                    + ion_info.get_mass(monoisotopic=monoisotopic)
-                    + charge_info.get_mass(monoisotopic=monoisotopic)
-                    + (ELECTRON_MASS * -charge_info.charge),
-                    monoisotopic=monoisotopic,
-                    charge_state=charge_info.charge,
-                    charge_adducts=charge_info.to_fragment_mapping(),
-                    sequence=None,
-                    composition=None,
-                )
-
-        # Forward
-        if ion_info.is_forward:
-            current_sum = 0.0
-            for i, val in enumerate(mass_vector):
-                current_sum += val
-                cnt = i + 1
-                base = current_sum
-                yield from yield_frags(cnt, base, cnt)
-
-        # Backward
-        elif ion_info.is_backward:
-            current_sum = 0.0
-            # mass_vector is 0..N-1.
-            # reversed iterator
-            for i, val in enumerate(reversed(mass_vector)):
-                current_sum += val
-                cnt = i + 1
-                base = current_sum
-                yield from yield_frags(cnt, base, cnt)
-
-        # Intact
-        elif ion_info.is_intact:
-            total = sum(mass_vector)
-            cnt = len(mass_vector)
-            base = total
-            yield from yield_frags(cnt, base, cnt)
-
-        # Internal
-        elif ion_info.is_internal:
-            P = [0.0] * (len(mass_vector) + 1)
-            acc = 0.0
-            for i, v in enumerate(mass_vector):
-                acc += v
-                P[i + 1] = acc
-
-            if ion_info.ion_type == IonType.IMMONIUM:
-                for i in range(len(mass_vector)):
-                    val = mass_vector[i]
-                    # Try to get sequence label, safe fallback
-                    # TODO: Update to not repeat amino acids
-                    if self.sequence:
-                        pos_label = self.sequence[i]
-                    else:
-                        pos_label = i
-                    yield from yield_frags(pos_label, val, 1)
-
-            else:
-                n = len(mass_vector)
-                for start in range(n):
-                    for end in range(start + 1, n + 1):
-                        if end - start == n:
-                            continue
-
-                        length = end - start
-                        base_sum = P[end] - P[start]
-                        base = base_sum
-                        yield from yield_frags((start, end), base, length)
 
     def _fragment(
         self,
@@ -3405,10 +3344,27 @@ class ProFormaAnnotation:
         composition: Counter[ElementInfo] = self.comp(ion_type=ion_type, charge=charge, isotopes=isotopes, deltas=deltas)
 
         # get charge state
-        if charge is None:
-            charge_state = self.charge_state
+        # if charge is None:
+        #    charge_state = self.charge_state
+        # else:
+        #    _, charge_state = handle_charge_input_comp(charge=charge)
+
+        has_user_charge = charge is not None
+        has_annot_charge = self._charge is not None
+
+        if not has_user_charge and has_annot_charge:
+            annot_charge: int | Mods[GlobalChargeCarrier] | None = self.charge
+            if annot_charge is None:
+                charge_info = ChargeCarrierInfo.from_input(annot_charge)
+            elif isinstance(annot_charge, int):
+                charge_info = ChargeCarrierInfo.from_input(annot_charge)
+            elif isinstance(annot_charge, Mods):
+                # Extract the values from Mod objects
+                charge_info = ChargeCarrierInfo.from_input(tuple(mod.value for mod in annot_charge.mods))
+            else:
+                raise RuntimeError(f"Unsupported charge type in annotation: {type(annot_charge)}")
         else:
-            _, charge_state = handle_charge_input_comp(charge=charge)
+            charge_info: ChargeCarrierInfo = ChargeCarrierInfo.from_input(charge)
 
         return isotopic_distribution(
             chemical_formula=cast(Mapping[str | ElementInfo, int | float], composition),
@@ -3417,7 +3373,7 @@ class ProFormaAnnotation:
             distribution_resolution=distribution_resolution,
             use_neutron_count=use_neutron_count,
             conv_min_abundance_threshold=conv_min_abundance_threshold,
-            charge=charge_state,
+            charge=charge_info.charge_state,
         )
 
     def estimate_isotopic_distribution(

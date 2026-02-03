@@ -84,3 +84,11 @@ class TestAnnotationConstruction:
         annot = pt.ProFormaAnnotation.parse(sequence)
         assert annot.serialize() == sequence
         mass = annot.mass()
+
+    def test_get_mod_by_type(self):
+        """Test getting modifications by type"""
+        sequence = "PEP[Phospho]TIDE[Oxidation]K"
+        annot = pt.ProFormaAnnotation.parse(sequence)
+        mods = annot.get_mods(mod_types="internal")
+        assert "internal" in mods
+        assert len(mods["internal"]) == 2

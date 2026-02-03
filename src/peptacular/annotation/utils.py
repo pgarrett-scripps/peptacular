@@ -12,78 +12,12 @@ from tacular import (
     IonTypeLiteral,
 )
 
-from ..annotation.mod import Mods
-from ..constants import ELECTRON_MASS, PROTON_MASS
-from ..proforma_components.comps import ChargedFormula, GlobalChargeCarrier
+from ..constants import ELECTRON_MASS
+from ..proforma_components.comps import ChargedFormula
 from .cached_comps import ChargeCarrierInfo, DeltaInfo, IsotopeInfo
 from .frag import Fragment
 
 H_ELEMENT_INFO = ELEMENT_LOOKUP["H"]
-
-
-def _handle_charge_input_mass(
-    charge: int | str | GlobalChargeCarrier | tuple[GlobalChargeCarrier | str, ...] | Mods[GlobalChargeCarrier],
-    monoisotopic: bool,
-) -> tuple[float, int]:
-    if isinstance(charge, Mods):
-        mass = charge.get_mass(monoisotopic=monoisotopic)
-        charge_state = charge.get_charge()
-
-        if charge_state is None:
-            raise ValueError("Charge is not defined for this modification.")
-        return mass, charge_state
-
-    base_mass = 0.0
-    if isinstance(charge, int):
-        charge_value = charge
-        base_mass += charge_value * PROTON_MASS
-    elif isinstance(charge, str) or isinstance(charge, GlobalChargeCarrier):
-        if isinstance(charge, str):
-            charge = GlobalChargeCarrier.from_string(charge)
-        m = charge.get_mass(monoisotopic=monoisotopic)
-        base_mass += m
-        charge_value = charge.get_charge()
-    elif isinstance(charge, tuple):
-        charge_value = 0
-        for global_charge_carrier in charge:
-            if isinstance(global_charge_carrier, str):
-                global_charge_carrier = GlobalChargeCarrier.from_string(global_charge_carrier)
-            m = global_charge_carrier.get_mass(monoisotopic=monoisotopic)
-            base_mass += m
-            charge_value += global_charge_carrier.get_charge()
-    else:
-        raise TypeError(f"Invalid charge type: {type(charge)}")
-
-    return base_mass, charge_value
-
-
-def handle_charge_input_comp(
-    charge: int | str | GlobalChargeCarrier | tuple[GlobalChargeCarrier | str, ...],
-) -> tuple[Counter[ElementInfo], int]:
-    base_comp = Counter[ElementInfo]()
-    total_charge = 0
-    if isinstance(charge, int):
-        charge_value = charge
-        base_comp[H_ELEMENT_INFO] += charge_value
-        total_charge = charge_value
-    elif isinstance(charge, str) or isinstance(charge, GlobalChargeCarrier):
-        if isinstance(charge, str):
-            charge = GlobalChargeCarrier.from_string(charge)
-        comp = charge.get_composition()
-        for element, elem_count in comp.items():
-            base_comp[element] += elem_count
-        total_charge = charge.get_charge()
-    elif isinstance(charge, tuple):
-        for global_charge_carrier in charge:
-            if isinstance(global_charge_carrier, str):
-                global_charge_carrier = GlobalChargeCarrier.from_string(global_charge_carrier)
-            comp = global_charge_carrier.get_composition()
-            for element, elem_count in comp.items():
-                base_comp[element] += elem_count
-
-            total_charge += global_charge_carrier.get_charge()
-
-    return base_comp, total_charge
 
 
 def adjust_mass_mz(

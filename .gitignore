@@ -143,7 +143,7 @@ ipython_config.py
 
 # uv
 .venv
-
+local/
 # ruff
 .ruff_cache/
 

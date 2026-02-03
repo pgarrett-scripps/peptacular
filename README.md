@@ -42,13 +42,14 @@ import peptacular as pt
 peptide: pt.ProFormaAnnotation = pt.parse("PEM[Oxidation]TIDE")
 
 # Calculate mass and m/z
-mass: float = peptide.mass()
-mz: float = peptide.mz(charge=2)
+mass: float = peptide.mass() # 849.342
+mz: float = peptide.mz(charge=2) # 425.678
 
-# Facotry pattern
+# Factory pattern
 print(peptide.set_charge(2).set_peptide_name("Peptacular").serialize())
 # (>Peptacular)PEM[Oxidation]TIDE/2
 ```
+
 
 ## Quick Start (Functional Based)
 
@@ -60,12 +61,8 @@ import peptacular as pt
 peptides = ['[Acetyl]-PEPTIDES', '<C13>ARE', 'SICK/2']
 
 # Calculate mass and m/z for all peptides
-masses: list[float] = pt.mass(peptides)
-mzs: list[float] = pt.mz(peptides, charge=2)
-
-# For single peptides 
-mass: float = pt.mass(peptides[0])
-mz: float = pt.mz(peptides[0], charge=2)
+masses: list[float] = pt.mass(peptides) # [928.4026, 374.1914, 451.2454]
+mzs: list[float] = pt.mz(peptides, charge=2) # [465.2086, 188.103, 225.6227]
 ```
 
 

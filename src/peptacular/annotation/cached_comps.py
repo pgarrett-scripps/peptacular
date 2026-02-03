@@ -291,7 +291,7 @@ class DeltaInfo:
         combined = {k: v for k, v in combined.items() if v != 0}
 
         # Use from_input to get cached version
-        return DeltaInfo.from_input(combined) # type: ignore
+        return DeltaInfo.from_input(combined)  # type: ignore
 
     def __sub__(self, other: "DeltaInfo") -> "DeltaInfo":
         """Subtract one DeltaInfo from another."""
@@ -303,7 +303,7 @@ class DeltaInfo:
         result = {k: v for k, v in result.items() if v != 0}
 
         # Use from_input to get cached version
-        return DeltaInfo.from_input(result) # type: ignore
+        return DeltaInfo.from_input(result)  # type: ignore
 
     def __neg__(self) -> "DeltaInfo":
         """Negate all deltas (flip signs)."""

@@ -1332,6 +1332,7 @@ class SequenceRegion(MassPropertyMixin):
 
     sequence: tuple[SequenceElement, ...]
     modifications: tuple[MODIFICATION_TYPE, ...]
+    ambiguous: bool
 
     def get_mass(self, monoisotopic: bool = True) -> float:
         return sum_masses(self.sequence + self.modifications, monoisotopic=monoisotopic)

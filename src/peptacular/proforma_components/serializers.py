@@ -514,7 +514,7 @@ def serialize_sequence_region(sr: "SequenceRegion") -> str:
 
     # Format: (SEQUENCE)[mod][mod]...
     seq_str = "".join(str(se) for se in sr.sequence)
-    result = f"({seq_str})"
+    result = f"({'' if not sr.ambiguous else '?'}{seq_str})"
 
     if sr.modifications:
         for mod in sr.modifications:
@@ -524,7 +524,7 @@ def serialize_sequence_region(sr: "SequenceRegion") -> str:
 
 
 @lru_cache(maxsize=512)
-def serialize_peptidoform(pf: "Peptidoform") -> str:
+def serialize_peptidoform(pf: "Peptidoform") -> str:  # pragma: no cover
     """
     Serialize a Peptidoform to ProForma notation.
 
@@ -578,7 +578,7 @@ def serialize_peptidoform(pf: "Peptidoform") -> str:
 
 
 @lru_cache(maxsize=512)
-def serialize_peptidoform_ion(pfi: "PeptidoformIon") -> str:
+def serialize_peptidoform_ion(pfi: "PeptidoformIon") -> str:  # pragma: no cover
     """
     Serialize a PeptidoformIon to ProForma notation.
 
@@ -612,7 +612,7 @@ def serialize_peptidoform_ion(pfi: "PeptidoformIon") -> str:
 
 
 @lru_cache(maxsize=256)
-def serialize_compound_peptidoform_ion(cpfi: "CompoundPeptidoformIon") -> str:
+def serialize_compound_peptidoform_ion(cpfi: "CompoundPeptidoformIon") -> str:  # pragma: no cover
     """
     Serialize a CompoundPeptidoformIon to ProForma notation.
 

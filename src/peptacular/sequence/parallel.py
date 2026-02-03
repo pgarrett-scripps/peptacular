@@ -1,4 +1,3 @@
-import atexit
 import multiprocessing as mp
 import sys
 from collections.abc import Callable, Sequence
@@ -10,9 +9,7 @@ from ..constants import parallelMethod, parallelMethodLiteral
 
 T = TypeVar("T")
 
-# Global pool cache
-_pool_cache: dict[tuple[str, int], Pool | ThreadPool] = {}
-_pool_lock = mp.Lock()
+# Global pool cache removed
 
 
 def set_start_method(method: Literal["fork", "spawn", "forkserver"] | None = None):
@@ -88,46 +85,18 @@ def _apply_wrapper[T](item: Any, func: Callable[..., T], func_kwargs: dict[str, 
     return func(item, **func_kwargs)
 
 
-def _get_or_create_pool(method: parallelMethod, n_workers: int, reuse_pool: bool = True) -> Pool | ThreadPool:
+def _create_pool(method: parallelMethod, n_workers: int) -> Pool | ThreadPool:
     """
-    Get an existing pool or create a new one.
+    Create a new pool.
 
     :param method: Process or thread pool
     :param n_workers: Number of workers
-    :param reuse_pool: If True, reuse existing pools
     :return: Pool instance
     """
-    if not reuse_pool:
-        if method == parallelMethod.THREAD:
-            return ThreadPool(processes=n_workers)
-        else:
-            return Pool(processes=n_workers)
-
-    pool_key = (method.value, n_workers)
-
-    with _pool_lock:
-        if pool_key not in _pool_cache:
-            if method == parallelMethod.THREAD:
-                _pool_cache[pool_key] = ThreadPool(processes=n_workers)
-            else:
-                _pool_cache[pool_key] = Pool(processes=n_workers)
-
-        return _pool_cache[pool_key]
-
-
-def cleanup_pools():
-    """
-    Clean up all cached pools. Call this at program exit if needed.
-    """
-    global _pool_cache
-    with _pool_lock:
-        for pool in _pool_cache.values():
-            try:
-                pool.close()
-                pool.join()
-            except Exception:
-                pass
-        _pool_cache.clear()
+    if method == parallelMethod.THREAD:
+        return ThreadPool(processes=n_workers)
+    else:
+        return Pool(processes=n_workers)
 
 
 def parallel_apply_internal[T](
@@ -136,7 +105,7 @@ def parallel_apply_internal[T](
     n_workers: int | None = None,
     chunksize: int | None = None,
     method: parallelMethod | parallelMethodLiteral | None = None,
-    reuse_pool: bool = True,
+    reuse_pool: bool = False,
     verbose: bool = False,
     **func_kwargs: Any,
 ) -> list[T]:
@@ -151,7 +120,7 @@ def parallel_apply_internal[T](
     :param n_workers: Number of worker processes/threads. If None, uses CPU count
     :param chunksize: Number of items per chunk. If None, auto-calculated
     :param method: 'process', 'thread', 'sequential', or None (auto-detect). Default is None.
-    :param reuse_pool: If True (default), reuse existing pools for better performance
+    :param reuse_pool: Ignored. Kept for backward compatibility.
     :param verbose: If True, print worker and chunksize info
     :param func_kwargs: Keyword arguments to pass to the function
     :return: List of results in the same order as input items
@@ -191,16 +160,7 @@ def parallel_apply_internal[T](
 
     wrapper = partial(_apply_wrapper, func=func, func_kwargs=func_kwargs)
 
-    # Get or create pool
-    pool = _get_or_create_pool(method_enum, n_workers, reuse_pool)
-
-    if reuse_pool:
-        # Don't use context manager - pool is managed globally
+    # Create temporary pool
+    pool = _create_pool(method_enum, n_workers)
+    with pool:
         return pool.map(wrapper, items_list, chunksize=chunksize)
-    else:
-        # Create temporary pool
-        with pool:
-            return pool.map(wrapper, items_list, chunksize=chunksize)
-
-
-atexit.register(cleanup_pools)

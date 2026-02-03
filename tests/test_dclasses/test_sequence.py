@@ -33,7 +33,7 @@ class TestSequenceRegion(unittest.TestCase):
         se2 = pt.SequenceElement(amino_acid=pt.AminoAcid.E)
         se3 = pt.SequenceElement(amino_acid=pt.AminoAcid.P)
 
-        sr = pt.SequenceRegion(sequence=(se1, se2, se3), modifications=())
+        sr = pt.SequenceRegion(sequence=(se1, se2, se3), modifications=(), ambiguous=False)
 
         self.assertEqual(len(sr.sequence), 3)
         self.assertEqual(len(sr.modifications), 0)
@@ -47,7 +47,7 @@ class TestSequenceRegion(unittest.TestCase):
 
         mod = pt.ModificationTags.from_string("Phospho")
 
-        sr = pt.SequenceRegion(sequence=(se1, se2, se3), modifications=(mod,))
+        sr = pt.SequenceRegion(sequence=(se1, se2, se3), modifications=(mod,), ambiguous=False)
 
         self.assertEqual(len(sr.sequence), 3)
         self.assertEqual(len(sr.modifications), 1)

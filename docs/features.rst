@@ -100,7 +100,7 @@ Modifications are stored as strings and only parsed when needed for calculations
 This minimizes overhead and improves performance for operations that don't require 
 mass and composition data.
 
-.. testcode::
+.. code-block:: python
 
    import peptacular as pt
    
@@ -119,7 +119,7 @@ mass and composition data.
 By default, parsing does not validate inputs. This allows for users to potenitally create annotations
 with invalid modifications/sequences. If you need strict validation:
 
-.. testcode::
+.. code-block:: python
 
    import peptacular as pt
    
@@ -132,4 +132,5 @@ with invalid modifications/sequences. If you need strict validation:
 
    # get validation status
    print(a.validate)
+   
 

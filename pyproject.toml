@@ -53,6 +53,8 @@ dev-dependencies = [
     "myst-parser",
     "lxml>=6.0.2",
     "numpy>=2.4.1",
+    "matplotlib>=3.10.8",
+    "pandas>=3.0.0",
 ]
 
 [tool.pytest.ini_options]
@@ -82,3 +84,13 @@ select = [
 #[tool.uv.sources]
 #tacular = { path = "../tacular", editable = true }
 #paftacular = { path = "../paftacular", editable = true }
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]

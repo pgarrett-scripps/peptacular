@@ -13,16 +13,22 @@ Install Peptacular using pip:
 Basic Usage
 -----------
 
+Import as a namespace:
+
+.. testcode::
+
+   import peptacular as pt
+
 .. testsetup:: *
 
    import peptacular as pt
 
 Parse/Serialize
-~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
+
+`pt.parse` will return a ProFormaAnnotation object representing the sequence with modifications.
 
 .. testcode::
-
-   import peptacular as pt
    
    # Parse a ProForma sequence
    peptide = pt.parse("PEM[Oxidation]TIDE/2")
@@ -35,8 +41,43 @@ Parse/Serialize
    PEM[Oxidation]TIDE/2
 
 
+Parse and Modify Sequences
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A number of methods exist to modify the ProFormaAnnotation object after parsing. You can set, append, extend, and remove modifications.
+
+There are a lot of accepted input values for these methods, see the API documentation for details. 
+But generally, strings representing modification names or identifiers, and float / int values are accepted.
+
+append / extend methods will add to existing modifications (increasing the count if the modification already exists at that position),
+while set methods will overwrite existing modifications at that position.
+
+Annotations have the following modification types: static, isotope, labile, nterm, cterm, internal, interval, charge (charge state or adducts).
+
+.. testcode::
+
+   # Parse ProForma sequences
+   simple = pt.parse("PEPTIDE")
+   modified = pt.parse("[Acetyl]-PEP[Oxidation]TIDE/2")
+   labeled = pt.parse("<13C>PEPTIDE")
+
+   # Programmatic modification
+   annot = pt.ProFormaAnnotation(sequence="PEPTIDE")
+   annot.set_nterm_mods({"Acetyl": 1})
+   annot.set_internal_mods_at_index(2, {"Oxidation": 1})
+   annot.set_charge(2)
+   print(annot.serialize())
+
+.. testoutput::
+
+   [Acetyl]-PEP[Oxidation]TIDE/2
+
+
 Fragment Generation
 ~~~~~~~~~~~~~~~~~~~
+
+The fragment method requires that you provide a list of ion types and charge states to generate. It will return a list of FragmentAnnotation objects.
+If no charge states are provided, it will default to the charge state of the peptide, or charge state 1 if the peptide does not have a charge state assigned.
 
 .. testcode::
 
@@ -57,11 +98,16 @@ Fragment Generation
 Protein Digestion
 ~~~~~~~~~~~~~~~~~
 
+The digest method will return spans representing the (start, end, missed_cleavages) of each peptide generated from the digestion.
+You can readily create peptide annotations by slicing the protein annotation with the spans.
+
+A number of proteases are available in pt.Proteases, but you can also provide your own cleavage rules via a regex pattern.
+
 .. testcode::
 
    # Digest a protein
    protein = pt.parse("PEM[Oxidation]TRPEPTIDEKPEPTIDEIDE/2")
-   for span in protein.digest(pt.Proteases.TRYPSIN):
+   for span in protein.digest(pt.Proteases.TRYPSIN, missed_cleavages=1):
        print(f"  {protein[span].serialize()}")
 
 .. testoutput::
@@ -69,29 +115,29 @@ Protein Digestion
 
    ...
 
-Parse and Modify Sequences
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+There is an additional digest option which is based on amino acids rather than regex patterns.
 
 .. testcode::
 
-   # Parse ProForma sequences
-   simple = pt.parse("PEPTIDE")
-   modified = pt.parse("[Acetyl]-PEP[Oxidation]TIDE/2")
-   labeled = pt.parse("<13C>PEPTIDE")
-
-   # Programmatic modification
-   annot = pt.ProFormaAnnotation(sequence="PEPTIDE")
-   annot.set_nterm_mods({"Acetyl": 1})
-   annot.set_internal_mods_at_index(2, {"Oxidation": 1})
-   annot.set_charge(2)
-   print(annot.serialize())
+   # Digest a protein
+   protein = pt.parse("PEM[Oxidation]TRPEPTIDEKPEPTIDEIDE/2")
+   for span in protein.simple_digest(cleave_on="KR", restrict_after="P", missed_cleavages=1):
+       print(f"  {protein[span].serialize()}")
 
 .. testoutput::
+   :hide:
 
-   [Acetyl]-PEP[Oxidation]TIDE/2
+   ...
+
 
 Mass / MZ / Composition
 ~~~~~~~~~~~~~~~~~~~~~~~
+
+There are a number of methods available to calculate masses, m/z values, and elemental compositions of peptides. 
+
+This is where modifications are parsed and applied to the calculations. So previously parsed ProFormaAnnotation objects just required valid syntax, 
+but for mass/comp calculations the modifications must also be recognized. For mass calculations to work, all modifications must be mass resolvable. For compositions,
+all modifications must be composition resolvable (This means delta mass modifications eg. [+15.99] will not work for compositions).
 
 .. testcode::
 
@@ -99,7 +145,7 @@ Mass / MZ / Composition
    
    # Calculate masses with different parameters
    precursor_mass = peptide.mass(ion_type="p")
-   neutral_mass = peptide.mass(ion_type="n")
+   neutral_mass = peptide.neutral_mass(ion_type="p")
    mz_2plus = peptide.mz(charge=2)
 
    # With isotopes and losses
@@ -111,6 +157,9 @@ Mass / MZ / Composition
 
 Isotopic Patterns
 ~~~~~~~~~~~~~~~~~
+
+Peptacular also includes functionality to generate isotopic distributions for peptides and fragments. This relies on parsing a valid composition for the peptide/modifications.
+If the composition cannot be resolved, you may use estimate_isotopic_distribution instead which will use an averagine model to estimate the composition based on the peptide's mass.
 
 .. testcode::
 
@@ -131,57 +180,13 @@ Isotopic Patterns
        deltas={'H-2O-1': 1}
    )
 
-Digestion
-~~~~~~~~~
-
-.. testcode::
-
-   protein = pt.parse("PEPTIDEKPEPTIDERPEPTIDER")
-
-   # Tryptic digestion
-   for span in protein.digest('trypsin'):
-       peptide = protein[span]
-       print(f"{peptide.serialize()} - missed cleavages: {span.missed_cleavages}")
-
-.. testoutput::
-   :hide:
-
-   ...
-
-.. testcode::
-
-   protein = pt.parse("PEPTIDEKPEPTIDERPEPTIDER")
-   
-   # With missed cleavages and length filtering
-   for span in protein.digest(
-       'trypsin',
-       missed_cleavages=2,
-       min_len=7,
-       max_len=30
-   ):
-       print(protein[span].serialize())
-
-.. testoutput::
-   :hide:
-
-   ...
-
-.. testcode::
-
-   protein = pt.parse("PEPTIDEKPEPTIDERPEPTIDER")
-   
-   # Semi-enzymatic
-   for span in protein.digest('trypsin', semi=True):
-       print(protein[span].serialize())
-
-.. testoutput::
-   :hide:
-
-   ...
-
 
 Physicochemical Properties
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+These are based solely on the amino acid sequence, modifications are not considered in these calculations.
+
+Properties are accessible via the `prop` property. See the API documentation for a full list of available properties and methods. There are also options to calculate custom properties via the calc_property method.
+
 
 .. testcode::
 
@@ -215,6 +220,8 @@ Physicochemical Properties
 Format Conversion
 ~~~~~~~~~~~~~~~~~
 
+Peptacular supports conversion from and to a number of popular peptide sequence formats.
+
 .. testcode::
 
    # From other formats
@@ -228,6 +235,9 @@ Format Conversion
 
 Batch Processing
 ~~~~~~~~~~~~~~~~
+
+Most functions in Peptacular support batch processing of multiple sequences via lists. Parallelization is handled automatically when 
+providing a list of sequences to one of the sequential API functions. The sequence API functions support strings and annotation objects as input.
 
 .. testcode::
 

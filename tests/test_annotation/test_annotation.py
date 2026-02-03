@@ -341,3 +341,42 @@ class TestAnnotationParse:
         annot = pt.ProFormaAnnotation(peptide_name="test")
         result = annot.serialize()
         assert result == "(>test)"
+
+    def test_sequecne_regions(self):
+        """Test getting sequence regions"""
+        annot = pt.ProFormaAnnotation.parse("PE(PTID)[Oxidation]E")
+        regions: tuple[pt.SequenceRegion, ...] = annot.sequence_regions
+        assert len(regions) == 1
+        assert str(regions[0]) == "(PTID)[Oxidation]"
+
+        annot = pt.ProFormaAnnotation.parse("PE(?PTID)[Oxidation]E")
+        regions: tuple[pt.SequenceRegion, ...] = annot.sequence_regions
+        assert len(regions) == 1
+        assert str(regions[0]) == "(?PTID)[Oxidation]"
+
+    def test_sequence_elements(self):
+        """Test getting sequence elements"""
+        annot = pt.ProFormaAnnotation.parse("PEPTIDE")
+        elements: tuple[pt.SequenceElement, ...] = annot.sequence_elements
+        assert len(elements) == 7
+        assert str(elements[0]) == "P"
+
+    def test_sequence_elements_with_regions(self):
+        """Test getting sequence elements"""
+        annot = pt.ProFormaAnnotation.parse("P(?EPT)[oxidation]IDE")
+        elements: tuple[pt.SequenceElement, ...] = annot.sequence_elements
+        assert len(elements) == 7
+        assert str(elements[0]) == "P"
+
+    def test_sequence_elements_and_regions(self):
+        """Test getting sequence elements and regions with modifications"""
+        annot = pt.ProFormaAnnotation.parse("P(?E[Phospho]PT)[Oxidation]IDE")
+        elems: tuple[pt.SequenceElement | pt.SequenceRegion, ...] = annot.sequence_elements_and_regions
+        assert len(elems) == 5
+        assert str(elems[0]) == "P"
+        assert str(elems[1]) == "(?E[Phospho]PT)[Oxidation]"
+        assert str(elems[2]) == "I"
+
+
+if __name__ == "__main__":
+    pytest.main([__file__])
