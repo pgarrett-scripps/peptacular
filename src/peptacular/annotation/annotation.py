@@ -1295,6 +1295,42 @@ class ProFormaAnnotation:
     REMOVE Methods
     """
 
+    def remove_mods(self, mods: Mapping[ModType | ModTypeLiteral | int, Any], inplace: bool = True) -> Self:
+        """Remove modifications by decrementing their counts."""
+        if not inplace:
+            return self.copy().remove_mods(mods, inplace=True)
+
+        for mod_type, mod_value in mods.items():
+            if isinstance(mod_type, int):
+                if mod_type < 0 or mod_type >= len(self.sequence):
+                    raise IndexError(f"Internal modification index out of range: {mod_type}")
+                self.remove_internal_mod_at_index(mod_type, mod_value, inplace=True)
+                continue
+
+            match ModType(mod_type):
+                case ModType.ISOTOPE:
+                    self.remove_isotope_mod(mod_value, inplace=True)
+                case ModType.STATIC:
+                    self.remove_static_mod(mod_value, inplace=True)
+                case ModType.LABILE:
+                    self.remove_labile_mod(mod_value, inplace=True)
+                case ModType.UNKNOWN:
+                    self.remove_unknown_mod(mod_value, inplace=True)
+                case ModType.NTERM:
+                    self.remove_nterm_mod(mod_value, inplace=True)
+                case ModType.CTERM:
+                    self.remove_cterm_mod(mod_value, inplace=True)
+                case ModType.INTERNAL:
+                    raise NotImplementedError("Use remove_internal_mod_at_index for internal modifications.")
+                case ModType.INTERVAL:
+                    self.remove_interval(mod_value, inplace=True)
+                case ModType.CHARGE:
+                    raise NotImplementedError("Removing charge modifications not supported.")
+                case _:
+                    raise TypeError(f"Unknown mod type: {mod_type}")
+
+        return self
+
     def _remove_mod_generic(
         self,
         mod: Any,

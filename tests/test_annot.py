@@ -92,3 +92,45 @@ class TestAnnotationConstruction:
         mods = annot.get_mods(mod_types="internal")
         assert "internal" in mods
         assert len(mods["internal"]) == 2
+
+    def test_set_mod_by_type(self):
+        """Test getting modifications by type"""
+        sequence = "PEP[Phospho]TIDE[Oxidation]K"
+        annot = pt.ProFormaAnnotation.parse(sequence)
+        annot = annot.set_mods({"nterm": 11, "cterm": 12})
+        assert str(annot) == "[+11]-PEP[Phospho]TIDE[Oxidation]K-[+12]"
+
+    def test_append_mod_types(self):
+        """Test appending modification types"""
+        sequence = "{Glycan}PEP[Phospho]TIDE[Oxidation]K"
+        annot = pt.ProFormaAnnotation.parse(sequence)
+        annot = annot.append_mods({"labile": 5})
+        assert annot.serialize() == "{Glycan}{+5}PEP[Phospho]TIDE[Oxidation]K"
+
+    def test_remove_mod_types(self):
+        """Test removing modification types"""
+        sequence = "{Glycan}PEP[Phospho]TIDE[Oxidation]K"
+        annot = pt.ProFormaAnnotation.parse(sequence)
+        annot = annot.remove_mods({"labile": "Glycan"})
+        assert annot.serialize() == "PEP[Phospho]TIDE[Oxidation]K"
+
+    def test_extend_mod_types(self):
+        """Test extending modification types"""
+        sequence = "PEP[Phospho]TIDE[Oxidation]K"
+        annot = pt.ProFormaAnnotation.parse(sequence)
+        annot = annot.extend_mods({"labile": ["Glycan"]})
+        assert annot.serialize() == "{Glycan}PEP[Phospho]TIDE[Oxidation]K"
+
+    def test_validate_mod_types(self):
+        """Test validating modification types"""
+        sequence = "{Glycan}PEP[Phospho]TIDE[Oxidation]K"
+        annot = pt.ProFormaAnnotation.parse(sequence)
+        with pytest.raises(ValueError):
+            assert annot.validate_annotation() is False
+        sequence = "{Oxidation}PEP[Phospho]TIDE[Oxidation]K"
+        annot = pt.ProFormaAnnotation.parse(sequence)
+        annot.validate_annotation()
+
+
+if __name__ == "__main__":
+    pytest.main([__file__])
