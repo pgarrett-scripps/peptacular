@@ -1733,7 +1733,7 @@ class ProFormaAnnotation:
     def get_mods(
         self,
         mod_types: (Iterable[ModTypeLiteral | ModType] | ModType | ModTypeLiteral | None) = None,
-    ) -> dict[ModType, Any]:
+    ) -> dict[ModType | ModTypeLiteral, Any]:
         mod_enums = get_mods(mod_types)
         return {mod_enum: self._get_mods_by_type(mod_enum) for mod_enum in mod_enums if self._has_mods_by_type(mod_enum)}
 

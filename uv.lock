@@ -1281,11 +1281,11 @@ wheels = [
 
 [[package]]
 name = "tacular"
-version = "1.0.0"
+version = "1.0.1"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/d1/4a/a9cadb0300bda3b349d5f1a0c115667715ebdffa1c98e7076d0b93c5f662/tacular-1.0.0.tar.gz", hash = "sha256:9d0588e80c818a57a4344c19ac4824b4d0ef6da779a88f08f707b7061896907d", size = 695046, upload-time = "2026-01-28T23:29:45.027Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/81/39/35c22571b4a75ccc84c08295ef12043efae75e4d4b7041c35e284e8e7d67/tacular-1.0.1.tar.gz", hash = "sha256:6a700fcecd4a50d5729bef358396a4ccdacc26079e0c01d2d37f2c58105b55f5", size = 758608, upload-time = "2026-02-03T22:52:21.869Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/18/ab/e13ce3c6c710ca7d2af0b5f4eece9e1dd604f0015f71389ded118259a001/tacular-1.0.0-py3-none-any.whl", hash = "sha256:89769f47dcb163bcde778a304ea42a576d13e97e3555746ac934de8d3f6bb509", size = 361025, upload-time = "2026-01-28T23:29:43.557Z" },
+    { url = "https://files.pythonhosted.org/packages/25/19/d9515375e21ae4e23c735d55228d0cf964769a54418f849617c9c09c24e8/tacular-1.0.1-py3-none-any.whl", hash = "sha256:77b7f0889ca82a1d2066b0a40bce1d5721e7415d1903d1281d53ff96200474ed", size = 362501, upload-time = "2026-02-03T22:52:20.667Z" },
 ]
 
 [[package]]
