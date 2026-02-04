@@ -22,10 +22,6 @@ classifiers = [
     "Typing :: Typed",
 ]
 
-[project.optional-dependencies]
-paftacular = ["paftacular>=0.1.0"]
-all = ["paftacular>=0.1.0"]
-
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
@@ -39,7 +35,6 @@ path = "src/peptacular/__init__.py"
 [tool.uv]
 package = true
 dev-dependencies = [
-    "paftacular>=0.1.0",
     "pytest>=9.0.1",
     "pytest-cov>=6.0.0",
     "pympler>=1.1",
@@ -83,7 +78,6 @@ select = [
 
 #[tool.uv.sources]
 #tacular = { path = "../tacular", editable = true }
-#paftacular = { path = "../paftacular", editable = true }
 
 [tool.coverage.report]
 exclude_lines = [

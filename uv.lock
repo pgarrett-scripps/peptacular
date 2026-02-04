@@ -731,18 +731,6 @@ wheels = [
 ]
 
 [[package]]
-name = "paftacular"
-version = "0.1.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "tacular" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/a9/87/b67bb7809cc619038d33ff4f947e36ad98285d5b0d143cb441c7c43cdc29/paftacular-0.1.0.tar.gz", hash = "sha256:deab03460ebb0af9e17fa02e93b53b137721bd960cf7dd2ce1fccd9e446b8128", size = 509734, upload-time = "2026-01-31T00:14:03.984Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/00/90/5c69d75d5657e02e21eac06da6f8c73f0d8a347e493c6fc11b355c13ecc8/paftacular-0.1.0-py3-none-any.whl", hash = "sha256:de78b23e152d3780d306c1f40a0eee82908993a0f451e26b3849adf0aea16ac0", size = 21792, upload-time = "2026-01-31T00:14:02.869Z" },
-]
-
-[[package]]
 name = "pandas"
 version = "3.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -801,21 +789,12 @@ dependencies = [
     { name = "tacular" },
 ]
 
-[package.optional-dependencies]
-all = [
-    { name = "paftacular" },
-]
-paftacular = [
-    { name = "paftacular" },
-]
-
 [package.dev-dependencies]
 dev = [
     { name = "lxml" },
     { name = "matplotlib" },
     { name = "myst-parser" },
     { name = "numpy" },
-    { name = "paftacular" },
     { name = "pandas" },
     { name = "pympler" },
     { name = "pyteomics" },
@@ -830,12 +809,7 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [
-    { name = "paftacular", marker = "extra == 'all'", specifier = ">=0.1.0" },
-    { name = "paftacular", marker = "extra == 'paftacular'", specifier = ">=0.1.0" },
-    { name = "tacular", specifier = ">=1.0.0" },
-]
-provides-extras = ["all", "paftacular"]
+requires-dist = [{ name = "tacular", specifier = ">=1.0.0" }]
 
 [package.metadata.requires-dev]
 dev = [
@@ -843,7 +817,6 @@ dev = [
     { name = "matplotlib", specifier = ">=3.10.8" },
     { name = "myst-parser" },
     { name = "numpy", specifier = ">=2.4.1" },
-    { name = "paftacular", specifier = ">=0.1.0" },
     { name = "pandas", specifier = ">=3.0.0" },
     { name = "pympler", specifier = ">=1.1" },
     { name = "pyteomics", specifier = ">=4.7.5" },
