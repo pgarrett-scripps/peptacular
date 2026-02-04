@@ -229,7 +229,7 @@ a Creative Commons Attribution 4.0 International License (CC BY
   adoption. The package has accumulated over <bold>33k</bold> downloads
   from PyPI, with sustained weekly download rates exceeding 200
   installations. It has been recognized as one of 3 python packages to
-  support Proforma notation by the PSI group. Additionally, Peptauclar
+  support Proforma notation by the PSI group. Additionally, Peptacular
   was used to generate figures within a textbook chapter
   (<xref alt="P. T. Garrett et al., 2025" rid="ref-garrett-2025" ref-type="bibr">P.
   T. Garrett et al., 2025</xref>).</p>
@@ -446,11 +446,24 @@ mzs: list[float] = pt.mz(peptides, charge=2) # [465.2086, 188.103, 225.6227]</co
     <tex-math><![CDATA[\otimes]]></tex-math>
     <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mi>⊗</mml:mi></mml:math></alternatives></inline-formula>
     represents the convolution operation.</p>
+    <p>The computational complexity of isotopic distribution
+    calculations scales with the number of isotopic peaks retained
+    during the convolution process. To balance accuracy with
+    computational efficiency, Peptacular implements several thresholding
+    parameters that limit the number of peaks propagated through
+    successive convolution operations. These thresholds allow users to
+    control the trade-off between calculation precision and processing
+    time based on their specific application requirements.</p>
     <sec id="averagine-model">
       <title>Averagine Model</title>
       <p>When the exact elemental composition is unknown, the averagine
       model estimates composition from molecular mass using
-      empirically-derived ratios. The composition is calculated as:</p>
+      empirically-derived ratios. The averagine values were calculated
+      by determining the cumulative number of elements from all proteins
+      within the human reviewed proteome downloaded from UniProt, then
+      dividing by the total monoisotopic mass of the entire proteome,
+      yielding an atoms-per-dalton ratio for each element.</p>
+      <p>The composition is calculated as:</p>
       <p><inline-formula><alternatives>
       <tex-math><![CDATA[n_E = r_E \cdot M_{\textrm{neutral}} + n_{E,\textrm{ion}}]]></tex-math>
       <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:msub><mml:mi>n</mml:mi><mml:mi>E</mml:mi></mml:msub><mml:mo>=</mml:mo><mml:msub><mml:mi>r</mml:mi><mml:mi>E</mml:mi></mml:msub><mml:mo>⋅</mml:mo><mml:msub><mml:mi>M</mml:mi><mml:mtext mathvariant="normal">neutral</mml:mtext></mml:msub><mml:mo>+</mml:mo><mml:msub><mml:mi>n</mml:mi><mml:mrow><mml:mi>E</mml:mi><mml:mo>,</mml:mo><mml:mtext mathvariant="normal">ion</mml:mtext></mml:mrow></mml:msub></mml:mrow></mml:math></alternatives></inline-formula></p>
@@ -766,8 +779,8 @@ mzs: list[float] = pt.mz(peptides, charge=2) # [465.2086, 188.103, 225.6227]</co
   Peptacular. The package currently supports all ProForma 2.1 features
   for linear peptides. Cross-linked peptides (both inter- and
   intrachain) and branched structures are not supported. Ion notation is
-  also not supported, as it conflicts with mzPAF (Peak Annotation
-  Format) notation for fragment ions.</p>
+  also not supported as sequence level, but offers extensive
+  fragmentation support through either API.</p>
   <p><bold>Figure 1: Parallelization Performance - GIL Enabled vs GIL
   Disabled (Python 3.14t)</bold></p>
   <fig>
@@ -812,7 +825,6 @@ mzs: list[float] = pt.mz(peptides, charge=2) # [465.2086, 188.103, 225.6227]</co
   questions and providing feedback during the development process.
   Particular recognition is extended to Douwe Schulte for his
   contributions to ProForma 2.1.</p>
-  <p>Funding (TODO?)</p>
 </sec>
 </body>
 <back>

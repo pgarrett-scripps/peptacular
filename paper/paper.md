@@ -51,7 +51,7 @@ Peptacular is fully type-annotated and includes a **py.typed** marker, enabling 
 
 # Research impact statement
 
-Since its initial release, Peptacular has demonstrated measurable adoption. The package has accumulated over **33k** downloads from PyPI, with sustained weekly download rates exceeding 200 installations. It has been recognized as one of 3 python packages to support Proforma notation by the PSI group. Additionally, Peptauclar was used to generate figures within a textbook chapter [@garrett-2025]. 
+Since its initial release, Peptacular has demonstrated measurable adoption. The package has accumulated over **33k** downloads from PyPI, with sustained weekly download rates exceeding 200 installations. It has been recognized as one of 3 python packages to support Proforma notation by the PSI group. Additionally, Peptacular was used to generate figures within a textbook chapter [@garrett-2025]. 
 
 # Example Usage
 
@@ -143,9 +143,13 @@ $P(\textrm{total}) = P(E_1)^{n_1} \otimes P(E_2)^{n_2} \otimes ... \otimes P(E_k
 
 where $P(E_i)$ is the natural isotopic distribution of element $E_i$, $n_i$ is the count of that element, and $\otimes$ represents the convolution operation.
 
+The computational complexity of isotopic distribution calculations scales with the number of isotopic peaks retained during the convolution process. To balance accuracy with computational efficiency, Peptacular implements several thresholding parameters that limit the number of peaks propagated through successive convolution operations. These thresholds allow users to control the trade-off between calculation precision and processing time based on their specific application requirements.
+
 ### Averagine Model
 
-When the exact elemental composition is unknown, the averagine model estimates composition from molecular mass using empirically-derived ratios. The composition is calculated as:
+When the exact elemental composition is unknown, the averagine model estimates composition from molecular mass using empirically-derived ratios. The averagine values were calculated by determining the cumulative number of elements from all proteins within the human reviewed proteome downloaded from UniProt, then dividing by the total monoisotopic mass of the entire proteome, yielding an atoms-per-dalton ratio for each element.
+
+The composition is calculated as:
 
 $n_E = r_E \cdot M_{\textrm{neutral}} + n_{E,\textrm{ion}}$
 
@@ -209,7 +213,7 @@ The averagine ratios (atoms/Da) derived from the human proteome are:
 | Y | Charges                    | `SEQUEN/2`, `SEQUEN/[Na:z+1,H:z+1]`          | 11.5   |
 | N | Ion notation               | `SEQUEN-[b-type-ion]`                        | 11.6   |
 
-**Table 1** depicts the level of ProForma support in Peptacular. The package currently supports all ProForma 2.1 features for linear peptides. Cross-linked peptides (both inter- and intrachain) and branched structures are not supported. Ion notation is also not supported, as it conflicts with mzPAF (Peak Annotation Format) notation for fragment ions.
+**Table 1** depicts the level of ProForma support in Peptacular. The package currently supports all ProForma 2.1 features for linear peptides. Cross-linked peptides (both inter- and intrachain) and branched structures are not supported. Ion notation is also not supported as sequence level, but offers extensive fragmentation support through either API. 
 
 **Figure 1: Parallelization Performance - GIL Enabled vs GIL Disabled (Python 3.14t)**
 
@@ -226,5 +230,3 @@ Peptacular is distributed through PyPI (<https://pypi.org/project/peptacular/>) 
 # Acknowledgements
 
 We acknowledge the PSI group for their assistance in answering questions and providing feedback during the development process. Particular recognition is extended to Douwe Schulte for his contributions to ProForma 2.1.
-
-Funding (TODO?)
