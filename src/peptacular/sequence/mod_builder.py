@@ -156,7 +156,7 @@ def build_mods(
 def get_mods(
     sequence: str | ProFormaAnnotation,
     mods: ModType | Iterable[ModType] | ModTypeLiteral | None = None,
-) -> dict[ModType, Any]:
+) -> dict[ModType | ModTypeLiteral, Any]:
     """
     Parses a sequence with modifications and returns a dictionary where keys represent the position/type of the modifications.
     """

@@ -1,14 +1,11 @@
 from collections import Counter
 from collections.abc import Mapping
-from typing import Any, Literal, cast
+from typing import Any
 
 from tacular import (
     ELEMENT_LOOKUP,
-    FRAGMENT_ION_LOOKUP,
     ElementInfo,
-    FragmentIonInfo,
     IonType,
-    IonTypeProperty,
 )
 
 from ..proforma_components import (

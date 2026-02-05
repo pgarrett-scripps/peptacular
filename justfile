@@ -18,8 +18,7 @@ sync:
 
 # Run tests
 test:
-    uv run python --version
-    uv run pytest tests/
+	uv run pytest tests/ -n auto
 
 # Run tests with coverage
 test-cov:

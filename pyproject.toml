@@ -46,10 +46,8 @@ dev-dependencies = [
     "sphinx-rtd-theme>=2.0",
     "sphinx-autodoc-typehints>=1.25",
     "myst-parser",
-    "lxml>=6.0.2",
-    "numpy>=2.4.1",
-    "matplotlib>=3.10.8",
     "pandas>=3.0.0",
+    "pytest-xdist>=3.8.0",
 ]
 
 [tool.pytest.ini_options]
@@ -78,6 +76,8 @@ select = [
 
 #[tool.uv.sources]
 #tacular = { path = "../tacular", editable = true }
+[tool.uv.sources]
+pyteomics = { git = "https://github.com/levitsky/pyteomics.git" }
 
 [tool.coverage.report]
 exclude_lines = [

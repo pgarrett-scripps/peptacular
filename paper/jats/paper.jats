@@ -80,21 +80,21 @@ a Creative Commons Attribution 4.0 International License (CC BY
 <body>
 <sec id="summary">
   <title>Summary</title>
-  <p>Mass spectrometry-based proteomics relies on computational methods
-  to identify and characterize amino acid (AA) sequences. These
-  sequences, which range from short peptides to complete proteins,
-  exhibit considerable chemical complexity arising from
-  post-translational modifications (PTMs), variable charge states,
-  neutral losses, and isotopic patterns
+  <p>Mass spectrometry-based proteomics depends on computational methods
+  to identify and characterize AA sequences. These sequences, ranging
+  from short peptides to complete proteins, exhibit substantial chemical
+  complexity due to PTMs, variable charge states, neutral losses, and
+  isotopic patterns
   (<xref alt="Angel et al., 2012" rid="ref-angel-2012" ref-type="bibr">Angel
   et al., 2012</xref>;
   <xref alt="Smith &amp; Kelleher, 2013" rid="ref-smith-2013" ref-type="bibr">Smith
   &amp; Kelleher, 2013</xref>). <bold>Peptacular</bold> is a fully
-  type-annotated pure Python library designed around ProForma 2.1
-  notation for working with such complexity. The library provides
-  functionality for modifying AA sequences, calculating mass, m/z,
-  isotopic distributions, physicochemical properties, digesting via
-  common enzymes, fragmenting, and more.</p>
+  type-annotated Python library designed to handle this complexity. The
+  library provides functionality for modifying, calculating mass, m/z,
+  isotopic distributions, physicochemical properties, enzymatic
+  digestion, and fragmentation of AA sequences. Built around the
+  standardized ProForma 2.1 notation, it supports nearly all ProForma
+  features.</p>
 </sec>
 <sec id="statement-of-need">
   <title>Statement of Need</title>
@@ -106,92 +106,85 @@ a Creative Commons Attribution 4.0 International License (CC BY
   et al., 2018</xref>) was developed to address this challenge by
   providing a unified representation system. However, adoption has
   remained limited, partly due to insufficient support in widely-used
-  computational tools and libraries. Peptacular addresses this gap by
-  providing an accessible and efficient application programming
-  interface (API) for working with AA sequences in a standardized
-  manner. The library was built from the ground up to support ProForma
-  notation and implements nearly all features specified in ProForma
-  2.1.</p>
-  <p>Modern proteomics experiments routinely identify hundreds of
-  thousands of peptide-spectrum matches (PSMs). These results are
-  typically exported as tabular files and processed using Python,
-  particularly with data manipulation libraries such as
-  <bold>pandas</bold>
+  computational tools and libraries. Peptacular was designed
+  specifically to accelerate ProForma adoption by offering a
+  comprehensive and accessible API with clear documentation.</p>
+  <p>Additionally, with the continued advance of mass spectrometers,
+  modern proteomics experiments routinely identify tens of thousands of
+  AA Sequences. These results are typically exported as tabular files
+  and are frequently processed using Python, particularly with data
+  manipulation libraries such as <bold>pandas</bold>
   (<xref alt="Team, 2025" rid="ref-team-2025" ref-type="bibr">Team,
   2025</xref>) and <bold>polars</bold>
   (<xref alt="Vink et al., 2025" rid="ref-vink-2025" ref-type="bibr">Vink
-  et al., 2025</xref>). Given the scale of these datasets, efficient
-  computational methods for processing these tables are essential.
-  Peptacular addresses this requirement by providing a functional API
-  that operates directly on tabular data structures while automatically
-  supporting parallelization to improve computational performance.</p>
+  et al., 2025</xref>). To support this workflow, Peptacular’s
+  functional API supports operating directly on these tabular data
+  structures and automatically parallelizes operations, making
+  large-scale sequence analysis both fast and straightforward (See
+  examples).</p>
 </sec>
 <sec id="state-of-the-field">
   <title>State of the Field</title>
-  <p>Several existing Python packages provide functionality for working
-  with AA sequences and ProForma parsing. <bold>Pyteomics</bold>
+  <p>Several Python packages provide AA sequence analysis capabilities,
+  though each exhibits either limitations in ProForma support, API
+  complexity, or python compatibility. <bold>Pyteomics</bold>
   (<xref alt="Goloborodko et al., 2013" rid="ref-goloborodko-2013" ref-type="bibr">Goloborodko
-  et al., 2013</xref>) offers considerable overlap with Peptacular but
-  does not support the complete ProForma specification and lacks
-  built-in parallelization capabilities. <bold>BioPython</bold>
+  et al., 2013</xref>) recently added partial ProForma support while
+  maintaining its legacy notation system, requiring format conversions
+  that are not universally supported. <bold>BioPython</bold>
   (<xref alt="Cock et al., 2009" rid="ref-cock-2009" ref-type="bibr">Cock
-  et al., 2009</xref>) provides basic support for calculating properties
-  of AA sequences; however, its broader scope (encompassing DNA and RNA)
-  results in a more complex API, and it does not include ProForma
-  support. <bold>RustyMS</bold>
+  et al., 2009</xref>) offers basic sequence property calculations
+  without ProForma support; its API complexity reflects a broad scope
+  encompassing DNA, RNA, and protein analysis. <bold>RustyMS</bold>
   (<xref alt="Schulte et al., n.d." rid="ref-Schulte_mzcore" ref-type="bibr">Schulte
-  et al., n.d.</xref>) Python bindings offer comprehensive ProForma
-  support with the performance benefits of a Rust backend, though this
-  architecture introduces additional API complexity and omits certain
-  features available in Peptacular. <bold>PyOpenMS</bold>
+  et al., n.d.</xref>) delivers comprehensive ProForma parsing through
+  Rust bindings with excellent performance, though it focuses primarily
+  on parsing rather than sequence modification and requires PyO3 updates
+  before supporting new Python versions. <bold>PyOpenMS</bold>
   (<xref alt="Röst et al., 2013" rid="ref-rost-2013" ref-type="bibr">Röst
-  et al., 2013</xref>) supports AA sequence operations but lacks
-  ProForma compatibility, requires specific Python versions, and
-  addresses a substantially broader scope than AA sequence manipulation
-  alone.</p>
-  <p>The development of Peptacular was motivated by the need for a
-  package that combines comprehensive AA sequence support with ProForma
-  notation in a pure Python implementation compatible with any Python
-  environment. The decision to implement this library from scratch,
-  rather than extending existing projects, was based on several
-  considerations. First, many established packages have expanded to
-  support various features beyond processing AA sequences, making
-  targeted contributions more challenging. Second, because many of these
-  projects predate ProForma notation, ProForma support was incorporated
-  retrospectively, which constrains the extent of implementation and
-  complicates API design. Finally, not all current packages are
-  compatible with the latest Python versions, particularly free-threaded
-  versions of Python with the Global Interpreter Lock (GIL)
-  disabled.</p>
+  et al., 2013</xref>) provides extensive mass spectrometry tools
+  without ProForma compatibility; its C++ backend with Python bindings
+  similarly delays support for new Python releases.</p>
+  <p>Peptacular was designed to fill a specific gap: a pure Python
+  library that implements nearly all ProForma 2.1 features while
+  providing both an intuitive API, comprehensive documentation, and
+  still remaining performant. Developing Peptacular from scratch rather
+  than extending existing tools provided three advantages. First,
+  ProForma notation serves as the foundation rather than a retrofitted
+  addition, enabling complete feature coverage and a cleaner API.
+  Second, the library targets AA sequence analysis specifically,
+  avoiding complexity from broader scope. Third, the pure Python
+  implementation ensures compatibility with modern Python versions,
+  including free-threaded builds with the Global Interpreter Lock (GIL)
+  disabled, which will become increasingly relevant as Python’s
+  parallelization capabilities improve.</p>
 </sec>
 <sec id="software-design">
   <title>Software Design</title>
   <p>Peptacular provides two primary APIs: a functional API and an
   object-oriented API. The object-oriented API employs a factory pattern
-  to modify Annotation objects, enabling precise control over
+  to modify Proforma Annotation objects, enabling precise control over
   annotations. The functional API provides functions that operate
   directly on serialized sequences and annotations, with automatic
-  parallelization when multiple inputs are provided.</p>
+  parallelization for batch processing.</p>
   <p>The built-in parallelization supports three execution backends:
-  sequential, threaded, and process-based. Sequential execution runs on
-  a single core. Threading is limited by the GIL in most Python
-  versions; however, as Python development progresses toward making the
-  GIL optional, threading will likely become increasingly viable.
-  Process-based parallelization is the default backend, as it has the
-  best compatibility between systems. Users can globally configure the
-  spawning mechanism for processes or threads, selecting from fork,
-  spawn, or forkserver modes. Processes are cached to avoid the startup
-  cost of creating new processes.</p>
-  <p>Peptacular employs lazy evaluation to minimize memory overhead and
-  improve performance. Modifications remain in serialized form until
-  they are explicitly required for calculations. The serialization and
-  parsing of objects utilize extensive caching, as proteomics datasets
-  commonly contain only a subset of repeated modifications.
-  Additionally, Peptacular uses conditional initialization, whereby
-  modification-related data structures are instantiated only when the
-  corresponding modification type is needed. This approach reduces the
-  memory footprint of annotation objects and accelerates their creation
-  and copying.</p>
+  sequential, threaded, and process-based (default). Sequential
+  execution provides single-threaded processing for small batches where
+  parallelization overhead is detrimental. Thread-based parallelization
+  currently offers limited benefits due to the GIL but will improve as
+  free-threaded Python builds become standard. Process-based
+  parallelization is the default and most widely supported method.
+  Process and thread spawning mechanisms (fork, spawn, forkserver) are
+  globally configurable, and worker processes are cached to eliminate
+  startup overhead.</p>
+  <p>Three performance optimizations enable efficient large-scale
+  processing. First, lazy evaluation keeps modifications in serialized
+  form until calculations require parsed representations, minimizing
+  memory overhead. Second, aggressive caching exploits the fact that
+  proteomics datasets typically contain a small number of repeated
+  modifications. Third, conditional initialization instantiates
+  modification-specific data structures only when needed, reducing
+  memory footprint and accelerating object creation.</p>
   <p>Modification reference data, including masses, compositions, and
   identifiers from Unimod
   (<xref alt="Creasy &amp; Cottrell, 2004" rid="ref-creasy-2004" ref-type="bibr">Creasy
@@ -204,24 +197,21 @@ a Creative Commons Attribution 4.0 International License (CC BY
   (<xref alt="Hupo-Psi, n.d.-b" rid="ref-hupo-psi-no-dateB" ref-type="bibr">Hupo-Psi,
   n.d.-b</xref>), and GNOme
   (<xref alt="Glygen-Glycan-Data, n.d." rid="ref-glygen-glycan-data-no-date" ref-type="bibr">Glygen-Glycan-Data,
-  n.d.</xref>), are provided by the <bold>Tacular</bold>
+  n.d.</xref>), are provided by the companion package
+  <bold>Tacular</bold>
   (<xref alt="P. Garrett, 2026" rid="ref-garrett-2026-tacular" ref-type="bibr">P.
-  Garrett, 2026</xref>) package. This package embeds the data directly
-  within itself as Python modules rather than storing them as external
-  files. Only valid modifications are included in the embedded data; a
+  Garrett, 2026</xref>). This package embeds the data directly within
+  itself as Python modules rather than storing them as external files.
+  Only valid modifications are included in the embedded data; a
   modification is considered valid if it possesses at least one of the
   following properties: average mass, monoisotopic mass, or chemical
   formula. This design eliminates file I/O overhead during the parsing
-  of supported ontologies. The primary limitation of this approach is
-  that updates to the ontologies are not immediately available and
-  require a package update. However, Tacular includes a pipeline to
-  rebuild from the latest ontology versions.</p>
-  <p>Peptacular is fully type-annotated and includes a
-  <bold>py.typed</bold> marker, enabling static type checking with
-  tools. This provides enhanced IDE support through intelligent
-  autocomplete and inline documentation, while allowing users to catch
-  type-related errors before runtime. The package maintains &gt;70% test
-  coverage and employs continuous integration via GitHub Actions.</p>
+  of supported ontologies.</p>
+  <p>The package includes full type annotations with a py.typed marker,
+  which enables static type checking and provides IDE autocomplete,
+  inline documentation, and compile-time error detection. Test coverage
+  exceeds 70%, with continuous integration implemented through GitHub
+  Actions.</p>
 </sec>
 <sec id="research-impact-statement">
   <title>Research impact statement</title>
@@ -260,6 +250,19 @@ peptides = ['[Acetyl]-PEPTIDES', '&lt;C13&gt;ARE', 'SICK/2']
 # Calculate mass and m/z for all peptides
 masses: list[float] = pt.mass(peptides) # [928.4026, 374.1914, 451.2454]
 mzs: list[float] = pt.mz(peptides, charge=2) # [465.2086, 188.103, 225.6227]</code>
+  </sec>
+  <sec id="pandas-functional-api">
+    <title>Pandas-Functional API</title>
+    <code language="python">import peptacular as pt
+import pandas as pd
+
+df = pd.DataFrame(
+    {
+        &quot;seq&quot;: [&quot;PEM[Oxidation]TIDE&quot;, &quot;ACDEFGHIK&quot;, &quot;M[Phospho]NOPQR&quot;],
+    }
+)
+
+df[&quot;mass&quot;] = df[&quot;seq&quot;].apply(pt.mass)</code>
   </sec>
 </sec>
 <sec id="mathematics">
@@ -529,16 +532,16 @@ mzs: list[float] = pt.mz(peptides, charge=2) # [465.2086, 188.103, 225.6227]</co
     <table>
       <colgroup>
         <col width="1%" />
-        <col width="34%" />
-        <col width="57%" />
-        <col width="8%" />
+        <col width="32%" />
+        <col width="54%" />
+        <col width="13%" />
       </colgroup>
       <thead>
         <tr>
           <th>?</th>
           <th>Feature</th>
           <th>Example</th>
-          <th>§</th>
+          <th>§ [Support]</th>
         </tr>
       </thead>
       <tbody>
@@ -546,246 +549,249 @@ mzs: list[float] = pt.mz(peptides, charge=2) # [465.2086, 188.103, 225.6227]</co
           <td>Y</td>
           <td>Amino acids (+UO)</td>
           <td><monospace>AAHCFKUOT</monospace></td>
-          <td>6.1</td>
+          <td>6.1 [B]</td>
         </tr>
         <tr>
           <td>Y</td>
           <td>Unimod names</td>
           <td><monospace>PEM[Oxidation]AT</monospace></td>
-          <td>6.2.1</td>
+          <td>6.2.1 [B]</td>
         </tr>
         <tr>
           <td>Y</td>
           <td>PSI-MOD names</td>
           <td><monospace>PEM[monohydroxylated residue]AT</monospace></td>
-          <td>6.2.1</td>
+          <td>6.2.1 [B]</td>
         </tr>
         <tr>
           <td>Y</td>
           <td>Unimod numbers</td>
           <td><monospace>PEM[UNIMOD:35]AT</monospace></td>
-          <td>6.2.2</td>
+          <td>6.2.2 [B]</td>
         </tr>
         <tr>
           <td>Y</td>
           <td>PSI-MOD numbers</td>
           <td><monospace>PEM[MOD:00425]AT</monospace></td>
-          <td>6.2.2</td>
+          <td>6.2.2 [B]</td>
         </tr>
         <tr>
           <td>Y</td>
           <td>Delta masses</td>
           <td><monospace>PEM[+15.995]AT</monospace></td>
-          <td>6.2.3</td>
+          <td>6.2.3 [B]</td>
         </tr>
         <tr>
           <td>Y</td>
           <td>N-terminal modifications</td>
           <td><monospace>[Carbamyl]-QPEPTIDE</monospace></td>
-          <td>6.3</td>
+          <td>6.3 [B]</td>
         </tr>
         <tr>
           <td>Y</td>
           <td>C-terminal modifications</td>
           <td><monospace>PEPTIDEG-[Methyl]</monospace></td>
-          <td>6.3</td>
+          <td>6.3 [B]</td>
         </tr>
         <tr>
           <td>Y</td>
           <td>Labile modifications</td>
           <td><monospace>{Glycan:Hex}EM[U:Oxidation]EV</monospace></td>
-          <td>6.4</td>
+          <td>6.4 [B]</td>
         </tr>
         <tr>
           <td>Y</td>
           <td>Multiple modifications</td>
           <td><monospace>MPGNW[Oxidation][Carboxymethyl]PESQE</monospace></td>
-          <td>6.5</td>
+          <td>6.5 [B]</td>
         </tr>
         <tr>
           <td>Y</td>
           <td>Information tag</td>
           <td><monospace>ELV[INFO:AnyString]IS</monospace></td>
-          <td>6.6</td>
+          <td>6.6 [B]</td>
         </tr>
         <tr>
           <td>Y</td>
           <td>Ambiguous amino acids</td>
           <td><monospace>BZJX</monospace></td>
-          <td>7.1</td>
+          <td>7.1 [2]</td>
         </tr>
         <tr>
           <td>Y</td>
           <td>Prefixed delta masses</td>
           <td><monospace>PEM[U:+15.995]AT</monospace></td>
-          <td>7.2</td>
+          <td>7.2 [2]</td>
         </tr>
         <tr>
           <td>Y</td>
           <td>Mass gap</td>
           <td><monospace>PEX[+147.035]AT</monospace></td>
-          <td>7.3</td>
+          <td>7.3 [2]</td>
         </tr>
         <tr>
           <td>Y</td>
           <td>Formulas</td>
           <td><monospace>PEM[Formula:O]AT</monospace>,
           <monospace>PEM[Formula:[17O1]]AT</monospace></td>
-          <td>7.4</td>
+          <td>7.4 [2]</td>
         </tr>
         <tr>
           <td>Y</td>
           <td>Mass with interpretation</td>
           <td><monospace>PEM[+15.995\|Oxidation]AT</monospace></td>
-          <td>7.5</td>
+          <td>7.5 [2]</td>
         </tr>
         <tr>
           <td>Y</td>
           <td>Unknown mod position</td>
           <td><monospace>[Oxidation]?PEMAT</monospace></td>
-          <td>7.6.1</td>
+          <td>7.6.1 [2]</td>
         </tr>
         <tr>
           <td>Y</td>
           <td>Set of positions</td>
           <td><monospace>PEP[Oxidation#1]M[#1]AT</monospace></td>
-          <td>7.6.2</td>
+          <td>7.6.2 [2]</td>
         </tr>
         <tr>
           <td>Y</td>
           <td>Range of positions</td>
           <td><monospace>PRT(ESFRMS)[+19.0523]ISK</monospace></td>
-          <td>7.6.3</td>
+          <td>7.6.3 [2]</td>
         </tr>
         <tr>
           <td>Y</td>
           <td>Position scores</td>
           <td><monospace>PEP[Oxidation#1(0.95)]M[#1(0.05)]AT</monospace></td>
-          <td>7.6.4</td>
+          <td>7.6.4 [2]</td>
         </tr>
         <tr>
           <td>Y</td>
           <td>Range position scores</td>
           <td><monospace>(PEP)[Oxidation#1(0.95)]M[#1(0.05)]AT</monospace></td>
-          <td>7.6.5</td>
+          <td>7.6.5 [2]</td>
         </tr>
         <tr>
           <td>Y</td>
           <td>Amino acid ambiguity</td>
           <td><monospace>(?VCH)AT</monospace></td>
-          <td>7.7</td>
+          <td>7.7 [2]</td>
         </tr>
         <tr>
           <td>Y</td>
           <td>Modification prefixes</td>
           <td><monospace>PEPM[U:Oxidation]AS[M:O-phospho-L-serine]</monospace></td>
-          <td>7.8</td>
+          <td>7.8 [2]</td>
         </tr>
         <tr>
           <td>Y</td>
           <td>RESID modifications</td>
           <td><monospace>EM[R:L-methionine sulfone]EM[RESID:AA0581]</monospace></td>
-          <td>8.1</td>
+          <td>8.1 [T]</td>
         </tr>
         <tr>
           <td>Y</td>
           <td>Names</td>
           <td><monospace>(&gt;Heavy chain)EVQLVESG</monospace></td>
-          <td>8.2</td>
+          <td>8.2 [T]</td>
         </tr>
         <tr>
           <td>Y</td>
           <td>XL-MOD modifications</td>
           <td><monospace>EVTK[X:Aryl azide]LEK[XLMOD:00114]SEFD</monospace></td>
-          <td>9.1</td>
+          <td>9.1 [X]</td>
         </tr>
         <tr>
           <td>N</td>
           <td>Cross-linkers (intrachain)</td>
           <td><monospace>EVTK[X:Aryl azide#XL1]LEK[#XL1]SEFD</monospace></td>
-          <td>9.2.1</td>
+          <td>9.2.1 [X]</td>
         </tr>
         <tr>
           <td>N</td>
           <td>Cross-linkers (interchain)</td>
           <td><monospace>EVTK[X:Aryl azide#XL1]L//EK[#XL1]SEFD</monospace></td>
-          <td>9.2.2</td>
+          <td>9.2.2 [X]</td>
         </tr>
         <tr>
           <td>N</td>
           <td>Branches</td>
           <td><monospace>ED[MOD:00093#BRANCH]//D[#BRANCH]ATR</monospace></td>
-          <td>9.3</td>
+          <td>9.3 [X]</td>
         </tr>
         <tr>
           <td>Y</td>
           <td>GNO modifications</td>
           <td><monospace>NEEYN[GNO:G59626AS]K</monospace></td>
-          <td>10.1</td>
+          <td>10.1 [G]</td>
         </tr>
         <tr>
           <td>Y</td>
           <td>Glycan compositions</td>
           <td><monospace>NEEYN[Glycan:Hex5HexNAc4NeuAc1]K</monospace></td>
-          <td>10.2</td>
+          <td>10.2 [G]</td>
         </tr>
         <tr>
           <td>Y</td>
           <td>Charged formulas</td>
           <td><monospace>SEQUEN[Formula:Zn1:z+2]CE</monospace></td>
-          <td>11.1</td>
+          <td>11.1 [A]</td>
         </tr>
         <tr>
           <td>Y</td>
           <td>Controlling placement</td>
           <td><monospace>PTI(MERMERME)[+32\|Position:E]PTIDE</monospace></td>
-          <td>11.2</td>
+          <td>11.2 [A]</td>
         </tr>
         <tr>
           <td>Y</td>
           <td>Global isotope</td>
           <td><monospace>&lt;13C&gt;CARBON</monospace></td>
-          <td>11.3.1</td>
+          <td>11.3.1 [A]</td>
         </tr>
         <tr>
           <td>Y</td>
           <td>Fixed modifications</td>
           <td><monospace>&lt;[Oxidation]@M&gt;ATPEMILTCMGCLK</monospace></td>
-          <td>11.3.2</td>
+          <td>11.3.2 [A]</td>
         </tr>
         <tr>
           <td>Y</td>
           <td>Chimeric spectra</td>
           <td><monospace>NEEYN+SEQUEN</monospace></td>
-          <td>11.4</td>
+          <td>11.4 [A]</td>
         </tr>
         <tr>
           <td>Y</td>
           <td>Charges</td>
           <td><monospace>SEQUEN/2</monospace>,
           <monospace>SEQUEN/[Na:z+1,H:z+1]</monospace></td>
-          <td>11.5</td>
+          <td>11.5 [A]</td>
         </tr>
         <tr>
           <td>N</td>
           <td>Ion notation</td>
           <td><monospace>SEQUEN-[b-type-ion]</monospace></td>
-          <td>11.6</td>
+          <td>11.6 [A]</td>
         </tr>
       </tbody>
     </table>
   </table-wrap>
-  <p><bold>Table 1</bold> depicts the level of ProForma support in
-  Peptacular. The package currently supports all ProForma 2.1 features
-  for linear peptides. Cross-linked peptides (both inter- and
-  intrachain) and branched structures are not supported. Ion notation is
-  also not supported as sequence level, but offers extensive
-  fragmentation support through either API.</p>
+  <p><bold>Table 1</bold> presents the level of ProForma support
+  implemented in Peptacular. The package currently supports all ProForma
+  2.1 features for linear peptides. Cross-linked peptides (both inter-
+  and intrachain) and branched structures are not currently supported.
+  Ion notation is also not supported at the sequence level; however, the
+  package provides extensive fragmentation support through either API.
+  Support levels are designated as follows: [B] - Base ProForma support,
+  [2] - ProForma 2, [T] - Top down, [X] - Cross linking, [G] - Glycan,
+  [A] - Advanced.</p>
   <p><bold>Figure 1: Parallelization Performance - GIL Enabled vs GIL
   Disabled (Python 3.14t)</bold></p>
   <fig>
     <caption><p>Parallelization performance comparison for calculating
-    the mass of randomly generated modified peptides with lengths
+    the mass of 10,000 randomly generated modified peptides with lengths
     ranging from 10 to 30 amino acids. The benchmark compares serialized
     annotations (strings) and annotation objects across different
     parallelization methods, varying numbers of workers, and both
@@ -822,9 +828,7 @@ mzs: list[float] = pt.mz(peptides, charge=2) # [465.2086, 188.103, 225.6227]</co
 <sec id="acknowledgements">
   <title>Acknowledgements</title>
   <p>We acknowledge the PSI group for their assistance in answering
-  questions and providing feedback during the development process.
-  Particular recognition is extended to Douwe Schulte for his
-  contributions to ProForma 2.1.</p>
+  questions and providing feedback during the development process.</p>
 </sec>
 </body>
 <back>

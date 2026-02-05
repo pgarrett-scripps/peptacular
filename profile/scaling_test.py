@@ -10,7 +10,7 @@ import time
 from pathlib import Path
 from typing import Literal
 
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 import peptacular as pt
 
@@ -60,10 +60,6 @@ def save_results_to_tsv(results: dict, output_path: Path):
                 for method in ["sequential", "thread", "process"]:
                     mean_time, std_time, speedup = result[method]
                     writer.writerow([data_type, workers, method, f"{mean_time:.4f}", f"{std_time:.4f}", f"{speedup:.2f}"])
-
-    plt.tight_layout()
-    plt.savefig(output_path, dpi=150, bbox_inches="tight")
-    print(f"Plot saved to: {output_path}")
 
 
 def main():

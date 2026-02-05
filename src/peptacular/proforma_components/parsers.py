@@ -755,7 +755,7 @@ def parse_tag_mass(s: str) -> "TagMass":
 
 
 @lru_cache(maxsize=512)
-def parse_tag_name(s: str) -> "TagName" | "TagCustom":
+def parse_tag_name(s: str) -> "TagName | TagCustom":
     """
     Parse a named modification string.
 
