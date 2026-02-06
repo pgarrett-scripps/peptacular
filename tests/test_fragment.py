@@ -642,6 +642,63 @@ class TestFragment(unittest.TestCase):
                 msg=f"Failed for fragment {frag}, expected mass: {expected_mass}",
             )
 
+    def test_fragmenty(self):
+        annot = pt.parse("PEPTIDE/2")
+
+        frags = annot.fragment(ion_types=["y"])
+        self.assertEqual(len(frags), 7)
+        self.assertEqual(frags[0].position, 1)
+        self.assertEqual(frags[0].parent_sequence, "PEPTIDE/2")
+        self.assertEqual(frags[0].charge_state, 2)
+        self.assertEqual(frags[0].sequence, "E/2")
+
+    def test_fragmentb(self):
+        annot = pt.parse("PEPTIDE/2")
+
+        frags = annot.fragment(ion_types=["b"])
+        self.assertEqual(len(frags), 7)
+        self.assertEqual(frags[0].position, 1)
+        self.assertEqual(frags[0].parent_sequence, "PEPTIDE/2")
+        self.assertEqual(frags[0].charge_state, 2)
+        self.assertEqual(frags[0].sequence, "P/2")
+        self.assertAlmostEqual(frags[0].mz, pt.mz("P/2", ion_type="b"))
+
+    def test_fragment_immonium(self):
+        annot = pt.parse("PEPTIDE/2")
+
+        frags = annot.fragment(ion_types=["i"])
+        self.assertEqual(len(frags), 7)
+        self.assertEqual(frags[0].position, 1)
+        self.assertEqual(frags[0].parent_sequence, "PEPTIDE/2")
+        self.assertEqual(frags[0].charge_state, 2)
+        self.assertEqual(frags[0].sequence, "P/2")
+
+        self.assertEqual(frags[1].position, 2)
+        self.assertEqual(frags[1].parent_sequence, "PEPTIDE/2")
+        self.assertEqual(frags[1].charge_state, 2)
+        self.assertEqual(frags[1].sequence, "E/2")
+
+    def test_fragment_internal(self):
+        annot = pt.parse("PEPT/2")
+
+        frags = annot.fragment(ion_types=["by"])
+        self.assertEqual(len(frags), 3)  # EP, E, P
+
+        self.assertEqual(frags[0].position, (2, 2))
+        self.assertEqual(frags[0].parent_sequence, "PEPT/2")
+        self.assertEqual(frags[0].charge_state, 2)
+        self.assertEqual(frags[0].sequence, "E/2")
+
+        self.assertEqual(frags[1].position, (2, 3))
+        self.assertEqual(frags[1].parent_sequence, "PEPT/2")
+        self.assertEqual(frags[1].charge_state, 2)
+        self.assertEqual(frags[1].sequence, "EP/2")
+
+        self.assertEqual(frags[2].position, (3, 3))
+        self.assertEqual(frags[2].parent_sequence, "PEPT/2")
+        self.assertEqual(frags[2].charge_state, 2)
+        self.assertEqual(frags[2].sequence, "P/2")
+
 
 if __name__ == "__main__":
     unittest.main()

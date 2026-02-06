@@ -125,7 +125,7 @@ class ChargeCarrierInfo:
 
     @staticmethod
     def from_input(
-        charge: int | str | GlobalChargeCarrier | tuple[GlobalChargeCarrier | str, ...] | None,
+        charge: int | str | GlobalChargeCarrier | tuple[GlobalChargeCarrier, ...] | list[str] | None,
     ) -> Self:
         carriers = handle_charge_input(charge)
         # Sort for consistent caching - use serialized form as sort key
@@ -150,6 +150,31 @@ class ChargeCarrierInfo:
         if not composition:
             return {}
         return {str(elem_info): count for elem_info, count in composition.items()}
+
+    @cached_property
+    def to_proforma_charge(self) -> Mapping[str, int] | int | None:
+        composition: Counter[ElementInfo] = self.composition
+        if not composition:
+            return None
+        if len(composition) == 1:
+            elem_info, count = next(iter(composition.items()))
+            if str(elem_info) == "H":
+                return count
+
+        return {str(elem_info): count for elem_info, count in composition.items()}
+
+    @cached_property
+    def to_tuple_or_int(self) -> tuple[str, ...] | int | None:
+        composition: Counter[ElementInfo] = self.composition
+        if not composition:
+            return None
+
+        elif len(composition) == 1:
+            elem_info, count = next(iter(composition.items()))
+            if str(elem_info) == "H":
+                return count
+
+        return tuple(str(elem_info) for elem_info in composition.keys())
 
 
 # ============================================================================
@@ -381,7 +406,7 @@ def _handle_delta_input(
 
 
 def handle_charge_input(
-    charge: int | str | GlobalChargeCarrier | tuple[GlobalChargeCarrier | str, ...] | None,
+    charge: int | str | GlobalChargeCarrier | tuple[GlobalChargeCarrier | str, ...] | list[str] | None,
 ) -> tuple[GlobalChargeCarrier, ...]:
     """Normalize charge input to tuple of GlobalChargeCarrier."""
     if isinstance(charge, int):
@@ -399,6 +424,13 @@ def handle_charge_input(
         return tuple(adducts)
     elif charge is None:
         return ()
+    elif isinstance(charge, list):
+        adducts = []
+        for adduct_str in charge:
+            cformula = ChargedFormula.from_string(adduct_str, require_formula_prefix=False)
+            adduct = GlobalChargeCarrier(cformula, occurance=1)
+            adducts.extend([adduct] * 1)
+        return tuple(adducts)
     else:
         raise TypeError(f"Invalid charge type: {type(charge)}")
 

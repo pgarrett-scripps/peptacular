@@ -39,7 +39,7 @@ def get_mod_type(mod: ModTypeLiteral | ModType | str) -> ModType:
 
 
 def get_mods(
-    mods: Iterable[ModTypeLiteral | ModType] | ModType | ModTypeLiteral | None,
+    mods: Iterable[ModTypeLiteral] | Iterable[ModType] | ModType | ModTypeLiteral | None,
 ) -> list[ModType]:
     """
     Get the list of modification types from the input.

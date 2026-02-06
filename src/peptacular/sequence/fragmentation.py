@@ -26,7 +26,6 @@ def _fragment_single(
     deltas: Sequence[CUSTOM_LOSS_TYPE | None] = (None,),
     neutral_deltas: Sequence[LOSS_TYPE] = (),
     calculate_composition: bool = False,
-    include_sequence: bool = False,
     max_ndeltas: int = 1,
 ) -> list[Fragment]:
     annotation = get_annotation_input(sequence=sequence, copy=False)
@@ -39,7 +38,6 @@ def _fragment_single(
         deltas=deltas,
         neutral_deltas=neutral_deltas,
         calculate_composition=calculate_composition,
-        include_sequence=include_sequence,
         max_ndeltas=max_ndeltas,
     )
 
@@ -54,7 +52,6 @@ def fragment(
     deltas: Sequence[CUSTOM_LOSS_TYPE | None] = (None,),
     neutral_deltas: Sequence[LOSS_TYPE | None] = (None,),
     calculate_composition: bool = False,
-    include_sequence: bool = False,
     max_ndeltas: int = 1,
     n_workers: None = None,
     chunksize: None = None,
@@ -72,7 +69,6 @@ def fragment(
     deltas: Sequence[CUSTOM_LOSS_TYPE | None] = (None,),
     neutral_deltas: Sequence[LOSS_TYPE | None] = (None,),
     calculate_composition: bool = False,
-    include_sequence: bool = False,
     max_ndeltas: int = 1,
     n_workers: int | None = None,
     chunksize: int | None = None,
@@ -89,7 +85,6 @@ def fragment(
     deltas: Sequence[CUSTOM_LOSS_TYPE | None] = (None,),
     neutral_deltas: Sequence[LOSS_TYPE] = (),
     calculate_composition: bool = False,
-    include_sequence: bool = False,
     max_ndeltas: int = 1,
     n_workers: int | None = None,
     chunksize: int | None = None,
@@ -113,7 +108,6 @@ def fragment(
             neutral_deltas=neutral_deltas,
             max_ndeltas=max_ndeltas,
             calculate_composition=calculate_composition,
-            include_sequence=include_sequence,
         )
     else:
         return _fragment_single(
@@ -126,5 +120,4 @@ def fragment(
             neutral_deltas=neutral_deltas,
             max_ndeltas=max_ndeltas,
             calculate_composition=calculate_composition,
-            include_sequence=include_sequence,
         )

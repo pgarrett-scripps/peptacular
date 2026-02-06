@@ -184,9 +184,7 @@ def run():
     print("=" * 60)
 
     print("\ny-ions: +2 charge, H2O loss, 1x 13C:")
-    for frag in peptide.fragment(
-        ion_types=["y"], charges=[2], neutral_deltas=["H2O"], isotopes=[1]
-    ):
+    for frag in peptide.fragment(ion_types=["y"], charges=[2], neutral_deltas=["H2O"], isotopes=[1]):
         print(f"  {frag}")
 
     # ============================================================================
@@ -201,9 +199,7 @@ def run():
     Unless otherwise specified, fragments do not include sequence or composition data.
     This can be enabled with the `include_sequence` and `calculate_composition` flags.
     """
-    b_ions: list[pt.Fragment] = peptide.fragment(
-        ion_types=["b"], charges=[2], include_sequence=True, calculate_composition=True
-    )
+    b_ions: list[pt.Fragment] = peptide.fragment(ion_types=["b"], charges=[2], include_sequence=True, calculate_composition=True)
     if len(b_ions) > 0:
         frag = b_ions[0]
         print(f"\nExample fragment: {frag}")
@@ -216,8 +212,8 @@ def run():
         if frag.composition:
             comp_str = {str(elem): count for elem, count in frag.composition.items()}
             print(f"  Composition: {comp_str}")
-        if frag.sequence:
-            print(f"  Sequence: {frag.sequence}")
+        if frag.parent_sequence:
+            print(f"  Sequence: {frag.parent_sequence}")
 
     # ============================================================================
     # MZPAF OUTPUT
@@ -236,9 +232,7 @@ def run():
         print(f"  {mzpaf}")
 
         # parse back from mzPAF. Mass and monoisotopic info must be provided since this is not stored in the mzPAF string
-        _: pt.Fragment = pt.Fragment.from_mzpaf(
-            mzpaf, mass=frag.mass, monoisotopic=frag.monoisotopic
-        )
+        _: pt.Fragment = pt.Fragment.from_mzpaf(mzpaf, mass=frag.mass, monoisotopic=frag.monoisotopic)
 
     print("\n" + "=" * 60)
 

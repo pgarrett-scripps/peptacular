@@ -48,6 +48,7 @@ dev-dependencies = [
     "myst-parser",
     "pandas>=3.0.0",
     "pytest-xdist>=3.8.0",
+    "lxml>=6.0.2",
 ]
 
 [tool.pytest.ini_options]

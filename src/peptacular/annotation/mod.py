@@ -253,11 +253,10 @@ class Mods[T: ModificationProtocol](MassPropertyMixin):
                     for _ in range(count):
                         mod_str_comps.append(f"[{mod_str}]")
             case ModType.CHARGE:
-                for mod_str, count in (self._mods or {}).items():
-                    if count == 1:
-                        mod_str_comps.append(f"{mod_str}")
-                    else:
-                        mod_str_comps.append(f"{mod_str}^{count}")
+                for mod_str, cnt in (self._mods or {}).items():
+                    if cnt != 1:
+                        raise RuntimeError(f"Charge modifications cannot have count > 1, got {cnt} for mod {mod_str}")
+                    mod_str_comps.append(f"{mod_str}")
                 return f"[{','.join(mod_str_comps)}]"
             case ModType.INTERNAL:
                 for mod_str, count in (self._mods or {}).items():

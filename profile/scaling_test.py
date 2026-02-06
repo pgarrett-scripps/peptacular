@@ -11,7 +11,6 @@ from pathlib import Path
 from typing import Literal
 
 # import matplotlib.pyplot as plt
-
 import peptacular as pt
 
 

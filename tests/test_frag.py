@@ -1,25 +1,20 @@
 import unittest
 
+import pytest
 from tacular import IonType
 
+import peptacular as pt
 from peptacular.annotation.frag import Fragment
-
-try:
-    import paftacular  # noqa: F401
-
-    HAS_PAFTACULAR = True
-except ImportError:
-    HAS_PAFTACULAR = False
 
 
 class TestFragmentClass(unittest.TestCase):
     def test_init_simple(self):
-        f = Fragment(ion_type=IonType.Y, position=2, mass=100.0, monoisotopic=True, charge_state=1, sequence="AB")
+        f = Fragment(ion_type=IonType.Y, position=2, mass=100.0, monoisotopic=True, charge_state=1, parent_sequence="AB")
         self.assertEqual(f.ion_type, IonType.Y)
         self.assertEqual(f.position, 2)
         self.assertEqual(f.mass, 100.0)
         self.assertEqual(f.charge_state, 1)
-        self.assertEqual(f.sequence, "AB")
+        self.assertEqual(f.parent_sequence, "AB")
         self.assertTrue(f.monoisotopic)
 
         # mz = mass / charge
@@ -34,7 +29,7 @@ class TestFragmentClass(unittest.TestCase):
     def test_charge_adducts(self):
         # Na+ adduct, charge 1
         # Need to format adduct dictionary correctly: string -> int count
-        f = Fragment(ion_type=IonType.B, position=3, mass=200.0, monoisotopic=True, charge_state=1, charge_adducts={"Na": 1})
+        f = Fragment(ion_type=IonType.B, position=3, mass=200.0, monoisotopic=True, charge_state=1, charge_adducts=("Na:z+1",))
         self.assertEqual(f.mz, 200.0)
         self.assertFalse(f.is_protonated)
 
@@ -78,84 +73,70 @@ class TestFragmentClass(unittest.TestCase):
         losses2 = f2.losses
         self.assertEqual(losses2[18.01], 1)
 
-    @unittest.skipUnless(HAS_PAFTACULAR, "paftacular not installed")
-    def test_mzpaf_roundtrip_simple(self):
-        # Simple Y ion
-        f = Fragment(ion_type=IonType.Y, position=2, mass=300.0, monoisotopic=True, charge_state=1, sequence="PE")
-        paf = f.to_mzpaf(include_annotation=True)
-        # Verify paf content
-        self.assertEqual(paf.ion_type.series.value, "y")
-        self.assertEqual(paf.ion_type.position, 2)
+    def test_position(self):
+        annot = pt.parse("PEPTIDE")
 
-        # Roundtrip
-        f2 = Fragment.from_mzpaf(paf, mass=300.0)
-        self.assertEqual(f2.ion_type, IonType.Y)
-        self.assertEqual(f2.position, 2)
-        self.assertEqual(f2.sequence, "PE")
-        self.assertEqual(f2.charge_state, 1)
+        frag = annot.frag(position=3, ion_type=IonType.B)
+        self.assertEqual(frag.position, 3)
+        self.assertEqual(frag.parent_sequence, "PEPTIDE")
+        self.assertEqual(frag.sequence, "PEP")
 
-    @unittest.skipUnless(HAS_PAFTACULAR, "paftacular not installed")
-    def test_mzpaf_internal_ion(self):
-        # Internal ion
-        f = Fragment(
-            ion_type=IonType.BY,  # Internal b-y ion?
-            position=(2, 4),
-            mass=400.0,
-            monoisotopic=True,
-            charge_state=1,
-            sequence="EPT",
-        )
-        # Note: frag.py to_mzpaf logic:
-        # case IonTypeProperty.INTERNAL:
-        # checks start, end
-        # checks internal_ion_key in pft.INTERNAL_MASS_DIFFS
+    def test_frag_charge(self):
+        annot = pt.parse("PEPTIDE/2")
 
-        # We need to make sure IonType.BY is supported and mapped correctly.
-        # If not, this test might fail or raise ValueError.
-        # Assuming IonType.BY corresponds to standard internal fragments.
+        frag = annot.frag(position=3, ion_type=IonType.IMMONIUM)
+        self.assertEqual(frag.position, 3)
+        self.assertEqual(frag.parent_sequence, "PEPTIDE/2")
+        self.assertEqual(frag.charge_state, 2)
+        self.assertEqual(frag.sequence, "P/2")
 
-        try:
-            paf = f.to_mzpaf()
-            # If successful, check it looks like an internal ion
-            self.assertTrue(hasattr(paf.ion_type, "start_position"))
-            self.assertEqual(paf.ion_type.start_position, 2)
-            self.assertEqual(paf.ion_type.end_position, 4)
+    def test_frag_set_charge(self):
+        annot = pt.parse("PEPTIDE/2")
 
-            f2 = Fragment.from_mzpaf(paf, mass=400.0)
-            self.assertEqual(f2.position, (2, 4))
-        except ValueError:
-            # If BY is not supported or misconfigured for this test environment
-            pass
+        frag = annot.frag(position=(2, 5), charge=3, ion_type=IonType.BY)
+        self.assertEqual(frag.position, (2, 5))
+        self.assertEqual(frag.parent_sequence, "PEPTIDE/3")
+        self.assertEqual(frag.charge_state, 3)
+        self.assertEqual(frag.sequence, "EPTI/3")
 
-    @unittest.skipUnless(HAS_PAFTACULAR, "paftacular not installed")
-    def test_mzpaf_immonium(self):
-        f = Fragment(ion_type=IonType.IMMONIUM, position="P", mass=70.0, monoisotopic=True, charge_state=1, sequence="P")
-        paf = f.to_mzpaf()
-        self.assertTrue(hasattr(paf.ion_type, "amino_acid"))
-        self.assertEqual(paf.ion_type.amino_acid, "P")
+    def test_frag_set_charge_adduct(self):
+        annot = pt.parse("PEPTIDE/2")
 
-        f2 = Fragment.from_mzpaf(paf, mass=70.0)
-        self.assertEqual(f2.ion_type, IonType.IMMONIUM)
-        self.assertEqual(f2.position, "P")
+        frag = annot.frag(position=3, charge="Na:z+1^2", ion_type=IonType.Z)
+        self.assertEqual(frag.position, 3)
+        self.assertEqual(frag.parent_sequence, "PEPTIDE/[Na:z+1^2]")
+        self.assertEqual(frag.charge_state, 2)
 
-    @unittest.skipUnless(HAS_PAFTACULAR, "paftacular not installed")
-    def test_mzpaf_isotopes_and_losses(self):
-        f = Fragment(ion_type=IonType.B, position=3, mass=350.0, monoisotopic=True, charge_state=1, isotopes=2, deltas={18.015: 1, "H3PO4": 1})
-        paf = f.to_mzpaf()
-        # Expect isotopes
-        self.assertTrue(any(iso.count == 2 for iso in paf.isotopes))
+        frag = annot.frag(position=3, charge="Na:z+1", ion_type=IonType.Z)
+        self.assertEqual(frag.position, 3)
+        self.assertEqual(frag.parent_sequence, "PEPTIDE/[Na:z+1]")
+        self.assertEqual(frag.charge_state, 1)
+        self.assertEqual(frag._charge_adducts, ("Na:z+1",))
+        self.assertEqual(frag.charge_adducts.serialize(), "[Na:z+1]")
 
-        # Expect losses
-        # Check base_mass 18.015
-        self.assertTrue(any(l.base_mass == 18.015 for l in paf.neutral_losses))
-        # Check formula H3PO4
-        # self.assertTrue(any(l.base_formula == "H3PO4" for l in paf.neutral_losses))
-        # Note: charged formula might parse it differently or to_mzpaf might handle it.
+    def test_frag_set_bad_charge_adduct(self):
+        annot = pt.parse("PEPTIDE/2")
 
-        f2 = Fragment.from_mzpaf(paf, mass=350.0)
-        self.assertTrue(f2.is_c13)
-        self.assertEqual(f2.isotopes[next(iter(f2.isotopes))], 2)  # Access via property that returns dict
-        self.assertTrue(18.015 in f2.losses)
+        with pytest.raises(ValueError):
+            frag = annot.frag(position=3, charge="Na", ion_type=IonType.Z)
+            self.assertEqual(frag.position, 3)
+            self.assertEqual(frag.parent_sequence, "PEPTIDE/[Na]")
+
+    def test_frag_position(self):
+        annot = pt.parse("PEPTIDE")
+
+        frag = annot.frag(position=4, ion_type=IonType.Y)
+        self.assertEqual(frag.position, 4)
+        self.assertEqual(frag.parent_sequence, "PEPTIDE")
+        self.assertEqual(frag.sequence, "TIDE")
+
+    def test_frag_position_none(self):
+        annot = pt.parse("PEPTIDE")
+
+        frag = annot.frag(position=None, ion_type=IonType.Y)
+        self.assertEqual(frag.position, 7)
+        self.assertEqual(frag.parent_sequence, "PEPTIDE")
+        self.assertEqual(frag.sequence, "PEPTIDE")
 
 
 if __name__ == "__main__":

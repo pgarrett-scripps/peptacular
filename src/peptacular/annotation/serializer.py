@@ -173,7 +173,6 @@ def _serialize_charge(
     comps: list[str],
 ) -> None:
     """Serialize charge and charge adducts into comps list."""
-
     charge_type = annotation.charge_type
     if charge_type == "none":
         return

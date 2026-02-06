@@ -13,22 +13,24 @@ from tacular import (
 )
 
 from ..constants import ELECTRON_MASS
-from ..proforma_components.comps import ChargedFormula
-from .cached_comps import ChargeCarrierInfo, DeltaInfo, IsotopeInfo
+from ..proforma_components.comps import ChargedFormula, GlobalChargeCarrier
+from .cached_comps import DeltaInfo, IsotopeInfo
 from .frag import Fragment
+from .mod import Mods
 
 H_ELEMENT_INFO = ELEMENT_LOOKUP["H"]
 
 
 def adjust_mass_mz(
     base: float | Counter[ElementInfo],
-    charge: ChargeCarrierInfo,
+    charge: Mods[GlobalChargeCarrier],
     ion_type: IonType | IonTypeLiteral | FragmentIonInfo,
     monoisotopic: bool,
     isotope: IsotopeInfo,
     delta: DeltaInfo,
-    position: int | tuple[int, int] | str | None = None,
-    sequence: str | None = None,
+    position: int | tuple[int, int] | None,
+    parent_sequence: str,
+    parent_sequence_length: int,
     internal_charge: int = 0,  # already includded in base mass (only effects mz calculation)
 ) -> Fragment:
     """Adjust base mass by charge carriers and ion type."""
@@ -46,7 +48,7 @@ def adjust_mass_mz(
     # Apply losses
     base_mass += delta.get_mass_delta(monoisotopic)
 
-    total_charge = charge.charge + internal_charge
+    total_charge = charge.get_charge() + internal_charge
     # Correct for electron mass based on charge
     base_mass += charge.get_mass(monoisotopic)
 
@@ -61,25 +63,27 @@ def adjust_mass_mz(
         mass=base_mass,
         monoisotopic=monoisotopic,
         charge_state=total_charge,
-        charge_adducts=charge.to_fragment_mapping,
+        charge_adducts=tuple(m for m in charge._mods.keys()) if charge._mods else None,
         isotopes=isotope.to_fragment_mapping,
         deltas=delta.to_fragment_mapping,
         composition=None,
-        sequence=sequence,
+        parent_sequence=parent_sequence,
+        parent_sequence_length=parent_sequence_length,
     )
 
 
 def adjust_comp(
     base_comp: Counter[ElementInfo],
-    charge: ChargeCarrierInfo,
+    charge: Mods[GlobalChargeCarrier],
     ion_type: IonType | IonTypeLiteral | FragmentIonInfo,
     monoisotopic: bool,
     isotope: IsotopeInfo,
     delta: DeltaInfo,
+    parent_sequence: str,
+    parent_sequence_length: int,
+    position: int | tuple[int, int] | None,
     inplace: bool = True,
     isotope_map: dict[ElementInfo, ElementInfo] | None = None,
-    position: int | tuple[int, int] | str | None = None,
-    sequence: str | None = None,
     internal_charge: int = 0,
 ) -> Fragment:
     """Adjust base composition by charge carriers and ion type, returning a Fragment object."""
@@ -104,11 +108,13 @@ def adjust_comp(
                 count = base_comp.pop(original_element)
                 base_comp[replaced_element] += count
 
-    # Charge adjustments should not be effected by isotope mapping
-    # Build fragment notation for charge adducts
+    for mod in charge.mods:
+        base_comp += mod.get_composition()
 
-    charge.adjust_composition(base_comp)
-    total_charge = charge.charge + internal_charge
+    if any(count < 0 for count in base_comp.values()):
+        raise ValueError(f"Negative element counts after charge adjustments: {base_comp}")
+
+    total_charge = charge.get_charge() + internal_charge
 
     # Validate no negative counts
     if any(count < 0 for count in base_comp.values()):
@@ -129,23 +135,25 @@ def adjust_comp(
         mass=base_mass,
         charge_state=total_charge,
         monoisotopic=monoisotopic,
-        charge_adducts=charge.to_fragment_mapping,
+        charge_adducts=tuple(m for m in charge._mods.keys()) if charge._mods else None,
         isotopes=isotope.to_fragment_mapping,
         deltas=delta.to_fragment_mapping,
         composition=base_comp,
-        sequence=sequence,
+        parent_sequence=parent_sequence,
+        parent_sequence_length=parent_sequence_length,
     )
 
 
 def comp_frag(
     comp: Counter[ElementInfo],
-    charge: ChargeCarrierInfo,
+    charge: Mods[GlobalChargeCarrier],
     ion_type: IonType | IonTypeLiteral | FragmentIonInfo,
     monoisotopic: bool,
     isotopes: IsotopeInfo,
     deltas: DeltaInfo,
-    position: int | tuple[int, int] | str | None = None,
-    parent_sequence: str | None = None,
+    parent_sequence: str,
+    parent_sequence_length: int,
+    position: int | tuple[int, int] | None,
 ) -> Fragment:
     mass: float = 0
     for elem, count in comp.items():
@@ -159,7 +167,8 @@ def comp_frag(
         isotope=isotopes,
         delta=deltas,
         position=position,
-        sequence=parent_sequence,
+        parent_sequence=parent_sequence,
+        parent_sequence_length=parent_sequence_length,
     )
 
 

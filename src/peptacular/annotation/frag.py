@@ -8,39 +8,57 @@ from tacular import (
     IonType,
 )
 
+from ..constants import ModType
 from ..proforma_components import (
     ChargedFormula,
     GlobalChargeCarrier,
 )
+from .mod import Mods
+from .positions import validate_position
 
 
 class Fragment:
     def __init__(
         self,
-        ion_type: IonType | None,
-        position: int | tuple[int, int] | str | None,
+        ion_type: IonType,
+        position: int | tuple[int, int] | None,
         mass: float,
         monoisotopic: bool,
         charge_state: int,
-        charge_adducts: Mapping[str, int] | None = None,
+        charge_adducts: tuple[str, ...] | None = None,
         isotopes: Mapping[str, int] | int | None = None,
         deltas: Mapping[str | float, int] | None = None,
         composition: Mapping[ElementInfo, int] | None = None,
-        sequence: str | None = None,
+        parent_sequence: str | None = None,
+        parent_sequence_length: int | None = None,
     ) -> None:
-        self.ion_type: IonType | None = ion_type
-        self.position: int | tuple[int, int] | str | None = position
+        self.ion_type: IonType = ion_type
+        self.position: int | tuple[int, int] | None = position
         self.mass: int | float = mass
         self.monoisotopic: bool = monoisotopic
         self.charge_state: int = charge_state
         # None means protonated
-        self._charge_adducts: Mapping[str, int] | None = charge_adducts
+        self._charge_adducts: tuple[str, ...] | None = charge_adducts
         # int means 13C count
         self._isotopes: Mapping[str, int] | int | None = isotopes
         self._losses: Mapping[str | float, int] | None = deltas
         # Optional composition cache
-        self.composition: Counter[ElementInfo] | None = composition
-        self.sequence: str | None = sequence
+        self._composition: Counter[ElementInfo] | None = composition
+        self.parent_sequence: str | None = parent_sequence
+        self.parent_sequence_length: int | None = parent_sequence_length
+
+    @property
+    def composition(self) -> Counter[ElementInfo] | None:
+        if self._composition is not None:
+            return self._composition
+
+        if self.parent_sequence is None:
+            raise ValueError("Cannot calculate composition without parent sequence or explicit composition")
+
+        from .annotation import ProFormaAnnotation
+
+        annot = ProFormaAnnotation.parse(self.parent_sequence)
+        return annot.comp(isotopes=self.isotopes, deltas=self.losses)  # type: ignore
 
     @property
     def mz(self) -> float:
@@ -51,26 +69,23 @@ class Fragment:
         # subract adduct masses
         total_adduct_mass = 0.0
         for adduct in self.charge_adducts:
-            total_adduct_mass += adduct.get_mass(self.monoisotopic) * adduct.occurance
+            total_adduct_mass += adduct.get_mass(self.monoisotopic)
         return self.mass - total_adduct_mass
 
     @property
-    def charge_adducts(self) -> tuple[GlobalChargeCarrier, ...]:
-        if self._charge_adducts is not None:
-            adducts = []
-            for adduct_name, count in self._charge_adducts.items():
-                adducts.append(
-                    GlobalChargeCarrier(
-                        ChargedFormula.from_string(adduct_name, require_formula_prefix=False),
-                        count,
-                    )
+    def charge_adducts(self) -> Mods[GlobalChargeCarrier]:
+        if self._charge_adducts is None:
+            if self.charge_state != 0:
+                return Mods[GlobalChargeCarrier](
+                    mod_type=ModType.CHARGE,
+                    _mods={GlobalChargeCarrier.charged_proton(self.charge_state).serialize(): 1},
                 )
-            return tuple(adducts)
+            # no adducts no charge
+            return Mods[GlobalChargeCarrier](mod_type=ModType.CHARGE, _mods={})
 
-        if self.charge_state != 0:
-            return (GlobalChargeCarrier.charged_proton(self.charge_state),)
-
-        return ()
+        # we have adducts, convert to Mods object
+        else:
+            return Mods[GlobalChargeCarrier](mod_type=ModType.CHARGE, _mods={k: 1 for k in self._charge_adducts})
 
     @property
     def is_protonated(self) -> bool:
@@ -131,3 +146,22 @@ class Fragment:
 
     def __repr__(self) -> str:
         return self.__str__()
+
+    @property
+    def sequence(self) -> str | None:
+        if self.parent_sequence is None:
+            raise ValueError("Cannot determine fragment sequence without parent sequence")
+
+        if self.parent_sequence_length is None:
+            raise ValueError("Cannot determine fragment sequence without parent sequence length")
+
+        pos = validate_position(self.ion_type, self.position, self.parent_sequence_length)
+        if pos is None:
+            return self.parent_sequence
+        elif isinstance(pos, tuple):
+            from .annotation import ProFormaAnnotation
+
+            start, end = pos
+            return ProFormaAnnotation.parse(self.parent_sequence)[slice(start, end)].serialize()
+
+        raise ValueError("Invalid position format for fragment sequence extraction")

@@ -179,7 +179,7 @@ def test_charge_state_with_mod(basic_mod: pt.Mod):
 def test_charge_state_with_adduct():
     # Test the case with a charge state at the end of the _sequence
     proforma = "PEPTIDE/[H:z+1]"
-    expected_output = pt.ProFormaAnnotation(sequence="PEPTIDE", charge={"H:z+1": 1})
+    expected_output = pt.ProFormaAnnotation(sequence="PEPTIDE", charge="H:z+1")
     assert pt.ProFormaAnnotation.parse(proforma) == expected_output
     assert pt.serialize(expected_output) == proforma
 

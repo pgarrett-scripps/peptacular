@@ -78,7 +78,7 @@ def isotopic_distribution(
     distribution_resolution: int | None = 5,
     use_neutron_count: bool = False,
     conv_min_abundance_threshold: float = 10e-15,
-    charge: int | None = None,
+    charge_state: int | None = None,
 ) -> list[IsotopicData]:
     """
     Calculate the isotopic distribution for a given chemical formula.
@@ -167,10 +167,10 @@ def isotopic_distribution(
             composition[str(key)] = value
 
     # Just use these to correct mass
-    if charge == 0 or charge is None:
+    if charge_state == 0 or charge_state is None:
         particle_mass_offset = 0.0
     else:
-        particle_mass_offset = -charge * constants.ELECTRON_MASS
+        particle_mass_offset = -charge_state * constants.ELECTRON_MASS
 
     # check if any values are negative:
     if any(v < 0 for v in composition.values()):
