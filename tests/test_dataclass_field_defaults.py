@@ -68,9 +68,8 @@ def test_collection_finds_the_package_dataclasses() -> None:
     assert len(DATACLASSES) >= MINIMUM_DATACLASSES, sorted(DATACLASSES)
 
 
-@pytest.mark.parametrize("name", sorted(DATACLASSES))
-def test_no_field_default_is_a_descriptor(name: str) -> None:
-    for field in dataclasses.fields(DATACLASSES[name]):
+def _assert_no_descriptor_defaults(name: str, cls: type) -> None:
+    for field in dataclasses.fields(cls):
         default = field.default
         if default is dataclasses.MISSING or isinstance(default, SAFE_DESCRIPTOR_TYPES):
             continue
@@ -80,3 +79,34 @@ def test_no_field_default_is_a_descriptor(name: str) -> None:
         )
         assert not isinstance(default, classmethod | staticmethod), f"{name}.{field.name} defaults to a {type(default).__name__}"
         assert not _is_descriptor(default), f"{name}.{field.name} defaults to a {type(default).__name__} descriptor"
+
+
+@pytest.mark.parametrize("name", sorted(DATACLASSES))
+def test_no_field_default_is_a_descriptor(name: str) -> None:
+    _assert_no_descriptor_defaults(name, DATACLASSES[name])
+
+
+def test_guard_detects_a_property_default() -> None:
+    """The hazard this file exists for, rebuilt inline, must still be caught.
+
+    Without this, a green run only shows that the walk found nothing. It does not show
+    that the walk would notice the shape that put ``PositionScore`` at risk.
+    """
+
+    class _ScoreMixin:
+        @property
+        def position_id(self) -> str | None:
+            return None
+
+    @dataclasses.dataclass(frozen=True, slots=True)
+    class _Scored(_ScoreMixin):
+        position_id: str | None
+        _: dataclasses.KW_ONLY
+        score: float = 0.0
+
+    # The hazard is silent: position_id is declared without a default, yet this
+    # constructs, because dataclasses took the inherited property as the default.
+    assert isinstance(_Scored().position_id, property)
+
+    with pytest.raises(AssertionError, match="defaults to a property object"):
+        _assert_no_descriptor_defaults("_Scored", _Scored)
