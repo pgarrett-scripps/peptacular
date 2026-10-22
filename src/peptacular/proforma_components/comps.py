@@ -195,11 +195,23 @@ class HasPositionScore(Protocol):
         ...
 
 
-class PositionScoreMixin(ABC):
-    """Mixin to add position/score serialization to classes."""
+class PositionScoreMixin:
+    """Mixin to add position/score serialization to classes.
 
-    position_id: str | None
-    score: float | None
+    Both attributes are declared read-only here because every concrete subclass is a
+    frozen dataclass that supplies them as fields. Subclasses that carry no
+    position or score inherit these defaults.
+    """
+
+    @property
+    def position_id(self) -> str | None:
+        """The position identifier, or None if the subclass has none."""
+        return None
+
+    @property
+    def score(self) -> float | None:
+        """The localization score, or None if the subclass has none."""
+        return None
 
     def serialize_position_score(self) -> str:
         """Serialize the position_id and score components.
