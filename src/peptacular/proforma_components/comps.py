@@ -11,7 +11,7 @@ from collections import Counter
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from math import isfinite
-from typing import Any, Protocol, Self, runtime_checkable
+from typing import TYPE_CHECKING, Any, Protocol, Self, runtime_checkable
 
 from tacular import (
     AA_LOOKUP,
@@ -195,23 +195,23 @@ class HasPositionScore(Protocol):
         ...
 
 
-class PositionScoreMixin:
-    """Mixin to add position/score serialization to classes.
+class PositionScoreMixin(ABC):  # noqa: B024 - ruff does not see the declarations in the TYPE_CHECKING block below
+    """Mixin to add position/score serialization to classes."""
 
-    Both attributes are declared read-only here because every concrete subclass is a
-    frozen dataclass that supplies them as fields. Subclasses that carry no
-    position or score inherit these defaults.
-    """
+    if TYPE_CHECKING:
+        # Declared read-only: every subclass is a frozen dataclass whose fields are
+        # read-only, and plain writable attributes here would be declarations they
+        # cannot override. They stay behind TYPE_CHECKING because a real property
+        # object would be picked up as a dataclass field default.
+        @property
+        def position_id(self) -> str | None:
+            """Position identifier of the modification, if one is given."""
+            ...
 
-    @property
-    def position_id(self) -> str | None:
-        """The position identifier, or None if the subclass has none."""
-        return None
-
-    @property
-    def score(self) -> float | None:
-        """The localization score, or None if the subclass has none."""
-        return None
+        @property
+        def score(self) -> float | None:
+            """Localization score of the modification, if one is given."""
+            ...
 
     def serialize_position_score(self) -> str:
         """Serialize the position_id and score components.
