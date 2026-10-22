@@ -195,7 +195,7 @@ class HasPositionScore(Protocol):
         ...
 
 
-class PositionScoreMixin(ABC):  # noqa: B024 - ruff does not see the declarations in the TYPE_CHECKING block below
+class PositionScoreMixin:
     """Mixin to add position/score serialization to classes."""
 
     if TYPE_CHECKING:
