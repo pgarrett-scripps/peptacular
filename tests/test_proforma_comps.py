@@ -383,6 +383,16 @@ class TestPositionScore:
     def test_validate_is_always_none(self) -> None:
         assert PositionScore(position_id="1").validate() is None
 
+    def test_position_id_is_required(self) -> None:
+        """position_id has no default, so omitting it is a TypeError.
+
+        PositionScoreMixin must not declare position_id as a real property: dataclasses
+        resolve a field default with getattr through the MRO, so a property object would
+        silently become this field's default.
+        """
+        with pytest.raises(TypeError):
+            PositionScore()  # ty: ignore[missing-argument]
+
 
 class TestTagName:
     def test_is_valid_false_for_unknown_name(self) -> None:

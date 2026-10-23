@@ -11,7 +11,7 @@ from collections import Counter
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from math import isfinite
-from typing import Any, Protocol, Self, runtime_checkable
+from typing import TYPE_CHECKING, Any, Protocol, Self, runtime_checkable
 
 from tacular import (
     AA_LOOKUP,
@@ -195,11 +195,23 @@ class HasPositionScore(Protocol):
         ...
 
 
-class PositionScoreMixin(ABC):
+class PositionScoreMixin:
     """Mixin to add position/score serialization to classes."""
 
-    position_id: str | None
-    score: float | None
+    if TYPE_CHECKING:
+        # Declared read-only: every subclass is a frozen dataclass whose fields are
+        # read-only, and plain writable attributes here would be declarations they
+        # cannot override. They stay behind TYPE_CHECKING because a real property
+        # object would be picked up as a dataclass field default.
+        @property
+        def position_id(self) -> str | None:
+            """Position identifier of the modification, if one is given."""
+            ...
+
+        @property
+        def score(self) -> float | None:
+            """Localization score of the modification, if one is given."""
+            ...
 
     def serialize_position_score(self) -> str:
         """Serialize the position_id and score components.
