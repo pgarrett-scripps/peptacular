@@ -8,6 +8,12 @@ stored as the default and the field silently becomes optional.
 
 This walks every module in the package so a dataclass added later is covered the day it
 lands.
+
+:func:`_is_descriptor` is deliberately broad, so it also matches a callable: a plain
+function or a lambda, because ``FunctionType`` carries ``__get__``, and from Python 3.13
+a :func:`functools.partial` too (on 3.12 it is not a descriptor). No field default in
+the package is a callable. If one ever legitimately is, loosen this test rather than
+changing the code.
 """
 
 import dataclasses
